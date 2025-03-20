@@ -125,33 +125,9 @@ fn generate_ts_type_def_for_struct(
 
     let mut output_as_type = false;
 
-    if let Some(field_indices) = &struct_def.estree.field_indices {
-        // Specified field order - output in this order
-        for &field_index in field_indices {
-            let field_index = field_index as usize;
-            if let Some(field) = struct_def.fields.get(field_index) {
-                generate_ts_type_def_for_struct_field(
-                    struct_def,
-                    field,
-                    &mut fields_str,
-                    &mut extends,
-                    &mut output_as_type,
-                    schema,
-                );
-            } else {
-                let (field_name, converter_name) =
-                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
-                generate_ts_type_def_for_added_struct_field(
-                    field_name,
-                    converter_name,
-                    &mut fields_str,
-                    schema,
-                );
-            }
-        }
-    } else {
-        // No specified field order - output in original order
-        for field in &struct_def.fields {
+    for &field_index in &struct_def.estree.field_indices {
+        let field_index = field_index as usize;
+        if let Some(field) = struct_def.fields.get(field_index) {
             generate_ts_type_def_for_struct_field(
                 struct_def,
                 field,
@@ -160,9 +136,9 @@ fn generate_ts_type_def_for_struct(
                 &mut output_as_type,
                 schema,
             );
-        }
-
-        for (field_name, converter_name) in &struct_def.estree.add_fields {
+        } else {
+            let (field_name, converter_name) =
+                &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
             generate_ts_type_def_for_added_struct_field(
                 field_name,
                 converter_name,
@@ -294,7 +270,8 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
     }
 
     let field_camel_name = get_struct_field_name(field);
-    fields_str.push_str(&format!("\n\t{field_camel_name}: {field_type_name};"));
+    let question_mark = if field.estree.is_ts { "?" } else { "" };
+    fields_str.push_str(&format!("\n\t{field_camel_name}{question_mark}: {field_type_name};"));
 }
 
 /// Generate Typescript type definition for an extra struct field
@@ -305,10 +282,12 @@ fn generate_ts_type_def_for_added_struct_field(
     fields_str: &mut String,
     schema: &Schema,
 ) {
-    let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {
+    let converter = schema.meta_by_name(converter_name);
+    let Some(ts_type) = converter.estree.ts_type.as_deref() else {
         panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
     };
-    fields_str.push_str(&format!("\n\t{field_name}: {ts_type};"));
+    let question_mark = if converter.estree.is_ts { "?" } else { "" };
+    fields_str.push_str(&format!("\n\t{field_name}{question_mark}: {ts_type};"));
 }
 
 /// Get the TS type definition for a converter.

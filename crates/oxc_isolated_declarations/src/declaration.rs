@@ -232,7 +232,7 @@ impl<'a> IsolatedDeclarations<'a> {
             PropertyKey::StaticMemberExpression(expr) => {
                 !expr.get_first_object().is_identifier_reference()
             }
-            key => !self.is_literal_key(key),
+            key => !Self::is_literal_key(key),
         };
 
         if is_not_allowed {

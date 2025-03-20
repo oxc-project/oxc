@@ -64,12 +64,18 @@ impl Rule for NoCaseDeclarations {
                     }
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
-                        let end = match var.kind {
-                            VariableDeclarationKind::Const => 5,
+                        let len = match var.kind {
+                            VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
                             VariableDeclarationKind::Let => 3,
-                            _ => unreachable!(),
+                            #[expect(clippy::cast_possible_truncation)]
+                            VariableDeclarationKind::AwaitUsing => {
+                                ctx.source_range(Span::new(start, var.declarations[0].span.start))
+                                    .trim_end()
+                                    .len() as u32
+                            }
+                            VariableDeclarationKind::Var => unreachable!(),
                         };
-                        let end = start + end;
+                        let end = start + len;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     _ => {}
@@ -102,6 +108,8 @@ fn test() {
         ("switch (a) { default: function f() {} break; }", None),
         ("switch (a) { case 1: class C {} break; }", None),
         ("switch (a) { default: class C {} break; }", None),
+        ("switch (a) { default: using x = {}; break; }", None),
+        ("switch (a) { default: await using x = {}; break; }", None),
     ];
 
     Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::PLUGIN, pass, fail)

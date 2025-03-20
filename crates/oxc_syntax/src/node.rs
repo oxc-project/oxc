@@ -56,18 +56,6 @@ impl Serialize for NodeId {
     }
 }
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type NodeId = number;
-export type NodeFlags = {
-    JSDoc: 1,
-    Class: 2,
-    HasYield: 4
-    Parameter: 8
-};
-"#;
-
 bitflags! {
     /// Contains additional information about an AST node.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

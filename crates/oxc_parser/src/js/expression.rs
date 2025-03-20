@@ -2,6 +2,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+#[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -171,7 +172,7 @@ impl<'a> ParserImpl<'a> {
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
-            Kind::LCurly => self.parse_object_expression(),
+            Kind::LCurly => self.parse_object_expression().map(Expression::ObjectExpression),
             // ClassExpression
             Kind::Class => self.parse_class_expression(),
             // This
@@ -342,18 +343,31 @@ impl<'a> ParserImpl<'a> {
         let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
         let raw = self.cur_src();
         self.bump_any();
+
         // Parse pattern if options is enabled and also flags are valid
-        let pattern = (self.options.parse_regular_expression && !flags_error)
-            .then_some(())
-            .map(|()| {
-                self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
-            })
-            .map_or_else(
-                || RegExpPattern::Raw(pattern_text),
-                |pat| {
-                    pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
-                },
-            );
+        #[cfg(feature = "regular_expression")]
+        let pattern = {
+            (self.options.parse_regular_expression && !flags_error)
+                .then_some(())
+                .map(|()| {
+                    self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
+                })
+                .map_or_else(
+                    || RegExpPattern::Raw(pattern_text),
+                    |pat| {
+                        pat.map_or_else(
+                            || RegExpPattern::Invalid(pattern_text),
+                            RegExpPattern::Pattern,
+                        )
+                    },
+                )
+        };
+        #[cfg(not(feature = "regular_expression"))]
+        let pattern = {
+            let _ = (flags_start, flags_text, flags_error);
+            RegExpPattern::Raw(pattern_text)
+        };
+
         Ok(self.ast.reg_exp_literal(
             self.end_span(span),
             RegExp { pattern, flags },
@@ -361,6 +375,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
+    #[cfg(feature = "regular_expression")]
     fn parse_regex_pattern(
         &mut self,
         pattern_span_offset: u32,
@@ -391,6 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
+        let lossy = self.cur_token().lossy;
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -398,7 +414,9 @@ impl<'a> ParserImpl<'a> {
         let raw = Atom::from(unsafe {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
-        Ok(self.ast.string_literal(span, value, Some(raw)))
+        let mut string_literal = self.ast.string_literal(span, value, Some(raw));
+        string_literal.lossy = lossy;
+        Ok(string_literal)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -546,8 +564,8 @@ impl<'a> ParserImpl<'a> {
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         self.ast.template_element(
             span,
-            tail,
             TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
+            tail,
         )
     }
 

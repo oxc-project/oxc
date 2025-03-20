@@ -14,7 +14,6 @@ on:
   push:
     branches:
       - main
-      - "renovate/**"
     paths-ignore:
       - "**/*.md"
       - "**/*.yml"
@@ -92,55 +91,66 @@ jobs:
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
-    # if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
-      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
-      # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_ast -p oxc_cfg -p oxc_regular_expression -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
-      - run: rustup target add wasm32-wasip1-threads
-      - uses: bytecodealliance/actions/wasmtime/setup@3b93676295fd6f7eaa7af2c2785539e052fa8349 # v1.1.1
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/parser/Cargo.toml
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/transform/Cargo.toml
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/minify/Cargo.toml
-      # Fix `index.d.ts`
-      - run: node napi/parser/scripts/fix-wasm-dts.mjs
-      - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
-      - run: git diff --exit-code # Must commit everything
+        if: steps.filter.outputs.src == 'true'
+      - name: Build
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
+          git diff --exit-code # Must commit everything
+      - name: Test wasi in browser
+        if: steps.filter.outputs.src == 'true'
+        working-directory: napi/parser
+        run: |
+          rm -rf *.wasm
+          pnpm exec playwright install chromium
+          pnpm run build-wasi
+          pnpm run build-npm-dir
+          pnpm run test-browser
 
-  test-wasm32-unknown-unknown:
-    name: Check wasm32-unknown-unknown
+  test-napi:
+    name: Test NAPI
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
         with:
-          cache-key: wasm
-          save-cache: ${{ github.ref_name == 'main' }}
-          tools: wasm-pack,just
-      - name: Check
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo check -p oxc_wasm --target wasm32-unknown-unknown
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
       - uses: ./.github/actions/pnpm
-
-      - run: just build-wasm debug
-      - working-directory: npm/oxc-wasm
-        run: pnpm run check
-
-      - working-directory: wasm/parser
-        run: pnpm run build
-      - working-directory: npm/parser-wasm
-        run: pnpm run check
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build
+          pnpm run test
+          pnpm --filter e2e run test
+          git diff --exit-code # Must commit everything
 
   typos:
     name: Spell Check
@@ -202,9 +212,7 @@ jobs:
               - '!editors/**'
               - '!napi/**'
               - '!npm/**'
-              - '!wasm/**'
               - '!crates/oxc_linter/**'
-              - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
               - '!tasks/**'
               - 'tasks/conformance/**'
@@ -277,10 +285,9 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Restore dprint plugin cache
-        id: cache-restore
         uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
-          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
 
       - name: Check AST Changes
@@ -289,37 +296,3 @@ jobs:
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
           (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)
-
-      - name: Save dprint plugin cache
-        if: ${{ github.ref_name == 'main' }}
-        id: cache-save
-        uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
-        with:
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-          path: ~/.cache/dprint
-
-  napi:
-    name: Test NAPI
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
-        id: filter
-        with:
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        if: steps.filter.outputs.src == 'true'
-        with:
-          cache-key: napi
-      - uses: ./.github/actions/pnpm
-        if: steps.filter.outputs.src == 'true'
-      - if: steps.filter.outputs.src == 'true'
-        run: |
-          pnpm run build
-          pnpm run test
-          pnpm --filter e2e run test
-          git diff --exit-code # Must commit everything

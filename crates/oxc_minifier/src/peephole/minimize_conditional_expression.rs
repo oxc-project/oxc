@@ -423,10 +423,11 @@ impl<'a> PeepholeOptimizations {
         if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
             return None;
         }
-        // TODO: need this condition when `keep_fnames` is introduced
-        // if consequent.right.is_anonymous_function_definition() {
-        //     return None;
-        // }
+        // NOTE: if the right hand side is an anonymous function, applying this compression will
+        // set the `name` property of that function.
+        // Since codes relying on the fact that function's name is undefined should be rare,
+        // we do this compression even if `keep_names` is enabled.
+
         if consequent.operator != AssignmentOperator::Assign
             || consequent.operator != alternate.operator
             || consequent.left.content_ne(&alternate.left)

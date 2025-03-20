@@ -42,7 +42,7 @@ declare_oxc_lint!(
     ///
     /// ```javascript
     /// Math.max(0, Math.min(100, x));
-    /// Math.min(0, Math.max(1000, z));
+    /// Math.min(1000, Math.max(0, z));
     /// ```
     ///
     BadMinMaxFunc,

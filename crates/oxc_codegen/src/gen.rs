@@ -1007,7 +1007,9 @@ impl Gen for ExportNamedDeclaration<'_> {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export");
-        if self.export_kind.is_type() {
+        if self.export_kind.is_type()
+            && !self.declaration.as_ref().is_some_and(oxc_ast::ast::Declaration::is_type)
+        {
             p.print_str(" type ");
         }
         if let Some(decl) = &self.declaration {
@@ -1449,7 +1451,7 @@ impl GenExpr for CallExpression<'_> {
             if self.optional {
                 p.print_str("?.");
             }
-            if let Some(type_parameters) = &self.type_parameters {
+            if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
             p.print_ascii_byte(b'(');
@@ -1673,9 +1675,7 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => {
-                p.print_quoted_utf16(s.value.as_str(), /* allow_backtick */ false);
-            }
+            Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
             _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
@@ -2154,7 +2154,7 @@ impl Gen for TaggedTemplateExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         self.tag.print_expr(p, Precedence::Postfix, Context::empty());
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
         self.quasi.print(p, ctx);
@@ -2335,7 +2335,7 @@ impl Gen for Class<'_> {
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(" extends ");
                 super_class.print_expr(p, Precedence::Postfix, Context::empty());
-                if let Some(super_type_parameters) = &self.super_type_parameters {
+                if let Some(super_type_parameters) = &self.super_type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }
@@ -2576,8 +2576,9 @@ impl Gen for JSXText<'_> {
 
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_str("...");
+        p.print_str("{...");
         p.print_expression(&self.expression);
+        p.print_ascii_byte(b'}');
     }
 }
 
@@ -2586,7 +2587,7 @@ impl Gen for JSXChild<'_> {
         match self {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
-            Self::Spread(spread) => p.print_expression(&spread.expression),
+            Self::Spread(spread) => spread.print(p, ctx),
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
             Self::Text(text) => text.print(p, ctx),
         }
@@ -2980,7 +2981,7 @@ impl Gen for Decorator<'_> {
 impl Gen for TSClassImplements<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print(p, ctx);
-        if let Some(type_parameters) = self.type_parameters.as_ref() {
+        if let Some(type_parameters) = self.type_arguments.as_ref() {
             type_parameters.print(p, ctx);
         }
     }
@@ -3256,7 +3257,7 @@ impl Gen for TSTypePredicate<'_> {
 impl Gen for TSTypeReference<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.type_name.print(p, ctx);
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }
@@ -3527,7 +3528,7 @@ impl Gen for TSTypeQuery<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("typeof ");
         self.expr_name.print(p, ctx);
-        if let Some(type_params) = &self.type_parameters {
+        if let Some(type_params) = &self.type_arguments {
             type_params.print(p, ctx);
         }
     }
@@ -3549,9 +3550,9 @@ impl Gen for TSImportType<'_> {
         }
         p.print_str("import(");
         self.argument.print(p, ctx);
-        if let Some(attributes) = &self.options {
+        if let Some(options) = &self.options {
             p.print_str(", ");
-            attributes.print(p, ctx);
+            options.print_expr(p, Precedence::Lowest, ctx);
         }
         p.print_str(")");
         if let Some(qualifier) = &self.qualifier {
@@ -3560,42 +3561,6 @@ impl Gen for TSImportType<'_> {
         }
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
-        }
-    }
-}
-
-impl Gen for TSImportAttributes<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_ascii_byte(b'{');
-        p.print_soft_space();
-        self.attributes_keyword.print(p, ctx);
-        p.print_str(":");
-        p.print_soft_space();
-        p.print_ascii_byte(b'{');
-        p.print_soft_space();
-        p.print_list(&self.elements, ctx);
-        p.print_soft_space();
-        p.print_ascii_byte(b'}');
-        p.print_soft_space();
-        p.print_ascii_byte(b'}');
-    }
-}
-
-impl Gen for TSImportAttribute<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.name.print(p, ctx);
-        p.print_str(": ");
-        self.value.print_expr(p, Precedence::Member, ctx);
-    }
-}
-
-impl Gen for TSImportAttributeName<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
-            TSImportAttributeName::StringLiteral(literal) => {
-                p.print_string_literal(literal, false);
-            }
         }
     }
 }
@@ -3768,7 +3733,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 impl Gen for TSInterfaceHeritage<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print_expr(p, Precedence::Call, ctx);
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }

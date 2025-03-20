@@ -121,7 +121,9 @@ pub fn print_export_declaration<'a>(
             }
         }
         ExportDeclarationLike::ExportNamedDeclaration(decl) => {
-            if decl.export_kind.is_type() {
+            if decl.export_kind.is_type()
+                && !decl.declaration.as_ref().is_some_and(oxc_ast::ast::Declaration::is_type)
+            {
                 parts.push(text!(" type"));
             }
             if let Some(decl) = &decl.declaration {

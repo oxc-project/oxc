@@ -391,6 +391,32 @@ impl Case for EstreeTypescriptCase {
                 continue;
             }
 
+            // compare as object to ignore order difference for now
+            let mut oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
+                Ok(v) => v,
+                Err(e) => {
+                    self.base.result =
+                        TestResult::GenericError("serde_json::from_str(oxc_json)", e.to_string());
+                    return;
+                }
+            };
+            let estree_json_value = match serde_json::from_str::<serde_json::Value>(&estree_json) {
+                Ok(v) => v,
+                Err(e) => {
+                    self.base.result = TestResult::GenericError(
+                        "serde_json::from_str(estree_json)",
+                        e.to_string(),
+                    );
+                    return;
+                }
+            };
+            if oxc_json_value == estree_json_value {
+                continue;
+            }
+            convert_to_typescript_eslint_order(&mut oxc_json_value);
+            let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
+            let estree_json = serde_json::to_string_pretty(&estree_json_value).unwrap();
+
             // Mismatch found.
             // Write diff to `acorn-test262-diff` directory only when SAVE_DIFF=true since it's slow
             if std::option_env!("SAVE_DIFF") == Some("true") {
@@ -413,5 +439,36 @@ impl Case for EstreeTypescriptCase {
         }
 
         self.base.result = TestResult::Passed;
+    }
+}
+
+fn convert_to_typescript_eslint_order(ast: &mut serde_json::Value) {
+    match ast {
+        serde_json::Value::Object(obj) => {
+            // TODO: not entirely alphabetical?
+            // e.g. `BinaryExpression.operator` comes before `BinaryExpression.left`
+            obj.sort_keys();
+            if let Some((_, r#type)) = obj.shift_remove_entry("type") {
+                if r#type.as_str() == Some("Program") {
+                    // keep hashbang last
+                    let (key, value) = obj.shift_remove_entry("hashbang").unwrap();
+                    obj.shift_insert(4, key, value);
+                }
+                obj.shift_insert(0, "type".to_string(), r#type);
+                let (_, start) = obj.shift_remove_entry("start").unwrap();
+                obj.shift_insert(1, "start".to_string(), start);
+                let (_, end) = obj.shift_remove_entry("end").unwrap();
+                obj.shift_insert(2, "end".to_string(), end);
+            }
+            for (_, value) in obj.iter_mut() {
+                convert_to_typescript_eslint_order(value);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for value in arr.iter_mut() {
+                convert_to_typescript_eslint_order(value);
+            }
+        }
+        _ => {}
     }
 }

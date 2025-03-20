@@ -84,6 +84,7 @@ fn test_vars_simple() {
         ),
         ("const { foo: fooBar, baz } = obj; f(baz);", None),
         ("let _a = 1", Some(json!([{ "argsIgnorePattern": "^_" }]))),
+        ("for (using x of y) console.log(); x()", None),
     ];
 
     let fix = vec![

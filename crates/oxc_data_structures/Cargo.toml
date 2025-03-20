@@ -1,6 +1,6 @@
 [package]
 name = "oxc_data_structures"
-version = "0.58.1"
+version = "0.60.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -18,8 +18,17 @@ workspace = true
 
 [lib]
 test = true
-doctest = false
+# Doctests must be enabled for this crate as they are used to run compilation failure tests
+doctest = true
 
 [dependencies]
-assert-unchecked = { workspace = true }
-ropey = { workspace = true }
+ropey = { workspace = true, optional = true }
+
+[features]
+default = []
+all = ["assert_unchecked", "code_buffer", "inline_string", "rope", "stack"]
+assert_unchecked = []
+code_buffer = ["assert_unchecked"]
+inline_string = []
+rope = ["dep:ropey"]
+stack = ["assert_unchecked"]

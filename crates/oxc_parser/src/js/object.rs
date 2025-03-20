@@ -12,7 +12,7 @@ impl<'a> ParserImpl<'a> {
     ///     { }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
-    pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_object_expression(&mut self) -> Result<Box<'a, ObjectExpression<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
@@ -29,7 +29,7 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span)
         });
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.expression_object(
+        Ok(self.ast.alloc_object_expression(
             self.end_span(span),
             object_expression_properties,
             trailing_comma,

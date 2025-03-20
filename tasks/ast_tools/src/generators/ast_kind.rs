@@ -22,7 +22,7 @@ use super::define_generator;
 /// Types to omit creating an `AstKind` for.
 ///
 /// Apart from this list every type with `#[ast(visit)]` attr gets an `AstKind`.
-const BLACK_LIST: [&str; 64] = [
+const BLACK_LIST: [&str; 61] = [
     "Span",
     "Expression",
     "ObjectPropertyKind",
@@ -71,9 +71,6 @@ const BLACK_LIST: [&str; 64] = [
     "TSModuleDeclarationName",
     "TSModuleDeclarationBody",
     "TSTypeQueryExprName",
-    "TSImportAttribute",
-    "TSImportAttributes",
-    "TSImportAttributeName",
     "TSFunctionType",
     "TSConstructorType",
     "TSNamespaceExportDeclaration",
@@ -96,7 +93,7 @@ define_generator!(AstKindGenerator);
 
 impl Generator for AstKindGenerator {
     /// Set `has_kind` for structs and enums which are visited, and not on blacklist.
-    fn prepare(&self, schema: &mut Schema) {
+    fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind` to `true` for all visited types
         for type_def in &mut schema.types {
             match type_def {

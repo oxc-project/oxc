@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
+members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
 exclude = ["tasks/lint_rules", "tasks/e2e"]
 
 [workspace.package]
@@ -103,30 +103,30 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.58.1", path = "crates/oxc" }
-oxc_allocator = { version = "0.58.1", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.58.1", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.58.1", path = "crates/oxc_ast_macros" }
-oxc_ast_visit = { version = "0.58.1", path = "crates/oxc_ast_visit" }
-oxc_cfg = { version = "0.58.1", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.58.1", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.58.1", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.58.1", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.58.1", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.58.1", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.58.1", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.58.1", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.58.1", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.58.1", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.58.1", path = "crates/oxc_parser" }
-oxc_parser_napi = { version = "0.58.1", path = "napi/parser" }
-oxc_regular_expression = { version = "0.58.1", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.58.1", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.58.1", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.58.1", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.58.1", path = "napi/transform" }
-oxc_transformer = { version = "0.58.1", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.58.1", path = "crates/oxc_traverse" }
+oxc = { version = "0.60.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.60.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.60.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.60.0", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.60.0", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.60.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.60.0", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.60.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.60.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.60.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.60.0", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.60.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.60.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.60.0", path = "crates/oxc_minifier" }
+oxc_napi = { version = "0.60.0", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.60.0", path = "crates/oxc_parser", features = ["regular_expression"] }
+oxc_parser_napi = { version = "0.60.0", path = "napi/parser" }
+oxc_regular_expression = { version = "0.60.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.60.0", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.60.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.60.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.60.0", path = "napi/transform" }
+oxc_transformer = { version = "0.60.0", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.60.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }
@@ -158,7 +158,6 @@ oxc_sourcemap = "3"
 
 #
 allocator-api2 = "0.2.21"
-assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 bitflags = "2.8.0"
 bpaf = "0.9.16"
@@ -167,10 +166,9 @@ bpaf = "0.9.16"
 # of `bumpalo` which may change in a future version.
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
 bumpalo = "=3.17.0"
-compact_str = "0.8.1"
+compact_str = "0.9.0"
 console = "0.15.10"
-console_error_panic_hook = "0.1.7"
-convert_case = "0.7.1"
+convert_case = "0.8.0"
 cow-utils = "0.1.3"
 criterion2 = { version = "3.0.0", default-features = false }
 encoding_rs = "0.8.35"
@@ -189,15 +187,14 @@ insta = "1.42.1"
 itertools = "0.14.0"
 itoa = "1.0.14"
 javascript-globals = "1.0.0"
-jemallocator = "0.5.4"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy_static = "1.5.0"
 log = "0.4.25"
 markdown = "1.0.0-alpha.22"
 memchr = "2.7.4"
-miette = { package = "oxc-miette", version = "2.1.2", features = ["fancy-no-syscall"] }
-mimalloc = "0.1.43"
+miette = { package = "oxc-miette", version = "2.2.1", features = ["fancy-no-syscall"] }
+mimalloc-safe = "0.1.49"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
@@ -216,20 +213,17 @@ saphyr = "0.0.3"
 schemars = "0.8.21"
 self_cell = "1.1.0"
 seq-macro = "0.3.5"
-serde-wasm-bindgen = "0.6.5"
 sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.7.0"
 similar-asserts = "1.6.1"
 smallvec = "1.14.0"
 tempfile = "3.16.0"
-tokio = "1.43.0"
+tokio = { version = "1.43.0", default-features = false }
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.19"
-tsify = "0.4.5"
 ureq = { version = "3.0.5", default-features = false }
 walkdir = "2.5.0"
-wasm-bindgen = "0.2.100"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]
@@ -248,7 +242,7 @@ oxc_ast_macros.opt-level = 1
 insta.opt-level = 3
 similar.opt-level = 3
 
-[profile.release.package.oxc_wasm]
+[profile.release.package.oxc_playground_napi]
 opt-level = 'z'
 
 [profile.release]

@@ -1,7 +1,7 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.6.3",
   "volta": {
     "node": "22.14.0"
   },

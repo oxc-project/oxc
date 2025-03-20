@@ -23905,7 +23905,7 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ 
     ╰────
 
-  × Duplicated export '\ud83c'
+  × Duplicated export '�'
     ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
  20 │ // 🌙 is '\uD83C\uDF19'
  21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";

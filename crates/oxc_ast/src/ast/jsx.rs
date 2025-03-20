@@ -57,12 +57,12 @@ pub struct JSXElement<'a> {
 ///
 /// // element with self-closing tag (self_closing = true)
 /// <Component<T> />
-/// //         ^ type_parameters
+/// //         ^ type_arguments
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, attributes, name, self_closing, type_parameters))]
+#[estree(field_order(span, attributes, name, self_closing, type_arguments))]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -80,7 +80,7 @@ pub struct JSXOpeningElement<'a> {
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// JSX Closing Element

@@ -542,7 +542,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TaggedTemplateExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             tag: CloneIn::clone_in(&self.tag, allocator),
             quasi: CloneIn::clone_in(&self.quasi, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -552,8 +552,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TemplateElement {
             span: CloneIn::clone_in(&self.span, allocator),
-            tail: CloneIn::clone_in(&self.tail, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
+            tail: CloneIn::clone_in(&self.tail, allocator),
         }
     }
 }
@@ -627,7 +627,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CallExpression<'_> {
         CallExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             callee: CloneIn::clone_in(&self.callee, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
             pure: CloneIn::clone_in(&self.pure, allocator),
@@ -642,7 +642,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             callee: CloneIn::clone_in(&self.callee, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
             pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
@@ -1314,8 +1314,8 @@ impl<'alloc> CloneIn<'alloc> for VariableDeclarationKind {
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
             Self::Var => VariableDeclarationKind::Var,
-            Self::Const => VariableDeclarationKind::Const,
             Self::Let => VariableDeclarationKind::Let,
+            Self::Const => VariableDeclarationKind::Const,
             Self::Using => VariableDeclarationKind::Using,
             Self::AwaitUsing => VariableDeclarationKind::AwaitUsing,
         }
@@ -1935,7 +1935,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             id: CloneIn::clone_in(&self.id, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             super_class: CloneIn::clone_in(&self.super_class, allocator),
-            super_type_parameters: CloneIn::clone_in(&self.super_type_parameters, allocator),
+            super_type_arguments: CloneIn::clone_in(&self.super_type_arguments, allocator),
             implements: CloneIn::clone_in(&self.implements, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
@@ -2535,6 +2535,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             raw: CloneIn::clone_in(&self.raw, allocator),
+            lossy: CloneIn::clone_in(&self.lossy, allocator),
         }
     }
 }
@@ -2602,7 +2603,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
             self_closing: CloneIn::clone_in(&self.self_closing, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
             attributes: CloneIn::clone_in(&self.attributes, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3458,7 +3459,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeReference<'_> {
         TSTypeReference {
             span: CloneIn::clone_in(&self.span, allocator),
             type_name: CloneIn::clone_in(&self.type_name, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3552,7 +3553,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSClassImplements<'_> {
         TSClassImplements {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3704,7 +3705,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceHeritage<'_> {
         TSInterfaceHeritage {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3823,7 +3824,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQuery<'_> {
         TSTypeQuery {
             span: CloneIn::clone_in(&self.span, allocator),
             expr_name: CloneIn::clone_in(&self.expr_name, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3855,42 +3856,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
             is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttributes<'_> {
-    type Cloned = TSImportAttributes<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        TSImportAttributes {
-            span: CloneIn::clone_in(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in(&self.attributes_keyword, allocator),
-            elements: CloneIn::clone_in(&self.elements, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttribute<'_> {
-    type Cloned = TSImportAttribute<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        TSImportAttribute {
-            span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttributeName<'_> {
-    type Cloned = TSImportAttributeName<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Identifier(it) => {
-                TSImportAttributeName::Identifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                TSImportAttributeName::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
         }
     }
 }

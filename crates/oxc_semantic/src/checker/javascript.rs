@@ -624,11 +624,10 @@ fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnost
         .with_label(span1)
 }
 
-pub fn check_for_statement_left<'a>(
+pub fn check_for_statement_left(
     left: &ForStatementLeft,
     is_for_in: bool,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'_>,
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
@@ -864,11 +863,7 @@ fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span)
 }
 
-pub fn check_formal_parameters<'a>(
-    params: &FormalParameters,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if let Some(rest) = &params.rest {
         if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
             ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
@@ -1000,11 +995,7 @@ fn delete_private_field(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_unary_expression<'a>(
-    unary_expr: &'a UnaryExpression,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
         match unary_expr.argument.get_inner_expression() {

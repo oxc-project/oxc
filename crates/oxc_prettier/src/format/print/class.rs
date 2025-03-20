@@ -29,7 +29,7 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
         extend_parts.push(text!("extends "));
         extend_parts.push(super_class.format(p));
 
-        if let Some(super_type_parameters) = &class.super_type_parameters {
+        if let Some(super_type_parameters) = &class.super_type_arguments {
             extend_parts.push(super_type_parameters.format(p));
         }
 

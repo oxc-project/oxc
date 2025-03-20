@@ -1,10 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MethodDefinitionKind},
+    ast::{
+        AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
+        FormalParameter, MethodDefinitionKind, Statement,
+    },
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -47,7 +52,7 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryParameterPropertyAssignment,
     typescript,
-    nursery, // TODO: import tests from typescript-eslint, fix them and change back to correctness
+    correctness,
     pending,
 );
 
@@ -59,49 +64,188 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
         if method.kind != MethodDefinitionKind::Constructor {
             return;
         }
-        for param in &method.value.params.items {
-            if !param.is_public() {
-                continue;
-            }
-            let Some(ident) = param.pattern.get_binding_identifier() else {
+
+        let parameter_properties: Vec<_> = method
+            .value
+            .params
+            .items
+            .iter()
+            .filter(|param| {
+                // TypeScript offers special syntax for turning a constructor parameter into a class property with the same name and value.
+                // These are called parameter properties and are created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly
+                // https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties
+                param.accessibility.is_some() || param.readonly
+            })
+            .collect();
+
+        if parameter_properties.is_empty() {
+            return;
+        }
+
+        let Some(parent_node) = ctx.semantic().nodes().parent_node(node.id()) else {
+            return;
+        };
+        let AstKind::ClassBody(class_body) = parent_node.kind() else {
+            return;
+        };
+
+        let mut assigned_before_constructor = FxHashSet::default();
+        for statement in &class_body.body {
+            let ClassElement::PropertyDefinition(property_definition) = statement else {
                 continue;
             };
-            for reference in ctx.symbol_references(ident.symbol_id()) {
-                // check if the param is being read which would indicate an assignment
-                if !reference.is_read() {
-                    continue;
-                }
-
-                let Some(AstKind::AssignmentExpression(assignment_expr)) =
-                    ctx.nodes().parent_kind(reference.node_id())
-                else {
-                    continue;
+            let Some(expression) = &property_definition.value else {
+                continue;
+            };
+            let assignments = get_assignments_inside_expression(expression);
+            for assignment in assignments {
+                if let Some(this_property_name) = get_property_name(&assignment.left) {
+                    assigned_before_constructor.insert(this_property_name);
                 };
-
-                // check for assigning to this: this.x = ?
-                let AssignmentTarget::StaticMemberExpression(static_member_expr) =
-                    &assignment_expr.left
-                else {
-                    continue;
-                };
-                if !matches!(&static_member_expr.object, Expression::ThisExpression(_)) {
-                    continue;
-                }
-                let assignment_name = static_member_expr.property.name;
-
-                // check both sides of assignment have the same name: this.x = x
-                let Expression::Identifier(assignment_target_ident) = &assignment_expr.right else {
-                    continue;
-                };
-                if assignment_target_ident.name != assignment_name {
-                    continue;
-                }
-
-                ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
-                    assignment_expr.span,
-                ));
             }
         }
+
+        let mut visitor = AssignmentVisitor {
+            ctx,
+            parameter_properties,
+            assigned_before_unnecessary: FxHashSet::default(),
+            assigned_before_constructor,
+        };
+        visitor.visit_method_definition(method);
+    }
+}
+
+struct AssignmentVisitor<'a, 'b> {
+    ctx: &'b LintContext<'a>,
+    parameter_properties: Vec<&'b FormalParameter<'a>>,
+    assigned_before_unnecessary: FxHashSet<Atom<'a>>,
+    assigned_before_constructor: FxHashSet<Atom<'a>>,
+}
+
+impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    fn visit_assignment_expression(
+        &mut self,
+        assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
+    ) {
+        let Some(this_property_name) = get_property_name(&assignment_expr.left) else {
+            return;
+        };
+        // assigning to a property of this
+
+        if !is_unnecessary_assignment_operator(assignment_expr.operator) {
+            self.assigned_before_unnecessary.insert(this_property_name);
+            return;
+        }
+        // operator could be unnecessary
+
+        let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
+        else {
+            return;
+        };
+        // the right side of the assignment is an identifier
+
+        if this_property_name != right_identifier.name {
+            return;
+        }
+        // the property of this matches the identifier name on the right
+
+        for param in &self.parameter_properties {
+            let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
+                continue;
+            };
+            if binding_identifier.name != this_property_name {
+                continue;
+            }
+            // name of property parameter matches the name of the assigned property
+
+            let right_reference = self.ctx.scoping().get_reference(right_identifier.reference_id());
+            if !self
+                .ctx
+                .symbol_references(binding_identifier.symbol_id())
+                .any(|reference| reference.node_id() == right_reference.node_id())
+            {
+                continue;
+            }
+            // property parameter is same symbol as identifier on the right of assignment
+
+            if self.assigned_before_unnecessary.contains(&this_property_name) {
+                continue; // there already was an assignment inside the constructor
+            }
+
+            if self.assigned_before_constructor.contains(&this_property_name) {
+                continue; // there already was an assignment outside the constructor
+            }
+
+            self.ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
+                assignment_expr.span,
+            ));
+        }
+    }
+}
+
+fn get_assignments_inside_expression<'a>(
+    expression: &'a Expression,
+) -> Vec<&'a AssignmentExpression<'a>> {
+    let mut assignments: Vec<&AssignmentExpression> = Vec::new();
+
+    match expression.without_parentheses() {
+        Expression::CallExpression(call) => {
+            // Immediately Invoked Function Expression (IIFE)
+
+            let function_body = match call.callee.without_parentheses() {
+                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
+                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                _ => None,
+            };
+
+            if let Some(function_body) = function_body {
+                for statement in &function_body.statements {
+                    if let Statement::ExpressionStatement(expr) = statement {
+                        if let Expression::AssignmentExpression(assignment) = &expr.expression {
+                            assignments.push(assignment);
+                        }
+                    }
+                }
+            }
+        }
+        Expression::AssignmentExpression(assignment) => {
+            assignments.push(assignment);
+        }
+        _ => (),
+    };
+
+    assignments
+}
+
+fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
+    matches!(
+        operator,
+        AssignmentOperator::Assign
+            | AssignmentOperator::LogicalOr
+            | AssignmentOperator::LogicalAnd
+            | AssignmentOperator::LogicalNullish
+    )
+}
+
+fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
+    match assignment_target {
+        AssignmentTarget::StaticMemberExpression(expr)
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+        {
+            // this.property
+            Some(expr.property.name)
+        }
+        AssignmentTarget::ComputedMemberExpression(expr)
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+        {
+            // this["property"]
+            if let Expression::StringLiteral(str) = &expr.expression {
+                Some(str.value)
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 
@@ -159,6 +303,177 @@ fn test() {
           }
         }
         ",
+        "
+        class Foo {
+          constructor(foo: string) {}
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {}
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: any) {
+            this.foo = foo.bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = this.bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          foo: string;
+          constructor(foo: string) {
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          bar: string;
+          constructor(private foo: string) {
+            this.bar = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.bar = () => {
+              this.foo = foo;
+            };
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this[`${foo}`] = foo;
+          }
+        }
+        ",
+        "
+        function Foo(foo) {
+          this.foo = foo;
+        }
+        ",
+        "
+        const foo = 'foo';
+        this.foo = foo;
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo += foo;
+            this.foo -= foo;
+            this.foo *= foo;
+            this.foo /= foo;
+            this.foo %= foo;
+            this.foo **= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo += 1;
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(
+            public foo: number,
+            bar: boolean,
+          ) {
+            if (bar) {
+              this.foo += 1;
+            } else {
+              this.foo = foo;
+            }
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (this.foo += 1);
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            {
+              const foo = 1;
+              this.foo = foo;
+            }
+          }
+        }
+        ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            this[name] = foo;
+          }
+        }
+        ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            Foo.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (() => {
+            this.foo += 1;
+          })();
+        }
+        ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            this[name] = foo;
+          }
+          init = (this[name] = 1);
+          init2 = (Foo.foo = 1);
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (function() {
+            console.log('hi');
+            this.foo += 1;
+          })();
+        }
+        ",
     ];
 
     let fail = vec![
@@ -194,6 +509,152 @@ fn test() {
             } else {
               this.name = name + 'edited';
             }
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo?: string) {
+            this.foo = foo!;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo?: string) {
+            this.foo = foo as any;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo = '') {
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo = '') {
+            this.foo = foo;
+            this.foo += 'foo';
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo ||= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo ??= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo &&= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this['foo'] = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            function bar() {
+              this.foo = foo;
+            }
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.bar = () => {
+              this.foo = foo;
+            };
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            class Bar {
+              constructor(private foo: string) {
+                this.foo = foo;
+              }
+            }
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          bar = () => {
+            this.foo = 'foo';
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          init = foo => {
+            this.foo = foo;
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          init = class Bar {
+            constructor(private foo: string) {
+              this.foo = foo;
+            }
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            {
+              this.foo = foo;
+            }
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            (() => {
+              this.foo = foo;
+            })();
           }
         }
         ",

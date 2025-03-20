@@ -52,8 +52,8 @@ impl<'a> CallExpressionLike<'a, '_> {
 
     fn type_parameters(&self) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
-            CallExpressionLike::CallExpression(call) => call.type_parameters.as_ref(),
-            CallExpressionLike::NewExpression(new) => new.type_parameters.as_ref(),
+            CallExpressionLike::CallExpression(call) => call.type_arguments.as_ref(),
+            CallExpressionLike::NewExpression(new) => new.type_arguments.as_ref(),
             CallExpressionLike::V8Intrinsic(_) => None,
         }
     }

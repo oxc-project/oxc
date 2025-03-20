@@ -2015,29 +2015,6 @@ impl GetSpan for TSImportType<'_> {
     }
 }
 
-impl GetSpan for TSImportAttributes<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for TSImportAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for TSImportAttributeName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it),
-            Self::StringLiteral(it) => GetSpan::span(it),
-        }
-    }
-}
-
 impl GetSpan for TSFunctionType<'_> {
     #[inline]
     fn span(&self) -> Span {

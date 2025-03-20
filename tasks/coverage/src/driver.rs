@@ -54,7 +54,7 @@ impl CompilerInterface for Driver {
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::all_true)
+        self.compress.then(CompressOptions::smallest)
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {

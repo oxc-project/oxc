@@ -12,6 +12,13 @@ export interface ArrowFunctionsOptions {
   spec?: boolean
 }
 
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
 export interface CompilerAssumptions {
   ignoreFunctionLength?: boolean
   noDocumentAll?: boolean
@@ -257,6 +264,7 @@ export interface OxcError {
   message: string
   labels: Array<ErrorLabel>
   helpMessage?: string
+  codeframe?: string
 }
 
 export interface ReactRefreshOptions {

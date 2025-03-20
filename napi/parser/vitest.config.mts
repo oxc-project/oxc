@@ -1,9 +1,13 @@
-// Enable Codspeed plugin in CI only
-const config = {};
-if (process.env.CI) {
-  const codspeedPlugin = (await import('@codspeed/vitest-plugin')).default;
-  // @ts-ignore
-  config.plugins = [codspeedPlugin()];
-}
+import { defineConfig } from 'vitest/config';
 
-export default config;
+export default defineConfig({
+  test: {
+    diff: {
+      expand: false,
+    },
+  },
+  plugins: [
+    // Enable Codspeed plugin in CI only
+    process.env.CI && (await import('@codspeed/vitest-plugin')).default(),
+  ],
+});

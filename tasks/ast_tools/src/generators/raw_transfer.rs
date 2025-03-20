@@ -15,8 +15,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, OptionDef, PrimitiveDef, Schema, StructDef,
-        TypeDef, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PrimitiveDef, Schema,
+        StructDef, TypeDef, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{FxIndexMap, format_cow, upper_case_first, write_it},
@@ -142,7 +142,8 @@ fn generate_struct(
     let mut generator = StructDeserializerGenerator::new(is_ts, schema);
 
     let body = if let Some(converter_name) = &struct_def.estree.via {
-        generator.apply_converter(converter_name, struct_def, 0).map(|value| {
+        let converter = schema.meta_by_name(converter_name);
+        generator.apply_converter(converter, struct_def, 0).map(|value| {
             if generator.preamble.is_empty() {
                 format!("return {value};")
             } else {
@@ -236,30 +237,13 @@ impl<'s> StructDeserializerGenerator<'s> {
     }
 
     fn generate_struct_fields(&mut self, struct_def: &StructDef, struct_offset: u32) {
-        if let Some(field_indices) = &struct_def.estree.field_indices {
-            // Specified field order - serialize in this order
-            for &field_index in field_indices {
-                let field_index = field_index as usize;
-                if let Some(field) = struct_def.fields.get(field_index) {
-                    self.generate_struct_field_owned(field, struct_def, struct_offset);
-                } else {
-                    let (field_name, converter_name) =
-                        &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
-                    self.generate_struct_field_added(
-                        struct_def,
-                        field_name,
-                        converter_name,
-                        struct_offset,
-                    );
-                }
-            }
-        } else {
-            // No specified field order - serialize in original order
-            for field in &struct_def.fields {
+        for &field_index in &struct_def.estree.field_indices {
+            let field_index = field_index as usize;
+            if let Some(field) = struct_def.fields.get(field_index) {
                 self.generate_struct_field_owned(field, struct_def, struct_offset);
-            }
-
-            for (field_name, converter_name) in &struct_def.estree.add_fields {
+            } else {
+                let (field_name, converter_name) =
+                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
                 self.generate_struct_field_added(
                     struct_def,
                     field_name,
@@ -346,7 +330,8 @@ impl<'s> StructDeserializerGenerator<'s> {
 
             value.clone_from(&field_name);
         } else if let Some(converter_name) = &field.estree.via {
-            value = self.apply_converter(converter_name, struct_def, struct_offset).unwrap();
+            let converter = self.schema.meta_by_name(converter_name);
+            value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
         }
 
         self.fields.insert(field_name, value);
@@ -359,17 +344,21 @@ impl<'s> StructDeserializerGenerator<'s> {
         converter_name: &str,
         struct_offset: u32,
     ) {
-        let value = self.apply_converter(converter_name, struct_def, struct_offset).unwrap();
+        let converter = self.schema.meta_by_name(converter_name);
+        if !self.is_ts && converter.estree.is_ts {
+            return;
+        }
+
+        let value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
         self.fields.insert(field_name.to_string(), value);
     }
 
     fn apply_converter(
         &mut self,
-        converter_name: &str,
+        converter: &MetaType,
         struct_def: &StructDef,
         struct_offset: u32,
     ) -> Option<String> {
-        let converter = self.schema.meta_by_name(converter_name);
         let raw_deser = converter.estree.raw_deser.as_deref()?;
 
         let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));

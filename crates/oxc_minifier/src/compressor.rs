@@ -31,7 +31,8 @@ impl<'a> Compressor<'a> {
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
         Normalize::new(normalize_options, self.options).build(program, &mut ctx);
-        PeepholeOptimizations::new(self.options.target).run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target, self.options.keep_names)
+            .run_in_loop(program, &mut ctx);
         LatePeepholeOptimizations::new(self.options.target).build(program, &mut ctx);
     }
 

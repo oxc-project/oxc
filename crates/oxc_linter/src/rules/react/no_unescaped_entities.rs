@@ -2,7 +2,6 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{Map, phf_map};
 
 use crate::{
     AstNode,
@@ -10,7 +9,11 @@ use crate::{
     rule::Rule,
 };
 
-fn no_unescaped_entities_diagnostic(span: Span, unescaped: char, escaped: &str) -> OxcDiagnostic {
+static ESCAPED_DOUBLE_QUOTE: &str = "&quot; or &ldquo; or &#34; or &rdquo;";
+static ESCAPED_SINGLE_QUOTE: &str = "&apos; or &lsquo; or &#39; or &rsquo;";
+
+fn no_unescaped_entities_diagnostic(span: Span, unescaped: char) -> OxcDiagnostic {
+    let escaped = if unescaped == '"' { ESCAPED_DOUBLE_QUOTE } else { ESCAPED_SINGLE_QUOTE };
     OxcDiagnostic::warn(format!("`{unescaped}` can be escaped with {escaped}")).with_label(span)
 }
 
@@ -50,20 +53,14 @@ declare_oxc_lint!(
 impl Rule for NoUnescapedEntities {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXText(jsx_text) = node.kind() {
-            let source = jsx_text.span.source_text(ctx.source_text());
-            for (i, char) in source.char_indices() {
-                if !CHARS.contains(&char) {
-                    continue;
-                }
-                if let Some(escapes) = DEFAULTS.get(&char) {
+            let source = jsx_text.raw.unwrap().as_str();
+            for (i, &byte) in source.as_bytes().iter().enumerate() {
+                if matches!(byte, b'\'' | b'\"') {
                     #[expect(clippy::cast_possible_truncation)]
+                    let start = jsx_text.span.start + i as u32;
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
-                        Span::new(
-                            jsx_text.span.start + i as u32,
-                            jsx_text.span.start + i as u32 + 1,
-                        ),
-                        char,
-                        &escapes.join(" or "),
+                        Span::new(start, start + 1),
+                        byte as char,
                     ));
                 }
             }
@@ -74,16 +71,6 @@ impl Rule for NoUnescapedEntities {
         ctx.source_type().is_jsx()
     }
 }
-
-// NOTE: If we add substantially more characters, we should consider using a hash set instead.
-pub const CHARS: [char; 4] = ['>', '"', '\'', '}'];
-
-pub const DEFAULTS: Map<char, &'static [&'static str]> = phf_map! {
-    '>' => &["&gt;"],
-    '"' => &["&quot;", "&ldquo;", "&#34;", "&rdquo;"],
-    '\'' => &["&apos;", "&lsquo;", "&#39;", "&rsquo;"],
-    '}' => &["&#125;"],
-};
 
 #[test]
 fn test() {

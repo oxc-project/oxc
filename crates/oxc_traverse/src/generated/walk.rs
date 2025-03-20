@@ -502,10 +502,10 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeParameters);
+        ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -632,10 +632,10 @@ unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::CallExpressionTypeParameters);
+        ctx.retag_stack(AncestorType::CallExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::CallExpressionArguments);
@@ -669,10 +669,10 @@ unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
         walk_argument(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::NewExpressionTypeParameters);
+        ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -2502,10 +2502,10 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::ClassSuperClass);
         walk_expression(traverser, field as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::ClassSuperTypeParameters);
+        ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
@@ -3232,10 +3232,10 @@ unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
         walk_jsx_attribute_item(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::JSXOpeningElementTypeParameters);
+        ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -4393,10 +4393,10 @@ unsafe fn walk_ts_type_reference<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSTypeReferenceTypeParameters);
+        ctx.retag_stack(AncestorType::TSTypeReferenceTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -4567,10 +4567,10 @@ unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSClassImplementsTypeParameters);
+        ctx.retag_stack(AncestorType::TSClassImplementsTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -4889,10 +4889,10 @@ unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSInterfaceHeritageTypeParameters);
+        ctx.retag_stack(AncestorType::TSInterfaceHeritageTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -5088,11 +5088,10 @@ unsafe fn walk_ts_type_query<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_EXPR_NAME) as *mut TSTypeQueryExprName,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_TYPE_QUERY_TYPE_PARAMETERS)
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSTypeQueryTypeParameters);
+        ctx.retag_stack(AncestorType::TSTypeQueryTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
@@ -5131,10 +5130,10 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
-        as *mut Option<Box<TSImportAttributes>>)
+        as *mut Option<Box<ObjectExpression>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeOptions);
-        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
+        walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
         as *mut Option<TSTypeName>)
@@ -5151,73 +5150,6 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_import_type(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attributes<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttributes<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attributes(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributesAttributesKeyword(
-        ancestor::TSImportAttributesWithoutAttributesKeyword(node, PhantomData),
-    ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
-            as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSImportAttributesElements);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS)
-        as *mut Vec<TSImportAttribute>)
-    {
-        walk_ts_import_attribute(traverser, item as *mut _, ctx);
-    }
-    ctx.pop_stack(pop_token);
-    traverser.exit_ts_import_attributes(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attribute<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttribute<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributeName(
-        ancestor::TSImportAttributeWithoutName(node, PhantomData),
-    ));
-    walk_ts_import_attribute_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTE_NAME)
-            as *mut TSImportAttributeName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSImportAttributeValue);
-    walk_expression(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTE_VALUE) as *mut Expression,
-        ctx,
-    );
-    ctx.pop_stack(pop_token);
-    traverser.exit_ts_import_attribute(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attribute_name<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttributeName<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attribute_name(&mut *node, ctx);
-    match &mut *node {
-        TSImportAttributeName::Identifier(node) => {
-            walk_identifier_name(traverser, node as *mut _, ctx)
-        }
-        TSImportAttributeName::StringLiteral(node) => {
-            walk_string_literal(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_ts_import_attribute_name(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(

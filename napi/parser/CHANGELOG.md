@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.60.0] - 2025-03-18
+
+### Features
+
+- aa3dff8 napi: Add mimalloc to parser and transformr (#9859) (Boshen)
+
+### Performance
+
+- 2d63704 ast: Re-order `VariableDeclarationKind` variants (#9853) (overlookmotel)
+
+### Refactor
+
+- 7106e5d napi: Disable unused browser fs (#9848) (hi-ogawa)
+
+## [0.60.0] - 2025-03-18
+
+### Features
+
+- aa3dff8 napi: Add mimalloc to parser and transformr (#9859) (Boshen)
+
+### Performance
+
+- 2d63704 ast: Re-order `VariableDeclarationKind` variants (#9853) (overlookmotel)
+
+### Refactor
+
+- 7106e5d napi: Disable unused browser fs (#9848) (hi-ogawa)
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- db946e6 ast/estree: Order TS fields last by default (#9820) (overlookmotel)
+- 06518ae napi/parser: `JSON.parse` the returned AST in wasm (#9630) (Boshen)
+
+### Bug Fixes
+
+- 3f858c4 ast/estree: Add `directive` field to `ExpressionStatement` in TS AST (#9844) (overlookmotel)
+- cd18358 ast/extree: Fix `Class.implements` (#9817) (hi-ogawa)
+
+### Refactor
+
+
+### Testing
+
+- 48bac92 napi/parser: Test wasi browser (#9793) (Hiroshi Ogawa)
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- db946e6 ast/estree: Order TS fields last by default (#9820) (overlookmotel)
+- 06518ae napi/parser: `JSON.parse` the returned AST in wasm (#9630) (Boshen)
+
+### Bug Fixes
+
+- 3f858c4 ast/estree: Add `directive` field to `ExpressionStatement` in TS AST (#9844) (overlookmotel)
+- cd18358 ast/extree: Fix `Class.implements` (#9817) (hi-ogawa)
+
+### Refactor
+
+
+### Testing
+
+- 48bac92 napi/parser: Test wasi browser (#9793) (Hiroshi Ogawa)
+
 ## [0.58.1] - 2025-03-13
 
 ### Bug Fixes

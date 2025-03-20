@@ -589,7 +589,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Argument<'a> {
-        let elements_iter =
+        let elements =
             ctx.ast.vec_from_iter(specifiers.into_iter().map(|specifier| match specifier {
                 ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                     let ImportSpecifier { span, local, imported, .. } = specifier.unbox();
@@ -603,7 +603,6 @@ impl<'a> ModuleRunnerTransform<'a> {
                     unreachable!()
                 }
             }));
-        let elements = ctx.ast.vec_from_iter(elements_iter);
         Self::create_imported_names_object(elements, ctx)
     }
 

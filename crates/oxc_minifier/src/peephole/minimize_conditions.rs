@@ -187,7 +187,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return false };
-        let new_op = logical_expr.operator.to_assignment_operator();
+        // NOTE: if the right hand side is an anonymous function, applying this compression will
+        // set the `name` property of that function.
+        // Since codes relying on the fact that function's name is undefined should be rare,
+        // we do this compression even if `keep_names` is enabled.
 
         let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -202,6 +205,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut logical_expr.right);
         true
@@ -1317,11 +1321,8 @@ mod test {
 
         // a.b might have a side effect
         test_same("x ? a.b = 0 : a.b = 1");
-        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function
-        // TODO: need to pass these tests when `keep_fnames` are introduced
-        // test_same("x ? a = () => 'a' : a = () => 'b'");
-        // test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
-        // test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
+        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
+        test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
         // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
         // so cannot be fold to `a += x ? 0 : 1`
@@ -1376,7 +1377,7 @@ mod test {
         test("x && (x = g())", "x &&= g()");
         test("x ?? (x = g())", "x ??= g()");
 
-        // `||=`, `&&=`, `??=` sets the name property of the function
+        // `||=`, `&&=`, `??=` sets the name property of the function, but we ignore that difference
         // Example case: `let f = false; f || (f = () => {}); console.log(f.name)`
         test("x || (x = () => 'a')", "x ||= () => 'a'");
 
@@ -1423,6 +1424,11 @@ mod test {
         test_same("var x; x.y = x.y || 1");
         // This case is not supported, since the minifier does not support with statements
         // test_same("var x; with (z) { x = x || 1 }");
+
+        // `||=`, `&&=`, `??=` sets the name property of the function, while `= x || y` does not
+        // but we ignore that difference
+        // Example case: `let f = false; f = f || (() => {}); console.log(f.name)`
+        test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
         let target = ESTarget::ES2019;
         let code = "var x; x = x || 1";

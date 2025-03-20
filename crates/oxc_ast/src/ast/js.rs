@@ -209,7 +209,10 @@ pub use match_expression;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct IdentifierName<'a> {
     pub span: Span,
     #[estree(json_safe)]
@@ -224,7 +227,10 @@ pub struct IdentifierName<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
@@ -437,7 +443,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
@@ -446,11 +452,10 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, value, tail))]
 pub struct TemplateElement<'a> {
     pub span: Span,
-    pub tail: bool,
     pub value: TemplateElementValue<'a>,
+    pub tail: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
@@ -567,7 +572,7 @@ pub struct PrivateFieldExpression<'a> {
 /// //               ^ optional
 ///
 /// const z = foo<number, string>(1, 2)
-/// //            ^^^^^^^^^^^^^^ type_parameters
+/// //            ^^^^^^^^^^^^^^ type_arguments
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -576,7 +581,7 @@ pub struct CallExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
     /// `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -595,7 +600,7 @@ pub struct CallExpression<'a> {
 /// //              ↓↓↓         ↓↓↓↓
 /// const foo = new Foo<number>(1, 2)
 /// //                 ↑↑↑↑↑↑↑↑
-/// //                 type_parameters
+/// //                 type_arguments
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -605,7 +610,7 @@ pub struct NewExpression<'a> {
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[builder(default)]
     #[estree(skip)]
@@ -1171,8 +1176,8 @@ pub struct VariableDeclaration<'a> {
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum VariableDeclarationKind {
     Var = 0,
-    Const = 1,
-    Let = 2,
+    Let = 1,
+    Const = 2,
     Using = 3,
     #[estree(rename = "await using")]
     AwaitUsing = 4,
@@ -1211,6 +1216,7 @@ pub struct EmptyStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(directive = ExpressionStatementDirective))] // Only in TS AST
 pub struct ExpressionStatement<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
@@ -1755,7 +1761,7 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
-#[estree(no_type, field_order(pattern, decorators, accessibility, readonly, r#override))]
+#[estree(no_type)]
 pub struct FormalParameter<'a> {
     #[estree(skip)]
     pub span: Span,
@@ -1850,7 +1856,7 @@ pub struct YieldExpression<'a> {
 #[rustfmt::skip]
 #[estree(field_order(
     r#type, span, id, super_class, body,
-    decorators, type_parameters, super_type_parameters, implements, r#abstract, declare,
+    decorators, type_parameters, super_type_arguments, implements, r#abstract, declare,
 ))]
 pub struct Class<'a> {
     pub span: Span,
@@ -1888,7 +1894,7 @@ pub struct Class<'a> {
     /// //                       ^
     /// ```
     #[ts]
-    pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub super_type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -1898,6 +1904,7 @@ pub struct Class<'a> {
     /// //                   ^^^
     /// ```
     #[ts]
+    #[estree(via = ClassImplements)]
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub body: Box<'a, ClassBody<'a>>,
     /// Whether the class is abstract

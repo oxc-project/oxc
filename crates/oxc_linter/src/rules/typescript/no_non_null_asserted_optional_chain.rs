@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// ```
     NoNonNullAssertedOptionalChain,
     typescript,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {

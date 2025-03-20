@@ -169,7 +169,7 @@ impl<'a> Format<'a> for JSXOpeningElement<'a> {
         parts.push(text!("<"));
         parts.push(self.name.format(p));
 
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             parts.push(type_parameters.format(p));
         }
 

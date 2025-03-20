@@ -1,6 +1,10 @@
 // Napi value need to be passed as value
 #![expect(clippy::needless_pass_by_value)]
 
+#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
 use std::mem;
 
 use napi::{Task, bindgen_prelude::AsyncTask};
@@ -8,20 +12,18 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    ast::CommentKind,
-    ast_visit::utf8_to_utf16::Utf8ToUtf16,
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, convert_utf8_to_utf16};
 
 mod convert;
 mod raw_transfer;
 mod raw_transfer_types;
 mod types;
 pub use raw_transfer::{get_buffer_offset, parse_sync_raw, raw_transfer_supported};
-pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
 
 mod generated {
     // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
@@ -89,53 +91,17 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
-    let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
+    let mut diagnostics = ret.errors;
 
     if options.show_semantic_errors == Some(true) {
         let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-        errors.extend(semantic_ret.errors.into_iter().map(OxcError::from));
+        diagnostics.extend(semantic_ret.errors);
     }
 
-    // Convert spans to UTF-16
-    let span_converter = Utf8ToUtf16::new(&source_text);
-    span_converter.convert_program(&mut program);
+    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
 
-    // Convert comments
-    let mut offset_converter = span_converter.converter();
-    let comments = program
-        .comments
-        .iter()
-        .map(|comment| {
-            let value = comment.content_span().source_text(&source_text).to_string();
-            let mut span = comment.span;
-            if let Some(converter) = offset_converter.as_mut() {
-                converter.convert_span(&mut span);
-            }
-
-            Comment {
-                r#type: match comment.kind {
-                    CommentKind::Line => String::from("Line"),
-                    CommentKind::Block => String::from("Block"),
-                },
-                value,
-                start: span.start,
-                end: span.end,
-            }
-        })
-        .collect::<Vec<_>>();
-
-    // Convert spans in module record to UTF-16
-    span_converter.convert_module_record(&mut module_record);
-
-    // Convert spans in errors to UTF-16
-    if let Some(mut converter) = span_converter.converter() {
-        for error in &mut errors {
-            for label in &mut error.labels {
-                converter.convert_offset(&mut label.start);
-                converter.convert_offset(&mut label.end);
-            }
-        }
-    }
+    let comments =
+        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
 
     let program = match ast_type {
         AstType::JavaScript => program.to_estree_js_json(),

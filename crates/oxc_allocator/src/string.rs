@@ -13,10 +13,11 @@ use std::{
     ptr,
 };
 
-use assert_unchecked::assert_unchecked;
 use bumpalo::collections::String as BumpaloString;
 pub use simdutf8::basic::Utf8Error;
 use simdutf8::basic::from_utf8;
+
+use oxc_data_structures::assert_unchecked;
 
 use crate::{Allocator, Vec};
 

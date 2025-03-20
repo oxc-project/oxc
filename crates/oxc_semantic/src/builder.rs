@@ -687,7 +687,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(super_class) = &class.super_class {
             self.visit_expression(super_class);
         }
-        if let Some(super_type_parameters) = &class.super_type_parameters {
+        if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
         }
         if let Some(implements) = &class.implements {
@@ -1183,21 +1183,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
             cfg.add_edge(before_if_stmt_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
 
-            cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-
             cfg.add_edge(after_test_graph_ix, before_consequent_stmt_graph_ix, EdgeType::Jump);
+
+            cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
 
             if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
                 else_graph_ix
             {
-                cfg.add_edge(
-                    before_if_stmt_graph_ix,
-                    start_of_alternate_stmt_graph_ix,
-                    EdgeType::Normal,
-                );
+                cfg.add_edge(after_test_graph_ix, start_of_alternate_stmt_graph_ix, EdgeType::Jump);
                 cfg.add_edge(after_alternate_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
             } else {
-                cfg.add_edge(before_if_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+                cfg.add_edge(after_test_graph_ix, after_if_graph_ix, EdgeType::Jump);
             }
         });
         /* cfg */

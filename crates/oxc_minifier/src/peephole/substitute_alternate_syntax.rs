@@ -1,3 +1,5 @@
+use std::iter::repeat_with;
+
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
@@ -594,7 +596,13 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
-        if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
+        if matches!(
+            decl.kind,
+            VariableDeclarationKind::Const
+                | VariableDeclarationKind::Using
+                | VariableDeclarationKind::AwaitUsing
+        ) || decl.id.kind.is_destructuring_pattern()
+        {
             return;
         }
         if !decl.kind.is_var()
@@ -738,8 +746,8 @@ impl<'a> PeepholeOptimizations {
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                let elisions = std::iter::from_fn(|| {
-                                    Some(ArrayExpressionElement::Elision(ctx.ast.elision(n.span)))
+                                let elisions = repeat_with(|| {
+                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
                                 })
                                 .take(n_int);
                                 return Some(ctx.ast.expression_array(
@@ -965,6 +973,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This compression is not safe if the code relies on `Function::name`.
     fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
+        if self.keep_names.function {
+            return;
+        }
+
         if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             func.id = None;
             self.mark_current_function_as_changed();
@@ -975,8 +987,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// e.g. `var a = class C {}` -> `var a = class {}`
     ///
-    /// This compression is not safe if the code relies on `Function::name`.
+    /// This compression is not safe if the code relies on `Class::name`.
     fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
+        if self.keep_names.class {
+            return;
+        }
+
         if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             class.id = None;
             self.mark_current_function_as_changed();
@@ -1200,8 +1216,15 @@ mod test {
 
     use crate::{
         CompressOptions,
+        options::CompressOptionsKeepNames,
         tester::{run, test, test_same},
     };
+
+    fn test_same_keep_names(keep_names: CompressOptionsKeepNames, code: &str) {
+        let result = run(code, Some(CompressOptions { keep_names, ..CompressOptions::smallest() }));
+        let expected = run(code, None);
+        assert_eq!(result, expected, "\nfor source\n{code}\ngot\n{result}");
+    }
 
     #[test]
     fn test_fold_return_result() {
@@ -1852,8 +1875,10 @@ mod test {
     fn test_remove_name_from_expressions() {
         test("var a = function f() {}", "var a = function () {}");
         test_same("var a = function f() { return f; }");
+        test_same_keep_names(CompressOptionsKeepNames::function_only(), "var a = function f() {}");
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
+        test_same_keep_names(CompressOptionsKeepNames::class_only(), "var a = class C {}");
     }
 
     #[test]

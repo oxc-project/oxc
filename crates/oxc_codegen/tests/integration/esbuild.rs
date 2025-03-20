@@ -360,18 +360,18 @@ fn test_string() {
     test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
     test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
     test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
-    // test( "let x = '\U000123AB'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\u{123AB}'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\uD808\\uDFAB'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\uD808'", "let x = \"\\uD808\";\n");
-    // test( "let x = '\\uD808X'", "let x = \"\\uD808X\";\n");
-    // test( "let x = '\\uDFAB'", "let x = \"\\uDFAB\";\n");
-    // test( "let x = '\\uDFABX'", "let x = \"\\uDFABX\";\n");
+    test("let x = '\\U000123AB'", "let x = \"U000123AB\";\n");
+    test("let x = '\\u{123AB}'", "let x = \"\u{123ab}\";\n");
+    test("let x = '\\uD808\\uDFAB'", "let x = \"\u{123ab}\";\n");
+    test("let x = '\\uD808'", "let x = '\\uD808';\n"); // lone surrogate
+    test("let x = '\\uD808X'", "let x = '\\uD808X';\n");
+    test("let x = '\\uDFAB'", "let x = '\\uDFAB';\n");
+    test("let x = '\\uDFABX'", "let x = '\\uDFABX';\n");
 
-    // test( "let x = '\\x80'", "let x = \"\U00000080\";\n");
-    // test( "let x = '\\xFF'", "let x = \"\U000000FF\";\n");
-    // test( "let x = '\\xF0\\x9F\\x8D\\x95'", "let x = \"\U000000F0\U0000009F\U0000008D\U00000095\";\n");
-    // test( "let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = \"\U00010402\\uDC03\\uD804\";\n");
+    test("let x = '\\x80'", "let x = \"\u{80}\";\n");
+    test("let x = '\\xFF'", "let x = \"ÿ\";\n");
+    test("let x = '\\xF0\\x9F\\x8D\\x95'", "let x = \"ð\u{9f}\u{8d}\u{95}\";\n");
+    test("let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = '\\uD801\\uDC02\\uDC03\\uD804';\n"); // lossy
 }
 
 #[test]

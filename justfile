@@ -40,7 +40,7 @@ submodules:
   just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 578ac4df1c8a05f01350553950dbfbbeaac013c2
   just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git 15392346d05045742e653eab5c87538ff2a3c863
   just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 7584432401a47a26943dd7a9ca9a8e032ead7285
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 ad6f20525e19e8fb66c35f3513ed0fa7ac06fbd8
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 eb5e9976435fafd45e2859a4b668a77ec75ce625
   just update-transformer-fixtures
 
 # Install git pre-commit to format files
@@ -150,18 +150,15 @@ update-transformer-fixtures:
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
-# Install wasm-pack
+# Install wasm32-wasip1-threads for playground
 install-wasm:
-  cargo binstall wasm-pack
+  rustup target add wasm32-wasip1-threads
 
-watch-wasm:
-  just watch 'just build-wasm dev'
+watch-playground:
+  just watch 'pnpm --filter oxc-playground dev'
 
-build-wasm mode="release":
-  wasm-pack build crates/oxc_wasm --no-pack --target web --scope oxc --out-dir ../../npm/oxc-wasm --{{mode}}
-  cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
-  rm npm/oxc-wasm/.gitignore
-  node ./crates/oxc_wasm/update-bindings.mjs
+build-playground mode="release":
+  pnpm --filter oxc-playground build
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

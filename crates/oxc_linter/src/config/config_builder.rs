@@ -3,9 +3,11 @@ use std::{
     fmt,
 };
 
+use itertools::Itertools;
+use rustc_hash::FxHashSet;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::CompactStr;
-use rustc_hash::FxHashSet;
 
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
@@ -326,6 +328,7 @@ impl ConfigStoreBuilder {
         let new_rules = self
             .rules
             .iter()
+            .sorted_by_key(|x| (x.plugin_name(), x.name()))
             .map(|r: &RuleWithSeverity| ESLintRule {
                 plugin_name: r.plugin_name().to_string(),
                 rule_name: r.rule.name().to_string(),

@@ -300,7 +300,7 @@ fn main() {
     // Run `prepare` actions
     let runners = get_runners();
     for runner in &runners {
-        runner.prepare(&mut schema);
+        runner.prepare(&mut schema, &codegen);
     }
 
     // Run generators

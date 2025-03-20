@@ -53,12 +53,12 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::ForInStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
-            js::check_for_statement_left(&stmt.left, true, node, ctx);
+            js::check_for_statement_left(&stmt.left, true, ctx);
             ts::check_for_statement_left(&stmt.left, true, ctx);
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
-            js::check_for_statement_left(&stmt.left, false, node, ctx);
+            js::check_for_statement_left(&stmt.left, false, ctx);
             ts::check_for_statement_left(&stmt.left, false, ctx);
         }
         AstKind::WhileStatement(WhileStatement { body, .. })
@@ -88,7 +88,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
-            js::check_formal_parameters(params, node, ctx);
+            js::check_formal_parameters(params, ctx);
             ts::check_formal_parameters(params, ctx);
         }
         AstKind::ArrayPattern(pat) => {
@@ -102,7 +102,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::LogicalExpression(expr) => js::check_logical_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
-        AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
+        AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
         AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),

@@ -25,12 +25,13 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, options::CompressOptionsKeepNames};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
 pub struct PeepholeOptimizations {
     target: ESTarget,
+    keep_names: CompressOptionsKeepNames,
 
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
@@ -45,9 +46,10 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
-    pub fn new(target: ESTarget) -> Self {
+    pub fn new(target: ESTarget, keep_names: CompressOptionsKeepNames) -> Self {
         Self {
             target,
+            keep_names,
             iteration: 0,
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
@@ -363,7 +365,12 @@ pub struct DeadCodeElimination {
 
 impl<'a> DeadCodeElimination {
     pub fn new() -> Self {
-        Self { inner: PeepholeOptimizations::new(ESTarget::ESNext) }
+        Self {
+            inner: PeepholeOptimizations::new(
+                ESTarget::ESNext,
+                CompressOptionsKeepNames::all_true(),
+            ),
+        }
     }
 
     pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {

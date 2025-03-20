@@ -1,5 +1,9 @@
 #![expect(clippy::needless_pass_by_value, clippy::missing_errors_doc)]
 
+#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
 mod options;
 
 use std::path::PathBuf;

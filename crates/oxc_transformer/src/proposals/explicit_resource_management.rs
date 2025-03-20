@@ -84,6 +84,12 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         let variable_declarator = decl.declarations.first_mut().unwrap();
         variable_declarator.kind = VariableDeclarationKind::Const;
 
+        let variable_declarator_binding_ident =
+            variable_declarator.id.get_binding_identifier().unwrap();
+
+        let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
+        let for_of_init_name = variable_declarator_binding_ident.name;
+
         let temp_id = ctx.generate_uid_based_on_node(
             variable_declarator.id.get_binding_identifier().unwrap(),
             for_of_stmt_scope_id,
@@ -107,6 +113,13 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             false,
         ));
 
+        let scope_id = match &mut for_of_stmt.body {
+            Statement::BlockStatement(block) => block.scope_id(),
+            _ => ctx.create_child_scope(for_of_stmt_scope_id, ScopeFlags::empty()),
+        };
+        ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
+        ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, &for_of_init_name);
+
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
             body.body.insert(0, using_stmt);
@@ -115,11 +128,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             let old_body = ctx.ast.move_statement(&mut for_of_stmt.body);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
-            for_of_stmt.body = ctx.ast.statement_block_with_scope_id(
-                SPAN,
-                new_body,
-                ctx.create_child_scope(for_of_stmt_scope_id, ScopeFlags::empty()),
-            );
+            for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
         };
     }
 
@@ -143,7 +152,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///   }
     /// }
     /// ```
-    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = block.scope_id();
         if let Some(replacement) =
             self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)

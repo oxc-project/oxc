@@ -28,7 +28,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                 let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
-                let options = CompressOptions::all_true();
+                let options = CompressOptions::smallest();
 
                 runner.run(|| {
                     Compressor::new(&allocator, options).build_with_scoping(scoping, &mut program);

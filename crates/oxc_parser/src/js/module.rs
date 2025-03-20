@@ -363,13 +363,18 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
+        let export_kind = if declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        };
         self.ctx = reserved_ctx;
         Ok(self.ast.alloc_export_named_declaration(
             self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,
-            ImportOrExportKind::Value,
+            export_kind,
             NONE,
         ))
     }
@@ -498,7 +503,7 @@ impl<'a> ParserImpl<'a> {
                 let literal = self.parse_literal_string()?;
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if !literal.is_string_well_formed_unicode() {
+                if literal.lossy || !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))

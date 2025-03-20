@@ -57,14 +57,14 @@ impl Rule for NoArrayConstructor {
                 call_expr.span,
                 &call_expr.callee,
                 &call_expr.arguments,
-                &call_expr.type_parameters,
+                &call_expr.type_arguments,
                 call_expr.optional,
             ),
             AstKind::NewExpression(new_expr) => (
                 new_expr.span,
                 &new_expr.callee,
                 &new_expr.arguments,
-                &new_expr.type_parameters,
+                &new_expr.type_arguments,
                 false,
             ),
             _ => {

@@ -1,12 +1,12 @@
 {
   "name": "oxc-transform",
-  "version": "0.58.1",
+  "version": "0.60.0",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
     "build-dev": "napi --no-dts-cache build --platform",
-    "build": "pnpm run build-dev --release",
-    "test": "vitest --typecheck run ./test && tsc"
+    "build": "pnpm run build-dev --features allocator --release",
+    "test": "vitest run --dir ./test && tsc"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -57,7 +57,7 @@
     ],
     "wasm": {
       "browser": {
-        "fs": true
+        "fs": false
       }
     }
   }

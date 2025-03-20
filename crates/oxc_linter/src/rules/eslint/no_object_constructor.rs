@@ -47,14 +47,11 @@ declare_oxc_lint!(
 impl Rule for NoObjectConstructor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (span, callee, arguments, type_parameters) = match node.kind() {
-            AstKind::CallExpression(call_expr) => (
-                call_expr.span,
-                &call_expr.callee,
-                &call_expr.arguments,
-                &call_expr.type_parameters,
-            ),
+            AstKind::CallExpression(call_expr) => {
+                (call_expr.span, &call_expr.callee, &call_expr.arguments, &call_expr.type_arguments)
+            }
             AstKind::NewExpression(new_expr) => {
-                (new_expr.span, &new_expr.callee, &new_expr.arguments, &new_expr.type_parameters)
+                (new_expr.span, &new_expr.callee, &new_expr.arguments, &new_expr.type_arguments)
             }
             _ => {
                 return;

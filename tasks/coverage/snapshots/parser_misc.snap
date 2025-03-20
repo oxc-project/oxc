@@ -90,12 +90,13 @@ Negative Passed: 30/30 (100.00%)
    ·     ─────────
    ╰────
 
-  × Unexpected token
-    ╭─[misc/fail/oxc-2394.ts:20:22]
- 19 │ export type LocalInterface =
- 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
-    ·                      ─────────────────
- 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+  × Expected `{` but found `[`
+    ╭─[misc/fail/oxc-2394.ts:38:21]
+ 37 │ export type LocalInterface =
+ 38 │     & import("pkg", [ {"resolution-mode": "require"} ]).RequireInterface
+    ·                     ┬
+    ·                     ╰── `{` expected
+ 39 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
     ╰────
 
   × Unexpected token

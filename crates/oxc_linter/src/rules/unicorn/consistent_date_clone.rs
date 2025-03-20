@@ -52,7 +52,7 @@ impl Rule for ConsistentDateClone {
 
         if !(expr.callee.is_specific_id("Date")
             && expr.arguments.len() == 1
-            && expr.type_parameters.is_none())
+            && expr.type_arguments.is_none())
         {
             return;
         }

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- 3f808cb semantic: Speed up creating redeclarations (#9851) (overlookmotel)
+
+### Refactor
+
+- 78d0713 semantic: Remove dead code (#9852) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
 ## [0.57.0] - 2025-03-11
 
 - b0d979d semantic: [**BREAKING**] Make `Scoping::references` private (#9629) (Boshen)

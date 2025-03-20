@@ -87,6 +87,9 @@ impl ESTree for IdentifierName<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -98,6 +101,9 @@ impl ESTree for IdentifierReference<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -321,7 +327,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("tag", &self.tag);
         state.serialize_field("quasi", &self.quasi);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -406,9 +412,9 @@ impl ESTree for CallExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("arguments", &self.arguments);
         state.serialize_field("optional", &self.optional);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -421,7 +427,7 @@ impl ESTree for NewExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
         state.serialize_field("arguments", &self.arguments);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -913,8 +919,8 @@ impl ESTree for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Var => JsonSafeString("var").serialize(serializer),
-            Self::Const => JsonSafeString("const").serialize(serializer),
             Self::Let => JsonSafeString("let").serialize(serializer),
+            Self::Const => JsonSafeString("const").serialize(serializer),
             Self::Using => JsonSafeString("using").serialize(serializer),
             Self::AwaitUsing => JsonSafeString("await using").serialize(serializer),
         }
@@ -951,6 +957,8 @@ impl ESTree for ExpressionStatement<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
+        state
+            .serialize_ts_field("directive", &crate::serialize::ExpressionStatementDirective(self));
         state.end();
     }
 }
@@ -1449,8 +1457,8 @@ impl ESTree for Class<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("decorators", &self.decorators);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_ts_field("superTypeParameters", &self.super_type_parameters);
-        state.serialize_ts_field("implements", &self.implements);
+        state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
+        state.serialize_ts_field("implements", &crate::serialize::ClassImplements(self));
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
         state.end();
@@ -1749,11 +1757,11 @@ impl ESTree for ExportNamedDeclaration<'_> {
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
-        state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field(
             "attributes",
             &crate::serialize::ExportNamedDeclarationWithClause(self),
         );
+        state.serialize_ts_field("exportKind", &self.export_kind);
         state.end();
     }
 }
@@ -1989,7 +1997,7 @@ impl ESTree for JSXOpeningElement<'_> {
         state.serialize_field("attributes", &self.attributes);
         state.serialize_field("name", &self.name);
         state.serialize_field("selfClosing", &self.self_closing);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2720,7 +2728,7 @@ impl ESTree for TSTypeReference<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeName", &self.type_name);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2815,7 +2823,7 @@ impl ESTree for TSClassImplements<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2961,7 +2969,7 @@ impl ESTree for TSInterfaceHeritage<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -3073,7 +3081,7 @@ impl ESTree for TSTypeQuery<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("exprName", &self.expr_name);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -3100,39 +3108,6 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
-    }
-}
-
-impl ESTree for TSImportAttributes<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributesKeyword", &self.attributes_keyword);
-        state.serialize_field("elements", &self.elements);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttribute"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
-        state.serialize_field("value", &self.value);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-        }
     }
 }
 

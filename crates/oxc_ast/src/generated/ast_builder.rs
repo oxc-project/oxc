@@ -276,6 +276,29 @@ impl<'a> AstBuilder<'a> {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build an [`Expression::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn expression_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> Expression<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Expression::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build an [`Expression::TemplateLiteral`].
     ///
     /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
@@ -530,7 +553,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -538,7 +561,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Expression<'a>
@@ -548,7 +571,7 @@ impl<'a> AstBuilder<'a> {
         Expression::CallExpression(self.alloc_call_expression(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
         ))
@@ -561,7 +584,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -570,7 +593,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
@@ -581,7 +604,7 @@ impl<'a> AstBuilder<'a> {
         Expression::CallExpression(self.alloc_call_expression_with_pure(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
             pure,
@@ -611,7 +634,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -625,7 +648,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -643,7 +666,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -662,7 +685,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -677,7 +700,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -696,7 +719,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -887,14 +910,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_new<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -903,7 +926,7 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters,
+            type_arguments,
         ))
     }
 
@@ -915,7 +938,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn expression_new_with_pure<T1>(
@@ -923,7 +946,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
         pure: bool,
     ) -> Expression<'a>
     where
@@ -933,7 +956,7 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters,
+            type_arguments,
             pure,
         ))
     }
@@ -996,14 +1019,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_tagged_template<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1012,7 +1035,7 @@ impl<'a> AstBuilder<'a> {
             span,
             tag,
             quasi,
-            type_parameters,
+            type_arguments,
         ))
     }
 
@@ -1811,14 +1834,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TaggedTemplateExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1827,7 +1850,7 @@ impl<'a> AstBuilder<'a> {
             span,
             tag,
             quasi,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -1839,20 +1862,20 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TaggedTemplateExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.tagged_template_expression(span, tag, quasi, type_parameters),
+            self.tagged_template_expression(span, tag, quasi, type_arguments),
             self.allocator,
         )
     }
@@ -1863,16 +1886,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, tail, value }
+        TemplateElement { span, value, tail }
     }
 
     /// Build a [`TemplateElement`], and store it in the memory arena.
@@ -1881,16 +1904,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn alloc_template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> Box<'a, TemplateElement<'a>> {
-        Box::new_in(self.template_element(span, tail, value), self.allocator)
+        Box::new_in(self.template_element(span, value, tail), self.allocator)
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].
@@ -2089,7 +2112,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -2097,7 +2120,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> CallExpression<'a>
@@ -2107,7 +2130,7 @@ impl<'a> AstBuilder<'a> {
         CallExpression {
             span,
             callee,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
             arguments,
             optional,
             pure: Default::default(),
@@ -2121,7 +2144,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -2129,7 +2152,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Box<'a, CallExpression<'a>>
@@ -2137,7 +2160,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.call_expression(span, callee, type_parameters, arguments, optional),
+            self.call_expression(span, callee, type_arguments, arguments, optional),
             self.allocator,
         )
     }
@@ -2149,7 +2172,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -2158,7 +2181,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
@@ -2169,7 +2192,7 @@ impl<'a> AstBuilder<'a> {
         CallExpression {
             span,
             callee,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
             arguments,
             optional,
             pure,
@@ -2183,7 +2206,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -2192,7 +2215,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
@@ -2201,14 +2224,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.call_expression_with_pure(
-                span,
-                callee,
-                type_parameters,
-                arguments,
-                optional,
-                pure,
-            ),
+            self.call_expression_with_pure(span, callee, type_arguments, arguments, optional, pure),
             self.allocator,
         )
     }
@@ -2221,14 +2237,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> NewExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -2237,7 +2253,7 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
             pure: Default::default(),
         }
     }
@@ -2250,19 +2266,19 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.new_expression(span, callee, arguments, type_parameters), self.allocator)
+        Box::new_in(self.new_expression(span, callee, arguments, type_arguments), self.allocator)
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -2273,7 +2289,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_expression_with_pure<T1>(
@@ -2281,7 +2297,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
         pure: bool,
     ) -> NewExpression<'a>
     where
@@ -2291,7 +2307,7 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
             pure,
         }
     }
@@ -2304,7 +2320,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn alloc_new_expression_with_pure<T1>(
@@ -2312,14 +2328,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
         pure: bool,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.new_expression_with_pure(span, callee, arguments, type_parameters, pure),
+            self.new_expression_with_pure(span, callee, arguments, type_arguments, pure),
             self.allocator,
         )
     }
@@ -3250,7 +3266,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -3258,7 +3274,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> ChainElement<'a>
@@ -3268,7 +3284,7 @@ impl<'a> AstBuilder<'a> {
         ChainElement::CallExpression(self.alloc_call_expression(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
         ))
@@ -3281,7 +3297,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -3290,7 +3306,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
         pure: bool,
@@ -3301,7 +3317,7 @@ impl<'a> AstBuilder<'a> {
         ChainElement::CallExpression(self.alloc_call_expression_with_pure(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
             pure,
@@ -4056,7 +4072,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -4070,7 +4086,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -4088,7 +4104,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -4107,7 +4123,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -4122,7 +4138,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -4141,7 +4157,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -6438,7 +6454,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -6452,7 +6468,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -6470,7 +6486,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
-            super_type_parameters: super_type_parameters.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
             r#abstract,
@@ -6490,7 +6506,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -6504,7 +6520,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -6523,7 +6539,7 @@ impl<'a> AstBuilder<'a> {
                 id,
                 type_parameters,
                 super_class,
-                super_type_parameters,
+                super_type_arguments,
                 implements,
                 body,
                 r#abstract,
@@ -6544,7 +6560,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -6559,7 +6575,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -6578,7 +6594,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
-            super_type_parameters: super_type_parameters.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
             r#abstract,
@@ -6598,7 +6614,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -6613,7 +6629,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -6633,7 +6649,7 @@ impl<'a> AstBuilder<'a> {
                 id,
                 type_parameters,
                 super_class,
-                super_type_parameters,
+                super_type_arguments,
                 implements,
                 body,
                 r#abstract,
@@ -7827,6 +7843,27 @@ impl<'a> AstBuilder<'a> {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build an [`ImportAttributeKey::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn import_attribute_key_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> ImportAttributeKey<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ImportAttributeKey::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build an [`ExportNamedDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_export_named_declaration`] instead.
@@ -8164,7 +8201,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8178,7 +8215,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -8196,7 +8233,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -8215,7 +8252,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8230,7 +8267,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -8249,7 +8286,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
@@ -8405,6 +8442,27 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build a [`ModuleExportName::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn module_export_name_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> ModuleExportName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ModuleExportName::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build a [`V8IntrinsicExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_v_8_intrinsic_expression`] instead.
@@ -8540,7 +8598,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator), raw }
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy: Default::default() }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -8562,6 +8620,52 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
+    }
+
+    /// Build a [`StringLiteral`] with `lossy`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal_with_lossy`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy }
+    }
+
+    /// Build a [`StringLiteral`] with `lossy`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lossy`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn alloc_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.string_literal_with_lossy(span, value, raw, lossy), self.allocator)
     }
 
     /// Build a [`BigIntLiteral`].
@@ -8702,7 +8806,7 @@ impl<'a> AstBuilder<'a> {
     /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
+    /// * `type_arguments`: Type parameters for generic JSX elements.
     #[inline]
     pub fn jsx_opening_element<T1>(
         self,
@@ -8710,7 +8814,7 @@ impl<'a> AstBuilder<'a> {
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> JSXOpeningElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -8720,7 +8824,7 @@ impl<'a> AstBuilder<'a> {
             self_closing,
             name,
             attributes,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -8733,7 +8837,7 @@ impl<'a> AstBuilder<'a> {
     /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
+    /// * `type_arguments`: Type parameters for generic JSX elements.
     #[inline]
     pub fn alloc_jsx_opening_element<T1>(
         self,
@@ -8741,13 +8845,13 @@ impl<'a> AstBuilder<'a> {
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, JSXOpeningElement<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.jsx_opening_element(span, self_closing, name, attributes, type_parameters),
+            self.jsx_opening_element(span, self_closing, name, attributes, type_arguments),
             self.allocator,
         )
     }
@@ -9340,6 +9444,31 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build a [`JSXAttributeValue::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn jsx_attribute_value_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> JSXAttributeValue<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXAttributeValue::StringLiteral(
+            self.alloc_string_literal_with_lossy(span, value, raw, lossy),
+        )
+    }
+
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
     ///
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
@@ -9820,6 +9949,29 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build a [`TSEnumMemberName::String`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn ts_enum_member_name_string_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::String(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build a [`TSTypeAnnotation`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_annotation`] instead.
@@ -9952,6 +10104,29 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSLiteral::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn ts_literal_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSLiteral::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].
@@ -10330,7 +10505,7 @@ impl<'a> AstBuilder<'a> {
         is_type_of: bool,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc_ts_import_type(
@@ -10610,18 +10785,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSType::TSTypeQuery(self.alloc_ts_type_query(span, expr_name, type_parameters))
+        TSType::TSTypeQuery(self.alloc_ts_type_query(span, expr_name, type_arguments))
     }
 
     /// Build a [`TSType::TSTypeReference`].
@@ -10631,18 +10806,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSType::TSTypeReference(self.alloc_ts_type_reference(span, type_name, type_parameters))
+        TSType::TSTypeReference(self.alloc_ts_type_reference(span, type_name, type_arguments))
     }
 
     /// Build a [`TSType::TSUnionType`].
@@ -11506,22 +11681,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSTypeReference<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSTypeReference {
-            span,
-            type_name,
-            type_parameters: type_parameters.into_in(self.allocator),
-        }
+        TSTypeReference { span, type_name, type_arguments: type_arguments.into_in(self.allocator) }
     }
 
     /// Build a [`TSTypeReference`], and store it in the memory arena.
@@ -11531,18 +11702,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSTypeReference<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_reference(span, type_name, type_parameters), self.allocator)
+        Box::new_in(self.ts_type_reference(span, type_name, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypeName::IdentifierReference`].
@@ -11896,13 +12067,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_class_implements<T1>(
         self,
         span: Span,
         expression: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSClassImplements<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -11910,7 +12081,7 @@ impl<'a> AstBuilder<'a> {
         TSClassImplements {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -11921,18 +12092,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_class_implements<T1>(
         self,
         span: Span,
         expression: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSClassImplements<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_class_implements(span, expression, type_parameters), self.allocator)
+        Box::new_in(self.ts_class_implements(span, expression, type_arguments), self.allocator)
     }
 
     /// Build a [`TSInterfaceDeclaration`].
@@ -12943,13 +13114,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_interface_heritage<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSInterfaceHeritage<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -12957,7 +13128,7 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceHeritage {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -12968,18 +13139,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_interface_heritage<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSInterfaceHeritage<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_interface_heritage(span, expression, type_parameters), self.allocator)
+        Box::new_in(self.ts_interface_heritage(span, expression, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypePredicate`].
@@ -13216,6 +13387,29 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    #[inline]
+    pub fn ts_module_declaration_name_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSModuleDeclarationName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSModuleDeclarationName::StringLiteral(
+            self.string_literal_with_lossy(span, value, raw, lossy),
+        )
+    }
+
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].
     ///
     /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
@@ -13389,18 +13583,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSTypeQuery<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSTypeQuery { span, expr_name, type_parameters: type_parameters.into_in(self.allocator) }
+        TSTypeQuery { span, expr_name, type_arguments: type_arguments.into_in(self.allocator) }
     }
 
     /// Build a [`TSTypeQuery`], and store it in the memory arena.
@@ -13410,18 +13604,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSTypeQuery<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_query(span, expr_name, type_parameters), self.allocator)
+        Box::new_in(self.ts_type_query(span, expr_name, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypeQueryExprName::TSImportType`].
@@ -13446,7 +13640,7 @@ impl<'a> AstBuilder<'a> {
         is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
@@ -13481,7 +13675,7 @@ impl<'a> AstBuilder<'a> {
         is_type_of: bool,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
@@ -13516,121 +13710,13 @@ impl<'a> AstBuilder<'a> {
         is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
             self.allocator,
         )
-    }
-
-    /// Build a [`TSImportAttributes`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> TSImportAttributes<'a> {
-        TSImportAttributes { span, attributes_keyword, elements }
-    }
-
-    /// Build a [`TSImportAttributes`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn alloc_ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> Box<'a, TSImportAttributes<'a>> {
-        Box::new_in(self.ts_import_attributes(span, attributes_keyword, elements), self.allocator)
-    }
-
-    /// Build a [`TSImportAttribute`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> TSImportAttribute<'a> {
-        TSImportAttribute { span, name, value }
-    }
-
-    /// Build a [`TSImportAttribute`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn alloc_ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> Box<'a, TSImportAttribute<'a>> {
-        Box::new_in(self.ts_import_attribute(span, name, value), self.allocator)
-    }
-
-    /// Build a [`TSImportAttributeName::Identifier`].
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    #[inline]
-    pub fn ts_import_attribute_name_identifier<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::Identifier(self.identifier_name(span, name))
-    }
-
-    /// Build a [`TSImportAttributeName::StringLiteral`].
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn ts_import_attribute_name_string_literal<A>(
-        self,
-        span: Span,
-        value: A,
-        raw: Option<Atom<'a>>,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSFunctionType`].

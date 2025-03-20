@@ -88,7 +88,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@f87f9990b09867202953bff9aa0c80e23ee16bb7 # v2.49.18
+        uses: taiki-e/install-action@2c41309d51ede152b6f2ee6bf3b71e6dc9a8b7df # v2.49.27
         with:
           tool: cross
 
@@ -102,13 +102,9 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          CC: clang # for mimalloc
         run: |
-          # Need to support 16kb-aligned pages for aarch64 systems,
-          # Asahi Linux & Raspberry Pi OS use a 16k page size.
-          # https://github.com/oxc-project/oxc/issues/3783
-          case ${{ matrix.target }} in
-            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
-          esac;
           cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
           cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
 

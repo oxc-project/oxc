@@ -84,6 +84,17 @@ impl<T> ESTree for Null<'_, T> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "null", raw_deser = "null")]
+#[ts]
+pub struct TsNull<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsNull<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
+    }
+}
+
 /// Serialized as `true`.
 #[ast_meta]
 #[estree(ts_type = "true", raw_deser = "true")]
@@ -101,6 +112,17 @@ impl<T> ESTree for True<'_, T> {
 pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for False<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        false.serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "false", raw_deser = "false")]
+#[ts]
+pub struct TsFalse<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsFalse<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
     }
@@ -125,6 +147,17 @@ pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 impl<T> ESTree for Init<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("init").serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "[]", raw_deser = "[]")]
+#[ts]
+pub struct TsEmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsEmptyArray<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
     }
 }
 
@@ -505,6 +538,26 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSClassImplements>",
+    raw_deser = "
+        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
+        classImplements === null ? [] : classImplements
+    "
+)]
+pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassImplements<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(implements) = &self.0.implements {
+            implements.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
+        }
+    }
+}
+
 // --------------------
 // JSX
 // --------------------
@@ -517,8 +570,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     ts_type = "JSXIdentifier",
     raw_deser = "
         const ident = DESER[Box<IdentifierReference>](POS);
-        ident.type = 'JSXIdentifier';
-        ident
+        {type: 'JSXIdentifier', start: ident.start, end: ident.end, name: ident.name}
     "
 )]
 pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
@@ -555,6 +607,25 @@ pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpen
 impl ESTree for JSXOpeningFragmentAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
+    }
+}
+
+// --------------------
+// TS
+// --------------------
+
+/// Serializer for `directive` field of `ExpressionStatement`.
+/// This field is always `null`, and only appears in the TS AST, not JS ESTree.
+#[ast_meta]
+#[estree(ts_type = "string | null", raw_deser = "null")]
+#[ts]
+pub struct ExpressionStatementDirective<'a, 'b>(
+    #[expect(dead_code)] pub &'b ExpressionStatement<'a>,
+);
+
+impl ESTree for ExpressionStatementDirective<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
     }
 }
 

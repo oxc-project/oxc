@@ -4,6 +4,74 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.1] - 2025-03-20
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- 8e3d9be linter: Support `--report-unused-disable-directive` (#9223) (1zumii)
+- 62c0132 linter: Add import/no-empty-named-blocks rule (#9710) (yefan)
+- ea7e3f0 oxc_language_server: Support nested configs (#9739) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- e9565c9 linter: Parse vue custom tag that starts with script (#9887) (Boshen)
+- e6f7c74 linter: Import and fix tests for typescript::no_unnecessary_parameter_property_assignment (#9720) (Ulrich Stark)
+- 4e39ba0 linter: Ignore modules with invalid source (#9801) (branchseer)
+- 73fe248 linter/no_case_declarations: Fix span of error for `await using` (#9854) (overlookmotel)
+- 2e023ab linter/react: `exhaustive-deps` report longest dependency (#9891) (overlookmotel)
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 3d4c5f3 semantic: Correctly visit `IfStmt` `test` when building cfg (#9864) (camc314)
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- d44ab9b linter: Return early in loop in `promise/no-nesting` (#9808) (therewillbecode)
+- 2b65ed2 linter/no_unescaped_entities: Optimize string search and error generation (#9832) (overlookmotel)
+
+### Documentation
+
+- e408db8 linter: Improve docs for `unicorn/no-abusive-eslint-disable` (#9834) (shulaoda)
+- 187fe39 linter: Add correctness examples to `typescript-prefer-as-const` (#9805) (therewillbecode)
+
+### Refactor
+
+- 723fdfb linter: Improve `jest-prefer-hooks-in-order` (#9892) (therewillbecode)
+- 544a090 linter: Remove not implemented rule `constructor-super` (#9877) (Sysix)
+- 8bdac56 linter: Improve `ast_util::is_method_call` (#9874) (shulaoda)
+- a68e45c linter: Improve `unicorn/no-anonymous-default-export` (#9847) (dalaoshu)
+- 6407200 linter: Improve `unicorn/new-for-builtins` (#9804) (dalaoshu)
+
+## [0.16.0] - 2025-03-16
+
+### Features
+
+- 8dd6809 linter: Add `eslint/no-lonely-if` (#9660) (therewillbecode)
+- c22276e oxc_linter: Sort rules by plugin and rule name when outputting resolved config as a JSON string (#9799) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- 22f18ac linter: Improve `jsx-a11y/anchor-ambiguous-text` diagnostic message (#9789) (1zumii)
+- 6c11740 linter: False positive in `unicorn/catch-error-name` (#9763) (shulaoda)
+
+### Documentation
+
+- ea6b6d9 linter: Improve docs for `eslint-valid-typeof` (#9797) (therewillbecode)
+- 2c48fba linter: Fix typo in `oxc/bad-min-max-func` (#9791) (Flo)
+- 210b876 linter: Improve `eslint-no-async-promise-executor` (#9778) (therewillbecode)
+- f8628bc linter: Improve `eslint-no-class-assign` (#9779) (therewillbecode)
+- faca7a8 linter: Improve `eslint-no-self-assign` (#9768) (therewillbecode)
+
+### Refactor
+
+- 227d203 linter: Improve `typescript-no-unnecessary-type-constraint` (#9798) (therewillbecode)
+- 05fe2cd linter: Use `is_lexical` when checking for lexical decl (#9781) (camc314)
+- fcdd810 linter: Remove if let nesting from `unicorn-no-date-clone` (#9767) (therewillbecode)
+- 5a9e1b9 linter: Improve `typescript-no-misused-new` (#9766) (therewillbecode)
+- 9df5565 linter: Improve `unicorn/filename-case` (#9762) (shulaoda)
+- b0b1f18 linter: Remove if let nesting from `nextjs-no-async-client-component` (#9764) (therewillbecode)
+
 ## [0.15.15] - 2025-03-12
 
 ### Features

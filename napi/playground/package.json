@@ -1,0 +1,38 @@
+{
+  "name": "oxc-playground",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "browser": "./playground.wasi-browser.js",
+      "default": "./index.js"
+    },
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "napi build --no-dts-cache --platform --release --target wasm32-wasip1-threads && node patch.mjs",
+    "dev": "napi build --no-dts-cache --platform --target wasm32-wasip1-threads && node patch.mjs"
+  },
+  "dependencies": {
+    "@napi-rs/wasm-runtime": "^0.2.7"
+  },
+  "collaborators": [
+    "Boshen <boshenc@gmail.com>",
+    "Oxc contributors"
+  ],
+  "napi": {
+    "binaryName": "playground",
+    "packageName": "@oxc-playground/binding",
+    "targets": [
+      "wasm32-wasip1-threads"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    }
+  }
+}
