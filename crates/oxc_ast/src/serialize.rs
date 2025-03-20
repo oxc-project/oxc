@@ -558,6 +558,19 @@ impl ESTree for ClassImplements<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "DESER[TSModuleDeclarationKind](POS_OFFSET.kind) === 'global'"
+)]
+pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+
+impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.kind.is_global().serialize(serializer);
+    }
+}
+
 // --------------------
 // JSX
 // --------------------

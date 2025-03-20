@@ -1123,6 +1123,7 @@ pub enum TSTypePredicateName<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(global = TSModuleDeclarationGlobal))]
 pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     /// The name of the module/namespace being declared.

@@ -1791,6 +1791,7 @@ function deserializeTSModuleDeclaration(pos) {
     body: deserializeOptionTSModuleDeclarationBody(pos + 56),
     kind: deserializeTSModuleDeclarationKind(pos + 72),
     declare: deserializeBool(pos + 73),
+    global: deserializeTSModuleDeclarationKind(pos + 72) === 'global',
   };
 }
 

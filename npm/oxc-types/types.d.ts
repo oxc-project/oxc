@@ -1261,6 +1261,7 @@ export interface TSModuleDeclaration extends Span {
   body: TSModuleDeclarationBody | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
+  global: boolean;
 }
 
 export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
