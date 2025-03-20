@@ -301,10 +301,6 @@ impl Oxc {
         }
     }
 
-    fn reset(&self) {
-
-    }
-
     fn get_scope_text(program: &Program<'_>, scoping: &Scoping) -> String {
         struct ScopesTextWriter<'s> {
             scoping: &'s Scoping,
