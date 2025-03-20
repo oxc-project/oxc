@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.1] - 2025-03-20
+
+### Features
+
+- 8e3d9be linter: Support `--report-unused-disable-directive` (#9223) (1zumii)
+
+### Bug Fixes
+
+- e6f7c74 linter: Import and fix tests for typescript::no_unnecessary_parameter_property_assignment (#9720) (Ulrich Stark)
+
+### Performance
+
+- 84fa538 minify: Use mimalloc-safe to replace mimalloc (#9810) (LongYinan)
+
+### Refactor
+
+- b34cf94 oxlint: Remove `jemallocator` (#9823) (Boshen)
+
 ## [0.16.0] - 2025-03-16
 
 - 225e266 linter: [**BREAKING**] Enable `--experimental-nested-config` by default and add `--disable-nested-config` option (#9760) (camchenry)

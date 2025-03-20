@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.1] - 2025-03-20
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- 8e3d9be linter: Support `--report-unused-disable-directive` (#9223) (1zumii)
+- 62c0132 linter: Add import/no-empty-named-blocks rule (#9710) (yefan)
+- ea7e3f0 oxc_language_server: Support nested configs (#9739) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- e9565c9 linter: Parse vue custom tag that starts with script (#9887) (Boshen)
+- e6f7c74 linter: Import and fix tests for typescript::no_unnecessary_parameter_property_assignment (#9720) (Ulrich Stark)
+- 4e39ba0 linter: Ignore modules with invalid source (#9801) (branchseer)
+- 73fe248 linter/no_case_declarations: Fix span of error for `await using` (#9854) (overlookmotel)
+- 2e023ab linter/react: `exhaustive-deps` report longest dependency (#9891) (overlookmotel)
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 3d4c5f3 semantic: Correctly visit `IfStmt` `test` when building cfg (#9864) (camc314)
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- d44ab9b linter: Return early in loop in `promise/no-nesting` (#9808) (therewillbecode)
+- 2b65ed2 linter/no_unescaped_entities: Optimize string search and error generation (#9832) (overlookmotel)
+
+### Documentation
+
+- e408db8 linter: Improve docs for `unicorn/no-abusive-eslint-disable` (#9834) (shulaoda)
+- 187fe39 linter: Add correctness examples to `typescript-prefer-as-const` (#9805) (therewillbecode)
+
+### Refactor
+
+- 723fdfb linter: Improve `jest-prefer-hooks-in-order` (#9892) (therewillbecode)
+- 544a090 linter: Remove not implemented rule `constructor-super` (#9877) (Sysix)
+- 8bdac56 linter: Improve `ast_util::is_method_call` (#9874) (shulaoda)
+- a68e45c linter: Improve `unicorn/no-anonymous-default-export` (#9847) (dalaoshu)
+- 6407200 linter: Improve `unicorn/new-for-builtins` (#9804) (dalaoshu)
+
 ## [0.16.0] - 2025-03-16
 
 ### Features
