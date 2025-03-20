@@ -383,8 +383,8 @@ impl Scoping {
         self.symbol_scope_ids.reserve(additional_symbols);
         self.symbol_declarations.reserve(additional_symbols);
         self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.symbol_names.reserve(additional_symbols);
-            cell.resolved_references.reserve(additional_symbols);
+            cell.symbol_names.reserve_exact(additional_symbols);
+            cell.resolved_references.reserve_exact(additional_symbols);
         });
         self.references.reserve(additional_references);
 
@@ -396,7 +396,7 @@ impl Scoping {
         self.scope_node_ids.reserve(additional_scopes);
         if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|_allocator, cell| {
-                cell.scope_child_ids.reserve(additional_scopes);
+                cell.scope_child_ids.reserve_exact(additional_scopes);
             });
         }
     }
