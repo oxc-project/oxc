@@ -19,10 +19,11 @@ export function Oxc() {
       if (p === 'ast') {
         return jsonParseAst(oxc.astJson);
       }
-      if (typeof oxc[p] === 'function') {
-        return oxc[p].bind(oxc);
+      const value = oxc[p];
+      if (typeof value === 'function') {
+        return value.bind(oxc);
       }
-      return Reflect.get(...arguments);
+      return value;
     }
   })
 }
