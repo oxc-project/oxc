@@ -15,6 +15,7 @@ export declare class Oxc {
   constructor()
   getDiagnostics(): Array<OxcError>
   getComments(): Array<Comment>
+  static getSupportedEsTargets(): Array<string>
   /**
    * # Errors
    * Serde serialization error

@@ -22,7 +22,7 @@ use oxc::{
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
-    syntax::reference::Reference,
+    syntax::{es_target::list_all_es_target, reference::Reference},
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
@@ -68,6 +68,11 @@ impl Oxc {
     #[napi]
     pub fn get_comments(&self) -> Vec<Comment> {
         self.comments.clone()
+    }
+
+    #[napi]
+    pub fn get_supported_es_targets() -> Vec<String> {
+        list_all_es_target().into_iter().map(|s| format!("{s}")).collect()
     }
 
     /// # Errors
