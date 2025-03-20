@@ -66,3 +66,22 @@ impl fmt::Display for ESTarget {
         write!(f, "{s}",)
     }
 }
+
+/// List all supported ECMAScript targets.
+pub fn list_all_es_target() -> Vec<ESTarget> {
+    vec![
+        ESTarget::ES5,
+        ESTarget::ES2015,
+        ESTarget::ES2016,
+        ESTarget::ES2017,
+        ESTarget::ES2018,
+        ESTarget::ES2019,
+        ESTarget::ES2020,
+        ESTarget::ES2021,
+        ESTarget::ES2022,
+        ESTarget::ES2023,
+        ESTarget::ES2024,
+        ESTarget::ES2025,
+        ESTarget::ESNext,
+    ]
+}
