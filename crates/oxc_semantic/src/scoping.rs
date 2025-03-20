@@ -94,6 +94,47 @@ impl Default for Scoping {
     }
 }
 
+impl Scoping {
+    pub(super) fn with_capacity(
+        additional_symbols: usize,
+        additional_references: usize,
+        additional_scopes: usize,
+        scope_build_child_ids: bool,
+    ) -> Self {
+        let allocator_capacity = additional_symbols * 2
+            + usize::try_from(scope_build_child_ids).map_or_else(|_| 0, |_| additional_scopes)
+            // For unresolved references
+            + additional_references;
+        Self {
+            symbol_spans: IndexVec::with_capacity(additional_symbols),
+            symbol_flags: IndexVec::with_capacity(additional_symbols),
+            symbol_scope_ids: IndexVec::with_capacity(additional_symbols),
+            symbol_declarations: IndexVec::with_capacity(additional_symbols),
+            symbol_redeclarations: IndexVec::with_capacity(additional_symbols),
+            references: IndexVec::with_capacity(additional_references),
+            no_side_effects: FxHashSet::default(),
+            scope_parent_ids: IndexVec::with_capacity(additional_scopes),
+            scope_build_child_ids,
+            scope_node_ids: IndexVec::with_capacity(additional_scopes),
+            scope_flags: IndexVec::with_capacity(additional_scopes),
+            cell: ScopingCell::new(Allocator::with_capacity(allocator_capacity), |allocator| {
+                ScopingInner {
+                    symbol_names: ArenaVec::with_capacity_in(additional_symbols, allocator),
+                    resolved_references: ArenaVec::with_capacity_in(additional_symbols, allocator),
+                    redeclaration_spans: ArenaVec::new_in(allocator),
+                    bindings: IndexVec::with_capacity(additional_scopes),
+                    scope_child_ids: if scope_build_child_ids {
+                        ArenaVec::with_capacity_in(additional_scopes, allocator)
+                    } else {
+                        ArenaVec::new_in(allocator)
+                    },
+                    root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                }
+            }),
+        }
+    }
+}
+
 self_cell::self_cell!(
     pub struct ScopingCell {
         owner: Allocator,

@@ -247,10 +247,12 @@ impl<'a> SemanticBuilder<'a> {
                 (stats_with_excess, Some(stats))
             };
             self.nodes.reserve(stats.nodes as usize);
-            self.scoping.reserve(
+
+            self.scoping = Scoping::with_capacity(
                 stats.symbols as usize,
                 stats.references as usize,
                 stats.scopes as usize,
+                self.scoping.scope_build_child_ids,
             );
 
             // Visit AST to generate scopes tree etc
