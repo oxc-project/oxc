@@ -75,7 +75,7 @@ impl Oxc {
     #[napi]
     #[allow(clippy::allow_attributes, clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
-        self.diagnostics = vec![];
+        self.reset();
 
         let OxcOptions {
             run: run_options,
@@ -297,6 +297,22 @@ impl Oxc {
                 };
             }
         }
+    }
+
+    fn reset(&mut self) {
+        self.ast = ();
+        self.ast_json = String::new();
+        self.ir = String::new();
+        self.control_flow_graph = String::new();
+        self.symbols_json = String::new();
+        self.scope_text = String::new();
+        self.codegen_text = String::new();
+        self.codegen_sourcemap_text = None;
+        self.formatted_text = String::new();
+        self.prettier_formatted_text = String::new();
+        self.prettier_ir_text = String::new();
+        self.comments = vec![];
+        self.diagnostics = vec![];
     }
 
     fn get_scope_text(program: &Program<'_>, scoping: &Scoping) -> String {
