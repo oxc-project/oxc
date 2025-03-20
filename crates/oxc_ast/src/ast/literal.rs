@@ -83,6 +83,11 @@ pub struct StringLiteral<'a> {
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
+
+    /// The string value contains replacement character (U+FFFD).
+    #[builder(default)]
+    #[estree(skip)]
+    pub lossy: bool,
 }
 
 /// BigInt literal

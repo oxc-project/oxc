@@ -406,6 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
+        let lossy = self.cur_token().lossy;
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -413,7 +414,9 @@ impl<'a> ParserImpl<'a> {
         let raw = Atom::from(unsafe {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
-        Ok(self.ast.string_literal(span, value, Some(raw)))
+        let mut string_literal = self.ast.string_literal(span, value, Some(raw));
+        string_literal.lossy = lossy;
+        Ok(string_literal)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)

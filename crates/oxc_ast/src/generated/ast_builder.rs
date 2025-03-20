@@ -276,6 +276,29 @@ impl<'a> AstBuilder<'a> {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build an [`Expression::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn expression_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> Expression<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Expression::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build an [`Expression::TemplateLiteral`].
     ///
     /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
@@ -7820,6 +7843,27 @@ impl<'a> AstBuilder<'a> {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build an [`ImportAttributeKey::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn import_attribute_key_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> ImportAttributeKey<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ImportAttributeKey::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build an [`ExportNamedDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_export_named_declaration`] instead.
@@ -8398,6 +8442,27 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build a [`ModuleExportName::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn module_export_name_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> ModuleExportName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ModuleExportName::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build a [`V8IntrinsicExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_v_8_intrinsic_expression`] instead.
@@ -8533,7 +8598,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator), raw }
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy: Default::default() }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -8555,6 +8620,52 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
+    }
+
+    /// Build a [`StringLiteral`] with `lossy`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal_with_lossy`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy }
+    }
+
+    /// Build a [`StringLiteral`] with `lossy`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lossy`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn alloc_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.string_literal_with_lossy(span, value, raw, lossy), self.allocator)
     }
 
     /// Build a [`BigIntLiteral`].
@@ -9333,6 +9444,31 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build a [`JSXAttributeValue::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn jsx_attribute_value_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> JSXAttributeValue<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXAttributeValue::StringLiteral(
+            self.alloc_string_literal_with_lossy(span, value, raw, lossy),
+        )
+    }
+
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
     ///
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
@@ -9813,6 +9949,29 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build a [`TSEnumMemberName::String`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn ts_enum_member_name_string_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::String(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+    }
+
     /// Build a [`TSTypeAnnotation`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_annotation`] instead.
@@ -9945,6 +10104,29 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSLiteral::StringLiteral`] with `lossy`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn ts_literal_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSLiteral::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].
@@ -13203,6 +13385,29 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lossy`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lossy`
+    #[inline]
+    pub fn ts_module_declaration_name_string_literal_with_lossy<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lossy: bool,
+    ) -> TSModuleDeclarationName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSModuleDeclarationName::StringLiteral(
+            self.string_literal_with_lossy(span, value, raw, lossy),
+        )
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].

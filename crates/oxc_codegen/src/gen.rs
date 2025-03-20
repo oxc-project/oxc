@@ -1675,9 +1675,7 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => {
-                p.print_quoted_utf16(s.value.as_str(), /* allow_backtick */ false);
-            }
+            Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
             _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }

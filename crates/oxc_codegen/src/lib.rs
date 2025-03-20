@@ -578,16 +578,19 @@ impl<'a> Codegen<'a> {
 
     fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
-        let s = s.value.as_str();
+        if s.lossy {
+            self.print_str(s.raw.unwrap().as_str());
+            return;
+        }
         self.print_quoted_utf16(s, allow_backtick);
     }
 
-    fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {
+    fn print_quoted_utf16(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         let quote = if self.options.minify {
             let mut single_cost: i32 = 0;
             let mut double_cost: i32 = 0;
             let mut backtick_cost: i32 = 0;
-            let mut bytes = s.as_bytes().iter().peekable();
+            let mut bytes = s.value.as_bytes().iter().peekable();
             while let Some(b) = bytes.next() {
                 match b {
                     b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
@@ -621,8 +624,8 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(quote);
     }
 
-    fn print_unquoted_utf16(&mut self, s: &str, quote: u8) {
-        let mut chars = s.chars().peekable();
+    fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: u8) {
+        let mut chars = s.value.chars().peekable();
 
         while let Some(c) = chars.next() {
             match c {

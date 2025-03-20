@@ -124,15 +124,16 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`
-        // values are interpreted as is if they fall out of range
+        // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
             SurrogatePair::CodePoint(code_point) | SurrogatePair::Astral(code_point) => {
                 if let Ok(ch) = char::try_from(code_point) {
                     text.push(ch);
                 } else {
-                    text.push_str("\\u");
-                    text.push_str(format!("{code_point:x}").as_str());
+                    // Turns lone surrogate into lossy replacement character (U+FFFD).
+                    // A lone surrogate '\u{df06}' is not a valid UTF8 string.
+                    text.push_str("\u{FFFD}");
+                    self.token.lossy = true;
                 }
             }
             SurrogatePair::HighLow(high, low) => {

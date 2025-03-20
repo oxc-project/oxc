@@ -1471,6 +1471,7 @@ impl ContentEq for NumericLiteral<'_> {
 impl ContentEq for StringLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
+            && ContentEq::content_eq(&self.lossy, &other.lossy)
     }
 }
 

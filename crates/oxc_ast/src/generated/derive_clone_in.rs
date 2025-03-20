@@ -2535,6 +2535,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             raw: CloneIn::clone_in(&self.raw, allocator),
+            lossy: CloneIn::clone_in(&self.lossy, allocator),
         }
     }
 }

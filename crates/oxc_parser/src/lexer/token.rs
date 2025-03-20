@@ -26,6 +26,9 @@ pub struct Token {
     /// [Lexer::escaped_templates]: [super::Lexer::escaped_templates]
     pub escaped: bool,
 
+    /// True if a string contains lossy replacement character (U+FFFD).
+    pub lossy: bool,
+
     /// True if for numeric literal tokens that contain separator characters (`_`).
     ///
     /// Numeric literals are defined in Section 12.9.3 of the ECMAScript
@@ -36,7 +39,7 @@ pub struct Token {
     // Padding to fill to 16 bytes.
     // This makes copying a `Token` 1 x xmmword load & store, rather than 1 x dword + 1 x qword
     // and `Token::default()` is 1 x xmmword store, rather than 1 x dword + 1 x qword.
-    _padding2: u32,
+    _padding2: u16,
 }
 
 impl Token {
