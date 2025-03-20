@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.1] - 2025-03-20
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+- 0973356 editor: Support nested configs (#9743) (Nicholas Rayburn)
+- ea7e3f0 oxc_language_server: Support nested configs (#9739) (Nicholas Rayburn)
+
+### Documentation
+
+- 8bc70b3 language_server: Tell about Initialization options + didChangeWatchedFiles for nested configuration (#9876) (Alexander S.)
+
 ## [0.15.14] - 2025-03-11
 
 ### Features
