@@ -65,6 +65,10 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: ./.github/actions/pnpm
 
+      - name: Build
+        working-directory: editors/vscode
+        run: pnpm run build
+
       - name: Test VSCode
         working-directory: editors/vscode
         run: xvfb-run -a pnpm run test
