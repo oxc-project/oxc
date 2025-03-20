@@ -525,7 +525,13 @@ impl Rule for ExhaustiveDeps {
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
             declared_dependencies.iter().tuple_combinations().for_each(|(a, b)| {
-                if a.contains(b) || b.contains(a) {
+                if a.contains(b) {
+                    ctx.diagnostic(unnecessary_dependency_diagnostic(
+                        hook_name,
+                        &a.to_string(),
+                        dependencies_node.span,
+                    ));
+                } else if b.contains(a) {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,
                         &b.to_string(),
@@ -2361,6 +2367,13 @@ fn test() {
             console.log(props.foo);
             console.log(props.bar);
           }, [props, props.foo]);
+        }",
+        r"function MyComponent(props) {
+          const local = {};
+          useCallback(() => {
+            console.log(props.foo);
+            console.log(props.bar);
+          }, [props.foo, props]);
         }",
         r"function MyComponent(props) {
           const local = {};

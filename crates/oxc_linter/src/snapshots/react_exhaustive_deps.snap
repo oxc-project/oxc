@@ -514,10 +514,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Extract the expression to a separate variable so it can be statically checked.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             console.log(props.bar);
  6 │           }, [props, props.foo]);
+   ·              ──────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(props.bar);
+ 6 │           }, [props.foo, props]);
    ·              ──────────────────
  7 │         }
    ╰────
@@ -559,7 +568,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(local);
  5 │           }, [local.id, local]);
