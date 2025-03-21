@@ -814,9 +814,6 @@ function deserializeFormalParameter(pos) {
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 56),
     optional: deserializeBool(pos + 64),
     decorators: deserializeVecDecorator(pos + 8),
-    accessibility: deserializeOptionTSAccessibility(pos + 72),
-    readonly: deserializeBool(pos + 73),
-    override: deserializeBool(pos + 74),
   };
 }
 

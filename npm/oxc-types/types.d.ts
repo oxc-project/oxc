@@ -574,9 +574,6 @@ export interface FormalParameterRest extends Span {
 export type FormalParameter =
   & ({
     decorators?: Array<Decorator>;
-    accessibility?: TSAccessibility | null;
-    readonly?: boolean;
-    override?: boolean;
   })
   & BindingPattern;
 
