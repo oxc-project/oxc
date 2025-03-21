@@ -158,7 +158,6 @@ impl<'a> StatementInjectorStore<'a> {
     ///
     /// Use this if you convert one statement to another, and other code may have attached
     /// insertions to the original statement.
-    #[expect(dead_code)]
     #[inline]
     pub fn move_insertions<A1: GetAddress, A2: GetAddress>(
         &self,
