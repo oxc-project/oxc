@@ -5,15 +5,16 @@ use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 /// Minimize Conditions
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let mut changed = false;
@@ -50,7 +51,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
         if changed {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 

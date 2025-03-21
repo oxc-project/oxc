@@ -7,6 +7,7 @@ use oxc_minifier::Compressor;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+#[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -17,6 +18,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     Codegen::new().build(program).code
 }
 
+#[track_caller]
 fn test(source_text: &str, expected: &str) {
     let t = "('production' == 'production')";
     let f = "('production' == 'development')";
@@ -29,6 +31,7 @@ fn test(source_text: &str, expected: &str) {
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
+#[track_caller]
 fn test_same(source_text: &str) {
     test(source_text, source_text);
 }

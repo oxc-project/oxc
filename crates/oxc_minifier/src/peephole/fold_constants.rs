@@ -9,15 +9,24 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        if let Expression::TemplateLiteral(t) = expr {
-            self.try_inline_values_in_template_literal(t, ctx);
+    pub fn fold_constants_exit_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        match expr {
+            Expression::TemplateLiteral(t) => {
+                self.try_inline_values_in_template_literal(t, state, ctx);
+            }
+            Expression::ObjectExpression(e) => self.fold_object_spread(e, state, ctx),
+            _ => {}
         }
 
         if let Some(folded_expr) = match expr {
@@ -29,11 +38,10 @@ impl<'a> PeepholeOptimizations {
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         };
     }
 
@@ -633,10 +641,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_object_spread(
-        &mut self,
+        &self,
         e: &mut ObjectExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    ) {
         let len = e.properties.len();
         e.properties.retain(|p| {
             if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
@@ -659,17 +668,17 @@ impl<'a> PeepholeOptimizations {
             true
         });
         if e.properties.len() != len {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
-        None
     }
 
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     fn try_inline_values_in_template_literal(
-        &mut self,
+        &self,
         t: &mut TemplateLiteral<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let has_expr_to_inline = t
@@ -719,7 +728,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 }
 

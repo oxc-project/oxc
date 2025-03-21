@@ -16,14 +16,19 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
-    pub fn substitute_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_object_property(
+        &self,
+        prop: &mut ObjectProperty<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
         if !prop.method {
             if let PropertyKey::StringLiteral(str) = &prop.key {
@@ -34,28 +39,31 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_assignment_target_property_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.name, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_assignment_target_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_assignment_target_property(prop, ctx);
+        self.try_compress_assignment_target_property(prop, state, ctx);
     }
 
     pub fn try_compress_assignment_target_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // `a: a` -> `a`
@@ -72,22 +80,24 @@ impl<'a> PeepholeOptimizations {
                     ctx.ast.identifier_reference(assign_target_prop_prop.span, prop_name),
                     None,
                 );
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
     }
 
     pub fn substitute_binding_property(
-        &mut self,
+        &self,
         prop: &mut BindingProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_method_definition(
-        &mut self,
+        &self,
         prop: &mut MethodDefinition<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -96,12 +106,13 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_property_definition(
-        &mut self,
+        &self,
         prop: &mut PropertyDefinition<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -110,12 +121,13 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_accessor_property(
-        &mut self,
+        &self,
         prop: &mut AccessorProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -124,43 +136,64 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_return_statement(
-        &mut self,
+        &self,
         stmt: &mut ReturnStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.compress_return_statement(stmt, ctx);
+        self.compress_return_statement(stmt, state, ctx);
     }
 
     pub fn substitute_variable_declaration(
-        &mut self,
+        &self,
         decl: &mut VariableDeclaration<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
-            self.compress_variable_declarator(declarator, ctx);
+            self.compress_variable_declarator(declarator, state, ctx);
         }
     }
 
-    pub fn substitute_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) {
-        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    pub fn substitute_call_expression(
+        &self,
+        expr: &mut CallExpression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_flatten_arguments(&mut expr.arguments, state, ctx);
     }
 
-    pub fn substitute_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
-        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    pub fn substitute_new_expression(
+        &self,
+        expr: &mut NewExpression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_flatten_arguments(&mut expr.arguments, state, ctx);
     }
 
-    pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_exit_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         // Change syntax
         match expr {
-            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
-            Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
+            Expression::ArrowFunctionExpression(e) => {
+                self.try_compress_arrow_expression(e, state, ctx);
+            }
+            Expression::ChainExpression(e) => {
+                self.try_compress_chain_call_expression(e, state, ctx);
+            }
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
-            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, ctx),
-            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, ctx),
+            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, state, ctx),
+            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, state, ctx),
             _ => {}
         }
 
@@ -185,7 +218,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -200,8 +233,9 @@ impl<'a> PeepholeOptimizations {
 
     /// `() => { return foo })` -> `() => foo`
     fn try_compress_arrow_expression(
-        &mut self,
+        &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if !arrow_expr.expression
@@ -215,7 +249,7 @@ impl<'a> PeepholeOptimizations {
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
             }
@@ -567,7 +601,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: Ctx<'a, '_>) {
+    fn compress_return_statement(
+        &self,
+        stmt: &mut ReturnStatement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
@@ -587,12 +626,13 @@ impl<'a> PeepholeOptimizations {
             }
         }
         stmt.argument = None;
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 
     fn compress_variable_declarator(
-        &mut self,
+        &self,
         decl: &mut VariableDeclarator<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
@@ -609,12 +649,11 @@ impl<'a> PeepholeOptimizations {
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
         {
             decl.init = None;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
-    /// Fold `Boolean`, `Number`, `String`, `BigInt` constructors.
-    ///
+    /// Fold `Boolean`, ///
     /// `Boolean(a)` -> `!!a`
     /// `Number(0)` -> `0`
     /// `String()` -> `''`
@@ -848,8 +887,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_compress_chain_call_expression(
-        &mut self,
+        &self,
         chain_expr: &mut ChainExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
@@ -861,7 +901,7 @@ impl<'a> PeepholeOptimizations {
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
                 call_expr.callee = ctx.ast.expression_identifier(call_expr.callee.span(), "Object");
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
     }
@@ -872,9 +912,10 @@ impl<'a> PeepholeOptimizations {
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
     fn try_compress_property_key(
-        &mut self,
+        &self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let PropertyKey::NumericLiteral(_) = key {
@@ -888,7 +929,7 @@ impl<'a> PeepholeOptimizations {
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
-            self.mark_current_function_as_changed();
+            state.changed = true;
             return;
         }
         if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
@@ -900,7 +941,7 @@ impl<'a> PeepholeOptimizations {
                     None,
                     NumberBase::Decimal,
                 ));
-                self.mark_current_function_as_changed();
+                state.changed = true;
                 return;
             }
         }
@@ -911,7 +952,12 @@ impl<'a> PeepholeOptimizations {
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
     // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
-    fn try_flatten_arguments(&mut self, args: &mut Vec<'a, Argument<'a>>, ctx: Ctx<'a, '_>) {
+    fn try_flatten_arguments(
+        &self,
+        args: &mut Vec<'a, Argument<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
@@ -964,7 +1010,7 @@ impl<'a> PeepholeOptimizations {
                 new_args.push(arg);
             }
         }
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 
     /// Remove name from function expressions if it is not used.
@@ -972,14 +1018,19 @@ impl<'a> PeepholeOptimizations {
     /// e.g. `var a = function f() {}` -> `var a = function () {}`
     ///
     /// This compression is not safe if the code relies on `Function::name`.
-    fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
+    fn try_remove_name_from_functions(
+        &self,
+        func: &mut Function<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         if self.keep_names.function {
             return;
         }
 
         if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             func.id = None;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -988,14 +1039,19 @@ impl<'a> PeepholeOptimizations {
     /// e.g. `var a = class C {}` -> `var a = class {}`
     ///
     /// This compression is not safe if the code relies on `Class::name`.
-    fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
+    fn try_remove_name_from_classes(
+        &self,
+        class: &mut Class<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         if self.keep_names.class {
             return;
         }
 
         if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             class.id = None;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 }

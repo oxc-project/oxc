@@ -7,7 +7,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
 /// Remove Dead Code from the AST.
 ///
@@ -16,43 +16,52 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a, 'b> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
+    pub fn remove_dead_code_exit_statement(
+        &self,
+        stmt: &mut Statement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
-            Statement::IfStatement(s) => self.try_fold_if(s, ctx),
-            Statement::ForStatement(s) => self.try_fold_for(s, ctx),
+            Statement::IfStatement(s) => Self::try_fold_if(s, state, ctx),
+            Statement::ForStatement(s) => self.try_fold_for(s, state, ctx),
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
 
-        self.try_fold_expression_stmt(stmt, ctx);
+        self.try_fold_expression_stmt(stmt, state, ctx);
     }
 
     pub fn remove_dead_code_exit_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
+            Expression::ConditionalExpression(e) => {
+                self.try_fold_conditional_expression(e, state, ctx)
+            }
             Expression::SequenceExpression(sequence_expression) => {
-                self.try_fold_sequence_expression(sequence_expression, ctx)
+                self.try_fold_sequence_expression(sequence_expression, state, ctx)
             }
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
     pub fn remove_dead_code_exit_statements(
-        &mut self,
+        &self,
         stmts: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // Remove code after `return` and `throw` statements
@@ -104,12 +113,12 @@ impl<'a, 'b> PeepholeOptimizations {
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
             if !all_hoisted {
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
 
         if stmts.len() != len {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -150,29 +159,29 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_if(
-        &mut self,
         if_stmt: &mut IfStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
             Some(Statement::IfStatement(alternate)) => {
-                if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
+                if let Some(new_stmt) = Self::try_fold_if(alternate, state, ctx) {
                     if matches!(new_stmt, Statement::EmptyStatement(_)) {
                         if_stmt.alternate = None;
                     } else {
                         if_stmt.alternate = Some(new_stmt);
                     }
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
             _ => {}
         }
@@ -235,22 +244,23 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_for(
-        &mut self,
+        &self,
         for_stmt: &mut ForStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         if let Some(init) = &mut for_stmt.init {
             if let Some(init) = init.as_expression_mut() {
-                if self.remove_unused_expression(init, ctx) {
+                if self.remove_unused_expression(init, state, ctx) {
                     for_stmt.init = None;
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
         }
         if let Some(update) = &mut for_stmt.update {
-            if self.remove_unused_expression(update, ctx) {
+            if self.remove_unused_expression(update, state, ctx) {
                 for_stmt.update = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
 
@@ -293,7 +303,7 @@ impl<'a, 'b> PeepholeOptimizations {
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
                 None
             }
             None => None,
@@ -324,7 +334,12 @@ impl<'a, 'b> PeepholeOptimizations {
         var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
     }
 
-    fn try_fold_expression_stmt(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, 'b>) {
+    fn try_fold_expression_stmt(
+        &self,
+        stmt: &mut Statement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, 'b>,
+    ) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
@@ -334,9 +349,9 @@ impl<'a, 'b> PeepholeOptimizations {
             }
         }
 
-        if self.remove_unused_expression(&mut expr_stmt.expression, ctx) {
+        if self.remove_unused_expression(&mut expr_stmt.expression, state, ctx) {
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -375,8 +390,9 @@ impl<'a, 'b> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
-        &mut self,
+        &self,
         expr: &mut ConditionalExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
@@ -385,7 +401,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 let exprs = ctx.ast.vec_from_array([
                     {
                         let mut test = ctx.ast.move_expression(&mut expr.test);
-                        self.remove_unused_expression(&mut test, ctx);
+                        self.remove_unused_expression(&mut test, state, ctx);
                         test
                     },
                     ctx.ast.move_expression(if v {
@@ -426,8 +442,9 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_sequence_expression(
-        &mut self,
+        &self,
         sequence_expr: &mut SequenceExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let should_keep_as_sequence_expr = sequence_expr
@@ -446,28 +463,28 @@ impl<'a, 'b> PeepholeOptimizations {
         sequence_expr.expressions.retain_mut(|e| {
             i += 1;
             if should_keep_as_sequence_expr && i == old_len - 1 {
-                if self.remove_unused_expression(e, ctx) {
+                if self.remove_unused_expression(e, state, ctx) {
                     *e = ctx.ast.expression_numeric_literal(
                         e.span(),
                         0.0,
                         None,
                         NumberBase::Decimal,
                     );
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
                 return true;
             }
             if i == old_len {
                 return true;
             }
-            !self.remove_unused_expression(e, ctx)
+            !self.remove_unused_expression(e, state, ctx)
         });
         if sequence_expr.expressions.len() == 1 {
             return Some(sequence_expr.expressions.pop().unwrap());
         }
 
         if sequence_expr.expressions.len() != old_len {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
         None
     }
