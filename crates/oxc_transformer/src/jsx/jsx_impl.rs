@@ -559,7 +559,9 @@ impl<'a> JsxImpl<'a, '_> {
         let is_development = self.options.development;
         let is_element = opening_element.is_some();
 
-        let mut arguments = ctx.ast.vec();
+        // The maximum capacity length of arguments allowed.
+        let capacity = if is_classic { 3 + children.len() } else { 6 };
+        let mut arguments = ctx.ast.vec_with_capacity(capacity);
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
@@ -755,6 +757,7 @@ impl<'a> JsxImpl<'a, '_> {
             self.get_fragment(ctx)
         };
         arguments.insert(0, Argument::from(argument_expr));
+        debug_assert!(arguments.len() <= capacity);
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, self.pure)
