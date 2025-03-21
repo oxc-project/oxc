@@ -119,6 +119,16 @@ impl ConfigStoreBuilder {
                 let config_path_parent = config_path.as_ref().and_then(|p| p.parent());
 
                 for path in &extends {
+                    if path.starts_with("eslint:") || path.starts_with("plugin:") {
+                        // eslint: and plugin: named configs are not supported
+                        continue;
+                    }
+                    // if path does not include a ".", then we will heuristically skip it since it
+                    // kind of looks like it might be a named config
+                    if !path.to_string_lossy().contains('.') {
+                        continue;
+                    }
+
                     // resolve path relative to config path
                     let path = match config_path_parent {
                         Some(config_file_path) => &config_file_path.join(path),
@@ -947,6 +957,26 @@ mod test {
             extends_plugin_config.plugins(),
             "Extending a config with a plugin is the same as adding it directly"
         );
+    }
+
+    #[test]
+    fn test_not_extends_named_configs() {
+        // For now, test that extending named configs is just ignored
+        let config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "next/core-web-vitals",
+                "eslint:recommended",
+                "plugin:@typescript-eslint/strict-type-checked",
+                "prettier",
+                "plugin:unicorn/recommended"
+            ]
+        }
+        "#,
+        );
+        assert_eq!(config.plugins(), LintPlugins::default());
+        assert!(config.rules().is_empty());
     }
 
     fn config_store_from_path(path: &str) -> ConfigStore {
