@@ -761,7 +761,7 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = PatternParser::may_contain_strings_in_class_contents(kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -1321,7 +1321,7 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = PatternParser::may_contain_strings_in_class_contents(kind, &body);
 
                 // [SS:EE] NestedClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -2307,7 +2307,7 @@ impl<'a> PatternParser<'a> {
     // ---
 
     fn may_contain_strings_in_class_contents(
-        kind: &ast::CharacterClassContentsKind,
+        kind: ast::CharacterClassContentsKind,
         body: &Vec<'a, ast::CharacterClassContents<'a>>,
     ) -> bool {
         let may_contain_strings = |item: &ast::CharacterClassContents<'a>| match item {
