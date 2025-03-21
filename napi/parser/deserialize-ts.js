@@ -758,6 +758,9 @@ function deserializeArrayPattern(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     elements,
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 

@@ -536,6 +536,9 @@ export interface BindingProperty extends Span {
 export interface ArrayPattern extends Span {
   type: 'ArrayPattern';
   elements: Array<BindingPattern | BindingRestElement | null>;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface BindingRestElement extends Span {
