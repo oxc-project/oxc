@@ -373,25 +373,28 @@ function deserializeAssignmentTargetWithDefault(pos) {
 }
 
 function deserializeAssignmentTargetPropertyIdentifier(pos) {
+  const start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
+    key = deserializeIdentifierReference(pos + 8);
   const init = deserializeOptionExpression(pos + 40),
-    binding = deserializeIdentifierReference(pos + 8),
+    keyCopy = { ...key },
     value = init === null
-      ? binding
+      ? keyCopy
       : {
         type: 'AssignmentPattern',
-        start: deserializeU32(pos),
-        end: deserializeU32(pos + 4),
-        left: binding,
+        start: start,
+        end: end,
+        left: keyCopy,
         right: init,
       };
   return {
     type: 'Property',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
+    start,
+    end,
     method: false,
     shorthand: true,
     computed: false,
-    key: deserializeIdentifierReference(pos + 8),
+    key,
     value,
     kind: 'init',
   };
@@ -770,9 +773,7 @@ function deserializeBindingRestElement(pos) {
 function deserializeFunction(pos) {
   const params = deserializeBoxFormalParameters(pos + 72);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 64);
-  if (thisParam !== null) {
-    params.unshift(thisParam);
-  }
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: deserializeFunctionType(pos + 8),
     start: deserializeU32(pos),
@@ -831,17 +832,18 @@ function deserializeFunctionBody(pos) {
 }
 
 function deserializeArrowFunctionExpression(pos) {
+  const expression = deserializeBool(pos + 8);
   let body = deserializeBoxFunctionBody(pos + 40);
   return {
     type: 'ArrowFunctionExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: null,
-    expression: deserializeBool(pos + 8),
+    expression,
     generator: false,
     async: deserializeBool(pos + 9),
     params: deserializeBoxFormalParameters(pos + 24),
-    body: deserializeBool(pos + 8) ? body.body[0].expression : body,
+    body: expression ? body.body[0].expression : body,
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 16),
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 32),
   };
@@ -1790,15 +1792,16 @@ function deserializeTSTypePredicate(pos) {
 }
 
 function deserializeTSModuleDeclaration(pos) {
+  const kind = deserializeTSModuleDeclarationKind(pos + 80);
   return {
     type: 'TSModuleDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeTSModuleDeclarationName(pos + 8),
     body: deserializeOptionTSModuleDeclarationBody(pos + 64),
-    kind: deserializeTSModuleDeclarationKind(pos + 80),
+    kind,
     declare: deserializeBool(pos + 81),
-    global: deserializeTSModuleDeclarationKind(pos + 80) === 'global',
+    global: kind === 'global',
   };
 }
 

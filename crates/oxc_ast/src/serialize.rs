@@ -414,7 +414,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     ts_type = "FunctionBody | Expression",
     raw_deser = "
         let body = DESER[Box<FunctionBody>](POS_OFFSET.body);
-        DESER[bool](POS_OFFSET.expression) ? body.body[0].expression : body
+        THIS.expression ? body.body[0].expression : body
     "
 )]
 pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
@@ -436,14 +436,14 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
     ts_type = "IdentifierReference | AssignmentTargetWithDefault",
     raw_deser = "
         const init = DESER[Option<Expression>](POS_OFFSET.init),
-            binding = DESER[IdentifierReference](POS_OFFSET.binding),
+            keyCopy = {...THIS.key},
             value = init === null
-                ? binding
+                ? keyCopy
                 : {
                     type: 'AssignmentPattern',
-                    start: DESER[u32](POS_OFFSET.span.start),
-                    end: DESER[u32](POS_OFFSET.span.end),
-                    left: binding,
+                    start: THIS.start,
+                    end: THIS.end,
+                    left: keyCopy,
                     right: init,
                 };
         value
@@ -581,10 +581,7 @@ impl ESTree for ClassImplements<'_, '_> {
 }
 
 #[ast_meta]
-#[estree(
-    ts_type = "boolean",
-    raw_deser = "DESER[TSModuleDeclarationKind](POS_OFFSET.kind) === 'global'"
-)]
+#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
 pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
@@ -671,9 +668,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         /* IF_TS */
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
-        if (thisParam !== null) {
-            params.unshift(thisParam);
-        }
+        if (thisParam !== null) params.unshift(thisParam);
         /* END_IF_TS */
         params
     "
