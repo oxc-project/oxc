@@ -60,7 +60,7 @@ declare_oxc_lint!(
     /// ```
     NoDocumentCookie,
     unicorn,
-    correctness
+    restriction
 );
 
 impl Rule for NoDocumentCookie {
