@@ -147,22 +147,6 @@ impl Scoping {
     /// scope.
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
-    ///
-    /// ## Example
-    ///
-    /// ```
-    /// use oxc_semantic::Semantic;
-    /// let semantic: Semantic<'_> = parse_and_analyze("./foo.js");
-    ///
-    /// let classes = semantic
-    ///     .scopes()
-    ///     .symbol_ids()
-    ///     .filter(|&symbol_id| {
-    ///         let flags = semantic.scoping().get_flags(symbol_id);
-    ///         flags.is_class()
-    ///      })
-    ///      .collect::<Vec<_>>();
-    /// ```
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.symbol_spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }

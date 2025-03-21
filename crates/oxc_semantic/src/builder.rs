@@ -50,12 +50,6 @@ macro_rules! control_flow {
 ///
 /// The main API is the [`build`] method.
 ///
-/// # Example
-///
-/// ```rust
-#[doc = include_str!("../examples/semantic.rs")]
-/// ```
-///
 /// [`build`]: SemanticBuilder::build
 pub struct SemanticBuilder<'a> {
     /// source code of the parsed program

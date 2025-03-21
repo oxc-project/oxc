@@ -87,15 +87,6 @@ impl Linter {
     }
 
     /// Set the kind of auto fixes to apply.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_linter::{Linter, FixKind};
-    ///
-    /// // turn off all auto fixes. This is default behavior.
-    /// Linter::default().with_fix(FixKind::None);
-    /// ```
     #[must_use]
     pub fn with_fix(mut self, kind: FixKind) -> Self {
         self.options.fix = kind;

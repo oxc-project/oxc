@@ -210,7 +210,7 @@ impl Span {
     ///
     /// let span1 = Span::new(0, 5);
     /// let span2 = Span::new(3, 8);
-    /// let merged_span = span1.merge(&span2);
+    /// let merged_span = span1.merge(span2);
     /// assert_eq!(merged_span, Span::new(0, 8));
     /// ```
     #[must_use]

@@ -447,7 +447,7 @@ impl ExplicitFunctionReturnType {
 
     /**
      * Checks if a function belongs to:
-     * ```
+     * ```text
      * () => () => ...
      * () => function () { ... }
      * () => { return () => ... }
@@ -481,7 +481,7 @@ fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 /**
  * Checks if a node belongs to:
- * ```
+ * ```text
  * new Foo(() => {})
  *         ^^^^^^^^
  * ```
@@ -579,7 +579,7 @@ fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
 
 /**
  * Checks if a node is a class property with a type annotation.
- * ```
+ * ```text
  * public x: Foo = ...
  * ```
  */
@@ -590,7 +590,7 @@ fn is_property_definition_with_type_annotation(node: &AstNode) -> bool {
 
 /**
  * Checks if a node is type-constrained in JSX
- * ```
+ * ```text
  * <Foo x={() => {}} />
  * <Bar>{() => {}}</Bar>
  * <Baz {...props} />
@@ -710,7 +710,7 @@ fn check_return_statements<'a>(statements: &'a [Statement<'a>]) -> bool {
 
 /**
  * Checks if a node is a property or a nested property of a typed object:
- * ```
+ * ```text
  * const x: Foo = { prop: () => {} }
  * const x = { prop: () => {} } as Foo
  * const x = <Foo>{ prop: () => {} }

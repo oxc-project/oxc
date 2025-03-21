@@ -1,7 +1,7 @@
 //! Semantic analysis of a JavaScript/TypeScript program.
 //!
 //! # Example
-//! ```rust
+//! ```ignore
 #![doc = include_str!("../examples/semantic.rs")]
 //! ```
 

@@ -354,7 +354,7 @@ impl<'a> Symbol<'_, 'a> {
     ///   reference was not used by others, or `false` if it was.
     ///
     /// ## Examples
-    /// ```
+    /// ```text
     /// let a = 0;
     /// // should return true
     /// a++;

@@ -14,7 +14,7 @@
 //!
 //! Instead of nested enums:
 //!
-//! ```
+//! ```ignore
 //! pub enum Expression<'a> {
 //!     BooleanLiteral(Box<'a, BooleanLiteral>),
 //!     NullLiteral(Box<'a, NullLiteral>),
@@ -31,7 +31,7 @@
 //!
 //! We define the types using `inherit_variants!` macro:
 //!
-//! ```
+//! ```ignore
 //! inherit_variants! {
 //! #[repr(C, u8)]
 //! pub enum Expression<'a> {
@@ -52,7 +52,7 @@
 //!
 //! `inherit_variants!` macro expands `Expression` to:
 //!
-//! ```
+//! ```ignore
 //! #[repr(C, u8)]
 //! pub enum Expression<'a> {
 //!     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
@@ -82,7 +82,7 @@
 //!
 //! #### Creation
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! let expr = Expression::MemberExpression(
 //!   MemberExpression::ComputedMemberExpression(computed_member_expr)
@@ -94,7 +94,7 @@
 //!
 //! #### Conversion
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! let expr = Expression::MemberExpression(member_expr);
 //!
@@ -102,7 +102,7 @@
 //! let expr = Expression::from(member_expr);
 //! ```
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! let maybe_member_expr = match expr {
 //!     Expression::MemberExpression(member_expr) => Some(member_expr),
@@ -115,7 +115,7 @@
 //!
 //! #### Testing
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! if matches!(expr, Expression::MemberExpression(_)) { }
 //!
@@ -127,7 +127,7 @@
 //!
 //! #### Branching
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! if let Expression::MemberExpression(member_expr) = &expr { }
 //!
@@ -137,7 +137,7 @@
 //!
 //! #### Matching
 //!
-//! ```
+//! ```ignore
 //! // Old
 //! match get_expression() {
 //!     Expression::MemberExpression(member_expr) => visitor.visit(member_expr),

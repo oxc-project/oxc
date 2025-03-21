@@ -56,7 +56,7 @@ impl ContentEq for () {
 /// If either value is `NaN`, `f64::content_eq` only returns `true` if both are the *same* `NaN`,
 /// with the same bit pattern. This means, for example:
 ///
-/// ```
+/// ```text
 /// f64::NAN.content_eq(f64::NAN) == true
 /// f64::NAN.content_eq(-f64::NAN) == false
 /// f64::NAN.content_eq(--f64::NAN) == true
@@ -65,7 +65,7 @@ impl ContentEq for () {
 /// Any other `NaN`s which are created through an arithmetic operation, rather than explicitly
 /// with `f64::NAN`, are not guaranteed to equal `f64::NAN`.
 ///
-/// ```
+/// ```text
 /// // This results in `false` on at least some flavors of `x84_64`,
 /// // but that's not specified - could also result in `true`!
 /// (-1f64).sqrt().content_eq(f64::NAN) == false

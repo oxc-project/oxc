@@ -73,7 +73,7 @@ impl ConfigStoreBuilder {
     ///
     /// # Example
     /// Here's how to create a [`ConfigStore`] from a `.oxlintrc.json` file.
-    /// ```
+    /// ```ignore
     /// use oxc_linter::{ConfigBuilder, Oxlintrc};
     /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
     /// let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc).build();

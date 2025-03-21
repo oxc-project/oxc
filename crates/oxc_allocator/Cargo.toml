@@ -16,7 +16,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
