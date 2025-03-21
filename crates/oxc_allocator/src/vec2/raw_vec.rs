@@ -643,8 +643,19 @@ impl<'a, T> RawVec<'a, T> {
 
         let res = match self.current_layout() {
             Some(layout) => unsafe {
+                #[inline(never)]
+                unsafe fn grow_uninlined(
+                    a: &Bump,
+                    ptr: NonNull<u8>,
+                    layout: Layout,
+                    new_layout: Layout,
+                ) -> Result<NonNull<[u8]>, AllocError> {
+                    a.grow(ptr, layout, new_layout)
+                }
+
                 debug_assert!(new_layout.align() == layout.align());
-                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+                debug_assert!(new_layout.size() > layout.size());
+                grow_uninlined(self.a, self.ptr.cast(), layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
