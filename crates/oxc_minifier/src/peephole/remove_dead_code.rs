@@ -382,7 +382,7 @@ impl<'a, 'b> PeepholeOptimizations {
         expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
             if expr.test.may_have_side_effects(&ctx) {
                 // "(a, true) ? b : c" => "a, b"
-                let exprs = ctx.ast.vec_from_iter([
+                let exprs = ctx.ast.vec_from_array([
                     {
                         let mut test = ctx.ast.move_expression(&mut expr.test);
                         self.remove_unused_expression(&mut test, ctx);
@@ -408,7 +408,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 if should_keep_as_sequence_expr {
                     ctx.ast.expression_sequence(
                         expr.span,
-                        ctx.ast.vec_from_iter([
+                        ctx.ast.vec_from_array([
                             ctx.ast.expression_numeric_literal(
                                 expr.span,
                                 0.0,

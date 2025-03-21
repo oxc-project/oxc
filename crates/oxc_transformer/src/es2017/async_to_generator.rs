@@ -278,7 +278,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 Atom::new_const("arguments"),
                 ReferenceFlags::Read,
             ));
-            (callee, ctx.ast.vec_from_iter([this_argument, arguments_argument]))
+            (callee, ctx.ast.vec_from_array([this_argument, arguments_argument]))
         } else {
             // callee()
             (callee, ctx.ast.vec())

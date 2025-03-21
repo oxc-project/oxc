@@ -562,7 +562,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        let arguments = ctx.ast.vec_from_iter([
+        let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
             Argument::from(value),
         ]);
