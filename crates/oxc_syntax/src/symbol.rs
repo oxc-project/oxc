@@ -1,6 +1,7 @@
 #![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
@@ -14,6 +15,19 @@ use oxc_ast_macros::ast;
 #[content_eq(skip)]
 #[estree(skip)]
 pub struct SymbolId(NonMaxU32);
+
+impl<'alloc> CloneIn<'alloc> for SymbolId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips symbol_id field
+        unreachable!();
+    }
+
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
+    }
+}
 
 impl SymbolId {
     /// Create `SymbolId` from `u32`.

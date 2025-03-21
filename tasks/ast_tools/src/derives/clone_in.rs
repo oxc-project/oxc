@@ -97,7 +97,23 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         quote!( #type_ident )
     };
 
-    generate_impl(&type_ident, &body, struct_def.has_lifetime, has_fields)
+    let clone_in_with_semantic_ids_body = if has_fields {
+        let fields = struct_def.fields.iter().map(|field| {
+            let field_ident = field.ident();
+            quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
+        });
+        quote!( #type_ident { #(#fields),* } )
+    } else {
+        quote!( #type_ident )
+    };
+
+    generate_impl(
+        &type_ident,
+        &body,
+        &clone_in_with_semantic_ids_body,
+        struct_def.has_lifetime,
+        has_fields,
+    )
 }
 
 /// Get if a struct field should be filled with default value when cloning.
@@ -137,18 +153,41 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         }
     });
 
-    let body = quote! {
+    let clone_in_with_semantic_ids_match_arms = enum_def.all_variants(schema).map(|variant| {
+        let ident = variant.ident();
+        if variant.is_fieldless() {
+            quote!( Self::#ident => #type_ident::#ident )
+        } else {
+            // does not needs mutate `uses_allocator` since it should be the same as `clone_in`
+            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
+        }
+    });
+
+    let clone_in_body = quote! {
         match self {
             #(#match_arms),*
         }
     };
 
-    generate_impl(&type_ident, &body, enum_def.has_lifetime, uses_allocator)
+    let clone_in_with_semantic_ids_body = quote! {
+        match self {
+            #(#clone_in_with_semantic_ids_match_arms),*
+        }
+    };
+
+    generate_impl(
+        &type_ident,
+        &clone_in_body,
+        &clone_in_with_semantic_ids_body,
+        enum_def.has_lifetime,
+        uses_allocator,
+    )
 }
 
 fn generate_impl(
     type_ident: &Ident,
-    body: &TokenStream,
+    clone_in_body: &TokenStream,
+    clone_in_with_semantic_ids_body: &TokenStream,
     has_lifetime: bool,
     uses_allocator: bool,
 ) -> TokenStream {
@@ -159,7 +198,11 @@ fn generate_impl(
             impl<'new_alloc> CloneIn<'new_alloc> for #type_ident<'_> {
                 type Cloned = #type_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
-                    #body
+                    #clone_in_body
+                }
+                ///@@line_break
+                fn clone_in_with_semantic_ids(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
+                    #clone_in_with_semantic_ids_body
                 }
             }
         }
@@ -168,7 +211,12 @@ fn generate_impl(
             impl<'alloc> CloneIn<'alloc> for #type_ident {
                 type Cloned = #type_ident;
                 fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
-                    #body
+                    #clone_in_body
+                }
+
+                ///@@line_break
+                fn clone_in_with_semantic_ids(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
+                    #clone_in_with_semantic_ids_body
                 }
             }
         }
