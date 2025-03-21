@@ -62,6 +62,7 @@ describe('parse', () => {
                 start: 4,
                 end: 5,
                 name: 'x',
+                decorators: [],
                 typeAnnotation: null,
                 optional: false,
               },

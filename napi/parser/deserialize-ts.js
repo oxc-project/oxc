@@ -77,6 +77,9 @@ function deserializeBindingIdentifier(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
