@@ -3,18 +3,18 @@ import { moduleRunnerTransform } from '../index';
 
 describe('moduleRunnerTransform', () => {
   test('dynamic import', async () => {
-    const result = await moduleRunnerTransform('index.js', `export const i = () => import('./foo')`);
+    const result = moduleRunnerTransform('index.js', `export const i = () => import('./foo')`);
     expect(result?.code).toMatchInlineSnapshot(`
-			"const i = () => __vite_ssr_dynamic_import__("./foo");
-			Object.defineProperty(__vite_ssr_exports__, "i", {
-				enumerable: true,
-				configurable: true,
-				get() {
-					return i;
-				}
-			});
-			"
-		`);
+      "Object.defineProperty(__vite_ssr_exports__, "i", {
+      	enumerable: true,
+      	configurable: true,
+      	get() {
+      		return i;
+      	}
+      });
+      const i = () => __vite_ssr_dynamic_import__("./foo");
+      "
+    `);
     expect(result?.deps).toEqual([]);
     expect(result?.dynamicDeps).toEqual(['./foo']);
   });
@@ -32,7 +32,7 @@ describe('moduleRunnerTransform', () => {
 
     expect(map).toMatchInlineSnapshot(`
       {
-        "mappings": "AAAO,MAAM,IAAI;AAAjB",
+        "mappings": "AAAA;;;;;;;AAAO,MAAM,IAAI",
         "names": [],
         "sources": [
           "index.js",
