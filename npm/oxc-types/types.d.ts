@@ -553,7 +553,6 @@ export interface Function extends Span {
   body: FunctionBody | null;
   declare?: boolean;
   typeParameters?: TSTypeParameterDeclaration | null;
-  thisParam?: TSThisParameter | null;
   returnType?: TSTypeAnnotation | null;
 }
 
@@ -918,8 +917,11 @@ export interface JSXText extends Span {
 }
 
 export interface TSThisParameter extends Span {
-  type: 'TSThisParameter';
+  type: 'Identifier';
   typeAnnotation: TSTypeAnnotation | null;
+  name: 'this';
+  decorators?: [];
+  optional?: false;
 }
 
 export interface TSEnumDeclaration extends Span {

@@ -749,6 +749,7 @@ function deserializeBindingRestElement(pos) {
 }
 
 function deserializeFunction(pos) {
+  const params = deserializeBoxFormalParameters(pos + 72);
   return {
     type: deserializeFunctionType(pos + 8),
     start: deserializeU32(pos),
@@ -757,7 +758,7 @@ function deserializeFunction(pos) {
     expression: false,
     generator: deserializeBool(pos + 48),
     async: deserializeBool(pos + 49),
-    params: deserializeBoxFormalParameters(pos + 72),
+    params,
     body: deserializeOptionBoxFunctionBody(pos + 88),
   };
 }
@@ -1262,10 +1263,11 @@ function deserializeJSXText(pos) {
 
 function deserializeTSThisParameter(pos) {
   return {
-    type: 'TSThisParameter',
+    type: 'Identifier',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
+    name: 'this',
   };
 }
 

@@ -1345,11 +1345,10 @@ impl ESTree for Function<'_> {
         state.serialize_field("expression", &crate::serialize::False(self));
         state.serialize_field("generator", &self.generator);
         state.serialize_field("async", &self.r#async);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::FunctionFormalParameters(self));
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_ts_field("thisParam", &self.this_param);
         state.serialize_ts_field("returnType", &self.return_type);
         state.end();
     }
@@ -2278,10 +2277,13 @@ impl ESTree for JSXText<'_> {
 impl ESTree for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSThisParameter"));
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("name", &crate::serialize::This(self));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }

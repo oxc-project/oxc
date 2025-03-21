@@ -1658,7 +1658,7 @@ pub struct BindingRestElement<'a> {
     add_fields(expression = False),
     field_order(
         r#type, span, id, expression, generator, r#async, params, body,
-        declare, type_parameters, this_param, return_type,
+        declare, type_parameters, return_type,
     ),
 )]
 pub struct Function<'a> {
@@ -1695,10 +1695,12 @@ pub struct Function<'a> {
     /// });
     /// ```
     #[ts]
+    #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
+    #[estree(via = FunctionFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]

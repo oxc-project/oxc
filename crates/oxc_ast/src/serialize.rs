@@ -150,6 +150,17 @@ impl<T> ESTree for Init<'_, T> {
     }
 }
 
+/// Serialized as `"this"`.
+#[ast_meta]
+#[estree(ts_type = "'this'", raw_deser = "'this'")]
+pub struct This<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for This<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("this").serialize(serializer);
+    }
+}
+
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
 #[ts]
@@ -639,6 +650,42 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        /* IF_TS */
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) {
+            params.unshift(thisParam);
+        }
+        /* END_IF_TS */
+        params
+    "
+)]
+pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+
+impl ESTree for FunctionFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if let Some(this_param) = &self.0.this_param {
+            seq.serialize_ts_element(this_param);
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
     }
 }
 
