@@ -4,7 +4,6 @@ target/
 
 # Wasm
 **/*.wasm
-!/napi/parser/parser.wasm32-wasi.wasm
 
 # node_modules
 /node_modules/
