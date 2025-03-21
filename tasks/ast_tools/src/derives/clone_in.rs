@@ -7,7 +7,6 @@ use syn::Ident;
 use crate::{
     Result,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    utils::create_safe_ident,
 };
 
 use super::{
@@ -59,7 +58,7 @@ impl Derive for DeriveCloneIn {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::default_trait_access)]
+            #![allow(unused_variables, clippy::default_trait_access)]
 
             ///@@line_break
             use oxc_allocator::{Allocator, CloneIn};
@@ -83,7 +82,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
 
     let type_ident = struct_def.ident();
     let has_fields = !struct_def.fields.is_empty();
-    let body = if has_fields {
+    let clone_in_body = if has_fields {
         let fields = struct_def.fields.iter().map(|field| {
             let field_ident = field.ident();
             if struct_field_is_default(field, schema) {
@@ -109,10 +108,9 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
 
     generate_impl(
         &type_ident,
-        &body,
+        &clone_in_body,
         &clone_in_with_semantic_ids_body,
         struct_def.has_lifetime,
-        has_fields,
     )
 }
 
@@ -142,36 +140,31 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     );
 
     let type_ident = enum_def.ident();
-    let mut uses_allocator = false;
     let match_arms = enum_def.all_variants(schema).map(|variant| {
         let ident = variant.ident();
         if variant.is_fieldless() {
             quote!( Self::#ident => #type_ident::#ident )
         } else {
-            uses_allocator = true;
             quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in(it, allocator)) )
         }
     });
-
-    let clone_in_with_semantic_ids_match_arms = enum_def.all_variants(schema).map(|variant| {
-        let ident = variant.ident();
-        if variant.is_fieldless() {
-            quote!( Self::#ident => #type_ident::#ident )
-        } else {
-            // does not needs mutate `uses_allocator` since it should be the same as `clone_in`
-            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
-        }
-    });
-
     let clone_in_body = quote! {
         match self {
             #(#match_arms),*
         }
     };
 
+    let match_arms = enum_def.all_variants(schema).map(|variant| {
+        let ident = variant.ident();
+        if variant.is_fieldless() {
+            quote!( Self::#ident => #type_ident::#ident )
+        } else {
+            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
+        }
+    });
     let clone_in_with_semantic_ids_body = quote! {
         match self {
-            #(#clone_in_with_semantic_ids_match_arms),*
+            #(#match_arms),*
         }
     };
 
@@ -180,7 +173,6 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         &clone_in_body,
         &clone_in_with_semantic_ids_body,
         enum_def.has_lifetime,
-        uses_allocator,
     )
 }
 
@@ -189,35 +181,22 @@ fn generate_impl(
     clone_in_body: &TokenStream,
     clone_in_with_semantic_ids_body: &TokenStream,
     has_lifetime: bool,
-    uses_allocator: bool,
 ) -> TokenStream {
-    let alloc_ident = create_safe_ident(if uses_allocator { "allocator" } else { "_" });
+    let (from_lifetime, to_lifetime) =
+        if has_lifetime { (quote!( <'_> ), quote!( <'new_alloc> )) } else { (quote!(), quote!()) };
 
-    if has_lifetime {
-        quote! {
-            impl<'new_alloc> CloneIn<'new_alloc> for #type_ident<'_> {
-                type Cloned = #type_ident<'new_alloc>;
-                fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
-                    #clone_in_body
-                }
-                ///@@line_break
-                fn clone_in_with_semantic_ids(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
-                    #clone_in_with_semantic_ids_body
-                }
+    quote! {
+        impl<'new_alloc> CloneIn<'new_alloc> for #type_ident #from_lifetime {
+            type Cloned = #type_ident #to_lifetime;
+
+            ///@@line_break
+            fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+                #clone_in_body
             }
-        }
-    } else {
-        quote! {
-            impl<'alloc> CloneIn<'alloc> for #type_ident {
-                type Cloned = #type_ident;
-                fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
-                    #clone_in_body
-                }
 
-                ///@@line_break
-                fn clone_in_with_semantic_ids(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
-                    #clone_in_with_semantic_ids_body
-                }
+            ///@@line_break
+            fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+                #clone_in_with_semantic_ids_body
             }
         }
     }

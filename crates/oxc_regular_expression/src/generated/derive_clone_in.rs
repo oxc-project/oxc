@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
-#![allow(clippy::default_trait_access)]
+#![allow(unused_variables, clippy::default_trait_access)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
@@ -9,6 +9,7 @@ use crate::ast::*;
 
 impl<'new_alloc> CloneIn<'new_alloc> for Pattern<'_> {
     type Cloned = Pattern<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Pattern {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -26,6 +27,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Pattern<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for Disjunction<'_> {
     type Cloned = Disjunction<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Disjunction {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -43,6 +45,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Disjunction<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for Alternative<'_> {
     type Cloned = Alternative<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Alternative {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -60,6 +63,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Alternative<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for Term<'_> {
     type Cloned = Term<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::BoundaryAssertion(it) => {
@@ -125,16 +129,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for Term<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BoundaryAssertion {
+impl<'new_alloc> CloneIn<'new_alloc> for BoundaryAssertion {
     type Cloned = BoundaryAssertion;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         BoundaryAssertion {
             span: CloneIn::clone_in(&self.span, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         BoundaryAssertion {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
@@ -142,9 +147,10 @@ impl<'alloc> CloneIn<'alloc> for BoundaryAssertion {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BoundaryAssertionKind {
+impl<'new_alloc> CloneIn<'new_alloc> for BoundaryAssertionKind {
     type Cloned = BoundaryAssertionKind;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Start => BoundaryAssertionKind::Start,
             Self::End => BoundaryAssertionKind::End,
@@ -153,7 +159,7 @@ impl<'alloc> CloneIn<'alloc> for BoundaryAssertionKind {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Start => BoundaryAssertionKind::Start,
             Self::End => BoundaryAssertionKind::End,
@@ -165,6 +171,7 @@ impl<'alloc> CloneIn<'alloc> for BoundaryAssertionKind {
 
 impl<'new_alloc> CloneIn<'new_alloc> for LookAroundAssertion<'_> {
     type Cloned = LookAroundAssertion<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         LookAroundAssertion {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -182,9 +189,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for LookAroundAssertion<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for LookAroundAssertionKind {
+impl<'new_alloc> CloneIn<'new_alloc> for LookAroundAssertionKind {
     type Cloned = LookAroundAssertionKind;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Lookahead => LookAroundAssertionKind::Lookahead,
             Self::NegativeLookahead => LookAroundAssertionKind::NegativeLookahead,
@@ -193,7 +201,7 @@ impl<'alloc> CloneIn<'alloc> for LookAroundAssertionKind {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Lookahead => LookAroundAssertionKind::Lookahead,
             Self::NegativeLookahead => LookAroundAssertionKind::NegativeLookahead,
@@ -205,6 +213,7 @@ impl<'alloc> CloneIn<'alloc> for LookAroundAssertionKind {
 
 impl<'new_alloc> CloneIn<'new_alloc> for Quantifier<'_> {
     type Cloned = Quantifier<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Quantifier {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -226,9 +235,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for Quantifier<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for Character {
+impl<'new_alloc> CloneIn<'new_alloc> for Character {
     type Cloned = Character;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Character {
             span: CloneIn::clone_in(&self.span, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
@@ -236,7 +246,7 @@ impl<'alloc> CloneIn<'alloc> for Character {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Character {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
@@ -245,9 +255,10 @@ impl<'alloc> CloneIn<'alloc> for Character {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for CharacterKind {
+impl<'new_alloc> CloneIn<'new_alloc> for CharacterKind {
     type Cloned = CharacterKind;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::ControlLetter => CharacterKind::ControlLetter,
             Self::HexadecimalEscape => CharacterKind::HexadecimalEscape,
@@ -262,7 +273,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterKind {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::ControlLetter => CharacterKind::ControlLetter,
             Self::HexadecimalEscape => CharacterKind::HexadecimalEscape,
@@ -278,16 +289,17 @@ impl<'alloc> CloneIn<'alloc> for CharacterKind {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for CharacterClassEscape {
+impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassEscape {
     type Cloned = CharacterClassEscape;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClassEscape {
             span: CloneIn::clone_in(&self.span, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClassEscape {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
@@ -295,9 +307,10 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassEscape {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for CharacterClassEscapeKind {
+impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassEscapeKind {
     type Cloned = CharacterClassEscapeKind;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::D => CharacterClassEscapeKind::D,
             Self::NegativeD => CharacterClassEscapeKind::NegativeD,
@@ -308,7 +321,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassEscapeKind {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::D => CharacterClassEscapeKind::D,
             Self::NegativeD => CharacterClassEscapeKind::NegativeD,
@@ -322,6 +335,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassEscapeKind {
 
 impl<'new_alloc> CloneIn<'new_alloc> for UnicodePropertyEscape<'_> {
     type Cloned = UnicodePropertyEscape<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         UnicodePropertyEscape {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -343,19 +357,21 @@ impl<'new_alloc> CloneIn<'new_alloc> for UnicodePropertyEscape<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for Dot {
+impl<'new_alloc> CloneIn<'new_alloc> for Dot {
     type Cloned = Dot;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Dot { span: CloneIn::clone_in(&self.span, allocator) }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Dot { span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator) }
     }
 }
 
 impl<'new_alloc> CloneIn<'new_alloc> for CharacterClass<'_> {
     type Cloned = CharacterClass<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClass {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -377,9 +393,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for CharacterClass<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for CharacterClassContentsKind {
+impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassContentsKind {
     type Cloned = CharacterClassContentsKind;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Union => CharacterClassContentsKind::Union,
             Self::Intersection => CharacterClassContentsKind::Intersection,
@@ -387,7 +404,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassContentsKind {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Union => CharacterClassContentsKind::Union,
             Self::Intersection => CharacterClassContentsKind::Intersection,
@@ -398,6 +415,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassContentsKind {
 
 impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassContents<'_> {
     type Cloned = CharacterClassContents<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::CharacterClassRange(it) => {
@@ -445,9 +463,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassContents<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for CharacterClassRange {
+impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassRange {
     type Cloned = CharacterClassRange;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClassRange {
             span: CloneIn::clone_in(&self.span, allocator),
             min: CloneIn::clone_in(&self.min, allocator),
@@ -455,7 +474,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassRange {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClassRange {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             min: CloneIn::clone_in_with_semantic_ids(&self.min, allocator),
@@ -466,6 +485,7 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassRange {
 
 impl<'new_alloc> CloneIn<'new_alloc> for ClassStringDisjunction<'_> {
     type Cloned = ClassStringDisjunction<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ClassStringDisjunction {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -485,6 +505,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ClassStringDisjunction<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for ClassString<'_> {
     type Cloned = ClassString<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ClassString {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -504,6 +525,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ClassString<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for CapturingGroup<'_> {
     type Cloned = CapturingGroup<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CapturingGroup {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -523,6 +545,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CapturingGroup<'_> {
 
 impl<'new_alloc> CloneIn<'new_alloc> for IgnoreGroup<'_> {
     type Cloned = IgnoreGroup<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IgnoreGroup {
             span: CloneIn::clone_in(&self.span, allocator),
@@ -540,9 +563,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for IgnoreGroup<'_> {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for Modifiers {
+impl<'new_alloc> CloneIn<'new_alloc> for Modifiers {
     type Cloned = Modifiers;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Modifiers {
             span: CloneIn::clone_in(&self.span, allocator),
             enabling: CloneIn::clone_in(&self.enabling, allocator),
@@ -550,7 +574,7 @@ impl<'alloc> CloneIn<'alloc> for Modifiers {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Modifiers {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             enabling: CloneIn::clone_in_with_semantic_ids(&self.enabling, allocator),
@@ -559,9 +583,10 @@ impl<'alloc> CloneIn<'alloc> for Modifiers {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for Modifier {
+impl<'new_alloc> CloneIn<'new_alloc> for Modifier {
     type Cloned = Modifier;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Modifier {
             ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
             multiline: CloneIn::clone_in(&self.multiline, allocator),
@@ -569,7 +594,7 @@ impl<'alloc> CloneIn<'alloc> for Modifier {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Modifier {
             ignore_case: CloneIn::clone_in_with_semantic_ids(&self.ignore_case, allocator),
             multiline: CloneIn::clone_in_with_semantic_ids(&self.multiline, allocator),
@@ -578,16 +603,17 @@ impl<'alloc> CloneIn<'alloc> for Modifier {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for IndexedReference {
+impl<'new_alloc> CloneIn<'new_alloc> for IndexedReference {
     type Cloned = IndexedReference;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IndexedReference {
             span: CloneIn::clone_in(&self.span, allocator),
             index: CloneIn::clone_in(&self.index, allocator),
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IndexedReference {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             index: CloneIn::clone_in_with_semantic_ids(&self.index, allocator),
@@ -597,6 +623,7 @@ impl<'alloc> CloneIn<'alloc> for IndexedReference {
 
 impl<'new_alloc> CloneIn<'new_alloc> for NamedReference<'_> {
     type Cloned = NamedReference<'new_alloc>;
+
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         NamedReference {
             span: CloneIn::clone_in(&self.span, allocator),

@@ -1,16 +1,17 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
-#![allow(clippy::default_trait_access)]
+#![allow(unused_variables, clippy::default_trait_access)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
 use crate::number::*;
 use crate::operator::*;
 
-impl<'alloc> CloneIn<'alloc> for NumberBase {
+impl<'new_alloc> CloneIn<'new_alloc> for NumberBase {
     type Cloned = NumberBase;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Float => NumberBase::Float,
             Self::Decimal => NumberBase::Decimal,
@@ -20,7 +21,7 @@ impl<'alloc> CloneIn<'alloc> for NumberBase {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Float => NumberBase::Float,
             Self::Decimal => NumberBase::Decimal,
@@ -31,9 +32,10 @@ impl<'alloc> CloneIn<'alloc> for NumberBase {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BigintBase {
+impl<'new_alloc> CloneIn<'new_alloc> for BigintBase {
     type Cloned = BigintBase;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Decimal => BigintBase::Decimal,
             Self::Binary => BigintBase::Binary,
@@ -42,7 +44,7 @@ impl<'alloc> CloneIn<'alloc> for BigintBase {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Decimal => BigintBase::Decimal,
             Self::Binary => BigintBase::Binary,
@@ -52,9 +54,10 @@ impl<'alloc> CloneIn<'alloc> for BigintBase {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
+impl<'new_alloc> CloneIn<'new_alloc> for AssignmentOperator {
     type Cloned = AssignmentOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Assign => AssignmentOperator::Assign,
             Self::Addition => AssignmentOperator::Addition,
@@ -75,7 +78,7 @@ impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Assign => AssignmentOperator::Assign,
             Self::Addition => AssignmentOperator::Addition,
@@ -97,9 +100,10 @@ impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BinaryOperator {
+impl<'new_alloc> CloneIn<'new_alloc> for BinaryOperator {
     type Cloned = BinaryOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Equality => BinaryOperator::Equality,
             Self::Inequality => BinaryOperator::Inequality,
@@ -126,7 +130,7 @@ impl<'alloc> CloneIn<'alloc> for BinaryOperator {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Equality => BinaryOperator::Equality,
             Self::Inequality => BinaryOperator::Inequality,
@@ -154,9 +158,10 @@ impl<'alloc> CloneIn<'alloc> for BinaryOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for LogicalOperator {
+impl<'new_alloc> CloneIn<'new_alloc> for LogicalOperator {
     type Cloned = LogicalOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Or => LogicalOperator::Or,
             Self::And => LogicalOperator::And,
@@ -164,7 +169,7 @@ impl<'alloc> CloneIn<'alloc> for LogicalOperator {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Or => LogicalOperator::Or,
             Self::And => LogicalOperator::And,
@@ -173,9 +178,10 @@ impl<'alloc> CloneIn<'alloc> for LogicalOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for UnaryOperator {
+impl<'new_alloc> CloneIn<'new_alloc> for UnaryOperator {
     type Cloned = UnaryOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::UnaryPlus => UnaryOperator::UnaryPlus,
             Self::UnaryNegation => UnaryOperator::UnaryNegation,
@@ -187,7 +193,7 @@ impl<'alloc> CloneIn<'alloc> for UnaryOperator {
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::UnaryPlus => UnaryOperator::UnaryPlus,
             Self::UnaryNegation => UnaryOperator::UnaryNegation,
@@ -200,16 +206,17 @@ impl<'alloc> CloneIn<'alloc> for UnaryOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for UpdateOperator {
+impl<'new_alloc> CloneIn<'new_alloc> for UpdateOperator {
     type Cloned = UpdateOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Increment => UpdateOperator::Increment,
             Self::Decrement => UpdateOperator::Decrement,
         }
     }
 
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Increment => UpdateOperator::Increment,
             Self::Decrement => UpdateOperator::Decrement,
