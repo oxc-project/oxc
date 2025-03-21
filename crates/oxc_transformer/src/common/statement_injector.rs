@@ -12,7 +12,7 @@
 //! self.ctx.statement_injector.insert_many_after(address, statements);
 //! ```
 
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::hash_map::Entry};
 
 use rustc_hash::FxHashMap;
 
@@ -152,6 +152,34 @@ impl<'a> StatementInjectorStore<'a> {
         adjacent_stmts.extend(
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
+    }
+
+    /// Move insertions from one [`Address`] to another.
+    ///
+    /// Use this if you convert one statement to another, and other code may have attached
+    /// insertions to the original statement.
+    #[expect(dead_code)]
+    #[inline]
+    pub fn move_insertions<A1: GetAddress, A2: GetAddress>(
+        &self,
+        old_target: &A1,
+        new_target: &A2,
+    ) {
+        self.move_insertions_address(old_target.address(), new_target.address());
+    }
+
+    fn move_insertions_address(&self, old_address: Address, new_address: Address) {
+        let mut insertions = self.insertions.borrow_mut();
+        let Some(mut adjacent_stmts) = insertions.remove(&old_address) else { return };
+
+        match insertions.entry(new_address) {
+            Entry::Occupied(entry) => {
+                entry.into_mut().append(&mut adjacent_stmts);
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(adjacent_stmts);
+            }
+        }
     }
 }
 
