@@ -97,8 +97,8 @@
         "oxc.configPath": {
           "type": "string",
           "scope": "window",
-          "default": ".oxlintrc.json",
-          "description": "Path to ESlint configuration."
+          "default": "",
+          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
         },
         "oxc.path.server": {
           "type": "string",
