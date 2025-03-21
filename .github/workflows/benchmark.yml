@@ -43,6 +43,44 @@ defaults:
     shell: bash
 
 jobs:
+  # Build and run benchmarks for walltime
+  benchmark-walltime:
+    name: Benchmark (walltime)
+    runs-on: codspeed-macro
+    strategy:
+      fail-fast: true
+      matrix:
+        component:
+          - lexer
+          - parser
+          - transformer
+
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          cache-key: benchmark-${{ matrix.component }}-${{ runner.arch }}
+          save-cache: ${{ github.ref_name == 'main' || github.ref_name == '03-20-ci_benchmarks_try_using_walltime_instrumentation' }}
+          tools: cargo-codspeed
+
+      - name: Build benchmark
+        env:
+          RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
+        run: |
+          cargo codspeed build --profile release -p oxc_benchmark ${{ matrix.component }} \
+            --no-default-features --features ${{ matrix.component }} --features codspeed
+      - name: Run benchmark
+        uses: CodSpeedHQ/action@0010eb0ca6e89b80c88e8edaaa07cfe5f3e6664d # v3.5.0
+        timeout-minutes: 30
+        with:
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: cargo codspeed run
+      - name: Debug
+        run: |
+          find ./target/codspeed
+
   # Build and run benchmarks for all components except linter
   benchmark:
     name: Benchmark
