@@ -751,6 +751,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         self.buf.reserve(self.len, additional);
     }
 
+    /// A specialized version of `self.reserve(len, 1)` which requires the
+    /// caller to ensure `len == self.capacity()`.
+    #[inline(never)]
+    pub fn grow_one(&mut self) {
+        self.buf.grow_one()
+    }
+
     /// Reserves the minimum capacity for exactly `additional` more elements to
     /// be inserted in the given `Vec<'bump, T>`. After calling `reserve_exact`,
     /// capacity will be greater than or equal to `self.len() + additional`.

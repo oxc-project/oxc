@@ -435,6 +435,13 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
+    #[inline]
+    pub fn grow_one(&mut self) {
+        if let Err(err) = self.grow_amortized(self.cap, 1) {
+            handle_error(err);
+        }
+    }
+
     /*
     /// Attempts to ensure that the buffer contains at least enough space to hold
     /// `len + additional` elements. If it doesn't already have
