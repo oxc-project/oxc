@@ -143,6 +143,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
