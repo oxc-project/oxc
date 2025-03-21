@@ -1382,9 +1382,6 @@ impl ESTree for FormalParameter<'_> {
         state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
         state.serialize_ts_field("optional", &self.pattern.optional);
         state.serialize_ts_field("decorators", &self.decorators);
-        state.serialize_ts_field("accessibility", &self.accessibility);
-        state.serialize_ts_field("readonly", &self.readonly);
-        state.serialize_ts_field("override", &self.r#override);
         state.end();
     }
 }

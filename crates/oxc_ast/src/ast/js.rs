@@ -1775,10 +1775,13 @@ pub struct FormalParameter<'a> {
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
     #[ts]
+    #[estree(skip)]
     pub accessibility: Option<TSAccessibility>,
     #[ts]
+    #[estree(skip)]
     pub readonly: bool,
     #[ts]
+    #[estree(skip)]
     pub r#override: bool,
 }
 
