@@ -3009,6 +3009,7 @@ impl ESTree for TSModuleDeclaration<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("declare", &self.declare);
+        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(self));
         state.end();
     }
 }
