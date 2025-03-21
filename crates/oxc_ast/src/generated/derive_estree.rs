@@ -3124,7 +3124,6 @@ impl ESTree for TSFunctionType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("thisParam", &self.this_param);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
         state.end();

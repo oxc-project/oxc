@@ -1319,6 +1319,7 @@ pub struct TSFunctionType<'a> {
     /// type T = (this: string, a: number) => void;
     /// //        ^^^^^^^^^^^^
     /// ```
+    #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
     pub params: Box<'a, FormalParameters<'a>>,
