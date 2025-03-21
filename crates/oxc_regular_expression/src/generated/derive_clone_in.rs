@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
-#![allow(unused_variables, clippy::default_trait_access)]
+#![allow(unused_variables, clippy::default_trait_access, clippy::inline_always)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
@@ -150,22 +150,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for BoundaryAssertion {
 impl<'new_alloc> CloneIn<'new_alloc> for BoundaryAssertionKind {
     type Cloned = BoundaryAssertionKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Start => BoundaryAssertionKind::Start,
-            Self::End => BoundaryAssertionKind::End,
-            Self::Boundary => BoundaryAssertionKind::Boundary,
-            Self::NegativeBoundary => BoundaryAssertionKind::NegativeBoundary,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Start => BoundaryAssertionKind::Start,
-            Self::End => BoundaryAssertionKind::End,
-            Self::Boundary => BoundaryAssertionKind::Boundary,
-            Self::NegativeBoundary => BoundaryAssertionKind::NegativeBoundary,
-        }
+        *self
     }
 }
 
@@ -192,22 +184,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for LookAroundAssertion<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for LookAroundAssertionKind {
     type Cloned = LookAroundAssertionKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Lookahead => LookAroundAssertionKind::Lookahead,
-            Self::NegativeLookahead => LookAroundAssertionKind::NegativeLookahead,
-            Self::Lookbehind => LookAroundAssertionKind::Lookbehind,
-            Self::NegativeLookbehind => LookAroundAssertionKind::NegativeLookbehind,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Lookahead => LookAroundAssertionKind::Lookahead,
-            Self::NegativeLookahead => LookAroundAssertionKind::NegativeLookahead,
-            Self::Lookbehind => LookAroundAssertionKind::Lookbehind,
-            Self::NegativeLookbehind => LookAroundAssertionKind::NegativeLookbehind,
-        }
+        *self
     }
 }
 
@@ -258,34 +242,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for Character {
 impl<'new_alloc> CloneIn<'new_alloc> for CharacterKind {
     type Cloned = CharacterKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::ControlLetter => CharacterKind::ControlLetter,
-            Self::HexadecimalEscape => CharacterKind::HexadecimalEscape,
-            Self::Identifier => CharacterKind::Identifier,
-            Self::Null => CharacterKind::Null,
-            Self::Octal1 => CharacterKind::Octal1,
-            Self::Octal2 => CharacterKind::Octal2,
-            Self::Octal3 => CharacterKind::Octal3,
-            Self::SingleEscape => CharacterKind::SingleEscape,
-            Self::Symbol => CharacterKind::Symbol,
-            Self::UnicodeEscape => CharacterKind::UnicodeEscape,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::ControlLetter => CharacterKind::ControlLetter,
-            Self::HexadecimalEscape => CharacterKind::HexadecimalEscape,
-            Self::Identifier => CharacterKind::Identifier,
-            Self::Null => CharacterKind::Null,
-            Self::Octal1 => CharacterKind::Octal1,
-            Self::Octal2 => CharacterKind::Octal2,
-            Self::Octal3 => CharacterKind::Octal3,
-            Self::SingleEscape => CharacterKind::SingleEscape,
-            Self::Symbol => CharacterKind::Symbol,
-            Self::UnicodeEscape => CharacterKind::UnicodeEscape,
-        }
+        *self
     }
 }
 
@@ -310,26 +274,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassEscape {
 impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassEscapeKind {
     type Cloned = CharacterClassEscapeKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::D => CharacterClassEscapeKind::D,
-            Self::NegativeD => CharacterClassEscapeKind::NegativeD,
-            Self::S => CharacterClassEscapeKind::S,
-            Self::NegativeS => CharacterClassEscapeKind::NegativeS,
-            Self::W => CharacterClassEscapeKind::W,
-            Self::NegativeW => CharacterClassEscapeKind::NegativeW,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::D => CharacterClassEscapeKind::D,
-            Self::NegativeD => CharacterClassEscapeKind::NegativeD,
-            Self::S => CharacterClassEscapeKind::S,
-            Self::NegativeS => CharacterClassEscapeKind::NegativeS,
-            Self::W => CharacterClassEscapeKind::W,
-            Self::NegativeW => CharacterClassEscapeKind::NegativeW,
-        }
+        *self
     }
 }
 
@@ -396,20 +348,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for CharacterClass<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for CharacterClassContentsKind {
     type Cloned = CharacterClassContentsKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Union => CharacterClassContentsKind::Union,
-            Self::Intersection => CharacterClassContentsKind::Intersection,
-            Self::Subtraction => CharacterClassContentsKind::Subtraction,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Union => CharacterClassContentsKind::Union,
-            Self::Intersection => CharacterClassContentsKind::Intersection,
-            Self::Subtraction => CharacterClassContentsKind::Subtraction,
-        }
+        *self
     }
 }
 

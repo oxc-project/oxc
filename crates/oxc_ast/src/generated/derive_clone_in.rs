@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
-#![allow(unused_variables, clippy::default_trait_access)]
+#![allow(unused_variables, clippy::default_trait_access, clippy::inline_always)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
@@ -1036,20 +1036,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for PropertyKind {
     type Cloned = PropertyKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Init => PropertyKind::Init,
-            Self::Get => PropertyKind::Get,
-            Self::Set => PropertyKind::Set,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Init => PropertyKind::Init,
-            Self::Get => PropertyKind::Get,
-            Self::Set => PropertyKind::Set,
-        }
+        *self
     }
 }
 
@@ -2594,24 +2588,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarationKind {
     type Cloned = VariableDeclarationKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Var => VariableDeclarationKind::Var,
-            Self::Let => VariableDeclarationKind::Let,
-            Self::Const => VariableDeclarationKind::Const,
-            Self::Using => VariableDeclarationKind::Using,
-            Self::AwaitUsing => VariableDeclarationKind::AwaitUsing,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Var => VariableDeclarationKind::Var,
-            Self::Let => VariableDeclarationKind::Let,
-            Self::Const => VariableDeclarationKind::Const,
-            Self::Using => VariableDeclarationKind::Using,
-            Self::AwaitUsing => VariableDeclarationKind::AwaitUsing,
-        }
+        *self
     }
 }
 
@@ -3590,22 +3574,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for FunctionType {
     type Cloned = FunctionType;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::FunctionDeclaration => FunctionType::FunctionDeclaration,
-            Self::FunctionExpression => FunctionType::FunctionExpression,
-            Self::TSDeclareFunction => FunctionType::TSDeclareFunction,
-            Self::TSEmptyBodyFunctionExpression => FunctionType::TSEmptyBodyFunctionExpression,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::FunctionDeclaration => FunctionType::FunctionDeclaration,
-            Self::FunctionExpression => FunctionType::FunctionExpression,
-            Self::TSDeclareFunction => FunctionType::TSDeclareFunction,
-            Self::TSEmptyBodyFunctionExpression => FunctionType::TSEmptyBodyFunctionExpression,
-        }
+        *self
     }
 }
 
@@ -3660,22 +3636,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameter<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for FormalParameterKind {
     type Cloned = FormalParameterKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::FormalParameter => FormalParameterKind::FormalParameter,
-            Self::UniqueFormalParameters => FormalParameterKind::UniqueFormalParameters,
-            Self::ArrowFormalParameters => FormalParameterKind::ArrowFormalParameters,
-            Self::Signature => FormalParameterKind::Signature,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::FormalParameter => FormalParameterKind::FormalParameter,
-            Self::UniqueFormalParameters => FormalParameterKind::UniqueFormalParameters,
-            Self::ArrowFormalParameters => FormalParameterKind::ArrowFormalParameters,
-            Self::Signature => FormalParameterKind::Signature,
-        }
+        *self
     }
 }
 
@@ -3795,18 +3763,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for ClassType {
     type Cloned = ClassType;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::ClassDeclaration => ClassType::ClassDeclaration,
-            Self::ClassExpression => ClassType::ClassExpression,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::ClassDeclaration => ClassType::ClassDeclaration,
-            Self::ClassExpression => ClassType::ClassExpression,
-        }
+        *self
     }
 }
 
@@ -3909,18 +3873,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinition<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinitionType {
     type Cloned = MethodDefinitionType;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::MethodDefinition => MethodDefinitionType::MethodDefinition,
-            Self::TSAbstractMethodDefinition => MethodDefinitionType::TSAbstractMethodDefinition,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::MethodDefinition => MethodDefinitionType::MethodDefinition,
-            Self::TSAbstractMethodDefinition => MethodDefinitionType::TSAbstractMethodDefinition,
-        }
+        *self
     }
 }
 
@@ -3969,44 +3929,28 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinitionType {
     type Cloned = PropertyDefinitionType;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::PropertyDefinition => PropertyDefinitionType::PropertyDefinition,
-            Self::TSAbstractPropertyDefinition => {
-                PropertyDefinitionType::TSAbstractPropertyDefinition
-            }
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::PropertyDefinition => PropertyDefinitionType::PropertyDefinition,
-            Self::TSAbstractPropertyDefinition => {
-                PropertyDefinitionType::TSAbstractPropertyDefinition
-            }
-        }
+        *self
     }
 }
 
 impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinitionKind {
     type Cloned = MethodDefinitionKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Constructor => MethodDefinitionKind::Constructor,
-            Self::Method => MethodDefinitionKind::Method,
-            Self::Get => MethodDefinitionKind::Get,
-            Self::Set => MethodDefinitionKind::Set,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Constructor => MethodDefinitionKind::Constructor,
-            Self::Method => MethodDefinitionKind::Method,
-            Self::Get => MethodDefinitionKind::Get,
-            Self::Set => MethodDefinitionKind::Set,
-        }
+        *self
     }
 }
 
@@ -4103,18 +4047,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for ModuleDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for AccessorPropertyType {
     type Cloned = AccessorPropertyType;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::AccessorProperty => AccessorPropertyType::AccessorProperty,
-            Self::TSAbstractAccessorProperty => AccessorPropertyType::TSAbstractAccessorProperty,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::AccessorProperty => AccessorPropertyType::AccessorProperty,
-            Self::TSAbstractAccessorProperty => AccessorPropertyType::TSAbstractAccessorProperty,
-        }
+        *self
     }
 }
 
@@ -4203,18 +4143,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for ImportPhase {
     type Cloned = ImportPhase;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Source => ImportPhase::Source,
-            Self::Defer => ImportPhase::Defer,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Source => ImportPhase::Source,
-            Self::Defer => ImportPhase::Defer,
-        }
+        *self
     }
 }
 
@@ -6200,20 +6136,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeOperator<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for TSTypeOperatorOperator {
     type Cloned = TSTypeOperatorOperator;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Keyof => TSTypeOperatorOperator::Keyof,
-            Self::Unique => TSTypeOperatorOperator::Unique,
-            Self::Readonly => TSTypeOperatorOperator::Readonly,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Keyof => TSTypeOperatorOperator::Keyof,
-            Self::Unique => TSTypeOperatorOperator::Unique,
-            Self::Readonly => TSTypeOperatorOperator::Readonly,
-        }
+        *self
     }
 }
 
@@ -6890,20 +6820,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeAliasDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for TSAccessibility {
     type Cloned = TSAccessibility;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Private => TSAccessibility::Private,
-            Self::Protected => TSAccessibility::Protected,
-            Self::Public => TSAccessibility::Public,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Private => TSAccessibility::Private,
-            Self::Protected => TSAccessibility::Protected,
-            Self::Public => TSAccessibility::Public,
-        }
+        *self
     }
 }
 
@@ -7096,20 +7020,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSCallSignatureDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for TSMethodSignatureKind {
     type Cloned = TSMethodSignatureKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Method => TSMethodSignatureKind::Method,
-            Self::Get => TSMethodSignatureKind::Get,
-            Self::Set => TSMethodSignatureKind::Set,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Method => TSMethodSignatureKind::Method,
-            Self::Get => TSMethodSignatureKind::Get,
-            Self::Set => TSMethodSignatureKind::Set,
-        }
+        *self
     }
 }
 
@@ -7286,20 +7204,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationKind {
     type Cloned = TSModuleDeclarationKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Global => TSModuleDeclarationKind::Global,
-            Self::Module => TSModuleDeclarationKind::Module,
-            Self::Namespace => TSModuleDeclarationKind::Namespace,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Global => TSModuleDeclarationKind::Global,
-            Self::Module => TSModuleDeclarationKind::Module,
-            Self::Namespace => TSModuleDeclarationKind::Namespace,
-        }
+        *self
     }
 }
 
@@ -7570,22 +7482,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSMappedType<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for TSMappedTypeModifierOperator {
     type Cloned = TSMappedTypeModifierOperator;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::True => TSMappedTypeModifierOperator::True,
-            Self::Plus => TSMappedTypeModifierOperator::Plus,
-            Self::Minus => TSMappedTypeModifierOperator::Minus,
-            Self::None => TSMappedTypeModifierOperator::None,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::True => TSMappedTypeModifierOperator::True,
-            Self::Plus => TSMappedTypeModifierOperator::Plus,
-            Self::Minus => TSMappedTypeModifierOperator::Minus,
-            Self::None => TSMappedTypeModifierOperator::None,
-        }
+        *self
     }
 }
 
@@ -7839,18 +7743,14 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInstantiationExpression<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for ImportOrExportKind {
     type Cloned = ImportOrExportKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Value => ImportOrExportKind::Value,
-            Self::Type => ImportOrExportKind::Type,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Value => ImportOrExportKind::Value,
-            Self::Type => ImportOrExportKind::Type,
-        }
+        *self
     }
 }
 
@@ -7909,64 +7809,42 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSDocUnknownType {
 impl<'new_alloc> CloneIn<'new_alloc> for CommentKind {
     type Cloned = CommentKind;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Line => CommentKind::Line,
-            Self::Block => CommentKind::Block,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Line => CommentKind::Line,
-            Self::Block => CommentKind::Block,
-        }
+        *self
     }
 }
 
 impl<'new_alloc> CloneIn<'new_alloc> for CommentPosition {
     type Cloned = CommentPosition;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Leading => CommentPosition::Leading,
-            Self::Trailing => CommentPosition::Trailing,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Leading => CommentPosition::Leading,
-            Self::Trailing => CommentPosition::Trailing,
-        }
+        *self
     }
 }
 
 impl<'new_alloc> CloneIn<'new_alloc> for CommentAnnotation {
     type Cloned = CommentAnnotation;
 
+    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::None => CommentAnnotation::None,
-            Self::Jsdoc => CommentAnnotation::Jsdoc,
-            Self::Legal => CommentAnnotation::Legal,
-            Self::Pure => CommentAnnotation::Pure,
-            Self::NoSideEffects => CommentAnnotation::NoSideEffects,
-            Self::Webpack => CommentAnnotation::Webpack,
-            Self::Vite => CommentAnnotation::Vite,
-        }
+        *self
     }
 
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::None => CommentAnnotation::None,
-            Self::Jsdoc => CommentAnnotation::Jsdoc,
-            Self::Legal => CommentAnnotation::Legal,
-            Self::Pure => CommentAnnotation::Pure,
-            Self::NoSideEffects => CommentAnnotation::NoSideEffects,
-            Self::Webpack => CommentAnnotation::Webpack,
-            Self::Vite => CommentAnnotation::Vite,
-        }
+        *self
     }
 }
 

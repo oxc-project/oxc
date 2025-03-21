@@ -27,6 +27,8 @@ impl<'alloc> CloneIn<'alloc> for ReferenceId {
         unreachable!();
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
         *self
     }

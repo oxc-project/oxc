@@ -58,7 +58,7 @@ impl Derive for DeriveCloneIn {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_variables, clippy::default_trait_access)]
+            #![allow(unused_variables, clippy::default_trait_access, clippy::inline_always)]
 
             ///@@line_break
             use oxc_allocator::{Allocator, CloneIn};
@@ -111,6 +111,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         &clone_in_body,
         &clone_in_with_semantic_ids_body,
         struct_def.has_lifetime,
+        false,
     )
 }
 
@@ -140,39 +141,48 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     );
 
     let type_ident = enum_def.ident();
-    let match_arms = enum_def.all_variants(schema).map(|variant| {
-        let ident = variant.ident();
-        if variant.is_fieldless() {
-            quote!( Self::#ident => #type_ident::#ident )
-        } else {
-            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in(it, allocator)) )
-        }
-    });
-    let clone_in_body = quote! {
-        match self {
-            #(#match_arms),*
-        }
+    let (clone_in_body, clone_in_with_semantic_ids_body) = if enum_def.is_fieldless() {
+        // Fieldless enums are always `Copy`
+        (quote!(*self), quote!(*self))
+    } else {
+        let match_arms = enum_def.all_variants(schema).map(|variant| {
+            let ident = variant.ident();
+            if variant.is_fieldless() {
+                quote!( Self::#ident => #type_ident::#ident )
+            } else {
+                quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in(it, allocator)) )
+            }
+        });
+        let clone_in_body = quote! {
+            match self {
+                #(#match_arms),*
+            }
+        };
+
+        let match_arms = enum_def.all_variants(schema).map(|variant| {
+            let ident = variant.ident();
+            if variant.is_fieldless() {
+                quote!( Self::#ident => #type_ident::#ident )
+            } else {
+                quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
+            }
+        });
+        let clone_in_with_semantic_ids_body = quote! {
+            match self {
+                #(#match_arms),*
+            }
+        };
+
+        (clone_in_body, clone_in_with_semantic_ids_body)
     };
 
-    let match_arms = enum_def.all_variants(schema).map(|variant| {
-        let ident = variant.ident();
-        if variant.is_fieldless() {
-            quote!( Self::#ident => #type_ident::#ident )
-        } else {
-            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
-        }
-    });
-    let clone_in_with_semantic_ids_body = quote! {
-        match self {
-            #(#match_arms),*
-        }
-    };
-
+    // Note: Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
     generate_impl(
         &type_ident,
         &clone_in_body,
         &clone_in_with_semantic_ids_body,
         enum_def.has_lifetime,
+        enum_def.is_fieldless(),
     )
 }
 
@@ -181,20 +191,25 @@ fn generate_impl(
     clone_in_body: &TokenStream,
     clone_in_with_semantic_ids_body: &TokenStream,
     has_lifetime: bool,
+    inline_always: bool,
 ) -> TokenStream {
     let (from_lifetime, to_lifetime) =
         if has_lifetime { (quote!( <'_> ), quote!( <'new_alloc> )) } else { (quote!(), quote!()) };
+
+    let inline = if inline_always { quote!( #[inline(always)] ) } else { quote!() };
 
     quote! {
         impl<'new_alloc> CloneIn<'new_alloc> for #type_ident #from_lifetime {
             type Cloned = #type_ident #to_lifetime;
 
             ///@@line_break
+            #inline
             fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
                 #clone_in_body
             }
 
             ///@@line_break
+            #inline
             fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
                 #clone_in_with_semantic_ids_body
             }
