@@ -381,6 +381,45 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `Function`.
+///
+/// In TS AST, this adds `this_param` to start of the array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        /* IF_TS */
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        /* END_IF_TS */
+        params
+    "
+)]
+pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+
+impl ESTree for FunctionFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if S::INCLUDE_TS_FIELDS {
+            if let Some(this_param) = &self.0.this_param {
+                seq.serialize_element(this_param);
+            }
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
 /// Serializer for `specifiers` field of `ImportDeclaration`.
 ///
 /// Serialize `specifiers` as an empty array if it's `None`.
@@ -560,36 +599,6 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
-#[ast_meta]
-#[estree(
-    ts_type = "Array<TSClassImplements>",
-    raw_deser = "
-        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
-        classImplements === null ? [] : classImplements
-    "
-)]
-pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
-
-impl ESTree for ClassImplements<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(implements) = &self.0.implements {
-            implements.serialize(serializer);
-        } else {
-            [(); 0].serialize(serializer);
-        }
-    }
-}
-
-#[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
-pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
-
-impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.kind.is_global().serialize(serializer);
-    }
-}
-
 // --------------------
 // JSX
 // --------------------
@@ -661,39 +670,38 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     }
 }
 
+/// Serializer for `implements` field of `Class`.
+///
+/// This field is only used in TS AST.
+/// `None` is serialized as empty array (`[]`).
 #[ast_meta]
 #[estree(
-    ts_type = "ParamPattern[]",
+    ts_type = "Array<TSClassImplements>",
     raw_deser = "
-        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        /* IF_TS */
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
-        if (thisParam !== null) params.unshift(thisParam);
-        /* END_IF_TS */
-        params
+        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
+        classImplements === null ? [] : classImplements
     "
 )]
-pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
 
-impl ESTree for FunctionFormalParameters<'_, '_> {
+impl ESTree for ClassImplements<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
-        if S::INCLUDE_TS_FIELDS {
-            if let Some(this_param) = &self.0.this_param {
-                seq.serialize_element(this_param);
-            }
+        if let Some(implements) = &self.0.implements {
+            implements.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
         }
+    }
+}
 
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
+/// Serializer for `global` field of `TSModuleDeclaration`.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
+pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
+impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.kind.is_global().serialize(serializer);
     }
 }
 
