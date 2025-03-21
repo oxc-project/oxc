@@ -82,7 +82,7 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
     // `#[inline]` because this is a hot path
     #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::ClassDeclaration(_) => self.transform_class(stmt, ctx),
             Statement::ExportNamedDeclaration(_) => {

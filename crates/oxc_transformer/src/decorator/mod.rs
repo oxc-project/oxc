@@ -26,9 +26,9 @@ impl<'a, 'ctx> Decorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for Decorator<'a, '_> {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
-            self.legacy_decorator.enter_statement(stmt, ctx);
+            self.legacy_decorator.exit_statement(stmt, ctx);
         }
     }
 

@@ -553,7 +553,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
-        self.decorator.enter_statement(stmt, ctx);
+        self.decorator.exit_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
