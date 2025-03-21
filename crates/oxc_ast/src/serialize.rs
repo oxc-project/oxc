@@ -684,8 +684,10 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
 
-        if let Some(this_param) = &self.0.this_param {
-            seq.serialize_ts_element(this_param);
+        if S::INCLUDE_TS_FIELDS {
+            if let Some(this_param) = &self.0.this_param {
+                seq.serialize_element(this_param);
+            }
         }
 
         for item in &self.0.params.items {

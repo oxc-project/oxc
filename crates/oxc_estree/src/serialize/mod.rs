@@ -30,6 +30,9 @@ pub trait ESTree {
 // Internal methods we don't want to expose outside this crate are in [`SerializerPrivate`] trait.
 #[expect(private_bounds)]
 pub trait Serializer: SerializerPrivate {
+    /// `true` if output should contain TS fields
+    const INCLUDE_TS_FIELDS: bool;
+
     /// Type of struct serializer this serializer uses.
     type StructSerializer: StructSerializer;
     /// Type of sequence serializer this serializer uses.
@@ -99,6 +102,9 @@ impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
 }
 
 impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
+    /// `true` if output should contain TS fields
+    const INCLUDE_TS_FIELDS: bool = C::INCLUDE_TS_FIELDS;
+
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 

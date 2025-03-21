@@ -4,7 +4,6 @@ use super::{Config, ESTree, ESTreeSerializer, Formatter, Serializer, SerializerP
 pub trait SequenceSerializer {
     /// Serialize sequence entry.
     fn serialize_element<T: ESTree + ?Sized>(&mut self, value: &T);
-    fn serialize_ts_element<T: ESTree + ?Sized>(&mut self, value: &T);
 
     /// Finish serializing sequence.
     fn end(self);
@@ -42,12 +41,6 @@ impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_
         }
 
         value.serialize(&mut *self.serializer);
-    }
-
-    fn serialize_ts_element<T: ESTree + ?Sized>(&mut self, value: &T) {
-        if C::INCLUDE_TS_FIELDS {
-            self.serialize_element(value);
-        }
     }
 
     /// Finish serializing sequence.
