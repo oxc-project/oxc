@@ -33,7 +33,8 @@ use super::{inherit_variants, js::*, literal::*};
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Identifier",
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, name = This)
+    add_fields(name = This, decorators = EmptyArray, optional = False),
+    field_order(span, name, type_annotation, decorators, optional),
 )]
 pub struct TSThisParameter<'a> {
     pub span: Span,

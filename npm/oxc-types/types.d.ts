@@ -918,10 +918,10 @@ export interface JSXText extends Span {
 
 export interface TSThisParameter extends Span {
   type: 'Identifier';
-  typeAnnotation: TSTypeAnnotation | null;
   name: 'this';
-  decorators?: [];
-  optional?: false;
+  typeAnnotation: TSTypeAnnotation | null;
+  decorators: [];
+  optional: false;
 }
 
 export interface TSEnumDeclaration extends Span {

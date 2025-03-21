@@ -1266,8 +1266,10 @@ function deserializeTSThisParameter(pos) {
     type: 'Identifier',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
     name: 'this',
+    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
+    decorators: [],
+    optional: false,
   };
 }
 

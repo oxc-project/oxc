@@ -2280,10 +2280,10 @@ impl ESTree for TSThisParameter<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("name", &crate::serialize::This(self));
-        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
-        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
         state.end();
     }
 }

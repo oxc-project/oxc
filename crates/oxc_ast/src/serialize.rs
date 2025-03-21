@@ -161,6 +161,17 @@ impl<T> ESTree for This<'_, T> {
     }
 }
 
+/// Serialized as `[]`.
+#[ast_meta]
+#[estree(ts_type = "[]", raw_deser = "[]")]
+pub struct EmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for EmptyArray<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
+    }
+}
+
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
 #[ts]
