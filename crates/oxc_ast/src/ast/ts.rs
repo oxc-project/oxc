@@ -975,6 +975,7 @@ pub struct TSIndexSignature<'a> {
 pub struct TSCallSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[estree(skip)]
     pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -1319,6 +1320,7 @@ pub struct TSFunctionType<'a> {
     /// type T = (this: string, a: number) => void;
     /// //        ^^^^^^^^^^^^
     /// ```
+    #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
     pub params: Box<'a, FormalParameters<'a>>,

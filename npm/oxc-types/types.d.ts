@@ -1210,7 +1210,6 @@ export interface TSIndexSignature extends Span {
 export interface TSCallSignatureDeclaration extends Span {
   type: 'TSCallSignatureDeclaration';
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
 }
@@ -1307,7 +1306,6 @@ export interface TSImportType extends Span {
 export interface TSFunctionType extends Span {
   type: 'TSFunctionType';
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation;
 }

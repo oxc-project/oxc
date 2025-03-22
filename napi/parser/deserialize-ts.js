@@ -1727,7 +1727,6 @@ function deserializeTSCallSignatureDeclaration(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    thisParam: deserializeOptionTSThisParameter(pos + 16),
     params: deserializeBoxFormalParameters(pos + 48),
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
   };
@@ -1863,7 +1862,6 @@ function deserializeTSFunctionType(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    thisParam: deserializeOptionBoxTSThisParameter(pos + 16),
     params: deserializeBoxFormalParameters(pos + 24),
     returnType: deserializeBoxTSTypeAnnotation(pos + 32),
   };
