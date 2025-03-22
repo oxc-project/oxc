@@ -308,6 +308,21 @@ impl ESTree for RegExpFlagsConverter<'_> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "string", raw_deser = "'todo'")]
+pub struct StringLiteralValue<'a, 'b>(pub &'b StringLiteral<'a>);
+
+impl ESTree for StringLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if self.0.lossy {
+            let raw = self.0.raw.unwrap();
+            JsonSafeString(&raw[1..raw.len() - 1]).serialize(serializer);
+        } else {
+            self.0.value.serialize(serializer);
+        }
+    }
+}
+
 // --------------------
 // Various
 // --------------------
