@@ -1924,7 +1924,7 @@ impl ESTree for StringLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("value", &self.value);
+        state.serialize_field("value", &crate::serialize::StringLiteralValue(self));
         state.serialize_field("raw", &self.raw);
         state.end();
     }
