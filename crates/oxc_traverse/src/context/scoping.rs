@@ -99,7 +99,25 @@ impl TraverseScoping {
     pub fn insert_scope_below_statement(&mut self, stmt: &Statement, flags: ScopeFlags) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
         collector.visit_statement(stmt);
-        self.insert_scope_below(&collector.scope_ids, flags)
+        self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
+    }
+
+    /// Insert a scope into scope tree below a statement.
+    ///
+    /// Statement must be in provided scope.
+    /// New scope is created as child of the provided scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn insert_scope_below_statement_from_scope_id(
+        &mut self,
+        stmt: &Statement,
+        scope_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_statement(stmt);
+        self.insert_scope_below(scope_id, &collector.scope_ids, flags)
     }
 
     /// Insert a scope into scope tree below an expression.
@@ -116,7 +134,7 @@ impl TraverseScoping {
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
         collector.visit_expression(expr);
-        self.insert_scope_below(&collector.scope_ids, flags)
+        self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
     }
 
     /// Insert a scope into scope tree below a `Vec` of statements.
@@ -133,17 +151,22 @@ impl TraverseScoping {
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
         collector.visit_statements(stmts);
-        self.insert_scope_below(&collector.scope_ids, flags)
+        self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
     }
 
-    fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
+    fn insert_scope_below(
+        &mut self,
+        scope_id: ScopeId,
+        child_scope_ids: &[ScopeId],
+        flags: ScopeFlags,
+    ) -> ScopeId {
         // Remove these scopes from parent's children
         if self.scoping.has_scope_child_ids() {
-            self.scoping.remove_child_scopes(self.current_scope_id, child_scope_ids);
+            self.scoping.remove_child_scopes(scope_id, child_scope_ids);
         }
 
         // Create new scope as child of parent
-        let new_scope_id = self.create_child_scope_of_current(flags);
+        let new_scope_id = self.create_child_scope(scope_id, flags);
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
