@@ -659,17 +659,7 @@ impl<'a, T> RawVec<'a, T> {
                 self.grow_raw(self.ptr.cast(), layout, new_layout)
             }
         } else {
-            // 分配新内存是冷路径
-            #[cold]
-            #[inline(never)]
-            fn allocate_new<'a>(
-                allocator: &'a Bump,
-                new_layout: Layout,
-            ) -> Result<NonNull<[u8]>, AllocError> {
-                allocator.allocate(new_layout)
-            }
-
-            allocate_new(self.a, new_layout)
+            self.a.allocate(new_layout)
         };
 
         res.map_err(|_| AllocErr)
