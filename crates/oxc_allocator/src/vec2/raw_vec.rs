@@ -150,6 +150,7 @@ impl<'a, T> RawVec<'a, T> {
         self.a
     }
 
+    #[inline]
     fn current_layout(&self) -> Option<Layout> {
         if self.cap == 0 {
             None
@@ -636,30 +637,17 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
-    #[inline(always)]
-    unsafe fn grow_raw(
-        &self,
-        ptr: NonNull<u8>,
-        layout: Layout,
-        new_layout: Layout,
-    ) -> Result<NonNull<[u8]>, AllocError> {
-        self.a.grow(ptr, layout, new_layout)
-    }
-
+    // Given a new layout, completes the grow operation.
     #[inline]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
-        let res = if let Some(layout) = self.current_layout() {
-            unsafe {
+        let res = match self.current_layout() {
+            Some(layout) => unsafe {
                 debug_assert!(new_layout.align() == layout.align());
-                debug_assert!(new_layout.size() > layout.size());
-
-                // 直接调用，但标记为热路径
-                self.grow_raw(self.ptr.cast(), layout, new_layout)
-            }
-        } else {
-            self.a.allocate(new_layout)
+                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+            },
+            None => self.a.allocate(new_layout),
         };
 
         res.map_err(|_| AllocErr)
