@@ -45,6 +45,6 @@ pico-args = { workspace = true }
 [features]
 default = ["regular_expression"]
 # Parse regex
-regular_expression = ["oxc_regular_expression"]
+regular_expression = ["dep:oxc_regular_expression"]
 # Expose Lexer for benchmarks
 benchmarking = []
