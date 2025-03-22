@@ -13,6 +13,7 @@ use oxc_semantic::{Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::Atom;
 
 pub(crate) mod base54;
+mod keep_names;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
