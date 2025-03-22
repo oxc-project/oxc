@@ -1279,6 +1279,7 @@ impl ESTree for AssignmentPattern<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.end();
     }
 }
