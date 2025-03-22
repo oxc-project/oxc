@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 362
+---
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:7:17]
+ 6 │                 console.log(v);
+ 7 │                 v = 'unused';
+   ·                 ────────────
+ 8 │             }
+   ╰────
+  help: Remove the assignment.
