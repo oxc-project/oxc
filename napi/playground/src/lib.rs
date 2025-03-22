@@ -51,6 +51,7 @@ pub struct Oxc {
     pub prettier_ir_text: String,
     comments: Vec<Comment>,
     diagnostics: Vec<OxcDiagnostic>,
+    source_text: String,
 }
 
 #[napi]
@@ -62,7 +63,7 @@ impl Oxc {
 
     #[napi]
     pub fn get_diagnostics(&self) -> Vec<OxcError> {
-        self.diagnostics.iter().map(OxcError::from).collect()
+        OxcError::from_diagnostics("", &self.source_text, self.diagnostics.clone())
     }
 
     #[napi]
@@ -75,6 +76,7 @@ impl Oxc {
     #[napi]
     #[allow(clippy::allow_attributes, clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
+        self.source_text.clone_from(&source_text);
         self.diagnostics = vec![];
         self.scope_text = String::new();
         self.symbols_json = String::new();
