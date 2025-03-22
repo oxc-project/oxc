@@ -4,16 +4,16 @@ permissions: {}
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - "crates/oxc_allocator/**"
-      - "crates/oxc_ast/src/utf8_to_utf16.rs"
-      - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
-      - "crates/oxc_data_structures/**"
-      - "crates/oxc_parser/**"
-      - "crates/oxc_traverse/**"
-      - ".github/workflows/miri.yml"
+  # pull_request:
+  #   types: [opened, synchronize]
+  #   paths:
+  #     - "crates/oxc_allocator/**"
+  #     - "crates/oxc_ast/src/utf8_to_utf16.rs"
+  #     - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
+  #     - "crates/oxc_data_structures/**"
+  #     - "crates/oxc_parser/**"
+  #     - "crates/oxc_traverse/**"
+  #     - ".github/workflows/miri.yml"
   push:
     branches:
       - main
