@@ -1468,9 +1468,7 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = ctx.ast.take(expr) else {
-            unreachable!()
-        };
+        let Expression::ChainExpression(chain_expr) = ctx.ast.take(expr) else { unreachable!() };
         match chain_expr.unbox().expression {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
@@ -1571,10 +1569,8 @@ impl<'a> ClassProperties<'a, '_> {
             if is_optional_callee {
                 // `o?.Foo.#self?.getSelf?.().#x;` -> `(_ref$getSelf = (_ref2 = _ref = o === null || o === void 0 ?
                 //              ^^ is optional         void 0 : babelHelpers.assertClassBrand(Foo, o.Foo, _self)._)`
-                *object =
-                    Self::wrap_conditional_check(result, ctx.ast.take(object), ctx);
-                let (assignment, context) =
-                    self.duplicate_object(ctx.ast.take(object), ctx);
+                *object = Self::wrap_conditional_check(result, ctx.ast.take(object), ctx);
+                let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
                 *object = assignment;
                 context
             } else {
@@ -1583,11 +1579,9 @@ impl<'a> ClassProperties<'a, '_> {
                 // ^^^^^^^^^^^^^^^^^^^^^^ to make sure get `getSelf` call has a proper context, we need to assign
                 //                        the parent of callee (i.e `o?.Foo.#self`) to a temp variable,
                 //                        and then use it as a first argument of `_ref.call`.
-                let (assignment, context) =
-                    self.duplicate_object(ctx.ast.take(object), ctx);
+                let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
                 *object = assignment;
-                *callee =
-                    Self::wrap_conditional_check(result, ctx.ast.take(callee), ctx);
+                *callee = Self::wrap_conditional_check(result, ctx.ast.take(callee), ctx);
                 context
             }
         } else {
