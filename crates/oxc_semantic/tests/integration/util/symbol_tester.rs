@@ -237,6 +237,40 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    pub fn is_symbol_for_function_name(mut self) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                if self.semantic.scoping().function_name_symbols().contains(&symbol_id) {
+                    Ok(symbol_id)
+                } else {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {} to be a function name symbol, but it was not.",
+                        self.target_symbol_name
+                    )))
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
+    pub fn is_symbol_for_class_name(mut self) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                if self.semantic.scoping().class_name_symbols().contains(&symbol_id) {
+                    Ok(symbol_id)
+                } else {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {} to be a class name symbol, but it was not.",
+                        self.target_symbol_name
+                    )))
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
     /// Complete the test case. Will panic if any of the previously applied
     /// assertions failed.
     pub fn test(self) {

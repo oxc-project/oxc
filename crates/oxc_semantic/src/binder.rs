@@ -97,9 +97,17 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             });
         }
 
-        // Save `@__NO_SIDE_EFFECTS__` for function initializers.
         if let BindingPatternKind::BindingIdentifier(id) = &self.id.kind {
             if let Some(symbol_id) = id.symbol_id.get() {
+                if self.init.as_ref().is_some_and(Expression::is_anonymous_function_definition) {
+                    if matches!(self.init, Some(Expression::ClassExpression(_))) {
+                        builder.class_name_symbols.insert(symbol_id);
+                    } else {
+                        builder.function_name_symbols.insert(symbol_id);
+                    }
+                }
+
+                // Save `@__NO_SIDE_EFFECTS__` for function initializers.
                 if let Some(init) = &self.init {
                     if match init {
                         Expression::FunctionExpression(func) => func.pure,
@@ -107,6 +115,76 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         _ => false,
                     } {
                         builder.scoping.no_side_effects.insert(symbol_id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Binder<'a> for AssignmentPattern<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let BindingPatternKind::BindingIdentifier(id) = &self.left.kind {
+            if let Some(symbol_id) = id.symbol_id.get() {
+                if self.right.is_anonymous_function_definition() {
+                    {
+                        if matches!(self.right, Expression::ClassExpression(_)) {
+                            builder.class_name_symbols.insert(symbol_id);
+                        } else {
+                            builder.function_name_symbols.insert(symbol_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Binder<'a> for AssignmentExpression<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let AssignmentTarget::AssignmentTargetIdentifier(id) = &self.left {
+            if let Some(reference_id) = id.reference_id.get() {
+                if self.right.is_anonymous_function_definition() {
+                    {
+                        if matches!(self.right, Expression::ClassExpression(_)) {
+                            builder.class_name_references.insert(reference_id);
+                        } else {
+                            builder.function_name_references.insert(reference_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Binder<'a> for AssignmentTargetWithDefault<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let AssignmentTarget::AssignmentTargetIdentifier(id) = &self.binding {
+            if let Some(reference_id) = id.reference_id.get() {
+                if self.init.is_anonymous_function_definition() {
+                    {
+                        if matches!(self.init, Expression::ClassExpression(_)) {
+                            builder.class_name_references.insert(reference_id);
+                        } else {
+                            builder.function_name_references.insert(reference_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Binder<'a> for AssignmentTargetPropertyIdentifier<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let Some(reference_id) = self.binding.reference_id.get() {
+            if self.init.as_ref().is_some_and(Expression::is_anonymous_function_definition) {
+                {
+                    if matches!(self.init, Some(Expression::ClassExpression(_))) {
+                        builder.class_name_references.insert(reference_id);
+                    } else {
+                        builder.function_name_references.insert(reference_id);
                     }
                 }
             }
@@ -129,6 +207,7 @@ impl<'a> Binder<'a> for Class<'a> {
                 },
             );
             ident.symbol_id.set(Some(symbol_id));
+            builder.class_name_symbols.insert(symbol_id);
         }
     }
 }
@@ -198,6 +277,7 @@ impl<'a> Binder<'a> for Function<'a> {
 
                 let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
+                builder.function_name_symbols.insert(symbol_id);
             } else if self.r#type == FunctionType::FunctionExpression {
                 // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
                 // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
@@ -208,6 +288,7 @@ impl<'a> Binder<'a> for Function<'a> {
                     SymbolFlags::empty(),
                 );
                 ident.symbol_id.set(Some(symbol_id));
+                builder.function_name_symbols.insert(symbol_id);
             }
         }
 
