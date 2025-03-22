@@ -152,6 +152,12 @@ impl<'a> LintContext<'a> {
         &self.parent.config.globals
     }
 
+    /// Checks if the given variable name is either an environment variable
+    /// or a global variable that is enabled.
+    pub fn is_env_or_global_var(&self, name: &str) -> bool {
+        self.env_contains_var(name) || self.globals().is_enabled(name)
+    }
+
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
