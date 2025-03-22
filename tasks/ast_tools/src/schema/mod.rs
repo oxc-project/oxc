@@ -22,6 +22,7 @@ pub mod extensions {
     pub mod kind;
     pub mod layout;
     pub mod span;
+    pub mod take_in;
     pub mod visit;
 }
 

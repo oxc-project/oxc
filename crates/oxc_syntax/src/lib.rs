@@ -28,6 +28,7 @@ mod generated {
     mod derive_content_eq;
     #[cfg(feature = "serialize")]
     mod derive_estree;
+    mod derive_take_in;
 }
 
 /// Dummy type to communicate the content of `nonmax::NonMaxU32` to `oxc_ast_tools`.

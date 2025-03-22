@@ -19,12 +19,14 @@ mod content_eq;
 pub mod estree;
 mod get_address;
 mod get_span;
+mod take_in;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
 pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use take_in::DeriveTakeIn;
 
 /// Trait to define a derive.
 pub trait Derive: Runner {

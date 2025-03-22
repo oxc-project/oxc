@@ -65,6 +65,7 @@ mod generated {
     pub mod derive_get_address;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
+    pub mod derive_take_in;
     pub mod get_id;
 }
 

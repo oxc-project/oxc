@@ -25,6 +25,7 @@ mod generated {
     pub mod assert_layouts;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
+    pub mod derive_take_in;
 }
 
 #[doc(hidden)]

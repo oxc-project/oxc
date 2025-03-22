@@ -16,6 +16,7 @@ use super::{
         estree::{ESTreeEnum, ESTreeEnumVariant},
         kind::Kind,
         layout::{GetLayout, Layout},
+        take_in::TakeInEnum,
         visit::{VisitEnum, VisitFieldOrVariant},
     },
 };
@@ -43,6 +44,7 @@ pub struct EnumDef {
     pub kind: Kind,
     pub layout: Layout,
     pub clone_in: CloneInType,
+    pub take_in: TakeInEnum,
     pub content_eq: ContentEqType,
     pub estree: ESTreeEnum,
 }
@@ -77,6 +79,7 @@ impl EnumDef {
             kind: Kind::default(),
             layout: Layout::default(),
             clone_in: CloneInType::default(),
+            take_in: TakeInEnum::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeEnum::default(),
         }
