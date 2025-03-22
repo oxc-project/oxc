@@ -77,7 +77,7 @@ impl Rule for Scope {
         }
 
         ctx.diagnostic_with_fix(scope_diagnostic(scope_attribute.span), |fixer| {
-            fixer.delete_range(scope_attribute.span)
+            fixer.delete(scope_attribute)
         });
     }
 }

@@ -73,7 +73,7 @@ impl Rule for NoRedundantRoles {
                     if exceptions.is_some_and(|set| set.contains(role)) {
                         ctx.diagnostic_with_fix(
                             no_redundant_roles_diagnostic(attr.span, &component, role),
-                            |fixer| fixer.delete_range(attr.span),
+                            |fixer| fixer.delete(attr),
                         );
                     }
                 }

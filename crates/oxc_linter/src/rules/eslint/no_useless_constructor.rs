@@ -162,7 +162,7 @@ fn lint_empty_constructor<'a>(
     }
 
     ctx.diagnostic_with_fix(no_empty_constructor(constructor.span), |fixer| {
-        fixer.delete_range(constructor.span)
+        fixer.delete(constructor)
     });
 }
 
@@ -184,7 +184,7 @@ fn lint_redundant_super_call<'a>(
     {
         ctx.diagnostic_with_fix(
             no_redundant_super_call(constructor.key.span(), super_call.span()),
-            |fixer| fixer.delete_range(constructor.span),
+            |fixer| fixer.delete(constructor),
         );
     }
 }

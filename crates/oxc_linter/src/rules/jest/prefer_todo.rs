@@ -90,7 +90,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                         return fixer.replace(span, "todo");
                     }
                 }
-                fixer.delete_range(call_expr.span)
+                fixer.delete(call_expr)
             });
         }
 

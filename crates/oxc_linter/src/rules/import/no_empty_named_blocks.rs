@@ -55,7 +55,7 @@ impl Rule for NoEmptyNamedBlocks {
         if specifiers.is_empty() {
             // for "import {} from 'mod'"
             ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
-                fixer.delete_range(import_decl.span)
+                fixer.delete(import_decl)
             });
         }
 

@@ -83,7 +83,7 @@ impl Rule for SwitchCaseBraces {
                                     case_block.span,
                                     Diagnostic::EmptyClause,
                                 ),
-                                |fixer| fixer.delete_range(case_block.span),
+                                |fixer| fixer.delete(case_block),
                             );
                         }
 

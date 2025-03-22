@@ -120,7 +120,7 @@ impl Rule for JsxPropsNoSpreadMulti {
                                 vec![*left_span, *right_span],
                                 member_prop_name,
                             ),
-                            |fixer| fixer.delete_range(*left_span),
+                            |fixer| fixer.delete(left_span),
                         );
                     }
                 },

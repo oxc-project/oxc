@@ -1,7 +1,7 @@
 use std::{
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    ops::{Index, IndexMut, Range},
+    ops::{Deref, Index, IndexMut, Range},
 };
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
@@ -552,6 +552,12 @@ impl Serialize for Span {
         map.serialize_entry("start", &self.start)?;
         map.serialize_entry("end", &self.end)?;
         map.end()
+    }
+}
+
+impl<T: GetSpan> GetSpan for oxc_allocator::Box<'_, T> {
+    fn span(&self) -> Span {
+        self.deref().span()
     }
 }
 
