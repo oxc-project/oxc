@@ -13,6 +13,7 @@ use super::{
         ast_builder::AstBuilderType,
         clone_in::CloneInType,
         content_eq::ContentEqType,
+        dummy::DummyEnum,
         estree::{ESTreeEnum, ESTreeEnumVariant},
         kind::Kind,
         layout::{GetLayout, Layout},
@@ -43,6 +44,7 @@ pub struct EnumDef {
     pub kind: Kind,
     pub layout: Layout,
     pub clone_in: CloneInType,
+    pub dummy: DummyEnum,
     pub content_eq: ContentEqType,
     pub estree: ESTreeEnum,
 }
@@ -77,6 +79,7 @@ impl EnumDef {
             kind: Kind::default(),
             layout: Layout::default(),
             clone_in: CloneInType::default(),
+            dummy: DummyEnum::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeEnum::default(),
         }

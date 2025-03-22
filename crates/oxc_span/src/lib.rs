@@ -23,6 +23,7 @@ pub use crate::{
 mod generated {
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
 }

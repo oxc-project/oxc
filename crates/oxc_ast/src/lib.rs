@@ -60,11 +60,13 @@ mod generated {
     pub mod ast_kind;
     pub mod derive_clone_in;
     pub mod derive_content_eq;
+    pub mod derive_dummy;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
     pub mod derive_get_address;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
+    pub mod derive_take_in;
     pub mod get_id;
 }
 
