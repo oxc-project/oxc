@@ -650,14 +650,26 @@ impl<'a, T> RawVec<'a, T> {
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
-        let res = match self.current_layout() {
-            Some(layout) => unsafe {
+        let res = if let Some(layout) = self.current_layout() {
+            unsafe {
                 debug_assert!(new_layout.align() == layout.align());
                 debug_assert!(new_layout.size() > layout.size());
-                // 通过辅助函数调用，提供更好的优化表面
-                self.grow_raw(self.ptr.cast(), layout, new_layout)
-            },
-            None => self.a.allocate(new_layout),
+
+                // 直接调用，但标记为热路径
+                self.a.grow(self.ptr.cast(), layout, new_layout)
+            }
+        } else {
+            // 分配新内存是冷路径
+            #[cold]
+            #[inline(never)]
+            fn allocate_new<'a>(
+                allocator: &'a Bump,
+                new_layout: Layout,
+            ) -> Result<NonNull<[u8]>, AllocError> {
+                allocator.allocate(new_layout)
+            }
+
+            allocate_new(self.a, new_layout)
         };
 
         res.map_err(|_| AllocErr)
