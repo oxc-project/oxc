@@ -387,20 +387,16 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(&ctx).is_number() {
-                ctx.ast.move_expression(expr)
+                ctx.ast.take(expr)
             } else {
-                ctx.ast.expression_unary(
-                    SPAN,
-                    UnaryOperator::UnaryPlus,
-                    ctx.ast.move_expression(expr),
-                )
+                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, ctx.ast.take(expr))
             }
         };
 
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            ctx.ast.move_expression(first_arg),
+            ctx.ast.take(first_arg),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -610,10 +606,10 @@ impl<'a> PeepholeOptimizations {
 
         *node = ctx.ast.expression_call(
             original_span,
-            ctx.ast.move_expression(new_root_callee),
+            ctx.ast.take(new_root_callee),
             Option::<TSTypeParameterInstantiation>::None,
             ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.move_vec(arg)),
+                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.take(arg)),
             ),
             false,
         );
@@ -675,13 +671,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(ctx.ast.move_expression(object))
+                    Some(ctx.ast.take(object))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        ctx.ast.move_expression(callee),
+                        ctx.ast.take(callee),
                         Option::<TSTypeParameterInstantiation>::None,
-                        ctx.ast.move_vec(args),
+                        ctx.ast.take(args),
                         false,
                     ))
                 } else {
@@ -955,7 +951,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.atom(&c.to_string());
                     s.raw = None;
-                    Some(ctx.ast.move_expression(object))
+                    Some(ctx.ast.take(object))
                 } else {
                     None
                 }

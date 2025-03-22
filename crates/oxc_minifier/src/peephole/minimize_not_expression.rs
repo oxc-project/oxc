@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
             Expression::UnaryExpression(e)
                 if e.operator.is_not() && e.argument.value_type(&ctx).is_boolean() =>
             {
-                Some(ctx.ast.move_expression(&mut e.argument))
+                Some(ctx.ast.take(&mut e.argument))
             }
             // `!(a == b)` => `a != b`
             // `!(a != b)` => `a == b`
@@ -42,17 +42,13 @@ impl<'a> PeepholeOptimizations {
             // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(e) if e.operator.is_equality() => {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
-                Some(ctx.ast.move_expression(&mut expr.argument))
+                Some(ctx.ast.take(&mut expr.argument))
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
-                    *last_expr = self.minimize_not(
-                        last_expr.span(),
-                        ctx.ast.move_expression(last_expr),
-                        ctx,
-                    );
-                    return Some(ctx.ast.move_expression(&mut expr.argument));
+                    *last_expr = self.minimize_not(last_expr.span(), ctx.ast.take(last_expr), ctx);
+                    return Some(ctx.ast.take(&mut expr.argument));
                 }
                 None
             }

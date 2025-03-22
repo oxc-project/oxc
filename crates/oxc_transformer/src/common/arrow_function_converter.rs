@@ -420,7 +420,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx))
+                    Some(wrap_expression_in_arrow_function_iife(ctx.ast.take(expr), ctx))
                 } else {
                     return;
                 }
@@ -445,8 +445,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) =
-                ctx.ast.move_expression(expr)
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = ctx.ast.take(expr)
             else {
                 unreachable!()
             };
@@ -746,8 +745,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
-                argument = Some(ctx.ast.move_expression(&mut computed_member.expression));
-                ctx.ast.move_expression(&mut computed_member.object)
+                argument = Some(ctx.ast.take(&mut computed_member.expression));
+                ctx.ast.take(&mut computed_member.object)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
@@ -756,7 +755,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // Used to generate the name of the arrow function.
                 property = static_member.property.name.as_str();
-                ctx.ast.move_expression(expr)
+                ctx.ast.take(expr)
             }
             MemberExpression::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
@@ -783,7 +782,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
         // _value
         if let Some(assign_value) = assign_value {
-            arguments.push(Argument::from(ctx.ast.move_expression(assign_value)));
+            arguments.push(Argument::from(ctx.ast.take(assign_value)));
         }
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         Some(call)
@@ -820,7 +819,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // Add `this` as the first argument and original arguments as the rest.
         let mut arguments = ctx.ast.vec_with_capacity(call.arguments.len() + 1);
         arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-        arguments.extend(ctx.ast.move_vec(&mut call.arguments));
+        arguments.extend(ctx.ast.take(&mut call.arguments));
 
         let property = ctx.ast.identifier_name(SPAN, "call");
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
@@ -857,7 +856,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             return None;
         }
 
-        let assignment_target = ctx.ast.move_assignment_target(&mut assignment.left);
+        let assignment_target = ctx.ast.take(&mut assignment.left);
         let mut assignment_expr = Expression::from(assignment_target.into_member_expression());
         self.transform_member_expression_for_super(
             &mut assignment_expr,
@@ -1317,7 +1316,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = self.ctx.ast.vec_from_array([self.ctx.ast.move_expression(expr), assignment]);
+        let exprs = self.ctx.ast.vec_from_array([self.ctx.ast.take(expr), assignment]);
         *expr = self.ctx.ast.expression_sequence(span, exprs);
     }
 

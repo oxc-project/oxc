@@ -651,7 +651,7 @@ impl<'a> ParserImpl<'a> {
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
             expr.expression = self.map_to_chain_expression(
                 expr.expression.span(),
-                self.ast.move_expression(&mut expr.expression),
+                self.ast.take(&mut expr.expression),
             );
             Ok(Expression::TSInstantiationExpression(expr))
         } else {

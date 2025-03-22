@@ -125,7 +125,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
-            let old_body = ctx.ast.move_statement(&mut for_of_stmt.body);
+            let old_body = ctx.ast.take(&mut for_of_stmt.body);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
@@ -224,7 +224,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             return;
         }
 
-        let program_body = ctx.ast.move_vec(&mut program.body);
+        let program_body = ctx.ast.take(&mut program.body);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -333,7 +333,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
                             return (program_body, inner_block);
                         }
-                        let decl = ctx.ast.move_declaration(decl);
+                        let decl = ctx.ast.take(decl);
 
                         let export_specifiers = match decl {
                             Declaration::ClassDeclaration(class_decl) => {
@@ -579,7 +579,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     )),
                     false,
                 )),
-                ctx.ast.move_statement(stmt),
+                ctx.ast.take(stmt),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -678,7 +678,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = ctx.ast.move_vec(stmts);
+        let mut stmts = ctx.ast.take(stmts);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
