@@ -637,25 +637,15 @@ impl<'a, T> RawVec<'a, T> {
     }
 
     // Given a new layout, completes the grow operation.
-    #[inline]
+    #[inline(never)]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
         let res = match self.current_layout() {
             Some(layout) => unsafe {
-                #[inline(never)]
-                unsafe fn grow_uninlined(
-                    a: &Bump,
-                    ptr: NonNull<u8>,
-                    layout: Layout,
-                    new_layout: Layout,
-                ) -> Result<NonNull<[u8]>, AllocError> {
-                    a.grow(ptr, layout, new_layout)
-                }
-
                 debug_assert!(new_layout.align() == layout.align());
                 debug_assert!(new_layout.size() > layout.size());
-                grow_uninlined(self.a, self.ptr.cast(), layout, new_layout)
+                self.a.grow(self.ptr.cast(), layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
