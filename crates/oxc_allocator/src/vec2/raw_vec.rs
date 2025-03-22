@@ -637,7 +637,6 @@ impl<'a, T> RawVec<'a, T> {
     }
 
     // Given a new layout, completes the grow operation.
-    #[inline(never)]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
