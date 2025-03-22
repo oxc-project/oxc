@@ -2,12 +2,13 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, MethodDefinitionKind, Statement,
+        FormalParameter, Function, MethodDefinitionKind, Statement,
     },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashSet;
 
@@ -53,7 +54,7 @@ declare_oxc_lint!(
     NoUnnecessaryParameterPropertyAssignment,
     typescript,
     correctness,
-    pending,
+    suggestion,
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {
@@ -105,13 +106,17 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             }
         }
 
+        let Some(function_body) = &method.value.body else {
+            return;
+        };
+
         let mut visitor = AssignmentVisitor {
             ctx,
             parameter_properties,
             assigned_before_unnecessary: FxHashSet::default(),
             assigned_before_constructor,
         };
-        visitor.visit_method_definition(method);
+        visitor.visit_function_body(function_body);
     }
 }
 
@@ -123,10 +128,11 @@ struct AssignmentVisitor<'a, 'b> {
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
-    fn visit_assignment_expression(
-        &mut self,
-        assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
-    ) {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
+        // don't continue walking into functions as they have a different scoped "this"
+    }
+
+    fn visit_assignment_expression(&mut self, assignment_expr: &AssignmentExpression<'a>) {
         let Some(this_property_name) = get_property_name(&assignment_expr.left) else {
             return;
         };
@@ -176,9 +182,15 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
                 continue; // there already was an assignment outside the constructor
             }
 
-            self.ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
-                assignment_expr.span,
-            ));
+            self.ctx.diagnostic_with_suggestion(
+                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span),
+                |fixer| {
+                    fixer.delete_range(Span::new(
+                        assignment_expr.span.start,
+                        assignment_expr.span.end + 1,
+                    ))
+                },
+            );
         }
     }
 }
@@ -254,47 +266,47 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {}
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown, other: unknown) {
             this.other = other;
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             this.other = name;
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(name: unknown) {
             this.name = name;
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             this.name = 'other';
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             this.name = name + 'edited';
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             if (maybeTrue) {
@@ -474,17 +486,26 @@ fn test() {
           })();
         }
         ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            function bar() {
+              this.foo = foo;
+            }
+          }
+        }
+        ",
     ];
 
     let fail = vec![
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             this.name = name;
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(other: unknown, public name: unknown) {
             this.other = other;
@@ -492,7 +513,7 @@ fn test() {
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             this.name = name;
@@ -501,7 +522,7 @@ fn test() {
           }
         }
         ",
-        r"
+        "
         class Foo {
           constructor(public name: unknown) {
             if (maybeTrue) {
@@ -660,11 +681,419 @@ fn test() {
         ",
     ];
 
+    let fix = vec![
+        (
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                this.name = name;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(other: unknown, public name: unknown) {
+                this.other = other;
+                this.name = name;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(other: unknown, public name: unknown) {
+                this.other = other;
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                this.name = name;
+                this.name = name;
+                this.name = name;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                
+                
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                if (maybeTrue) {
+                  this.name = name;
+                } else {
+                  this.name = name + 'edited';
+                }
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public name: unknown) {
+                if (maybeTrue) {
+                  
+                } else {
+                  this.name = name + 'edited';
+                }
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo: string) {
+                this.foo = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo?: string) {
+                this.foo = foo!;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo?: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo?: string) {
+                this.foo = foo as any;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo?: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo = '') {
+                this.foo = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo = '') {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo = '') {
+                this.foo = foo;
+                this.foo += 'foo';
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo = '') {
+                
+                this.foo += 'foo';
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo: string) {
+                this.foo ||= foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo: string) {
+                this.foo ??= foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(public foo: string) {
+                this.foo &&= foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(public foo: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this['foo'] = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                function bar() {
+                  this.foo = foo;
+                }
+                this.foo = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                function bar() {
+                  this.foo = foo;
+                }
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this.bar = () => {
+                  this.foo = foo;
+                };
+                this.foo = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this.bar = () => {
+                  this.foo = foo;
+                };
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                class Bar {
+                  constructor(private foo: string) {
+                    this.foo = foo;
+                  }
+                }
+                this.foo = foo;
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                class Bar {
+                  constructor(private foo: string) {
+                    
+                  }
+                }
+                
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this.foo = foo;
+              }
+              bar = () => {
+                this.foo = 'foo';
+              };
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                
+              }
+              bar = () => {
+                this.foo = 'foo';
+              };
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this.foo = foo;
+              }
+              init = foo => {
+                this.foo = foo;
+              };
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                
+              }
+              init = foo => {
+                this.foo = foo;
+              };
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                this.foo = foo;
+              }
+              init = class Bar {
+                constructor(private foo: string) {
+                  this.foo = foo;
+                }
+              };
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                
+              }
+              init = class Bar {
+                constructor(private foo: string) {
+                  
+                }
+              };
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                {
+                  this.foo = foo;
+                }
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                {
+                  
+                }
+              }
+            }
+            ",
+        ),
+        (
+            "
+            class Foo {
+              constructor(private foo: string) {
+                (() => {
+                  this.foo = foo;
+                })();
+              }
+            }
+            ",
+            "
+            class Foo {
+              constructor(private foo: string) {
+                (() => {
+                  
+                })();
+              }
+            }
+            ",
+        ),
+    ];
+
     Tester::new(
         NoUnnecessaryParameterPropertyAssignment::NAME,
         NoUnnecessaryParameterPropertyAssignment::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }
