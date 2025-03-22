@@ -18,3 +18,11 @@ pub struct DecoratorOptions {
     /// in TypeScript, and it only works when `legacy` is true.
     pub emit_decorator_metadata: bool,
 }
+
+impl DecoratorOptions {
+    pub fn enable_all() -> Self {
+        // Should be `emit_decorator_metadata: true` but there's a bug somewhere that crashes conformance
+        // with that option enabled
+        DecoratorOptions { legacy: true, emit_decorator_metadata: false }
+    }
+}
