@@ -150,6 +150,7 @@ impl<'a, T> RawVec<'a, T> {
         self.a
     }
 
+    #[inline]
     fn current_layout(&self) -> Option<Layout> {
         if self.cap == 0 {
             None
