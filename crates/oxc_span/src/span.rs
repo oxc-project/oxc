@@ -8,7 +8,7 @@ use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, TakeIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -542,6 +542,15 @@ impl<'a> CloneIn<'a> for Span {
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
+    }
+}
+
+impl<'a> TakeIn<'a> for Span {
+    /// Create a dummy [`Span`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy_in(_allocator: &'a Allocator) -> Self {
+        SPAN
     }
 }
 

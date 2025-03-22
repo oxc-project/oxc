@@ -16,6 +16,7 @@ use super::{
         kind::Kind,
         layout::{Layout, Offset},
         span::SpanStruct,
+        take_in::TakeInStruct,
         visit::{VisitFieldOrVariant, VisitStruct},
     },
 };
@@ -39,6 +40,7 @@ pub struct StructDef {
     pub layout: Layout,
     pub span: SpanStruct,
     pub clone_in: CloneInType,
+    pub take_in: TakeInStruct,
     pub content_eq: ContentEqType,
     pub estree: ESTreeStruct,
 }
@@ -72,6 +74,7 @@ impl StructDef {
             layout: Layout::default(),
             span: SpanStruct::default(),
             clone_in: CloneInType::default(),
+            take_in: TakeInStruct::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeStruct::default(),
         }
