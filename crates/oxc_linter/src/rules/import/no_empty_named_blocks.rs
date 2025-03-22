@@ -48,12 +48,12 @@ impl Rule for NoEmptyNamedBlocks {
             return;
         };
 
-        // if "import 'foo'"
         let Some(specifiers) = import_decl.specifiers.as_ref() else {
             return;
         };
 
         if specifiers.is_empty() {
+            // import {} from 'mod'
             ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
                 fixer.delete_range(import_decl.span)
             });
@@ -68,7 +68,7 @@ impl Rule for NoEmptyNamedBlocks {
         let span = Span::new(specifier.span.end, import_decl.source.span.start);
         let source_token_str = ctx.source_range(span);
 
-        // find is there anything between '{' and '}'
+        // import Default, {} from 'mod'
         if let Some(start) = source_token_str.find(',') {
             let end = source_token_str[start..].find("from").unwrap();
 
