@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10623/10725 (99.05%)
-Positive Passed: 1818/10725 (16.95%)
+Positive Passed: 1923/10725 (17.93%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
@@ -203,7 +203,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignToInvalidL
 Cannot assign to this expression
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignToObjectTypeWithPrototypeProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assigningFromObjectToAnythingElse.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/assigningFunctionToTupleIssuesError.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompat1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatBug2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatBug3.ts
@@ -212,7 +211,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatForEnum
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatFunctionsWithOptionalArgs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatInterfaceWithStringIndexSignature.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatOnNew.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatWithOverloads.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability10.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability11.ts
@@ -340,7 +338,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitUnionPromise.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitedType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeCrash.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeJQuery.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeNoLib.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeStrictNull.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/badExternalModuleReference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/badInferenceLowerPriorityThanGoodInference.ts
@@ -410,7 +407,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution4
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution7.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/cachedModuleResolution9.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/callConstructAssignment.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callExpressionWithTypeParameterConstrainedToOuterTypeParameter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOnClass.ts
@@ -421,11 +417,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOverloads4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOverloads5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callSignatureFunctionOverload.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callSignaturesShouldBeResolvedBeforeSpecialization.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDifferByOptionality.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callbacksDontShareTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSignatures.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/cannotIndexGenericWritingError.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/captureSuperPropertyAccessInSuperCall01.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/captureThisInSuperCall.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop12.ts
@@ -577,7 +571,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOrder2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOrderBug.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classPropInitializationInferenceWithElementAccess.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/classPropertyErrorOnNameOnly.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classReferencedInContextualParameterWithinItsOwnBaseExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance3.ts
@@ -797,7 +790,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeSimplifi
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeVarianceBigArrayConstraintsPerformance.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionalTypesASI.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionalTypesSimplifyWhenTrivial.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionallyDuplicateOverloadsCausedByOverloadResolution.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conflictingDeclarationsImportFromNamespace1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conflictingDeclarationsImportFromNamespace2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/conflictingMemberTypesInBases.ts
@@ -900,7 +892,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInst
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstantiation2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstantiation3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstantiation4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstantiationWithTypeParameterConstrainedToOuterTypeParameter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstatiationContravariance.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstatiationCovariance.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualSignature_objectLiteralMethodMayReturnNever.ts
@@ -932,9 +923,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping10.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping11.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping12.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping13.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping14.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping15.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping17.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping18.ts
@@ -942,23 +930,15 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping19.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping20.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping21.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping22.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping23.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping24.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping25.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping26.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping27.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping32.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping33.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping34.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping35.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping36.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping37.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping38.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping39.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping40.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping41.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTyping6.ts
@@ -974,15 +954,12 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfArray
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfConditionalExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfConditionalExpression2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfGenericFunctionTypedArguments1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfLambdaReturnExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfLambdaWithMultipleSignatures.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfLambdaWithMultipleSignatures2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfObjectLiterals.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfObjectLiterals2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfOptionalMembers.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfTooShortOverloads.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingReturnStatementWithReturnTypeAnnotation.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingTwoInstancesOfSameTypeParameter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithFixedTypeParameters1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithGenericAndNonGenericSignature.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithGenericSignature.ts
@@ -1119,7 +1096,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileRestParametersO
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationArrayType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationBuiltInType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationParenType.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTupleType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeAlias.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeLiteral.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationUnionType.ts
@@ -1131,7 +1107,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationV
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorVariableDeclaration.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofClass.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofEnum.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofInAnonymousType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithClassNameConflictingWithClassReferredByExtendsClause.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts
@@ -1449,7 +1424,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConditional
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConstraints.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedMappedTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedTemplateLiteralIntersection.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultArgsInFunctionExpressions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultArgsInOverloads.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultBestCommonTypesHaveDecls.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultDeclarationEmitDefaultImport.ts
@@ -1523,8 +1497,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringWithConstr
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringWithGenericParameter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNewExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringWithNumberLiteral.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfLambdaFunction1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfLambdaFunction2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/didYouMeanElaborationsForExpressionsWhichCouldBeCalled.ts
@@ -2181,7 +2153,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/fillInMissingTypeArgsOn
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/findLast.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/firstMatchRegExpMatchArray.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fixCrashAliasLookupForDefauledImport.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fixingTypeParametersRepeatedly1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fixingTypeParametersRepeatedly2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fixingTypeParametersRepeatedly3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/flatArrayNoExcessiveStackDepth.ts
@@ -2212,7 +2183,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall15.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall17.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall18.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall7.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/functionCall8.ts
@@ -2311,7 +2281,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericArrayPropertyAss
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericArrayWithoutTypeAnnotation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericAssignmentCompatOfFunctionSignatures1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericAssignmentCompatWithInterfaces1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericBaseClassLiteralProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericBaseClassLiteralProperty2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceConditionalType1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceConditionalType2.ts
@@ -2322,7 +2291,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallWithFixedArg
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallWithNonGenericArgs1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallWithObjectLiteralArguments1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallWithinOwnBodyCastTypeParameterIdentity.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallbackInvokedInsideItsContainingFunction1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCallbacksAndClassHierarchy.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericCapturingFunctionNarrowing.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericChainedCalls.ts
@@ -2355,10 +2323,8 @@ Unexpected estree file content error: 1 != 2
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericDerivedTypeWithSpecializedBase.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericDerivedTypeWithSpecializedBase2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionCallSignatureReturnTypeMismatch.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionHasFreshTypeArgs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionTypedArgumentsAreFixed.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctions2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctions3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsAndConditionalInference.ts
@@ -2417,7 +2383,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeReferencesRe
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeUsedWithoutTypeArguments1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeUsedWithoutTypeArguments3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithCallableMembers.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithCallableMembers2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTypeWithMultipleBases3.ts
@@ -2472,8 +2437,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/idInProp.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/identicalGenericConditionalsWithInferRelated.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/identicalTypesNoDifferByCheckOrder.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/identityAndDivergentNormalizedTypes.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/identityForSignaturesWithTypeParametersAndAny.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/identityForSignaturesWithTypeParametersSwitched.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/identityRelationNeverTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/ifElseWithStatements1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/ifStatementInternalComments.ts
@@ -2505,7 +2468,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitAnyGenericTypeI
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitAnyGetAndSetAccessorWithAnyReturnType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInCatch.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitAnyWidenToAny.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitConstParameters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/implicitIndexSignatures.ts
 tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit1.ts
 Unexpected estree file content error: 3 != 10
@@ -2735,10 +2697,8 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferenceShouldFailOnEv
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferenceUnionOfObjectsMappedContextualType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingObjectLiteralMethod1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingObjectLiteralMethod2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingUsingApparentType1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingUsingApparentType2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingUsingApparentType3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFunctionType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFunctionTypeNested.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFunctionTypeSyntacticScenarios.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingWithFunctionTypeZip.ts
@@ -2751,9 +2711,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferredRestTypeFixedOn
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferredReturnTypeIncorrectReuse1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferrenceInfiniteLoopWithSubtyping.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringAnyFunctionType5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferringReturnTypeFromConstructSignatureGeneric.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/infiniteConstraints.ts
@@ -2778,16 +2736,8 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritance1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPrivateMemberCollision.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPrivateMemberCollisionWithPublicMember.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPublicMemberCollisionWithPrivateMember.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceMemberFuncOverridingProperty.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceMemberPropertyOverridingAccessor.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceMemberPropertyOverridingMethod.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceMemberPropertyOverridingProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceOfGenericConstructorMethod1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceOfGenericConstructorMethod2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingAccessorOfFuncType.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingPropertyOfFuncType.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticPropertyOverridingAccessor.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticPropertyOverridingProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritedConstructorPropertyContextualType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritedConstructorWithRestParams.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inheritedConstructorWithRestParams2.ts
@@ -3356,7 +3306,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/metadataOfUnion.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/methodContainingLocalFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/methodInAmbientClass1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/methodSignatureHandledDeclarationKindForSymbol.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/mismatchedExplicitTypeParameterAndArgumentType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/mismatchedGenericArguments1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingCommaInTemplateStringsArray.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingDomElements.ts
@@ -3368,7 +3317,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingReturnStatement1
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingSelf.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingSemicolonInModuleSpecifier.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments3.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/misspelledNewMetaProperty.ts
 The only valid meta property for new is new.target
@@ -3379,7 +3327,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/mixinOverMappedTypeNoCr
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/mixinPrivateAndProtected.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/mixingApparentTypeOverrides.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/modFunctionCrash.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/modifierParenCast.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modifiersInObjectLiterals.ts
 'public' modifier cannot be used here.
@@ -3499,7 +3446,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeR
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoTsCJS.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoTsESM.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionPackageIdWithRelativeAndAbsolutePath.ts
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported.ts
 Unexpected estree file content error: 2 != 4
 
@@ -3750,7 +3696,6 @@ Missing initializer in destructuring declaration
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyForIn.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyForwardReferencedInterface.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyFunctionExpressionAssignment.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyInBareInterface.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyInCastExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyInContextuallyTypesFunctionParamter.ts
@@ -3935,7 +3880,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalFunctionArgAssi
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParamArgsTest.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParamAssignmentCompat.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParamInOverride.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParamTypeComparison.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParameterInDestructuringWithInitializer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParameterProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParameterRetainsNull.ts
@@ -3971,29 +3915,23 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadCrash.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadEquivalenceWithStatics.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadGenericFunctionWithRestArgs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadModifiersMustAgree.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstAsTypeAnnotation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInBaseWithBadImplementationInDerived.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInCallback1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInObjectLiteralImplementingAnInterface.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoAnyImplementation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoAnyImplementation2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoNonSpecializedSignature.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoStringImplementation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoStringImplementation2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnGenericArity.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadOnGenericClassAndNonGenericClass.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverCTLambda.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverNonCTLambdas.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverNonCTObjectLit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionTest1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionWithAny.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadRet.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadReturnTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadWithCallbacksWithDifferingOptionalityOnArgs.ts
@@ -4123,7 +4061,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionReturnTy
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGetter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloClass.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloFunc.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloImport.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloImportParseErrors.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloInterface.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyGloVar.ts
@@ -4410,7 +4347,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnInConstructor1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnInfiniteIntersection.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnStatement1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnTypeInferenceNotTooBroad.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnTypeParameterWithModules.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnTypeTypeArguments.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/returnValueInSetter.ts
@@ -4439,11 +4375,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/satisfiesEmit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/scopeCheckClassProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/scopeCheckStaticInitializer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/scopingInCatchBlocks.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfInCallback.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfInLambdas.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfNameAndImportsEmitInclusion.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfRef.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfReference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfReferencingFile.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfReferencingFile2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/selfReferencingFile3.ts
@@ -4580,7 +4514,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializeVarArgs1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedInheritedConstructors1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedLambdaTypeArguments.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedOverloadWithRestParameters.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureAsCallbackParameter1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureInInterface.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureOverloadReturnTypeWithIndexers.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/spellingSuggestionGlobal1.ts
@@ -4693,7 +4626,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/super.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/super1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/super2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superAccessCastedCall.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/superAccessInFatArrow1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallArgsMustMatch.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallFromClassThatDerivesFromGenericType1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallFromClassThatDerivesFromGenericType2.ts
@@ -4706,13 +4638,11 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallInStaticMethod
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallInsideObjectLiteralExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallOutsideConstructor.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superCallWithCommentEmit01.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/superElementAccess.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superHasMethodsFromMergedInterface.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superInCatchBlock1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superNewCall1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/superWithGenerics.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/switchAssignmentCompat.ts
@@ -4784,7 +4714,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/taggedTemplatesInModule
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/tailRecursiveConditionalTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetEs6DecoratorMetadataImportNotElided.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeArgs.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeCalls.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeCastTest.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeObjectLiteral.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeObjectLiteralToAny.ts
@@ -4792,7 +4721,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypeVoidFunc.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/targetTypingOnFunctions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/templateExpressionAsPossiblyDiscriminantValue.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/templateExpressionNoInlininingOfConstantBindingWithInitializer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/templateLiteralConstantEvaluation.ts
@@ -4946,16 +4874,13 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeGuardOnContainerTyp
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeIdentityConsidersBrands.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInfer1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceCacheInvalidation.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceConflictingCandidates.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceFBoundedTypeParams.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceFixEarly.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceLiteralUnion.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceReturnTypeCallback.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceTypePredicate.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceTypePredicate2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessProperties.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeLiteralCallback.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeMatch1.ts
@@ -4980,7 +4905,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterConstraine
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterConstrainedToOuterTypeParameter2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterConstraintInstantiation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterConstraints1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterEquality.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterExplicitlyExtendsAny.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterExtendsPrimitive.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterFixingWithConstraints.ts
@@ -5131,7 +5055,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/unreachableDeclarations
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/unresolvableSelfReferencingAwaitedUnion.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/unresolvedTypeAssertionSymbol.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/unspecializedConstraints.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/untypedArgumentInLambdaExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/untypedFunctionCallsWithTypeParameters1.ts
 tasks/coverage/typescript/tests/cases/compiler/untypedModuleImport_withAugmentation2.ts
 Unexpected estree file content error: 2 != 3
@@ -5228,7 +5151,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidConstructor.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidFunctionAssignmentCompat.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidIsInitialized.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidReturnIndexUnionInference.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidReturnLambdaValue.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/voidUndefinedReduction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference2.ts
@@ -5252,7 +5174,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/yieldExpression1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/yieldExpressionInFlowLoop.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/yieldExpressionInnerCommentEmit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/yieldInForInInDownlevelGenerator.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/yieldStarContextualType.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/yieldStringLiteral.ts
 A 'yield' expression is only allowed in a generator body.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/Symbols/ES5SymbolProperty1.ts
@@ -5384,7 +5305,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclara
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAndInterfaceMerge.d.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts
@@ -5428,7 +5348,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticB
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock14.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock15.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock17.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock18.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts
@@ -5825,9 +5744,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/dec
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorInstantiateModulesInFunctionBodies.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass8.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod12.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod14.ts
@@ -5835,11 +5751,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/met
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod18.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod19.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodParameter3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty10.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty11.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty12.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorCallGeneric.ts
@@ -6819,13 +6731,7 @@ A 'yield' expression is only allowed in a generator body.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression8_es6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression9_es6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorNoImplicitReturns.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck25.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck26.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck27.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck28.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck29.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck30.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck31.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck32.ts
 A 'yield' expression is only allowed in a generator body.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck40.ts
@@ -6833,7 +6739,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck42.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck43.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck44.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck45.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck46.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck48.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck55.ts
@@ -7060,7 +6965,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOp
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidStaticToString.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithLHSIsObject.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSIsSubtypeOfFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorWithEveryType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorWithTypeParameters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/logicalOrOperator/logicalOrExpressionIsContextuallyTyped.ts
@@ -7129,7 +7033,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/function
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceWithObjectLiteral.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/arrowFunctionExpressions.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedFunctionExpressionsAndReturnAnnotations.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedIife.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedIifeStrict.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/typeOfThisInFunctionExpression.ts
@@ -7200,7 +7103,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuar
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/nullOrUndefinedTypeGuardIsOrderIndependent.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardEnums.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunction.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionGenerics.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThis.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThisErrors.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardInClass.ts
@@ -7664,7 +7566,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/expo
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithInaccessibleTypeInTypeAnnotation.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedClasses.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedEnums.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedFunctions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedImportAlias.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedVariables.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/circularImportAlias.ts
@@ -8316,7 +8217,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override19.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override20.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override21.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override4.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override5.ts
 override' modifier already seen.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/override/override6.ts
@@ -9138,8 +9038,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/object
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/objectTypeWithStringIndexerHidingObjectIndexer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/objectTypeWithStringNamedPropertyOfIllegalCharacters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithOptionalProperty.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPrivateConstructor.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithProtectedConstructor.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPublicConstructor.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedCallSignatures.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedConstructSignatures.ts
@@ -9390,7 +9288,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOf
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/wideningTuples2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/builtinIteratorReturn.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/circularTypeAliasForUnionWithClass.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/circularTypeAliasForUnionWithInterface.ts
@@ -9553,11 +9450,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationsh
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithRecursiveConstraints.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfUnion.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesA.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesWithOptionalParameters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesWithRestParameters.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignaturesWithSpecializedSignatures.ts
