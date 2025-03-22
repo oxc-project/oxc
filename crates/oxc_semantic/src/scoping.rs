@@ -677,6 +677,12 @@ impl Scoping {
         });
     }
 
+    pub fn remove_child_scope(&mut self, scope_id: ScopeId, child_scope_ids: ScopeId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.scope_child_ids[scope_id.index()].retain(|scope_id| *scope_id != child_scope_ids);
+        });
+    }
+
     /// Create a scope.
     #[inline]
     pub fn add_scope(
