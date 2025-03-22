@@ -158,7 +158,7 @@ impl ClassStaticBlock {
         // Always strict mode since we're in a class.
         *ctx.scoping_mut().scope_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
-        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
+        wrap_statements_in_arrow_function_iife(ctx.ast.take(stmts), scope_id, block.span, ctx)
     }
 
     /// Convert static block to expression which will be value of private field,
@@ -169,7 +169,7 @@ impl ClassStaticBlock {
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let expr = ctx.ast.move_expression(expr);
+        let expr = ctx.ast.take(expr);
 
         // Remove the scope for the static block from the scope chain
         ctx.remove_scope_for_expression(scope_id, &expr);

@@ -499,7 +499,7 @@ impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
         if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
             return;
         }
-        *expr = match ctx.ast.move_expression(expr) {
+        *expr = match ctx.ast.take(expr) {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),

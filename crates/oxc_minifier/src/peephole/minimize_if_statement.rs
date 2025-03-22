@@ -26,17 +26,17 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) b();" => "a && b();"
                     e => (LogicalOperator::And, e),
                 };
-                let a = ctx.ast.move_expression(e);
-                let b = ctx.ast.move_expression(&mut expr_stmt.expression);
+                let a = ctx.ast.take(e);
+                let b = ctx.ast.take(&mut expr_stmt.expression);
                 let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
                 &mut if_stmt.alternate
             {
                 // "if (a) b(); else c();" => "a ? b() : c();"
-                let test = ctx.ast.move_expression(&mut if_stmt.test);
-                let consequent = ctx.ast.move_expression(&mut expr_stmt.expression);
-                let alternate = ctx.ast.move_expression(&mut alternate_expr_stmt.expression);
+                let test = ctx.ast.take(&mut if_stmt.test);
+                let consequent = ctx.ast.take(&mut expr_stmt.expression);
+                let alternate = ctx.ast.take(&mut alternate_expr_stmt.expression);
                 let expr =
                     self.minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
                 || if_stmt.alternate.as_ref().is_some_and(Self::is_statement_empty)
             {
                 // "if (a) {}" => "a;"
-                let mut expr = ctx.ast.move_expression(&mut if_stmt.test);
+                let mut expr = ctx.ast.take(&mut if_stmt.test);
                 self.remove_unused_expression(&mut expr, state, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
@@ -58,8 +58,8 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) {} else b();" => "a || b();"
                     e => (LogicalOperator::Or, e),
                 };
-                let a = ctx.ast.move_expression(e);
-                let b = ctx.ast.move_expression(&mut expr_stmt.expression);
+                let a = ctx.ast.take(e);
+                let b = ctx.ast.take(&mut expr_stmt.expression);
                 let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
@@ -67,8 +67,8 @@ impl<'a> PeepholeOptimizations {
                 match &mut if_stmt.test {
                     // "if (!a) {} else return b;" => "if (a) return b;"
                     Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                        if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
-                        if_stmt.consequent = ctx.ast.move_statement(stmt);
+                        if_stmt.test = ctx.ast.take(&mut unary_expr.argument);
+                        if_stmt.consequent = ctx.ast.take(stmt);
                         if_stmt.alternate = None;
                         state.changed = true;
                     }
@@ -76,10 +76,10 @@ impl<'a> PeepholeOptimizations {
                     _ => {
                         if_stmt.test = self.minimize_not(
                             if_stmt.test.span(),
-                            ctx.ast.move_expression(&mut if_stmt.test),
+                            ctx.ast.take(&mut if_stmt.test),
                             ctx,
                         );
-                        if_stmt.consequent = ctx.ast.move_statement(stmt);
+                        if_stmt.consequent = ctx.ast.take(stmt);
                         if_stmt.alternate = None;
                         self.try_minimize_if(if_stmt, state, ctx);
                         state.changed = true;
@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
                 if let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test {
                     if unary_expr.operator.is_not() {
                         // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
-                        if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
+                        if_stmt.test = ctx.ast.take(&mut unary_expr.argument);
                         std::mem::swap(&mut if_stmt.consequent, alternate);
                         self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
                         state.changed = true;
@@ -105,8 +105,8 @@ impl<'a> PeepholeOptimizations {
                 if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent {
                     if if2_stmt.alternate.is_none() {
                         // "if (a) if (b) return c;" => "if (a && b) return c;"
-                        let a = ctx.ast.move_expression(&mut if_stmt.test);
-                        let b = ctx.ast.move_expression(&mut if2_stmt.test);
+                        let a = ctx.ast.take(&mut if_stmt.test);
+                        let b = ctx.ast.take(&mut if2_stmt.test);
                         if_stmt.test = self.join_with_left_associative_op(
                             if_stmt.test.span(),
                             LogicalOperator::And,
@@ -114,7 +114,7 @@ impl<'a> PeepholeOptimizations {
                             b,
                             ctx,
                         );
-                        if_stmt.consequent = ctx.ast.move_statement(&mut if2_stmt.consequent);
+                        if_stmt.consequent = ctx.ast.take(&mut if2_stmt.consequent);
                         state.changed = true;
                     }
                 }
@@ -138,7 +138,7 @@ impl<'a> PeepholeOptimizations {
                 if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
                     ctx.ast.block_statement_with_scope_id(
                         if_stmt.consequent.span(),
-                        ctx.ast.vec1(ctx.ast.move_statement(&mut if_stmt.consequent)),
+                        ctx.ast.vec1(ctx.ast.take(&mut if_stmt.consequent)),
                         scope_id,
                     ),
                 ));

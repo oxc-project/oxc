@@ -589,7 +589,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = ctx.ast.move_expression(expr);
+        let super_call = ctx.ast.take(expr);
         *expr = ctx.ast.expression_call(
             span,
             Expression::from(ctx.ast.member_expression_static(

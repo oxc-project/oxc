@@ -530,7 +530,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                let expression = Some(ctx.ast.take(&mut expr_stmt.expression));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

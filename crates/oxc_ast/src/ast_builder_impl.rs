@@ -1,8 +1,8 @@
 #![warn(missing_docs)]
 
-use std::{borrow::Cow, mem};
+use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, TakeIn, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -101,121 +101,9 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Moves the expression out by replacing it with an [`Expression::NullLiteral`].
-    #[inline]
-    pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_expr = self.expression_null_literal(SPAN);
-        mem::replace(expr, null_expr)
-    }
-
-    /// Moves the statement out by replacing it with a [`Statement::EmptyStatement`].
-    #[inline]
-    pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
-        let empty_stmt = self.empty_statement(SPAN);
-        mem::replace(stmt, Statement::EmptyStatement(self.alloc(empty_stmt)))
-    }
-
-    /// Moves the assignment target out by replacing it with a dummy
-    /// [`AssignmentTarget::AssignmentTargetIdentifier`] with no name and an empty [`Span`].
-    #[inline]
-    pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy =
-            self.simple_assignment_target_assignment_target_identifier(SPAN, Atom::from(""));
-        mem::replace(target, dummy.into())
-    }
-
-    /// Moves the property key out by replacing it with a [`PropertyKey::NullLiteral`].
-    pub fn move_property_key(self, key: &mut PropertyKey<'a>) -> PropertyKey<'a> {
-        let null_expr = PropertyKey::from(self.expression_null_literal(SPAN));
-        mem::replace(key, null_expr)
-    }
-
-    /// Move a declaration out by replacing it with an empty [`Declaration::VariableDeclaration`].
-    #[inline]
-    pub fn move_declaration(self, decl: &mut Declaration<'a>) -> Declaration<'a> {
-        let empty_decl =
-            self.declaration_variable(SPAN, VariableDeclarationKind::Var, self.vec(), false);
-        mem::replace(decl, empty_decl)
-    }
-
-    /// Move a variable declaration out by replacing it with an empty [`VariableDeclaration`].
-    #[inline]
-    pub fn move_variable_declaration(
-        self,
-        decl: &mut VariableDeclaration<'a>,
-    ) -> VariableDeclaration<'a> {
-        let empty_decl =
-            self.variable_declaration(SPAN, VariableDeclarationKind::Var, self.vec(), false);
-        mem::replace(decl, empty_decl)
-    }
-
-    /// Move a formal parameters out by replacing it with an empty [`FormalParameters`].
-    #[inline]
-    pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
-        let empty_params = self.formal_parameters(SPAN, params.kind, self.vec(), NONE);
-        mem::replace(params, empty_params)
-    }
-
-    /// Move a function body out by replacing it with an empty [`FunctionBody`].
-    #[inline]
-    pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
-        let empty_body = self.function_body(SPAN, self.vec(), self.vec());
-        mem::replace(body, empty_body)
-    }
-
-    /// Move a function out by replacing it with an empty [`Function`].
-    #[inline]
-    pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
-        let params =
-            self.formal_parameters(SPAN, FormalParameterKind::FormalParameter, self.vec(), NONE);
-        let empty_function = self.function(
-            SPAN,
-            FunctionType::FunctionDeclaration,
-            None,
-            false,
-            false,
-            false,
-            NONE,
-            NONE,
-            params,
-            NONE,
-            NONE,
-        );
-        mem::replace(function, empty_function)
-    }
-
-    /// Move a class out by replacing it with an empty [`Class`].
-    pub fn move_class(self, class: &mut Class<'a>) -> Class<'a> {
-        let empty_class = self.class(
-            SPAN,
-            ClassType::ClassDeclaration,
-            self.vec(),
-            None,
-            NONE,
-            None,
-            NONE,
-            None,
-            self.class_body(SPAN, self.vec()),
-            false,
-            false,
-        );
-        mem::replace(class, empty_class)
-    }
-
-    /// Move an array element out by replacing it with an [`ArrayExpressionElement::Elision`].
-    pub fn move_array_expression_element(
-        self,
-        element: &mut ArrayExpressionElement<'a>,
-    ) -> ArrayExpressionElement<'a> {
-        let elision = self.array_expression_element_elision(SPAN);
-        mem::replace(element, elision)
-    }
-
-    /// Take the contents of a arena-allocated [`Vec`], leaving an empty [`Vec`] in its place.
-    /// This is akin to [`std::mem::take`].
-    #[inline]
-    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
-        mem::replace(vec, self.vec())
+    /// Take the AST node and substitute a dummy node in its place.
+    pub fn take<T: TakeIn<'a>>(self, value: &mut T) -> T {
+        value.take_in(self.allocator)
     }
 
     /* ---------- Constructors ---------- */

@@ -167,7 +167,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt {
                 if let Some(declaration) = &mut decl.declaration {
-                    *stmt = Statement::from(self.ast.move_declaration(declaration));
+                    *stmt = Statement::from(self.ast.take(declaration));
                 }
             }
         });

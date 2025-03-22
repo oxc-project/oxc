@@ -225,7 +225,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.move_expression(initializer);
+                        let mut new_initializer = ast.take(initializer);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,

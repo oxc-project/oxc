@@ -73,7 +73,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
-        let right = ctx.ast.move_expression(&mut export_assignment.expression);
+        let right = ctx.ast.take(&mut export_assignment.expression);
         let assignment_expr =
             ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, assignment_expr)
