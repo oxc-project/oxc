@@ -2,12 +2,13 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, MethodDefinitionKind, Statement,
+        FormalParameter, Function, MethodDefinitionKind, Statement,
     },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashSet;
 
@@ -105,13 +106,17 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             }
         }
 
+        let Some(function_body) = &method.value.body else {
+            return;
+        };
+
         let mut visitor = AssignmentVisitor {
             ctx,
             parameter_properties,
             assigned_before_unnecessary: FxHashSet::default(),
             assigned_before_constructor,
         };
-        visitor.visit_method_definition(method);
+        visitor.visit_function_body(function_body);
     }
 }
 
@@ -123,10 +128,11 @@ struct AssignmentVisitor<'a, 'b> {
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
-    fn visit_assignment_expression(
-        &mut self,
-        assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
-    ) {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
+        // don't continue walking into functions as they have a different scoped "this"
+    }
+
+    fn visit_assignment_expression(&mut self, assignment_expr: &AssignmentExpression<'a>) {
         let Some(this_property_name) = get_property_name(&assignment_expr.left) else {
             return;
         };
@@ -472,6 +478,15 @@ fn test() {
             console.log('hi');
             this.foo += 1;
           })();
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            function bar() {
+              this.foo = foo;
+            }
+          }
         }
         ",
     ];
