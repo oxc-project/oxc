@@ -115,7 +115,11 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
         let scope_id = match &mut for_of_stmt.body {
             Statement::BlockStatement(block) => block.scope_id(),
-            _ => ctx.create_child_scope(for_of_stmt_scope_id, ScopeFlags::empty()),
+            _ => ctx.insert_scope_below_statement_from_scope_id(
+                &for_of_stmt.body,
+                for_of_stmt.scope_id(),
+                ScopeFlags::empty(),
+            ),
         };
         ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
         ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, &for_of_init_name);
