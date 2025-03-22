@@ -1582,6 +1582,7 @@ pub struct BindingProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull))]
 pub struct ArrayPattern<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
