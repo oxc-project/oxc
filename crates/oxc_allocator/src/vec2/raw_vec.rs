@@ -636,7 +636,17 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
-    // Given a new layout, completes the grow operation.
+    #[inline(always)]
+    unsafe fn grow_raw(
+        &self,
+        ptr: NonNull<u8>,
+        layout: Layout,
+        new_layout: Layout,
+    ) -> Result<NonNull<[u8]>, AllocError> {
+        self.a.grow(ptr, layout, new_layout)
+    }
+
+    #[inline]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
@@ -644,7 +654,8 @@ impl<'a, T> RawVec<'a, T> {
             Some(layout) => unsafe {
                 debug_assert!(new_layout.align() == layout.align());
                 debug_assert!(new_layout.size() > layout.size());
-                self.a.grow(self.ptr.cast(), layout, new_layout)
+                // 通过辅助函数调用，提供更好的优化表面
+                self.grow_raw(self.ptr.cast(), layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
