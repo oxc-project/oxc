@@ -656,7 +656,7 @@ impl<'a, T> RawVec<'a, T> {
                 debug_assert!(new_layout.size() > layout.size());
 
                 // 直接调用，但标记为热路径
-                self.a.grow(self.ptr.cast(), layout, new_layout)
+                self.grow_raw(self.ptr.cast(), layout, new_layout)
             }
         } else {
             // 分配新内存是冷路径
