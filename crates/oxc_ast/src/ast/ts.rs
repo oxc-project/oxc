@@ -962,7 +962,6 @@ pub enum TSSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(add_fields(accessibility = TsNull))]
-
 pub struct TSIndexSignature<'a> {
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
