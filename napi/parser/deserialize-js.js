@@ -1065,7 +1065,7 @@ function deserializeStringLiteral(pos) {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeStr(pos + 8),
+    value: 'todo',
     raw: deserializeOptionStr(pos + 24),
   };
 }

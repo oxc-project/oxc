@@ -6676,10 +6676,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedE
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings08.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings09.ts
 tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings10.ts
-serde_json::from_str(estree_json) error: unexpected end of hex escape at line 30 column 29
+serde_json::from_str(oxc_json) error: invalid escape at line 30 column 28
 
 tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings11.ts
-serde_json::from_str(estree_json) error: lone leading surrogate in hex escape at line 30 column 28
+serde_json::from_str(oxc_json) error: invalid escape at line 30 column 28
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings15.ts
