@@ -255,7 +255,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         expressions.push(ctx.ast.expression_assignment(
             SPAN,
             op,
-            ctx.ast.move_assignment_target(&mut assign_expr.left),
+            ctx.ast.take(&mut assign_expr.left),
             reference_builder.create_read_expression(ctx),
         ));
 
@@ -403,7 +403,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 break;
             }
         }
-        let mut expressions = ctx.ast.vec1(ctx.ast.move_expression(expr));
+        let mut expressions = ctx.ast.vec1(ctx.ast.take(expr));
         expressions.extend(exprs);
         *expr = ctx.ast.expression_sequence(SPAN, expressions);
     }
@@ -443,7 +443,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 exprs.push(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    ctx.ast.move_assignment_target(pat),
+                    ctx.ast.take(pat),
                     bound_identifier.create_read_expression(ctx),
                 ));
                 *pat = bound_identifier.create_spanned_write_target(SPAN, ctx);
@@ -493,7 +493,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(spread_prop) = prop {
                 Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
-                let arg = ctx.ast.move_expression(&mut spread_prop.unbox().argument);
+                let arg = ctx.ast.take(&mut spread_prop.unbox().argument);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
                 props.push(prop);
@@ -637,7 +637,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             return;
         }
         let target = left.to_assignment_target_mut();
-        let assign_left = ctx.ast.move_assignment_target(target);
+        let assign_left = ctx.ast.take(target);
         let flags = SymbolFlags::FunctionScopedVariable;
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let id = bound_identifier.create_binding_pattern(ctx);
@@ -669,7 +669,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             (empty_stmt.span, ctx.ast.vec())
         } else {
             let span = stmt.span();
-            (span, ctx.ast.vec1(ctx.ast.move_statement(stmt)))
+            (span, ctx.ast.vec1(ctx.ast.take(stmt)))
         };
         *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
@@ -1151,7 +1151,7 @@ impl<'a> ReferenceBuilder<'a> {
         force_create_binding: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
-        let expr = ctx.ast.move_expression(expr);
+        let expr = ctx.ast.take(expr);
         let binding;
         let maybe_bound_identifier;
         match &expr {

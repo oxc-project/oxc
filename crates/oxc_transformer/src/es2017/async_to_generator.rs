@@ -173,11 +173,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(
-                SPAN,
-                false,
-                Some(ctx.ast.move_expression(&mut expr.argument)),
-            ))
+            Some(ctx.ast.expression_yield(SPAN, false, Some(ctx.ast.take(&mut expr.argument))))
         } else {
             None
         }
@@ -302,7 +298,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
-        let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut wrapper_function.params));
+        let params = ctx.alloc(ctx.ast.take(&mut *wrapper_function.params));
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -390,8 +386,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         // Construct the IIFE
-        let callee =
-            Expression::FunctionExpression(ctx.alloc(ctx.ast.move_function(wrapper_function)));
+        let callee = Expression::FunctionExpression(ctx.alloc(ctx.ast.take(wrapper_function)));
         ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -473,19 +468,19 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = ctx.ast.move_function_body(&mut arrow.body);
+        let mut body = ctx.ast.take(&mut *arrow.body);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => ctx.ast.move_expression(&mut es.expression),
+                Statement::ExpressionStatement(es) => ctx.ast.take(&mut es.expression),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut arrow.params));
+        let params = ctx.alloc(ctx.ast.take(&mut *arrow.params));
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);

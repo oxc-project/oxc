@@ -85,9 +85,9 @@ impl<'a> PeepholeOptimizations {
         loop {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
-                    let right = ctx.ast.move_expression(&mut logical_expr.left);
+                    let right = ctx.ast.take(&mut logical_expr.left);
                     a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = ctx.ast.move_expression(&mut logical_expr.right);
+                    b = ctx.ast.take(&mut logical_expr.right);
                     continue;
                 }
             }
@@ -144,9 +144,9 @@ impl<'a> PeepholeOptimizations {
                     _ => return None,
                 }
                 Some(if b.value {
-                    ctx.ast.move_expression(&mut e.left)
+                    ctx.ast.take(&mut e.left)
                 } else {
-                    let argument = ctx.ast.move_expression(&mut e.left);
+                    let argument = ctx.ast.take(&mut e.left);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
             }
@@ -208,7 +208,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
+        expr.right = ctx.ast.take(&mut logical_expr.right);
         true
     }
 
@@ -230,7 +230,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        expr.right = ctx.ast.take(&mut binary_expr.right);
         true
     }
 

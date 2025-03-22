@@ -431,7 +431,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         // `class C {}` -> `let C = class {}`
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(ctx.ast.alloc(ctx.ast.move_class(class))),
+            Expression::ClassExpression(ctx.ast.alloc(ctx.ast.take(class))),
             class_alias_binding.as_ref(),
             ctx,
         );
@@ -873,7 +873,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
-                let right = ctx.ast.move_expression(key.to_expression_mut());
+                let right = ctx.ast.take(key.to_expression_mut());
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)

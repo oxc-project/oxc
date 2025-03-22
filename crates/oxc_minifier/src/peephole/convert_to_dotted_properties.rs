@@ -18,7 +18,7 @@ impl<'a> LatePeepholeOptimizations {
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
-            let object = ctx.ast.move_expression(&mut e.object);
+            let object = ctx.ast.take(&mut e.object);
             *expr = MemberExpression::StaticMemberExpression(
                 ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
             );

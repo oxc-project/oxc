@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
         let mut keep_var = KeepVar::new(ctx.ast);
         let mut new_stmts = ctx.ast.vec_from_iter(stmts.drain(..));
         for i in 0..new_stmts.len() {
-            let stmt = ctx.ast.move_statement(&mut new_stmts[i]);
+            let stmt = ctx.ast.take(&mut new_stmts[i]);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -158,8 +158,7 @@ impl<'a> PeepholeOptimizations {
                             // "if (!a) return b; return c;" => "return a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
                                 if unary_expr.operator.is_not() {
-                                    prev_if.test =
-                                        ctx.ast.move_expression(&mut unary_expr.argument);
+                                    prev_if.test = ctx.ast.take(&mut unary_expr.argument);
                                     std::mem::swap(&mut left, &mut right);
                                 }
                             }
@@ -176,7 +175,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
                                 let mut expr = self.minimize_conditional(
                                     prev_if.span,
-                                    ctx.ast.move_expression(&mut prev_if.test),
+                                    ctx.ast.take(&mut prev_if.test),
                                     left,
                                     right,
                                     ctx,
@@ -246,8 +245,7 @@ impl<'a> PeepholeOptimizations {
                             // "if (!a) throw b; throw c;" => "throw a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
                                 if unary_expr.operator.is_not() {
-                                    prev_if.test =
-                                        ctx.ast.move_expression(&mut unary_expr.argument);
+                                    prev_if.test = ctx.ast.take(&mut unary_expr.argument);
                                     std::mem::swap(&mut left, &mut right);
                                 }
                             }
@@ -264,7 +262,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) throw b; throw c;" => "throw a ? b : c;"
                                 let mut expr = self.minimize_conditional(
                                     prev_if.span,
-                                    ctx.ast.move_expression(&mut prev_if.test),
+                                    ctx.ast.take(&mut prev_if.test),
                                     left,
                                     right,
                                     ctx,
@@ -344,8 +342,8 @@ impl<'a> PeepholeOptimizations {
         b: &mut Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Expression<'a> {
-        let a = ctx.ast.move_expression(a);
-        let b = ctx.ast.move_expression(b);
+        let a = ctx.ast.take(a);
+        let b = ctx.ast.take(b);
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
             sequence_expr.expressions.push(b);
@@ -451,8 +449,8 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test = self.join_with_left_associative_op(
                         if_stmt.test.span(),
                         LogicalOperator::Or,
-                        ctx.ast.move_expression(&mut prev_if_stmt.test),
-                        ctx.ast.move_expression(&mut if_stmt.test),
+                        ctx.ast.take(&mut prev_if_stmt.test),
+                        ctx.ast.take(&mut if_stmt.test),
                         ctx,
                     );
                     result.pop();
@@ -519,7 +517,7 @@ impl<'a> PeepholeOptimizations {
                     self.minimize_statements(&mut body, state, ctx);
                     let span =
                         if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
-                    let test = ctx.ast.move_expression(&mut if_stmt.test);
+                    let test = ctx.ast.take(&mut if_stmt.test);
                     let mut test = self.minimize_not(test.span(), test, ctx);
                     self.try_fold_expr_in_boolean_context(&mut test, ctx);
                     let consequent = if body.len() == 1 {
@@ -623,9 +621,8 @@ impl<'a> PeepholeOptimizations {
                         state.changed = true;
                     }
                 } else {
-                    for_stmt.init = Some(ForStatementInit::from(
-                        ctx.ast.move_expression(&mut prev_expr_stmt.expression),
-                    ));
+                    for_stmt.init =
+                        Some(ForStatementInit::from(ctx.ast.take(&mut prev_expr_stmt.expression)));
                     result.pop();
                     state.changed = true;
                 }
@@ -644,7 +641,7 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 } else if prev_var_decl.kind.is_var() {
-                    let var_decl = ctx.ast.move_variable_declaration(prev_var_decl);
+                    let var_decl = ctx.ast.take(&mut **prev_var_decl);
                     for_stmt.init =
                         Some(ForStatementInit::VariableDeclaration(ctx.ast.alloc(var_decl)));
                     result.pop();
@@ -712,7 +709,7 @@ impl<'a> PeepholeOptimizations {
                         {
                             if id.name == decl_id.name {
                                 for_in_stmt.left = ForStatementLeft::VariableDeclaration(
-                                    ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
+                                    ctx.ast.alloc(ctx.ast.take(prev_var_decl)),
                                 );
                                 result.pop();
                                 state.changed = true;
@@ -752,7 +749,7 @@ impl<'a> PeepholeOptimizations {
                     {
                         if id.name == decl_id.name {
                             for_of_stmt.left = ForStatementLeft::VariableDeclaration(
-                                ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
+                                ctx.ast.alloc(ctx.ast.take(prev_var_decl)),
                             );
                             result.pop();
                             state.changed = true;

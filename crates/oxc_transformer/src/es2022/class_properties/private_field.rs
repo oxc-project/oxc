@@ -59,7 +59,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let span = field_expr.span;
-        let object = ctx.ast.move_expression(&mut field_expr.object);
+        let object = ctx.ast.take(&mut field_expr.object);
         let resolved = if is_assignment {
             match self.classes_stack.find_writeable_private_prop(&field_expr.field) {
                 Some(prop) => prop,
@@ -265,7 +265,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
 
-            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let object = ctx.ast.take(&mut field_expr.object);
             call_expr.callee = Expression::from(Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
@@ -332,7 +332,7 @@ impl<'a> ClassProperties<'a, '_> {
         let span = field_expr.span;
         // `(object.#method)()`
         //  ^^^^^^^^^^^^^^^^ is a parenthesized expression
-        let object = ctx.ast.move_expression(field_expr.object.get_inner_expression_mut());
+        let object = ctx.ast.take(field_expr.object.get_inner_expression_mut());
 
         let Some(ResolvedPrivateProp {
             prop_binding,
@@ -495,7 +495,7 @@ impl<'a> ClassProperties<'a, '_> {
         if self.private_fields_as_properties {
             // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
             // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
-            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let object = ctx.ast.take(&mut field_expr.object);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 // At least one of `get_binding` or `set_binding` is always present
@@ -632,7 +632,7 @@ impl<'a> ClassProperties<'a, '_> {
 
                 if let Some(operator) = operator.to_binary_operator() {
                     // `Class.#prop += value` -> `_prop._ = _prop._ + value`
-                    let value = ctx.ast.move_expression(&mut assign_expr.right);
+                    let value = ctx.ast.take(&mut assign_expr.right);
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right = ctx.ast.expression_binary(SPAN, prop_obj, operator, value);
                 } else if let Some(operator) = operator.to_logical_operator() {
@@ -640,7 +640,7 @@ impl<'a> ClassProperties<'a, '_> {
                     let span = assign_expr.span;
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
-                    let right = ctx.ast.move_expression(expr);
+                    let right = ctx.ast.take(expr);
                     *expr = ctx.ast.expression_logical(span, prop_obj, operator, right);
                 } else {
                     // The above covers all types of `AssignmentOperator`
@@ -662,7 +662,7 @@ impl<'a> ClassProperties<'a, '_> {
             let object = field_expr.object.into_inner_expression();
 
             let class_ident = class_binding.create_read_expression(ctx);
-            let value = ctx.ast.move_expression(&mut assign_expr.right);
+            let value = ctx.ast.take(&mut assign_expr.right);
 
             if operator == AssignmentOperator::Assign {
                 // Replace right side of assignment with `_assertClassBrand(Class, object, _prop)`
@@ -672,7 +672,7 @@ impl<'a> ClassProperties<'a, '_> {
                     self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
             } else {
                 let class_ident = class_binding.create_read_expression(ctx);
-                let value = ctx.ast.move_expression(&mut assign_expr.right);
+                let value = ctx.ast.take(&mut assign_expr.right);
 
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
@@ -722,7 +722,7 @@ impl<'a> ClassProperties<'a, '_> {
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object2, value, SPAN, ctx);
-                    let right = ctx.ast.move_expression(expr);
+                    let right = ctx.ast.take(expr);
                     // `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
                     *expr = ctx.ast.expression_logical(span, left, operator, right);
                 } else {
@@ -754,7 +754,7 @@ impl<'a> ClassProperties<'a, '_> {
         class_binding: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let assign_expr = match ctx.ast.move_expression(expr) {
+        let assign_expr = match ctx.ast.take(expr) {
             Expression::AssignmentExpression(assign_expr) => assign_expr.unbox(),
             _ => unreachable!(),
         };
@@ -926,7 +926,7 @@ impl<'a> ClassProperties<'a, '_> {
         if self.private_fields_as_properties {
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
             // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
-            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let object = ctx.ast.take(&mut field_expr.object);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
@@ -952,7 +952,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // TODO(improve-on-babel): Could avoid `move_expression` here and replace `update_expr.argument` instead.
         // Only doing this first to match the order Babel creates temp vars.
-        let object = ctx.ast.move_expression(field_expr.object.get_inner_expression_mut());
+        let object = ctx.ast.take(field_expr.object.get_inner_expression_mut());
 
         if is_static && !is_method {
             // Unwrap is safe because `is_method` is false, then private prop is always have a `get_binding`
@@ -1024,7 +1024,7 @@ impl<'a> ClassProperties<'a, '_> {
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
-            let update_expr = ctx.ast.move_expression(expr);
+            let update_expr = ctx.ast.take(expr);
 
             if prefix {
                 // Source = `++object.#prop` (prefix `++`)
@@ -1121,7 +1121,7 @@ impl<'a> ClassProperties<'a, '_> {
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
-            let update_expr = ctx.ast.move_expression(expr);
+            let update_expr = ctx.ast.take(expr);
 
             if prefix {
                 // Source = `++object.#prop` (prefix `++`)
@@ -1375,7 +1375,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `o?.Foo.#self.self?.self.unicorn;` -> `(result ? void 0 : object)?.self.unicorn`
             //  ^^^^^^^^^^^^^^^^^ the object has transformed, if the current member is optional,
             //                    then we need to wrap it to a conditional expression
-            let owned_object = ctx.ast.move_expression(object);
+            let owned_object = ctx.ast.take(object);
             *object = Self::wrap_conditional_check(result, owned_object, ctx);
             None
         } else {
@@ -1397,7 +1397,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `Foo.bar.#m?.();` -> `_assertClassBrand(Foo, _Foo$bar = Foo.bar, _m)._?.call(_Foo$bar);`
             //          ^^^^ only the private field is optional
             // Move out parenthesis and typescript syntax
-            call_expr.callee = ctx.ast.move_expression(callee);
+            call_expr.callee = ctx.ast.take(callee);
             self.transform_call_expression_impl(call_expr, ctx);
             return result;
         }
@@ -1415,9 +1415,9 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
         let result = result?;
         let object = callee.to_member_expression_mut().object_mut();
-        let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
+        let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
         *object = assignment;
-        let callee = ctx.ast.move_expression(&mut call_expr.callee);
+        let callee = ctx.ast.take(&mut call_expr.callee);
         let callee = Self::wrap_conditional_check(result, callee, ctx);
         Self::substitute_callee_and_insert_context(call_expr, callee, context, ctx);
 
@@ -1438,7 +1438,7 @@ impl<'a> ClassProperties<'a, '_> {
         object: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut owned_object = ctx.ast.move_expression(object.get_inner_expression_mut());
+        let mut owned_object = ctx.ast.take(object.get_inner_expression_mut());
 
         let owned_object = if let Some(result) =
             self.transform_chain_element_recursively(&mut owned_object, ctx)
@@ -1468,9 +1468,7 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = ctx.ast.move_expression(expr) else {
-            unreachable!()
-        };
+        let Expression::ChainExpression(chain_expr) = ctx.ast.take(expr) else { unreachable!() };
         match chain_expr.unbox().expression {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
@@ -1571,10 +1569,8 @@ impl<'a> ClassProperties<'a, '_> {
             if is_optional_callee {
                 // `o?.Foo.#self?.getSelf?.().#x;` -> `(_ref$getSelf = (_ref2 = _ref = o === null || o === void 0 ?
                 //              ^^ is optional         void 0 : babelHelpers.assertClassBrand(Foo, o.Foo, _self)._)`
-                *object =
-                    Self::wrap_conditional_check(result, ctx.ast.move_expression(object), ctx);
-                let (assignment, context) =
-                    self.duplicate_object(ctx.ast.move_expression(object), ctx);
+                *object = Self::wrap_conditional_check(result, ctx.ast.take(object), ctx);
+                let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
                 *object = assignment;
                 context
             } else {
@@ -1583,11 +1579,9 @@ impl<'a> ClassProperties<'a, '_> {
                 // ^^^^^^^^^^^^^^^^^^^^^^ to make sure get `getSelf` call has a proper context, we need to assign
                 //                        the parent of callee (i.e `o?.Foo.#self`) to a temp variable,
                 //                        and then use it as a first argument of `_ref.call`.
-                let (assignment, context) =
-                    self.duplicate_object(ctx.ast.move_expression(object), ctx);
+                let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
                 *object = assignment;
-                *callee =
-                    Self::wrap_conditional_check(result, ctx.ast.move_expression(callee), ctx);
+                *callee = Self::wrap_conditional_check(result, ctx.ast.take(callee), ctx);
                 context
             }
         } else {
@@ -1595,14 +1589,14 @@ impl<'a> ClassProperties<'a, '_> {
             // ^^^^^^^^^^^^^^^^ this is a optional function call, to make sure it has a proper context,
             //                  we also need to assign `Foo?.bar()` to a temp variable, and then use
             //                  it as a first argument of `_Foo$bar$zoo`.
-            let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
+            let (assignment, context) = self.duplicate_object(ctx.ast.take(object), ctx);
             *object = assignment;
             context
         };
 
         // After the below transformation, the `callee` will be a temp variable.
         let result = self.transform_expression_to_wrap_nullish_check(callee, ctx);
-        let owned_callee = ctx.ast.move_expression(callee);
+        let owned_callee = ctx.ast.take(callee);
         Self::substitute_callee_and_insert_context(call, owned_callee, context, ctx);
         result
     }
@@ -1699,7 +1693,7 @@ impl<'a> ClassProperties<'a, '_> {
                 {
                     // We still need this unary expr, but it needs to be used as the alternative of the conditional
                     unary_expr.argument = chain_expr;
-                    ctx.ast.move_expression(expr)
+                    ctx.ast.take(expr)
                 },
             );
         }
@@ -1759,7 +1753,7 @@ impl<'a> ClassProperties<'a, '_> {
             // But this is not needed, so we omit it.
             let prop_binding = self.classes_stack.find_private_prop(&field_expr.field).prop_binding;
 
-            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let object = ctx.ast.take(&mut field_expr.object);
             let replacement = Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
@@ -1849,7 +1843,7 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::PrivateInExpression(private_in) = ctx.ast.move_expression(expr) else {
+        let Expression::PrivateInExpression(private_in) = ctx.ast.take(expr) else {
             unreachable!();
         };
 

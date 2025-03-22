@@ -226,17 +226,17 @@ impl<'a, 'b> PeepholeOptimizations {
                 }
                 return Some(ctx.ast.statement_if(
                     if_stmt.span,
-                    ctx.ast.move_expression(&mut if_stmt.test),
-                    ctx.ast.move_statement(&mut if_stmt.consequent),
-                    if_stmt.alternate.as_mut().map(|alternate| ctx.ast.move_statement(alternate)),
+                    ctx.ast.take(&mut if_stmt.test),
+                    ctx.ast.take(&mut if_stmt.consequent),
+                    if_stmt.alternate.as_mut().map(|alternate| ctx.ast.take(alternate)),
                 ));
             }
             return Some(if boolean {
-                ctx.ast.move_statement(&mut if_stmt.consequent)
+                ctx.ast.take(&mut if_stmt.consequent)
             } else {
                 if_stmt.alternate.as_mut().map_or_else(
                     || ctx.ast.statement_empty(if_stmt.span),
-                    |alternate| ctx.ast.move_statement(alternate),
+                    |alternate| ctx.ast.take(alternate),
                 )
             });
         }
@@ -279,10 +279,9 @@ impl<'a, 'b> PeepholeOptimizations {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
                                 .declarations
-                                .splice(0..0, ctx.ast.move_vec(&mut var_init.declarations));
+                                .splice(0..0, ctx.ast.take(&mut var_init.declarations));
                         } else {
-                            var_decl =
-                                Some(ctx.ast.alloc(ctx.ast.move_variable_declaration(var_init)));
+                            var_decl = Some(ctx.ast.alloc(ctx.ast.take(var_init)));
                         }
                     }
                     Some(var_decl.map_or_else(
@@ -400,23 +399,16 @@ impl<'a, 'b> PeepholeOptimizations {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_array([
                     {
-                        let mut test = ctx.ast.move_expression(&mut expr.test);
+                        let mut test = ctx.ast.take(&mut expr.test);
                         self.remove_unused_expression(&mut test, state, ctx);
                         test
                     },
-                    ctx.ast.move_expression(if v {
-                        &mut expr.consequent
-                    } else {
-                        &mut expr.alternate
-                    }),
+                    ctx.ast.take(if v { &mut expr.consequent } else { &mut expr.alternate }),
                 ]);
                 ctx.ast.expression_sequence(expr.span, exprs)
             } else {
-                let result_expr = ctx.ast.move_expression(if v {
-                    &mut expr.consequent
-                } else {
-                    &mut expr.alternate
-                });
+                let result_expr =
+                    ctx.ast.take(if v { &mut expr.consequent } else { &mut expr.alternate });
 
                 let should_keep_as_sequence_expr =
                     Self::should_keep_indirect_access(&result_expr, ctx);

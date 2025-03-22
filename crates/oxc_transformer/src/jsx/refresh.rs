@@ -250,7 +250,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
+        arguments.insert(0, Argument::from(ctx.ast.take(expr)));
         *expr = ctx.ast.expression_call(
             SPAN,
             binding.create_read_expression(ctx),
@@ -503,7 +503,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                ctx.ast.move_expression(expr),
+                ctx.ast.take(expr),
             );
         }
 
