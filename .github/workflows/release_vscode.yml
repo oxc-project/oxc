@@ -81,12 +81,12 @@ jobs:
         run: pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@2c41309d51ede152b6f2ee6bf3b71e6dc9a8b7df # v2.49.27
+        uses: taiki-e/install-action@a433d87f121760c7447ab86390794f9a2dce31cf # v2.49.33
         with:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -117,7 +117,7 @@ jobs:
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: packages-${{ matrix.code-target }}
           path: ./oxc_language_server-${{ matrix.code-target }}.vsix
@@ -134,7 +134,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Download extension artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           merge-multiple: true
           path: editors/vscode

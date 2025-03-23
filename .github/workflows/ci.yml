@@ -79,7 +79,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
@@ -287,7 +287,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Restore dprint plugin cache
-        uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
