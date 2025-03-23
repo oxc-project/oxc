@@ -720,6 +720,7 @@ function deserializeAssignmentPattern(pos) {
     end: deserializeU32(pos + 4),
     left: deserializeBindingPattern(pos + 8),
     right: deserializeExpression(pos + 40),
+    decorators: [],
   };
 }
 

@@ -516,6 +516,7 @@ export interface AssignmentPattern extends Span {
   type: 'AssignmentPattern';
   left: BindingPattern;
   right: Expression;
+  decorators?: [];
 }
 
 export interface ObjectPattern extends Span {

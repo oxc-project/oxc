@@ -1547,6 +1547,7 @@ pub enum BindingPatternKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(decorators = TsEmptyArray))]
 pub struct AssignmentPattern<'a> {
     pub span: Span,
     pub left: BindingPattern<'a>,
