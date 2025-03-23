@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Performance
+
+- a09bbcf regular_expression: Make all fieldless enums `Copy` (#9937) (overlookmotel)
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+
 ## [0.61.1] - 2025-03-21
 
 ### Features
