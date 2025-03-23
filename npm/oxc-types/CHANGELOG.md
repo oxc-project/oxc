@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- 89cb368 ast/estree: Add decorators field to `AssignmentPattern` (#9967) (therewillbecode)
+- 4980b73 ast/estree: Add missing estree fields to `TSIndexSignature` and `TSIndexSignatureName` (#9968) (therewillbecode)
+- b9f80b9 ast/estree: Fix `TSFunctionType` and `TSCallSignatureDeclaration`  (#9959) (therewillbecode)
+- 0cdeedd ast/estree: Fix `ArrayPattern` (#9956) (therewillbecode)
+- 6fcd342 ast/estree: Fix `FormalParameter` (#9954) (therewillbecode)
+- 9d1035e ast/estree: Fix TS type def for `TSThisParameter` (#9942) (overlookmotel)
+- 8228b74 ast/estree: Fix `Function.this_param` (#9913) (hi-ogawa)
+- d69cc34 ast/estree: Fix `BindingIdentifier` (#9822) (hi-ogawa)
+- 5631ebd ast/extree: Fix `TSModuleDeclaration.global` (#9941) (overlookmotel)
+
 ## [0.61.0] - 2025-03-20
 
 - c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
