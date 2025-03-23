@@ -420,6 +420,30 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     }
 }
 
+/// Serializer for `extends` field of `TSInterfaceDeclaration`.
+///
+/// Serialize `extends` as an empty array if it's `None`.
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSInterfaceDeclarationExtends>",
+    raw_deser = "
+        let extends = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
+        if (extends === null) specifiers = [];
+        extends
+    "
+)]
+pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
+
+impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(extends) = &self.0.extends {
+            extends.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `specifiers` field of `ImportDeclaration`.
 ///
 /// Serialize `specifiers` as an empty array if it's `None`.
