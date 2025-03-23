@@ -224,6 +224,11 @@ impl<'a> Lexer<'a> {
         token
     }
 
+    /// Advance source cursor to end of file.
+    pub fn advance_to_end(&mut self) {
+        self.source.advance_to_end();
+    }
+
     // ---------- Private Methods ---------- //
     fn error(&mut self, error: OxcDiagnostic) {
         self.errors.push(error);

@@ -85,12 +85,12 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
 };
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{ModuleKind, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -363,6 +363,8 @@ struct ParserImpl<'a> {
     /// Source Code
     source_text: &'a str,
 
+    fatal_error: Option<FatalError>,
+
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
@@ -407,6 +409,7 @@ impl<'a> ParserImpl<'a> {
             lexer: Lexer::new(allocator, source_text, source_type, unique),
             source_type,
             source_text,
+            fatal_error: None,
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
@@ -424,22 +427,22 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (mut program, panicked) = match self.parse_program() {
-            Ok(program) => (program, false),
-            Err(error) => {
-                self.error(self.overlong_error().unwrap_or(error));
-                let program = self.ast.program(
-                    Span::default(),
-                    self.source_type,
-                    self.source_text,
-                    self.ast.vec(),
-                    None,
-                    self.ast.vec(),
-                    self.ast.vec(),
-                );
-                (program, true)
-            }
-        };
+        let mut program = self.parse_program();
+        let mut panicked = false;
+        if let Some(FatalError { error, errors_len: errors_count }) = self.fatal_error.take() {
+            self.errors.truncate(errors_count);
+            self.error(self.overlong_error().unwrap_or(error));
+            program = self.ast.program(
+                Span::default(),
+                self.source_type,
+                self.source_text,
+                self.ast.vec(),
+                None,
+                self.ast.vec(),
+                self.ast.vec(),
+            );
+            panicked = true;
+        }
 
         self.check_unfinished_errors();
         let mut is_flow_language = false;
@@ -486,7 +489,12 @@ impl<'a> ParserImpl<'a> {
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
-        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+
+        let expr = self.parse_expr();
+        if let Some(FatalError { error, .. }) = self.fatal_error.take() {
+            return Err(vec![error]);
+        }
+
         self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
         if !errors.is_empty() {
@@ -496,17 +504,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Result<Program<'a>> {
+    fn parse_program(&mut self) -> Program<'a> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
 
         let hashbang = self.parse_hashbang();
         let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true)?;
+            self.parse_directives_and_statements(/* is_top_level */ true);
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
-        Ok(self.ast.program(
+        self.ast.program(
             span,
             self.source_type,
             self.source_text,
@@ -514,7 +522,7 @@ impl<'a> ParserImpl<'a> {
             hashbang,
             directives,
             statements,
-        ))
+        )
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
@@ -562,18 +570,37 @@ impl<'a> ParserImpl<'a> {
         None
     }
 
-    /// Return error info at current token
-    /// # Panics
-    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected(&mut self) -> OxcDiagnostic {
+    fn set_fatal_error(&mut self, error: OxcDiagnostic) {
+        if self.fatal_error.is_none() {
+            // Advance lexer's cursor to end of file, so parsing exits as swiftly as possible
+            self.lexer.advance_to_end();
+            self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
+        }
+    }
+
+    fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
+        self.set_fatal_error(error);
+        Dummy::dummy(self.ast.allocator)
+    }
+
+    fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
             if let Some(error) = self.lexer.errors.pop() {
-                return error;
+                self.set_fatal_error(error);
+                return;
             }
         }
-        diagnostics::unexpected_token(self.cur_token().span())
+        self.set_fatal_error(diagnostics::unexpected_token(self.cur_token().span()));
+    }
+
+    /// Return error info at current token
+    /// # Panics
+    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
+    fn unexpected<T: Dummy<'a>>(&mut self) -> T {
+        self.set_unexpected();
+        Dummy::dummy(self.ast.allocator)
     }
 
     /// Push a Syntax Error
@@ -589,6 +616,14 @@ impl<'a> ParserImpl<'a> {
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
         self.ast.alloc(value)
     }
+}
+
+/// Fatal parsing error.
+struct FatalError {
+    /// The fatal error
+    error: OxcDiagnostic,
+    /// Length of `errors` at time fatal error is recorded
+    errors_len: usize,
 }
 
 #[cfg(test)]
