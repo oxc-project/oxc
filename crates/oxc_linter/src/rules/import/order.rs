@@ -204,7 +204,7 @@ impl Rule for Order {
         }
 
         // Check if the original order matches the sorted order
-        for (_, (original, sorted)) in imports.iter().zip(&sorted_imports).enumerate() {
+        for (original, sorted) in imports.iter().zip(&sorted_imports) {
             if original.original_index != sorted.original_index {
                 ctx.diagnostic(
                     OxcDiagnostic::error(format!(
@@ -313,7 +313,7 @@ fn get_group_rank(
     }
 
     // Store whether the group is found in the configuration
-    let mut found = false;
+    let found = false;
 
     // Otherwise look for the group in the configuration
     for (i, group_value) in groups.iter().enumerate() {
@@ -439,7 +439,7 @@ fn classify_import_source(specifier: &str) -> PredefinedGroup {
     }
 
     // Check for absolute paths or aliased paths (internal)
-    if specifier.starts_with("/") || specifier.starts_with("~/") || specifier.starts_with("@/") {
+    if specifier.starts_with('/') || specifier.starts_with("~/") || specifier.starts_with("@/") {
         return PredefinedGroup::Internal;
     }
 
