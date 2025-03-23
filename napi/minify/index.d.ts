@@ -65,8 +65,29 @@ export interface MangleOptions {
    * @default false
    */
   toplevel?: boolean
+  /**
+   * Preserve `name` property for functions and classes.
+   *
+   * @default false
+   */
+  keepNames?: boolean | MangleOptionsKeepNames
   /** Debug mangled names. */
   debug?: boolean
+}
+
+export interface MangleOptionsKeepNames {
+  /**
+   * Preserve `name` property for functions.
+   *
+   * @default false
+   */
+  function: boolean
+  /**
+   * Preserve `name` property for classes.
+   *
+   * @default false
+   */
+  class: boolean
 }
 
 /** Minify synchronously. */

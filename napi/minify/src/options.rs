@@ -92,6 +92,11 @@ pub struct MangleOptions {
     /// @default false
     pub toplevel: Option<bool>,
 
+    /// Preserve `name` property for functions and classes.
+    ///
+    /// @default false
+    pub keep_names: Option<Either<bool, MangleOptionsKeepNames>>,
+
     /// Debug mangled names.
     pub debug: Option<bool>,
 }
@@ -101,8 +106,33 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
         let default = oxc_minifier::MangleOptions::default();
         Self {
             top_level: o.toplevel.unwrap_or(default.top_level),
+            keep_names: match &o.keep_names {
+                Some(Either::A(false)) => oxc_minifier::MangleOptionsKeepNames::all_false(),
+                Some(Either::A(true)) => oxc_minifier::MangleOptionsKeepNames::all_true(),
+                Some(Either::B(o)) => oxc_minifier::MangleOptionsKeepNames::from(o),
+                None => default.keep_names,
+            },
             debug: o.debug.unwrap_or(default.debug),
         }
+    }
+}
+
+#[napi(object)]
+pub struct MangleOptionsKeepNames {
+    /// Preserve `name` property for functions.
+    ///
+    /// @default false
+    pub function: bool,
+
+    /// Preserve `name` property for classes.
+    ///
+    /// @default false
+    pub class: bool,
+}
+
+impl From<&MangleOptionsKeepNames> for oxc_minifier::MangleOptionsKeepNames {
+    fn from(o: &MangleOptionsKeepNames) -> Self {
+        oxc_minifier::MangleOptionsKeepNames { function: o.function, class: o.class }
     }
 }
 

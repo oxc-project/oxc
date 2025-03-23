@@ -3,24 +3,65 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
 use rustc_hash::FxHashSet;
 
-#[cfg_attr(not(test), expect(dead_code))]
-pub fn collect_name_symbols(scoping: &Scoping, ast_nodes: &AstNodes) -> FxHashSet<SymbolId> {
-    let collector = NameSymbolCollector::new(scoping, ast_nodes);
+#[derive(Debug, Clone, Copy, Default)]
+pub struct MangleOptionsKeepNames {
+    /// Preserve `name` property for functions.
+    ///
+    /// Default `false`
+    pub function: bool,
+
+    /// Preserve `name` property for classes.
+    ///
+    /// Default `false`
+    pub class: bool,
+}
+
+impl MangleOptionsKeepNames {
+    pub fn all_false() -> Self {
+        Self { function: false, class: false }
+    }
+
+    pub fn all_true() -> Self {
+        Self { function: true, class: true }
+    }
+}
+
+impl From<bool> for MangleOptionsKeepNames {
+    fn from(keep_names: bool) -> Self {
+        if keep_names { Self::all_true() } else { Self::all_false() }
+    }
+}
+
+pub fn collect_name_symbols(
+    options: MangleOptionsKeepNames,
+    scoping: &Scoping,
+    ast_nodes: &AstNodes,
+) -> FxHashSet<SymbolId> {
+    let collector = NameSymbolCollector::new(options, scoping, ast_nodes);
     collector.collect()
 }
 
 /// Collects symbols that are used to set `name` properties of functions and classes.
 struct NameSymbolCollector<'a, 'b> {
+    options: MangleOptionsKeepNames,
     scoping: &'b Scoping,
     ast_nodes: &'b AstNodes<'a>,
 }
 
 impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
-    fn new(scoping: &'b Scoping, ast_nodes: &'b AstNodes<'a>) -> Self {
-        Self { scoping, ast_nodes }
+    fn new(
+        options: MangleOptionsKeepNames,
+        scoping: &'b Scoping,
+        ast_nodes: &'b AstNodes<'a>,
+    ) -> Self {
+        Self { options, scoping, ast_nodes }
     }
 
     fn collect(self) -> FxHashSet<SymbolId> {
+        if !self.options.function && !self.options.class {
+            return FxHashSet::default();
+        }
+
         self.scoping
             .symbol_ids()
             .filter(|symbol_id| {
@@ -42,9 +83,12 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     fn is_name_set_declare_node(&self, node: &'a AstNode, symbol_id: SymbolId) -> bool {
         match node.kind() {
             AstKind::Function(function) => {
-                function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
+                self.options.function
+                    && function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
-            AstKind::Class(cls) => cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id),
+            AstKind::Class(cls) => {
+                self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
+            }
             AstKind::VariableDeclarator(decl) => {
                 if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
                     if id.symbol_id() == symbol_id {
@@ -176,9 +220,18 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         }
     }
 
-    #[expect(clippy::unused_self)]
     fn is_expression_whose_name_needs_to_be_kept(&self, expr: &Expression) -> bool {
-        expr.is_anonymous_function_definition()
+        let is_anonymous = expr.is_anonymous_function_definition();
+        if !is_anonymous {
+            return false;
+        }
+
+        if self.options.class && self.options.function {
+            return true;
+        }
+
+        let is_class = matches!(expr, Expression::ClassExpression(_));
+        (self.options.class && is_class) || (self.options.function && !is_class)
     }
 }
 
@@ -189,11 +242,10 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
     use rustc_hash::FxHashSet;
-    use std::iter::once;
 
-    use super::collect_name_symbols;
+    use super::{MangleOptionsKeepNames, collect_name_symbols};
 
-    fn collect(source_text: &str) -> FxHashSet<String> {
+    fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
         assert!(!ret.panicked, "{source_text}");
@@ -201,69 +253,72 @@ mod test {
         let ret = SemanticBuilder::new().build(&ret.program);
         assert!(ret.errors.is_empty(), "{source_text}");
         let semantic = ret.semantic;
-        let symbols = collect_name_symbols(semantic.scoping(), semantic.nodes());
+        let symbols = collect_name_symbols(opts, semantic.scoping(), semantic.nodes());
         symbols
             .into_iter()
             .map(|symbol_id| semantic.scoping().symbol_name(symbol_id).to_string())
             .collect()
     }
 
+    fn data(s: &str) -> FxHashSet<String> {
+        FxHashSet::from_iter([s.to_string()])
+    }
+
+    fn function_only() -> MangleOptionsKeepNames {
+        MangleOptionsKeepNames { function: true, class: false }
+    }
+
+    fn class_only() -> MangleOptionsKeepNames {
+        MangleOptionsKeepNames { function: false, class: true }
+    }
+
     #[test]
     fn test_declarations() {
-        assert_eq!(collect("function foo() {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("class Foo {}"), once("Foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "function foo() {}"), data("foo"));
+        assert_eq!(collect(class_only(), "class Foo {}"), data("Foo"));
     }
 
     #[test]
     fn test_simple_declare_init() {
-        assert_eq!(collect("var foo = function() {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("var foo = () => {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("var Foo = class {}"), once("Foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "var foo = function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = () => {}"), data("foo"));
+        assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
     }
 
     #[test]
     fn test_simple_assign() {
-        assert_eq!(collect("var foo; foo = function() {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("var foo; foo = () => {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("var Foo; Foo = class {}"), once("Foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "var foo; foo = function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo; foo = () => {}"), data("foo"));
+        assert_eq!(collect(class_only(), "var Foo; Foo = class {}"), data("Foo"));
 
-        assert_eq!(collect("var foo; foo ||= function() {}"), once("foo".to_string()).collect());
-        assert_eq!(
-            collect("var foo = 1; foo &&= function() {}"),
-            once("foo".to_string()).collect()
-        );
-        assert_eq!(collect("var foo; foo ??= function() {}"), once("foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "var foo; foo ||= function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = 1; foo &&= function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo; foo ??= function() {}"), data("foo"));
     }
 
     #[test]
     fn test_default_declarations() {
-        assert_eq!(collect("var [foo = function() {}] = []"), once("foo".to_string()).collect());
-        assert_eq!(collect("var [foo = () => {}] = []"), once("foo".to_string()).collect());
-        assert_eq!(collect("var [Foo = class {}] = []"), once("Foo".to_string()).collect());
-        assert_eq!(collect("var { foo = function() {} } = {}"), once("foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "var [foo = function() {}] = []"), data("foo"));
+        assert_eq!(collect(function_only(), "var [foo = () => {}] = []"), data("foo"));
+        assert_eq!(collect(class_only(), "var [Foo = class {}] = []"), data("Foo"));
+        assert_eq!(collect(function_only(), "var { foo = function() {} } = {}"), data("foo"));
     }
 
     #[test]
     fn test_default_assign() {
+        assert_eq!(collect(function_only(), "var foo; [foo = function() {}] = []"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo; [foo = () => {}] = []"), data("foo"));
+        assert_eq!(collect(class_only(), "var Foo; [Foo = class {}] = []"), data("Foo"));
         assert_eq!(
-            collect("var foo; [foo = function() {}] = []"),
-            once("foo".to_string()).collect()
-        );
-        assert_eq!(collect("var foo; [foo = () => {}] = []"), once("foo".to_string()).collect());
-        assert_eq!(collect("var Foo; [Foo = class {}] = []"), once("Foo".to_string()).collect());
-        assert_eq!(
-            collect("var foo; ({ foo = function() {} } = {})"),
-            once("foo".to_string()).collect()
+            collect(function_only(), "var foo; ({ foo = function() {} } = {})"),
+            data("foo")
         );
     }
 
     #[test]
     fn test_for_in_declaration() {
-        assert_eq!(
-            collect("for (var foo = function() {} in []) {}"),
-            once("foo".to_string()).collect()
-        );
-        assert_eq!(collect("for (var foo = () => {} in []) {}"), once("foo".to_string()).collect());
-        assert_eq!(collect("for (var Foo = class {} in []) {}"), once("Foo".to_string()).collect());
+        assert_eq!(collect(function_only(), "for (var foo = function() {} in []) {}"), data("foo"));
+        assert_eq!(collect(function_only(), "for (var foo = () => {} in []) {}"), data("foo"));
+        assert_eq!(collect(class_only(), "for (var Foo = class {} in []) {}"), data("Foo"));
     }
 }
