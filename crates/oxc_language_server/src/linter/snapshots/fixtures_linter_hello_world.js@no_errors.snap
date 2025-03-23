@@ -1,4 +1,0 @@
----
-source: crates/oxc_language_server/src/linter/tester.rs
----
-No diagnostic reports

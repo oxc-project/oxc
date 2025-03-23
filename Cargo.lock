@@ -1780,7 +1780,6 @@ dependencies = [
  "futures",
  "globset",
  "ignore",
- "insta",
  "log",
  "oxc_allocator",
  "oxc_data_structures",
