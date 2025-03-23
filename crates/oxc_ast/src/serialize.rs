@@ -427,9 +427,8 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
 #[estree(
     ts_type = "Array<TSInterfaceHeritage>",
     raw_deser = "
-        let extends = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
-        if (extends === null) extends = [];
-        extends
+        const extendsArr = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
+        extendsArr === null ? [] : extendsArr
     "
 )]
 pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
