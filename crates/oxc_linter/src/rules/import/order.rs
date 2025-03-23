@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Clone, Deserialize)]
 struct OrderConfig {
-    groups: Option<Vec<CompactStr>>,
+    groups: Option<Vec<GroupValue>>,
     #[serde(rename = "pathGroups")]
     path_groups: Option<Vec<PathGroup>>,
     #[serde(rename = "newlines-between")]
@@ -18,36 +18,25 @@ struct OrderConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum GroupValue {
+    Single(CompactStr),
+    Multiple(Vec<CompactStr>),
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 enum PredefinedGroup {
-    Builtin = 0,
-    External = 1,
-    Internal = 2,
-    Parent = 3,
-    Sibling = 4,
-    Index = 5,
-    Object = 6,
+    Builtin,
+    External,
+    Internal,
+    Parent,
+    Sibling,
+    Index,
+    Object,
+    Type,
+    Unknown,
 }
-
-impl std::cmp::Ord for PredefinedGroup {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        get_predefined_group_rank(self).cmp(&get_predefined_group_rank(other))
-    }
-}
-
-impl std::cmp::PartialOrd for PredefinedGroup {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl std::cmp::PartialEq for PredefinedGroup {
-    fn eq(&self, other: &Self) -> bool {
-        get_predefined_group_rank(self) == get_predefined_group_rank(other)
-    }
-}
-
-impl std::cmp::Eq for PredefinedGroup {}
 
 #[derive(Debug, Clone, Deserialize)]
 struct PathGroup {
@@ -72,7 +61,7 @@ pub struct Order {
 /// A minimal struct to store info about an import
 #[derive(Debug, Clone)]
 struct ImportInfo {
-    /// 0 => builtin, 1 => external (in this tiny example)
+    /// The group this import belongs to
     group: PredefinedGroup,
     /// the import's position in the file as encountered
     original_index: usize,
@@ -80,6 +69,8 @@ struct ImportInfo {
     span: Span,
     /// the import source, e.g. "fs" or "./bar"
     specifier: String,
+    /// Path group this import matches, if any
+    path_group_index: Option<usize>,
 }
 
 declare_oxc_lint!(
@@ -136,90 +127,327 @@ declare_oxc_lint!(
 
 impl Rule for Order {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self { config: serde_json::from_value(value).ok().map(Box::new) }
-    }
+        // The configuration in tests is wrapped in an array
+        let config = if value.is_array() {
+            // Extract the first element from the array
+            value
+                .as_array()
+                .and_then(|arr| arr.first().cloned())
+                .and_then(|inner_value| serde_json::from_value(inner_value).ok())
+                .map(Box::new)
+        } else {
+            // Direct configuration object
+            serde_json::from_value(value).ok().map(Box::new)
+        };
 
+        Self { config }
+    }
     fn run_once(&self, ctx: &LintContext<'_>) {
         // Gather all imports from the module record
         let module_record = ctx.module_record();
         let import_entries = &module_record.import_entries;
 
-        // Convert each import entry into our SimpleImport struct
+        // Early return if no imports to check
+        if import_entries.is_empty() {
+            return;
+        }
+
+        // Extract config or use defaults
+        let default_groups = vec![
+            GroupValue::Single("builtin".into()),
+            GroupValue::Single("external".into()),
+            GroupValue::Single("parent".into()),
+            GroupValue::Single("sibling".into()),
+            GroupValue::Single("index".into()),
+        ];
+
+        let groups = match &self.config {
+            Some(config) => config.groups.as_ref().unwrap_or(&default_groups),
+            None => &default_groups,
+        };
+
+        let alphabetize = self.config.as_ref().and_then(|c| c.alphabetize.as_ref());
+
+        let path_groups = self.config.as_ref().and_then(|c| c.path_groups.as_ref());
+
+        // Convert each import entry into our ImportInfo struct
         let imports: Vec<ImportInfo> = import_entries
             .iter()
             .enumerate()
             .map(|(idx, entry)| {
                 let specifier = entry.module_request.name();
+                let group = classify_import_source(specifier);
+
+                // Check if this import matches any path group
+                let path_group_index = path_groups.and_then(|groups| {
+                    groups.iter().position(|pg| matches_pattern(specifier, &pg.pattern))
+                });
+
                 ImportInfo {
-                    group: classify_import_source(specifier),
+                    group,
                     original_index: idx,
                     span: entry.statement_span,
                     specifier: specifier.to_owned(),
+                    path_group_index,
                 }
             })
             .collect();
 
-        println!("Imports: {:#?}", imports);
-
-        // Make a sorted clone to see what the ideal order “should” be
+        // Make a sorted clone to determine the ideal order
         let mut sorted_imports = imports.clone();
+        sort_imports(&mut sorted_imports, groups, path_groups, alphabetize);
 
-        // Sort by group first (builtin vs. external),
-        // then alphabetically by specifier as a secondary key
-        sorted_imports.sort_by(|a, b| {
-            // First compare groups
-            let group_cmp = a.group.cmp(&b.group);
-            if group_cmp != std::cmp::Ordering::Equal {
-                return group_cmp;
-            }
+        // Create a mapping from original import to its expected position
+        let mut import_positions: FxHashMap<usize, usize> = FxHashMap::default();
+        for (expected_pos, import) in sorted_imports.iter().enumerate() {
+            import_positions.insert(import.original_index, expected_pos);
+        }
 
-            // If they're in the same group, compare by specifier
-            a.specifier.cmp(&b.specifier)
-        });
-
-        // Compare actual vs. sorted order:
-        // - If any import is in a different position, emit a diagnostic
-        for (actual, ideal) in imports.iter().zip(sorted_imports.iter()) {
-            if actual.specifier != ideal.specifier {
+        // Check if the original order matches the sorted order
+        for (_, (original, sorted)) in imports.iter().zip(&sorted_imports).enumerate() {
+            if original.original_index != sorted.original_index {
                 ctx.diagnostic(
                     OxcDiagnostic::error(format!(
-                        "Import {:?} should appear after {:?}",
-                        actual.specifier, ideal.specifier
+                        "Import from '{}' should occur before import from '{}'",
+                        sorted.specifier, original.specifier
                     ))
-                    .with_label(actual.span),
+                    .with_label(original.span),
                 );
+
+                // Only report the first disorder
+                break;
             }
         }
     }
 }
 
-/// Classifies the import source as builtin or external
-/// In a real rule, you'd detect core modules, node_modules, local paths, etc.
+/// Sort the imports according to the configuration
+fn sort_imports(
+    imports: &mut [ImportInfo],
+    groups: &[GroupValue],
+    path_groups: Option<&Vec<PathGroup>>,
+    alphabetize: Option<&Alphabetize>,
+) {
+    imports.sort_by(|a, b| {
+        // 1. First compare by group rank according to configured groups
+        let a_rank = get_group_rank(&a.group, a.path_group_index, groups, path_groups);
+        let b_rank = get_group_rank(&b.group, b.path_group_index, groups, path_groups);
+
+        let group_comparison = a_rank.cmp(&b_rank);
+        if group_comparison != std::cmp::Ordering::Equal {
+            return group_comparison;
+        }
+
+        // 2. If alphabetize is enabled, sort by specifier
+        if let Some(alpha) = alphabetize {
+            if let Some(order) = &alpha.order {
+                if order == "asc" || order == "desc" {
+                    let case_insensitive = alpha.case_insensitive.unwrap_or(false);
+
+                    let a_spec = if case_insensitive {
+                        a.specifier.to_lowercase()
+                    } else {
+                        a.specifier.clone()
+                    };
+
+                    let b_spec = if case_insensitive {
+                        b.specifier.to_lowercase()
+                    } else {
+                        b.specifier.clone()
+                    };
+
+                    let comparison = a_spec.cmp(&b_spec);
+                    if order == "desc" {
+                        return comparison.reverse();
+                    }
+                    return comparison;
+                }
+            }
+        }
+
+        // 3. Preserve original order if no other sorting criteria apply
+        a.original_index.cmp(&b.original_index)
+    });
+}
+
+/// Get the rank of a group based on the specified order in configuration
+fn get_group_rank(
+    group: &PredefinedGroup,
+    path_group_index: Option<usize>,
+    groups: &[GroupValue],
+    path_groups: Option<&Vec<PathGroup>>,
+) -> usize {
+    // If this import matches a path group, use its rank
+    if let Some(pg_idx) = path_group_index {
+        if let Some(path_groups) = path_groups {
+            if let Some(path_group) = path_groups.get(pg_idx) {
+                // Find the rank of the path group's target group
+                for (i, group_value) in groups.iter().enumerate() {
+                    match group_value {
+                        GroupValue::Single(g) => {
+                            if group_from_str(g) == Some(path_group.group.clone()) {
+                                let position_modifier = match path_group.position.as_deref() {
+                                    Some("before") => 0,
+                                    Some("after") => 1,
+                                    _ => 0,
+                                };
+                                return i * 2 + position_modifier; // * 2 to make room for before/after
+                            }
+                        }
+                        GroupValue::Multiple(gs) => {
+                            for g in gs {
+                                if group_from_str(g) == Some(path_group.group.clone()) {
+                                    let position_modifier = match path_group.position.as_deref() {
+                                        Some("before") => 0,
+                                        Some("after") => 1,
+                                        _ => 0,
+                                    };
+                                    return i * 2 + position_modifier;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Store whether the group is found in the configuration
+    let mut found = false;
+
+    // Otherwise look for the group in the configuration
+    for (i, group_value) in groups.iter().enumerate() {
+        match group_value {
+            GroupValue::Single(g) => {
+                if group_from_str(g) == Some(group.clone()) {
+                    return i * 2; // * 2 to accommodate possible path group positions
+                }
+            }
+            GroupValue::Multiple(gs) => {
+                for g in gs {
+                    if group_from_str(g) == Some(group.clone()) {
+                        return i * 2;
+                    }
+                }
+            }
+        }
+    }
+
+    // If group is not in configured groups, put it at the end
+    // But ensure consistent ordering among non-configured groups
+    if !found {
+        // Return a consistent rank based on the predefined order
+        // This ensures stable sorting among non-configured groups
+        match group {
+            PredefinedGroup::Builtin => groups.len() * 2,
+            PredefinedGroup::External => groups.len() * 2 + 1,
+            PredefinedGroup::Internal => groups.len() * 2 + 2,
+            PredefinedGroup::Parent => groups.len() * 2 + 3,
+            PredefinedGroup::Sibling => groups.len() * 2 + 4,
+            PredefinedGroup::Index => groups.len() * 2 + 5,
+            PredefinedGroup::Object => groups.len() * 2 + 6,
+            PredefinedGroup::Type => groups.len() * 2 + 7,
+            PredefinedGroup::Unknown => groups.len() * 2 + 8,
+        }
+    } else {
+        // Should never reach here if found is true
+        usize::MAX
+    }
+}
+
+/// Convert a string representation to a PredefinedGroup
+fn group_from_str(group_str: &str) -> Option<PredefinedGroup> {
+    match group_str {
+        "builtin" => Some(PredefinedGroup::Builtin),
+        "external" => Some(PredefinedGroup::External),
+        "internal" => Some(PredefinedGroup::Internal),
+        "parent" => Some(PredefinedGroup::Parent),
+        "sibling" => Some(PredefinedGroup::Sibling),
+        "index" => Some(PredefinedGroup::Index),
+        "object" => Some(PredefinedGroup::Object),
+        "type" => Some(PredefinedGroup::Type),
+        "unknown" => Some(PredefinedGroup::Unknown),
+        _ => None,
+    }
+}
+
+/// Classifies the import source into predefined groups
 fn classify_import_source(specifier: &str) -> PredefinedGroup {
-    match specifier {
-        "assert" | "async" | "buffer" | "child_process" | "cluster" | "crypto" | "dgram"
-        | "dns" | "domain" | "events" | "fs" | "http" | "https" | "net" | "os" | "path"
-        | "punycode" | "querystring" | "readline" | "stream" | "string_decoder" | "tls" | "tty"
-        | "url" | "util" | "v8" | "vm" | "zlib" => PredefinedGroup::Builtin, // builtin
-        path if path.starts_with("./") => PredefinedGroup::Sibling,
-        path if path.starts_with("../") => PredefinedGroup::Parent,
-        "." => PredefinedGroup::Parent,
-        _ => PredefinedGroup::External, // external
+    // List of Node.js builtin modules
+    const BUILTIN_MODULES: &[&str] = &[
+        "assert",
+        "async",
+        "async_hooks",
+        "buffer",
+        "child_process",
+        "cluster",
+        "console",
+        "constants",
+        "crypto",
+        "dgram",
+        "dns",
+        "domain",
+        "events",
+        "fs",
+        "http",
+        "http2",
+        "https",
+        "inspector",
+        "module",
+        "net",
+        "os",
+        "path",
+        "perf_hooks",
+        "process",
+        "punycode",
+        "querystring",
+        "readline",
+        "repl",
+        "stream",
+        "string_decoder",
+        "tls",
+        "trace_events",
+        "tty",
+        "url",
+        "util",
+        "v8",
+        "vm",
+        "wasi",
+        "worker_threads",
+        "zlib",
+    ];
+
+    // Check for builtin modules
+    if BUILTIN_MODULES.contains(&specifier) {
+        return PredefinedGroup::Builtin;
     }
+
+    // Check for relative paths that point to parent directory
+    if specifier.starts_with("../") || specifier == ".." || specifier == "../" {
+        return PredefinedGroup::Parent;
+    }
+
+    // Check for relative paths that point to current directory's index
+    if specifier == "." || specifier == "./" || specifier == "./index" || specifier == "./index.js"
+    {
+        return PredefinedGroup::Index;
+    }
+
+    // Check for relative paths that point to current directory (siblings)
+    if specifier.starts_with("./") {
+        return PredefinedGroup::Sibling;
+    }
+
+    // Check for absolute paths or aliased paths (internal)
+    if specifier.starts_with("/") || specifier.starts_with("~/") || specifier.starts_with("@/") {
+        return PredefinedGroup::Internal;
+    }
+
+    // Everything else is considered external
+    PredefinedGroup::External
 }
 
-fn get_predefined_group_rank(group: &PredefinedGroup) -> usize {
-    match group {
-        PredefinedGroup::Builtin => 0,
-        PredefinedGroup::External => 1,
-        PredefinedGroup::Internal => 2,
-        PredefinedGroup::Parent => 3,
-        PredefinedGroup::Sibling => 4,
-        PredefinedGroup::Index => 5,
-        PredefinedGroup::Object => 6,
-    }
-}
-
+/// Check if a source matches a pattern using glob syntax
 fn matches_pattern(source: &str, pattern: &str) -> bool {
     // Handle regular glob patterns
     if pattern.contains('*') {
@@ -259,13 +487,13 @@ fn test() {
         // Default order using import
         (
             r"
-                        import async, {foo1} from 'async';
                         import fs from 'fs';
-                        import relParent3 from '../';
+                        import async, {foo1} from 'async';
                         import relParent1 from '../foo';
                         import relParent2, {foo2} from '../foo/bar';
-                        import index from './';
+                        import relParent3 from '../';
                         import sibling, {foo3} from './foo';
+                        import index from './';
                         ",
             None,
         ),
@@ -400,10 +628,10 @@ fn test() {
                         import fs from 'fs';
                         import path from 'path';
 
-                        import index from '.';
                         import relParent3 from '../';
                         import relParent1 from '../foo';
                         import sibling from './foo';
+                        import index from '.';
                         ",
             Some(serde_json::json!([{
                 "groups": [
@@ -533,7 +761,10 @@ fn test() {
             import fs from 'fs';
             ",
             Some(serde_json::json!([{
-                "groups": ["builtin", "external"]
+                "groups": ["builtin", "external"],
+                "alphabetize": {
+                    "order": "asc"
+                }
             }])),
         ),
         // Missing newline between groups
@@ -598,27 +829,6 @@ fn test_matches_pattern() {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_predefined_group_ordering() {
-        // Test basic ordering
-        assert!(PredefinedGroup::Builtin < PredefinedGroup::External);
-        assert!(PredefinedGroup::External < PredefinedGroup::Internal);
-        assert!(PredefinedGroup::Internal < PredefinedGroup::Parent);
-        assert!(PredefinedGroup::Parent < PredefinedGroup::Sibling);
-        assert!(PredefinedGroup::Sibling < PredefinedGroup::Index);
-        assert!(PredefinedGroup::Index < PredefinedGroup::Object);
-
-        // Test equality
-        assert_eq!(PredefinedGroup::Builtin, PredefinedGroup::Builtin);
-        assert_eq!(PredefinedGroup::External, PredefinedGroup::External);
-
-        // Test transitivity
-        assert!(PredefinedGroup::Builtin < PredefinedGroup::Internal);
-        assert!(PredefinedGroup::Internal < PredefinedGroup::Sibling);
-        assert!(PredefinedGroup::Builtin < PredefinedGroup::Sibling);
-    }
-
     #[test]
     fn test_classify_import_source() {
         // Test builtin modules
@@ -636,6 +846,7 @@ mod tests {
 
         // Test sibling paths
         assert_eq!(classify_import_source("./foo"), PredefinedGroup::Sibling);
-        assert_eq!(classify_import_source("./"), PredefinedGroup::Sibling);
+        // Test index paths
+        assert_eq!(classify_import_source("./"), PredefinedGroup::Index);
     }
 }

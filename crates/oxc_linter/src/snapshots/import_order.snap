@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(order): Import "lodash" should appear after "fs"
+  ⚠ eslint-plugin-import(order): Import from 'fs' should occur before import from 'lodash'
    ╭─[order.tsx:2:13]
  1 │ 
  2 │             import _ from 'lodash';
@@ -9,15 +9,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │             import fs from 'fs';
    ╰────
 
-  ⚠ eslint-plugin-import(order): Import "fs" should appear after "lodash"
-   ╭─[order.tsx:3:13]
- 2 │             import _ from 'lodash';
- 3 │             import fs from 'fs';
-   ·             ────────────────────
- 4 │             
-   ╰────
-
-  ⚠ eslint-plugin-import(order): Import "b" should appear after "a"
+  ⚠ eslint-plugin-import(order): Import from 'a' should occur before import from 'b'
    ╭─[order.tsx:2:13]
  1 │ 
  2 │             import b from 'b';
@@ -25,26 +17,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             import a from 'a';
    ╰────
 
-  ⚠ eslint-plugin-import(order): Import "a" should appear after "b"
-   ╭─[order.tsx:3:13]
- 2 │             import b from 'b';
- 3 │             import a from 'a';
-   ·             ──────────────────
- 4 │             
-   ╰────
-
-  ⚠ eslint-plugin-import(order): Import "~/components/MyComponent" should appear after "lodash"
+  ⚠ eslint-plugin-import(order): Import from 'lodash' should occur before import from '~/components/MyComponent'
    ╭─[order.tsx:2:13]
  1 │ 
  2 │             import MyComponent from '~/components/MyComponent';
    ·             ───────────────────────────────────────────────────
  3 │             import _ from 'lodash';
-   ╰────
-
-  ⚠ eslint-plugin-import(order): Import "lodash" should appear after "~/components/MyComponent"
-   ╭─[order.tsx:3:13]
- 2 │             import MyComponent from '~/components/MyComponent';
- 3 │             import _ from 'lodash';
-   ·             ───────────────────────
- 4 │             
    ╰────
