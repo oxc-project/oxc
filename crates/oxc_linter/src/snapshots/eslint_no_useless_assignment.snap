@@ -3,6 +3,42 @@ source: crates/oxc_linter/src/tester.rs
 assertion_line: 362
 ---
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:17]
+ 4 │                 doSomething(v);
+ 5 │                 v = 'unused';
+   ·                 ────────────
+ 6 │             }
+   ╰────
+  help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:17]
+ 4 │             if (condition) {
+ 5 │                 v = 'unused';
+   ·                 ────────────
+ 6 │                 return
+   ╰────
+  help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:7:17]
+ 6 │             } else {
+ 7 │                 v = 'unused';
+   ·                 ────────────
+ 8 │             }
+   ╰────
+  help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:17]
+ 4 │             if (condition) {
+ 5 │                 v = 'used';
+   ·                 ──────────
+ 6 │                 doSomething(v);
+   ╰────
+  help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:7:17]
  6 │                 console.log(v);
  7 │                 v = 'unused';
