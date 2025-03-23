@@ -425,7 +425,7 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
 /// Serialize `extends` as an empty array if it's `None`.
 #[ast_meta]
 #[estree(
-    ts_type = "Array<TSInterfaceDeclaration>",
+    ts_type = "Array<TSInterfaceHeritage>",
     raw_deser = "
         let extends = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
         if (extends === null) extends = [];
