@@ -1206,6 +1206,7 @@ export interface TSIndexSignature extends Span {
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
   static: boolean;
+  accessibility?: null;
 }
 
 export interface TSCallSignatureDeclaration extends Span {
@@ -1240,6 +1241,8 @@ export interface TSIndexSignatureName extends Span {
   type: 'Identifier';
   name: string;
   typeAnnotation: TSTypeAnnotation;
+  decorators?: [];
+  optional?: false;
 }
 
 export interface TSInterfaceHeritage extends Span {

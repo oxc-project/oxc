@@ -1719,6 +1719,7 @@ function deserializeTSIndexSignature(pos) {
     typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 40),
     readonly: deserializeBool(pos + 48),
     static: deserializeBool(pos + 49),
+    accessibility: null,
   };
 }
 
@@ -1767,6 +1768,8 @@ function deserializeTSIndexSignatureName(pos) {
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
     typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 24),
+    decorators: [],
+    optional: false,
   };
 }
 

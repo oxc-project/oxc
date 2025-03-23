@@ -961,6 +961,7 @@ pub enum TSSignature<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(accessibility = TsNull))]
 pub struct TSIndexSignature<'a> {
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
@@ -1034,7 +1035,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(rename = "Identifier", add_fields(decorators = TsEmptyArray, optional = TsFalse))]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
     #[estree(json_safe)]
