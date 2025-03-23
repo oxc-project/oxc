@@ -136,11 +136,9 @@ impl<'a> Lexer<'a> {
                     self.token.lossy = true;
                 }
             }
-            SurrogatePair::HighLow(high, low) => {
-                text.push_str("\\u");
-                text.push_str(format!("{high:x}").as_str());
-                text.push_str("\\u");
-                text.push_str(format!("{low:x}").as_str());
+            SurrogatePair::HighLow(_high, _low) => {
+                text.push_str("\u{FFFD}\u{FFFD}");
+                self.token.lossy = true;
             }
         }
     }

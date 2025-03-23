@@ -143,6 +143,7 @@ fn unicode_escape() {
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
     test("console.log('안녕하세요');", "console.log(\"안녕하세요\");\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log(\"🧑‍🤝‍🧑\");\n");
+    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\uD800\\uD801\");\n");
 }
 
 #[test]
