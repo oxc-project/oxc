@@ -16,15 +16,19 @@ use crate::{
 
 mod clone_in;
 mod content_eq;
+mod dummy;
 pub mod estree;
 mod get_address;
 mod get_span;
+mod take_in;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
+pub use dummy::DeriveDummy;
 pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use take_in::DeriveTakeIn;
 
 /// Trait to define a derive.
 pub trait Derive: Runner {

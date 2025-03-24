@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, fmt};
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::ContentEq;
@@ -213,8 +213,19 @@ impl ContentEq for RegExpFlags {
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         *self
+    }
+}
+
+impl<'a> Dummy<'a> for RegExpFlags {
+    /// Create a dummy [`RegExpFlags`].
+    ///
+    /// Does not allocate any data into arena.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn dummy(_: &'a Allocator) -> Self {
+        RegExpFlags::empty()
     }
 }
 

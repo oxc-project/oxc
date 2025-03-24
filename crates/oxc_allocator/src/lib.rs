@@ -24,6 +24,7 @@ mod convert;
 mod from_raw_parts;
 pub mod hash_map;
 pub mod string;
+mod take_in;
 mod vec;
 mod vec2;
 
@@ -34,4 +35,5 @@ pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
 pub use string::String;
+pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
