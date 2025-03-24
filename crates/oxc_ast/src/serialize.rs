@@ -718,6 +718,7 @@ impl ESTree for ClassImplements<'_, '_> {
 }
 
 /// Serializer for `TSPropertySignature`.
+#[ast_meta]
 pub struct TSPropertySignatureValue<'b>(pub &'b TSPropertySignature<'b>);
 
 impl ESTree for TSPropertySignatureValue<'_> {
