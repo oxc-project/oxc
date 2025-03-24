@@ -30,6 +30,7 @@ fn bench_parser(criterion: &mut Criterion) {
     group.finish();
 }
 
+#[expect(dead_code)]
 fn bench_estree(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("estree");
     for file in TestFiles::complicated().files().iter().take(1) {
@@ -61,5 +62,5 @@ fn bench_estree(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree);
+criterion_group!(parser, bench_parser);
 criterion_main!(parser);
