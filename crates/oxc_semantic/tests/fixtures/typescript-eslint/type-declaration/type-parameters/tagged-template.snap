@@ -54,7 +54,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(Function)",
         "id": 1,
         "name": "div",
         "node": "Function(div)",

@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 713/1191
+Passed: 644/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -363,6 +363,15 @@ rebuilt        : ScopeId(4): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "_method":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "_method_shadowed":
+after transform: SymbolId(7): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 
 * private/static-shadow/input.js
 x Output mismatch
@@ -466,11 +475,82 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (46/148)
+# babel-plugin-transform-private-methods (7/148)
+* accessors/arguments/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
+
+* accessors/basic/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
+
+* accessors/class-binding/input.js
+Symbol flags mismatch for "_get_getA":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* accessors/destructuring/input.js
+Symbol flags mismatch for "_set_setter":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "_get_getter":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+
+* accessors/get-only-setter/input.js
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* accessors/preserve-comments/input.js
+Symbol flags mismatch for "_get_a":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "_set_a":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* accessors/reassignment/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* accessors/set-only-getter/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
 * accessors/tagged-template/input.js
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Symbol flags mismatch for "_get_tag":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* accessors/updates/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(9): SymbolFlags(Function)
+
+* accessors/updates-bigint/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(9): SymbolFlags(Function)
 
 * accessors-loose/basic/input.js
 x Output mismatch
@@ -532,8 +612,106 @@ x Output mismatch
 * assumption-constantSuper/private-method-super/input.js
 x Output mismatch
 
+* duplicated-names/get-set/input.js
+Symbol flags mismatch for "_get_getSet":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "_set_getSet":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+
+* duplicated-names/set-get/input.js
+Symbol flags mismatch for "_set_getSet":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "_get_getSet":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
+
+* misc/multiple/input.js
+Symbol flags mismatch for "_method":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "_get_getter":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "_set_setter":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "_get_getset":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
+Symbol flags mismatch for "_set_getset":
+after transform: SymbolId(7): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(7): SymbolFlags(Function)
+
+* private-method/assignment/input.js
+Symbol flags mismatch for "_privateMethod":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/async/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/before-fields/input.js
+Symbol flags mismatch for "_method":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private-method/class-binding/input.js
+Symbol flags mismatch for "_getA":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private-method/class-expression/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/context/input.js
+Symbol flags mismatch for "_getStatus":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
+
+* private-method/destructuring/input.js
+Symbol flags mismatch for "_method":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/exfiltrated/input.js
+Symbol flags mismatch for "_privateMethod":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private-method/generator/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/preserve-comments/input.js
+Symbol flags mismatch for "_a":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/read-only/input.js
+Symbol flags mismatch for "_method":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-method/reassignment/input.js
+Symbol flags mismatch for "_privateFieldValue":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
 * private-method/super/input.js
 x Output mismatch
+
+* private-method/tagged-template/input.js
+Symbol flags mismatch for "_tag":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 
 * private-method-loose/assignment/input.js
 x Output mismatch
@@ -633,8 +811,56 @@ x Output mismatch
     `----
 
 
+* private-static-method/basic/input.js
+Symbol flags mismatch for "_privateStaticMethod":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* private-static-method/class-check/input.js
+Symbol flags mismatch for "_privateStaticMethod":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-static-method/class-expression/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-static-method/exfiltrated/input.js
+Symbol flags mismatch for "_privateStaticMethod":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-static-method/generator/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* private-static-method/preserve-comments/input.js
+Symbol flags mismatch for "_a":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
 * private-static-method/read-only/input.js
 x Output mismatch
+
+* private-static-method/super/input.js
+Symbol flags mismatch for "_subStaticPrivateMethod":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private-static-method/tagged-template/input.js
+Symbol flags mismatch for "_tag":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private-static-method/this/input.js
+Symbol flags mismatch for "_getA":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "_getB":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
 
 * private-static-method-loose/async/input.js
 
@@ -744,8 +970,29 @@ x Output mismatch
 * private-static-method-privateFieldsAsSymbols/this/input.js
 x Output mismatch
 
+* static-accessors/basic/input.js
+Symbol flags mismatch for "_get_privateStaticFieldValue":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateStaticFieldValue":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* static-accessors/destructure-set/input.js
+Symbol flags mismatch for "_set_p":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
 * static-accessors/get-only-setter/input.js
 x Output mismatch
+
+* static-accessors/preserve-comments/input.js
+Symbol flags mismatch for "_get_a":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+Symbol flags mismatch for "_set_a":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 
 * static-accessors/set-only-getter/input.js
 x Output mismatch
@@ -754,6 +1001,17 @@ x Output mismatch
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
+Symbol flags mismatch for "_get_tag":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* static-accessors/updates/input.js
+Symbol flags mismatch for "_get_privateFieldValue":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
+Symbol flags mismatch for "_set_privateFieldValue":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(7): SymbolFlags(Function)
 
 * static-accessors-loose/basic/input.js
 x Output mismatch
@@ -810,7 +1068,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (25/59)
+# babel-plugin-transform-private-property-in-object (14/59)
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -871,6 +1129,26 @@ x Output mismatch
 * assumption-privateFieldsAsSymbols/static-method/input.js
 x Output mismatch
 
+* private/accessor/input.js
+Symbol flags mismatch for "_get_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private/method/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* private/static-accessor/input.js
+Symbol flags mismatch for "_get_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* private/static-method/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
 * private/static-shadow/input.js
 x Output mismatch
 
@@ -904,8 +1182,46 @@ x Output mismatch
 * private-loose/static-shadow/input.js
 x Output mismatch
 
+* to-native-fields/accessor/input.js
+Symbol flags mismatch for "_get_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
 * to-native-fields/class-expression-in-default-param/input.js
 x Output mismatch
+
+* to-native-fields/half-constructed-instance/input.js
+Symbol flags mismatch for "_get_w":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "_z":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
+
+* to-native-fields/half-constructed-static/input.js
+Symbol flags mismatch for "_z":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* to-native-fields/method/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* to-native-fields/multiple-checks/input.js
+Symbol flags mismatch for "_m":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* to-native-fields/static-accessor/input.js
+Symbol flags mismatch for "_get_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* to-native-fields/static-method/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 
 * to-native-fields/static-shadow/input.js
 x Output mismatch
@@ -978,9 +1294,72 @@ after transform: ["ExampleType", "o"]
 rebuilt        : ["o"]
 
 
-# babel-plugin-transform-async-generator-functions (19/20)
+# babel-plugin-transform-async-generator-functions (7/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
+
+* async-generators/declaration/input.js
+Symbol flags mismatch for "_agf":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* async-generators/expression/input.js
+Symbol flags mismatch for "agf":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* async-generators/transform-class-keys/input.js
+Symbol flags mismatch for "_fn":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* async-generators/yield-star/input.js
+Symbol flags mismatch for "_g":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* for-await/async-function/input.js
+Symbol flags mismatch for "_f":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* for-await/async-generator/input.js
+Symbol flags mismatch for "_g":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* for-await/create-async-from-sync-iterator/input.js
+Symbol flags mismatch for "_fn":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* for-await/destructuring/input.js
+Symbol flags mismatch for "_f":
+after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* nested/arrows-in-declaration/input.js
+Symbol flags mismatch for "_g":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* nested/async-in-params/input.js
+Symbol flags mismatch for "_g":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
+* nested/generator-in-async/input.js
+Symbol flags mismatch for "_f":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+Symbol flags mismatch for "_g":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+
+* yield-star/create-async-from-sync-iterator/input.js
+Symbol flags mismatch for "_fn":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 
 
 # babel-plugin-transform-object-rest-spread (28/36)
@@ -1008,7 +1387,7 @@ after transform: ScopeId(7): ["_ref5"]
 rebuilt        : ScopeId(7): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
 Symbol span mismatch for "a":
 after transform: SymbolId(0): Span { start: 27, end: 28 }
 rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
@@ -1220,7 +1599,7 @@ rebuilt        : [ReferenceId(0), ReferenceId(7)]
 
 
 
-# babel-plugin-transform-async-to-generator (10/28)
+# babel-plugin-transform-async-to-generator (4/28)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -1241,6 +1620,44 @@ x Output mismatch
 
 * async-to-generator/async-iife-with-regenerator-spec/input.js
 x Output mismatch
+
+* async-to-generator/function-arity/input.js
+Symbol flags mismatch for "_one":
+after transform: SymbolId(24): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "_two":
+after transform: SymbolId(27): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
+Symbol flags mismatch for "_three":
+after transform: SymbolId(29): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(14): SymbolFlags(Function)
+Symbol flags mismatch for "_four":
+after transform: SymbolId(31): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(21): SymbolFlags(Function)
+Symbol flags mismatch for "_five":
+after transform: SymbolId(34): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(29): SymbolFlags(Function)
+Symbol flags mismatch for "_six":
+after transform: SymbolId(36): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(34): SymbolFlags(Function)
+
+* async-to-generator/shadowed-promise/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* async-to-generator/shadowed-promise-import/input.mjs
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+
+* async-to-generator/shadowed-promise-nested/input.js
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
 
 * bluebird-coroutines/arrow-function/input.js
 x Output mismatch
@@ -1272,6 +1689,11 @@ x Output mismatch
 * regression/15978/input.js
 x Output mismatch
 
+* regression/8783/input.js
+Symbol flags mismatch for "poll":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
 * regression/T7108/input.js
 x Output mismatch
 
@@ -1280,6 +1702,14 @@ x Output mismatch
 
 * regression/in-uncompiled-class-fields/input.js
 x Output mismatch
+
+* regression/regression-2765/input.js
+Symbol flags mismatch for "g":
+after transform: SymbolId(7): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "c":
+after transform: SymbolId(11): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(10): SymbolFlags(Function)
 
 
 # babel-plugin-transform-exponentiation-operator (2/7)
@@ -1879,8 +2309,8 @@ rebuilt        : ScopeId(0): []
 
 * imports/import-type-func-with-duplicate-name/input.ts
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeImport)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 13, end: 16 }
 rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
@@ -1888,8 +2318,8 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 70, end: 73 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo2":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(1): SymbolFlags(Function | TypeImport)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol span mismatch for "Foo2":
 after transform: SymbolId(1): Span { start: 43, end: 47 }
 rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
@@ -2294,9 +2724,6 @@ rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "c":
 after transform: SymbolId(19): Span { start: 344, end: 345 }
 rebuilt        : SymbolId(18): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(20): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "d":
 after transform: SymbolId(21): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(21): SymbolFlags(BlockScopedVariable)
@@ -2429,14 +2856,14 @@ Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 45, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol flags mismatch for "M":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(4): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(4): [Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(6): []
 Symbol flags mismatch for "D":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(6): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(9): SymbolFlags(Function)
 Symbol redeclarations mismatch for "D":
 after transform: SymbolId(6): [Span { start: 207, end: 208 }]
 rebuilt        : SymbolId(9): []
@@ -2545,9 +2972,6 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(3): [Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
 rebuilt        : SymbolId(5): []
-Symbol flags mismatch for "_N3":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "_N":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
@@ -2752,7 +3176,12 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (20/24)
+# babel-plugin-proposal-explicit-resource-management (19/24)
+* integration/async-to-generator/input.js
+Symbol flags mismatch for "_fn":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+
 * transform-sync/function-body/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "x"]

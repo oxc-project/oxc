@@ -141,6 +141,16 @@ fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
     flags.is_function() || (source_type.is_script() && flags.is_top())
 }
 
+/// Check if the function is not allowed to be redeclared.
+pub fn is_function_redeclared_not_allowed(
+    func: &Function<'_>,
+    builder: &SemanticBuilder<'_>,
+) -> bool {
+    let current_scope_flags = builder.current_scope_flags();
+    (current_scope_flags.is_strict_mode() || func.r#async || func.generator)
+        && !function_as_var(current_scope_flags, builder.source_type)
+}
+
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
 fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
     if builder.current_scope_flags().is_strict_mode() {
@@ -165,8 +175,9 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let current_scope_id = builder.current_scope_id;
-        let scope_flags = builder.current_scope_flags();
+        if self.r#type.is_typescript_syntax() {
+            return;
+        }
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.scoping.create_symbol(
@@ -177,35 +188,30 @@ impl<'a> Binder<'a> for Function<'a> {
                     builder.current_node_id,
                 );
                 ident.symbol_id.set(Some(symbol_id));
-            } else if self.r#type == FunctionType::FunctionDeclaration {
-                // The visitor is already inside the function scope,
-                // retrieve the parent scope for the function id to bind to.
-
-                let (includes, excludes) =
-                    if (scope_flags.is_strict_mode() || self.r#async || self.generator)
-                        && !function_as_var(scope_flags, builder.source_type)
-                    {
-                        (
-                            SymbolFlags::Function | SymbolFlags::BlockScopedVariable,
-                            SymbolFlags::BlockScopedVariableExcludes,
-                        )
+            } else {
+                let excludes = if self.is_declaration() {
+                    // The visitor is already inside the function scope,
+                    // retrieve the parent scope for the function id to bind to.
+                    if is_function_redeclared_not_allowed(self, builder) {
+                        SymbolFlags::BlockScopedVariableExcludes
                     } else {
-                        (
-                            SymbolFlags::FunctionScopedVariable,
-                            SymbolFlags::FunctionScopedVariableExcludes,
-                        )
-                    };
+                        SymbolFlags::FunctionScopedVariableExcludes
+                    }
+                } else if self.is_expression() {
+                    // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
+                    // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
+                    SymbolFlags::empty()
+                } else {
+                    unreachable!(
+                        "Currently we haven't create a symbol for typescript syntax function"
+                    );
+                };
 
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
-                ident.symbol_id.set(Some(symbol_id));
-            } else if self.r#type == FunctionType::FunctionExpression {
-                // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
-                // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
                 let symbol_id = builder.declare_symbol(
                     ident.span,
                     &ident.name,
                     SymbolFlags::Function,
-                    SymbolFlags::empty(),
+                    excludes,
                 );
                 ident.symbol_id.set(Some(symbol_id));
             }
@@ -215,7 +221,7 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flags = builder.scoping.scope_flags_mut(current_scope_id);
+            let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
