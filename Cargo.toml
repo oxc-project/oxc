@@ -226,7 +226,7 @@ ureq = { version = "3.0.5", default-features = false }
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "lazy_static"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

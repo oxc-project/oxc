@@ -1,13 +1,15 @@
-use std::sync::Mutex;
+use std::sync::{
+    OnceLock, {RwLock, RwLockWriteGuard},
+};
 
 use lazy_regex::Regex;
-use lazy_static::lazy_static;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::MethodDefinitionKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -91,9 +93,9 @@ fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
 }
 
-// For perf, cache regex is needed
-lazy_static! {
-    static ref REGEX_CACHE: Mutex<FxHashMap<String, Regex>> = Mutex::new(FxHashMap::default());
+fn regex_cache() -> RwLockWriteGuard<'static, FxHashMap<String, Regex>> {
+    static REGEX_CACHE: OnceLock<RwLock<FxHashMap<String, Regex>>> = OnceLock::new();
+    REGEX_CACHE.get_or_init(|| RwLock::new(FxHashMap::default())).write().unwrap()
 }
 
 impl Rule for RequireParam {
@@ -165,9 +167,9 @@ impl Rule for RequireParam {
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
-        let mut regex_cache = REGEX_CACHE.lock().unwrap();
+        let mut cache = regex_cache();
         let check_types_regex =
-            regex_cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
+            cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
                 Regex::new(config.check_types_pattern.as_str())
                     .expect("`config.checkTypesPattern` should be a valid regex pattern")
             });

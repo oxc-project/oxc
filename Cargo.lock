@@ -1714,7 +1714,6 @@ dependencies = [
  "encoding_rs_io",
  "futures",
  "lazy-regex",
- "lazy_static",
  "oxc",
  "oxc_prettier",
  "oxc_tasks_common",

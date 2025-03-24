@@ -2,7 +2,7 @@
 
 use std::{fs, path::Path, sync::Arc};
 
-use lazy_regex::Regex;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::FxHashMap;
 
 use oxc::{
@@ -15,11 +15,11 @@ use oxc::{
 
 use crate::workspace_root;
 
-lazy_static::lazy_static! {
-    // Returns a match for a test option. Test options have the form `// @name: value`
-    static ref META_OPTIONS: Regex = Regex::new(r"(?m)^/{2}[[:space:]]*@(?P<name>[[:word:]]+)[[:space:]]*:[[:space:]]*(?P<value>[^\r\n]*)").unwrap();
-    static ref TEST_BRACES: Regex = Regex::new(r"^[[:space:]]*[{|}][[:space:]]*$").unwrap();
-}
+// Returns a match for a test option. Test options have the form `// @name: value`
+static META_OPTIONS: Lazy<Regex> = lazy_regex!(
+    r"(?m)^/{2}[[:space:]]*@(?P<name>[[:word:]]+)[[:space:]]*:[[:space:]]*(?P<value>[^\r\n]*)"
+);
+// static TEST_BRACES: Lazy<Regex> = lazy_regex!(r"^[[:space:]]*[{|}][[:space:]]*$");
 
 #[expect(unused)]
 #[derive(Debug)]
