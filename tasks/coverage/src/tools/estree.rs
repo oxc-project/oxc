@@ -5,8 +5,11 @@ use std::{
 };
 
 use oxc::{
-    allocator::Allocator, ast_visit::utf8_to_utf16::Utf8ToUtf16, diagnostics::OxcDiagnostic,
-    parser::Parser, span::SourceType,
+    allocator::Allocator,
+    ast_visit::utf8_to_utf16::Utf8ToUtf16,
+    diagnostics::OxcDiagnostic,
+    parser::{ParseOptions, Parser},
+    span::SourceType,
 };
 
 use crate::{
@@ -371,7 +374,10 @@ impl Case for EstreeTypescriptCase {
         for (unit, estree_json) in self.base.units.iter().zip(estree_units.into_iter()) {
             let source_text = &unit.content;
             let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, source_text, unit.source_type).parse();
+            let options = ParseOptions { preserve_parens: false, ..Default::default() };
+            let ret = Parser::new(&allocator, source_text, unit.source_type)
+                .with_options(options)
+                .parse();
 
             if ret.panicked || !ret.errors.is_empty() {
                 let error = ret
