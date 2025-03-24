@@ -261,6 +261,25 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_statement(stmt, flags)
     }
 
+    /// Insert a scope into scope tree below a statement.
+    ///
+    /// Statement must be in provided scope.
+    /// New scope is created as child of the provided scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statement_from_scope_id`.
+    #[inline]
+    pub fn insert_scope_below_statement_from_scope_id(
+        &mut self,
+        stmt: &Statement,
+        scope_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_statement_from_scope_id(stmt, scope_id, flags)
+    }
+
     /// Insert a scope into scope tree below an expression.
     ///
     /// Expression must be in current scope.
