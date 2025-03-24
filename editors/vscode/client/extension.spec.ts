@@ -1,9 +1,11 @@
-import { deepStrictEqual } from 'assert';
-import { commands, extensions } from 'vscode';
+import { deepStrictEqual, notEqual, strictEqual } from 'assert';
+import { commands, extensions, window } from 'vscode';
 
 // const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
 // const filePath = WORKSPACE_DIR + '/debugger.js';
 // const fileUri = Uri.parse(filePath);
+
+const sleep = (time: number) => new Promise((r) => setTimeout(r, time));
 
 suite('commands', () => {
   setup(async () => {
@@ -27,6 +29,15 @@ suite('commands', () => {
       'oxc.applyAllFixesFile',
       'oxc.fixAll',
     ], oxcCommands);
+  });
+
+  test('oxc.showOutputChannel', async () => {
+    await commands.executeCommand('oxc.showOutputChannel');
+    await sleep(500);
+
+    notEqual(window.activeTextEditor, undefined);
+    const uri = window.activeTextEditor!.document.uri;
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc');
   });
 
   // ToDo: check why this is not working,
