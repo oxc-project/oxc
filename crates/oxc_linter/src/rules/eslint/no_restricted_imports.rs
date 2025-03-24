@@ -1,4 +1,5 @@
 use ignore::gitignore::GitignoreBuilder;
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
@@ -6,7 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;

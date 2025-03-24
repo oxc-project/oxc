@@ -3,9 +3,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-use lazy_static::lazy_static;
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
-use regex::{Captures, Regex, Replacer};
 use syn::parse2;
 
 use super::add_header;
@@ -70,6 +69,4 @@ impl Replacer for CommentReplacer {
     }
 }
 
-lazy_static! {
-    static ref COMMENT_REGEX: Regex = Regex::new(r"[ \t]*//[/!]@(.*)").unwrap();
-}
+static COMMENT_REGEX: Lazy<Regex> = lazy_regex!(r"[ \t]*//[/!]@(.*)");

@@ -1,6 +1,7 @@
 use std::hash::Hash;
 
 use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Argument, BinaryExpression, Expression},
@@ -8,7 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -309,7 +309,7 @@ fn validate_title(
     }
 
     if !valid_title.disallowed_words.is_empty() {
-        let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
+        let Ok(disallowed_words_reg) = Regex::new(&format!(
             r"(?iu)\b(?:{})\b",
             valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
         )) else {

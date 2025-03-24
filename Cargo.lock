@@ -1187,6 +1187,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4345964bb142484797b161f473a503a434de77149dd8c7427788c6e13379388"
 
 [[package]]
+name = "lazy-regex"
+version = "3.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60c7310b93682b36b98fa7ea4de998d3463ccbebd94d935d6b48ba5b6ffa7126"
+dependencies = [
+ "lazy-regex-proc_macros",
+ "once_cell",
+ "regex",
+]
+
+[[package]]
+name = "lazy-regex-proc_macros"
+version = "3.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ba01db5ef81e17eb10a5e0f2109d1b3a3e29bac3070fdbd7d156bf7dbd206a1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1586,14 +1609,13 @@ dependencies = [
  "cow-utils",
  "indexmap",
  "itertools",
- "lazy_static",
+ "lazy-regex",
  "oxc_index",
  "phf",
  "prettyplease",
  "proc-macro2",
  "quote",
  "rayon",
- "regex",
  "rustc-hash",
  "serde",
  "syn",
@@ -1691,6 +1713,7 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "futures",
+ "lazy-regex",
  "lazy_static",
  "oxc",
  "oxc_prettier",
@@ -1698,7 +1721,6 @@ dependencies = [
  "oxc_tasks_transform_checker",
  "pico-args",
  "rayon",
- "regex",
  "rustc-hash",
  "saphyr",
  "serde",
@@ -1813,6 +1835,7 @@ dependencies = [
  "javascript-globals",
  "json-strip-comments",
  "language-tags",
+ "lazy-regex",
  "lazy_static",
  "markdown",
  "memchr",
@@ -1835,7 +1858,6 @@ dependencies = [
  "phf",
  "project-root",
  "rayon",
- "regex",
  "rust-lapper",
  "rustc-hash",
  "schemars",
@@ -2250,13 +2272,13 @@ dependencies = [
  "cow-utils",
  "ignore",
  "insta",
+ "lazy-regex",
  "mimalloc-safe",
  "oxc-miette",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_span",
  "rayon",
- "regex",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2592,14 +2614,13 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "handlebars",
- "lazy_static",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
- "regex",
  "rustc-hash",
  "serde",
 ]

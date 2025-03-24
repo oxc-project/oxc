@@ -48,12 +48,12 @@ itertools = { workspace = true }
 javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
+lazy-regex = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
-regex = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }

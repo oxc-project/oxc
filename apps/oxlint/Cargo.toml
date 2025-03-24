@@ -48,7 +48,7 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 
 [dev-dependencies]
 insta = { workspace = true }
-regex = { workspace = true }
+lazy-regex = { workspace = true }
 
 [features]
 default = []
