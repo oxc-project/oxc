@@ -2,7 +2,7 @@ commit: 15392346
 
 semantic_typescript Summary:
 AST Parsed     : 6531/6531 (100.00%)
-Positive Passed: 2853/6531 (43.68%)
+Positive Passed: 2843/6531 (43.53%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -2712,6 +2712,18 @@ tasks/coverage/typescript/tests/cases/compiler/commentOnDecoratedClassDeclaratio
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "Remote":
+after transform: SymbolId(1): Span { start: 97, end: 103 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Remote":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 97, end: 103 }
+Symbol span mismatch for "AnotherRomote":
+after transform: SymbolId(2): Span { start: 161, end: 174 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "AnotherRomote":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 161, end: 174 }
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnElidedModule1.ts
 semantic error: Bindings mismatch:
@@ -7272,8 +7284,8 @@ rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Observable", "Test", "whatever"]
-rebuilt        : ScopeId(0): ["Test", "whatever"]
+after transform: ScopeId(0): ["Observable", "Test", "_decorate", "_decorateParam", "whatever"]
+rebuilt        : ScopeId(0): ["Test", "_decorate", "_decorateParam", "whatever"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImportOnDeclare.ts
 semantic error: Bindings mismatch:
@@ -7285,14 +7297,14 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataForMethodWithNoReturnTypeAnnotation01.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "decorator"]
-rebuilt        : ScopeId(0): ["MyClass"]
+after transform: ScopeId(0): ["MyClass", "_decorate", "decorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["decorator"]
+after transform: ["require"]
+rebuilt        : ["decorator", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataNoStrictNull.ts
 semantic error: Symbol reference IDs mismatch for "dec":
@@ -7318,8 +7330,8 @@ rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataPromise.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "_asyncToGenerator", "decorator"]
-rebuilt        : ScopeId(0): ["A", "_asyncToGenerator"]
+after transform: ScopeId(0): ["A", "_asyncToGenerator", "_decorate", "decorator"]
+rebuilt        : ScopeId(0): ["A", "_asyncToGenerator", "_decorate"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -7335,8 +7347,14 @@ rebuilt        : ["decorator", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataRestParameterWithImportedType.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ClassA", "SomeClass", "SomeClass1", "_defineProperty", "annotation", "annotation1"]
-rebuilt        : ScopeId(0): ["ClassA", "_defineProperty", "annotation", "annotation1"]
+after transform: ScopeId(0): ["ClassA", "SomeClass", "SomeClass1", "_decorate", "_defineProperty", "annotation", "annotation1"]
+rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_defineProperty", "annotation", "annotation1"]
+Symbol span mismatch for "ClassA":
+after transform: SymbolId(6): Span { start: 266, end: 272 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "ClassA":
+after transform: SymbolId(10): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 266, end: 272 }
 Unresolved references mismatch:
 after transform: ["ClassDecorator", "MethodDecorator"]
 rebuilt        : []
@@ -7368,33 +7386,88 @@ rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "_defineProperty", "db", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
+after transform: ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "db", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "someDecorator"]
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 100, end: 107 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 100, end: 107 }
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Database", "MyClass", "_defineProperty", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
+after transform: ScopeId(0): ["Database", "MyClass", "_decorate", "_defineProperty", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "someDecorator"]
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 112, end: 119 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 112, end: 119 }
+
+tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
+semantic error: Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 104, end: 111 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 104, end: 111 }
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "_defineProperty", "db", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
+after transform: ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "db", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "someDecorator"]
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 98, end: 105 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 98, end: 105 }
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "_defineProperty", "database", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
+after transform: ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "database", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_defineProperty", "someDecorator"]
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 104, end: 111 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 104, end: 111 }
+
+tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
+semantic error: Symbol span mismatch for "MyClass":
+after transform: SymbolId(3): Span { start: 110, end: 117 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyClass":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 110, end: 117 }
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Yoha", "foo"]
-rebuilt        : ScopeId(0): ["Bar", "foo"]
+after transform: ScopeId(0): ["Bar", "Yoha", "_decorate", "_decorateParam", "foo"]
+rebuilt        : ScopeId(0): ["Bar", "_decorate", "_decorateParam", "foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferences.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 198, end: 199 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 198, end: 199 }
+Symbol reference IDs mismatch for "y":
+after transform: SymbolId(5): [ReferenceId(5)]
+rebuilt        : SymbolId(5): []
+Reference symbol mismatch for "y":
+after transform: SymbolId(5) "y"
+rebuilt        : <None>
+Unresolved reference IDs mismatch for "y":
+after transform: [ReferenceId(0), ReferenceId(3)]
+rebuilt        : [ReferenceId(3), ReferenceId(5), ReferenceId(9)]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorWithNegativeLiteralTypeNoCrash.ts
 semantic error: Symbol reference IDs mismatch for "decorator":
@@ -7403,8 +7476,8 @@ rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorWithUnderscoreMethod.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "console", "dec"]
-rebuilt        : ScopeId(0): ["A", "dec"]
+after transform: ScopeId(0): ["A", "_decorate", "console", "dec"]
+rebuilt        : ScopeId(0): ["A", "_decorate", "dec"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
@@ -7412,8 +7485,8 @@ Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "PropertyDescriptor"]
-rebuilt        : ["console"]
+after transform: ["Function", "PropertyDescriptor", "require"]
+rebuilt        : ["console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConditionalTypes.ts
 semantic error: Scope children mismatch:
@@ -8420,25 +8493,40 @@ rebuilt        : SymbolId(6): [ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/emitDecoratorMetadata_object.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "MyClassDecorator", "MyMethodDecorator"]
-rebuilt        : ScopeId(0): ["A"]
-Reference symbol mismatch for "MyClassDecorator":
-after transform: SymbolId(0) "MyClassDecorator"
-rebuilt        : <None>
+after transform: ScopeId(0): ["A", "MyClassDecorator", "MyMethodDecorator", "_decorate"]
+rebuilt        : ScopeId(0): ["A", "_decorate"]
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 123, end: 124 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 123, end: 124 }
 Reference symbol mismatch for "MyMethodDecorator":
 after transform: SymbolId(1) "MyMethodDecorator"
 rebuilt        : <None>
+Reference symbol mismatch for "MyClassDecorator":
+after transform: SymbolId(0) "MyClassDecorator"
+rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["ClassDecorator", "MethodDecorator"]
-rebuilt        : ["MyClassDecorator", "MyMethodDecorator"]
+after transform: ["ClassDecorator", "MethodDecorator", "require"]
+rebuilt        : ["MyClassDecorator", "MyMethodDecorator", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/emitDecoratorMetadata_restArgs.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "MyClassDecorator", "MyMethodDecorator"]
-rebuilt        : ScopeId(0): ["A", "B"]
-Reference symbol mismatch for "MyClassDecorator":
-after transform: SymbolId(0) "MyClassDecorator"
-rebuilt        : <None>
+after transform: ScopeId(0): ["A", "B", "MyClassDecorator", "MyMethodDecorator", "_decorate"]
+rebuilt        : ScopeId(0): ["A", "B", "_decorate"]
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 123, end: 124 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 123, end: 124 }
+Symbol span mismatch for "B":
+after transform: SymbolId(5): Span { start: 228, end: 229 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "B":
+after transform: SymbolId(10): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 228, end: 229 }
 Reference symbol mismatch for "MyMethodDecorator":
 after transform: SymbolId(1) "MyMethodDecorator"
 rebuilt        : <None>
@@ -8447,15 +8535,24 @@ after transform: SymbolId(0) "MyClassDecorator"
 rebuilt        : <None>
 Reference symbol mismatch for "MyMethodDecorator":
 after transform: SymbolId(1) "MyMethodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "MyClassDecorator":
+after transform: SymbolId(0) "MyClassDecorator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["ClassDecorator", "MethodDecorator"]
-rebuilt        : ["MyClassDecorator", "MyMethodDecorator"]
+after transform: ["ClassDecorator", "MethodDecorator", "require"]
+rebuilt        : ["MyClassDecorator", "MyMethodDecorator", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/emitHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "_objectSpread", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_objectSpread", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "_decorate", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_decorate", "_objectSpread", "o", "y"]
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 57, end: 58 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 57, end: 58 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -13825,8 +13922,14 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpers.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "dec", "id", "result"]
-rebuilt        : ScopeId(0): ["A", "B", "C", "id", "result"]
+after transform: ScopeId(0): ["A", "B", "C", "_decorate", "_decorateParam", "dec", "id", "result"]
+rebuilt        : ScopeId(0): ["A", "B", "C", "_decorate", "_decorateParam", "id", "result"]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 83, end: 84 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 83, end: 84 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(2) "dec"
 rebuilt        : <None>
@@ -13839,8 +13942,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersES6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "_asyncToGenerator", "_checkInRHS", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_objectSpread", "_x", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_asyncToGenerator", "_checkInRHS", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_objectSpread", "_x", "o", "y"]
+after transform: ScopeId(0): ["A", "_asyncToGenerator", "_checkInRHS", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_objectSpread", "_x", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_asyncToGenerator", "_checkInRHS", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_objectSpread", "_x", "o", "y"]
+Symbol span mismatch for "A":
+after transform: SymbolId(1): Span { start: 40, end: 41 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(12): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 40, end: 41 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -13858,8 +13967,14 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersInIsolatedModules.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "dec"]
-rebuilt        : ScopeId(0): ["A", "B", "C"]
+after transform: ScopeId(0): ["A", "B", "C", "_decorate", "_decorateParam", "dec"]
+rebuilt        : ScopeId(0): ["A", "B", "C", "_decorate", "_decorateParam"]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 83, end: 84 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 83, end: 84 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(2) "dec"
 rebuilt        : <None>
@@ -13886,8 +14001,14 @@ rebuilt        : ["React", "o"]
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "_objectSpread", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_objectSpread", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "_decorate", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_decorate", "_objectSpread", "o", "y"]
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 57, end: 58 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 57, end: 58 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -16180,6 +16301,14 @@ Unresolved references mismatch:
 after transform: ["shouldBeIdentity"]
 rebuilt        : ["p1", "shouldBeIdentity"]
 
+tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDecoratorSyntax.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(0): Span { start: 16, end: 17 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 16, end: 17 }
+
 tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
@@ -17342,8 +17471,8 @@ rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataReferencedWithinFilteredUnion.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Class1", "Class2", "decorate"]
-rebuilt        : ScopeId(0): ["Class2", "decorate"]
+after transform: ScopeId(0): ["Class1", "Class2", "_decorate", "decorate"]
+rebuilt        : ScopeId(0): ["Class2", "_decorate", "decorate"]
 
 tasks/coverage/typescript/tests/cases/compiler/methodContainingLocalFunction.ts
 semantic error: Scope flags mismatch:
@@ -18106,8 +18235,14 @@ rebuilt        : ScopeId(0): ["data2"]
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserveImportHelpers.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "dec"]
-rebuilt        : ScopeId(0): ["A"]
+after transform: ScopeId(0): ["A", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["A", "_decorate"]
+Symbol span mismatch for "A":
+after transform: SymbolId(1): Span { start: 42, end: 43 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 42, end: 43 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -19406,8 +19541,14 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/noEmitHelpers2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "decorator"]
-rebuilt        : ScopeId(0): ["A"]
+after transform: ScopeId(0): ["A", "_decorate", "_decorateParam", "decorator"]
+rebuilt        : ScopeId(0): ["A", "_decorate", "_decorateParam"]
+Symbol span mismatch for "A":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 46, end: 47 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -19415,8 +19556,8 @@ Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["decorator"]
+after transform: ["require"]
+rebuilt        : ["decorator", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyDestructuringInPrivateMethod.ts
 semantic error: Scope children mismatch:
@@ -25851,8 +25992,20 @@ rebuilt        : SymbolId(3): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/compiler/staticInitializersAndLegacyClassDecorators.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "_C", "_C2", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["C1", "C2", "_C", "_C2", "_defineProperty"]
+after transform: ScopeId(0): ["C1", "C2", "_C", "_C2", "_decorate", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["C1", "C2", "_C", "_C2", "_decorate", "_defineProperty"]
+Symbol span mismatch for "C1":
+after transform: SymbolId(1): Span { start: 90, end: 92 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "C1":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 90, end: 92 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(2): Span { start: 141, end: 143 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 141, end: 143 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -26434,8 +26587,8 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/targetEs6DecoratorMetadataImportNotElided.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Input", "MyComponent", "TemplateRef", "_defineProperty"]
-rebuilt        : ScopeId(0): ["Input", "MyComponent", "_defineProperty"]
+after transform: ScopeId(0): ["Input", "MyComponent", "TemplateRef", "_decorate", "_defineProperty"]
+rebuilt        : ScopeId(0): ["Input", "MyComponent", "_decorate", "_defineProperty"]
 
 tasks/coverage/typescript/tests/cases/compiler/targetTypeArgs.ts
 semantic error: Scope children mismatch:
@@ -26682,8 +26835,14 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "decorator"]
-rebuilt        : ScopeId(0): ["Foo"]
+after transform: ScopeId(0): ["Foo", "_decorate", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate"]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(1): Span { start: 52, end: 55 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 52, end: 55 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -28358,23 +28517,212 @@ rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5", "C6", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["C1", "C2", "C3", "C4", "C5", "C6", "_defineProperty"]
+after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5", "C6", "_C", "_C2", "_C3", "_decorate", "_decorateParam", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["C1", "C2", "C3", "C4", "C5", "C6", "_C", "_C2", "_C3", "_decorate", "_decorateParam", "_defineProperty"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(29), ScopeId(39)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(37), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57)]
 Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(27)]
-rebuilt        : ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(23), ScopeId(25)]
+rebuilt        : ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15)]
+Scope children mismatch:
+after transform: ScopeId(23): [ScopeId(24)]
+rebuilt        : ScopeId(13): []
+Scope children mismatch:
+after transform: ScopeId(25): [ScopeId(26)]
+rebuilt        : ScopeId(14): []
+Scope children mismatch:
+after transform: ScopeId(27): [ScopeId(28)]
+rebuilt        : ScopeId(15): []
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(6))
+rebuilt        : ScopeId(16): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(9): Some(ScopeId(6))
+rebuilt        : ScopeId(17): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(6))
+rebuilt        : ScopeId(18): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(14): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(6))
+rebuilt        : ScopeId(19): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(15): Some(ScopeId(6))
+rebuilt        : ScopeId(20): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(17): Some(ScopeId(6))
+rebuilt        : ScopeId(21): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(19): Some(ScopeId(6))
+rebuilt        : ScopeId(22): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(22): Some(ScopeId(6))
+rebuilt        : ScopeId(23): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(26): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(26): Some(ScopeId(25))
+rebuilt        : ScopeId(24): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(28): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(28): Some(ScopeId(27))
+rebuilt        : ScopeId(25): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(24): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(24): Some(ScopeId(23))
+rebuilt        : ScopeId(26): Some(ScopeId(0))
 Scope children mismatch:
 after transform: ScopeId(39): [ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(58), ScopeId(60)]
-rebuilt        : ScopeId(37): [ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(54), ScopeId(56)]
+rebuilt        : ScopeId(37): [ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46)]
+Scope children mismatch:
+after transform: ScopeId(56): [ScopeId(57)]
+rebuilt        : ScopeId(44): []
+Scope children mismatch:
+after transform: ScopeId(58): [ScopeId(59)]
+rebuilt        : ScopeId(45): []
+Scope children mismatch:
+after transform: ScopeId(60): [ScopeId(61)]
+rebuilt        : ScopeId(46): []
+Scope flags mismatch:
+after transform: ScopeId(40): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(47): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(40): Some(ScopeId(39))
+rebuilt        : ScopeId(47): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(42): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(48): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(42): Some(ScopeId(39))
+rebuilt        : ScopeId(48): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(44): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(49): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(44): Some(ScopeId(39))
+rebuilt        : ScopeId(49): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(47): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(50): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(47): Some(ScopeId(39))
+rebuilt        : ScopeId(50): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(48): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(51): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(48): Some(ScopeId(39))
+rebuilt        : ScopeId(51): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(50): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(52): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(50): Some(ScopeId(39))
+rebuilt        : ScopeId(52): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(52): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(53): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(52): Some(ScopeId(39))
+rebuilt        : ScopeId(53): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(55): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(54): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(55): Some(ScopeId(39))
+rebuilt        : ScopeId(54): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(59): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(55): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(59): Some(ScopeId(58))
+rebuilt        : ScopeId(55): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(61): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(56): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(61): Some(ScopeId(60))
+rebuilt        : ScopeId(56): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(57): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(57): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(57): Some(ScopeId(56))
+rebuilt        : ScopeId(57): Some(ScopeId(0))
+Symbol span mismatch for "C1":
+after transform: SymbolId(1): Span { start: 52, end: 54 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C1":
+after transform: SymbolId(22): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 52, end: 54 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(2): Span { start: 84, end: 86 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(24): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 84, end: 86 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(3): Span { start: 126, end: 128 }
+rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(25): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(11): Span { start: 126, end: 128 }
+Symbol span mismatch for "C4":
+after transform: SymbolId(4): Span { start: 146, end: 148 }
+rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C4":
-after transform: SymbolId(4): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(23), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(85)]
-rebuilt        : SymbolId(4): [ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(24), ReferenceId(27), ReferenceId(29), ReferenceId(31)]
+after transform: SymbolId(4): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(23), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(94), ReferenceId(108), ReferenceId(110), ReferenceId(112), ReferenceId(114), ReferenceId(116), ReferenceId(118), ReferenceId(120), ReferenceId(122), ReferenceId(124), ReferenceId(126), ReferenceId(129), ReferenceId(132)]
+rebuilt        : SymbolId(12): [ReferenceId(21), ReferenceId(25), ReferenceId(29), ReferenceId(33), ReferenceId(37), ReferenceId(41), ReferenceId(45), ReferenceId(49), ReferenceId(53), ReferenceId(58), ReferenceId(63), ReferenceId(64), ReferenceId(70)]
+Symbol span mismatch for "C4":
+after transform: SymbolId(27): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(13): Span { start: 146, end: 148 }
+Symbol span mismatch for "C5":
+after transform: SymbolId(10): Span { start: 683, end: 685 }
+rebuilt        : SymbolId(19): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C5":
-after transform: SymbolId(10): [ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(45), ReferenceId(47), ReferenceId(49), ReferenceId(51), ReferenceId(53), ReferenceId(55), ReferenceId(57), ReferenceId(88)]
-rebuilt        : SymbolId(10): [ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(45), ReferenceId(47), ReferenceId(49), ReferenceId(52), ReferenceId(54), ReferenceId(56)]
+after transform: SymbolId(10): [ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(45), ReferenceId(47), ReferenceId(49), ReferenceId(51), ReferenceId(53), ReferenceId(55), ReferenceId(57), ReferenceId(136), ReferenceId(150), ReferenceId(152), ReferenceId(154), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(166), ReferenceId(168), ReferenceId(171), ReferenceId(174)]
+rebuilt        : SymbolId(19): [ReferenceId(74), ReferenceId(78), ReferenceId(82), ReferenceId(86), ReferenceId(90), ReferenceId(94), ReferenceId(98), ReferenceId(102), ReferenceId(106), ReferenceId(111), ReferenceId(116), ReferenceId(117), ReferenceId(123)]
+Symbol span mismatch for "C5":
+after transform: SymbolId(30): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(20): Span { start: 683, end: 685 }
+Symbol span mismatch for "C6":
+after transform: SymbolId(16): Span { start: 1143, end: 1145 }
+rebuilt        : SymbolId(26): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C6":
-after transform: SymbolId(16): [ReferenceId(59), ReferenceId(61), ReferenceId(63), ReferenceId(65), ReferenceId(67), ReferenceId(69), ReferenceId(71), ReferenceId(73), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(81), ReferenceId(83), ReferenceId(91)]
-rebuilt        : SymbolId(16): [ReferenceId(58), ReferenceId(60), ReferenceId(62), ReferenceId(64), ReferenceId(66), ReferenceId(68), ReferenceId(70), ReferenceId(72), ReferenceId(74), ReferenceId(77), ReferenceId(79), ReferenceId(81)]
+after transform: SymbolId(16): [ReferenceId(59), ReferenceId(61), ReferenceId(63), ReferenceId(65), ReferenceId(67), ReferenceId(69), ReferenceId(71), ReferenceId(73), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(81), ReferenceId(83), ReferenceId(178), ReferenceId(192), ReferenceId(194), ReferenceId(196), ReferenceId(198), ReferenceId(200), ReferenceId(202), ReferenceId(204), ReferenceId(206), ReferenceId(208), ReferenceId(210), ReferenceId(213), ReferenceId(216)]
+rebuilt        : SymbolId(26): [ReferenceId(127), ReferenceId(131), ReferenceId(135), ReferenceId(139), ReferenceId(143), ReferenceId(147), ReferenceId(151), ReferenceId(155), ReferenceId(159), ReferenceId(164), ReferenceId(169), ReferenceId(170), ReferenceId(176)]
+Symbol span mismatch for "C6":
+after transform: SymbolId(32): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(27): Span { start: 1143, end: 1145 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -30965,6 +31313,26 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Mup", "require"]
 
+tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(3): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(0))
+
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
 semantic error: Classes may not have a static property named prototype
 Classes may not have a static property named prototype
@@ -31456,40 +31824,40 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor4.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor5.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor8.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(8), ScopeId(11), ScopeId(14), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(10), ScopeId(13), ScopeId(15)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
 semantic error: Unresolved references mismatch:
@@ -31498,8 +31866,26 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "dec"]
-rebuilt        : ScopeId(0): ["A", "B", "C"]
+after transform: ScopeId(0): ["A", "B", "C", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["A", "B", "C", "_decorate"]
+Symbol span mismatch for "A":
+after transform: SymbolId(1): Span { start: 34, end: 35 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 34, end: 35 }
+Symbol span mismatch for "B":
+after transform: SymbolId(2): Span { start: 52, end: 53 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "B":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 52, end: 53 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 100, end: 101 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 100, end: 101 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -31510,21 +31896,33 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter1.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 107, end: 108 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 107, end: 108 }
 Unresolved references mismatch:
-after transform: ["Function", "dec"]
-rebuilt        : ["dec"]
+after transform: ["Function", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter5.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "BulkEditPreviewProvider":
+after transform: SymbolId(1): Span { start: 106, end: 129 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "BulkEditPreviewProvider":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 106, end: 129 }
 Reference symbol mismatch for "IFoo":
 after transform: SymbolId(0) "IFoo"
 rebuilt        : <None>
@@ -31533,30 +31931,60 @@ after transform: ["require"]
 rebuilt        : ["IFoo", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass1.ts
-semantic error: Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 100, end: 103 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7), ReferenceId(8)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 100, end: 103 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass2.ts
-semantic error: Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 114, end: 117 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7), ReferenceId(8)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 114, end: 117 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass3.ts
-semantic error: Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 100, end: 103 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(3): [ReferenceId(5), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5)]
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(9), ReferenceId(11)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7), ReferenceId(8)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 100, end: 103 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 218, end: 221 }
+rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(3): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(15), ReferenceId(17)]
+rebuilt        : SymbolId(7): [ReferenceId(11), ReferenceId(15), ReferenceId(16)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(8): Span { start: 218, end: 221 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "_Testing", "_defineProperty"]
-rebuilt        : ScopeId(0): ["Testing123", "_Testing", "_defineProperty"]
+after transform: ScopeId(0): ["Something", "Testing123", "_Testing", "_decorate", "_defineProperty"]
+rebuilt        : ScopeId(0): ["Testing123", "_Testing", "_decorate", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(2): Span { start: 119, end: 129 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 119, end: 129 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(1) "Something"
 rebuilt        : <None>
@@ -31566,11 +31994,17 @@ rebuilt        : ["Something"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123"]
-rebuilt        : ScopeId(0): ["Testing123"]
+after transform: ScopeId(0): ["Something", "Testing123", "_decorate"]
+rebuilt        : ScopeId(0): ["Testing123", "_decorate"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(2): Span { start: 119, end: 129 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 119, end: 129 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(1) "Something"
 rebuilt        : <None>
@@ -31580,11 +32014,17 @@ rebuilt        : ["Something"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsSystem1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "_Testing", "_defineProperty"]
-rebuilt        : ScopeId(0): ["Testing123", "_Testing", "_defineProperty"]
+after transform: ScopeId(0): ["Something", "Testing123", "_Testing", "_decorate", "_defineProperty"]
+rebuilt        : ScopeId(0): ["Testing123", "_Testing", "_decorate", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(2): Span { start: 119, end: 129 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 119, end: 129 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(1) "Something"
 rebuilt        : <None>
@@ -31594,11 +32034,17 @@ rebuilt        : ["Something"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsSystem2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123"]
-rebuilt        : ScopeId(0): ["Testing123"]
+after transform: ScopeId(0): ["Something", "Testing123", "_decorate"]
+rebuilt        : ScopeId(0): ["Testing123", "_decorate"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(2): Span { start: 119, end: 129 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Testing123":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 119, end: 129 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(1) "Something"
 rebuilt        : <None>
@@ -31607,39 +32053,92 @@ after transform: []
 rebuilt        : ["Something"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassFromExternalModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Decorated"]
-rebuilt        : ScopeId(0): []
+semantic error: Symbol span mismatch for "Decorated":
+after transform: SymbolId(2): Span { start: 67, end: 76 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "Decorated":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 67, end: 76 }
+
+tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorInstantiateModulesInFunctionBodies.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(0))
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass1.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 51, end: 52 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 51, end: 52 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 58, end: 59 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 58, end: 59 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass3.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 58, end: 59 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 58, end: 59 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass4.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 59, end: 60 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 59, end: 60 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass5.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 59, end: 60 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 59, end: 60 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass9.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "_B", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["A", "B", "_B", "_defineProperty"]
+after transform: ScopeId(0): ["A", "B", "_B", "_B2", "_decorate", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["A", "B", "_B", "_B2", "_decorate", "_defineProperty"]
+Symbol span mismatch for "B":
+after transform: SymbolId(2): Span { start: 102, end: 103 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "B":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11), ReferenceId(13)]
+rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(16)]
+Symbol span mismatch for "B":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 102, end: 103 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -31652,21 +32151,21 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod13.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod14.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_defineProperty", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_defineProperty"]
+after transform: ScopeId(0): ["Foo", "_decorate", "_defineProperty", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate", "_defineProperty"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -31676,8 +32175,8 @@ rebuilt        : ["decorator", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod15.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_defineProperty", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_defineProperty"]
+after transform: ScopeId(0): ["Foo", "_decorate", "_defineProperty", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate", "_defineProperty"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -31687,8 +32186,8 @@ rebuilt        : ["decorator", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod16.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_defineProperty", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_defineProperty"]
+after transform: ScopeId(0): ["Foo", "_decorate", "_defineProperty", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate", "_defineProperty"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -31703,14 +32202,35 @@ rebuilt        : ScopeId(0): ["Foo", "_defineProperty"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod19.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_x", "_x2", "decorator"]
-rebuilt        : ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_x", "_x2"]
+after transform: ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateParam", "_x", "_x2", "decorator"]
+rebuilt        : ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateParam", "_x", "_x2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(8)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(7)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(4): Some(ScopeId(0))
+Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6)]
+rebuilt        : ScopeId(7): []
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(5))
+rebuilt        : ScopeId(8): Some(ScopeId(0))
 Symbol reference IDs mismatch for "C1":
-after transform: SymbolId(1): [ReferenceId(1)]
-rebuilt        : SymbolId(3): []
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(11)]
+rebuilt        : SymbolId(5): [ReferenceId(12)]
 Symbol reference IDs mismatch for "C2":
-after transform: SymbolId(3): [ReferenceId(4)]
-rebuilt        : SymbolId(6): []
+after transform: SymbolId(3): [ReferenceId(4), ReferenceId(19)]
+rebuilt        : SymbolId(8): [ReferenceId(22)]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -31726,32 +32246,32 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod4.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod5.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod7.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethodOverload2.ts
 semantic error: Scope children mismatch:
@@ -31761,27 +32281,27 @@ Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["TypedPropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodParameter1.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["Object", "dec"]
-rebuilt        : ["dec"]
+after transform: ["Object", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodParameter2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(3): [ReferenceId(1)]
-rebuilt        : SymbolId(0): []
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(4)]
+rebuilt        : SymbolId(2): [ReferenceId(5)]
 Unresolved references mismatch:
-after transform: ["Object", "dec"]
-rebuilt        : ["dec"]
+after transform: ["Object", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty1.ts
 semantic error: Scope children mismatch:
@@ -31812,8 +32332,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["PropertyDescriptor", "dec"]
-rebuilt        : ["dec"]
+after transform: ["PropertyDescriptor", "dec", "require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty2.ts
 semantic error: Scope children mismatch:
@@ -31836,8 +32356,14 @@ rebuilt        : ["Symbol"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadata.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "Service", "decorator"]
-rebuilt        : ScopeId(0): ["MyComponent"]
+after transform: ScopeId(0): ["MyComponent", "Service", "_decorate", "decorator"]
+rebuilt        : ScopeId(0): ["MyComponent", "_decorate"]
+Symbol span mismatch for "MyComponent":
+after transform: SymbolId(2): Span { start: 80, end: 91 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyComponent":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 80, end: 91 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
@@ -31850,8 +32376,14 @@ rebuilt        : ["decorator"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadataWithTypeOnlyImport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "Service", "decorator"]
-rebuilt        : ScopeId(0): ["MyComponent"]
+after transform: ScopeId(0): ["MyComponent", "Service", "_decorate", "decorator"]
+rebuilt        : ScopeId(0): ["MyComponent", "_decorate"]
+Symbol span mismatch for "MyComponent":
+after transform: SymbolId(2): Span { start: 89, end: 100 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "MyComponent":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 89, end: 100 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
@@ -31872,8 +32404,80 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
 semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20)]
+Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(19)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(2): []
+Scope children mismatch:
+after transform: ScopeId(19): [ScopeId(20)]
+rebuilt        : ScopeId(9): []
+Scope children mismatch:
+after transform: ScopeId(21): [ScopeId(22)]
+rebuilt        : ScopeId(10): []
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(11): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(2))
+rebuilt        : ScopeId(11): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(12): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(2))
+rebuilt        : ScopeId(12): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(10): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(13): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(10): Some(ScopeId(2))
+rebuilt        : ScopeId(13): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(12): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(14): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(12): Some(ScopeId(2))
+rebuilt        : ScopeId(14): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(14): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(2))
+rebuilt        : ScopeId(15): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(17): Some(ScopeId(2))
+rebuilt        : ScopeId(16): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(20): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(20): Some(ScopeId(19))
+rebuilt        : ScopeId(17): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(22): Some(ScopeId(21))
+rebuilt        : ScopeId(18): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(20): Some(ScopeId(0))
+Symbol span mismatch for "C":
+after transform: SymbolId(0): Span { start: 20, end: 21 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(39): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 20, end: 21 }
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression2ES2020.ts
 semantic error: Unresolved references mismatch:
@@ -33444,36 +34048,84 @@ tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decorator
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 51, end: 52 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 51, end: 52 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass2.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 58, end: 59 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 58, end: 59 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass3.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 66, end: 67 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 66, end: 67 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass4.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "_default":
+after transform: SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass5.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 51, end: 52 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(6), ReferenceId(10), ReferenceId(11)]
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 51, end: 52 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass6.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 58, end: 59 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 58, end: 59 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass7.es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 66, end: 67 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 66, end: 67 }
 
 tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass8.es6.ts
 semantic error: Scope children mismatch:
@@ -33633,17 +34285,35 @@ after transform: []
 rebuilt        : ["arr"]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsAmd/decoratedDefaultExportsGetExportedAmd.ts
-semantic error: Unresolved references mismatch:
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(1): Span { start: 64, end: 67 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 64, end: 67 }
+Unresolved references mismatch:
 after transform: ["ClassDecorator"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsCommonjs/decoratedDefaultExportsGetExportedCommonjs.ts
-semantic error: Unresolved references mismatch:
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(1): Span { start: 64, end: 67 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 64, end: 67 }
+Unresolved references mismatch:
 after transform: ["ClassDecorator"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/decoratedDefaultExportsGetExportedSystem.ts
-semantic error: Unresolved references mismatch:
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(1): Span { start: 64, end: 67 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 64, end: 67 }
+Unresolved references mismatch:
 after transform: ["ClassDecorator"]
 rebuilt        : []
 
@@ -33651,7 +34321,13 @@ tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLev
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsUmd/decoratedDefaultExportsGetExportedUmd.ts
-semantic error: Unresolved references mismatch:
+semantic error: Symbol span mismatch for "Foo":
+after transform: SymbolId(1): Span { start: 64, end: 67 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 64, end: 67 }
+Unresolved references mismatch:
 after transform: ["ClassDecorator"]
 rebuilt        : []
 
@@ -33962,6 +34638,14 @@ Unresolved references mismatch:
 after transform: ["Iterable", "Symbol", "foo", "undefined"]
 rebuilt        : ["Symbol", "foo", "undefined"]
 
+tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck61.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 42, end: 43 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 42, end: 43 }
+
 tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
@@ -34004,8 +34688,14 @@ rebuilt        : SymbolId(2): [ReferenceId(11)]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStatic.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec", "method3"]
-rebuilt        : ScopeId(0): ["C", "method3"]
+after transform: ScopeId(0): ["C", "_decorate", "_method", "_method2", "dec", "method3"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_method", "_method2", "method3"]
+Reference flags mismatch for "_method":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_method2":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34025,8 +34715,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticPrivate.ts
 semantic error: Bindings mismatch:
@@ -34035,8 +34725,14 @@ rebuilt        : ScopeId(0): ["C", "_C_brand", "_classPrivateMethodInitSpec", "_
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-static.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec", "method3"]
-rebuilt        : ScopeId(0): ["C", "method3"]
+after transform: ScopeId(0): ["C", "_decorate", "_method", "_method2", "dec", "method3"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_method", "_method2", "method3"]
+Reference flags mismatch for "_method":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_method2":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34056,13 +34752,19 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-staticPrivate.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_get_method", "_get_method2", "_set_method", "_set_method2", "_toSetter", "dec"]
-rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_get_method", "_get_method2", "_set_method", "_set_method2", "_toSetter"]
+after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate", "_get_method", "_get_method2", "_set_method", "_set_method2", "_toSetter", "dec"]
+rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate", "_get_method", "_get_method2", "_set_method", "_set_method2", "_toSetter"]
+Symbol span mismatch for "D":
+after transform: SymbolId(3): Span { start: 137, end: 138 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(12): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 137, end: 138 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34072,11 +34774,17 @@ rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_superPropGet", "dec", "method"]
-rebuilt        : ScopeId(0): ["C", "_C", "_superPropGet", "method"]
+after transform: ScopeId(0): ["C", "_C", "_decorate", "_superPropGet", "dec", "method"]
+rebuilt        : ScopeId(0): ["C", "_C", "_decorate", "_superPropGet", "method"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 125, end: 126 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 125, end: 126 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34086,8 +34794,26 @@ rebuilt        : ["Base", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_superPropGet", "dec"]
-rebuilt        : ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_superPropGet"]
+after transform: ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_decorate", "_superPropGet", "dec"]
+rebuilt        : ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_decorate", "_superPropGet"]
+Symbol span mismatch for "C1":
+after transform: SymbolId(1): Span { start: 97, end: 99 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "C1":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 97, end: 99 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(2): Span { start: 239, end: 241 }
+rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(8): Span { start: 239, end: 241 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(3): Span { start: 389, end: 391 }
+rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(10): Span { start: 389, end: 391 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34103,11 +34829,17 @@ rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "dec", "x"]
-rebuilt        : ScopeId(0): ["C", "_C", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "x"]
+after transform: ScopeId(0): ["C", "_C", "_decorate", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "dec", "x"]
+rebuilt        : ScopeId(0): ["C", "_C", "_decorate", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 96, end: 97 }
+rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(24): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(24): Span { start: 96, end: 97 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34117,11 +34849,17 @@ rebuilt        : ["Base", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_defineProperty", "_superPropGet", "dec", "method"]
-rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty", "_superPropGet", "method"]
+after transform: ScopeId(0): ["C", "_C", "_decorate", "_defineProperty", "_superPropGet", "dec", "method"]
+rebuilt        : ScopeId(0): ["C", "_C", "_decorate", "_defineProperty", "_superPropGet", "method"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 127, end: 128 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 127, end: 128 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34131,11 +34869,29 @@ rebuilt        : ["Base", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_defineProperty", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "dec", "x"]
-rebuilt        : ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_defineProperty", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "x"]
+after transform: ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_decorate", "_defineProperty", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "dec", "x"]
+rebuilt        : ScopeId(0): ["C1", "C2", "C3", "_C", "_C2", "_C3", "_decorate", "_defineProperty", "_super$x", "_super$x10", "_super$x11", "_super$x12", "_super$x13", "_super$x14", "_super$x15", "_super$x16", "_super$x17", "_super$x18", "_super$x2", "_super$x3", "_super$x4", "_super$x5", "_super$x6", "_super$x7", "_super$x8", "_super$x9", "_superPropGet", "_superPropSet", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+Symbol span mismatch for "C1":
+after transform: SymbolId(2): Span { start: 96, end: 98 }
+rebuilt        : SymbolId(26): Span { start: 0, end: 0 }
+Symbol span mismatch for "C1":
+after transform: SymbolId(15): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(27): Span { start: 96, end: 98 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(3): Span { start: 389, end: 391 }
+rebuilt        : SymbolId(28): Span { start: 0, end: 0 }
+Symbol span mismatch for "C2":
+after transform: SymbolId(24): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(29): Span { start: 389, end: 391 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(4): Span { start: 709, end: 711 }
+rebuilt        : SymbolId(30): Span { start: 0, end: 0 }
+Symbol span mismatch for "C3":
+after transform: SymbolId(32): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(31): Span { start: 709, end: 711 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34151,11 +34907,17 @@ rebuilt        : ["Base", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["C", "_defineProperty"]
+after transform: ScopeId(0): ["C", "_decorate", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 195, end: 196 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 195, end: 196 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34165,8 +34927,14 @@ rebuilt        : ["Base", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classThisReference/esDecorators-classDeclaration-classThisReference.es5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty"]
+after transform: ScopeId(0): ["C", "_C", "_decorate", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["C", "_C", "_decorate", "_defineProperty"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 34, end: 35 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 34, end: 35 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34176,8 +34944,14 @@ rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classThisReference/esDecorators-classDeclaration-classThisReference.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty"]
+after transform: ScopeId(0): ["C", "_C", "_decorate", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["C", "_C", "_decorate", "_defineProperty"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 34, end: 35 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 34, end: 35 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34187,17 +34961,23 @@ rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
-rebuilt        : ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
+after transform: ScopeId(0): ["C", "_decorate", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 57, end: 58 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 57, end: 58 }
 Symbol flags mismatch for "_method":
 after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
 Symbol flags mismatch for "_get_x":
 after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
 Symbol flags mismatch for "_set_x":
 after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34240,14 +35020,17 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Example", "deco"]
-rebuilt        : ScopeId(0): ["Example"]
-Symbol flags mismatch for "Example":
-after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
+after transform: ScopeId(0): ["Example", "_decorate", "deco"]
+rebuilt        : ScopeId(0): ["Example", "_decorate"]
+Symbol span mismatch for "Example":
+after transform: SymbolId(1): Span { start: 43, end: 50 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Example":
 after transform: SymbolId(1): [Span { start: 93, end: 100 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
+Symbol span mismatch for "Example":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 43, end: 50 }
 Reference symbol mismatch for "deco":
 after transform: SymbolId(0) "deco"
 rebuilt        : <None>
@@ -34257,8 +35040,14 @@ rebuilt        : ["deco"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Example", "deco"]
-rebuilt        : ScopeId(0): ["Example"]
+after transform: ScopeId(0): ["Example", "_decorate", "deco"]
+rebuilt        : ScopeId(0): ["Example", "_decorate"]
+Symbol span mismatch for "Example":
+after transform: SymbolId(1): Span { start: 43, end: 50 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Example":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 43, end: 50 }
 Reference symbol mismatch for "deco":
 after transform: SymbolId(0) "deco"
 rebuilt        : <None>
@@ -34268,8 +35057,14 @@ rebuilt        : ["deco"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-multipleDecorators.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec1", "dec2"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "dec1", "dec2"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 53, end: 54 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 53, end: 54 }
 Reference symbol mismatch for "dec1":
 after transform: SymbolId(0) "dec1"
 rebuilt        : <None>
@@ -34277,25 +35072,43 @@ Reference symbol mismatch for "dec2":
 after transform: SymbolId(1) "dec2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec1", "dec2"]
+after transform: ["require"]
+rebuilt        : ["dec1", "dec2", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-outerThisReference.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_defineProperty", "_f", "_f2", "dec", "f"]
-rebuilt        : ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_defineProperty", "_f", "_f2"]
+after transform: ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_defineProperty", "_f", "_f2", "dec", "f"]
+rebuilt        : ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_defineProperty", "_f", "_f2"]
 Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(5): [ScopeId(6)]
 Symbol reference IDs mismatch for "_classPrivateFieldGet":
-after transform: SymbolId(11): [ReferenceId(22)]
-rebuilt        : SymbolId(2): []
+after transform: SymbolId(14): [ReferenceId(28)]
+rebuilt        : SymbolId(3): []
+Symbol span mismatch for "A":
+after transform: SymbolId(2): Span { start: 119, end: 120 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 119, end: 120 }
+Symbol span mismatch for "B":
+after transform: SymbolId(3): Span { start: 300, end: 301 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "B":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 300, end: 301 }
 Symbol reference IDs mismatch for "_a":
-after transform: SymbolId(9): [ReferenceId(18), ReferenceId(21)]
-rebuilt        : SymbolId(7): [ReferenceId(18)]
+after transform: SymbolId(12): [ReferenceId(24), ReferenceId(27)]
+rebuilt        : SymbolId(10): [ReferenceId(24)]
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 551, end: 552 }
+rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(4): [ReferenceId(8)]
-rebuilt        : SymbolId(8): []
+after transform: SymbolId(4): [ReferenceId(8), ReferenceId(30), ReferenceId(32)]
+rebuilt        : SymbolId(11): [ReferenceId(26), ReferenceId(29)]
+Symbol span mismatch for "C":
+after transform: SymbolId(15): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(12): Span { start: 551, end: 552 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34317,19 +35130,25 @@ rebuilt        : ["WeakMap", "dec", "f", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-parameterProperties.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "bound"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "bound"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
 Reference symbol mismatch for "bound":
 after transform: SymbolId(0) "bound"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["bound"]
+after transform: ["require"]
+rebuilt        : ["bound", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-setFunctionName.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 34, end: 35 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 34, end: 35 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34339,19 +35158,31 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-simpleTransformation.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 34, end: 35 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 34, end: 35 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-sourceMap.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
-rebuilt        : ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
+after transform: ScopeId(0): ["C", "_decorate", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 39, end: 40 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 39, end: 40 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34399,8 +35230,11 @@ rebuilt        : ScopeId(0): ["C", "_defineProperty", "field3"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticAccessor.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec", "field3"]
-rebuilt        : ScopeId(0): ["C", "field3"]
+after transform: ScopeId(0): ["C", "_decorate", "_field", "dec", "field3"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_field", "field3"]
+Reference flags mismatch for "_field":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34411,8 +35245,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticPrivate.ts
 semantic error: Bindings mismatch:
@@ -34421,14 +35255,14 @@ rebuilt        : ScopeId(0): ["C", "_classPrivateFieldInitSpec", "_field"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticPrivateAccessor.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-static.ts
 semantic error: Bindings mismatch:
@@ -34437,8 +35271,17 @@ rebuilt        : ScopeId(0): ["C", "_defineProperty", "field3"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAccessor.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "_D", "dec", "field3"]
-rebuilt        : ScopeId(0): ["C", "D", "_D", "field3"]
+after transform: ScopeId(0): ["C", "D", "_D", "_decorate", "_field", "dec", "field3"]
+rebuilt        : ScopeId(0): ["C", "D", "_D", "_decorate", "_field", "field3"]
+Symbol span mismatch for "D":
+after transform: SymbolId(3): Span { start: 199, end: 200 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 199, end: 200 }
+Reference flags mismatch for "_field":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34452,13 +35295,19 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivate.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_field", "_field2", "dec"]
-rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_field", "_field2"]
+after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate", "_field", "_field2", "dec"]
+rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate", "_field", "_field2"]
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 76, end: 77 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 76, end: 77 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34468,11 +35317,14 @@ rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "dec"]
-rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
+after transform: ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate", "dec"]
+rebuilt        : ScopeId(0): ["C", "D", "_D", "_assertClassBrand", "_decorate"]
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 85, end: 86 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 85, end: 86 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34480,6 +35332,9 @@ Reference symbol mismatch for "":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Reference symbol mismatch for "":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
@@ -34488,8 +35343,11 @@ rebuilt        : ["", "dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStatic.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec", "method3"]
-rebuilt        : ScopeId(0): ["C", "method3"]
+after transform: ScopeId(0): ["C", "_decorate", "_method", "dec", "method3"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_method", "method3"]
+Reference flags mismatch for "_method":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34500,8 +35358,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticPrivate.ts
 semantic error: Bindings mismatch:
@@ -34510,8 +35368,11 @@ rebuilt        : ScopeId(0): ["C", "_C_brand", "_classPrivateMethodInitSpec", "_
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-static.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec", "method3"]
-rebuilt        : ScopeId(0): ["C", "method3"]
+after transform: ScopeId(0): ["C", "_decorate", "_method", "dec", "method3"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "_method", "method3"]
+Reference flags mismatch for "_method":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -34522,19 +35383,25 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "_method", "_method2", "dec"]
-rebuilt        : ScopeId(0): ["C", "D", "_method", "_method2"]
+after transform: ScopeId(0): ["C", "D", "_decorate", "_method", "_method2", "dec"]
+rebuilt        : ScopeId(0): ["C", "D", "_decorate", "_method", "_method2"]
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 77, end: 78 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 77, end: 78 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["dec"]
+after transform: ["require"]
+rebuilt        : ["dec", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.1.ts
 semantic error: Bindings mismatch:
@@ -34939,19 +35806,166 @@ rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
 semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(12), ScopeId(14), ScopeId(22), ScopeId(28), ScopeId(30)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25)]
+Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(15): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(2))
+rebuilt        : ScopeId(16): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(9): Some(ScopeId(2))
+rebuilt        : ScopeId(17): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(15): Some(ScopeId(2))
+rebuilt        : ScopeId(18): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(16): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(16): Some(ScopeId(2))
+rebuilt        : ScopeId(19): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(19): Some(ScopeId(2))
+rebuilt        : ScopeId(20): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(23): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(23): Some(ScopeId(2))
+rebuilt        : ScopeId(21): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(25): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(25): Some(ScopeId(2))
+rebuilt        : ScopeId(22): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(31): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(31): Some(ScopeId(2))
+rebuilt        : ScopeId(23): Some(ScopeId(0))
+Scope flags mismatch:
+after transform: ScopeId(32): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(32): Some(ScopeId(2))
+rebuilt        : ScopeId(24): Some(ScopeId(0))
+Symbol span mismatch for "C":
+after transform: SymbolId(0): Span { start: 23, end: 24 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(59): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 23, end: 24 }
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["g", "h", "x"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_decorate", "g", "h", "x"]
+rebuilt        : ScopeId(0): ["_decorate"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(33), ScopeId(36), ScopeId(39), ScopeId(42), ScopeId(45), ScopeId(48), ScopeId(51), ScopeId(54), ScopeId(57), ScopeId(60), ScopeId(63), ScopeId(66)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(30), ScopeId(33), ScopeId(36), ScopeId(39), ScopeId(42), ScopeId(45), ScopeId(48), ScopeId(51), ScopeId(54), ScopeId(57), ScopeId(60), ScopeId(63)]
+Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 121, end: 122 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(31): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 121, end: 122 }
+Symbol span mismatch for "C":
+after transform: SymbolId(6): Span { start: 143, end: 144 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(33): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 143, end: 144 }
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 165, end: 166 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(34): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 165, end: 166 }
+Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 194, end: 195 }
+rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(35): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(8): Span { start: 194, end: 195 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 223, end: 224 }
+rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(36): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(10): Span { start: 223, end: 224 }
+Symbol span mismatch for "C":
+after transform: SymbolId(10): Span { start: 254, end: 255 }
+rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(37): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(12): Span { start: 254, end: 255 }
+Symbol span mismatch for "C":
+after transform: SymbolId(11): Span { start: 279, end: 280 }
+rebuilt        : SymbolId(13): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(38): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(14): Span { start: 279, end: 280 }
+Symbol span mismatch for "C":
+after transform: SymbolId(12): Span { start: 306, end: 307 }
+rebuilt        : SymbolId(15): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(39): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(16): Span { start: 306, end: 307 }
+Symbol span mismatch for "C":
+after transform: SymbolId(13): Span { start: 329, end: 330 }
+rebuilt        : SymbolId(17): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(40): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(18): Span { start: 329, end: 330 }
+Symbol span mismatch for "C":
+after transform: SymbolId(14): Span { start: 354, end: 355 }
+rebuilt        : SymbolId(19): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(41): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(20): Span { start: 354, end: 355 }
+Symbol span mismatch for "C":
+after transform: SymbolId(15): Span { start: 379, end: 380 }
+rebuilt        : SymbolId(21): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(42): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(22): Span { start: 379, end: 380 }
+Symbol span mismatch for "C":
+after transform: SymbolId(16): Span { start: 405, end: 406 }
+rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(43): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(24): Span { start: 405, end: 406 }
+Symbol span mismatch for "C":
+after transform: SymbolId(17): Span { start: 433, end: 434 }
+rebuilt        : SymbolId(25): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(44): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(26): Span { start: 433, end: 434 }
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -35055,8 +36069,8 @@ Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["g", "h", "x"]
+after transform: ["require"]
+rebuilt        : ["g", "h", "require", "x"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.3.ts
 semantic error: Bindings mismatch:
@@ -35077,8 +36091,8 @@ rebuilt        : ["g"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-preservesThis.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "instance"]
-rebuilt        : ScopeId(0): ["C", "D"]
+after transform: ScopeId(0): ["C", "D", "_decorate", "instance"]
+rebuilt        : ScopeId(0): ["C", "D", "_decorate"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
@@ -35092,22 +36106,60 @@ Reference symbol mismatch for "instance":
 after transform: SymbolId(3) "instance"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["DecoratorContext", "DecoratorProvider"]
-rebuilt        : ["DecoratorProvider", "instance"]
+after transform: ["DecoratorContext", "DecoratorProvider", "require"]
+rebuilt        : ["DecoratorProvider", "instance", "require"]
 Unresolved reference IDs mismatch for "DecoratorProvider":
 after transform: [ReferenceId(0), ReferenceId(4), ReferenceId(8)]
-rebuilt        : [ReferenceId(3)]
+rebuilt        : [ReferenceId(10)]
+
+tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata1.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 144, end: 145 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 144, end: 145 }
+
+tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata2.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(5): Span { start: 144, end: 145 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(7): Span { start: 144, end: 145 }
+
+tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata3.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(6): Span { start: 225, end: 226 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 225, end: 226 }
+Symbol span mismatch for "D":
+after transform: SymbolId(7): Span { start: 260, end: 261 }
+rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(11): Span { start: 260, end: 261 }
+
+tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata4.ts
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 366, end: 367 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 366, end: 367 }
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "metadata"]
-rebuilt        : ScopeId(0): ["C"]
+after transform: ScopeId(0): ["C", "_decorate", "metadata"]
+rebuilt        : ScopeId(0): ["C", "_decorate"]
 Reference symbol mismatch for "metadata":
 after transform: SymbolId(0) "metadata"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["metadata"]
+after transform: ["require"]
+rebuilt        : ["metadata", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiteralInference.ts
 semantic error: Scope children mismatch:
@@ -38084,11 +39136,26 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulek
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7)]
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 147, end: 148 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 147, end: 148 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target11.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 69, end: 70 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 69, end: 70 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target12.ts
 semantic error: Bindings mismatch:
@@ -38141,6 +39208,12 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulek
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "D":
+after transform: SymbolId(1): Span { start: 69, end: 70 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 69, end: 70 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target5.ts
 semantic error: Bindings mismatch:
@@ -38180,11 +39253,26 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextm
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7)]
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 147, end: 148 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 147, end: 148 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target11.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 69, end: 70 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10)]
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 69, end: 70 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target12.ts
 semantic error: Bindings mismatch:
@@ -38237,6 +39325,12 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextm
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "D":
+after transform: SymbolId(1): Span { start: 69, end: 70 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 69, end: 70 }
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target5.ts
 semantic error: Bindings mismatch:
@@ -38367,11 +39461,17 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "C1", "C2", "C3", "_await", "_defineProperty", "dec", "x", "y"]
-rebuilt        : ScopeId(0): ["C", "C1", "C2", "C3", "_defineProperty", "x", "y"]
+after transform: ScopeId(0): ["C", "C1", "C2", "C3", "_await", "_decorate", "_defineProperty", "dec", "x", "y"]
+rebuilt        : ScopeId(0): ["C", "C1", "C2", "C3", "_decorate", "_defineProperty", "x", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 665, end: 666 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 665, end: 666 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(6) "dec"
 rebuilt        : <None>
@@ -41568,8 +42668,14 @@ rebuilt        : ["Symbol", "dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41579,8 +42685,11 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.10.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["after", "dec"]
-rebuilt        : ScopeId(0): ["after"]
+after transform: ScopeId(0): ["_decorate", "_default", "after", "dec"]
+rebuilt        : ScopeId(0): ["_decorate", "_default", "after"]
+Symbol flags mismatch for "_default":
+after transform: SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41590,8 +42699,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.11.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41601,8 +42716,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.12.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41612,8 +42733,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 75, end: 76 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 75, end: 76 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41623,8 +42750,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 83, end: 84 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 83, end: 84 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41634,8 +42767,11 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["before", "dec"]
-rebuilt        : ScopeId(0): ["before"]
+after transform: ScopeId(0): ["_decorate", "_default", "before", "dec"]
+rebuilt        : ScopeId(0): ["_decorate", "_default", "before"]
+Symbol flags mismatch for "_default":
+after transform: SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41645,8 +42781,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41656,8 +42798,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41667,8 +42815,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.7.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41678,8 +42832,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.8.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 53, end: 54 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 53, end: 54 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41689,8 +42849,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.9.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 61, end: 62 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 61, end: 62 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41700,8 +42866,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41711,8 +42883,11 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.10.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["after", "dec"]
-rebuilt        : ScopeId(0): ["after"]
+after transform: ScopeId(0): ["_decorate", "_default", "after", "dec"]
+rebuilt        : ScopeId(0): ["_decorate", "_default", "after"]
+Symbol flags mismatch for "_default":
+after transform: SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41722,8 +42897,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.11.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41733,8 +42914,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.12.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41744,8 +42931,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 75, end: 76 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 75, end: 76 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41755,8 +42948,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 83, end: 84 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 83, end: 84 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41766,8 +42965,11 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["before", "dec"]
-rebuilt        : ScopeId(0): ["before"]
+after transform: ScopeId(0): ["_decorate", "_default", "before", "dec"]
+rebuilt        : ScopeId(0): ["_decorate", "_default", "before"]
+Symbol flags mismatch for "_default":
+after transform: SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41777,8 +42979,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41788,8 +42996,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "before", "dec"]
-rebuilt        : ScopeId(0): ["C", "before"]
+after transform: ScopeId(0): ["C", "_decorate", "before", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "before"]
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 68, end: 69 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 68, end: 69 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41799,8 +43013,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.7.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 46, end: 47 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 46, end: 47 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41810,8 +43030,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.8.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 53, end: 54 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 53, end: 54 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -41821,8 +43047,14 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.9.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "after", "dec"]
-rebuilt        : ScopeId(0): ["C", "after"]
+after transform: ScopeId(0): ["C", "_decorate", "after", "dec"]
+rebuilt        : ScopeId(0): ["C", "_decorate", "after"]
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 61, end: 62 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 61, end: 62 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
