@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_semantic::{SymbolId, NodeId, ReferenceId, ScopeId, Reference};
+use oxc_semantic::{NodeId, Reference, ReferenceFlags, ReferenceId, ScopeId, SymbolId};
 use rustc_hash::FxHashMap;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -68,18 +68,43 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
     // Get all references to this symbol ordered by span position
     let references = ctx.semantic().symbol_references(symbol_id).collect::<Vec<_>>();
 
+    // get SymbolId's declaration node
+    let declaration_node = ctx.semantic().scoping().symbol_declaration(symbol_id);
+
     // Create a map to group references by control structure
     let mut reference_group = FxHashMap::default();
     let mut reference_group_without_parent = vec![];
 
+    let mut has_if_else_statement = false;
+    let mut has_loop_statement = false;
     for reference in references {
         // Find the containing control structure (if statement, for loop, etc.)
         let control_parent = find_control_parent(reference.node_id(), ctx);
+        // check if control_parent is IfStatement
+        if let Some(parent_id) = control_parent {
+            if has_if_else_context(parent_id, ctx) && parent_id > declaration_node {
+                has_if_else_statement = true;
+            }
+            if has_loop_context(parent_id, ctx) && parent_id > declaration_node {
+                has_loop_statement = true;
+            }
+        }
+
         if let Some(parent_id) = control_parent {
             reference_group.entry(parent_id).or_insert_with(Vec::new).push(reference);
         } else {
             reference_group_without_parent.push(reference);
         }
+    }
+
+
+
+    let dec_control_parent = find_control_parent(declaration_node, ctx);
+    let dec_ref = Reference::new(declaration_node, ReferenceFlags::None);
+    if let Some(parent_id) = dec_control_parent {
+        reference_group.entry(parent_id).or_insert_with(Vec::new).push(&dec_ref);
+    } else {
+        reference_group_without_parent.push(&dec_ref);
     }
 
     // combine reference_group values and reference_group_without_parent to one vector with vector item
@@ -100,7 +125,12 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         let mut read_count_total = 0;
         let mut write_count_total = 0;
         let mut write_count = 0;
-        for reference in reference_group_value.iter() {
+        let mut has_declaration = false;
+        for reference in reference_group_value {
+            if reference.node_id() == declaration_node {
+                has_declaration = true;
+            }
+
             if reference.flags().is_write() {
                // Count this as an assignment
                 write_count += 1;
@@ -118,16 +148,23 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
             }
         }
 
+        if has_declaration && reference_group_value.len() == 1 && !has_if_else_statement && !has_loop_statement {
+            return true;
+        }
+
         if write_count_total > read_count_total {
             is_multiple_assignments_without_read = true;
         }
 
         if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) && read_count_total > 0 {
+            print!("failed");
             return true;
         }
     }
 
+    // bypass no-unused-vars
     if is_multiple_assignments_without_read && has_read {
+        print!("failed3");
         return true;
     }
 
@@ -151,8 +188,7 @@ fn find_control_parent(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId>
                 AstKind::ForInStatement(_) |
                 AstKind::ForOfStatement(_) |
                 AstKind::WhileStatement(_) |
-                AstKind::DoWhileStatement(_) |
-                AstKind::BlockStatement(_)
+                AstKind::DoWhileStatement(_)
             ) {
                 return Some(parent_id);
             }
@@ -175,16 +211,7 @@ fn in_loop_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
         let parent_id = ctx.semantic().nodes().parent_id(current_id);
 
         if let Some(parent_id) = parent_id {
-            let parent = ctx.semantic().nodes().get_node(parent_id);
-
-            if matches!(
-                parent.kind(),
-                AstKind::ForStatement(_) |
-                AstKind::ForInStatement(_) |
-                AstKind::ForOfStatement(_) |
-                AstKind::WhileStatement(_) |
-                AstKind::DoWhileStatement(_)
-            ) {
+            if has_loop_context(parent_id, ctx) {
                 return true;
             }
 
@@ -196,6 +223,25 @@ fn in_loop_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     }
 
     false
+}
+
+fn has_loop_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    matches!(
+        ctx.semantic().nodes().get_node(node_id).kind(),
+        AstKind::ForStatement(_) |
+        AstKind::ForInStatement(_) |
+        AstKind::ForOfStatement(_) |
+        AstKind::WhileStatement(_) |
+        AstKind::DoWhileStatement(_)
+    )
+}
+
+fn has_if_else_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    if let AstKind::IfStatement(statement) = ctx.semantic().nodes().get_node(node_id).kind() {
+        statement.alternate.is_some()
+    } else {
+        false
+    }
 }
 
 #[test]
