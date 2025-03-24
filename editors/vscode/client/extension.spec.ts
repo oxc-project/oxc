@@ -1,5 +1,5 @@
 import { deepStrictEqual, notEqual, strictEqual } from 'assert';
-import { commands, extensions, window } from 'vscode';
+import { commands, extensions, window, workspace } from 'vscode';
 
 // const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
 // const filePath = WORKSPACE_DIR + '/debugger.js';
@@ -38,6 +38,17 @@ suite('commands', () => {
     notEqual(window.activeTextEditor, undefined);
     const uri = window.activeTextEditor!.document.uri;
     strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc');
+  });
+
+  test('oxc.toggleEnable', async () => {
+    const isEnabledBefore = workspace.getConfiguration('oxc').get<boolean>('enable');
+    strictEqual(isEnabledBefore, true);
+
+    await commands.executeCommand('oxc.toggleEnable');
+    await sleep(500);
+
+    const isEnabledAfter = workspace.getConfiguration('oxc').get<boolean>('enable');
+    strictEqual(isEnabledAfter, false);
   });
 
   // ToDo: check why this is not working,
