@@ -717,6 +717,27 @@ impl ESTree for ClassImplements<'_, '_> {
     }
 }
 
+/// Serializer for `TSPropertySignature`.
+pub struct TSPropertySignatureValue<'b>(pub &'b TSPropertySignature<'b>);
+
+impl ESTree for TSPropertySignatureValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let ts_param = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
+        state.serialize_field("start", &ts_param.span.start);
+        state.serialize_field("end", &ts_param.span.end);
+        state.serialize_field("accessibility", &Null(self));
+        state.serialize_field("computed", &ts_param.computed);
+        state.serialize_field("key", &ts_param.key);
+        state.serialize_field("typeAnnotation", &ts_param.type_annotation);
+        state.serialize_field("optional", &False(self));
+        state.serialize_field("readonly", &False(self));
+        state.serialize_field("static", &False(self));
+        state.end();
+    }
+}
+
 /// Serializer for `global` field of `TSModuleDeclaration`.
 #[ast_meta]
 #[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]

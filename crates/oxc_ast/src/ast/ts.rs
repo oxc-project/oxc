@@ -928,6 +928,7 @@ pub struct TSInterfaceBody<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TSPropertySignatureValue)]
 pub struct TSPropertySignature<'a> {
     pub span: Span,
     pub computed: bool,

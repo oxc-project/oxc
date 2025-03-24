@@ -2862,16 +2862,7 @@ impl ESTree for TSInterfaceBody<'_> {
 
 impl ESTree for TSPropertySignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("computed", &self.computed);
-        state.serialize_field("optional", &self.optional);
-        state.serialize_field("readonly", &self.readonly);
-        state.serialize_field("key", &self.key);
-        state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.end();
+        crate::serialize::TSPropertySignatureValue(self).serialize(serializer)
     }
 }
 
