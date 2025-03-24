@@ -17,14 +17,14 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: taiki-e/install-action@2c41309d51ede152b6f2ee6bf3b71e6dc9a8b7df # v2.49.27
+      - uses: taiki-e/install-action@a433d87f121760c7447ab86390794f9a2dce31cf # v2.49.33
         with:
           tool: dprint
 
       - run: dprint check
 
       - name: Save dprint plugin cache
-        uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
