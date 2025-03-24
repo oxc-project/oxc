@@ -127,6 +127,7 @@ function deserializeObjectProperty(pos) {
     type: 'Property',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    optional: false,
     method: deserializeBool(pos + 48),
     shorthand: deserializeBool(pos + 49),
     computed: deserializeBool(pos + 50),

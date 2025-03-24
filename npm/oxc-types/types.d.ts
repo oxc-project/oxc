@@ -100,6 +100,7 @@ export type ObjectPropertyKind = ObjectProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
   type: 'Property';
+  optional?: false;
   method: boolean;
   shorthand: boolean;
   computed: boolean;
