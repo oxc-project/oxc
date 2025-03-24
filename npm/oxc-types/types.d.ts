@@ -1173,7 +1173,7 @@ export interface TSClassImplements extends Span {
 export interface TSInterfaceDeclaration extends Span {
   type: 'TSInterfaceDeclaration';
   id: BindingIdentifier;
-  extends: Array<TSInterfaceHeritage> | null;
+  extends: Array<TSInterfaceHeritage>;
   typeParameters: TSTypeParameterDeclaration | null;
   body: TSInterfaceBody;
   declare: boolean;

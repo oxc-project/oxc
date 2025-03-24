@@ -1610,12 +1610,13 @@ function deserializeTSClassImplements(pos) {
 }
 
 function deserializeTSInterfaceDeclaration(pos) {
+  const extendsArr = deserializeOptionVecTSInterfaceHeritage(pos + 40);
   return {
     type: 'TSInterfaceDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeBindingIdentifier(pos + 8),
-    extends: deserializeOptionVecTSInterfaceHeritage(pos + 40),
+    extends: extendsArr === null ? [] : extendsArr,
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 72),
     body: deserializeBoxTSInterfaceBody(pos + 80),
     declare: deserializeBool(pos + 88),

@@ -2841,7 +2841,7 @@ impl ESTree for TSInterfaceDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("extends", &self.extends);
+        state.serialize_field("extends", &crate::serialize::TSInterfaceDeclarationExtends(self));
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("body", &self.body);
         state.serialize_field("declare", &self.declare);
