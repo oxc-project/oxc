@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10623/10725 (99.05%)
-Positive Passed: 3622/10725 (33.77%)
+Positive Passed: 3629/10725 (33.84%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
@@ -1413,7 +1413,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitTopOfFileTripleSlas
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyAnonymousObjectNarrowing.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyArrayDestructuringExpressionVisitedByTransformer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyDeclarationEmitIsModule.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyIndexer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyModuleName.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyObjectNotSubtypeOfIndexSignatureContainingObject1.ts
@@ -1457,7 +1456,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithInfinityPropert
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithNaNProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithNegativeInfinityProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithNonLiteralStringInitializer.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithPrimitiveName.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumWithUnicodeEscape1.ts
@@ -1773,10 +1771,10 @@ tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
 serde_json::from_str(oxc_json) error: number out of range at line 32 column 27
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-serde_json::from_str(oxc_json) error: number out of range at line 41 column 29
+serde_json::from_str(oxc_json) error: number out of range at line 47 column 31
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-serde_json::from_str(oxc_json) error: number out of range at line 41 column 29
+serde_json::from_str(oxc_json) error: number out of range at line 47 column 31
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fallbackToBindingPatternForTypeInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fatArrowSelf.ts
@@ -2113,7 +2111,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/incompatibleTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/incorrectNumberOfTypeArgumentsDuringErrorReporting.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/incorrectRecursiveMappedTypeConstraint.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexClassByNumber.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexIntoEnum.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexSignatureAndMappedType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexSignatureInOtherFile.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexSignatureInOtherFile1.ts
@@ -3189,7 +3186,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/outModuleConcatUmd.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/outModuleTripleSlashRefs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overEagerReturnTypeSpecialization.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overload1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/overload2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadAssignmentCompat.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadBindingAcrossDeclarationBoundaries.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadBindingAcrossDeclarationBoundaries2.ts
@@ -4717,7 +4713,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolPr
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType17.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType18.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType19.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType20.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts
 Line terminator not permitted before arrow
@@ -5698,7 +5693,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAsse
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/duplicatePropertiesInTypeAssertions01.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/duplicatePropertiesInTypeAssertions02.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/TypeGuardWithEnumUnion.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardEnums.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThis.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThisErrors.ts
@@ -5945,7 +5939,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verb
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxNoElisionCJS.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxNoElisionESM.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/fixSignatureCaching.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementationErrors.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementations.ts
