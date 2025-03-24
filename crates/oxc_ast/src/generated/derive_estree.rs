@@ -2296,9 +2296,9 @@ impl ESTree for TSEnumDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("members", &self.members);
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
+        state.serialize_field("body", &crate::serialize::TSEnumDeclarationBody(self));
         state.end();
     }
 }
