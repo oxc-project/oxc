@@ -67,7 +67,6 @@ fn is_dead_store(symbol_id: SymbolId, _node_id: NodeId, ctx: &LintContext<'_>) -
 fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     // Get all references to this symbol ordered by span position
     let references = ctx.semantic().symbol_references(symbol_id).collect::<Vec<_>>();
-    println!("referencess: {:?}", references);
 
     // Create a map to group references by control structure
     let mut reference_group = FxHashMap::default();
@@ -93,16 +92,19 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         reference_group_values.push(&reference_group_without_parent);
     }
 
-    let ref_group_len = reference_group_values.len();
+    println!("reference_group_values: {:?}", reference_group_values);
+
+    let mut has_read = false;
+    let mut is_multiple_assignments_without_read = false;
     for reference_group_value in reference_group_values {
+        let mut read_count_total = 0;
+        let mut write_count_total = 0;
         let mut write_count = 0;
-        for (index, reference) in reference_group_value.iter().enumerate() {
-            if index == 0 && !reference.flags().is_read() && ref_group_len == 1 {
-                return true;
-            }
+        for reference in reference_group_value.iter() {
             if reference.flags().is_write() {
                // Count this as an assignment
                 write_count += 1;
+                write_count_total += 1;
             }
 
             if write_count > 1 {
@@ -110,13 +112,23 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
             }
 
             if reference.flags().is_read() {
+                has_read = true;
+                read_count_total += 1;
                 write_count = 0;
             }
         }
 
-        if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) {
+        if write_count_total > read_count_total {
+            is_multiple_assignments_without_read = true;
+        }
+
+        if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) && read_count_total > 0 {
             return true;
         }
+    }
+
+    if is_multiple_assignments_without_read && has_read {
+        return true;
     }
 
     false
@@ -228,6 +240,13 @@ fn test() {
                     doSomething(v);
                     v = 'used in next iteration';
                 }
+            }
+        ",
+        "
+            function fn5() {
+                let v = 'unused';
+                v = 'unused-2'
+                doSomething();
             }
         "
     ];
