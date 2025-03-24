@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -6,7 +7,6 @@ use oxc_ast::{
         ObjectAssignmentTarget,
     },
 };
-use regex::Regex;
 
 use super::{NoUnusedVars, Symbol, options::IgnorePattern};
 

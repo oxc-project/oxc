@@ -1,9 +1,8 @@
-use lazy_static::lazy_static;
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::{Captures, Regex};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -93,13 +92,11 @@ fn quick_test(s: &str) -> bool {
     false
 }
 
+static NONOCTAL_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])");
+
 #[expect(clippy::cast_possible_truncation)]
 fn check_string(ctx: &LintContext<'_>, string: &str) {
-    lazy_static! {
-        static ref NONOCTAL_REGEX: Regex =
-            Regex::new(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])").unwrap();
-    }
-
     // Need at least 2 characters
     if string.len() <= 1 {
         return;

@@ -1,8 +1,7 @@
-use lazy_static::lazy_static;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -53,13 +52,12 @@ declare_oxc_lint!(
     suspicious
 );
 
+//  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
+static RE: Lazy<Regex> =
+    lazy_regex!(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#);
+
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {
-        lazy_static! {
-        //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
-            static ref RE: Regex =
-            Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
-        }
         let comments = ctx.comments();
         let commented_tests = comments.iter().filter_map(|comment| {
             let text = ctx.source_range(comment.content_span());

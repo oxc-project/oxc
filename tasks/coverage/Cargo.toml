@@ -32,10 +32,10 @@ cow-utils = { workspace = true }
 encoding_rs = { workspace = true }
 encoding_rs_io = { workspace = true }
 futures = { workspace = true }
+lazy-regex = { workspace = true }
 lazy_static = { workspace = true }
 pico-args = { workspace = true }
 rayon = { workspace = true }
-regex = { workspace = true }
 rustc-hash = { workspace = true }
 saphyr = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

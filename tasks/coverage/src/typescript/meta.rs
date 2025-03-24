@@ -2,7 +2,7 @@
 
 use std::{fs, path::Path, sync::Arc};
 
-use regex::Regex;
+use lazy_regex::Regex;
 use rustc_hash::FxHashMap;
 
 use oxc::{

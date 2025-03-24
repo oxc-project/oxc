@@ -1173,7 +1173,7 @@ export interface TSClassImplements extends Span {
 export interface TSInterfaceDeclaration extends Span {
   type: 'TSInterfaceDeclaration';
   id: BindingIdentifier;
-  extends: Array<TSInterfaceHeritage> | null;
+  extends: Array<TSInterfaceHeritage>;
   typeParameters: TSTypeParameterDeclaration | null;
   body: TSInterfaceBody;
   declare: boolean;
@@ -1206,7 +1206,7 @@ export interface TSIndexSignature extends Span {
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
   static: boolean;
-  accessibility?: null;
+  accessibility: null;
 }
 
 export interface TSCallSignatureDeclaration extends Span {
@@ -1241,8 +1241,8 @@ export interface TSIndexSignatureName extends Span {
   type: 'Identifier';
   name: string;
   typeAnnotation: TSTypeAnnotation;
-  decorators?: [];
-  optional?: false;
+  decorators: [];
+  optional: false;
 }
 
 export interface TSInterfaceHeritage extends Span {

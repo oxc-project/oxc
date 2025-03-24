@@ -1,9 +1,9 @@
 use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{
     context::{ContextHost, LintContext},

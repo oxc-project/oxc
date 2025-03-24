@@ -1,5 +1,5 @@
 import {
-  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
+  instantiateNapiModule as __emnapiInstantiateNapiModule,
   getDefaultContext as __emnapiGetDefaultContext,
   WASI as __WASI,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
@@ -25,7 +25,7 @@ const {
   instance: __napiInstance,
   module: __wasiModule,
   napiModule: __napiModule,
-} = await (await import("@napi-rs/wasm-runtime")).instantiateNapiModule(__wasmFile, {
+} = await __emnapiInstantiateNapiModule(__wasmFile, {
   context: __emnapiContext,
   asyncWorkPoolSize: 4,
   wasi: __wasi,

@@ -1610,12 +1610,13 @@ function deserializeTSClassImplements(pos) {
 }
 
 function deserializeTSInterfaceDeclaration(pos) {
+  const extendsArr = deserializeOptionVecTSInterfaceHeritage(pos + 40);
   return {
     type: 'TSInterfaceDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeBindingIdentifier(pos + 8),
-    extends: deserializeOptionVecTSInterfaceHeritage(pos + 40),
+    extends: extendsArr === null ? [] : extendsArr,
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 72),
     body: deserializeBoxTSInterfaceBody(pos + 80),
     declare: deserializeBool(pos + 88),
@@ -1653,6 +1654,7 @@ function deserializeTSIndexSignature(pos) {
     typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 40),
     readonly: deserializeBool(pos + 48),
     static: deserializeBool(pos + 49),
+    accessibility: null,
   };
 }
 
@@ -1701,6 +1703,8 @@ function deserializeTSIndexSignatureName(pos) {
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
     typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 24),
+    decorators: [],
+    optional: false,
   };
 }
 

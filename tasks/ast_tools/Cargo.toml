@@ -20,14 +20,13 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
-lazy_static = { workspace = true }
+lazy-regex = { workspace = true }
 oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 prettyplease = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 rayon = { workspace = true }
-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }

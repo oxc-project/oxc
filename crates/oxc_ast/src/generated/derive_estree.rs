@@ -2841,7 +2841,7 @@ impl ESTree for TSInterfaceDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("extends", &self.extends);
+        state.serialize_field("extends", &crate::serialize::TSInterfaceDeclarationExtends(self));
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("body", &self.body);
         state.serialize_field("declare", &self.declare);
@@ -2897,7 +2897,7 @@ impl ESTree for TSIndexSignature<'_> {
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("static", &self.r#static);
-        state.serialize_ts_field("accessibility", &crate::serialize::TsNull(self));
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -2964,8 +2964,8 @@ impl ESTree for TSIndexSignatureName<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
-        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
         state.end();
     }
 }

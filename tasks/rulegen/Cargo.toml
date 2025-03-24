@@ -23,7 +23,6 @@ oxc_tasks_common = { workspace = true }
 
 convert_case = { workspace = true }
 handlebars = { workspace = true }
-lazy_static = { workspace = true }
-regex = { workspace = true }
+lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

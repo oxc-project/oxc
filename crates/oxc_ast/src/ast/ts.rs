@@ -891,6 +891,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     /// Other interfaces/types this interface extends.
     #[scope(enter_before)]
+    #[estree(via = TSInterfaceDeclarationExtends)]
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Type parameters that get bound to the interface.
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -961,7 +962,7 @@ pub enum TSSignature<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(accessibility = TsNull))]
+#[estree(add_fields(accessibility = Null))]
 pub struct TSIndexSignature<'a> {
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
@@ -1035,7 +1036,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier", add_fields(decorators = TsEmptyArray, optional = TsFalse))]
+#[estree(rename = "Identifier", add_fields(decorators = EmptyArray, optional = False))]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
     #[estree(json_safe)]
