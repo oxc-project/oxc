@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 33/33 (100.00%)
-Positive Passed: 18/33 (54.55%)
+Positive Passed: 19/33 (57.58%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -10,11 +10,6 @@ tasks/coverage/misc/pass/oxc-1289.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/misc/pass/oxc-1740.tsx
-semantic error: Symbol flags mismatch for "render":
-after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(6): SymbolFlags(Function)
 
 tasks/coverage/misc/pass/oxc-2087.ts
 semantic error: Scope children mismatch:
@@ -90,15 +85,6 @@ rebuilt        : SymbolId(26): [ReferenceId(16)]
 Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215)]
 rebuilt        : SymbolId(35): [ReferenceId(66), ReferenceId(218)]
-Symbol flags mismatch for "_createTracker":
-after transform: SymbolId(137): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(50): SymbolFlags(Function)
-Symbol flags mismatch for "_untitledBackupTest":
-after transform: SymbolId(140): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(57): SymbolFlags(Function)
-Symbol flags mismatch for "_restoreBackupsInit":
-after transform: SymbolId(141): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(74): SymbolFlags(Function)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(291)]

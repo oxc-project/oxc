@@ -2,7 +2,7 @@ commit: 578ac4df
 
 semantic_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1868/2322 (80.45%)
+Positive Passed: 1904/2322 (82.00%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -10,21 +10,6 @@ rebuilt        : SymbolId(0): ScopeId(4294967294)
 Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-function/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
@@ -51,136 +36,10 @@ semantic error: A 'return' statement can only be used within a function body.
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/385/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/simple-parameter-list/async-arrow-function-concise-body/input.js
-semantic error: Symbol flags mismatch for "a":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/12/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/13/input.js
-semantic error: Symbol flags mismatch for "_inner":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/14/input.js
-semantic error: Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/31/input.js
-semantic error: Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/32/input.js
-semantic error: Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/33/input.js
-semantic error: Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/34/input.js
-semantic error: Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-async-function-declaration-name/input.js
-semantic error: Symbol flags mismatch for "_await":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-function-expression-name-inside-async-function/input.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-identifier-inside-parameters-of-nested-function/input.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-arguments-of-async-function-call/input.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-async-call-inside-parameters-of-function-inside-async-function/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parenthesized-assign/input.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-division-after-expression/input.js
-semantic error: Symbol flags mismatch for "fn":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-regex-after-statement/input.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/export/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol flags mismatch for "_bar":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/object-default-params/input.js
-semantic error: Symbol flags mismatch for "b":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-in/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-instanceof/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
 semantic error: Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
-Symbol flags mismatch for "_evil":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async-generator/input.js
 semantic error: Scope flags mismatch:
@@ -195,70 +54,6 @@ rebuilt        : ScopeId(6): ScopeFlags(0x0)
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(0x0)
-Symbol flags mismatch for "_readLines":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(5): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/combined/input.js
-semantic error: Symbol flags mismatch for "_a":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(6): SymbolFlags(Function)
-Symbol flags mismatch for "_set_c":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(7): SymbolFlags(Function)
-Symbol flags mismatch for "_d":
-after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(9): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/generator/input.js
-semantic error: Symbol flags mismatch for "_evil":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/get-set/input.js
-semantic error: Symbol flags mismatch for "_get_evil":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-Symbol flags mismatch for "_set_evil":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/method/input.js
-semantic error: Symbol flags mismatch for "_getBanned":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/instance-get-instance-set/input.js
-semantic error: Symbol flags mismatch for "_get_x":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-Symbol flags mismatch for "_set_x":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/instance-set-instance-get/input.js
-semantic error: Symbol flags mismatch for "_set_x":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
-Symbol flags mismatch for "_get_x":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(5): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/static-get-static-set/input.js
-semantic error: Symbol flags mismatch for "_get_x":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol flags mismatch for "_set_x":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/static-set-static-get/input.js
-semantic error: Symbol flags mismatch for "_set_x":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol flags mismatch for "_get_x":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
 semantic error: Unexpected token
@@ -697,9 +492,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/privat
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Symbol flags mismatch for "_f":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 semantic error: Identifier `x` has already been declared
@@ -710,11 +502,6 @@ Identifier `x` has already been declared
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 semantic error: Function implementation is missing or not immediately following the declaration.
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static-asi/input.ts
-semantic error: Symbol flags mismatch for "_method":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 semantic error: Bindings mismatch:

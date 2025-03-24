@@ -327,8 +327,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             if let Some(id) = id.as_ref() {
                 Self::move_binding_identifier_to_target_scope(wrapper_scope_id, id, ctx);
                 let symbol_id = id.symbol_id();
-                *ctx.scoping_mut().symbol_flags_mut(symbol_id) =
-                    SymbolFlags::FunctionScopedVariable;
+                *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::Function;
             }
             (scope_id, wrapper_scope_id)
         };
@@ -414,17 +413,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, ctx);
         let params = mem::replace(&mut wrapper_function.params, params);
 
-        // TODO: Needs a better way to handle the function SymbolFlags in different ModuleKind.
-        let flags = if self.ctx.source_type.is_module() && ctx.current_scope_flags().is_top() {
-            SymbolFlags::BlockScopedVariable | SymbolFlags::Function
-        } else {
-            SymbolFlags::FunctionScopedVariable
-        };
-
         let bound_ident = Self::create_bound_identifier(
             wrapper_function.id.as_ref(),
             ctx.current_scope_id(),
-            flags,
+            SymbolFlags::Function,
             ctx,
         );
 
@@ -518,7 +510,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let id = function_name.map(|name| {
-                ctx.generate_binding(name, wrapper_scope_id, SymbolFlags::FunctionScopedVariable)
+                ctx.generate_binding(name, wrapper_scope_id, SymbolFlags::Function)
                     .create_binding_identifier(ctx)
             });
             let function = Self::create_function(id, params, body, scope_id, ctx);
@@ -552,7 +544,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     ) -> Option<BindingIdentifier<'a>> {
         let name = Self::infer_function_name_from_parent_node(ctx)?;
         Some(
-            ctx.generate_binding(name, scope_id, SymbolFlags::FunctionScopedVariable)
+            ctx.generate_binding(name, scope_id, SymbolFlags::Function)
                 .create_binding_identifier(ctx),
         )
     }
