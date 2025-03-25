@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     NoAccessorRecursion,
     unicorn,
-    correctness,
+    suspicious,
 );
 
 impl Rule for NoAccessorRecursion {
