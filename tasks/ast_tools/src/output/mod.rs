@@ -47,7 +47,7 @@ impl Output {
 
         let (path, code) = match self {
             Self::Rust { path, tokens } => {
-                let code = print_rust(tokens, &generator_path);
+                let code = print_rust(&tokens, &generator_path);
                 (path, code)
             }
             Self::RustString { path, code } => {
