@@ -100,13 +100,13 @@ export type ObjectPropertyKind = ObjectProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
   type: 'Property';
-  optional?: false;
   method: boolean;
   shorthand: boolean;
   computed: boolean;
   key: PropertyKey;
   value: Expression;
   kind: PropertyKind;
+  optional?: false;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
