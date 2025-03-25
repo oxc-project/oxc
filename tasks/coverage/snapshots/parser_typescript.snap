@@ -1,9 +1,9 @@
 commit: 15392346
 
 parser_typescript Summary:
-AST Parsed     : 6515/6531 (99.76%)
-Positive Passed: 6503/6531 (99.57%)
-Negative Passed: 1290/5754 (22.42%)
+AST Parsed     : 6523/6531 (99.88%)
+Positive Passed: 6511/6531 (99.69%)
+Negative Passed: 1288/5754 (22.38%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -363,6 +363,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/compareTypeP
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complexClassRelationships.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complexRecursiveCollections.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1_ES6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring2.ts
@@ -1344,6 +1345,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGe
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccess.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccessConstraint.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceFromApparentType.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNoTypeNoCrash.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNotMistakenlyHomomorphic.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeRecursiveInference.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeUnionConstrainTupleTreatedAsArrayLike.ts
@@ -4468,15 +4470,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts
-
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts:20:8]
- 19 │ type ExtendedMapper2<HandledInputT, OutputT, ArgsT extends any[]> = (
- 20 │     {x:(name : string, mixed : HandledInputT, ...args : ArgsT) => OutputT}["x"]
-    ·        ─
- 21 │ );
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -4572,34 +4565,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ──────────────────
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
-
-  × Expected `,` but found `[`
-    ╭─[typescript/tests/cases/compiler/deferredConditionalTypes2.ts:18:30]
- 17 │ ] extends infer R extends [boolean, boolean, boolean, boolean]
- 18 │   ? [true, false] extends ([R[0], R[3]])
-    ·                              ┬
-    ·                              ╰── `,` expected
- 19 │     ? PositiveInfinity
-    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution.ts
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/deferredLookupTypeResolution.ts:4:22]
- 3 │ type StringContains<S extends string, L extends string> = (
- 4 │     { [K in S]:      'true' } &
-   ·                      ──────
- 5 │     { [key: string]: 'false' }
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts:3:72]
- 2 │ 
- 3 │ type StringContains<S extends string, L extends string> = ({ [K in S]: 'true' } & { [key: string]: 'false'})[L];
-   ·                                                                        ──────
- 4 │ 
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 
   × 'with' statements are not allowed
@@ -4635,16 +4600,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolution
    ·    ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parenthesisDoesNotBlockAliasSymbolCreation.ts
-
-  × Expected `:` but found `?`
-   ╭─[typescript/tests/cases/compiler/parenthesisDoesNotBlockAliasSymbolCreation.ts:3:15]
- 2 │ export type InvalidKeys2<K extends string|number|symbol> = (
- 3 │     { [P in K]? : never }
-   ·               ┬
-   ·               ╰── `:` expected
- 4 │ );
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -4654,16 +4609,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx
-
-  × Expected `,` but found `?`
-   ╭─[typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx:4:42]
- 3 │ 
- 4 │ declare function NotHappy(props: ({ fixed?: boolean } | { value?: number })): ReactElement<any>;
-   ·                                          ┬
-   ·                                          ╰── `,` expected
- 5 │ declare function Happy(props: { fixed?: boolean, value?: number }): ReactElement<any>;
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDeclarations.ts
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
@@ -4681,16 +4626,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDecla
     ·     ───────────────────────────────────────────
  85 │ }
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
-
-  × Expected `]` but found `Identifier`
-   ╭─[typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts:3:28]
- 2 │ type B = { b: number };
- 3 │ type X<T> = ({ [K in keyof T]: T[K] } & Record<string, void>)[keyof T];
-   ·                            ┬
-   ·                            ╰── `]` expected
- 4 │ type P1<T> = { data: X<T> };
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 
   × 'with' statements are not allowed
@@ -4844,15 +4779,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ x.#bar.baz = 20;
    ·   ────
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts
-
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts:14:11]
- 13 │ var d: (((x: string) => string) | ((x: number) => number))[];
- 14 │ var d: ({ (x: string): string } | { (x: number): number })[];
-    ·           ─
- 15 │ var d: Array<((x: string) => string) | ((x: number) => number)>;
-    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
@@ -6660,15 +6586,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specify
  3 │ sasync function myAsyncFunction3() {}
    ╰────
   help: Try insert a semicolon here
-
-  × Expected `]` but found `Identifier`
-    ╭─[typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts:19:20]
- 18 │     T,
- 19 │     ({ [P in keyof T]: P } & { [P in K]: never } & { [x: string]: never })[keyof T]
-    ·                    ┬
-    ·                    ╰── `]` expected
- 20 │ >;
-    ╰────
 
   × A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tests/cases/compiler/complicatedPrivacy.ts:11:26]
@@ -9650,13 +9567,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specify
  1 │ const a =!@#!@$
    ·             ─
  2 │ const b = !@#!@#!@#!
-   ╰────
-
-  × Expected `]` but found `Identifier`
-   ╭─[typescript/tests/cases/compiler/mappedTypeNoTypeNoCrash.ts:1:28]
- 1 │ type T0<T> = ({[K in keyof T]}) extends ({[key in K]: T[K]}) ? number : never;
-   ·                            ┬
-   ·                            ╰── `]` expected
    ╰────
 
   × Identifier `baz` has already been declared
@@ -17109,11 +17019,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specify
    ·           ─
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:11]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:17]
  1 │ var v = { *<T>() { } }
-   ·           ─
+   ·                 ▲
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration4_es6.ts:2:5]

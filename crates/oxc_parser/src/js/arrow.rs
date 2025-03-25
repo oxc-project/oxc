@@ -350,9 +350,9 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
 
-        if self.fatal_error.is_some() {
-            return None;
-        }
+        // if self.fatal_error.is_some() {
+        // return None;
+        // }
 
         let checkpoint = self.checkpoint();
 
@@ -391,7 +391,7 @@ impl<'a> ParserImpl<'a> {
             // the conditional expression. It's okay to do this because this code would
             // be a syntax error in JavaScript (as the second colon shouldn't be there).
 
-            if !self.at(Kind::Colon) {
+            if !self.at(Kind::Colon) || self.fatal_error.is_some() {
                 self.state.not_parenthesized_arrow.insert(pos);
                 self.rewind(checkpoint);
                 return None;

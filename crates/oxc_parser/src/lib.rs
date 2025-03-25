@@ -619,7 +619,7 @@ impl<'a> ParserImpl<'a> {
 }
 
 /// Fatal parsing error.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FatalError {
     /// The fatal error
     error: OxcDiagnostic,

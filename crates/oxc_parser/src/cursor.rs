@@ -6,16 +6,17 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, FatalError, ParserImpl, diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
+    fatal_error: Option<FatalError>,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -269,22 +270,24 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos } = checkpoint;
-
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+            checkpoint;
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
+        self.fatal_error = fatal_error;
     }
 
     /// # Errors
@@ -292,9 +295,9 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         func: impl FnOnce(&mut ParserImpl<'a>) -> T,
     ) -> Option<T> {
-        if self.fatal_error.is_some() {
-            return None;
-        }
+        // if self.fatal_error.is_some() {
+        // return None;
+        // }
 
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
@@ -302,7 +305,6 @@ impl<'a> ParserImpl<'a> {
         if self.fatal_error.is_none() {
             Some(node)
         } else {
-            self.fatal_error = None;
             self.ctx = ctx;
             self.rewind(checkpoint);
             None

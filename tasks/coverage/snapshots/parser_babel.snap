@@ -1,8 +1,8 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2303/2322 (99.18%)
-Positive Passed: 2282/2322 (98.28%)
+AST Parsed     : 2306/2322 (99.31%)
+Positive Passed: 2285/2322 (98.41%)
 Negative Passed: 1549/1673 (92.59%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
@@ -714,27 +714,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·      ╰── It can not be redeclared here
  32 │ }
     ╰────
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object/input.ts
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object/input.ts:1:20]
- 1 │ type T = ({ field: `${string}` });
-   ·                    ───
-   ╰────
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object-babel-7/input.ts
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object-babel-7/input.ts:1:20]
- 1 │ type T = ({ field: `${string}` });
-   ·                    ───
-   ╰────
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object-parenthesized-expressions-true/input.ts
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object-parenthesized-expressions-true/input.ts:1:20]
- 1 │ type T = ({ field: `${string}` });
-   ·                    ───
-   ╰────
 
   × Identifier `f` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.4-var-redeclaration-catch-binding/input.js:2:17]
