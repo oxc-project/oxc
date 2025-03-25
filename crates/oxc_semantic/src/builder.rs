@@ -241,11 +241,13 @@ impl<'a> SemanticBuilder<'a> {
                 (stats_with_excess, Some(stats))
             };
             self.nodes.reserve(stats.nodes as usize);
+            /*
             self.scoping.reserve(
                 stats.symbols as usize,
                 stats.references as usize,
                 stats.scopes as usize,
             );
+            */
 
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
