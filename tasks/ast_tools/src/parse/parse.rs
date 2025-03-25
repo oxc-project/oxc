@@ -14,13 +14,12 @@ use crate::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
         PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
     },
-    utils::{FxIndexMap, FxIndexSet},
+    utils::{FxIndexMap, FxIndexSet, ident_name},
 };
 
 use super::{
     Derives,
     attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
-    ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
 };
 

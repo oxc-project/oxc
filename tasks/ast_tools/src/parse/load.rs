@@ -9,10 +9,10 @@ use syn::{
     punctuated::Punctuated,
 };
 
-use crate::schema::FileId;
+use crate::{schema::FileId, utils::ident_name};
 
 use super::{
-    FxIndexMap, ident_name,
+    FxIndexMap,
     parse::convert_expr_to_string,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
 };
