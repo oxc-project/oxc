@@ -1642,6 +1642,8 @@ function deserializeTSPropertySignature(pos) {
     readonly: deserializeBool(pos + 10),
     key: deserializePropertyKey(pos + 16),
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 32),
+    accessibility: null,
+    static: false,
   };
 }
 

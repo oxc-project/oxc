@@ -2871,6 +2871,8 @@ impl ESTree for TSPropertySignature<'_> {
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("key", &self.key);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("static", &crate::serialize::False(self));
         state.end();
     }
 }
