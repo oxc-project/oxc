@@ -1344,17 +1344,13 @@ function deserializeTSThisParameter(pos) {
 }
 
 function deserializeTSEnumDeclaration(pos) {
-  const start = deserializeU32(pos),
-    end = deserializeU32(pos + 4);
+  const end = deserializeU32(pos + 4);
   const tsEnumDeclId = deserializeBindingIdentifier(pos + 8);
   const tsEnumDeclMembers = deserializeVecTSEnumMember(pos + 40);
-  const idBeforeLen = 5;
-  const idLen = tsEnumDeclId.name.length;
-  const idAfterLen = 1;
-  const bodyStart = start + idBeforeLen + idLen + idAfterLen;
+  const bodyStart = tsEnumDeclId.end + 1;
   return {
     type: 'TSEnumDeclaration',
-    start,
+    start: deserializeU32(pos),
     end,
     id: deserializeBindingIdentifier(pos + 8),
     const: deserializeBool(pos + 72),
