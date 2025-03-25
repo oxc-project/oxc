@@ -586,7 +586,7 @@ impl<'a> ParserImpl<'a> {
     fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
-        if self.cur_kind() == Kind::Undetermined {
+        if self.cur_kind() == Kind::Eof {
             if let Some(error) = self.lexer.errors.pop() {
                 self.set_fatal_error(error);
                 return;

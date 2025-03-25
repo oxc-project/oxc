@@ -219,7 +219,8 @@ impl<'a> Lexer<'a> {
             return cold_branch(|| {
                 let start = self.offset();
                 self.error(diagnostics::unexpected_end(Span::new(start, start)));
-                Kind::Undetermined
+                self.advance_to_end();
+                Kind::Eof
             });
         }
 
@@ -293,6 +294,7 @@ impl<'a> Lexer<'a> {
         let start = self.offset();
         let c = self.consume_char();
         self.error(diagnostics::invalid_character(c, Span::new(start, self.offset())));
-        Kind::Undetermined
+        self.advance_to_end();
+        Kind::Eof
     }
 }

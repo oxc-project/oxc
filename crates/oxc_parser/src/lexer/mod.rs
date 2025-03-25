@@ -225,6 +225,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Advance source cursor to end of file.
+    #[inline]
     pub fn advance_to_end(&mut self) {
         self.source.advance_to_end();
     }

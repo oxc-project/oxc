@@ -173,7 +173,7 @@ impl<'a> Lexer<'a> {
             );
             Kind::Skip
         } else {
-            self.source.advance_to_end();
+            self.advance_to_end();
             self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
             Kind::Eof
         }

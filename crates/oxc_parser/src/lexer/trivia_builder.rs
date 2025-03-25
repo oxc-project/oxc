@@ -34,7 +34,7 @@ impl Default for TriviaBuilder {
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
-            previous_kind: Kind::Undetermined,
+            previous_kind: Kind::Eof,
             has_pure_comment: false,
             has_no_side_effects_comment: false,
         }

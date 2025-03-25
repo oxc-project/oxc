@@ -43,8 +43,9 @@ macro_rules! handle_string_literal {
             table: $table,
             start: after_opening_quote,
             handle_eof: {
+                $lexer.advance_to_end();
                 $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                return Kind::Undetermined;
+                return Kind::Eof;
             },
         };
 
@@ -65,8 +66,9 @@ macro_rules! handle_string_literal {
                 cold_branch(|| {
                     debug_assert!(matches!(next_byte, b'\r' | b'\n'));
                     $lexer.consume_char();
+                    $lexer.advance_to_end();
                     $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                    Kind::Undetermined
+                    Kind::Eof
                 })
             }
         }
@@ -132,17 +134,18 @@ macro_rules! handle_string_literal_escape {
                         // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
                             debug_assert!(matches!(b, b'\r' | b'\n'));
-                            $lexer.consume_char();
+                            $lexer.advance_to_end();
                             $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                            Kind::Undetermined
+                            Kind::Eof
                         });
                     }
                 }
             }
 
             // EOF
+            $lexer.advance_to_end();
             $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-            return Kind::Undetermined;
+            return Kind::Eof;
         }
 
         // Convert `str` to arena slice and save to `escaped_strings`

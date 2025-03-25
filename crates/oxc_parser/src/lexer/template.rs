@@ -73,8 +73,9 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
+                self.advance_to_end();
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                return Kind::Undetermined;
+                return Kind::Eof;
             },
         };
 
@@ -103,9 +104,9 @@ impl<'a> Lexer<'a> {
         // If at EOF, exit. This illegal in valid JS, so cold branch.
         if pos.addr() == self.source.end_addr() {
             return cold_branch(|| {
-                self.source.advance_to_end();
+                self.advance_to_end();
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                Kind::Undetermined
+                Kind::Eof
             });
         }
 
@@ -322,8 +323,9 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
+                self.advance_to_end();
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                return Kind::Undetermined;
+                return Kind::Eof;
             },
         };
 
