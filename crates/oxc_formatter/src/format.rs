@@ -29,7 +29,7 @@ impl<'a> Format<JsFormatContext<'a>> for Statement<'a> {
     fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
         match self {
             Statement::VariableDeclaration(stmt) => stmt.fmt(f),
-            _ => todo!(),
+            _ => write!(f, [text("// TODO"), hard_line_break()]),
         }
     }
 }
@@ -40,7 +40,7 @@ impl<'a> Format<JsFormatContext<'a>> for VariableDeclaration<'a> {
 
         write!(
             f,
-            [text("// TODO: VariableDeclaration @"), text(kind.as_str()), hard_line_break(),]
+            [text("// TODO: VariableDeclaration @"), text(kind.as_str()), hard_line_break()]
         )?;
 
         Ok(())

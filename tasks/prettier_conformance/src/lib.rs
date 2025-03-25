@@ -12,8 +12,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 
 use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
@@ -383,7 +383,7 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
 fn run_oxc_prettier(
     source_text: &str,
     source_type: SourceType,
-    prettier_options: PrettierOptions,
+    formatter_options: FormatterOptions,
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
@@ -393,5 +393,5 @@ fn run_oxc_prettier(
             ..ParseOptions::default()
         })
         .parse();
-    Prettier::new(&allocator, prettier_options).build(&ret.program)
+    Formatter::new(&allocator, formatter_options).build(&ret.program)
 }
