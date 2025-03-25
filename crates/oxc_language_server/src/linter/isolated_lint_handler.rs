@@ -119,6 +119,7 @@ impl IsolatedLintHandler {
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: true,
+                    parse_regular_expression: true,
                     ..ParseOptions::default()
                 })
                 .parse();
