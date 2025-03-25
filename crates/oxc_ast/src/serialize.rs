@@ -730,16 +730,21 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
 
 /// Serializer for `body` field of `TSEnumDeclaration`.
 /// This field is derived from `members` field.
+///
+/// `Span` indicates within braces `{ ... }`.
+/// ```
+/// enum Foo { ... }
+/// |              | TSEnumDeclaration.span
+///          |     | TSEnumBody.span
+///        ^^ id_end + 1 for space
+/// ```
 #[ast_meta]
 #[estree(
     ts_type = "TSEnumBody",
     raw_deser = "
         const tsEnumDeclId = DESER[BindingIdentifier](POS_OFFSET.id);
         const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
-        const idBeforeLen = 5;
-        const idLen = tsEnumDeclId.name.length;
-        const idAfterLen = 1;
-        const bodyStart = THIS.start + idBeforeLen + idLen + idAfterLen;
+        const bodyStart = tsEnumDeclId.end + 1;
         {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
     "
 )]
@@ -749,15 +754,7 @@ impl ESTree for TSEnumDeclarationBody<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumBody"));
-        // enum Foo { ... }
-        // ^^^^^ id_before_len
-        //      ^^^ id_len
-        //         ^ id_after_len
-        let id_before_len = 5;
-        #[expect(clippy::cast_possible_truncation)]
-        let id_len = self.0.id.name.len() as u32;
-        let id_after_len = 1;
-        let body_start = self.0.span.start + id_before_len + id_len + id_after_len;
+        let body_start = self.0.id.span.end + 1;
         state.serialize_field("start", &body_start);
         state.serialize_field("end", &self.0.span.end);
         state.serialize_field("members", &self.0.members);
