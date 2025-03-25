@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_semantic::{NodeId, Reference, ReferenceFlags, ReferenceId, ScopeId, SymbolId};
+use oxc_semantic::{NodeId, Reference, ReferenceFlags, SymbolId};
 use rustc_hash::FxHashMap;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -70,6 +70,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
 
     // get SymbolId's declaration node
     let declaration_node = ctx.semantic().scoping().symbol_declaration(symbol_id);
+    println!("declaration_node: {:?}", declaration_node);
 
     // Create a map to group references by control structure
     let mut reference_group = FxHashMap::default();
@@ -126,9 +127,22 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         let mut write_count_total = 0;
         let mut write_count = 0;
         let mut has_declaration = false;
-        for reference in reference_group_value {
+        let mut declaration_node_idx = 0;
+
+        let mut sorted_references = reference_group_value.to_vec();
+        sorted_references.sort_by_key(|reference| reference.node_id());
+        for (idx, reference) in sorted_references.iter().enumerate() {
+            if has_declaration && idx - 1 == declaration_node_idx {
+                // can't assign immediately after declaration
+                if reference.flags().is_write() {
+                    is_multiple_assignments_without_read = true;
+                }
+            }
+
+            // check if reference is declaration
             if reference.node_id() == declaration_node {
                 has_declaration = true;
+                declaration_node_idx = idx;
             }
 
             if reference.flags().is_write() {
@@ -147,6 +161,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
                 write_count = 0;
             }
         }
+
 
         if has_declaration && reference_group_value.len() == 1 && !has_if_else_statement && !has_loop_statement {
             return true;
@@ -345,6 +360,29 @@ fn test() {
             }
             console.log(v);
         }"
+        ,
+        "
+            function fn6() {
+                let v = 'used1';
+                if (condition) {
+                    let v = 'used2';
+                    v = 'unused1';
+                    console.log(v);
+                }
+                console.log(v);
+            }
+        ",
+        "
+            function fn7() {
+                let v = 'used1';
+                if (condition) {
+                    let v = 'used2';
+                    v = 'unused1';
+                    console.log(v);
+                }
+                console.log(v);
+            }
+        "
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

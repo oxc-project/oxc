@@ -46,3 +46,21 @@ assertion_line: 362
  8 │             }
    ╰────
   help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:21]
+ 5 │                     let v = 'used2';
+ 6 │                     v = 'unused1';
+   ·                     ─────────────
+ 7 │                     console.log(v);
+   ╰────
+  help: Remove the assignment.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:21]
+ 5 │                     let v = 'used2';
+ 6 │                     v = 'unused1';
+   ·                     ─────────────
+ 7 │                     console.log(v);
+   ╰────
+  help: Remove the assignment.
