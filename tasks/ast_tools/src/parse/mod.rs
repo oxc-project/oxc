@@ -109,5 +109,6 @@ fn analyse_file(
 ///
 /// [`Ident`]: struct@Ident
 fn ident_name(ident: &Ident) -> String {
-    ident.to_string().trim_start_matches("r#").to_string()
+    let name = ident.to_string();
+    if let Some(unprefixed) = name.strip_prefix("r#") { unprefixed.to_string() } else { name }
 }
