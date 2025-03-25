@@ -1,0 +1,36 @@
+[package]
+name = "oxc_formatter"
+version = "0.0.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/examples", "/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
+
+countme = "3.0.1"
+drop_bomb = "0.1.5"
+rustc-hash = "2.1.1"
+tracing = { version = "0.1.41", default-features = false, features = ["std", "attributes"] }
+unicode-width = "0.1.12"
+
+[dev-dependencies]
+oxc_parser = { workspace = true }
+pico-args = { workspace = true }
