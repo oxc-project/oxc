@@ -1297,26 +1297,37 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 
     /// Retains only the elements specified by the predicate.
     ///
-    /// In other words, remove all elements `e` such that `f(&e)` returns `false`.
-    /// This method operates in place and preserves the order of the retained
-    /// elements.
+    /// In other words, remove all elements `e` for which `f(&e)` returns `false`.
+    /// This method operates in place, visiting each element exactly once in the
+    /// original order, and preserves the order of the retained elements.
     ///
     /// # Examples
     ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = bumpalo::vec![in &b; 1, 2, 3, 4];
+    /// ```ignore
+    /// use bumpalo::Bump;
+    /// let bump = Bump::new();
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &bump);
     /// vec.retain(|&x| x % 2 == 0);
     /// assert_eq!(vec, [2, 4]);
+    /// ```
+    ///
+    /// Because the elements are visited exactly once in the original order,
+    /// external state may be used to decide which elements to keep.
+    ///
+    /// ```ignore
+    /// use bumpalo::Bump;
+    /// let bump = Bump::new();
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &bump);
+    /// let keep = [false, true, true, false, true];
+    /// let mut iter = keep.iter();
+    /// vec.retain(|_| *iter.next().unwrap());
+    /// assert_eq!(vec, [2, 3, 5]);
     /// ```
     pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&T) -> bool,
     {
-        self.drain_filter(|x| !f(x));
+        self.retain_mut(|x| f(x));
     }
 
     /// Retains only the elements specified by the predicate, passing a mutable reference to it.
@@ -2244,7 +2255,6 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             } else {
                 begin.add(self.len()) as *const T
             };
-            // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             IntoIter { phantom: PhantomData, ptr: begin, end }
         }
     }
