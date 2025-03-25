@@ -1191,6 +1191,8 @@ export interface TSPropertySignature extends Span {
   readonly: boolean;
   key: PropertyKey;
   typeAnnotation: TSTypeAnnotation | null;
+  accessibility: null;
+  static: false;
 }
 
 export type TSSignature =
