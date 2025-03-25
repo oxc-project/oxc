@@ -1,9 +1,9 @@
 commit: 15392346
 
 parser_typescript Summary:
-AST Parsed     : 6522/6531 (99.86%)
-Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1288/5754 (22.38%)
+AST Parsed     : 6515/6531 (99.76%)
+Positive Passed: 6503/6531 (99.57%)
+Negative Passed: 1290/5754 (22.42%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -363,7 +363,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/compareTypeP
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complexClassRelationships.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complexRecursiveCollections.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1_ES6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring2.ts
@@ -1345,7 +1344,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGe
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccess.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccessConstraint.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceFromApparentType.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNoTypeNoCrash.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNotMistakenlyHomomorphic.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeRecursiveInference.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeUnionConstrainTupleTreatedAsArrayLike.ts
@@ -4470,6 +4468,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts
+
+  × Unexpected token
+    ╭─[typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts:20:8]
+ 19 │ type ExtendedMapper2<HandledInputT, OutputT, ArgsT extends any[]> = (
+ 20 │     {x:(name : string, mixed : HandledInputT, ...args : ArgsT) => OutputT}["x"]
+    ·        ─
+ 21 │ );
+    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -4563,7 +4570,35 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
   × Invalid Character `￾`
    ╭─[typescript/tests/cases/compiler/bom-utf16be.ts:1:1]
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
-   · ─
+   · ──────────────────
+   ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
+
+  × Expected `,` but found `[`
+    ╭─[typescript/tests/cases/compiler/deferredConditionalTypes2.ts:18:30]
+ 17 │ ] extends infer R extends [boolean, boolean, boolean, boolean]
+ 18 │   ? [true, false] extends ([R[0], R[3]])
+    ·                              ┬
+    ·                              ╰── `,` expected
+ 19 │     ? PositiveInfinity
+    ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution.ts
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/deferredLookupTypeResolution.ts:4:22]
+ 3 │ type StringContains<S extends string, L extends string> = (
+ 4 │     { [K in S]:      'true' } &
+   ·                      ──────
+ 5 │     { [key: string]: 'false' }
+   ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts:3:72]
+ 2 │ 
+ 3 │ type StringContains<S extends string, L extends string> = ({ [K in S]: 'true' } & { [key: string]: 'false'})[L];
+   ·                                                                        ──────
+ 4 │ 
    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 
@@ -4600,6 +4635,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolution
    ·    ▲
    ╰────
   help: Try insert a semicolon here
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parenthesisDoesNotBlockAliasSymbolCreation.ts
+
+  × Expected `:` but found `?`
+   ╭─[typescript/tests/cases/compiler/parenthesisDoesNotBlockAliasSymbolCreation.ts:3:15]
+ 2 │ export type InvalidKeys2<K extends string|number|symbol> = (
+ 3 │     { [P in K]? : never }
+   ·               ┬
+   ·               ╰── `:` expected
+ 4 │ );
+   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -4609,6 +4654,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx
+
+  × Expected `,` but found `?`
+   ╭─[typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx:4:42]
+ 3 │ 
+ 4 │ declare function NotHappy(props: ({ fixed?: boolean } | { value?: number })): ReactElement<any>;
+   ·                                          ┬
+   ·                                          ╰── `,` expected
+ 5 │ declare function Happy(props: { fixed?: boolean, value?: number }): ReactElement<any>;
+   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDeclarations.ts
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
@@ -4626,6 +4681,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDecla
     ·     ───────────────────────────────────────────
  85 │ }
     ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
+
+  × Expected `]` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts:3:28]
+ 2 │ type B = { b: number };
+ 3 │ type X<T> = ({ [K in keyof T]: T[K] } & Record<string, void>)[keyof T];
+   ·                            ┬
+   ·                            ╰── `]` expected
+ 4 │ type P1<T> = { data: X<T> };
+   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 
   × 'with' statements are not allowed
@@ -4779,6 +4844,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ x.#bar.baz = 20;
    ·   ────
    ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts
+
+  × Unexpected token
+    ╭─[typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts:14:11]
+ 13 │ var d: (((x: string) => string) | ((x: number) => number))[];
+ 14 │ var d: ({ (x: string): string } | { (x: number): number })[];
+    ·           ─
+ 15 │ var d: Array<((x: string) => string) | ((x: number) => number)>;
+    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
@@ -4998,15 +5072,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   × Invalid Character `؆`
    ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:387]
  1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
-   ·                                                                                                                                                                                                     ─
+   ·                                                                                                                                                                                                     ────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:387]
- 1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
-   ·                                                                                                                                                                                                     ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Getters and setters must have an implementation.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
@@ -6594,6 +6661,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × Expected `]` but found `Identifier`
+    ╭─[typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts:19:20]
+ 18 │     T,
+ 19 │     ({ [P in keyof T]: P } & { [P in K]: never } & { [x: string]: never })[keyof T]
+    ·                    ┬
+    ·                    ╰── `]` expected
+ 20 │ >;
+    ╰────
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tests/cases/compiler/complicatedPrivacy.ts:11:26]
  10 │         export class C2 implements m3.i3 {
@@ -7863,11 +7939,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
     ╭─[typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx:11:18]
  10 │ 
  11 │ let y = <   Baz >Hello
-    ·                  ─────
+    ·                  ──┬──
+    ·                    ╰── `<` expected
     ╰────
 
   × 'with' statements are not allowed
@@ -8394,11 +8471,34 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Invalid characters after number
-   ╭─[typescript/tests/cases/compiler/identifierStartAfterNumericLiteral.ts:1:16]
- 1 │ let valueIn = 3in[null];
-   ·                ──
- 2 │ 
-   ╰────
+    ╭─[typescript/tests/cases/compiler/identifierStartAfterNumericLiteral.ts:1:16]
+  1 │ ╭─▶ let valueIn = 3in[null];
+  2 │ │   
+  3 │ │   3a[null]
+  4 │ │   123a[null]
+  5 │ │   3e[null]
+  6 │ │   123e[null]
+  7 │ │   3in[null]
+  8 │ │   123in[null]
+  9 │ │   3en[null]
+ 10 │ │   123en[null]
+ 11 │ │   1a
+ 12 │ │   123a
+ 13 │ │   123abc
+ 14 │ │   1e
+ 15 │ │   123e
+ 16 │ │   1e9
+ 17 │ │   123e9
+ 18 │ │   1ee
+ 19 │ │   123ee
+ 20 │ │   1n
+ 21 │ │   123n
+ 22 │ │   2n2
+ 23 │ │   123n2
+ 24 │ │   2na
+ 25 │ │   123na
+ 26 │ ╰─▶ 123nabc
+    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts:3:11]
@@ -8745,6 +8845,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
  3 │ export default var a = 10;
    ·                ───
+   ╰────
+
+  × Duplicated default export
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:1:8]
+ 1 │ export default class a {
+   ·        ───────
+ 2 │ }
+ 3 │ export default var a = 10;
+   ·        ───────
    ╰────
 
   × The keyword 'let' is reserved
@@ -9543,6 +9652,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ const b = !@#!@#!@#!
    ╰────
 
+  × Expected `]` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/mappedTypeNoTypeNoCrash.ts:1:28]
+ 1 │ type T0<T> = ({[K in keyof T]}) extends ({[key in K]: T[K]}) ? number : never;
+   ·                            ┬
+   ·                            ╰── `]` expected
+   ╰────
+
   × Identifier `baz` has already been declared
    ╭─[typescript/tests/cases/compiler/mismatchedClassConstructorVariable.ts:1:5]
  1 │ var baz: foo;
@@ -10143,20 +10259,76 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Invalid characters after number
-   ╭─[typescript/tests/cases/compiler/numericLiteralsWithTrailingDecimalPoints01.ts:3:3]
- 2 │ 1.0.toString();
- 3 │ 1.toString();
-   ·   ────────
- 4 │ 1.+2.0 + 3. ;
-   ╰────
+    ╭─[typescript/tests/cases/compiler/numericLiteralsWithTrailingDecimalPoints01.ts:3:3]
+  2 │     1.0.toString();
+  3 │ ╭─▶ 1.toString();
+  4 │ │   1.+2.0 + 3. ;
+  5 │ │   
+  6 │ │   // Preserve whitespace and comments where important for JS compatibility
+  7 │ │   var i: number = 1;
+  8 │ │   var test1 = i.toString();
+  9 │ │   var test2 = 2.toString();
+ 10 │ │   var test3 = 3 .toString();
+ 11 │ │   var test4 = 3    .toString();
+ 12 │ │   var test5 = 3   .toString();
+ 13 │ │   var test6 = 3.['toString']();
+ 14 │ │   var test7 = 3
+ 15 │ │   .toString();
+ 16 │ │   var test8 = new Number(4).toString();
+ 17 │ │   var test9 = 3. + 3.;
+ 18 │ │   var test10 = 0 /* comment */.toString();
+ 19 │ │   var test11 = 3. /* comment */ .toString();
+ 20 │ │   var test12 = 3
+ 21 │ │     /* comment */ .toString();
+ 22 │ │   var test13 = 3.
+ 23 │ │     /* comment */ .toString();
+ 24 │ │   var test14 = 3
+ 25 │ │       // comment
+ 26 │ │       .toString();
+ 27 │ │   var test15 = 3.
+ 28 │ │       // comment
+ 29 │ │       .toString();
+ 30 │ │   var test16 = 3  // comment time
+ 31 │ │       .toString();
+ 32 │ │   var test17 = 3. // comment time again
+ 33 │ ╰─▶     .toString();
+    ╰────
 
   × Invalid characters after number
-   ╭─[typescript/tests/cases/compiler/numericLiteralsWithTrailingDecimalPoints02.ts:3:3]
- 2 │ 1.0.toString();
- 3 │ 1.toString();
-   ·   ────────
- 4 │ 1.+2.0 + 3. ;
-   ╰────
+    ╭─[typescript/tests/cases/compiler/numericLiteralsWithTrailingDecimalPoints02.ts:3:3]
+  2 │     1.0.toString();
+  3 │ ╭─▶ 1.toString();
+  4 │ │   1.+2.0 + 3. ;
+  5 │ │   
+  6 │ │   // Preserve whitespace where important for JS compatibility
+  7 │ │   var i: number = 1;
+  8 │ │   var test1 = i.toString();
+  9 │ │   var test2 = 2.toString();
+ 10 │ │   var test3 = 3 .toString();
+ 11 │ │   var test4 = 3    .toString();
+ 12 │ │   var test5 = 3   .toString();
+ 13 │ │   var test6 = 3.['toString']();
+ 14 │ │   var test7 = 3
+ 15 │ │   .toString();
+ 16 │ │   var test8 = new Number(4).toString();
+ 17 │ │   var test9 = 3. + 3.;
+ 18 │ │   var test10 = 0 /* comment */.toString();
+ 19 │ │   var test11 = 3. /* comment */ .toString();
+ 20 │ │   var test12 = 3
+ 21 │ │     /* comment */ .toString();
+ 22 │ │   var test13 = 3.
+ 23 │ │     /* comment */ .toString();
+ 24 │ │   var test14 = 3
+ 25 │ │       // comment
+ 26 │ │       .toString();
+ 27 │ │   var test15 = 3.
+ 28 │ │       // comment
+ 29 │ │       .toString();
+ 30 │ │   var test16 = 3  // comment time
+ 31 │ │       .toString();
+ 32 │ │   var test17 = 3. // comment time again
+ 33 │ ╰─▶     .toString();
+    ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/objectCreationExpressionInFunctionParameter.ts:6:2]
@@ -10654,10 +10826,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid characters after number
     ╭─[typescript/tests/cases/compiler/parseBigInt.ts:56:25]
- 55 │ // In separate blocks because they each declare an "n" variable
- 56 │ { const legacyOct = 0123n; }
-    ·                         ─
- 57 │ { const scientific = 1e2n; }
+ 55 │     // In separate blocks because they each declare an "n" variable
+ 56 │ ╭─▶ { const legacyOct = 0123n; }
+ 57 │ │   { const scientific = 1e2n; }
+ 58 │ │   { const decimal = 4.1n; }
+ 59 │ │   { const leadingDecimal = .1n; }
+ 60 │ │   const emptyBinary = 0bn; // should error but infer 0n
+ 61 │ │   const emptyOct = 0on; // should error but infer 0n
+ 62 │ │   const emptyHex = 0xn; // should error but infer 0n
+ 63 │ │   const leadingSeparator = _123n;
+ 64 │ │   const trailingSeparator = 123_n;
+ 65 │ │   const doubleSeparator = 123_456__789n;
+ 66 │ │   
+ 67 │ │   // Using literals as types
+ 68 │ │   const oneTwoOrThree = (x: 1n | 2n | 3n): bigint => x ** 2n;
+ 69 │ │   oneTwoOrThree(0n); oneTwoOrThree(1n); oneTwoOrThree(2n); oneTwoOrThree(3n);
+ 70 │ ╰─▶ oneTwoOrThree(0);  oneTwoOrThree(1);  oneTwoOrThree(2);  oneTwoOrThree(3);
     ╰────
 
   × Unexpected token
@@ -10677,17 +10861,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/compiler/parseErrorInHeritageClause1.ts:1:19]
- 1 │ class C extends A ¬ {
-   ·                   ─
- 2 │ }
+ 1 │ ╭─▶ class C extends A ¬ {
+ 2 │ ╰─▶ }
    ╰────
 
-  × Expected `{` but found `Unknown`
+  × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/compiler/parseErrorInHeritageClause1.ts:1:19]
- 1 │ class C extends A ¬ {
-   ·                   ┬
-   ·                   ╰── `{` expected
- 2 │ }
+ 1 │ ╭─▶ class C extends A ¬ {
+ 2 │ ├─▶ }
+   · ╰──── `{` expected
    ╰────
 
   × Unexpected token
@@ -10890,18 +11072,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ─
    ╰────
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── `<` expected
    ╰────
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
  1 │ const x = "oops";
  2 │ const y = + <> x;
-   ·               ───
+   ·               ─┬─
+   ·                ╰── `<` expected
    ╰────
 
   × Unexpected token
@@ -12681,13 +12865,36 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ╰────
 
   × Unterminated string
-   ╭─[typescript/tests/cases/compiler/stringLiteralsErrors.ts:2:11]
- 1 │ // Srtings missing line terminator
- 2 │ var es1 = "line 1
-   ·           ────────
- 3 │ ";
- 4 │ var es2 = 'line 1
-   ╰────
+    ╭─[typescript/tests/cases/compiler/stringLiteralsErrors.ts:2:11]
+  1 │     // Srtings missing line terminator
+  2 │ ╭─▶ var es1 = "line 1
+  3 │ │   ";
+  4 │ │   var es2 = 'line 1
+  5 │ │   ';
+  6 │ │   
+  7 │ │   // Space after backslash
+  8 │ │   var es3 = 'line 1\ 
+  9 │ │   ';
+ 10 │ │   var es4 = 'line 1\ 
+ 11 │ │   ';
+ 12 │ │   
+ 13 │ │   // Unterminated strings
+ 14 │ │   var es5 = "unterminated
+ 15 │ │   var es6 = 'unterminated
+ 16 │ │   
+ 17 │ │   // wrong terminator
+ 18 │ │   var es7 = "unterminated '
+ 19 │ │   var es8 = 'unterminated "
+ 20 │ │   
+ 21 │ │   // wrong unicode sequences
+ 22 │ │   var es9 = "\u00";
+ 23 │ │   var es10 = "\u00GG";
+ 24 │ │   var es11 = "\x0";
+ 25 │ │   var es12 = "\xmm";
+ 26 │ │   
+ 27 │ │   // End of file
+ 28 │ ╰─▶ var es13 = " 
+    ╰────
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superAccess2.ts:7:10]
@@ -13123,14 +13330,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·   ────────────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate1.ts:5:2]
- 4 │ // Incomplete call, not enough parameters.
- 5 │ f `123qdawdrqw
-   ·  ▲
-   ╰────
-  help: Try insert a semicolon here
-
   × Unterminated string
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate2.ts:5:3]
  4 │ // Incomplete call, not enough parameters, at EOF.
@@ -13138,18 +13337,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·   ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate2.ts:5:2]
- 4 │ // Incomplete call, not enough parameters, at EOF.
- 5 │ f `
-   ·  ▲
-   ╰────
-  help: Try insert a semicolon here
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions1.ts:5:17]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${
+   ╰────
+
+  × Unterminated string
+   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:20]
+ 4 │ // Incomplete call, enough parameters.
+ 5 │ f `123qdawdrqw${ }${
+   ·                    ─
    ╰────
 
   × Unexpected token
@@ -13163,6 +13361,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
+   ╰────
+
+  × Unterminated string
+   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions4.ts:5:27]
+ 4 │ // Incomplete call, but too many parameters.
+ 5 │ f `123qdawdrqw${ 1 }${ }${ 
+   ·                           ─
    ╰────
 
   × Unexpected token
@@ -13554,15 +13759,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   × Invalid Character `₁`
    ╭─[typescript/tests/cases/compiler/unicodeIdentifierName2.ts:1:6]
  1 │ var a₁ = "hello"; alert(a₁)
-   ·      ─
+   ·      ──────────────────────
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/unicodeIdentifierName2.ts:1:6]
- 1 │ var a₁ = "hello"; alert(a₁)
-   ·      ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/unparenthesizedConstructorTypeInUnionOrIntersection.ts:1:23]
@@ -13808,12 +14006,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
@@ -13896,12 +14095,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
@@ -14037,12 +14237,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]
@@ -16293,26 +16494,34 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid characters after number
    ╭─[typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralError.ts:2:17]
- 1 │ // error
- 2 │ var bin1 = 0B1102110;
-   ·                 ─
- 3 │ var bin1 = 0b11023410;
+ 1 │     // error
+ 2 │ ╭─▶ var bin1 = 0B1102110;
+ 3 │ │   var bin1 = 0b11023410;
+ 4 │ │   
+ 5 │ │   var obj1 = {
+ 6 │ │       0b11010: "hi",
+ 7 │ │       26: "Hello",
+ 8 │ │       "26": "world",
+ 9 │ ╰─▶ };
    ╰────
 
-  × Invalid Character `2`
-   ╭─[typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/invalidBinaryIntegerLiteralAndOctalIntegerLiteral.ts:2:16]
- 1 │ // Error
- 2 │ var binary = 0b21010;
-   ·                ▲
- 3 │ var binary1 = 0B21010;
+  × Unexpected end of file
+   ╭─[typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/invalidBinaryIntegerLiteralAndOctalIntegerLiteral.ts:5:21]
+ 4 │ var octal = 0o81010;
+ 5 │ var octal = 0O91010;
    ╰────
 
   × Invalid characters after number
    ╭─[typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteralError.ts:2:19]
- 1 │ // error
- 2 │ var oct1 = 0O13334823;
-   ·                   ─
- 3 │ var oct2 = 0o34318592;
+ 1 │     // error
+ 2 │ ╭─▶ var oct1 = 0O13334823;
+ 3 │ │   var oct2 = 0o34318592;
+ 4 │ │   
+ 5 │ │   var obj1 = {
+ 6 │ │       0O45436: "hi",
+ 7 │ │       19230: "Hello",
+ 8 │ │       "19230": "world",
+ 9 │ ╰─▶ };
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -16931,10 +17140,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration8_es6.ts:4:12]
- 3 │     // Make sure we don't think of *bar as the start of a generator method.
- 4 │     if (a) ¬ * bar;
-   ·            ─
- 5 │     return bar;
+ 3 │         // Make sure we don't think of *bar as the start of a generator method.
+ 4 │ ╭─▶     if (a) ¬ * bar;
+ 5 │ │       return bar;
+ 6 │ │     }
+ 7 │ ╰─▶ }
    ╰────
 
   × Expected `,` but found `string`
@@ -19318,12 +19528,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Invalid characters after number
-   ╭─[typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessNumericLiterals.ts:8:2]
- 7 │ 08.8e5.toString();
- 8 │ 0_8.8e5.toString();
-   ·  ─
- 9 │ 8.8e5.toString();
-   ╰────
+    ╭─[typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessNumericLiterals.ts:8:2]
+  7 │     08.8e5.toString();
+  8 │ ╭─▶ 0_8.8e5.toString();
+  9 │ │   8.8e5.toString();
+ 10 │ │   088e4.toString();
+ 11 │ │   88_e4.toString();
+ 12 │ │   88e4.toString();
+ 13 │ ╰─▶ 8_8e4.toString();
+    ╰────
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:46:9]
@@ -20499,12 +20712,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │ </div>
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-    ╭─[typescript/tests/cases/conformance/jsx/jsxEsprimaFbTestSuite.tsx:40:41]
- 39 │ 
- 40 │ <LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
-    ·                                         ▲
- 41 │ 
+  × Expected `<` but found `EOF`
+    ╭─[typescript/tests/cases/conformance/jsx/jsxEsprimaFbTestSuite.tsx:40:32]
+ 39 │     
+ 40 │ ╭─▶ <LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
+ 41 │ │   
+ 42 │ │   <a.b></a.b>;
+ 43 │ │   
+ 44 │ │   <a.b.c></a.b.c>;
+ 45 │ │   
+ 46 │ │   (<div />) < x;
+ 47 │ │   
+ 48 │ │   <div {...props} />;
+ 49 │ │   
+ 50 │ │   <div {...props} post="attribute" />;
+ 51 │ │   
+ 52 │ │   <div pre="leading" pre2="attribute" {...props}></div>;
+ 53 │ │   
+ 54 │ ├─▶ <a>    </a>;
+    · ╰──── `<` expected
     ╰────
 
   × Unexpected token
@@ -20553,12 +20779,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ </div>;
     ╰────
 
-  × Invalid characters after number
-    ╭─[typescript/tests/cases/conformance/jsx/tsxAttributeInvalidNames.tsx:10:10]
-  9 │ // Invalid names
- 10 │ <test1 32data={32} />;
-    ·          ────
- 11 │ <test2 -data={32} />;
+  × Expected `>` but found `EOF`
+    ╭─[typescript/tests/cases/conformance/jsx/tsxAttributeInvalidNames.tsx:10:8]
+  9 │     // Invalid names
+ 10 │ ╭─▶ <test1 32data={32} />;
+ 11 │ ├─▶ <test2 -data={32} />;
+    · ╰──── `>` expected
     ╰────
 
   × Unexpected token
@@ -20592,13 +20818,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ 
     ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:17]
- 7 │ // This is an element
- 8 │ var x1 = <T>() => {}</T>;
-   ·                 ▲
- 9 │ x1.isElement;
-   ╰────
+  × Expected `<` but found `EOF`
+    ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:13]
+  7 │     // This is an element
+  8 │ ╭─▶ var x1 = <T>() => {}</T>;
+  9 │ │   x1.isElement;
+ 10 │ │   
+ 11 │ │   // This is a generic function
+ 12 │ │   var x2 = <T extends {}>() => {};
+ 13 │ │   x2();
+ 14 │ │   
+ 15 │ │   // This is a generic function
+ 16 │ │   var x3 = <T, T1>() => {};
+ 17 │ │   x3();
+ 18 │ │   
+ 19 │ │   // This is an element
+ 20 │ │   var x4 = <T extends={true}>() => {}</T>;
+ 21 │ │   x4.isElement;
+ 22 │ │   
+ 23 │ │   // This is an element
+ 24 │ │   var x5 = <T extends>() => {}</T>;
+ 25 │ │   x5.isElement;
+ 26 │ │   
+ 27 │ │   // This is a generic function
+ 28 │ │   var x6 = <T = string,>() => {};
+ 29 │ ├─▶ x6();
+    · ╰──── `<` expected
+    ╰────
 
   × Expected `,` but found `;`
     ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
@@ -20729,25 +20975,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Remove the duplicate modifier.
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts:1:6]
+  × Unexpected end of file
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts:2:1]
  1 │ 0b00_
-   ·      ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.hexNegative.ts:1:6]
+  × Unexpected end of file
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.hexNegative.ts:2:1]
  1 │ 0x00_
-   ·      ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.octalNegative.ts:1:6]
+  × Unexpected end of file
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.octalNegative.ts:2:1]
  1 │ 0o00_
-   ·      ▲
    ╰────
 
   × Invalid escape sequence
@@ -21159,10 +21399,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:2:5]
- 1 │ function f() {
- 2 │     ¬
-   ·     ─
- 3 │     return;
+ 1 │     function f() {
+ 2 │ ╭─▶     ¬
+ 3 │ │       return;
+ 4 │ ╰─▶ }
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:2:5]
+ 1 │     function f() {
+ 2 │ ╭─▶     ¬
+ 3 │ │       return;
+ 4 │ ├─▶ }
+   · ╰──── `}` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -21194,10 +21443,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
- 1 │ module M {
- 2 │    ¬
-   ·    ─
- 3 │    class C {
+ 1 │     module M {
+ 2 │ ╭─▶    ¬
+ 3 │ │      class C {
+ 4 │ │      }
+ 5 │ │      @
+ 6 │ │      enum E {
+ 7 │ ╰─▶    ¬
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
+ 1 │     module M {
+ 2 │ ╭─▶    ¬
+ 3 │ │      class C {
+ 4 │ │      }
+ 5 │ │      @
+ 6 │ │      enum E {
+ 7 │ ├─▶    ¬
+   · ╰──── `}` expected
    ╰────
 
   × Empty parenthesized expression
@@ -21389,9 +21653,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList4.ts:1:14]
- 1 │ function f(a,¬) {
-   ·              ─
- 2 │ }
+ 1 │ ╭─▶ function f(a,¬) {
+ 2 │ ╰─▶ }
    ╰────
 
   × Expected `,` but found `=>`
@@ -22474,11 +22737,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ foo(a, \
    ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:8]
- 1 │ foo(a \
-   ╰────
-
   × Expected `,` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:7]
  1 │ foo(a \
@@ -22502,11 +22760,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens2.ts:1:2]
  1 │ \\
    ·  ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:13]
- 1 │ var v: X<T \
    ╰────
 
   × Expected `,` but found `Identifier`
@@ -23643,12 +23896,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     · ───────────
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.8.3_A6.1_T1.ts:13:3]
- 12 │ //CHECK#1
+  × Unexpected end of file
+    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.8.3_A6.1_T1.ts:14:1]
  13 │ 0x
-    ·   ▲
     ╰────
 
   × Invalid escape sequence
@@ -23660,10 +23910,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
 
   × Unterminated string
     ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerStringLiterals.ts:10:1]
-  9 │ "
- 10 │ "Should error because of newline.
-    · ──────────────────────────────────
- 11 │ "Should error because of end of file.
+  9 │     "
+ 10 │ ╭─▶ "Should error because of newline.
+ 11 │ ╰─▶ "Should error because of end of file.
     ╰────
 
   × Invalid Character ` `
@@ -23671,13 +23920,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ foo + bar;
    ·    ─
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnexpectedNullCharacter1.ts:1:4]
- 1 │ foo + bar;
-   ·    ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Keywords cannot contain escape characters
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]

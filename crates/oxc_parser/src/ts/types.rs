@@ -688,6 +688,9 @@ impl<'a> ParserImpl<'a> {
                 types.push(self.parse_ts_type());
                 self.re_lex_template_substitution_tail();
                 loop {
+                    if self.fatal_error.is_some() {
+                        break;
+                    }
                     match self.cur_kind() {
                         Kind::Eof => self.expect(Kind::TemplateTail),
                         Kind::TemplateTail => {

@@ -2670,13 +2670,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
- 1 │ #\041
-   ·   ─
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
  19 │ 
@@ -2684,13 +2677,6 @@ Negative Passed: 4519/4519 (100.00%)
     · ──┬──
     ·   ╰── `in` expected
     ╰────
-
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
- 1 │ #\u0021
-   ·        ▲
- 2 │ 
-   ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
@@ -2700,13 +2686,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ╰── `in` expected
     ╰────
 
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
- 1 │ #\u{21}
-   ·        ▲
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
  19 │ 
@@ -2714,13 +2693,6 @@ Negative Passed: 4519/4519 (100.00%)
     · ──┬──
     ·   ╰── `in` expected
     ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
- 1 │ #\x21
-   ·   ─
- 2 │ 
-   ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
@@ -2812,6 +2784,14 @@ Negative Passed: 4519/4519 (100.00%)
  21 │ }
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/comments/hashbang/function-body.js:20:16]
+ 19 │     
+ 20 │ ╭─▶ function fn() {#!
+ 21 │ ├─▶ }
+    · ╰──── `}` expected
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[test262/test/language/comments/hashbang/multi-line-comment.js:3:6]
  2 │ throw "Test262: This statement should not be evaluated.";
@@ -2881,6 +2861,14 @@ Negative Passed: 4519/4519 (100.00%)
  21 │   #!
     ·    ─
  22 │ }
+    ╰────
+
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/comments/hashbang/statement-block.js:21:3]
+ 20 │     {
+ 21 │ ╭─▶   #!
+ 22 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -6675,12 +6663,13 @@ Negative Passed: 4519/4519 (100.00%)
  18 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:16]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
  14 │ $DONOTEVALUATE();
  15 │ async(x = await) => {  }
-    ·                ─
+    ·                 ▲
     ╰────
+  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]
@@ -12680,6 +12669,14 @@ Negative Passed: 4519/4519 (100.00%)
  37 │ };
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-error.js:36:3]
+ 35 │     var C = class {
+ 36 │ ╭─▶   # x
+ 37 │ ├─▶ };
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-identifier-invalid-ues.js:64:10]
  63 │ var C = class {
@@ -12720,14 +12717,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ var C = class {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:7]
+ 28 │     var C = class {
+ 29 │ ╭─▶   get # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
@@ -12737,14 +12733,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ var C = class {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:7]
+ 28 │     var C = class {
+ 29 │ ╭─▶   set # m(_) {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -12762,14 +12757,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ var C = class {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:9]
+ 28 │     var C = class {
+ 29 │ ╭─▶   async # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -12787,12 +12781,28 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:29:3]
+ 28 │     var C = class {
+ 29 │ ╭─▶   # x = 1;
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:29:4]
  28 │ var C = class {
  29 │   # x;
     ·    ─
  30 │ };
+    ╰────
+
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:29:3]
+ 28 │     var C = class {
+ 29 │ ╭─▶   # x;
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
 
   × Invalid Character ` `
@@ -12819,6 +12829,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:3]
+ 28 │     var C = class {
+ 29 │ ╭─▶   # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:15]
  28 │ var C = class {
@@ -12827,14 +12845,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:14]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static get # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
@@ -12844,14 +12861,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:14]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static set # m(_) {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -12869,14 +12885,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ var C = class {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:16]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static async # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
@@ -12886,14 +12901,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ var C = class {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:10]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static # x = 1;
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
@@ -12903,14 +12917,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ var C = class {
- 29 │   static # x;
-    ·         ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:10]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static # x;
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -12928,14 +12941,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ var C = class {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ };
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:10]
+ 28 │     var C = class {
+ 29 │ ╭─▶   static # m() {}
+ 30 │ ├─▶ };
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -20964,16 +20976,8 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/identifiers/vertical-tilde-continue.js:17:6]
  16 │ 
  17 │ var aⸯ; // U+2E2F
-    ·      ─
+    ·      ─────────────
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/identifiers/vertical-tilde-continue.js:17:6]
- 16 │ 
- 17 │ var aⸯ; // U+2E2F
-    ·      ▲
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character `ⸯ`
     ╭─[test262/test/language/identifiers/vertical-tilde-start-escaped.js:17:11]
@@ -20986,7 +20990,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/identifiers/vertical-tilde-start.js:17:5]
  16 │ 
  17 │ var ⸯ; // U+2E2F
-    ·     ─
+    ·     ─────────────
     ╰────
 
   × Identifier `x` has already been declared
@@ -21249,20 +21253,20 @@ Negative Passed: 4519/4519 (100.00%)
 
   × Unterminated string
     ╭─[test262/test/language/line-terminators/S7.3_A2.1_T2.js:17:1]
- 16 │ //CHECK#1
- 17 │ "
-    · ──
- 18 │ str
- 19 │ ing
+ 16 │     //CHECK#1
+ 17 │ ╭─▶ "
+ 18 │ │   str
+ 19 │ │   ing
+ 20 │ ╰─▶ ";
     ╰────
 
   × Unterminated string
     ╭─[test262/test/language/line-terminators/S7.3_A2.2_T2.js:17:1]
- 16 │ //CHECK#1
- 17 │ "
-    · ──
- 18 │ str
- 19 │ ing
+ 16 │     //CHECK#1
+ 17 │ ╭─▶ "
+ 18 │ │   str
+ 19 │ │   ing
+ 20 │ ╰─▶ ";
     ╰────
 
   × Unexpected token
@@ -21363,22 +21367,19 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/line-terminators/invalid-string-cr.js:17:1]
  16 │ 
  17 │ ''
-    · ─
+    · ───
     ╰────
 
   × Unterminated string
     ╭─[test262/test/language/line-terminators/invalid-string-lf.js:17:1]
- 16 │ 
- 17 │ '
-    · ──
- 18 │ '
+ 16 │     
+ 17 │ ╭─▶ '
+ 18 │ ╰─▶ '
     ╰────
 
-  × Invalid Character `2`
-    ╭─[test262/test/language/literals/bigint/binary-invalid-digit.js:27:3]
- 26 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/binary-invalid-digit.js:28:1]
  27 │ 0b2n;
-    ·   ▲
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -21389,95 +21390,87 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Invalid Character `g`
-    ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
- 26 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:28:1]
  27 │ 0xgn;
-    ·   ▲
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/legacy-octal-like-invalid-00n.js:29:3]
  28 │ 
  29 │ 00n;
-    ·   ─
+    ·   ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/legacy-octal-like-invalid-01n.js:29:3]
  28 │ 
  29 │ 01n;
-    ·   ─
+    ·   ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/legacy-octal-like-invalid-07n.js:29:3]
  28 │ 
  29 │ 07n;
-    ·   ─
+    ·   ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/mv-is-not-integer-dil-dot-dds.js:28:7]
  27 │ 
  28 │ 2017.8n;
-    ·       ─
+    ·       ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/mv-is-not-integer-dot-dds.js:28:12]
  27 │ 
  28 │ .0000000001n;
-    ·            ─
+    ·            ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/non-octal-like-invalid-0008n.js:29:5]
  28 │ 
  29 │ 0008n;
-    ·     ─
+    ·     ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/non-octal-like-invalid-012348n.js:29:7]
  28 │ 
  29 │ 012348n;
-    ·       ─
+    ·       ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/non-octal-like-invalid-08n.js:29:3]
  28 │ 
  29 │ 08n;
-    ·   ─
+    ·   ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/non-octal-like-invalid-09n.js:29:3]
  28 │ 
  29 │ 09n;
-    ·   ─
+    ·   ───
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bd-nsl-bd-err.js:45:3]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bd-nsl-bd-err.js:46:1]
  45 │ 0b_1n;
-    ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:45:5]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:46:1]
  45 │ 0b0__0n;
-    ·     ▲
     ╰────
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:44:5]
- 43 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:45:1]
  44 │ 0b0_n;
-    ·     ▲
     ╰────
 
   × Invalid Character `_`
@@ -21491,7 +21484,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:37:3]
  36 │ 
  37 │ 1__0123456789n;
-    ·   ─
+    ·   ──────────────
     ╰────
 
   × Invalid Character `n`
@@ -21512,7 +21505,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:37:4]
  36 │ 
  37 │ 10__0123456789n;
-    ·    ─
+    ·    ──────────────
     ╰────
 
   × Invalid Character `n`
@@ -21522,130 +21515,118 @@ Negative Passed: 4519/4519 (100.00%)
     ·    ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd-err.js:45:3]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd-err.js:46:1]
  45 │ 0x_1n;
-    ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:45:5]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:46:1]
  45 │ 0x0__0n;
-    ·     ▲
     ╰────
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:45:5]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:46:1]
  45 │ 0x0_n;
-    ·     ▲
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-00-err.js:53:3]
  52 │ 
  53 │ 00_0n;
-    ·   ─
+    ·   ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-01-err.js:53:3]
  52 │ 
  53 │ 01_0n;
-    ·   ─
+    ·   ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-07-err.js:55:3]
  54 │ 
  55 │ 07_0n;
-    ·   ─
+    ·   ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-0_0-err.js:53:2]
  52 │ 
  53 │ 0_0n;
-    ·  ─
+    ·  ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-0_1-err.js:53:2]
  52 │ 
  53 │ 0_1n;
-    ·  ─
+    ·  ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-0_7-err.js:54:2]
  53 │ 
  54 │ 0_7n;
-    ·  ─
+    ·  ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nonoctal-08-err.js:50:3]
  49 │ 
  50 │ 08_0n;
-    ·   ─
+    ·   ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nonoctal-09-err.js:50:3]
  49 │ 
  50 │ 09_0n;
-    ·   ─
+    ·   ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nonoctal-0_8-err.js:50:2]
  49 │ 
  50 │ 0_8n;
-    ·  ─
+    ·  ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nonoctal-0_9-err.js:50:2]
  49 │ 
  50 │ 0_9n;
-    ·  ─
+    ·  ─────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nzd-nsl-dds-dunder-err.js:40:2]
  39 │ 
  40 │ 0__0123456789n;
-    ·  ──
+    ·  ───────────────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-nzd-nsl-dds-leading-zero-err.js:38:2]
  37 │ 
  38 │ 0_0123456789n;
-    ·  ─
+    ·  ──────────────
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:45:5]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:46:1]
  45 │ 0o0__0n;
-    ·     ▲
     ╰────
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:45:5]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:46:1]
  45 │ 0o0_n;
-    ·     ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:45:3]
- 44 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:46:1]
  45 │ 0o_1n;
-    ·   ▲
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -21656,11 +21637,9 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Invalid Character `9`
-    ╭─[test262/test/language/literals/bigint/octal-invalid-digit.js:27:3]
- 26 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/bigint/octal-invalid-digit.js:28:1]
  27 │ 0o9n;
-    ·   ▲
     ╰────
 
   × Keywords cannot contain escape characters
@@ -21700,55 +21679,41 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.1_T1.js:17:3]
- 16 │ //CHECK#1
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.1_T1.js:18:1]
  17 │ 0x
-    ·   ▲
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.1_T2.js:17:3]
- 16 │ //CHECK#1
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.1_T2.js:18:1]
  17 │ 0X
-    ·   ▲
     ╰────
 
-  × Invalid Character `G`
-    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.2_T1.js:17:3]
- 16 │ //CHECK#1
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.2_T1.js:18:1]
  17 │ 0xG
-    ·   ▲
     ╰────
 
-  × Invalid Character `g`
-    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.2_T2.js:17:3]
- 16 │ //CHECK#1
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/S7.8.3_A6.2_T2.js:18:1]
  17 │ 0xg
-    ·   ▲
     ╰────
 
-  × Invalid Character `2`
-    ╭─[test262/test/language/literals/numeric/binary-invalid-digit.js:24:3]
- 23 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/binary-invalid-digit.js:25:1]
  24 │ 0b2;
-    ·   ▲
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/binary-invalid-leading.js:24:3]
  23 │ 
  24 │ 00b0;
-    ·   ─
+    ·   ────
     ╰────
 
-  × Invalid Character `;`
-    ╭─[test262/test/language/literals/numeric/binary-invalid-truncated.js:24:3]
- 23 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/binary-invalid-truncated.js:25:1]
  24 │ 0b;
-    ·   ▲
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -21827,29 +21792,22 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/numeric/numeric-followed-by-ident.js:19:2]
  18 │ 
  19 │ 3in []
-    ·  ──
+    ·  ──────
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-bd-nsl-bd-err.js:35:3]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-bd-nsl-bd-err.js:36:1]
  35 │ 0b_1
-    ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:36:1]
  35 │ 0b0__0
-    ·     ▲
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:36:1]
  35 │ 0b0_
-    ·     ▲
     ╰────
 
   × Invalid Character `_`
@@ -21863,7 +21821,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:27:3]
  26 │ 
  27 │ 1__0123456789
-    ·   ─
+    ·   ────────────
     ╰────
 
   × Invalid Character `
@@ -21885,7 +21843,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:27:4]
  26 │ 
  27 │ 10__0123456789
-    ·    ─
+    ·    ────────────
     ╰────
 
   × Invalid Character `
@@ -21907,21 +21865,21 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-nsl-dd-err.js:29:4]
  28 │ 
  29 │ 10._1
-    ·    ─
+    ·    ───
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-nsl-ep-err.js:32:4]
  31 │ 
  32 │ 10._e1
-    ·    ──
+    ·    ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-nsl-err.js:30:4]
  29 │ 
  30 │ 10._
-    ·    ─
+    ·    ──
     ╰────
 
   × Invalid Character `e`
@@ -21945,132 +21903,118 @@ Negative Passed: 4519/4519 (100.00%)
     · ─
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd-err.js:35:3]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd-err.js:36:1]
  35 │ 0x_1
-    ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:36:1]
  35 │ 0x0__0
-    ·     ▲
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:36:1]
  35 │ 0x0_
-    ·     ▲
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-00-err.js:42:3]
  41 │ 
  42 │ 00_0;
-    ·   ─
+    ·   ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-01-err.js:42:3]
  41 │ 
  42 │ 01_0;
-    ·   ─
+    ·   ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-07-err.js:44:3]
  43 │ 
  44 │ 07_0;
-    ·   ─
+    ·   ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-0_0-err.js:42:2]
  41 │ 
  42 │ 0_0;
-    ·  ─
+    ·  ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-0_1-err.js:42:2]
  41 │ 
  42 │ 0_1;
-    ·  ─
+    ·  ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-0_7-err.js:43:2]
  42 │ 
  43 │ 0_7;
-    ·  ─
+    ·  ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nonoctal-08-err.js:39:3]
  38 │ 
  39 │ 08_0;
-    ·   ─
+    ·   ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nonoctal-09-err.js:39:3]
  38 │ 
  39 │ 09_0;
-    ·   ─
+    ·   ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nonoctal-0_8-err.js:39:2]
  38 │ 
  39 │ 0_8;
-    ·  ─
+    ·  ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nonoctal-0_9-err.js:39:2]
  38 │ 
  39 │ 0_9;
-    ·  ─
+    ·  ────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nzd-nsl-dds-dunder-err.js:30:2]
  29 │ 
  30 │ 0__0123456789
-    ·  ──
+    ·  ─────────────
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-nzd-nsl-dds-leading-zero-err.js:28:2]
  27 │ 
  28 │ 0_0123456789
-    ·  ─
+    ·  ────────────
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:36:1]
  35 │ 0o0__0
-    ·     ▲
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:35:5]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:36:1]
  35 │ 0o0_
-    ·     ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:35:3]
- 34 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:36:1]
  35 │ 0o_1
-    ·   ▲
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -22081,25 +22025,21 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Invalid Character `8`
-    ╭─[test262/test/language/literals/numeric/octal-invalid-digit.js:24:3]
- 23 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/octal-invalid-digit.js:25:1]
  24 │ 0o8;
-    ·   ▲
     ╰────
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/octal-invalid-leading.js:24:3]
  23 │ 
  24 │ 00o0;
-    ·   ─
+    ·   ────
     ╰────
 
-  × Invalid Character `;`
-    ╭─[test262/test/language/literals/numeric/octal-invalid-truncated.js:24:3]
- 23 │ 
+  × Unexpected end of file
+    ╭─[test262/test/language/literals/numeric/octal-invalid-truncated.js:25:1]
  24 │ 0o;
-    ·   ▲
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23432,20 +23372,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/literals/string/S7.8.4_A1.1_T1.js:19:3]
- 18 │ //CHECK#1
- 19 │ """
-    ·   ▲
-    ╰────
-  help: Try insert a semicolon here
-
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.1_T2.js:19:1]
- 18 │ //CHECK#1
- 19 │ "
-    · ──
- 20 │ "
+ 18 │     //CHECK#1
+ 19 │ ╭─▶ "
+ 20 │ ╰─▶ "
     ╰────
 
   × Unterminated string
@@ -23455,20 +23386,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/literals/string/S7.8.4_A1.2_T1.js:19:3]
- 18 │ //CHECK#1
- 19 │ '''
-    ·   ▲
-    ╰────
-  help: Try insert a semicolon here
-
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.2_T2.js:19:1]
- 18 │ //CHECK#1
- 19 │ '
-    · ──
- 20 │ '
+ 18 │     //CHECK#1
+ 19 │ ╭─▶ '
+ 20 │ ╰─▶ '
     ╰────
 
   × Unterminated string
@@ -31102,6 +31024,14 @@ Negative Passed: 4519/4519 (100.00%)
  37 │ }
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-error.js:36:3]
+ 35 │     class C {
+ 36 │ ╭─▶   # x
+ 37 │ ├─▶ }
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-identifier-invalid-ues.js:64:10]
  63 │ class C {
@@ -31142,14 +31072,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ class C {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:7]
+ 28 │     class C {
+ 29 │ ╭─▶   get # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
@@ -31159,14 +31088,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ class C {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:7]
+ 28 │     class C {
+ 29 │ ╭─▶   set # m(_) {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -31184,14 +31112,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ class C {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:9]
+ 28 │     class C {
+ 29 │ ╭─▶   async # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -31209,12 +31136,28 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:29:3]
+ 28 │     class C {
+ 29 │ ╭─▶   # x = 1;
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:29:4]
  28 │ class C {
  29 │   # x;
     ·    ─
  30 │ }
+    ╰────
+
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:29:3]
+ 28 │     class C {
+ 29 │ ╭─▶   # x;
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
 
   × Invalid Character ` `
@@ -31241,6 +31184,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:3]
+ 28 │     class C {
+ 29 │ ╭─▶   # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
+    ╰────
+
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:15]
  28 │ class C {
@@ -31249,14 +31200,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ class C {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:14]
+ 28 │     class C {
+ 29 │ ╭─▶   static get # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
@@ -31266,14 +31216,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ class C {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:14]
+ 28 │     class C {
+ 29 │ ╭─▶   static set # m(_) {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -31291,14 +31240,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ class C {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:16]
+ 28 │     class C {
+ 29 │ ╭─▶   static async # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
@@ -31308,14 +31256,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ class C {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:10]
+ 28 │     class C {
+ 29 │ ╭─▶   static # x = 1;
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
@@ -31325,14 +31272,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ class C {
- 29 │   static # x;
-    ·         ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:10]
+ 28 │     class C {
+ 29 │ ╭─▶   static # x;
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -31350,14 +31296,13 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ class C {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ }
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:10]
+ 28 │     class C {
+ 29 │ ╭─▶   static # m() {}
+ 30 │ ├─▶ }
+    · ╰──── `}` expected
     ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -35854,6 +35799,14 @@ Negative Passed: 4519/4519 (100.00%)
     ·                    ─
     ╰────
 
+  × Expected `}` but found `EOF`
+    ╭─[test262/test/language/statements/function/invalid-function-body-3.js:18:19]
+ 17 │ 
+ 18 │ function __func(){# ABC}
+    ·                   ───┬───
+    ·                      ╰── `}` expected
+    ╰────
+
   × Expected `(` but found `.`
     ╭─[test262/test/language/statements/function/invalid-name-dot.js:17:13]
  16 │ 
@@ -38906,14 +38859,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ───
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/types/string/S8.4_A13_T1.js:16:13]
- 15 │ 
- 16 │ var str = ''';
-    ·             ▲
-    ╰────
-  help: Try insert a semicolon here
-
   × Unterminated string
     ╭─[test262/test/language/types/string/S8.4_A13_T2.js:16:11]
  15 │ 
@@ -38942,14 +38887,6 @@ Negative Passed: 4519/4519 (100.00%)
  16 │ var str = """;
     ·             ───
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/types/string/S8.4_A14_T2.js:16:13]
- 15 │ 
- 16 │ var str = """;
-    ·             ▲
-    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/types/string/S8.4_A14_T3.js:16:13]
@@ -38998,5 +38935,5 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/white-space/mongolian-vowel-separator.js:33:4]
  32 │ // U+180E between "var" and "foo"; UTF8(0x180E) = 0xE1 0xA0 0x8E
  33 │ var᠎foo;
-    ·    ─
+    ·    ─────
     ╰────

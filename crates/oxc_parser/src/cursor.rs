@@ -342,7 +342,7 @@ impl<'a> ParserImpl<'a> {
         let mut list = self.ast.vec();
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || kind == Kind::Eof || self.fatal_error.is_some() {
                 break;
             }
             match f(self) {
@@ -372,7 +372,7 @@ impl<'a> ParserImpl<'a> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || kind == Kind::Eof || self.fatal_error.is_some() {
                 break;
             }
             if first {
@@ -407,7 +407,7 @@ impl<'a> ParserImpl<'a> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || kind == Kind::Eof || self.fatal_error.is_some() {
                 break;
             }
             if first {

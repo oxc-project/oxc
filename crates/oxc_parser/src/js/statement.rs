@@ -35,7 +35,7 @@ impl<'a> ParserImpl<'a> {
         let mut statements = self.ast.vec();
 
         let mut expecting_directives = true;
-        while !self.at(Kind::Eof) {
+        while !self.at(Kind::Eof) && self.fatal_error.is_none() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
             }
@@ -197,7 +197,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
         let mut body = self.ast.vec();
-        while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
+        while !self.at(Kind::RCurly) && !self.at(Kind::Eof) && self.fatal_error.is_none() {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
             body.push(stmt);
         }
@@ -527,7 +527,9 @@ impl<'a> ParserImpl<'a> {
         };
         self.expect(Kind::Colon);
         let mut consequent = self.ast.vec();
-        while !matches!(self.cur_kind(), Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof) {
+        while !matches!(self.cur_kind(), Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof)
+            && self.fatal_error.is_none()
+        {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
             consequent.push(stmt);
         }

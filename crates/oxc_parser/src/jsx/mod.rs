@@ -1,6 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, Dummy, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 
@@ -142,6 +142,10 @@ impl<'a> ParserImpl<'a> {
             );
         }
 
+        if self.fatal_error.is_some() {
+            return JSXElementName::dummy(&self.ast.allocator);
+        }
+
         // References begin with a capital letter, `_` or `$` e.g. `<Foo>`, `<_foo>`, `<$foo>`.
         // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
         // The identifier has already been checked to be valid, so when first char is ASCII, it can only
@@ -184,7 +188,7 @@ impl<'a> ParserImpl<'a> {
         let mut span = span;
         let mut property = None;
 
-        while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
+        while self.eat(Kind::Dot) && !self.at(Kind::Eof) && self.fatal_error.is_none() {
             // <foo.bar.baz>
             if let Some(prop) = property {
                 object =
@@ -212,7 +216,7 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXChild` `JSXChildren_opt`
     fn parse_jsx_children(&mut self) -> Vec<'a, JSXChild<'a>> {
         let mut children = self.ast.vec();
-        while !self.at(Kind::Eof) {
+        while !self.at(Kind::Eof) && self.fatal_error.is_none() {
             if let Some(child) = self.parse_jsx_child() {
                 children.push(child);
             } else {
@@ -314,7 +318,9 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> Vec<'a, JSXAttributeItem<'a>> {
         let mut attributes = self.ast.vec();
-        while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash) {
+        while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash)
+            && self.fatal_error.is_none()
+        {
             let attribute = match self.cur_kind() {
                 Kind::LCurly => {
                     JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
