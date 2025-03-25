@@ -732,7 +732,7 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
 /// This field is derived from `members` field.
 ///
 /// `Span` indicates within braces `{ ... }`.
-/// ```
+/// ```ignore
 /// enum Foo { ... }
 /// |              | TSEnumDeclaration.span
 ///          |     | TSEnumBody.span
