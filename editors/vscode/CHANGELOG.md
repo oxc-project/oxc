@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2025-03-25
+
+### Testing
+
+- 878bec6 editor: Add test for `oxc.toggleEnable` command (#9987) (Sysix)
+- 093e7e5 editor: Add `oxc.showOutputChannel` command test (#9986) (Sysix)
+- c3af9a4 editor: Add tests for listing all oxc commands (#9930) (Sysix)
+
 ## [0.16.2] - 2025-03-21
 
 - bfb416c editor: [**BREAKING**] Enable nested configuration by default (#9929) (Sysix)

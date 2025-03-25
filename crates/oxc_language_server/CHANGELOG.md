@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2025-03-25
+
+### Bug Fixes
+
+- 2d7b0cf editor: Re-add tester and prevent empty inverted diagnostics  (#9991) (camchenry)
+
+### Refactor
+
+- ad06194 linter: Add fixer for `typescript-eslint/no-non-null-asserted-optional-chain` (#9993) (camchenry)
+
+### Testing
+
+- 71dce1f editor: Add end-to-end tests for linter output (#9979) (Cam McHenry)
+- c2f1be0 editor: Add tests for `offset_to_position` (#9978) (camchenry)
+
 ## [0.16.1] - 2025-03-20
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
