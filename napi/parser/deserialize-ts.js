@@ -1747,9 +1747,11 @@ function deserializeTSMethodSignature(pos) {
     optional: deserializeBool(pos + 25),
     kind: deserializeTSMethodSignatureKind(pos + 26),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 32),
-    thisParam: deserializeOptionBoxTSThisParameter(pos + 40),
     params: deserializeBoxFormalParameters(pos + 48),
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
+    accessibility: null,
+    readonly: false,
+    static: false,
   };
 }
 

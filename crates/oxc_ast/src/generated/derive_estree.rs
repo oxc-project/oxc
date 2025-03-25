@@ -2938,9 +2938,11 @@ impl ESTree for TSMethodSignature<'_> {
         state.serialize_field("optional", &self.optional);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("thisParam", &self.this_param);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("readonly", &crate::serialize::False(self));
+        state.serialize_field("static", &crate::serialize::False(self));
         state.end();
     }
 }

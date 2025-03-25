@@ -1008,6 +1008,7 @@ pub enum TSMethodSignatureKind {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(accessibility = Null, readonly = False, r#static = False))]
 pub struct TSMethodSignature<'a> {
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -1015,6 +1016,7 @@ pub struct TSMethodSignature<'a> {
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,

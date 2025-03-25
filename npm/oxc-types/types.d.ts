@@ -1227,9 +1227,11 @@ export interface TSMethodSignature extends Span {
   optional: boolean;
   kind: TSMethodSignatureKind;
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
+  accessibility: null;
+  readonly: false;
+  static: false;
 }
 
 export interface TSConstructSignatureDeclaration extends Span {
