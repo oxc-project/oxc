@@ -61,12 +61,12 @@ impl TestFiles {
         Self { files: vec![file] }
     }
 
-    fn complicated_urls() -> [&'static str; 3] {
+    fn complicated_urls() -> [&'static str; 5] {
         [
             // TypeScript syntax (2.81MB)
-            // "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
+            "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
             // Real world app tsx (1.0M)
-            // "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx",
+            "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx",
             // Real world content-heavy app jsx (3K)
             "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx",
             // Heavy with classes (554K)
