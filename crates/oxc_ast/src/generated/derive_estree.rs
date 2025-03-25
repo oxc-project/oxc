@@ -238,13 +238,13 @@ impl ESTree for ObjectProperty<'_> {
         state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_field("method", &self.method);
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &self.computed);
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
