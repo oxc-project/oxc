@@ -14,11 +14,15 @@ const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
 
 // Load/download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
+//
+// `checker.ts` and `cal.com.tsx` fixture tests are disabled for now while we work on aligning TS AST
+// with TS-ESLint.
+// TODO: Enable them again once that work is complete.
 const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
-  'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
+  // 'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
   // Real world app tsx (1.0M)
-  'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
+  // 'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
   // Real world content-heavy app jsx (3K)
   'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx',
   // Heavy with classes (554K)
