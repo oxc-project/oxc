@@ -5,7 +5,7 @@ use std::{fs, path::Path};
 use pico_args::Arguments;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{JsFormatContext, JsFormatOptions, formatter};
+use oxc_formatter::Formatter;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -27,14 +27,7 @@ fn main() -> Result<(), String> {
         println!("Parsed with Errors.");
     }
 
-    let options = JsFormatOptions::default();
-    let context = JsFormatContext::new(&source_text, options);
-    let formatted = formatter::format(
-        context,
-        formatter::Arguments::new(&[formatter::Argument::new(&ret.program)]),
-    )
-    .unwrap();
-    let code = formatted.print().unwrap().into_code();
+    let code = Formatter::new(&allocator, options).build(program);
 
     println!("{code}");
 

@@ -6,16 +6,16 @@ use oxc_ast::ast::{
     VariableDeclarator,
 };
 use oxc_ast_visit::VisitMut;
-use oxc_parser::Parser;
-use oxc_prettier::{
-    ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
+use oxc_formatter::{
+    ArrowParens, EndOfLine, FormatterOptions, ObjectWrap, QuoteProps, TrailingComma,
 };
+use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
 /// Vec<(key, value)>
 type SnapshotOptions = Vec<(String, String)>;
 
-pub fn parse_spec(spec: &Path) -> Vec<(PrettierOptions, SnapshotOptions)> {
+pub fn parse_spec(spec: &Path) -> Vec<(FormatterOptions, SnapshotOptions)> {
     let mut parser = SpecParser::default();
     parser.parse(spec);
     parser.calls
@@ -25,7 +25,7 @@ pub fn parse_spec(spec: &Path) -> Vec<(PrettierOptions, SnapshotOptions)> {
 struct SpecParser {
     source_text: String,
     parsers: Vec<String>,
-    calls: Vec<(PrettierOptions, SnapshotOptions)>,
+    calls: Vec<(FormatterOptions, SnapshotOptions)>,
 }
 
 impl SpecParser {
@@ -77,7 +77,7 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = PrettierOptions::default();
+        let mut options = FormatterOptions::default();
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {
