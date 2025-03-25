@@ -22,7 +22,7 @@ use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
+    identifier::{LS, NBSP, PS, is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -36,6 +36,31 @@ pub use crate::{
     r#gen::{Gen, GenExpr},
     options::{CodegenOptions, LegalComment},
 };
+
+/// Convert `char` to UTF-8 bytes array.
+const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    let mut bytes = [0u8; N];
+    ch.encode_utf8(&mut bytes);
+    bytes
+}
+
+/// `LS` character as UTF-8 bytes.
+const LS_BYTES: [u8; 3] = to_bytes(LS);
+/// `PS` character as UTF-8 bytes.
+const PS_BYTES: [u8; 3] = to_bytes(PS);
+
+const _: () = assert!(LS_BYTES[0] == PS_BYTES[0]);
+const LS_OR_PS_FIRST_BYTE: u8 = LS_BYTES[0]; // 0xE2
+const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
+const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
+
+/// `NBSP` character as UTF-8 bytes.
+const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
+const NBSP_FIRST_BYTE: u8 = NBSP_BYTES[0]; // 0xC2
+
+/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
+const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0]; // 0xEF
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
@@ -240,12 +265,6 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.print_str(s);
-    }
-
-    /// Push `char` into the buffer.
-    #[inline]
-    pub fn print_char(&mut self, ch: char) {
-        self.code.print_char(ch);
     }
 
     /// Print a single [`Expression`], adding it to the code generator's
@@ -625,82 +644,142 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
-        let mut chars = s.value.chars().peekable();
+        let mut bytes = s.value.as_bytes().iter().copied();
 
-        while let Some(c) = chars.next() {
-            match c {
-                '\x00' => {
-                    if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
+        while let Some(b) = bytes.next() {
+            match b {
+                b'\x00' => {
+                    if bytes.clone().next().is_some_and(|next| next.is_ascii_digit()) {
                         self.print_str("\\x00");
                     } else {
                         self.print_str("\\0");
                     }
                 }
-                '\x07' => self.print_str("\\x07"),
-                '\u{8}' => self.print_str("\\b"), // \b
-                '\u{b}' => self.print_str("\\v"), // \v
-                '\u{c}' => self.print_str("\\f"), // \f
-                '\n' => {
+                b'\x07' => self.print_str("\\x07"),
+                b'\x08' => self.print_str("\\b"), // \b
+                b'\x0B' => self.print_str("\\v"), // \v
+                b'\x0C' => self.print_str("\\f"), // \f
+                b'\n' => {
                     if quote == Quote::Backtick {
                         self.print_ascii_byte(b'\n');
                     } else {
                         self.print_str("\\n");
                     }
                 }
-                '\r' => self.print_str("\\r"),
-                '\x1B' => self.print_str("\\x1B"),
-                '\\' => self.print_str("\\\\"),
+                b'\r' => self.print_str("\\r"),
+                b'\x1B' => self.print_str("\\x1B"),
+                b'\\' => self.print_str("\\\\"),
                 // Allow `U+2028` and `U+2029` in string literals
                 // <https://tc39.es/proposal-json-superset>
                 // <https://github.com/tc39/proposal-json-superset>
-                LS => self.print_str("\\u2028"),
-                PS => self.print_str("\\u2029"),
-                '\u{a0}' => self.print_str("\\xA0"),
-                '\'' => {
+                LS_OR_PS_FIRST_BYTE => {
+                    // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+                    // so there must be 2 more bytes available to consume
+                    let next2 = unsafe {
+                        let next1 = bytes.next().unwrap_unchecked();
+                        let next2 = bytes.next().unwrap_unchecked();
+                        [next1, next2]
+                    };
+                    match next2 {
+                        LS_LAST_2_BYTES => self.print_str("\\u2028"),
+                        PS_LAST_2_BYTES => self.print_str("\\u2029"),
+                        _ => {
+                            // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+                            // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+                            unsafe {
+                                self.code.print_bytes_unchecked(&[
+                                    LS_OR_PS_FIRST_BYTE,
+                                    next2[0],
+                                    next2[1],
+                                ]);
+                            }
+                        }
+                    }
+                }
+                NBSP_FIRST_BYTE => {
+                    // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
+                    // so there must be 1 more byte available to consume
+                    let next = unsafe { bytes.next().unwrap_unchecked() };
+                    if next == NBSP_BYTES[1] {
+                        self.print_str("\\xA0");
+                    } else {
+                        // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
+                        // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+                        unsafe { self.code.print_bytes_unchecked(&[NBSP_FIRST_BYTE, next]) };
+                    }
+                }
+                b'\'' => {
                     if quote == Quote::Single {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'\'');
                 }
-                '\"' => {
+                b'\"' => {
                     if quote == Quote::Double {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'"');
                 }
-                '`' => {
+                b'`' => {
                     if quote == Quote::Backtick {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'`');
                 }
-                '$' => {
-                    if quote == Quote::Backtick && chars.peek() == Some(&'{') {
+                b'$' => {
+                    if quote == Quote::Backtick && bytes.clone().next() == Some(b'{') {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'$');
                 }
-                '\u{FFFD}' if s.lone_surrogates => {
-                    // If `lone_surrogates` is set, string contains lone surrogates which are escaped
-                    // using the lossy replacement character (U+FFFD) as an escape marker.
-                    // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-                    let hex1 = chars.next().unwrap();
-                    let hex2 = chars.next().unwrap();
-                    let hex3 = chars.next().unwrap();
-                    let hex4 = chars.next().unwrap();
-                    if [hex1, hex2, hex3, hex4] == ['f', 'f', 'f', 'd'] {
-                        // Actual lossy replacement character
-                        self.print_char('\u{FFFD}');
+                LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
+                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
+                    // so there must be 2 more bytes available to consume
+                    let next2 = unsafe {
+                        let next1 = bytes.next().unwrap_unchecked();
+                        let next2 = bytes.next().unwrap_unchecked();
+                        [next1, next2]
+                    };
+                    if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
+                        && s.lone_surrogates
+                    {
+                        // If `lone_surrogates` is set, string contains lone surrogates which are escaped
+                        // using the lossy replacement character (U+FFFD) as an escape marker.
+                        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
+                        let hex1 = bytes.next().unwrap();
+                        let hex2 = bytes.next().unwrap();
+                        let hex3 = bytes.next().unwrap();
+                        let hex4 = bytes.next().unwrap();
+                        if [hex1, hex2, hex3, hex4] == [b'f', b'f', b'f', b'd'] {
+                            // Actual lossy replacement character
+                            self.print_str("\u{FFFD}");
+                        } else {
+                            // Lossy replacement character representing a lone surrogate
+                            assert!((hex1 | hex2 | hex3 | hex3).is_ascii());
+                            self.print_str("\\u");
+                            // SAFETY: Just checked all 4 bytes are ASCII
+                            unsafe { self.code.print_bytes_unchecked(&[hex1, hex2, hex3, hex4]) };
+                        }
                     } else {
-                        // Lossy replacement character representing a lone surrogate
-                        self.print_str("\\u");
-                        self.print_char(hex1);
-                        self.print_char(hex2);
-                        self.print_char(hex3);
-                        self.print_char(hex4);
+                        // Another Unicode char beginning with 0xEF or `lone_surrogates` flag is unset.
+                        // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
+                        // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string.
+                        unsafe {
+                            self.code.print_bytes_unchecked(&[
+                                LOSSY_REPLACEMENT_CHAR_FIRST_BYTE,
+                                next2[0],
+                                next2[1],
+                            ]);
+                        }
                     }
                 }
-                _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
+                _ => {
+                    // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
+                    // an invalid UTF-8 string. But none of the match arms above will match the remaining
+                    // bytes of the Unicode character, so we'll also print those remaining bytes on
+                    // next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
+                    unsafe { self.code.print_byte_unchecked(b) }
+                }
             }
         }
     }
