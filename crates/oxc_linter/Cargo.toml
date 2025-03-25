@@ -13,6 +13,9 @@ repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
 
+[features]
+ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
+
 [lints]
 workspace = true
 
@@ -28,7 +31,7 @@ oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }
-oxc_macros = { workspace = true }
+oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
