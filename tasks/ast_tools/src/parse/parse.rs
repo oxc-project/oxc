@@ -784,7 +784,7 @@ fn process_attr(
             for meta in parts {
                 match &meta {
                     Meta::Path(path) => {
-                        let part_name = path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(path.get_ident().ok_or(())?);
                         process_attr_part(
                             processor,
                             attr_name,
@@ -793,7 +793,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::NameValue(name_value) => {
-                        let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                         let str = convert_expr_to_string(&name_value.value);
                         process_attr_part(
                             processor,
@@ -803,7 +803,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::List(meta_list) => {
-                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                         let list = parse_attr_part_list(meta_list)?;
                         process_attr_part(
                             processor,
@@ -827,16 +827,16 @@ fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>
         .into_iter()
         .map(|meta| match meta {
             Meta::Path(path) => {
-                let part_name = path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(path.get_ident().ok_or(())?);
                 Ok(AttrPartListElement::Tag(part_name))
             }
             Meta::NameValue(name_value) => {
-                let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                 let str = convert_expr_to_string(&name_value.value);
                 Ok(AttrPartListElement::String(part_name, str))
             }
             Meta::List(meta_list) => {
-                let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                 let list = parse_attr_part_list(&meta_list)?;
                 Ok(AttrPartListElement::List(part_name, list))
             }

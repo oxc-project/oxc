@@ -111,7 +111,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                 let mut field_indices = vec![];
                 for list_element in list {
                     let field_name = list_element.try_into_tag()?;
-                    let field_name = field_name.trim_start_matches("r#");
                     let field_index = all_field_names
                         .clone()
                         .position(|this_field_name| this_field_name == field_name)
