@@ -67,30 +67,17 @@ fn is_dead_store(symbol_id: SymbolId, _node_id: NodeId, ctx: &LintContext<'_>) -
 fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     // Get all references to this symbol ordered by span position
     let references = ctx.semantic().symbol_references(symbol_id).collect::<Vec<_>>();
-
     // get SymbolId's declaration node
-    let declaration_node = ctx.semantic().scoping().symbol_declaration(symbol_id);
-    println!("declaration_node: {:?}", declaration_node);
+    let declaration_node_id = ctx.semantic().scoping().symbol_declaration(symbol_id);
+    let has_if_else_loop_after_declaration = check_has_if_else_loop_after_declaration(&declaration_node_id, &references, ctx);
 
     // Create a map to group references by control structure
     let mut reference_group = FxHashMap::default();
     let mut reference_group_without_parent = vec![];
 
-    let mut has_if_else_statement = false;
-    let mut has_loop_statement = false;
     for reference in references {
         // Find the containing control structure (if statement, for loop, etc.)
         let control_parent = find_control_parent(reference.node_id(), ctx);
-        // check if control_parent is IfStatement
-        if let Some(parent_id) = control_parent {
-            if has_if_else_context(parent_id, ctx) && parent_id > declaration_node {
-                has_if_else_statement = true;
-            }
-            if has_loop_context(parent_id, ctx) && parent_id > declaration_node {
-                has_loop_statement = true;
-            }
-        }
-
         if let Some(parent_id) = control_parent {
             reference_group.entry(parent_id).or_insert_with(Vec::new).push(reference);
         } else {
@@ -99,9 +86,8 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
     }
 
 
-
-    let dec_control_parent = find_control_parent(declaration_node, ctx);
-    let dec_ref = Reference::new(declaration_node, ReferenceFlags::None);
+    let dec_control_parent = find_control_parent(declaration_node_id, ctx);
+    let dec_ref = Reference::new(declaration_node_id, ReferenceFlags::None);
     if let Some(parent_id) = dec_control_parent {
         reference_group.entry(parent_id).or_insert_with(Vec::new).push(&dec_ref);
     } else {
@@ -140,7 +126,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
             }
 
             // check if reference is declaration
-            if reference.node_id() == declaration_node {
+            if reference.node_id() == declaration_node_id {
                 has_declaration = true;
                 declaration_node_idx = idx;
             }
@@ -163,7 +149,11 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         }
 
 
-        if has_declaration && reference_group_value.len() == 1 && !has_if_else_statement && !has_loop_statement {
+        // if there is only one reference and no if/else/loop statement after it, it's a dead store
+        if has_declaration &&
+            reference_group_value.len() == 1 &&
+            !has_if_else_loop_after_declaration
+            {
             return true;
         }
 
@@ -181,6 +171,27 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
     if is_multiple_assignments_without_read && has_read {
         print!("failed3");
         return true;
+    }
+
+    false
+}
+
+
+fn check_has_if_else_loop_after_declaration(dec_node_id: &NodeId, references: &Vec<&Reference>, ctx: &LintContext<'_>) -> bool {
+    for reference in references {
+        // Find the containing control structure (if statement, for loop, etc.)
+        if reference.node_id() > *dec_node_id {
+            let control_parent = find_control_parent(reference.node_id(), ctx);
+            // check if control_parent is IfStatement
+            if let Some(parent_node_id) = control_parent {
+                if has_if_else_context(parent_node_id, ctx) {
+                    return true;
+                }
+                if has_loop_context(parent_node_id, ctx) {
+                    return true;
+                }
+            }
+        }
     }
 
     false
@@ -382,7 +393,7 @@ fn test() {
                 }
                 console.log(v);
             }
-        "
+        ",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
