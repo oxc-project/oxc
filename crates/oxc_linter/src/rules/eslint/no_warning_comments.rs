@@ -1,19 +1,16 @@
-use lazy_static::lazy_static;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
 const CHAR_LIMIT: usize = 40;
 
-lazy_static! {
-    // This regex is used to detect if the comment itself is a configuration comment
-    // for the no-warning-comments rule. In such a case we do not warn.
-    static ref SELF_CONFIG_REGEX: Regex = Regex::new(r"(?i)\bno-warning-comments\b").unwrap();
-}
+// This regex is used to detect if the comment itself is a configuration comment
+// for the no-warning-comments rule. In such a case we do not warn.
+static SELF_CONFIG_REGEX: Lazy<Regex> = lazy_regex!(r"(?i)\bno-warning-comments\b");
 
 /// Determines where in a comment a warning term should be matched.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -155,8 +152,8 @@ fn no_warning_comments_diagnostic(matched_term: &str, comment: &str, span: Span)
 /// allowing for leading whitespace and any characters specified by `decoration`.
 /// Otherwise, if `location` is `Anywhere`, word boundaries are added if the term starts or ends with a word character.
 fn convert_to_regex(term: &str, location: WarningLocation, decoration: &str) -> Regex {
-    let escaped_term = regex::escape(term);
-    let escaped_decoration = regex::escape(decoration);
+    let escaped_term = term;
+    let escaped_decoration = decoration;
     let prefix = match location {
         WarningLocation::Start => format!("^[\\s{}]*", escaped_decoration),
         WarningLocation::Anywhere => {
