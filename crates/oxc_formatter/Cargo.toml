@@ -25,7 +25,6 @@ oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-countme = "3.0.1"
 rustc-hash = { workspace = true }
 unicode-width = "0.1.12"
 
