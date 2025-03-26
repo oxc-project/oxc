@@ -61,6 +61,7 @@ impl<'a> Format<JsFormatContext<'a>> for Statement<'a> {
     fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
         match self {
             Statement::VariableDeclaration(stmt) => stmt.fmt(f),
+            Statement::BlockStatement(stmt) => stmt.fmt(f),
             _ => write!(f, [text("// TODO"), hard_line_break()]),
         }
     }
@@ -68,14 +69,41 @@ impl<'a> Format<JsFormatContext<'a>> for Statement<'a> {
 
 impl<'a> Format<JsFormatContext<'a>> for VariableDeclaration<'a> {
     fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
-        let VariableDeclaration { kind, .. } = self;
-
         write!(
             f,
-            [text("// TODO: VariableDeclaration @"), text(kind.as_str()), hard_line_break()]
-        )?;
+            [text("// TODO: VariableDeclaration @"), text(self.kind.as_str()), hard_line_break()]
+        )
+    }
+}
 
-        Ok(())
+impl<'a> Format<JsFormatContext<'a>> for BlockStatement<'a> {
+    fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
+        write!(f, [text("{")])?;
+
+        if block_statement::is_empty_block(self) {
+            let comments = f.comments();
+            let has_dangling_comments = comments.has_dangling_comments(self.span);
+            if has_dangling_comments {
+            } else if block_statement::is_non_collapsible() {
+                write!(f, [hard_line_break()])?;
+            }
+        } else {
+            write!(f, [text("{")])?
+        }
+
+        write!(f, [text("}")])
+    }
+}
+
+mod block_statement {
+    use super::BlockStatement;
+
+    pub fn is_empty_block(block: &BlockStatement<'_>) -> bool {
+        true
+    }
+
+    pub fn is_non_collapsible() -> bool {
+        false
     }
 }
 
