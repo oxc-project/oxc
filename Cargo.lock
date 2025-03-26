@@ -1796,7 +1796,6 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
- "tracing",
  "unicode-width 0.1.14",
 ]
 

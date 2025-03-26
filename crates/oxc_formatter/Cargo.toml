@@ -28,7 +28,6 @@ oxc_syntax = { workspace = true }
 countme = "3.0.1"
 drop_bomb = "0.1.5"
 rustc-hash = "2.1.1"
-tracing = { version = "0.1.41", default-features = false, features = ["std", "attributes"] }
 unicode-width = "0.1.12"
 
 [dev-dependencies]

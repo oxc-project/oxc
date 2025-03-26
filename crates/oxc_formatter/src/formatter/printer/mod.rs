@@ -55,21 +55,19 @@ impl<'a> Printer<'a> {
         document: &'a Document,
         indent: u16,
     ) -> PrintResult<Printed> {
-        tracing::debug_span!("Printer::print").in_scope(move || {
-            let mut stack = PrintCallStack::new(PrintElementArgs::new());
-            let mut queue: PrintQueue<'a> = PrintQueue::new(document.as_ref());
-            let mut indent_stack = PrintIndentStack::new(Indention::Level(indent));
+        let mut stack = PrintCallStack::new(PrintElementArgs::new());
+        let mut queue: PrintQueue<'a> = PrintQueue::new(document.as_ref());
+        let mut indent_stack = PrintIndentStack::new(Indention::Level(indent));
 
-            while let Some(element) = queue.pop() {
-                self.print_element(&mut stack, &mut indent_stack, &mut queue, element)?;
+        while let Some(element) = queue.pop() {
+            self.print_element(&mut stack, &mut indent_stack, &mut queue, element)?;
 
-                if queue.is_empty() {
-                    self.flush_line_suffixes(&mut queue, &mut stack, &mut indent_stack, None);
-                }
+            if queue.is_empty() {
+                self.flush_line_suffixes(&mut queue, &mut stack, &mut indent_stack, None);
             }
+        }
 
-            Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
-        })
+        Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
     }
 
     /// Prints a single element and push the following elements to queue
