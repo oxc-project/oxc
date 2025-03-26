@@ -1,3 +1,8 @@
+use std::{fmt, rc::Rc, str::FromStr};
+
+use oxc_allocator::Vec;
+use oxc_ast::{Comment, ast::Program};
+
 use crate::formatter::formatter::Formatter;
 use crate::formatter::prelude::{if_group_breaks, text};
 use crate::formatter::printer::PrinterOptions;
@@ -8,23 +13,23 @@ use crate::formatter::{
     SyntaxTriviaPieceComments,
 };
 use crate::write;
-use std::fmt;
-use std::fmt::Debug;
-use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct JsFormatContext<'a> {
-    source_text: &'a str,
     options: JsFormatOptions,
-    // /// The comments of the nodes and tokens in the program.
-    // comments: Rc<JsComments>,
+    source_text: &'a str,
+    comments: Comments,
     // cached_function_body: Option<(AnyJsFunctionBody, FormatElement)>,
     // source_map: Option<TransformSourceMap>,
 }
 
 impl<'a> JsFormatContext<'a> {
-    pub fn new(source_text: &'a str, options: JsFormatOptions) -> Self {
-        Self { source_text, options }
+    pub fn new(program: &'a Program<'a>, options: JsFormatOptions) -> Self {
+        Self {
+            options,
+            source_text: program.source_text,
+            comments: Comments::from_oxc_comments(&program.comments),
+        }
     }
 
     pub fn source_text(&self) -> &'a str {
@@ -58,12 +63,11 @@ impl CommentStyle for JsCommentStyle {
 }
 
 impl<'a> CstFormatContext for JsFormatContext<'a> {
-    // type Language = JsLanguage;
     type Style = JsCommentStyle;
     // type CommentRule = FormatJsLeadingComment;
 
     fn comments(&self) -> &Comments {
-        todo!()
+        &self.comments
     }
 }
 

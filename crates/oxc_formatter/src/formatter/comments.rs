@@ -75,8 +75,15 @@
 //! This hasn't shown to be a significant limitation today but the infrastructure could be extended to support a `label` on [`SourceComment`] that allows to further categorise comments.
 //!
 
-mod builder;
 mod map;
+
+#[cfg(debug_assertions)]
+use std::cell::{Cell, RefCell};
+use std::marker::PhantomData;
+use std::rc::Rc;
+
+use oxc_ast::Comment;
+use oxc_span::Span;
 
 use self::map::CommentsMap;
 use super::buffer::Buffer;
@@ -86,10 +93,6 @@ use super::{SyntaxElementKey, SyntaxNode, SyntaxToken};
 // use biome_rowan::syntax::SyntaxElementKey;
 // use biome_rowan::{Language, SyntaxNode, SyntaxToken, SyntaxTriviaPieceComments};
 use rustc_hash::FxHashSet;
-#[cfg(debug_assertions)]
-use std::cell::{Cell, RefCell};
-use std::marker::PhantomData;
-use std::rc::Rc;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CommentKind {
@@ -763,7 +766,7 @@ pub trait CommentStyle: Default {
 /// The comments of a syntax tree stored by node.
 ///
 /// Cloning `comments` is cheap as it only involves bumping a reference counter.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Comments {
     /// The use of a [Rc] is necessary to achieve that [Comments] has a lifetime that is independent from the [crate::Formatter].
     /// Having independent lifetimes is necessary to support the use case where a (formattable object)[crate::Format]
@@ -781,113 +784,113 @@ pub struct Comments {
     ///
     /// Using an `Rc` here allows to cheaply clone [Comments] for these use cases.
     data: Rc<CommentsData>,
+    // comments: &'a oxc_allocator::Vec<'a, Comment>,
 }
 
 impl Comments {
-    /// Extracts all the comments from `root` and its descendants nodes.
-    pub fn from_node<Style>(
-        root: &SyntaxNode,
-        style: &Style,
-        // source_map: Option<&TransformSourceMap>,
-    ) -> Self
-    where
-        Style: CommentStyle,
-    {
-        todo!()
-        // let builder = CommentsBuilderVisitor::new(style, source_map);
+    pub fn from_oxc_comments<'a>(comments: &'a oxc_allocator::Vec<'a, Comment>) -> Self {
+        use oxc_ast::ast;
+        let mut map = CommentsMap::new();
+        for comment in comments {
+            // TODO: Converting to `SourceComment` is incomplete.
+            let c = SourceComment {
+                // FIXME
+                lines_before: 0,
+                // FIXME
+                lines_after: 0,
+                // FIXME
+                piece: SyntaxTriviaPieceComments {},
+                kind: match comment.kind {
+                    ast::CommentKind::Line => CommentKind::Line,
+                    ast::CommentKind::Block => CommentKind::Block, // TODO: missing CommentKind::InlineBlock
+                },
+                #[cfg(debug_assertions)]
+                formatted: Cell::new(false),
+            };
+            match comment.position {
+                ast::CommentPosition::Leading => {
+                    map.push_leading(comment.span.start, c);
+                }
+                ast::CommentPosition::Trailing => {
+                    map.push_trailing(comment.span.start, c);
+                } // TODO:: missing Comment::Position::Dangling
+            }
+        }
 
-        // let (comments, skipped) = builder.visit(root);
-
-        // Self {
-        // data: Rc::new(CommentsData {
-        // root: Some(root.clone()),
-        // is_suppression: Style::is_suppression,
-
-        // comments,
-        // with_skipped: skipped,
-        // #[cfg(debug_assertions)]
-        // checked_suppressions: RefCell::new(Default::default()),
-        // }),
-        // }
+        let data = Rc::new(CommentsData {
+            comments: map,
+            #[cfg(debug_assertions)]
+            checked_suppressions: RefCell::new(Default::default()),
+        });
+        Self { data }
     }
 
     /// Returns `true` if the given `node` has any [leading](self#leading-comments) or [trailing](self#trailing-comments) comments.
     #[inline]
-    pub fn has_comments(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // self.data.comments.has(&node.key())
+    pub fn has_comments(&self, span: Span) -> bool {
+        self.data.comments.has(&span.start)
     }
 
     /// Returns `true` if the given `node` has any [leading comments](self#leading-comments).
     #[inline]
-    pub fn has_leading_comments(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // !self.leading_comments(node).is_empty()
+    pub fn has_leading_comments(&self, span: Span) -> bool {
+        !self.leading_comments(span).is_empty()
     }
 
     /// Tests if the node has any [leading comments](self#leading-comments) that have a leading line break.
     ///
     /// Corresponds to [CommentTextPosition::OwnLine].
-    pub fn has_leading_own_line_comment(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // self.leading_comments(node).iter().any(|comment| comment.lines_after() > 0)
+    pub fn has_leading_own_line_comment(&self, span: Span) -> bool {
+        self.leading_comments(span).iter().any(|comment| comment.lines_after() > 0)
     }
 
     /// Returns the `node`'s [leading comments](self#leading-comments).
     #[inline]
-    pub fn leading_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-        todo!()
-        // self.data.comments.leading(&node.key())
+    pub fn leading_comments(&self, span: Span) -> &[SourceComment] {
+        self.data.comments.leading(&span.start)
     }
 
     /// Returns `true` if node has any [dangling comments](self#dangling-comments).
-    pub fn has_dangling_comments(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // !self.dangling_comments(node).is_empty()
+    pub fn has_dangling_comments(&self, span: Span) -> bool {
+        !self.dangling_comments(span).is_empty()
     }
 
     /// Returns the [dangling comments](self#dangling-comments) of `node`
-    pub fn dangling_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-        todo!()
-        // self.data.comments.dangling(&node.key())
+    pub fn dangling_comments(&self, span: Span) -> &[SourceComment] {
+        self.data.comments.dangling(&span.start)
     }
 
     /// Returns the `node`'s [trailing comments](self#trailing-comments).
     #[inline]
-    pub fn trailing_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-        todo!()
-        // self.data.comments.trailing(&node.key())
+    pub fn trailing_comments(&self, span: Span) -> &[SourceComment] {
+        self.data.comments.trailing(&span.start)
     }
 
     /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
-    pub fn has_trailing_line_comment(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // self.trailing_comments(node).iter().any(|comment| comment.kind().is_line())
+    pub fn has_trailing_line_comment(&self, span: Span) -> bool {
+        self.trailing_comments(span).iter().any(|comment| comment.kind().is_line())
     }
 
     /// Returns `true` if the given `node` has any [trailing comments](self#trailing-comments).
     #[inline]
-    pub fn has_trailing_comments(&self, node: &SyntaxNode) -> bool {
-        todo!()
-        // !self.trailing_comments(node).is_empty()
+    pub fn has_trailing_comments(&self, span: Span) -> bool {
+        !self.trailing_comments(span).is_empty()
     }
 
     /// Returns an iterator over the [leading](self#leading-comments) and [trailing comments](self#trailing-comments) of `node`.
     pub fn leading_trailing_comments(
         &self,
-        node: &SyntaxNode,
+        span: Span,
     ) -> impl Iterator<Item = &SourceComment> + use<'_> {
-        self.leading_comments(node).iter().chain(self.trailing_comments(node).iter())
+        self.leading_comments(span).iter().chain(self.trailing_comments(span).iter())
     }
 
     /// Returns an iterator over the [leading](self#leading-comments), [dangling](self#dangling-comments), and [trailing](self#trailing) comments of `node`.
-    pub fn leading_dangling_trailing_comments<'a>(
-        &'a self,
-        node: &'a SyntaxNode,
-    ) -> impl Iterator<Item = &'a SourceComment> + 'a {
-        todo!();
-        std::iter::empty()
-        // self.data.comments.parts(&node.key())
+    pub fn leading_dangling_trailing_comments(
+        &self,
+        span: Span,
+    ) -> impl Iterator<Item = &SourceComment> + '_ {
+        self.data.comments.parts(&span.start)
     }
 
     /// Returns `true` if that node has skipped token trivia attached.
@@ -1006,14 +1009,12 @@ impl Comments {
 }
 
 struct CommentsData {
-    root: Option<SyntaxNode>,
+    // root: Option<SyntaxNode>,
 
-    is_suppression: fn(&str) -> bool,
-
+    // is_suppression: fn(&str) -> bool,
     /// Stores all leading node comments by node
-    comments: CommentsMap<SyntaxElementKey, SourceComment>,
-    with_skipped: FxHashSet<SyntaxElementKey>,
-
+    comments: CommentsMap<u32, SourceComment>,
+    // with_skipped: FxHashSet<SyntaxElementKey>,
     /// Stores all nodes for which [Comments::is_suppressed] has been called.
     /// This index of nodes that have been checked if they have a suppression comments is used to
     /// detect format implementations that manually format a child node without previously checking if
@@ -1029,10 +1030,10 @@ struct CommentsData {
 impl Default for CommentsData {
     fn default() -> Self {
         Self {
-            root: None,
-            is_suppression: |_| false,
+            // root: None,
+            // is_suppression: |_| false,
             comments: Default::default(),
-            with_skipped: Default::default(),
+            // with_skipped: Default::default(),
             #[cfg(debug_assertions)]
             checked_suppressions: Default::default(),
         }
@@ -1041,7 +1042,7 @@ impl Default for CommentsData {
 
 impl std::fmt::Debug for CommentsData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "{:?}", self.comments)
         // let mut comments = Vec::new();
 
         // if let Some(root) = &self.root {
