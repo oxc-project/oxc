@@ -7,8 +7,8 @@ use crate::{JsFormatContext, write};
 
 pub type JsFormatter<'ast, 'buf> = Formatter<'buf, JsFormatContext<'ast>>;
 
-impl<'ast> Format<JsFormatContext<'ast>> for Program<'ast> {
-    fn fmt(&self, f: &mut JsFormatter<'ast, '_>) -> FormatResult<()> {
+impl<'a> Format<JsFormatContext<'a>> for Program<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
         write!(
             f,
             [

@@ -1,16 +1,18 @@
+use std::marker::PhantomData;
 use std::{fmt, rc::Rc, str::FromStr};
 
 use oxc_allocator::Vec;
 use oxc_ast::{Comment, ast::Program};
 
+use crate::format::JsFormatter;
 use crate::formatter::formatter::Formatter;
-use crate::formatter::prelude::{if_group_breaks, text};
+use crate::formatter::prelude::{dynamic_text, if_group_breaks, text};
 use crate::formatter::printer::PrinterOptions;
 use crate::formatter::{
     AttributePosition, BracketSameLine, BracketSpacing, Buffer, CommentKind, CommentPlacement,
     CommentStyle, Comments, CstFormatContext, DecoratedComment, Expand, Format, FormatContext,
-    FormatOptions, FormatResult, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle,
-    SyntaxTriviaPieceComments,
+    FormatOptions, FormatResult, FormatRule, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    QuoteStyle, SourceComment, SyntaxTriviaPieceComments,
 };
 use crate::write;
 
@@ -37,11 +39,37 @@ impl<'a> JsFormatContext<'a> {
     }
 }
 
-impl FormatContext for JsFormatContext<'_> {
+impl<'a> FormatContext<'a> for JsFormatContext<'a> {
     type Options = JsFormatOptions;
+
+    fn source_text(&self) -> &'a str {
+        self.source_text
+    }
 
     fn options(&self) -> &Self::Options {
         &self.options
+    }
+}
+
+impl<'a> CstFormatContext<'a> for JsFormatContext<'a> {
+    type Style = JsCommentStyle;
+    type CommentRule = FormatJsLeadingComment<'a>;
+
+    fn comments(&self) -> &Comments {
+        &self.comments
+    }
+}
+
+#[derive(Default)]
+pub struct FormatJsLeadingComment<'a> {
+    _phantom_data: PhantomData<&'a ()>,
+}
+
+impl<'a> FormatRule<SourceComment> for FormatJsLeadingComment<'a> {
+    type Context = JsFormatContext<'a>;
+    fn fmt(&self, comment: &SourceComment, f: &mut Formatter<Self::Context>) -> FormatResult<()> {
+        let text = comment.span.source_text(f.context().source_text());
+        write!(f, [dynamic_text(text, comment.span.start)])
     }
 }
 
@@ -59,15 +87,6 @@ impl CommentStyle for JsCommentStyle {
 
     fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
         todo!()
-    }
-}
-
-impl<'a> CstFormatContext for JsFormatContext<'a> {
-    type Style = JsCommentStyle;
-    // type CommentRule = FormatJsLeadingComment;
-
-    fn comments(&self) -> &Comments {
-        &self.comments
     }
 }
 

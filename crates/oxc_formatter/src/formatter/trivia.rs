@@ -56,165 +56,162 @@ pub enum FormatLeadingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<Context> Format<Context> for FormatLeadingComments<'_>
+impl<'a, 'b, Context> Format<Context> for FormatLeadingComments<'b>
 where
-    Context: CstFormatContext,
+    Context: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-        let comments = f.context().comments();
+        let comments = f.context().comments().clone();
 
         let leading_comments = match self {
             FormatLeadingComments::Node(span) => comments.leading_comments(*span),
             FormatLeadingComments::Comments(comments) => comments,
         };
-        dbg!(leading_comments);
-        todo!()
 
-        // let mut leading_comments_iter = leading_comments.iter().peekable();
-        // while let Some(comment) = leading_comments_iter.next() {
-        // let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
-        // write!(f, [format_comment])?;
+        let mut leading_comments_iter = leading_comments.iter().peekable();
+        while let Some(comment) = leading_comments_iter.next() {
+            let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
+            write!(f, [format_comment])?;
 
-        // match comment.kind() {
-        // CommentKind::Block | CommentKind::InlineBlock => {
-        // match comment.lines_after() {
-        // 0 => {
-        // let should_nestle =
-        // leading_comments_iter.peek().is_some_and(|next_comment| {
-        // should_nestle_adjacent_doc_comments(comment, next_comment)
-        // });
+            match comment.kind() {
+                CommentKind::Block | CommentKind::InlineBlock => {
+                    match comment.lines_after() {
+                        0 => {
+                            let should_nestle =
+                                leading_comments_iter.peek().is_some_and(|next_comment| {
+                                    should_nestle_adjacent_doc_comments(comment, next_comment)
+                                });
 
-        // write!(f, [maybe_space(!should_nestle)])?;
-        // }
-        // 1 => {
-        // if comment.lines_before() == 0 {
-        // write!(f, [soft_line_break_or_space()])?;
-        // } else {
-        // write!(f, [hard_line_break()])?;
-        // }
-        // }
-        // _ => write!(f, [empty_line()])?,
-        // };
-        // }
-        // CommentKind::Line => match comment.lines_after() {
-        // 0 | 1 => write!(f, [hard_line_break()])?,
-        // _ => write!(f, [empty_line()])?,
-        // },
-        // }
+                            write!(f, [maybe_space(!should_nestle)])?;
+                        }
+                        1 => {
+                            if comment.lines_before() == 0 {
+                                write!(f, [soft_line_break_or_space()])?;
+                            } else {
+                                write!(f, [hard_line_break()])?;
+                            }
+                        }
+                        _ => write!(f, [empty_line()])?,
+                    };
+                }
+                CommentKind::Line => match comment.lines_after() {
+                    0 | 1 => write!(f, [hard_line_break()])?,
+                    _ => write!(f, [empty_line()])?,
+                },
+            }
 
-        // comment.mark_formatted()
-        // }
+            comment.mark_formatted()
+        }
 
-        // Ok(())
+        Ok(())
     }
 }
 
 /// Formats the trailing comments of `node`.
-pub const fn format_trailing_comments(node: &SyntaxNode) -> FormatTrailingComments {
-    FormatTrailingComments::Node(node)
+pub const fn format_trailing_comments<'a>(span: Span) -> FormatTrailingComments<'a> {
+    FormatTrailingComments::Node(span)
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
 pub enum FormatTrailingComments<'a> {
-    Node(&'a SyntaxNode),
+    Node(Span),
     Comments(&'a [SourceComment]),
 }
 
-impl<Context> Format<Context> for FormatTrailingComments<'_>
+impl<'a, Context> Format<Context> for FormatTrailingComments<'_>
 where
-    Context: CstFormatContext,
+    Context: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-        todo!()
-        // let comments = f.context().comments().clone();
-        // let trailing_comments = match self {
-        // FormatTrailingComments::Node(node) => comments.trailing_comments(node),
-        // FormatTrailingComments::Comments(comments) => comments,
-        // };
+        let comments = f.context().comments().clone();
+        let trailing_comments = match self {
+            FormatTrailingComments::Node(span) => comments.trailing_comments(*span),
+            FormatTrailingComments::Comments(comments) => comments,
+        };
 
-        // let mut total_lines_before = 0;
-        // let mut previous_comment: Option<&SourceComment> = None;
+        let mut total_lines_before = 0;
+        let mut previous_comment: Option<&SourceComment> = None;
 
-        // for comment in trailing_comments {
-        // total_lines_before += comment.lines_before();
+        for comment in trailing_comments {
+            total_lines_before += comment.lines_before();
 
-        // let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
+            let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
 
-        // let should_nestle = previous_comment.is_some_and(|previous_comment| {
-        // should_nestle_adjacent_doc_comments(previous_comment, comment)
-        // });
+            let should_nestle = previous_comment.is_some_and(|previous_comment| {
+                should_nestle_adjacent_doc_comments(previous_comment, comment)
+            });
 
-        // // This allows comments at the end of nested structures:
-        // // {
-        // //   x: 1,
-        // //   y: 2
-        // //   // A comment
-        // // }
-        // // Those kinds of comments are almost always leading comments, but
-        // // here it doesn't go "outside" the block and turns it into a
-        // // trailing comment for `2`. We can simulate the above by checking
-        // // if this a comment on its own line; normal trailing comments are
-        // // always at the end of another expression.
-        // if total_lines_before > 0 {
-        // write!(
-        // f,
-        // [
-        // line_suffix(&format_with(|f| {
-        // match comment.lines_before() {
-        // _ if should_nestle => {}
-        // 0 => {
-        // // If the comment is immediately following a block-like comment,
-        // // then it can stay on the same line with just a space between.
-        // // Otherwise, it gets a hard break.
-        // //
-        // //   [>* hello <] // hi
-        // //   [>*
-        // //    * docs
-        // //   */ [> still on the same line <]
-        // if previous_comment.is_some_and(|previous_comment| {
-        // previous_comment.kind().is_line()
-        // }) {
-        // write!(f, [hard_line_break()])?;
-        // } else {
-        // write!(f, [space()])?;
-        // }
-        // }
-        // 1 => write!(f, [hard_line_break()])?,
-        // _ => write!(f, [empty_line()])?,
-        // };
+            // This allows comments at the end of nested structures:
+            // {
+            //   x: 1,
+            //   y: 2
+            //   // A comment
+            // }
+            // Those kinds of comments are almost always leading comments, but
+            // here it doesn't go "outside" the block and turns it into a
+            // trailing comment for `2`. We can simulate the above by checking
+            // if this a comment on its own line; normal trailing comments are
+            // always at the end of another expression.
+            if total_lines_before > 0 {
+                write!(
+                    f,
+                    [
+                        line_suffix(&format_with(|f| {
+                            match comment.lines_before() {
+                                _ if should_nestle => {}
+                                0 => {
+                                    // If the comment is immediately following a block-like comment,
+                                    // then it can stay on the same line with just a space between.
+                                    // Otherwise, it gets a hard break.
+                                    //
+                                    //   [>* hello <] // hi
+                                    //   [>*
+                                    //    * docs
+                                    //   */ [> still on the same line <]
+                                    if previous_comment.is_some_and(|previous_comment| {
+                                        previous_comment.kind().is_line()
+                                    }) {
+                                        write!(f, [hard_line_break()])?;
+                                    } else {
+                                        write!(f, [space()])?;
+                                    }
+                                }
+                                1 => write!(f, [hard_line_break()])?,
+                                _ => write!(f, [empty_line()])?,
+                            };
 
-        // write!(f, [format_comment])
-        // })),
-        // expand_parent()
-        // ]
-        // )?;
-        // } else {
-        // let content =
-        // format_with(|f| write!(f, [maybe_space(!should_nestle), format_comment]));
-        // if comment.kind().is_line() {
-        // write!(f, [line_suffix(&content), expand_parent()])?;
-        // } else {
-        // write!(f, [content])?;
-        // }
-        // }
+                            write!(f, [format_comment])
+                        })),
+                        expand_parent()
+                    ]
+                )?;
+            } else {
+                let content =
+                    format_with(|f| write!(f, [maybe_space(!should_nestle), format_comment]));
+                if comment.kind().is_line() {
+                    write!(f, [line_suffix(&content), expand_parent()])?;
+                } else {
+                    write!(f, [content])?;
+                }
+            }
 
-        // previous_comment = Some(comment);
-        // comment.mark_formatted();
-        // }
+            previous_comment = Some(comment);
+            comment.mark_formatted();
+        }
 
-        // Ok(())
+        Ok(())
     }
 }
 
 /// Formats the dangling comments of `node`.
-pub const fn format_dangling_comments(node: &SyntaxNode) -> FormatDanglingComments {
-    FormatDanglingComments::Node { node, indent: DanglingIndentMode::None }
+pub const fn format_dangling_comments<'a>(span: Span) -> FormatDanglingComments<'a> {
+    FormatDanglingComments::Node { span, indent: DanglingIndentMode::None }
 }
 
 /// Formats the dangling trivia of `token`.
 pub enum FormatDanglingComments<'a> {
-    Node { node: &'a SyntaxNode, indent: DanglingIndentMode },
+    Node { span: Span, indent: DanglingIndentMode },
     Comments { comments: &'a [SourceComment], indent: DanglingIndentMode },
 }
 
@@ -285,65 +282,64 @@ impl FormatDanglingComments<'_> {
     }
 }
 
-impl<Context> Format<Context> for FormatDanglingComments<'_>
+impl<'a, Context> Format<Context> for FormatDanglingComments<'_>
 where
-    Context: CstFormatContext,
+    Context: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-        todo!()
-        // let comments = f.context().comments().clone();
-        // let dangling_comments = match self {
-        // FormatDanglingComments::Node { node, .. } => comments.dangling_comments(node),
-        // FormatDanglingComments::Comments { comments, .. } => *comments,
-        // };
+        let comments = f.context().comments().clone();
+        let dangling_comments = match self {
+            FormatDanglingComments::Node { span, .. } => comments.dangling_comments(*span),
+            FormatDanglingComments::Comments { comments, .. } => *comments,
+        };
 
-        // if dangling_comments.is_empty() {
-        // return Ok(());
-        // }
-        // // Write all comments up to the first skipped token trivia or the token
-        // let format_dangling_comments = format_with(|f| {
-        // let mut previous_comment: Option<&SourceComment> = None;
+        if dangling_comments.is_empty() {
+            return Ok(());
+        }
+        // Write all comments up to the first skipped token trivia or the token
+        let format_dangling_comments = format_with(|f| {
+            let mut previous_comment: Option<&SourceComment> = None;
 
-        // for comment in dangling_comments {
-        // let format_comment =
-        // FormatRefWithRule::new(comment, Context::CommentRule::default());
+            for comment in dangling_comments {
+                let format_comment =
+                    FormatRefWithRule::new(comment, Context::CommentRule::default());
 
-        // let should_nestle = previous_comment.is_some_and(|previous_comment| {
-        // should_nestle_adjacent_doc_comments(previous_comment, comment)
-        // });
+                let should_nestle = previous_comment.is_some_and(|previous_comment| {
+                    should_nestle_adjacent_doc_comments(previous_comment, comment)
+                });
 
-        // write!(
-        // f,
-        // [
-        // (previous_comment.is_some() && !should_nestle).then_some(hard_line_break()),
-        // format_comment
-        // ]
-        // )?;
+                write!(
+                    f,
+                    [
+                        (previous_comment.is_some() && !should_nestle).then_some(hard_line_break()),
+                        format_comment
+                    ]
+                )?;
 
-        // previous_comment = Some(comment);
-        // comment.mark_formatted();
-        // }
+                previous_comment = Some(comment);
+                comment.mark_formatted();
+            }
 
-        // if matches!(self.indent(), DanglingIndentMode::Soft)
-        // && dangling_comments.last().is_some_and(|comment| comment.kind().is_line())
-        // {
-        // write!(f, [hard_line_break()])?;
-        // }
+            if matches!(self.indent(), DanglingIndentMode::Soft)
+                && dangling_comments.last().is_some_and(|comment| comment.kind().is_line())
+            {
+                write!(f, [hard_line_break()])?;
+            }
 
-        // Ok(())
-        // });
+            Ok(())
+        });
 
-        // match self.indent() {
-        // DanglingIndentMode::Block => {
-        // write!(f, [block_indent(&format_dangling_comments)])
-        // }
-        // DanglingIndentMode::Soft => {
-        // write!(f, [group(&soft_block_indent(&format_dangling_comments))])
-        // }
-        // DanglingIndentMode::None => {
-        // write!(f, [format_dangling_comments])
-        // }
-        // }
+        match self.indent() {
+            DanglingIndentMode::Block => {
+                write!(f, [block_indent(&format_dangling_comments)])
+            }
+            DanglingIndentMode::Soft => {
+                write!(f, [group(&soft_block_indent(&format_dangling_comments))])
+            }
+            DanglingIndentMode::None => {
+                write!(f, [format_dangling_comments])
+            }
+        }
     }
 }
 
@@ -381,9 +377,9 @@ pub struct FormatRemoved<'a> {
     token: &'a SyntaxToken,
 }
 
-impl<C> Format<C> for FormatRemoved<'_>
+impl<'a, C> Format<C> for FormatRemoved<'a>
 where
-    C: CstFormatContext,
+    C: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
@@ -411,9 +407,9 @@ pub struct FormatReplaced<'a, 'content, C> {
     content: Argument<'content, C>,
 }
 
-impl<C> Format<C> for FormatReplaced<'_, '_, C>
+impl<'a, C> Format<C> for FormatReplaced<'a, '_, C>
 where
-    C: CstFormatContext,
+    C: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
@@ -450,9 +446,9 @@ impl<C> FormatOnlyIfBreaks<'_, '_, C> {
     }
 }
 
-impl<C> Format<C> for FormatOnlyIfBreaks<'_, '_, C>
+impl<'a, C> Format<C> for FormatOnlyIfBreaks<'a, '_, C>
 where
-    C: CstFormatContext,
+    C: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         write!(
@@ -483,11 +479,11 @@ pub struct FormatSkippedTokenTrivia<'a> {
     token: &'a SyntaxToken,
 }
 
-impl FormatSkippedTokenTrivia<'_> {
+impl<'a> FormatSkippedTokenTrivia<'a> {
     #[cold]
     fn fmt_skipped<Context>(&self, f: &mut Formatter<Context>) -> FormatResult<()>
     where
-        Context: CstFormatContext,
+        Context: CstFormatContext<'a>,
     {
         todo!()
         // Lines/spaces before the next token/comment
@@ -612,9 +608,9 @@ impl FormatSkippedTokenTrivia<'_> {
     }
 }
 
-impl<Context> Format<Context> for FormatSkippedTokenTrivia<'_>
+impl<'a, Context> Format<Context> for FormatSkippedTokenTrivia<'a>
 where
-    Context: CstFormatContext,
+    Context: CstFormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
         if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
