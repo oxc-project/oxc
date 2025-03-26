@@ -164,8 +164,12 @@ struct IrFormatContext {
     printed_interned_elements: FxHashMap<Interned, usize>,
 }
 
-impl FormatContext for IrFormatContext {
+impl<'a> FormatContext<'a> for IrFormatContext {
     type Options = IrFormatOptions;
+
+    fn source_text(&self) -> &'a str {
+        ""
+    }
 
     fn options(&self) -> &Self::Options {
         &IrFormatOptions

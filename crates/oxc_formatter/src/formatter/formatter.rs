@@ -14,7 +14,7 @@ pub struct Formatter<'buf, Context> {
     pub(super) buffer: &'buf mut dyn Buffer<Context = Context>,
 }
 
-impl<'buf, Context> Formatter<'buf, Context> {
+impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// Creates a new context that uses the given formatter context
     pub fn new(buffer: &'buf mut (dyn Buffer<Context = Context> + 'buf)) -> Self {
         Self { buffer }
@@ -23,7 +23,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// Returns the format options
     pub fn options(&self) -> &Context::Options
     where
-        Context: FormatContext,
+        Context: FormatContext<'a>,
     {
         self.context().options()
     }
@@ -71,7 +71,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join<'a>(&'a mut self) -> JoinBuilder<'a, 'buf, (), Context> {
+    pub fn join(&'a mut self) -> JoinBuilder<'a, 'buf, (), Context> {
         JoinBuilder::new(self)
     }
 
@@ -102,10 +102,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join_with<'a, Joiner>(
-        &'a mut self,
-        joiner: Joiner,
-    ) -> JoinBuilder<'a, 'buf, Joiner, Context>
+    pub fn join_with<Joiner>(&'a mut self, joiner: Joiner) -> JoinBuilder<'a, 'buf, Joiner, Context>
     where
         Joiner: Format<Context>,
     {
@@ -118,9 +115,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::soft_line_break_or_space] or [crate::builders::empty_line] depending on how many line breaks were
     /// separating the elements in the original file.
-    pub fn join_nodes_with_soft_line<'a>(
-        &'a mut self,
-    ) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
+    pub fn join_nodes_with_soft_line(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
         JoinNodesBuilder::new(soft_line_break_or_space(), self)
     }
 
@@ -130,7 +125,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::hard_line_break] or [crate::builders::empty_line] depending on how many line breaks were separating the
     /// elements in the original file.
-    pub fn join_nodes_with_hardline<'a>(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
+    pub fn join_nodes_with_hardline(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
         JoinNodesBuilder::new(hard_line_break(), self)
     }
 
@@ -143,7 +138,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// This function should likely only be used in a `best_fitting!` context, where one variant attempts to
     /// force a list of nodes onto a single line without any possible breaks, then falls back to a broken
     /// out variant if the content does not fit.
-    pub fn join_nodes_with_space<'a>(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Space, Context> {
+    pub fn join_nodes_with_space(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Space, Context> {
         JoinNodesBuilder::new(space(), self)
     }
 
@@ -198,7 +193,7 @@ impl<'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn fill<'a>(&'a mut self) -> FillBuilder<'a, 'buf, Context> {
+    pub fn fill(&'a mut self) -> FillBuilder<'a, 'buf, Context> {
         FillBuilder::new(self)
     }
 
@@ -222,9 +217,9 @@ impl<'buf, Context> Formatter<'buf, Context> {
     }
 }
 
-impl<Context> Formatter<'_, Context>
+impl<'a, Context> Formatter<'_, Context>
 where
-    Context: FormatContext,
+    Context: FormatContext<'a>,
 {
     /// Take a snapshot of the state of the formatter
     #[inline]
@@ -240,9 +235,9 @@ where
     }
 }
 
-impl<Context> Formatter<'_, Context>
+impl<'a, Context> Formatter<'_, Context>
 where
-    Context: CstFormatContext,
+    Context: CstFormatContext<'a>,
 {
     /// Returns the comments from the context.
     pub fn comments(&self) -> &Comments {

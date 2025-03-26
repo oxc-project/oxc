@@ -58,7 +58,9 @@ use std::marker::PhantomData;
 pub use self::arguments::{Argument, Arguments};
 pub use self::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
 // use self::builders::syntax_token_cow_slice;
-pub use self::comments::{CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment};
+pub use self::comments::{
+    CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment, SourceComment,
+};
 pub use self::diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 use self::format_element::document::Document;
 #[cfg(debug_assertions)]
@@ -73,12 +75,6 @@ pub use self::text_size::TextSize;
 pub use self::token_text::TokenText;
 use crate::context::JsFormatContext;
 // use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
-// use biome_console::markup;
-// use biome_deserialize_macros::Merge;
-// use biome_rowan::{
-// NodeOrToken, SyntaxElement, SyntaxNode, SyntaxResult, SyntaxToken, SyntaxTriviaPiece,
-// TextLen, TextRange, TextSize, TokenAtOffset,
-// };
 pub use buffer::{
     Buffer, BufferExtensions, BufferSnapshot, Inspect, PreambleBuffer, RemoveSoftLinesBuffer,
     VecBuffer,
@@ -618,8 +614,11 @@ impl fmt::Display for Expand {
 }
 
 /// Context object storing data relevant when formatting an object.
-pub trait FormatContext {
+pub trait FormatContext<'a> {
     type Options: FormatOptions;
+
+    /// Returns the formatting options
+    fn source_text(&self) -> &'a str;
 
     /// Returns the formatting options
     fn options(&self) -> &Self::Options;
@@ -652,12 +651,11 @@ pub trait FormatOptions {
 /// by every language.
 ///
 /// The context customizes the comments formatting and stores the comments of the CST.
-pub trait CstFormatContext: FormatContext {
+pub trait CstFormatContext<'a>: FormatContext<'a> + Sized {
     type Style: CommentStyle;
 
-    // /// Rule for formatting comments.
-    // type CommentRule: Format<JsFormatContext<'_>> + Default;
-    // type CommentRule: FormatRule<SourceComment, Context = Self> + Default;
+    /// Rule for formatting comments.
+    type CommentRule: FormatRule<SourceComment, Context = Self> + Default;
 
     /// Returns a reference to the program's comments.
     fn comments(&self) -> &Comments;
@@ -674,8 +672,12 @@ impl SimpleFormatContext {
     }
 }
 
-impl FormatContext for SimpleFormatContext {
+impl<'a> FormatContext<'a> for SimpleFormatContext {
     type Options = SimpleFormatOptions;
+
+    fn source_text(&self) -> &'a str {
+        ""
+    }
 
     fn options(&self) -> &Self::Options {
         &self.options
@@ -758,9 +760,9 @@ impl<Context> Formatted<Context> {
     }
 }
 
-impl<Context> Formatted<Context>
+impl<'a, Context> Formatted<Context>
 where
-    Context: FormatContext,
+    Context: FormatContext<'a>,
 {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
@@ -912,24 +914,18 @@ where
     }
 }
 
-// impl<T, Context> Format<Context> for SyntaxResult<T>
-// where
-// T: Format<Context>,
-// {
-// fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-// match self {
-// Ok(value) => value.fmt(f),
-// Err(err) => Err(err.into()),
-// }
-// }
-// }
-
 impl<Context> Format<Context> for () {
     #[inline]
     fn fmt(&self, _: &mut Formatter<Context>) -> FormatResult<()> {
         // Intentionally left empty
         Ok(())
     }
+}
+
+pub trait FormatRule<T> {
+    type Context;
+
+    fn fmt(&self, item: &T, f: &mut Formatter<Self::Context>) -> FormatResult<()>;
 }
 
 /// Default implementation for formatting a token
@@ -943,21 +939,28 @@ impl<C> Default for FormatToken<C> {
     }
 }
 
+pub trait FormatWithRule<Context>: Format<Context> {
+    type Item;
+
+    /// Returns the associated item
+    fn item(&self) -> &Self::Item;
+}
+
 /// Formats the referenced `item` with the specified rule.
 #[derive(Debug, Copy, Clone)]
-pub struct FormatRefWithRule<'a, T, R>
+pub struct FormatRefWithRule<'b, T, R>
 where
-    R: Format<T>,
+    R: FormatRule<T>,
 {
-    item: &'a T,
+    item: &'b T,
     rule: R,
 }
 
-impl<'a, T, R> FormatRefWithRule<'a, T, R>
+impl<'b, T, R> FormatRefWithRule<'b, T, R>
 where
-    R: Format<T>,
+    R: FormatRule<T>,
 {
-    pub fn new(item: &'a T, rule: R) -> Self {
+    pub fn new(item: &'b T, rule: R) -> Self {
         Self { item, rule }
     }
 }
@@ -972,26 +975,26 @@ where
 // }
 // }
 
-// impl<T, R> FormatWithRule<R::Context> for FormatRefWithRule<'_, T, R>
-// where
-// R: FormatRule<T>,
-// {
-// type Item = T;
+impl<'b, T, R> FormatWithRule<R::Context> for FormatRefWithRule<'b, T, R>
+where
+    R: FormatRule<T>,
+{
+    type Item = T;
 
-// fn item(&self) -> &Self::Item {
-// self.item
-// }
-// }
+    fn item(&self) -> &Self::Item {
+        self.item
+    }
+}
 
-// impl<T, R> Format<R::Context> for FormatRefWithRule<'_, T, R>
-// where
-// R: FormatRule<T>,
-// {
-// #[inline(always)]
-// fn fmt(&self, f: &mut Formatter<R::Context>) -> FormatResult<()> {
-// self.rule.fmt(self.item, f)
-// }
-// }
+impl<'b, T, R> Format<R::Context> for FormatRefWithRule<'b, T, R>
+where
+    R: FormatRule<T>,
+{
+    #[inline(always)]
+    fn fmt(&self, f: &mut Formatter<R::Context>) -> FormatResult<()> {
+        self.rule.fmt(self.item, f)
+    }
+}
 
 /// The `write` function takes a target buffer and an `Arguments` struct that can be precompiled with the `format_args!` macro.
 ///
@@ -1076,12 +1079,12 @@ pub fn write<Context>(
 /// # Ok(())
 /// # }
 /// ```
-pub fn format<Context>(
+pub fn format<'a, Context>(
     context: Context,
     arguments: Arguments<Context>,
 ) -> FormatResult<Formatted<Context>>
 where
-    Context: FormatContext,
+    Context: FormatContext<'a>,
 {
     let mut state = FormatState::new(context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
@@ -1200,9 +1203,9 @@ impl<Context> FormatState<Context> {
     }
 }
 
-impl<Context> FormatState<Context>
+impl<'a, Context> FormatState<Context>
 where
-    Context: FormatContext,
+    Context: FormatContext<'a>,
 {
     pub fn snapshot(&self) -> FormatStateSnapshot {
         todo!()

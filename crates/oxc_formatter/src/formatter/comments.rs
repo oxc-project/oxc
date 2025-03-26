@@ -88,10 +88,10 @@ use oxc_span::Span;
 use self::map::CommentsMap;
 use super::buffer::Buffer;
 use super::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
-use super::{CstFormatContext, TextSize /*TransformSourceMap*/};
-use super::{SyntaxElementKey, SyntaxNode, SyntaxToken};
-// use biome_rowan::syntax::SyntaxElementKey;
-// use biome_rowan::{Language, SyntaxNode, SyntaxToken, SyntaxTriviaPieceComments};
+use super::{
+    CstFormatContext, Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken,
+    TextSize,
+};
 use rustc_hash::FxHashSet;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -161,6 +161,8 @@ impl CommentKind {
 /// A comment in the source document.
 #[derive(Debug, Clone)]
 pub struct SourceComment {
+    pub(crate) span: Span,
+
     /// The number of lines appearing before this comment
     pub(crate) lines_before: u32,
 
@@ -249,6 +251,12 @@ impl SourceComment {
         self.formatted.set(true);
     }
 }
+
+// impl<Context> Format<Context> for SourceComment {
+// fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+// todo!()
+// }
+// }
 
 /// A comment decorated with additional information about its surrounding context in the source document.
 ///
@@ -460,18 +468,18 @@ impl DecoratedComment {
     }
 }
 
-impl From<DecoratedComment> for SourceComment {
-    fn from(decorated: DecoratedComment) -> Self {
-        Self {
-            lines_before: decorated.lines_before,
-            lines_after: decorated.lines_after,
-            piece: decorated.comment,
-            kind: decorated.kind,
-            #[cfg(debug_assertions)]
-            formatted: Cell::new(false),
-        }
-    }
-}
+// impl From<DecoratedComment> for SourceComment {
+// fn from(decorated: DecoratedComment) -> Self {
+// Self {
+// lines_before: decorated.lines_before,
+// lines_after: decorated.lines_after,
+// piece: decorated.comment,
+// kind: decorated.kind,
+// #[cfg(debug_assertions)]
+// formatted: Cell::new(false),
+// }
+// }
+// }
 
 /// The position of a comment in the source text.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -794,6 +802,7 @@ impl Comments {
         for comment in comments {
             // TODO: Converting to `SourceComment` is incomplete.
             let c = SourceComment {
+                span: comment.span,
                 // FIXME
                 lines_before: 0,
                 // FIXME
