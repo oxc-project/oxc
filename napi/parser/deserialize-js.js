@@ -1278,18 +1278,18 @@ function deserializeTSThisParameter(pos) {
 }
 
 function deserializeTSEnumDeclaration(pos) {
-  const end = deserializeU32(pos + 4);
-  const tsEnumDeclId = deserializeBindingIdentifier(pos + 8);
+  const end = deserializeU32(pos + 4),
+    id = deserializeBindingIdentifier(pos + 8);
   const tsEnumDeclMembers = deserializeVecTSEnumMember(pos + 40);
-  const bodyStart = tsEnumDeclId.end + 1;
+  const bodyStart = id.end + 1;
   return {
     type: 'TSEnumDeclaration',
     start: deserializeU32(pos),
     end,
-    id: deserializeBindingIdentifier(pos + 8),
+    id,
+    body: { type: 'TSEnumBody', start: bodyStart, end: end, members: tsEnumDeclMembers },
     const: deserializeBool(pos + 72),
     declare: deserializeBool(pos + 73),
-    body: { type: 'TSEnumBody', start: bodyStart, end: end, members: tsEnumDeclMembers },
   };
 }
 
