@@ -9,7 +9,16 @@ pub type JsFormatter<'ast, 'buf> = Formatter<'buf, JsFormatContext<'ast>>;
 
 impl<'ast> Format<JsFormatContext<'ast>> for Program<'ast> {
     fn fmt(&self, f: &mut JsFormatter<'ast, '_>) -> FormatResult<()> {
-        write!(f, [self.hashbang, self.body, self.directives, hard_line_break()])
+        write!(
+            f,
+            [
+                self.hashbang,
+                self.body,
+                format_leading_comments(),
+                self.directives,
+                hard_line_break()
+            ]
+        )
     }
 }
 
