@@ -154,14 +154,12 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
         }
 
         if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) && read_count_total > 0 {
-            print!("failed");
             return true;
         }
     }
 
     // bypass no-unused-vars
     if is_multiple_assignments && has_read {
-        print!("failed3");
         return true;
     }
 
