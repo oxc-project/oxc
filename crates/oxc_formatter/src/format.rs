@@ -9,8 +9,30 @@ pub type JsFormatter<'ast, 'buf> = Formatter<'buf, JsFormatContext<'ast>>;
 
 impl<'ast> Format<JsFormatContext<'ast>> for Program<'ast> {
     fn fmt(&self, f: &mut JsFormatter<'ast, '_>) -> FormatResult<()> {
-        let Program { body, .. } = self;
-        body.fmt(f)
+        write!(f, [self.hashbang, self.body, self.directives, hard_line_break()])
+    }
+}
+
+impl<'a> Format<JsFormatContext<'a>> for Hashbang<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+        write!(f, [text("#!"), dynamic_text(self.value.as_str(), self.span.start)])
+    }
+}
+
+impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Directive<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+        let source_text = f.context().source_text();
+        let mut join = f.join_nodes_with_hardline();
+        for directive in self {
+            join.entry(directive.span, source_text, directive);
+        }
+        join.finish()
+    }
+}
+
+impl<'a> Format<JsFormatContext<'a>> for Directive<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+        write!(f, [self.expression])
     }
 }
 
@@ -44,5 +66,11 @@ impl<'a> Format<JsFormatContext<'a>> for VariableDeclaration<'a> {
         )?;
 
         Ok(())
+    }
+}
+
+impl<'a> Format<JsFormatContext<'a>> for StringLiteral<'a> {
+    fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
+        write!(f, [text("\""), dynamic_text(self.value.as_str(), self.span.start), text("\";")])
     }
 }
