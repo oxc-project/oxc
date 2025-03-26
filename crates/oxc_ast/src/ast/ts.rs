@@ -69,11 +69,11 @@ pub struct TSThisParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(add_ts_def = "
-        interface TSEnumBody extends Span {
-            type: 'TSEnumBody';
-            members: TSEnumMember[];
-        }
-    ")]
+    interface TSEnumBody extends Span {
+        type: 'TSEnumBody';
+        members: TSEnumMember[];
+    }
+")]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
