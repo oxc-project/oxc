@@ -1,8 +1,3 @@
-use super::TextSize;
+use oxc_span::Span;
 
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct TextRange {
-    // Invariant: start <= end
-    start: TextSize,
-    end: TextSize,
-}
+pub type TextRange = Span;
