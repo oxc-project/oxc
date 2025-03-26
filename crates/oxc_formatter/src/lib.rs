@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod context;
 mod format;
 mod formatter;
