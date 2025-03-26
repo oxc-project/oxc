@@ -738,13 +738,14 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
 ///          |     | TSEnumBody.span
 ///        ^^ id_end + 1 for space
 /// ```
+/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
+/// We may need to reconsider adding `TSEnumBody` as Rust AST.
 #[ast_meta]
 #[estree(
     ts_type = "TSEnumBody",
     raw_deser = "
-        const tsEnumDeclId = DESER[BindingIdentifier](POS_OFFSET.id);
         const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
-        const bodyStart = tsEnumDeclId.end + 1;
+        const bodyStart = THIS.id.end + 1;
         {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
     "
 )]

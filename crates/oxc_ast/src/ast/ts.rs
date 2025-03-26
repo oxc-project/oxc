@@ -75,13 +75,12 @@ pub struct TSThisParameter<'a> {
             members: TSEnumMember[];
         }
     ",
-    add_fields(body = TSEnumDeclarationBody)
 )]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    #[estree(skip)]
     #[scope(enter_before)]
+    #[estree(rename = "body", via = TSEnumDeclarationBody)]
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// `true` for const enums
     pub r#const: bool,
