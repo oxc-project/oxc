@@ -3,7 +3,7 @@ use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
-use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
 use crate::ast::*;
 
@@ -1305,14 +1305,6 @@ impl<'a> Function<'a> {
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
         self.id.as_ref().map(|id| id.name)
-    }
-
-    /// Get the [`SymbolId`] this [`Function`] is bound to.
-    ///
-    /// Returns [`None`] for anonymous functions.
-    #[inline]
-    pub fn symbol_id(&self) -> Option<SymbolId> {
-        self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
     /// Returns `true` if this function uses overload signatures or `declare function` statements.
