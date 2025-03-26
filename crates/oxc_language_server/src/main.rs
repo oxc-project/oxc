@@ -552,13 +552,15 @@ impl Backend {
             Oxlintrc::default()
         };
 
-        let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone())
+        let config_store = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone())
             .expect("failed to build config")
             .build()
             .expect("failed to build config");
 
+        let lint_options = LintOptions { fix: FixKind::SafeFix, ..Default::default() };
+
         let linter = if self.options.lock().await.disable_nested_configs() {
-            Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix)
+            Linter::new(lint_options, config_store)
         } else {
             let nested_configs = self.nested_configs.pin();
             let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
@@ -566,11 +568,7 @@ impl Backend {
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect::<FxHashMap<_, _>>();
 
-            Linter::new_with_nested_configs(
-                LintOptions::default(),
-                config_store,
-                nested_configs_copy,
-            )
+            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
         };
 
         *self.server_linter.write().await = ServerLinter::new_with_linter(linter);
