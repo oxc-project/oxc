@@ -48,7 +48,6 @@
 //! [`Generator`]: crate::Generator
 
 use oxc_index::IndexVec;
-use syn::Ident;
 
 use crate::{
     Codegen, log, log_success,
@@ -103,11 +102,4 @@ fn analyse_file(
     log_success!();
 
     File::new(file_path)
-}
-
-/// Convert [`Ident`] to `String`, removing `r#` from start.
-///
-/// [`Ident`]: struct@Ident
-fn ident_name(ident: &Ident) -> String {
-    ident.to_string().trim_start_matches("r#").to_string()
 }

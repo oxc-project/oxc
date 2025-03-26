@@ -1196,6 +1196,8 @@ export interface TSPropertySignature extends Span {
   readonly: boolean;
   key: PropertyKey;
   typeAnnotation: TSTypeAnnotation | null;
+  accessibility: null;
+  static: false;
 }
 
 export type TSSignature =
@@ -1230,9 +1232,11 @@ export interface TSMethodSignature extends Span {
   optional: boolean;
   kind: TSMethodSignatureKind;
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
+  accessibility: null;
+  readonly: false;
+  static: false;
 }
 
 export interface TSConstructSignatureDeclaration extends Span {

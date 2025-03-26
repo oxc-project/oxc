@@ -73,4 +73,21 @@ mod test {
         Tester::new_with_linter(linter)
             .test_and_snapshot_single_file("fixtures/linter/issue_9958/issue.ts");
     }
+
+    // Test case for https://github.com/oxc-project/oxc/issues/9957
+    #[test]
+    fn test_regexp() {
+        let config_store = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            Oxlintrc::from_file(&PathBuf::from("fixtures/linter/regexp_feature/.oxlintrc.json"))
+                .unwrap(),
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+        let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);
+
+        Tester::new_with_linter(linter)
+            .test_and_snapshot_single_file("fixtures/linter/regexp_feature/index.ts");
+    }
 }

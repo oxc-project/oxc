@@ -306,13 +306,14 @@ impl RuleWithSeverity {
 
 #[cfg(test)]
 mod test {
-    use markdown::{Options, to_html_with_options};
-
     use super::RuleCategory;
-    use crate::rules::RULES;
 
     #[test]
+    #[cfg(feature = "ruledocs")]
     fn ensure_documentation() {
+        use crate::rules::RULES;
+        use markdown::{Options, to_html_with_options};
+
         assert!(!RULES.is_empty());
         let options = Options::gfm();
 

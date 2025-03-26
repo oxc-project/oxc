@@ -13,21 +13,27 @@ pub struct LintRuleMeta {
     category: Ident,
     /// Describes what auto-fixing capabilities the rule has
     fix: Option<Ident>,
+    #[cfg(feature = "ruledocs")]
     documentation: String,
     pub used_in_test: bool,
 }
 
 impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
+        #[cfg(feature = "ruledocs")]
         let mut documentation = String::new();
+
         for attr in input.call(Attribute::parse_outer)? {
             match parse_attr(["doc"], &attr) {
                 Some(lit) => {
-                    let value = lit.value();
-                    let line = value.strip_prefix(' ').unwrap_or(&value);
+                    #[cfg(feature = "ruledocs")]
+                    {
+                        let value = lit.value();
+                        let line = value.strip_prefix(' ').unwrap_or(&value);
 
-                    documentation.push_str(line);
-                    documentation.push('\n');
+                        documentation.push_str(line);
+                        documentation.push('\n');
+                    }
                 }
                 _ => {
                     return Err(Error::new_spanned(attr, "unexpected attribute"));
@@ -54,7 +60,15 @@ impl Parse for LintRuleMeta {
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, plugin, category, fix, documentation, used_in_test: false })
+        Ok(Self {
+            name: struct_name,
+            plugin,
+            category,
+            fix,
+            #[cfg(feature = "ruledocs")]
+            documentation,
+            used_in_test: false,
+        })
     }
 }
 
@@ -63,7 +77,15 @@ pub fn rule_name_converter() -> Converter {
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, plugin, category, fix, documentation, used_in_test } = metadata;
+    let LintRuleMeta {
+        name,
+        plugin,
+        category,
+        fix,
+        #[cfg(feature = "ruledocs")]
+        documentation,
+        used_in_test,
+    } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
     let plugin = plugin.to_string(); // ToDo: validate plugin name
@@ -91,6 +113,16 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         Some(quote! { use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta}, fixer::FixKind}; })
     };
 
+    #[cfg(not(feature = "ruledocs"))]
+    let docs: Option<proc_macro2::TokenStream> = None;
+
+    #[cfg(feature = "ruledocs")]
+    let docs = Some(quote! {
+        fn documentation() -> Option<&'static str> {
+            Some(#documentation)
+        }
+    });
+
     let output = quote! {
         #import_statement
 
@@ -103,9 +135,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
             #fix
 
-            fn documentation() -> Option<&'static str> {
-                Some(#documentation)
-            }
+            #docs
         }
     };
 

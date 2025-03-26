@@ -315,24 +315,24 @@ impl<'a, T> RawVec<'a, T> {
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_exact(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        len: usize,
+        additional: usize,
     ) -> Result<(), CollectionAllocErr> {
-        if self.needs_to_grow(used_cap, needed_extra_cap) {
-            self.reserve_exact_internal(used_cap, needed_extra_cap)?
+        if self.needs_to_grow(len, additional) {
+            self.grow_exact(len, additional)?
         }
 
         Ok(())
     }
 
     /// Ensures that the buffer contains at least enough space to hold
-    /// `used_cap + needed_extra_cap` elements. If it doesn't already,
+    /// `len + additional` elements. If it doesn't already,
     /// will reallocate the minimum possible amount of memory necessary.
     /// Generally this will be exactly the amount of memory necessary,
     /// but in principle the allocator is free to give back more than
     /// we asked for.
     ///
-    /// If `used_cap` exceeds `self.cap()`, this may fail to actually allocate
+    /// If `len` exceeds `self.cap()`, this may fail to actually allocate
     /// the requested space. This is not really unsafe, but the unsafe
     /// code *you* write that relies on the behavior of this function may break.
     ///
@@ -345,22 +345,22 @@ impl<'a, T> RawVec<'a, T> {
     /// # Aborts
     ///
     /// Aborts on OOM
-    pub fn reserve_exact(&mut self, used_cap: usize, needed_extra_cap: usize) {
-        if let Err(err) = self.try_reserve_exact(used_cap, needed_extra_cap) {
+    pub fn reserve_exact(&mut self, len: usize, additional: usize) {
+        if let Err(err) = self.try_reserve_exact(len, additional) {
             handle_error(err)
         }
     }
 
-    /// Calculates the buffer's new size given that it'll hold `used_cap +
-    /// needed_extra_cap` elements. This logic is used in amortized reserve methods.
+    /// Calculates the buffer's new size given that it'll hold `len +
+    /// additional` elements. This logic is used in amortized reserve methods.
     /// Returns `(new_capacity, new_alloc_size)`.
     fn amortized_new_size(
         &self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        len: usize,
+        additional: usize,
     ) -> Result<usize, CollectionAllocErr> {
         // Nothing we can really do about these checks :(
-        let required_cap = used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?;
+        let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
         // Cannot overflow, because `cap <= isize::MAX`, and type of `cap` is `usize`.
         let double_cap = self.cap * 2;
         // `double_cap` guarantees exponential growth.
@@ -368,25 +368,21 @@ impl<'a, T> RawVec<'a, T> {
     }
 
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
-    pub fn try_reserve(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-    ) -> Result<(), CollectionAllocErr> {
-        if self.needs_to_grow(used_cap, needed_extra_cap) {
-            self.reserve_amortized_internal(used_cap, needed_extra_cap)?;
+    pub fn try_reserve(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
+        if self.needs_to_grow(len, additional) {
+            self.grow_amortized(len, additional)?;
         }
 
         Ok(())
     }
 
     /// Ensures that the buffer contains at least enough space to hold
-    /// `used_cap + needed_extra_cap` elements. If it doesn't already have
+    /// `len + additional` elements. If it doesn't already have
     /// enough capacity, will reallocate enough space plus comfortable slack
     /// space to get amortized `O(1)` behavior. Will limit this behavior
     /// if it would needlessly cause itself to panic.
     ///
-    /// If `used_cap` exceeds `self.cap()`, this may fail to actually allocate
+    /// If `len` exceeds `self.cap()`, this may fail to actually allocate
     /// the requested space. This is not really unsafe, but the unsafe
     /// code *you* write that relies on the behavior of this function may break.
     ///
@@ -433,20 +429,20 @@ impl<'a, T> RawVec<'a, T> {
     /// # }
     /// ```
     #[inline]
-    pub fn reserve(&mut self, used_cap: usize, need_extra_cap: usize) {
-        if let Err(err) = self.try_reserve(used_cap, need_extra_cap) {
+    pub fn reserve(&mut self, len: usize, additional: usize) {
+        if let Err(err) = self.try_reserve(len, additional) {
             handle_error(err)
         }
     }
 
     /*
     /// Attempts to ensure that the buffer contains at least enough space to hold
-    /// `used_cap + needed_extra_cap` elements. If it doesn't already have
+    /// `len + additional` elements. If it doesn't already have
     /// enough capacity, will reallocate in place enough space plus comfortable slack
     /// space to get amortized `O(1)` behavior. Will limit this behaviour
     /// if it would needlessly cause itself to panic.
     ///
-    /// If `used_cap` exceeds `self.cap()`, this may fail to actually allocate
+    /// If `len` exceeds `self.cap()`, this may fail to actually allocate
     /// the requested space. This is not really unsafe, but the unsafe
     /// code *you* write that relies on the behavior of this function may break.
     ///
@@ -457,7 +453,7 @@ impl<'a, T> RawVec<'a, T> {
     /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
-    pub fn reserve_in_place(&mut self, used_cap: usize, needed_extra_cap: usize) -> bool {
+    pub fn reserve_in_place(&mut self, len: usize, additional: usize) -> bool {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
@@ -466,21 +462,21 @@ impl<'a, T> RawVec<'a, T> {
 
             // Don't actually need any more capacity. If the current `cap` is 0, we can't
             // reallocate in place.
-            // Wrapping in case they give a bad `used_cap`
+            // Wrapping in case they give a bad `len`
             let old_layout = match self.current_layout() {
                 Some(layout) => layout,
                 None => return false,
             };
-            if self.cap().wrapping_sub(used_cap) >= needed_extra_cap {
+            if self.cap().wrapping_sub(len) >= additional {
                 return false;
             }
 
             let new_cap = self
-                .amortized_new_size(used_cap, needed_extra_cap)
+                .amortized_new_size(len, additional)
                 .unwrap_or_else(|_| capacity_overflow());
 
-            // Here, `cap < used_cap + needed_extra_cap <= new_cap`
-            // (regardless of whether `self.cap - used_cap` wrapped).
+            // Here, `cap < len + additional <= new_cap`
+            // (regardless of whether `self.cap - len` wrapped).
             // Therefore we can safely call grow_in_place.
 
             let new_layout = Layout::new::<T>().repeat(new_cap).unwrap().0;
@@ -584,24 +580,20 @@ impl<'a, T> RawVec<'a, T> {
 
 impl<'a, T> RawVec<'a, T> {
     #[inline]
-    fn needs_to_grow(&self, used_cap: usize, needed_extra_cap: usize) -> bool {
-        needed_extra_cap > self.cap().wrapping_sub(used_cap)
+    fn needs_to_grow(&self, len: usize, additional: usize) -> bool {
+        additional > self.cap().wrapping_sub(len)
     }
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn reserve_exact_internal(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-    ) -> Result<(), CollectionAllocErr> {
+    fn grow_exact(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
-            let new_cap = used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?;
+            let new_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
             let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
@@ -614,18 +606,14 @@ impl<'a, T> RawVec<'a, T> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn reserve_amortized_internal(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-    ) -> Result<(), CollectionAllocErr> {
+    fn grow_amortized(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
-            let new_cap = self.amortized_new_size(used_cap, needed_extra_cap)?;
+            let new_cap = self.amortized_new_size(len, additional)?;
             let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
