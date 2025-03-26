@@ -14,6 +14,8 @@ use crate::write;
 use std::cell::Cell;
 use std::ops::Sub;
 
+use oxc_span::Span;
+
 /// Returns true if:
 /// - `next_comment` is Some, and
 /// - both comments are documentation comments, and
@@ -43,15 +45,14 @@ fn should_nestle_adjacent_doc_comments(
 }
 
 /// Formats the leading comments of `node`
-pub const fn format_leading_comments<'a>() -> FormatLeadingComments<'a> {
-    todo!()
-    // FormatLeadingComments::Node(node)
+pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a> {
+    FormatLeadingComments::Node(span)
 }
 
 /// Formats the leading comments of a node.
 #[derive(Debug, Copy, Clone)]
 pub enum FormatLeadingComments<'a> {
-    Node(&'a SyntaxNode),
+    Node(Span),
     Comments(&'a [SourceComment]),
 }
 
@@ -60,13 +61,14 @@ where
     Context: CstFormatContext,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-        todo!()
-        // let comments = f.context().comments().clone();
+        let comments = f.context().comments();
 
-        // let leading_comments = match self {
-        // FormatLeadingComments::Node(node) => comments.leading_comments(node),
-        // FormatLeadingComments::Comments(comments) => comments,
-        // };
+        let leading_comments = match self {
+            FormatLeadingComments::Node(span) => comments.leading_comments(*span),
+            FormatLeadingComments::Comments(comments) => comments,
+        };
+        dbg!(leading_comments);
+        todo!()
 
         // let mut leading_comments_iter = leading_comments.iter().peekable();
         // while let Some(comment) = leading_comments_iter.next() {

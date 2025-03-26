@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::formatter::{Buffer, Format, FormatResult, prelude::*};
+use crate::formatter::{Buffer, CstFormatContext, Format, FormatResult, prelude::*};
 use crate::{JsFormatContext, write};
 
 pub type JsFormatter<'ast, 'buf> = Formatter<'buf, JsFormatContext<'ast>>;
@@ -14,7 +14,7 @@ impl<'ast> Format<JsFormatContext<'ast>> for Program<'ast> {
             [
                 self.hashbang,
                 self.body,
-                format_leading_comments(),
+                format_leading_comments(self.span),
                 self.directives,
                 hard_line_break()
             ]
