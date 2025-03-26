@@ -2,8 +2,10 @@ use crate::formatter::formatter::Formatter;
 use crate::formatter::prelude::{if_group_breaks, text};
 use crate::formatter::printer::PrinterOptions;
 use crate::formatter::{
-    AttributePosition, BracketSameLine, BracketSpacing, Buffer, Expand, Format, FormatContext,
+    AttributePosition, BracketSameLine, BracketSpacing, Buffer, CommentKind, CommentPlacement,
+    CommentStyle, Comments, CstFormatContext, DecoratedComment, Expand, Format, FormatContext,
     FormatOptions, FormatResult, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle,
+    SyntaxTriviaPieceComments,
 };
 use crate::write;
 use std::fmt;
@@ -35,6 +37,33 @@ impl FormatContext for JsFormatContext<'_> {
 
     fn options(&self) -> &Self::Options {
         &self.options
+    }
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
+pub struct JsCommentStyle;
+
+impl CommentStyle for JsCommentStyle {
+    fn is_suppression(text: &str) -> bool {
+        todo!()
+    }
+
+    fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind {
+        todo!()
+    }
+
+    fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
+        todo!()
+    }
+}
+
+impl<'a> CstFormatContext for JsFormatContext<'a> {
+    // type Language = JsLanguage;
+    type Style = JsCommentStyle;
+    // type CommentRule = FormatJsLeadingComment;
+
+    fn comments(&self) -> &Comments {
+        todo!()
     }
 }
 

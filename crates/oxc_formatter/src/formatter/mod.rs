@@ -39,12 +39,13 @@ pub mod separated;
 mod syntax_element_key;
 mod syntax_node;
 mod syntax_token;
+mod syntax_trivia_piece_comments;
 mod text_len;
 mod text_range;
 mod text_size;
 pub mod token;
-// pub mod trivia;
 mod token_text;
+pub mod trivia;
 mod verbatim;
 
 pub use self::formatter::Formatter;
@@ -55,8 +56,9 @@ use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
 
 pub use self::arguments::{Argument, Arguments};
+pub use self::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
 // use self::builders::syntax_token_cow_slice;
-use self::comments::{CommentStyle, Comments};
+pub use self::comments::{CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment};
 pub use self::diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 use self::format_element::document::Document;
 #[cfg(debug_assertions)]
@@ -69,6 +71,7 @@ pub use self::text_len::TextLen;
 pub use self::text_range::TextRange;
 pub use self::text_size::TextSize;
 pub use self::token_text::TokenText;
+use crate::context::JsFormatContext;
 // use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
 // use biome_console::markup;
 // use biome_deserialize_macros::Merge;
@@ -645,12 +648,16 @@ pub trait FormatOptions {
     fn as_print_options(&self) -> PrinterOptions;
 }
 
-// /// The [CstFormatContext] is an extension of the CST unaware [FormatContext] and must be implemented
-// /// by every language.
-// ///
-// /// The context customizes the comments formatting and stores the comments of the CST.
+/// The [CstFormatContext] is an extension of the CST unaware [FormatContext] and must be implemented
+/// by every language.
+///
+/// The context customizes the comments formatting and stores the comments of the CST.
 pub trait CstFormatContext: FormatContext {
     type Style: CommentStyle;
+
+    // /// Rule for formatting comments.
+    // type CommentRule: Format<JsFormatContext<'_>> + Default;
+    // type CommentRule: FormatRule<SourceComment, Context = Self> + Default;
 
     /// Returns a reference to the program's comments.
     fn comments(&self) -> &Comments;
@@ -935,6 +942,56 @@ impl<C> Default for FormatToken<C> {
         Self { context: PhantomData }
     }
 }
+
+/// Formats the referenced `item` with the specified rule.
+#[derive(Debug, Copy, Clone)]
+pub struct FormatRefWithRule<'a, T, R>
+where
+    R: Format<T>,
+{
+    item: &'a T,
+    rule: R,
+}
+
+impl<'a, T, R> FormatRefWithRule<'a, T, R>
+where
+    R: Format<T>,
+{
+    pub fn new(item: &'a T, rule: R) -> Self {
+        Self { item, rule }
+    }
+}
+
+// impl<T, R, O> FormatRefWithRule<'_, T, R>
+// where
+// R: FormatRuleWithOptions<T, Options = O>,
+// {
+// pub fn with_options(mut self, options: O) -> Self {
+// self.rule = self.rule.with_options(options);
+// self
+// }
+// }
+
+// impl<T, R> FormatWithRule<R::Context> for FormatRefWithRule<'_, T, R>
+// where
+// R: FormatRule<T>,
+// {
+// type Item = T;
+
+// fn item(&self) -> &Self::Item {
+// self.item
+// }
+// }
+
+// impl<T, R> Format<R::Context> for FormatRefWithRule<'_, T, R>
+// where
+// R: FormatRule<T>,
+// {
+// #[inline(always)]
+// fn fmt(&self, f: &mut Formatter<R::Context>) -> FormatResult<()> {
+// self.rule.fmt(self.item, f)
+// }
+// }
 
 /// The `write` function takes a target buffer and an `Arguments` struct that can be precompiled with the `format_args!` macro.
 ///

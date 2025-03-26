@@ -80,6 +80,7 @@ mod map;
 
 use self::map::CommentsMap;
 use super::buffer::Buffer;
+use super::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
 use super::{CstFormatContext, TextSize /*TransformSourceMap*/};
 use super::{SyntaxElementKey, SyntaxNode, SyntaxToken};
 // use biome_rowan::syntax::SyntaxElementKey;
@@ -162,8 +163,9 @@ pub struct SourceComment {
 
     pub(crate) lines_after: u32,
 
-    // /// The comment piece
-    // pub(crate) piece: SyntaxTriviaPieceComments,
+    /// The comment piece
+    pub(crate) piece: SyntaxTriviaPieceComments,
+
     /// The kind of the comment.
     pub(crate) kind: CommentKind,
 
@@ -173,10 +175,10 @@ pub struct SourceComment {
 }
 
 impl SourceComment {
-    // /// Returns the underlining comment trivia piece
-    // pub fn piece(&self) -> &SyntaxTriviaPieceComments {
-    // &self.piece
-    // }
+    /// Returns the underlining comment trivia piece
+    pub fn piece(&self) -> &SyntaxTriviaPieceComments {
+        &self.piece
+    }
 
     /// The number of lines between this comment and the **previous** token or comment.
     ///
@@ -257,7 +259,7 @@ pub struct DecoratedComment {
     text_position: CommentTextPosition,
     lines_before: u32,
     lines_after: u32,
-    // comment: SyntaxTriviaPieceComments,
+    comment: SyntaxTriviaPieceComments,
     kind: CommentKind,
 }
 
@@ -460,7 +462,7 @@ impl From<DecoratedComment> for SourceComment {
         Self {
             lines_before: decorated.lines_before,
             lines_after: decorated.lines_after,
-            // piece: decorated.comment,
+            piece: decorated.comment,
             kind: decorated.kind,
             #[cfg(debug_assertions)]
             formatted: Cell::new(false),
@@ -747,8 +749,8 @@ pub trait CommentStyle: Default {
         false
     }
 
-    // /// Returns the (kind)[CommentKind] of the comment
-    // fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind;
+    /// Returns the (kind)[CommentKind] of the comment
+    fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind;
 
     /// Determines the placement of `comment`.
     ///
@@ -781,210 +783,227 @@ pub struct Comments {
     data: Rc<CommentsData>,
 }
 
-// impl Comments {
-// /// Extracts all the comments from `root` and its descendants nodes.
-// pub fn from_node<Style>(
-// root: &SyntaxNode,
-// style: &Style,
-// // source_map: Option<&TransformSourceMap>,
-// ) -> Self
-// where
-// Style: CommentStyle<Language = L>,
-// {
-// let builder = CommentsBuilderVisitor::new(style, source_map);
+impl Comments {
+    /// Extracts all the comments from `root` and its descendants nodes.
+    pub fn from_node<Style>(
+        root: &SyntaxNode,
+        style: &Style,
+        // source_map: Option<&TransformSourceMap>,
+    ) -> Self
+    where
+        Style: CommentStyle,
+    {
+        todo!()
+        // let builder = CommentsBuilderVisitor::new(style, source_map);
 
-// let (comments, skipped) = builder.visit(root);
+        // let (comments, skipped) = builder.visit(root);
 
-// Self {
-// data: Rc::new(CommentsData {
-// root: Some(root.clone()),
-// is_suppression: Style::is_suppression,
+        // Self {
+        // data: Rc::new(CommentsData {
+        // root: Some(root.clone()),
+        // is_suppression: Style::is_suppression,
 
-// comments,
-// with_skipped: skipped,
-// #[cfg(debug_assertions)]
-// checked_suppressions: RefCell::new(Default::default()),
-// }),
-// }
-// }
+        // comments,
+        // with_skipped: skipped,
+        // #[cfg(debug_assertions)]
+        // checked_suppressions: RefCell::new(Default::default()),
+        // }),
+        // }
+    }
 
-// /// Returns `true` if the given `node` has any [leading](self#leading-comments) or [trailing](self#trailing-comments) comments.
-// #[inline]
-// pub fn has_comments(&self, node: &SyntaxNode) -> bool {
-// self.data.comments.has(&node.key())
-// }
+    /// Returns `true` if the given `node` has any [leading](self#leading-comments) or [trailing](self#trailing-comments) comments.
+    #[inline]
+    pub fn has_comments(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // self.data.comments.has(&node.key())
+    }
 
-// /// Returns `true` if the given `node` has any [leading comments](self#leading-comments).
-// #[inline]
-// pub fn has_leading_comments(&self, node: &SyntaxNode) -> bool {
-// !self.leading_comments(node).is_empty()
-// }
+    /// Returns `true` if the given `node` has any [leading comments](self#leading-comments).
+    #[inline]
+    pub fn has_leading_comments(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // !self.leading_comments(node).is_empty()
+    }
 
-// /// Tests if the node has any [leading comments](self#leading-comments) that have a leading line break.
-// ///
-// /// Corresponds to [CommentTextPosition::OwnLine].
-// pub fn has_leading_own_line_comment(&self, node: &SyntaxNode) -> bool {
-// self.leading_comments(node).iter().any(|comment| comment.lines_after() > 0)
-// }
+    /// Tests if the node has any [leading comments](self#leading-comments) that have a leading line break.
+    ///
+    /// Corresponds to [CommentTextPosition::OwnLine].
+    pub fn has_leading_own_line_comment(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // self.leading_comments(node).iter().any(|comment| comment.lines_after() > 0)
+    }
 
-// /// Returns the `node`'s [leading comments](self#leading-comments).
-// #[inline]
-// pub fn leading_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-// self.data.comments.leading(&node.key())
-// }
+    /// Returns the `node`'s [leading comments](self#leading-comments).
+    #[inline]
+    pub fn leading_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
+        todo!()
+        // self.data.comments.leading(&node.key())
+    }
 
-// /// Returns `true` if node has any [dangling comments](self#dangling-comments).
-// pub fn has_dangling_comments(&self, node: &SyntaxNode) -> bool {
-// !self.dangling_comments(node).is_empty()
-// }
+    /// Returns `true` if node has any [dangling comments](self#dangling-comments).
+    pub fn has_dangling_comments(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // !self.dangling_comments(node).is_empty()
+    }
 
-// /// Returns the [dangling comments](self#dangling-comments) of `node`
-// pub fn dangling_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-// self.data.comments.dangling(&node.key())
-// }
+    /// Returns the [dangling comments](self#dangling-comments) of `node`
+    pub fn dangling_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
+        todo!()
+        // self.data.comments.dangling(&node.key())
+    }
 
-// /// Returns the `node`'s [trailing comments](self#trailing-comments).
-// #[inline]
-// pub fn trailing_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
-// self.data.comments.trailing(&node.key())
-// }
+    /// Returns the `node`'s [trailing comments](self#trailing-comments).
+    #[inline]
+    pub fn trailing_comments(&self, node: &SyntaxNode) -> &[SourceComment] {
+        todo!()
+        // self.data.comments.trailing(&node.key())
+    }
 
-// /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
-// pub fn has_trailing_line_comment(&self, node: &SyntaxNode) -> bool {
-// self.trailing_comments(node).iter().any(|comment| comment.kind().is_line())
-// }
+    /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
+    pub fn has_trailing_line_comment(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // self.trailing_comments(node).iter().any(|comment| comment.kind().is_line())
+    }
 
-// /// Returns `true` if the given `node` has any [trailing comments](self#trailing-comments).
-// #[inline]
-// pub fn has_trailing_comments(&self, node: &SyntaxNode) -> bool {
-// !self.trailing_comments(node).is_empty()
-// }
+    /// Returns `true` if the given `node` has any [trailing comments](self#trailing-comments).
+    #[inline]
+    pub fn has_trailing_comments(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // !self.trailing_comments(node).is_empty()
+    }
 
-// /// Returns an iterator over the [leading](self#leading-comments) and [trailing comments](self#trailing-comments) of `node`.
-// pub fn leading_trailing_comments(
-// &self,
-// node: &SyntaxNode,
-// ) -> impl Iterator<Item = &SourceComment> + use<'_, L> {
-// self.leading_comments(node).iter().chain(self.trailing_comments(node).iter())
-// }
+    /// Returns an iterator over the [leading](self#leading-comments) and [trailing comments](self#trailing-comments) of `node`.
+    pub fn leading_trailing_comments(
+        &self,
+        node: &SyntaxNode,
+    ) -> impl Iterator<Item = &SourceComment> + use<'_> {
+        self.leading_comments(node).iter().chain(self.trailing_comments(node).iter())
+    }
 
-// /// Returns an iterator over the [leading](self#leading-comments), [dangling](self#dangling-comments), and [trailing](self#trailing) comments of `node`.
-// pub fn leading_dangling_trailing_comments<'a>(
-// &'a self,
-// node: &'a SyntaxNode,
-// ) -> impl Iterator<Item = &'a SourceComment> + 'a {
-// self.data.comments.parts(&node.key())
-// }
+    /// Returns an iterator over the [leading](self#leading-comments), [dangling](self#dangling-comments), and [trailing](self#trailing) comments of `node`.
+    pub fn leading_dangling_trailing_comments<'a>(
+        &'a self,
+        node: &'a SyntaxNode,
+    ) -> impl Iterator<Item = &'a SourceComment> + 'a {
+        todo!();
+        std::iter::empty()
+        // self.data.comments.parts(&node.key())
+    }
 
-// /// Returns `true` if that node has skipped token trivia attached.
-// #[inline]
-// pub fn has_skipped(&self, token: &SyntaxToken) -> bool {
-// self.data.with_skipped.contains(&token.key())
-// }
+    /// Returns `true` if that node has skipped token trivia attached.
+    #[inline]
+    pub fn has_skipped(&self, token: &SyntaxToken) -> bool {
+        todo!()
+        // self.data.with_skipped.contains(&token.key())
+    }
 
-// /// Returns `true` if `node` has a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) suppression comment.
-// ///
-// /// # Examples
-// ///
-// /// ```javascript
-// /// // biome-ignore format: Reason
-// /// console.log("Test");
-// /// ```
-// ///
-// /// Returns `true` for the expression statement but `false` for the call expression because the
-// /// call expression is nested inside of the expression statement.
-// pub fn is_suppressed(&self, node: &SyntaxNode) -> bool {
-// self.mark_suppression_checked(node);
-// let is_suppression = self.data.is_suppression;
+    /// Returns `true` if `node` has a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) suppression comment.
+    ///
+    /// # Examples
+    ///
+    /// ```javascript
+    /// // biome-ignore format: Reason
+    /// console.log("Test");
+    /// ```
+    ///
+    /// Returns `true` for the expression statement but `false` for the call expression because the
+    /// call expression is nested inside of the expression statement.
+    pub fn is_suppressed(&self, node: &SyntaxNode) -> bool {
+        todo!()
+        // self.mark_suppression_checked(node);
+        // let is_suppression = self.data.is_suppression;
 
-// self.leading_dangling_trailing_comments(node)
-// .any(|comment| is_suppression(comment.piece().text()))
-// }
+        // self.leading_dangling_trailing_comments(node)
+        // .any(|comment| is_suppression(comment.piece().text()))
+    }
 
-// #[cfg(not(debug_assertions))]
-// #[inline(always)]
-// pub fn mark_suppression_checked(&self, _: &SyntaxNode) {}
+    #[cfg(not(debug_assertions))]
+    #[inline(always)]
+    pub fn mark_suppression_checked(&self, _: &SyntaxNode) {}
 
-// /// Marks that it isn't necessary for the given node to check if it has been suppressed or not.
-// #[cfg(debug_assertions)]
-// pub fn mark_suppression_checked(&self, node: &SyntaxNode) {
-// let mut checked_nodes = self.data.checked_suppressions.borrow_mut();
-// checked_nodes.insert(node.clone());
-// }
+    /// Marks that it isn't necessary for the given node to check if it has been suppressed or not.
+    #[cfg(debug_assertions)]
+    pub fn mark_suppression_checked(&self, node: &SyntaxNode) {
+        todo!()
+        // let mut checked_nodes = self.data.checked_suppressions.borrow_mut();
+        // checked_nodes.insert(node.clone());
+    }
 
-// #[cfg(not(debug_assertions))]
-// #[inline(always)]
-// pub(crate) fn assert_checked_all_suppressions(&self, _: &SyntaxNode) {}
+    #[cfg(not(debug_assertions))]
+    #[inline(always)]
+    pub(crate) fn assert_checked_all_suppressions(&self, _: &SyntaxNode) {}
 
-// /// Verifies that [NodeSuppressions::is_suppressed] has been called for every node of `root`.
-// /// This is a no-op in builds that have the feature `debug_assertions` disabled.
-// ///
-// /// # Panics
-// /// If theres any node for which the formatting didn't very if it has a suppression comment.
-// #[cfg(debug_assertions)]
-// pub(crate) fn assert_checked_all_suppressions(&self, root: &SyntaxNode) {
-// // use biome_rowan::SyntaxKind;
+    /// Verifies that [NodeSuppressions::is_suppressed] has been called for every node of `root`.
+    /// This is a no-op in builds that have the feature `debug_assertions` disabled.
+    ///
+    /// # Panics
+    /// If theres any node for which the formatting didn't very if it has a suppression comment.
+    #[cfg(debug_assertions)]
+    pub(crate) fn assert_checked_all_suppressions(&self, root: &SyntaxNode) {
+        todo!()
+        // use biome_rowan::SyntaxKind;
 
-// let checked_nodes = self.data.checked_suppressions.borrow();
-// for node in root.descendants() {
-// if node.kind().is_list() || node.kind().is_root() {
-// continue;
-// }
+        // let checked_nodes = self.data.checked_suppressions.borrow();
+        // for node in root.descendants() {
+        // if node.kind().is_list() || node.kind().is_root() {
+        // continue;
+        // }
 
-// if !checked_nodes.contains(&node) {
-// panic!(
-// r#"
-// The following node has been formatted without checking if it has suppression comments.
-// Ensure that the formatter calls into the node's formatting rule by using `node.format()` or
-// manually test if the node has a suppression comment using `f.context().comments().is_suppressed(node.syntax())`
-// if using the node's format rule isn't an option."
+        // if !checked_nodes.contains(&node) {
+        // panic!(
+        // r#"
+        // The following node has been formatted without checking if it has suppression comments.
+        // Ensure that the formatter calls into the node's formatting rule by using `node.format()` or
+        // manually test if the node has a suppression comment using `f.context().comments().is_suppressed(node.syntax())`
+        // if using the node's format rule isn't an option."
 
-// Node:
-// {node:#?}"#
-// );
-// }
-// }
-// }
+        // Node:
+        // {node:#?}"#
+        // );
+        // }
+        // }
+    }
 
-// #[inline(always)]
-// #[cfg(not(debug_assertions))]
-// pub(crate) fn assert_formatted_all_comments(&self) {}
+    #[inline(always)]
+    #[cfg(not(debug_assertions))]
+    pub(crate) fn assert_formatted_all_comments(&self) {}
 
-// #[cfg(debug_assertions)]
-// pub(crate) fn assert_formatted_all_comments(&self) {
-// let has_unformatted_comments =
-// self.data.comments.all_parts().any(|comment| !comment.formatted.get());
+    #[cfg(debug_assertions)]
+    pub(crate) fn assert_formatted_all_comments(&self) {
+        todo!()
+        // let has_unformatted_comments =
+        // self.data.comments.all_parts().any(|comment| !comment.formatted.get());
 
-// if has_unformatted_comments {
-// let mut unformatted_comments = Vec::new();
+        // if has_unformatted_comments {
+        // let mut unformatted_comments = Vec::new();
 
-// for node in
-// self.data.root.as_ref().expect("Expected root for comments with data").descendants()
-// {
-// unformatted_comments.extend(self.leading_comments(&node).iter().filter_map(
-// |comment| {
-// (!comment.formatted.get())
-// .then_some(DebugComment::Leading { node: node.clone(), comment })
-// },
-// ));
-// unformatted_comments.extend(self.dangling_comments(&node).iter().filter_map(
-// |comment| {
-// (!comment.formatted.get())
-// .then_some(DebugComment::Dangling { node: node.clone(), comment })
-// },
-// ));
-// unformatted_comments.extend(self.trailing_comments(&node).iter().filter_map(
-// |comment| {
-// (!comment.formatted.get())
-// .then_some(DebugComment::Trailing { node: node.clone(), comment })
-// },
-// ));
-// }
+        // for node in
+        // self.data.root.as_ref().expect("Expected root for comments with data").descendants()
+        // {
+        // unformatted_comments.extend(self.leading_comments(&node).iter().filter_map(
+        // |comment| {
+        // (!comment.formatted.get())
+        // .then_some(DebugComment::Leading { node: node.clone(), comment })
+        // },
+        // ));
+        // unformatted_comments.extend(self.dangling_comments(&node).iter().filter_map(
+        // |comment| {
+        // (!comment.formatted.get())
+        // .then_some(DebugComment::Dangling { node: node.clone(), comment })
+        // },
+        // ));
+        // unformatted_comments.extend(self.trailing_comments(&node).iter().filter_map(
+        // |comment| {
+        // (!comment.formatted.get())
+        // .then_some(DebugComment::Trailing { node: node.clone(), comment })
+        // },
+        // ));
+        // }
 
-// panic!("The following comments have not been formatted.\n{unformatted_comments:#?}")
-// }
-// }
-// }
+        // panic!("The following comments have not been formatted.\n{unformatted_comments:#?}")
+        // }
+    }
+}
 
 struct CommentsData {
     root: Option<SyntaxNode>,
@@ -1092,94 +1111,96 @@ impl<C> Default for FormatPlainComment<C> {
     }
 }
 
-// /// Returns `true` if `comment` is a multi line block comment where each line
-// /// starts with a star (`*`). These comments can be formatted to always have
-// /// the leading stars line up in a column.
-// ///
-// /// # Examples
-// ///
-// /// ```rs,ignore
-// /// assert!(is_alignable_comment(&parse_comment(r#"
-// ///     /**
-// ///      * Multiline doc comment
-// ///      */
-// /// "#)));
-// ///
-// /// assert!(is_alignable_comment(&parse_comment(r#"
-// ///     /*
-// ///      * Single star
-// ///      */
-// /// "#)));
-// ///
-// ///
-// /// // Non indentable-comments
-// /// assert!(!is_alignable_comment(&parse_comment(r#"/** has no line break */"#)));
-// ///
-// /// assert!(!is_alignable_comment(&parse_comment(r#"
-// /// /*
-// ///  *
-// ///  this line doesn't start with a star
-// ///  */
-// /// "#)));
-// /// ```
-// pub fn is_alignable_comment(comment: &SyntaxTriviaPieceComments) -> bool {
-// if !comment.has_newline() {
-// return false;
-// }
+/// Returns `true` if `comment` is a multi line block comment where each line
+/// starts with a star (`*`). These comments can be formatted to always have
+/// the leading stars line up in a column.
+///
+/// # Examples
+///
+/// ```rs,ignore
+/// assert!(is_alignable_comment(&parse_comment(r#"
+///     /**
+///      * Multiline doc comment
+///      */
+/// "#)));
+///
+/// assert!(is_alignable_comment(&parse_comment(r#"
+///     /*
+///      * Single star
+///      */
+/// "#)));
+///
+///
+/// // Non indentable-comments
+/// assert!(!is_alignable_comment(&parse_comment(r#"/** has no line break */"#)));
+///
+/// assert!(!is_alignable_comment(&parse_comment(r#"
+/// /*
+///  *
+///  this line doesn't start with a star
+///  */
+/// "#)));
+/// ```
+pub fn is_alignable_comment(comment: &SyntaxTriviaPieceComments) -> bool {
+    todo!()
+    // if !comment.has_newline() {
+    // return false;
+    // }
 
-// let text = comment.text();
+    // let text = comment.text();
 
-// text.lines().enumerate().all(|(index, line)| {
-// if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-// })
-// }
+    // text.lines().enumerate().all(|(index, line)| {
+    // if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
+    // })
+}
 
-// /// **TODO:** This is really JS-specific logic, both in syntax and semantics.
-// /// It should probably be moved to `biome_js_formatter` when possible, but is
-// /// currently tied to other behavior about formatting sets of comments (which
-// /// might also be best to move as well, since it relates to the same specific
-// /// behavior).
-// ///
-// /// Returns `true` if `comment` is a documentation-style comment, specifically
-// /// matching the JSDoc format where the comment:
-// /// - spans over multiple lines
-// /// - starts with two stars (like `/**`)
-// ///
-// /// This is a special case of [self::is_alignable_comment].
-// ///
-// /// # Examples
-// ///
-// /// ```rs,ignore
-// /// assert!(is_doc_comment(&parse_comment(r#"
-// ///     /**
-// ///      * Multiline doc comment
-// ///      */
-// /// "#)));
-// ///
-// /// // Non doc-comments
-// /// assert!(!is_doc_comment(&parse_comment(r#"
-// ///     /*
-// ///      * Single star
-// ///      */
-// /// "#)));
-// ///
-// /// assert!(!is_doc_comment(&parse_comment(r#"/** has no line break */"#)));
-// ///
-// /// assert!(!is_doc_comment(&parse_comment(r#"
-// ///     /**
-// ///      *
-// ///     this line doesn't start with a star
-// ///     */
-// /// "#)));
-// /// ```
-// pub fn is_doc_comment(comment: &SyntaxTriviaPieceComments) -> bool {
-// if !comment.has_newline() {
-// return false;
-// }
+/// **TODO:** This is really JS-specific logic, both in syntax and semantics.
+/// It should probably be moved to `biome_js_formatter` when possible, but is
+/// currently tied to other behavior about formatting sets of comments (which
+/// might also be best to move as well, since it relates to the same specific
+/// behavior).
+///
+/// Returns `true` if `comment` is a documentation-style comment, specifically
+/// matching the JSDoc format where the comment:
+/// - spans over multiple lines
+/// - starts with two stars (like `/**`)
+///
+/// This is a special case of [self::is_alignable_comment].
+///
+/// # Examples
+///
+/// ```rs,ignore
+/// assert!(is_doc_comment(&parse_comment(r#"
+///     /**
+///      * Multiline doc comment
+///      */
+/// "#)));
+///
+/// // Non doc-comments
+/// assert!(!is_doc_comment(&parse_comment(r#"
+///     /*
+///      * Single star
+///      */
+/// "#)));
+///
+/// assert!(!is_doc_comment(&parse_comment(r#"/** has no line break */"#)));
+///
+/// assert!(!is_doc_comment(&parse_comment(r#"
+///     /**
+///      *
+///     this line doesn't start with a star
+///     */
+/// "#)));
+/// ```
+pub fn is_doc_comment(comment: &SyntaxTriviaPieceComments) -> bool {
+    todo!()
+    // if !comment.has_newline() {
+    // return false;
+    // }
 
-// let text = comment.text();
+    // let text = comment.text();
 
-// text.lines().enumerate().all(|(index, line)| {
-// if index == 0 { line.starts_with("/**") } else { line.trim_start().starts_with('*') }
-// })
-// }
+    // text.lines().enumerate().all(|(index, line)| {
+    // if index == 0 { line.starts_with("/**") } else { line.trim_start().starts_with('*') }
+    // })
+}

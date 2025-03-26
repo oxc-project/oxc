@@ -3,10 +3,10 @@ pub use super::format_element::*;
 pub use super::format_extensions::{MemoizeFormat, Memoized};
 pub use super::formatter::Formatter;
 pub use super::printer::PrinterOptions;
-// pub use super::trivia::{
-// format_dangling_comments, format_leading_comments, format_only_if_breaks, format_removed,
-// format_replaced, format_trailing_comments, format_trimmed_token,
-// };
+pub use super::trivia::{
+    format_dangling_comments, format_leading_comments, format_only_if_breaks, format_removed,
+    format_replaced, format_trailing_comments, format_trimmed_token,
+};
 
 pub use super::diagnostics::FormatError;
 pub use super::format_element::document::Document;
