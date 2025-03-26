@@ -1295,6 +1295,7 @@ impl ESTree for ObjectPattern<'_> {
             "properties",
             &AppendTo { array: &self.properties, after: &self.rest },
         );
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.end();
     }
 }
@@ -1635,6 +1636,10 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("override", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("readonly", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("declare", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
