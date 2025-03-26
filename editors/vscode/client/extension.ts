@@ -58,10 +58,14 @@ export async function activate(context: ExtensionContext) {
       try {
         if (client.isRunning()) {
           await client.restart();
+          // ToDo: refactor it on the server side.
+          // Do not touch watchers on client side, just simplify the restart of the server.
+          const configFiles = await findOxlintrcConfigFiles();
+          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
 
           window.showInformationMessage('oxc server restarted.');
         } else {
-          await client.start();
+          await startClient();
         }
       } catch (err) {
         client.error('Restarting client failed', err, 'force');
@@ -78,8 +82,18 @@ export async function activate(context: ExtensionContext) {
 
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
-    () => {
-      configService.config.updateEnable(!configService.config.enable);
+    async () => {
+      await configService.config.updateEnable(!configService.config.enable);
+
+      if (client.isRunning()) {
+        if (!configService.config.enable) {
+          await client.stop();
+        }
+      } else {
+        if (configService.config.enable) {
+          await startClient();
+        }
+      }
     },
   );
 
@@ -232,7 +246,7 @@ export async function activate(context: ExtensionContext) {
 
   configService.onConfigChange = function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
-    updateStatsBar(settings.enable);
+    updateStatsBar(this.config.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
 
     if (event.affectsConfiguration('oxc.configPath')) {
@@ -265,8 +279,17 @@ export async function activate(context: ExtensionContext) {
     myStatusBarItem.backgroundColor = bgColor;
   }
   updateStatsBar(configService.config.enable);
-  await client.start();
 
+  if (configService.config.enable) {
+    await startClient();
+  }
+}
+
+// Starts the client, it does not check if it is already started
+async function startClient() {
+  await client.start();
+  // ToDo: refactor it on the server side.
+  // Do not touch watchers on client side, just simplify the start of the server.
   const configFiles = await findOxlintrcConfigFiles();
   await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
 }

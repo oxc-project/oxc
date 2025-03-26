@@ -25,7 +25,6 @@ Initialization Options:
 | Option Key   | Value(s)               | Default          | Description                                                                                          |
 | ------------ | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
 | `run`        | `"onSave" \| "onType"` | `"onType"`       | Should the server lint the files when the user is typing or saving                                   |
-| `enable`     | `true \| false`        | `true`           | Should the server lint files                                                                         |
 | `configPath` | `<string>`             | `.oxlintrc.json` | Path to a oxlint configuration file, pass '' to enable nested configuration                          |
 | `flags`      | `Map<string, string>`  | `<empty>`        | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
 
@@ -33,11 +32,13 @@ Initialization Options:
 
 ### [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)
 
+The server will reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
+
 ### Workspace
 
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
-The server expects this request when settings like `run`, `enable`, `flags` or `configPath` are changed.
+The server expects this request when settings like `run`, `flags` or `configPath` are changed.
 The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)

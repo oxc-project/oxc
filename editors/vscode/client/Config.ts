@@ -98,7 +98,6 @@ export class Config implements ConfigInterface {
   public toLanguageServerConfig(): LanguageServerConfig {
     return {
       run: this.runTrigger,
-      enable: this.enable,
       configPath: this.configPath,
       flags: this.flags,
     };
@@ -107,7 +106,6 @@ export class Config implements ConfigInterface {
 
 interface LanguageServerConfig {
   configPath: string;
-  enable: boolean;
   run: Trigger;
   flags: Record<string, string>;
 }
