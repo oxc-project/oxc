@@ -348,8 +348,7 @@ impl<'a> Printer<'a> {
         self.print_str(text);
 
         if source_position.is_some() {
-            todo!()
-            // self.state.source_position += text.text_len();
+            self.state.source_position += text.text_len();
         }
 
         self.push_marker(SourceMarker {
