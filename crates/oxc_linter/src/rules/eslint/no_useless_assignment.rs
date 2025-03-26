@@ -47,7 +47,7 @@ impl Rule for NoUselessAssignment {
                 if let Some(reference_id) = id.reference_id.get() {
                     let reference = ctx.semantic().scoping().get_reference(reference_id);
                     if let Some(symbol_id) = reference.symbol_id() {
-                        if is_dead_store(symbol_id, node.id(), ctx) {
+                        if is_dead_store(symbol_id, ctx) {
                             ctx.diagnostic(no_useless_assignment_diagnostic(assign.span));
                         }
                     }
@@ -57,14 +57,7 @@ impl Rule for NoUselessAssignment {
     }
 }
 
-// Check if a symbol is a "dead store" - not read after this point
-fn is_dead_store(symbol_id: SymbolId, _node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    // Check if any assignment happens before using it
-    has_multiple_assignments_before_read(symbol_id, ctx)
-}
-
-
-fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     // Get all references to this symbol ordered by span position
     let references = ctx.semantic().symbol_references(symbol_id).collect::<Vec<_>>();
     // get SymbolId's declaration node
@@ -86,6 +79,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
     }
 
 
+    // create a reference for the declaration node
     let dec_control_parent = find_control_parent(declaration_node_id, ctx);
     let dec_ref = Reference::new(declaration_node_id, ReferenceFlags::None);
     if let Some(parent_id) = dec_control_parent {
@@ -104,10 +98,8 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         reference_group_values.push(&reference_group_without_parent);
     }
 
-    println!("reference_group_values: {:?}", reference_group_values);
-
     let mut has_read = false;
-    let mut is_multiple_assignments_without_read = false;
+    let mut is_multiple_assignments = false;
     for reference_group_value in reference_group_values {
         let mut read_count_total = 0;
         let mut write_count_total = 0;
@@ -115,13 +107,13 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         let mut has_declaration = false;
         let mut declaration_node_idx = 0;
 
-        let mut sorted_references = reference_group_value.to_vec();
+        let mut sorted_references = reference_group_value.clone();
         sorted_references.sort_by_key(|reference| reference.node_id());
         for (idx, reference) in sorted_references.iter().enumerate() {
             if has_declaration && idx - 1 == declaration_node_idx {
                 // can't assign immediately after declaration
                 if reference.flags().is_write() {
-                    is_multiple_assignments_without_read = true;
+                    is_multiple_assignments = true;
                 }
             }
 
@@ -158,7 +150,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
         }
 
         if write_count_total > read_count_total {
-            is_multiple_assignments_without_read = true;
+            is_multiple_assignments = true;
         }
 
         if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) && read_count_total > 0 {
@@ -168,7 +160,7 @@ fn has_multiple_assignments_before_read(symbol_id: SymbolId, ctx: &LintContext<'
     }
 
     // bypass no-unused-vars
-    if is_multiple_assignments_without_read && has_read {
+    if is_multiple_assignments && has_read {
         print!("failed3");
         return true;
     }
