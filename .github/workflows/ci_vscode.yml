@@ -10,7 +10,7 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "editors/vscode/**"
-      - ".github/worfkflows/ci_vscode.yml"
+      - ".github/workflows/ci_vscode.yml"
   push:
     branches:
       - main
@@ -18,26 +18,15 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "editors/vscode/**"
-      - ".github/worfkflows/ci_vscode.yml"
+      - ".github/workflows/ci_vscode.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  compile:
-    name: Compile
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: ./.github/actions/pnpm
-
-      - name: Compile VSCode
-        working-directory: editors/vscode
-        run: pnpm run compile
-
   lint:
-    name: Lint
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -46,13 +35,6 @@ jobs:
       - name: Lint VSCode
         working-directory: editors/vscode
         run: pnpm run lint
-
-  type-check:
-    name: Type-Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: ./.github/actions/pnpm
 
       - name: Type-Check VSCode
         working-directory: editors/vscode
@@ -64,6 +46,14 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: ./.github/actions/pnpm
+
+      - name: Build Language Server
+        working-directory: editors/vscode
+        run: pnpm run server:build:release
+
+      - name: Compile VSCode
+        working-directory: editors/vscode
+        run: pnpm run compile
 
       - name: Test VSCode
         working-directory: editors/vscode

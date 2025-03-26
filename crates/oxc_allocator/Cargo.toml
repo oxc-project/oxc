@@ -1,6 +1,6 @@
 [package]
 name = "oxc_allocator"
-version = "0.60.0"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,7 +16,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }

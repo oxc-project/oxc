@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2025-03-25
+
+### Features
+
+- 1b41cb3 linter: Add suggested fix to `unicorn/prefer-structured-clone` (#9994) (Ulrich Stark 🦀)
+- 24cbe51 linter: Add suggested fixer to `typescript/no_unnecessary_parameter_property_assignment` and fix false positive (#9973) (Ulrich Stark 🦀)
+
+### Bug Fixes
+
+- 6c4b533 linter: False positive in `import/no-empty-named-blocks` (#9974) (shulaoda)
+- ff13be6 linter: Correct fixer for spread in function arguments (#9972) (shulaoda)
+
+### Refactor
+
+- 0f1e0e8 linter: Gate rule docs behind feature (#10027) (camchenry)
+- ad06194 linter: Add fixer for `typescript-eslint/no-non-null-asserted-optional-chain` (#9993) (camchenry)
+- 402d8b7 linter: Improve `eslint/no-redeclare` (#9976) (shulaoda)
+- be62d38 rust: Remove usages of `lazy_static` (#10007) (Boshen)
+- 6432707 rust: Use `lazy-regex` (#10004) (Boshen)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
+## [0.16.2] - 2025-03-21
+
+### Bug Fixes
+
+- 2e8198e linter: Skip extending config files that look like named configs or not files (#9932) (camchenry)
+- f649fb3 linter: Reclassify `unicorn/no-document-cookie` as restriction (#9933) (camchenry)
+
 ## [0.16.1] - 2025-03-20
 
 - ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)

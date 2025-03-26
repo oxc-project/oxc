@@ -8,6 +8,6 @@ packages:
   - 'tasks/e2e'
 
 catalog:
-  "@napi-rs/cli": 3.0.0-alpha.75
-  "vitest": 3.0.8
+  "@napi-rs/cli": 3.0.0-alpha.76
+  "vitest": 3.0.9
   "typescript": 5.8.2

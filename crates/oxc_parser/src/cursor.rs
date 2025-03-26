@@ -282,13 +282,12 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
-            checkpoint;
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos } = checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
-        self.errors.truncate(errors_lens);
+        self.errors.truncate(errors_pos);
     }
 
     /// # Errors

@@ -415,7 +415,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         // obj.#prop = Math.pow(obj.#prop, right)
         //                          ^^^^^
         // ```
-        let field = field_expr.field.clone_in(ctx.ast.allocator);
+        let field = field_expr.field.clone();
 
         // Complete 2nd member expression
         // ```

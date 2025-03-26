@@ -70,6 +70,9 @@ export interface IdentifierReference extends Span {
 export interface BindingIdentifier extends Span {
   type: 'Identifier';
   name: string;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface LabelIdentifier extends Span {
@@ -513,6 +516,7 @@ export interface AssignmentPattern extends Span {
   type: 'AssignmentPattern';
   left: BindingPattern;
   right: Expression;
+  decorators?: [];
 }
 
 export interface ObjectPattern extends Span {
@@ -533,6 +537,9 @@ export interface BindingProperty extends Span {
 export interface ArrayPattern extends Span {
   type: 'ArrayPattern';
   elements: Array<BindingPattern | BindingRestElement | null>;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface BindingRestElement extends Span {
@@ -550,7 +557,6 @@ export interface Function extends Span {
   body: FunctionBody | null;
   declare?: boolean;
   typeParameters?: TSTypeParameterDeclaration | null;
-  thisParam?: TSThisParameter | null;
   returnType?: TSTypeAnnotation | null;
 }
 
@@ -572,9 +578,6 @@ export interface FormalParameterRest extends Span {
 export type FormalParameter =
   & ({
     decorators?: Array<Decorator>;
-    accessibility?: TSAccessibility | null;
-    readonly?: boolean;
-    override?: boolean;
   })
   & BindingPattern;
 
@@ -915,8 +918,11 @@ export interface JSXText extends Span {
 }
 
 export interface TSThisParameter extends Span {
-  type: 'TSThisParameter';
+  type: 'Identifier';
+  name: 'this';
   typeAnnotation: TSTypeAnnotation | null;
+  decorators: [];
+  optional: false;
 }
 
 export interface TSEnumDeclaration extends Span {
@@ -1167,7 +1173,7 @@ export interface TSClassImplements extends Span {
 export interface TSInterfaceDeclaration extends Span {
   type: 'TSInterfaceDeclaration';
   id: BindingIdentifier;
-  extends: Array<TSInterfaceHeritage> | null;
+  extends: Array<TSInterfaceHeritage>;
   typeParameters: TSTypeParameterDeclaration | null;
   body: TSInterfaceBody;
   declare: boolean;
@@ -1185,6 +1191,8 @@ export interface TSPropertySignature extends Span {
   readonly: boolean;
   key: PropertyKey;
   typeAnnotation: TSTypeAnnotation | null;
+  accessibility: null;
+  static: false;
 }
 
 export type TSSignature =
@@ -1200,12 +1208,12 @@ export interface TSIndexSignature extends Span {
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
   static: boolean;
+  accessibility: null;
 }
 
 export interface TSCallSignatureDeclaration extends Span {
   type: 'TSCallSignatureDeclaration';
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
 }
@@ -1219,9 +1227,11 @@ export interface TSMethodSignature extends Span {
   optional: boolean;
   kind: TSMethodSignatureKind;
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
+  accessibility: null;
+  readonly: false;
+  static: false;
 }
 
 export interface TSConstructSignatureDeclaration extends Span {
@@ -1235,6 +1245,8 @@ export interface TSIndexSignatureName extends Span {
   type: 'Identifier';
   name: string;
   typeAnnotation: TSTypeAnnotation;
+  decorators: [];
+  optional: false;
 }
 
 export interface TSInterfaceHeritage extends Span {
@@ -1258,6 +1270,7 @@ export interface TSModuleDeclaration extends Span {
   body: TSModuleDeclarationBody | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
+  global: boolean;
 }
 
 export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
@@ -1301,7 +1314,6 @@ export interface TSImportType extends Span {
 export interface TSFunctionType extends Span {
   type: 'TSFunctionType';
   typeParameters: TSTypeParameterDeclaration | null;
-  thisParam: TSThisParameter | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation;
 }

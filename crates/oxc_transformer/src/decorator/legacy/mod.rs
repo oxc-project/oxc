@@ -82,7 +82,7 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
     // `#[inline]` because this is a hot path
     #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::ClassDeclaration(_) => self.transform_class(stmt, ctx),
             Statement::ExportNamedDeclaration(_) => {
@@ -279,6 +279,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         if class_or_constructor_parameter_is_decorated {
             return Some(self.transform_class_declaration_with_class_decorators(
                 class,
+                stmt_address,
                 has_private_in_expression_in_decorator,
                 ctx,
             ));
@@ -300,6 +301,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class_declaration_with_class_decorators(
         &self,
         class: &mut Class<'a>,
+        stmt_address: Address,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> (BoundIdentifier<'a>, Statement<'a>) {
@@ -448,6 +450,8 @@ impl<'a> LegacyDecorator<'a, '_> {
         );
         let statement = Statement::from(var_declaration);
 
+        // Move any insertions attached to the old statement to the new one
+        self.ctx.statement_injector.move_insertions(&stmt_address, &statement);
         self.ctx.statement_injector.insert_many_after(&statement, decoration_stmts);
 
         (class_binding, statement)

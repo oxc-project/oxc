@@ -2,7 +2,7 @@ commit: 578ac4df
 
 semantic_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1902/2322 (81.91%)
+Positive Passed: 1904/2322 (82.00%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -93,20 +93,6 @@ Unexpected new.target expression
 Unexpected new.target expression
 Unexpected new.target expression
 Unexpected new.target expression
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-function-in-static-block/input.js
-semantic error: Symbol flags mismatch for "f":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
 semantic error: Unexpected token
@@ -506,9 +492,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/privat
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Symbol flags mismatch for "_f":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 semantic error: Identifier `x` has already been declared
@@ -519,11 +502,6 @@ Identifier `x` has already been declared
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 semantic error: Function implementation is missing or not immediately following the declaration.
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static-asi/input.ts
-semantic error: Symbol flags mismatch for "_method":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 semantic error: Bindings mismatch:
@@ -1659,8 +1637,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
@@ -1673,8 +1651,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
@@ -2088,8 +2066,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 24, end: 25 }
@@ -2172,8 +2150,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 26, end: 27 }

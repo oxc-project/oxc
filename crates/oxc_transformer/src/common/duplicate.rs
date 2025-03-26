@@ -130,7 +130,7 @@ impl<'a> TransformCtx<'a> {
                 let references = create_array(|| {
                     ctx.ast.expression_template_literal(
                         lit.span,
-                        lit.quasis.clone_in(ctx.ast.allocator),
+                        ctx.ast.vec_from_iter(lit.quasis.iter().cloned()),
                         ctx.ast.vec(),
                     )
                 });

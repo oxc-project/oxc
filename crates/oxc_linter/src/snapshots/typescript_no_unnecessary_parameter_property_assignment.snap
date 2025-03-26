@@ -137,15 +137,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the unnecessary assignment
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
-   ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
- 4 │             function bar() {
- 5 │               this.foo = foo;
-   ·               ──────────────
- 6 │             }
-   ╰────
-  help: Remove the unnecessary assignment
-
-  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:7:13]
  6 │             }
  7 │             this.foo = foo;

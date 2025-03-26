@@ -31,7 +31,7 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{GetAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{
@@ -979,7 +979,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
             }
             // `let { [`a`], ... rest }`
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
-                let expr = Expression::TemplateLiteral(lit.clone_in(ctx.ast.allocator));
+                let quasis = ctx.ast.vec1(lit.quasis[0].clone());
+                let expressions = ctx.ast.vec();
+                let expr = ctx.ast.expression_template_literal(lit.span, quasis, expressions);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {

@@ -31,7 +31,8 @@
     ],
     "wasm": {
       "browser": {
-        "fs": false
+        "fs": false,
+        "asyncInit": true
       }
     }
   }

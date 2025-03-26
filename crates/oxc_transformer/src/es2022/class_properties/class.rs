@@ -130,7 +130,7 @@ impl<'a> ClassProperties<'a, '_> {
                         let binding = ctx.generate_uid(
                             name,
                             ctx.current_block_scope_id(),
-                            SymbolFlags::FunctionScopedVariable,
+                            SymbolFlags::Function,
                         );
 
                         match private_props.entry(ident.name) {

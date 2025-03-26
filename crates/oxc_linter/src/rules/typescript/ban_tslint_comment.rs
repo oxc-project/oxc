@@ -1,8 +1,7 @@
-use lazy_static::lazy_static;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -32,12 +31,15 @@ declare_oxc_lint!(
     fix
 );
 
+static ENABLE_DISABLE_REGEX: Lazy<Regex> =
+    lazy_regex!(r"^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)");
+
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.comments();
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
-            if is_tslint_comment_directive(raw) {
+            if ENABLE_DISABLE_REGEX.is_match(raw) {
                 let comment_span = get_full_comment(ctx, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
@@ -46,15 +48,6 @@ impl Rule for BanTslintComment {
             }
         }
     }
-}
-
-fn is_tslint_comment_directive(raw: &str) -> bool {
-    lazy_static! {
-        static ref ENABLE_DISABLE_REGEX: Regex =
-            Regex::new(r"^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)").unwrap();
-    }
-
-    ENABLE_DISABLE_REGEX.is_match(raw)
 }
 
 fn get_full_comment(ctx: &LintContext, span: Span) -> Span {

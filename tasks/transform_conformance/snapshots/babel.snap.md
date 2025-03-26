@@ -1008,7 +1008,7 @@ after transform: ScopeId(7): ["_ref5"]
 rebuilt        : ScopeId(7): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
 Symbol span mismatch for "a":
 after transform: SymbolId(0): Span { start: 27, end: 28 }
 rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
@@ -1879,8 +1879,8 @@ rebuilt        : ScopeId(0): []
 
 * imports/import-type-func-with-duplicate-name/input.ts
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeImport)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 13, end: 16 }
 rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
@@ -1888,8 +1888,8 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 70, end: 73 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo2":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(1): SymbolFlags(Function | TypeImport)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol span mismatch for "Foo2":
 after transform: SymbolId(1): Span { start: 43, end: 47 }
 rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
@@ -2294,9 +2294,6 @@ rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "c":
 after transform: SymbolId(19): Span { start: 344, end: 345 }
 rebuilt        : SymbolId(18): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(20): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "d":
 after transform: SymbolId(21): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(21): SymbolFlags(BlockScopedVariable)
@@ -2429,14 +2426,14 @@ Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 45, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol flags mismatch for "M":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(4): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(4): [Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(6): []
 Symbol flags mismatch for "D":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(6): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(9): SymbolFlags(Function)
 Symbol redeclarations mismatch for "D":
 after transform: SymbolId(6): [Span { start: 207, end: 208 }]
 rebuilt        : SymbolId(9): []
@@ -2545,9 +2542,6 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(3): [Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
 rebuilt        : SymbolId(5): []
-Symbol flags mismatch for "_N3":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "_N":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)

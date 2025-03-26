@@ -1,6 +1,7 @@
 #![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
@@ -14,6 +15,21 @@ use oxc_ast_macros::ast;
 #[content_eq(skip)]
 #[estree(skip)]
 pub struct SymbolId(NonMaxU32);
+
+impl<'alloc> CloneIn<'alloc> for SymbolId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips symbol_id field
+        unreachable!();
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
+    }
+}
 
 impl SymbolId {
     /// Create `SymbolId` from `u32`.
@@ -117,18 +133,18 @@ bitflags! {
 
         const BlockScoped = Self::BlockScopedVariable.bits() | Self::Enum.bits() | Self::Class.bits();
 
-        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
+        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Function.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
         const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
-        const FunctionScopedVariableExcludes = Self::Value.bits() - Self::FunctionScopedVariable.bits();
+        const FunctionScopedVariableExcludes = Self::Value.bits() - Self::FunctionScopedVariable.bits() - Self::Function.bits();
 
         /// Block-scoped declarations are not allowed to be re-declared
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits();
 
-        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !(Self::ValueModule.bits() | Self::Interface.bits() | Self::Function.bits());
+        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !(Self::ValueModule.bits() | Self::Interface.bits());
         const ImportBindingExcludes = Self::Import.bits() | Self::TypeImport.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();
@@ -162,7 +178,7 @@ impl SymbolFlags {
     /// If true, then the symbol is a value, such as a Variable, Function, or Class
     #[inline]
     pub fn is_value(&self) -> bool {
-        self.intersects(Self::Value | Self::Import | Self::Function)
+        self.intersects(Self::Value | Self::Import)
     }
 
     #[inline]
@@ -230,7 +246,7 @@ impl SymbolFlags {
     /// If true, then the symbol can be referenced by a value reference
     #[inline]
     pub fn can_be_referenced_by_value(&self) -> bool {
-        self.intersects(Self::Value | Self::Import | Self::Function)
+        self.is_value()
     }
 
     /// If true, then the symbol can be referenced by a value_as_type reference

@@ -26,6 +26,7 @@ mod generated {
     pub mod assert_layouts;
     mod derive_clone_in;
     mod derive_content_eq;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
 }

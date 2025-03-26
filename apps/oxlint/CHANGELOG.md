@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2025-03-25
+
+### Refactor
+
+- 6432707 rust: Use `lazy-regex` (#10004) (Boshen)
+
+## [0.16.2] - 2025-03-21
+
+### Bug Fixes
+
+- f649fb3 linter: Reclassify `unicorn/no-document-cookie` as restriction (#9933) (camchenry)
+
+### Documentation
+
+- 46a12c6 linter: Tell about junit `--format` options (#9931) (Sysix)
+
 ## [0.16.1] - 2025-03-20
 
 ### Features

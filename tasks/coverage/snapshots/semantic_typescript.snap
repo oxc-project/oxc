@@ -2,7 +2,7 @@ commit: 15392346
 
 semantic_typescript Summary:
 AST Parsed     : 6531/6531 (100.00%)
-Positive Passed: 2853/6531 (43.68%)
+Positive Passed: 2855/6531 (43.71%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1453,9 +1453,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/chainedSpecializationToObjectTypeLiteral.ts
 semantic error: Scope children mismatch:
@@ -1556,8 +1553,8 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "maker":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(1): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol reference IDs mismatch for "maker":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
@@ -3342,8 +3339,8 @@ Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "foo":
 after transform: SymbolId(0): [Span { start: 25, end: 28 }]
 rebuilt        : SymbolId(0): []
@@ -5028,24 +5025,6 @@ rebuilt        : SymbolId(2): [ReferenceId(1)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(3): [ReferenceId(2), ReferenceId(10), ReferenceId(17), ReferenceId(45)]
 rebuilt        : SymbolId(3): [ReferenceId(3)]
-Symbol flags mismatch for "F":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F2":
-after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F3":
-after transform: SymbolId(10): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F4":
-after transform: SymbolId(13): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F5":
-after transform: SymbolId(16): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F6":
-after transform: SymbolId(18): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(13): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Array", "C"]
 rebuilt        : []
@@ -6567,9 +6546,6 @@ tasks/coverage/typescript/tests/cases/compiler/declarationEmitNamespaceMergedWit
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "biz":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "Bar":
 after transform: SymbolId(1) "Bar"
 rebuilt        : <None>
@@ -6643,8 +6619,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "ExpandoMerge":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "ExpandoMerge":
 after transform: SymbolId(0): [Span { start: 71, end: 83 }]
 rebuilt        : SymbolId(0): []
@@ -8148,9 +8124,6 @@ rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "C":
 after transform: SymbolId(2): Span { start: 21, end: 22 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/dottedSymbolResolution1.ts
 semantic error: Scope children mismatch:
@@ -8191,8 +8164,8 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 117, end: 120 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Bar":
-after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(6): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Bar":
 after transform: SymbolId(6): [Span { start: 235, end: 238 }]
 rebuilt        : SymbolId(4): []
@@ -11176,24 +11149,12 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(2): Span { start: 76, end: 78 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo3":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "foo4":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "m2":
 after transform: SymbolId(5): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(5): Span { start: 200, end: 202 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo3":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "foo4":
-after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalImport.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -11304,8 +11265,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(11), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(13)]
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 44, end: 47 }]
 rebuilt        : SymbolId(0): []
@@ -11733,8 +11694,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
@@ -11975,9 +11936,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "X":
 after transform: SymbolId(3): Span { start: 62, end: 63 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
 semantic error: Bindings mismatch:
@@ -11998,9 +11956,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "X":
 after transform: SymbolId(3): Span { start: 62, end: 63 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase1.ts
 semantic error: Scope children mismatch:
@@ -12293,8 +12248,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "f":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "f":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
@@ -12350,8 +12305,8 @@ Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "foo":
 after transform: SymbolId(0): [Span { start: 56, end: 59 }, Span { start: 108, end: 111 }]
 rebuilt        : SymbolId(0): []
@@ -13739,9 +13694,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/importAliasFromNamespace.ts
 semantic error: Bindings mismatch:
@@ -13762,9 +13714,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Internal":
 after transform: SymbolId(1): Span { start: 13, end: 21 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "getThing":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "WhichThing":
 after transform: SymbolId(3): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -15361,8 +15310,8 @@ Symbol redeclarations mismatch for "I2":
 after transform: SymbolId(1): [Span { start: 55, end: 57 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "I3":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(2): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol span mismatch for "I3":
 after transform: SymbolId(2): Span { start: 73, end: 75 }
 rebuilt        : SymbolId(1): Span { start: 89, end: 91 }
@@ -15558,9 +15507,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideTopLevelModuleWithoutExport.ts
 semantic error: Symbol flags mismatch for "a":
@@ -15569,9 +15515,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -16280,12 +16223,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Element":
 after transform: SymbolId(2): Span { start: 358, end: 365 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "isElement":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "createElement":
-after transform: SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["JSX", "undefined"]
 rebuilt        : ["undefined"]
@@ -16321,12 +16258,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Element":
 after transform: SymbolId(2): Span { start: 358, end: 365 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "isElement":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "createElement":
-after transform: SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["JSX", "undefined"]
 rebuilt        : ["undefined"]
@@ -16352,12 +16283,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Element":
 after transform: SymbolId(2): Span { start: 358, end: 365 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "isElement":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "createElement":
-after transform: SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["JSX", "undefined"]
 rebuilt        : ["undefined"]
@@ -17526,8 +17451,8 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "My":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(1): SymbolFlags(Function | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Symbol span mismatch for "My":
 after transform: SymbolId(1): Span { start: 30, end: 32 }
 rebuilt        : SymbolId(2): Span { start: 84, end: 86 }
@@ -17541,8 +17466,8 @@ Symbol span mismatch for "B":
 after transform: SymbolId(4): Span { start: 112, end: 113 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol flags mismatch for "My":
-after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(5): SymbolFlags(Function | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 Symbol span mismatch for "My":
 after transform: SymbolId(5): Span { start: 135, end: 137 }
 rebuilt        : SymbolId(6): Span { start: 218, end: 220 }
@@ -20381,8 +20306,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 62, end: 65 }
@@ -20645,12 +20570,6 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Query":
 after transform: SymbolId(3): Span { start: 86, end: 91 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol flags mismatch for "fromDoWhile":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "fromOrderBy":
-after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckAnonymousFunctionParameter2.ts
 semantic error: Scope children mismatch:
@@ -20668,12 +20587,6 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Q":
 after transform: SymbolId(3): [Span { start: 190, end: 191 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "bar":
-after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckCallbackOfInterfaceMethodWithTypeParameter.ts
 semantic error: Scope children mismatch:
@@ -20860,24 +20773,6 @@ rebuilt        : SymbolId(60): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(72): [ReferenceId(81), ReferenceId(83), ReferenceId(85), ReferenceId(86), ReferenceId(87), ReferenceId(88), ReferenceId(89), ReferenceId(95), ReferenceId(96), ReferenceId(97), ReferenceId(98), ReferenceId(99), ReferenceId(107), ReferenceId(108), ReferenceId(109), ReferenceId(110), ReferenceId(111), ReferenceId(112), ReferenceId(113), ReferenceId(121), ReferenceId(122), ReferenceId(123), ReferenceId(124), ReferenceId(125), ReferenceId(126), ReferenceId(127), ReferenceId(129), ReferenceId(131), ReferenceId(133), ReferenceId(135), ReferenceId(137), ReferenceId(139), ReferenceId(149), ReferenceId(151), ReferenceId(241)]
 rebuilt        : SymbolId(61): [ReferenceId(13)]
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(109): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(94): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes":
-after transform: SymbolId(111): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(96): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(113): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(98): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes":
-after transform: SymbolId(115): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(100): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(128): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(108): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(138): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(116): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "privateModule":
 after transform: SymbolId(141): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(118): SymbolFlags(BlockScopedVariable)
@@ -20890,24 +20785,6 @@ rebuilt        : SymbolId(120): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(143): [ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(168), ReferenceId(169), ReferenceId(175), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(187), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(201), ReferenceId(202), ReferenceId(203), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(209), ReferenceId(211), ReferenceId(213), ReferenceId(215), ReferenceId(217), ReferenceId(219), ReferenceId(229), ReferenceId(231), ReferenceId(257)]
 rebuilt        : SymbolId(121): [ReferenceId(41)]
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(180): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(154): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes":
-after transform: SymbolId(182): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(156): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(184): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(158): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes":
-after transform: SymbolId(186): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(160): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(199): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(168): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(209): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(176): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["privateModule"]
 rebuilt        : []
@@ -20940,42 +20817,6 @@ rebuilt        : SymbolId(22): [ReferenceId(28), ReferenceId(29), ReferenceId(30
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(28): [ReferenceId(86), ReferenceId(87), ReferenceId(88), ReferenceId(89), ReferenceId(94), ReferenceId(95), ReferenceId(96), ReferenceId(97), ReferenceId(106), ReferenceId(107), ReferenceId(108), ReferenceId(109), ReferenceId(110), ReferenceId(111), ReferenceId(112), ReferenceId(113), ReferenceId(122), ReferenceId(123), ReferenceId(124), ReferenceId(125), ReferenceId(126), ReferenceId(127), ReferenceId(128), ReferenceId(129), ReferenceId(131), ReferenceId(133), ReferenceId(135), ReferenceId(137), ReferenceId(139), ReferenceId(141), ReferenceId(247)]
 rebuilt        : SymbolId(23): [ReferenceId(27), ReferenceId(34), ReferenceId(35), ReferenceId(36), ReferenceId(37), ReferenceId(44), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(55), ReferenceId(59)]
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(37): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(28): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes":
-after transform: SymbolId(38): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(29): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(39): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(30): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes":
-after transform: SymbolId(40): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(31): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes1":
-after transform: SymbolId(41): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(32): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes1":
-after transform: SymbolId(42): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(33): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes1":
-after transform: SymbolId(43): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(34): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes1":
-after transform: SymbolId(44): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(47): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(37): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes1":
-after transform: SymbolId(48): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(38): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(51): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(40): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes1":
-after transform: SymbolId(52): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(41): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "privateModule":
 after transform: SymbolId(53): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(42): SymbolFlags(BlockScopedVariable)
@@ -20988,42 +20829,6 @@ rebuilt        : SymbolId(44): [ReferenceId(76), ReferenceId(77), ReferenceId(78
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(55): [ReferenceId(168), ReferenceId(169), ReferenceId(170), ReferenceId(171), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(194), ReferenceId(195), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(208), ReferenceId(209), ReferenceId(210), ReferenceId(211), ReferenceId(213), ReferenceId(215), ReferenceId(217), ReferenceId(219), ReferenceId(221), ReferenceId(223), ReferenceId(269)]
 rebuilt        : SymbolId(45): [ReferenceId(75), ReferenceId(82), ReferenceId(83), ReferenceId(84), ReferenceId(85), ReferenceId(92), ReferenceId(93), ReferenceId(94), ReferenceId(95), ReferenceId(103), ReferenceId(107)]
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(64): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(50): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes":
-after transform: SymbolId(65): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(51): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes":
-after transform: SymbolId(66): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(52): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes":
-after transform: SymbolId(67): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(53): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateParmeterTypes1":
-after transform: SymbolId(68): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(54): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicParmeterTypes1":
-after transform: SymbolId(69): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(55): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateParmeterTypes1":
-after transform: SymbolId(70): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(56): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicParmeterTypes1":
-after transform: SymbolId(71): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(57): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(74): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(59): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateModuleParameterTypes1":
-after transform: SymbolId(75): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(60): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes":
-after transform: SymbolId(78): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(62): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateModuleParameterTypes1":
-after transform: SymbolId(79): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(63): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["privateModule"]
 rebuilt        : []
@@ -21108,42 +20913,6 @@ rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3), R
 Symbol reference IDs mismatch for "C2_private":
 after transform: SymbolId(2): [ReferenceId(1), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(9), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(22), ReferenceId(23), ReferenceId(26), ReferenceId(27), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35), ReferenceId(38), ReferenceId(39), ReferenceId(42), ReferenceId(43), ReferenceId(46), ReferenceId(47), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(55)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(9), ReferenceId(14), ReferenceId(15), ReferenceId(18), ReferenceId(19), ReferenceId(32), ReferenceId(33), ReferenceId(40), ReferenceId(41)]
-Symbol flags mismatch for "f1_public":
-after transform: SymbolId(27): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(24): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f2_public":
-after transform: SymbolId(29): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(26): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f3_public":
-after transform: SymbolId(31): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(28): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f4_public":
-after transform: SymbolId(33): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(30): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f5_public":
-after transform: SymbolId(35): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(32): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f6_public":
-after transform: SymbolId(36): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(33): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f7_public":
-after transform: SymbolId(37): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(34): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f8_public":
-after transform: SymbolId(38): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f9_private":
-after transform: SymbolId(39): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(36): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f10_public":
-after transform: SymbolId(40): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(37): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f11_private":
-after transform: SymbolId(41): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(38): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f12_public":
-after transform: SymbolId(42): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(39): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "m2":
 after transform: SymbolId(43): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(40): SymbolFlags(BlockScopedVariable)
@@ -21156,42 +20925,6 @@ rebuilt        : SymbolId(42): [ReferenceId(47), ReferenceId(48), ReferenceId(49
 Symbol reference IDs mismatch for "m2_C2_private":
 after transform: SymbolId(45): [ReferenceId(57), ReferenceId(60), ReferenceId(61), ReferenceId(64), ReferenceId(65), ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(73), ReferenceId(75), ReferenceId(78), ReferenceId(79), ReferenceId(82), ReferenceId(83), ReferenceId(88), ReferenceId(89), ReferenceId(90), ReferenceId(91), ReferenceId(94), ReferenceId(95), ReferenceId(98), ReferenceId(99), ReferenceId(102), ReferenceId(103), ReferenceId(108), ReferenceId(109), ReferenceId(110), ReferenceId(111)]
 rebuilt        : SymbolId(43): [ReferenceId(50), ReferenceId(51), ReferenceId(54), ReferenceId(55), ReferenceId(60), ReferenceId(61), ReferenceId(64), ReferenceId(65), ReferenceId(78), ReferenceId(79), ReferenceId(86), ReferenceId(87)]
-Symbol flags mismatch for "f1_public":
-after transform: SymbolId(70): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(64): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f2_public":
-after transform: SymbolId(72): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(66): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f3_public":
-after transform: SymbolId(74): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(68): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f4_public":
-after transform: SymbolId(76): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(70): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f5_public":
-after transform: SymbolId(78): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(72): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f6_public":
-after transform: SymbolId(79): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(73): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f7_public":
-after transform: SymbolId(80): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(74): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f8_public":
-after transform: SymbolId(81): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(75): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f9_private":
-after transform: SymbolId(82): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(76): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f10_public":
-after transform: SymbolId(83): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(77): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f11_private":
-after transform: SymbolId(84): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(78): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "f12_public":
-after transform: SymbolId(85): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(79): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "C5_private":
 after transform: SymbolId(86): [ReferenceId(112), ReferenceId(116), ReferenceId(117), ReferenceId(120), ReferenceId(121), ReferenceId(126), ReferenceId(127), ReferenceId(128), ReferenceId(129), ReferenceId(130), ReferenceId(134), ReferenceId(135), ReferenceId(138), ReferenceId(139), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(150), ReferenceId(151), ReferenceId(152), ReferenceId(153), ReferenceId(158), ReferenceId(159), ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167)]
 rebuilt        : SymbolId(80): [ReferenceId(94), ReferenceId(95), ReferenceId(98), ReferenceId(99), ReferenceId(102), ReferenceId(103), ReferenceId(106), ReferenceId(107), ReferenceId(110), ReferenceId(111), ReferenceId(114), ReferenceId(115)]
@@ -21468,30 +21201,6 @@ rebuilt        : SymbolId(20): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(88): [ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(86), ReferenceId(87), ReferenceId(88), ReferenceId(89), ReferenceId(90), ReferenceId(91), ReferenceId(96), ReferenceId(97), ReferenceId(98), ReferenceId(99), ReferenceId(104), ReferenceId(105), ReferenceId(106), ReferenceId(107), ReferenceId(109), ReferenceId(111), ReferenceId(112), ReferenceId(113), ReferenceId(114), ReferenceId(115), ReferenceId(116), ReferenceId(117), ReferenceId(187)]
 rebuilt        : SymbolId(21): [ReferenceId(1)]
-Symbol flags mismatch for "publicFunctionWithPrivateTypeParameters":
-after transform: SymbolId(125): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(26): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicTypeParameters":
-after transform: SymbolId(127): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(27): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateTypeParameters":
-after transform: SymbolId(129): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(28): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicTypeParameters":
-after transform: SymbolId(131): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(29): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicTypeParametersWithoutExtends":
-after transform: SymbolId(151): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(32): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicTypeParametersWithoutExtends":
-after transform: SymbolId(153): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(33): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPrivateMopduleTypeParameters":
-after transform: SymbolId(162): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateMopduleTypeParameters":
-after transform: SymbolId(171): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(37): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "privateModule":
 after transform: SymbolId(173): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(38): SymbolFlags(BlockScopedVariable)
@@ -21504,24 +21213,6 @@ rebuilt        : SymbolId(40): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(175): [ReferenceId(142), ReferenceId(143), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(154), ReferenceId(155), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(175), ReferenceId(177), ReferenceId(179), ReferenceId(180), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(207)]
 rebuilt        : SymbolId(41): [ReferenceId(21)]
-Symbol flags mismatch for "publicFunctionWithPrivateTypeParameters":
-after transform: SymbolId(212): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(46): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicTypeParameters":
-after transform: SymbolId(214): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(47): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPrivateTypeParameters":
-after transform: SymbolId(216): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(48): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicTypeParameters":
-after transform: SymbolId(218): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(49): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "publicFunctionWithPublicTypeParametersWithoutExtends":
-after transform: SymbolId(238): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(52): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "privateFunctionWithPublicTypeParametersWithoutExtends":
-after transform: SymbolId(240): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(53): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["privateModule"]
 rebuilt        : []
@@ -23153,15 +22844,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 56, end: 59 }]
 rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Bar":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "Baz":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "Gar":
-after transform: SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
 Unresolved reference IDs mismatch for "C":
 after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6)]
 rebuilt        : [ReferenceId(5)]
@@ -23984,12 +23666,6 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Greeter":
 after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(7), ReferenceId(13)]
 rebuilt        : SymbolId(4): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(12)]
-Symbol flags mismatch for "foo":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "foo2":
-after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 semantic error: Unexpected token
@@ -26322,8 +25998,8 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "F":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(0): [Span { start: 37, end: 38 }]
 rebuilt        : SymbolId(0): []
@@ -26374,9 +26050,6 @@ rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "NonTopLevelModule":
 after transform: SymbolId(8): Span { start: 229, end: 246 }
 rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
-Symbol flags mismatch for "NonTopLevelFunction":
-after transform: SymbolId(10): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(13): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "NonTopLevelEnum":
 after transform: SymbolId(11): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(BlockScopedVariable)
@@ -26420,12 +26093,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "n":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "id":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "templateObjectFactory":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/tailRecursiveConditionalTypes.ts
 semantic error: Scope children mismatch:
@@ -26691,11 +26358,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["decorator"]
 
-tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers2.ts
-semantic error: Symbol flags mismatch for "_test":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuickinfoTypesSameAsObjectLiteral.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
@@ -26709,8 +26371,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol flags mismatch for "createElement":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(2): SymbolFlags(Function | NameSpaceModule)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
@@ -26891,8 +26553,8 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 Symbol flags mismatch for "Mixin":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol reference IDs mismatch for "Mixin":
 after transform: SymbolId(0): [ReferenceId(3), ReferenceId(6)]
 rebuilt        : SymbolId(0): []
@@ -27126,9 +26788,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "TypeGuards":
 after transform: SymbolId(0): Span { start: 17, end: 27 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "IsObject":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceCacheInvalidation.ts
 semantic error: Scope children mismatch:
@@ -28349,12 +28008,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "ts":
 after transform: SymbolId(0): Span { start: 10, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "printVersion":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "log":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.2.ts
 semantic error: Bindings mismatch:
@@ -28802,18 +28455,12 @@ rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(17): Span { start: 843, end: 845 }
 rebuilt        : SymbolId(13): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(18): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "m3":
 after transform: SymbolId(21): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m3":
 after transform: SymbolId(21): Span { start: 980, end: 982 }
 rebuilt        : SymbolId(16): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(22): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(18): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/withImportDecl.ts
 semantic error: Bindings mismatch:
@@ -28825,9 +28472,6 @@ rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(11): Span { start: 504, end: 506 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
-Symbol flags mismatch for "foo":
-after transform: SymbolId(12): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 semantic error: 'with' statements are not allowed
@@ -28984,9 +28628,6 @@ rebuilt        : SymbolId(33): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(19): Span { start: 913, end: 914 }
 rebuilt        : SymbolId(33): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f1":
-after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(2) "p"
 rebuilt        : <None>
@@ -29357,9 +28998,6 @@ rebuilt        : SymbolId(33): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(19): Span { start: 913, end: 914 }
 rebuilt        : SymbolId(33): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f1":
-after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(2) "p"
 rebuilt        : <None>
@@ -29761,9 +29399,6 @@ rebuilt        : SymbolId(33): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(19): Span { start: 913, end: 914 }
 rebuilt        : SymbolId(33): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f1":
-after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(2) "p"
 rebuilt        : <None>
@@ -30691,8 +30326,8 @@ Scope children mismatch:
 after transform: ScopeId(8): [ScopeId(9)]
 rebuilt        : ScopeId(6): []
 Symbol flags mismatch for "Mixin":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(0): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Mixin":
 after transform: SymbolId(0): Span { start: 10, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 55, end: 60 }
@@ -30734,8 +30369,8 @@ Symbol redeclarations mismatch for "Printable":
 after transform: SymbolId(9): [Span { start: 287, end: 296 }]
 rebuilt        : SymbolId(8): []
 Symbol flags mismatch for "Tagged":
-after transform: SymbolId(13): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(13): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(12): SymbolFlags(Function)
 Symbol span mismatch for "Tagged":
 after transform: SymbolId(13): Span { start: 557, end: 563 }
 rebuilt        : SymbolId(12): Span { start: 596, end: 602 }
@@ -30876,8 +30511,8 @@ Symbol reference IDs mismatch for "ApiEnumMember":
 after transform: SymbolId(7): [ReferenceId(27)]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | Function | Interface)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(8): SymbolFlags(Function | Interface)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Symbol span mismatch for "ApiItemContainerMixin":
 after transform: SymbolId(8): Span { start: 462, end: 483 }
 rebuilt        : SymbolId(2): Span { start: 558, end: 579 }
@@ -33818,9 +33453,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "generator":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads4.ts
 semantic error: Scope children mismatch:
@@ -33843,9 +33475,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "f":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Iterable"]
 rebuilt        : []
@@ -34189,15 +33818,6 @@ tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
 rebuilt        : ScopeId(0): ["C", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
-Symbol flags mismatch for "_method":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_get_x":
-after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_set_x":
-after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -38122,8 +37742,8 @@ Symbol redeclarations mismatch for "E":
 after transform: SymbolId(2): [Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
-after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(12): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(9): [Span { start: 336, end: 337 }]
 rebuilt        : SymbolId(12): []
@@ -38218,8 +37838,8 @@ Symbol redeclarations mismatch for "E":
 after transform: SymbolId(2): [Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
-after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(12): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(9): [Span { start: 336, end: 337 }]
 rebuilt        : SymbolId(12): []
@@ -38492,8 +38112,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 12, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 33, end: 34 }
@@ -39200,9 +38820,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "Point":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ModuleAndEnumWithSameNameAndCommonRoot.ts
 semantic error: Scope flags mismatch:
@@ -39349,9 +38966,6 @@ rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Utils":
 after transform: SymbolId(3): Span { start: 148, end: 153 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Symbol flags mismatch for "mirror":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndSameCommonRoot.ts
 semantic error: Scope children mismatch:
@@ -39369,9 +38983,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Utils":
 after transform: SymbolId(2): Span { start: 103, end: 108 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "mirror":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/exportCodeGen.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -39564,8 +39175,8 @@ Symbol redeclarations mismatch for "Point":
 after transform: SymbolId(7): [Span { start: 340, end: 352 }]
 rebuilt        : SymbolId(9): []
 Symbol flags mismatch for "fundule":
-after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(10): SymbolFlags(Function)
 Symbol reference IDs mismatch for "fundule":
 after transform: SymbolId(9): [ReferenceId(8), ReferenceId(17), ReferenceId(18)]
 rebuilt        : SymbolId(10): [ReferenceId(10), ReferenceId(11)]
@@ -39635,17 +39246,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["Uint8Array"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsPrivateFields01.ts
-semantic error: Symbol flags mismatch for "_calcHello":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_get_screamingHello":
-after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_set_screamingHello":
-after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
 semantic error: Scope children mismatch:

@@ -16,7 +16,7 @@ use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 
-pub use oxc_mangler::MangleOptions;
+pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
 pub use crate::{
     compressor::Compressor, options::CompressOptions, options::CompressOptionsKeepNames,

@@ -115,6 +115,9 @@ impl ESTree for BindingIdentifier<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -1276,6 +1279,7 @@ impl ESTree for AssignmentPattern<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.end();
     }
 }
@@ -1317,6 +1321,9 @@ impl ESTree for ArrayPattern<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -1342,11 +1349,10 @@ impl ESTree for Function<'_> {
         state.serialize_field("expression", &crate::serialize::False(self));
         state.serialize_field("generator", &self.generator);
         state.serialize_field("async", &self.r#async);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::FunctionFormalParameters(self));
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_ts_field("thisParam", &self.this_param);
         state.serialize_ts_field("returnType", &self.return_type);
         state.end();
     }
@@ -1380,9 +1386,6 @@ impl ESTree for FormalParameter<'_> {
         state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
         state.serialize_ts_field("optional", &self.pattern.optional);
         state.serialize_ts_field("decorators", &self.decorators);
-        state.serialize_ts_field("accessibility", &self.accessibility);
-        state.serialize_ts_field("readonly", &self.readonly);
-        state.serialize_ts_field("override", &self.r#override);
         state.end();
     }
 }
@@ -2275,10 +2278,13 @@ impl ESTree for JSXText<'_> {
 impl ESTree for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSThisParameter"));
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &crate::serialize::This(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
         state.end();
     }
 }
@@ -2835,7 +2841,7 @@ impl ESTree for TSInterfaceDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("extends", &self.extends);
+        state.serialize_field("extends", &crate::serialize::TSInterfaceDeclarationExtends(self));
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("body", &self.body);
         state.serialize_field("declare", &self.declare);
@@ -2865,6 +2871,8 @@ impl ESTree for TSPropertySignature<'_> {
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("key", &self.key);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("static", &crate::serialize::False(self));
         state.end();
     }
 }
@@ -2891,6 +2899,7 @@ impl ESTree for TSIndexSignature<'_> {
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("static", &self.r#static);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -2902,7 +2911,6 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("thisParam", &self.this_param);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
         state.end();
@@ -2930,9 +2938,11 @@ impl ESTree for TSMethodSignature<'_> {
         state.serialize_field("optional", &self.optional);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("thisParam", &self.this_param);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("readonly", &crate::serialize::False(self));
+        state.serialize_field("static", &crate::serialize::False(self));
         state.end();
     }
 }
@@ -2958,6 +2968,8 @@ impl ESTree for TSIndexSignatureName<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
         state.end();
     }
 }
@@ -3006,6 +3018,7 @@ impl ESTree for TSModuleDeclaration<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("declare", &self.declare);
+        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(self));
         state.end();
     }
 }
@@ -3118,7 +3131,6 @@ impl ESTree for TSFunctionType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("thisParam", &self.this_param);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
         state.end();

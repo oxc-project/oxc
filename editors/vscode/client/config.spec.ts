@@ -1,5 +1,5 @@
 import { deepStrictEqual, strictEqual } from 'assert';
-import { workspace } from 'vscode';
+import { Uri, workspace, WorkspaceEdit } from 'vscode';
 import { Config } from './Config.js';
 
 suite('Config', () => {
@@ -10,13 +10,21 @@ suite('Config', () => {
     await Promise.all(keys.map(key => wsConfig.update(key, undefined)));
   });
 
+  suiteTeardown(async () => {
+    const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
+    const file = Uri.parse(WORKSPACE_DIR + '/.vscode/settings.json');
+    const edit = new WorkspaceEdit();
+    edit.deleteFile(file);
+    await workspace.applyEdit(edit);
+  });
+
   test('default values on initialization', () => {
     const config = new Config();
 
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.enable, true);
     strictEqual(config.trace, 'off');
-    strictEqual(config.configPath, '.oxlintrc.json');
+    strictEqual(config.configPath, '');
     strictEqual(config.binPath, '');
     deepStrictEqual(config.flags, {});
   });

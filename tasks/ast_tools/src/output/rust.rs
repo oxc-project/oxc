@@ -3,16 +3,27 @@ use std::{
     process::{Command, Stdio},
 };
 
-use lazy_static::lazy_static;
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
-use regex::{Captures, Regex, Replacer};
 use syn::parse2;
+
+use crate::log;
 
 use super::add_header;
 
 /// Format Rust code, and add header.
-pub fn print_rust(tokens: TokenStream, generator_path: &str) -> String {
-    let code = prettyplease::unparse(&parse2(tokens).unwrap());
+pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
+    // Note: Cloning `TokenStream` is cheap, because internally it's an `Rc`
+    let file = match parse2(tokens.clone()) {
+        Ok(file) => file,
+        Err(err) => {
+            // Parsing failed. Return unformatted code, to aid debugging.
+            log!("FAILED TO PARSE Rust code:\n{err}");
+            return tokens.to_string();
+        }
+    };
+
+    let code = prettyplease::unparse(&file);
     let code = COMMENT_REGEX.replace_all(&code, CommentReplacer).to_string();
     let code = add_header(&code, generator_path, "//");
     rust_fmt(&code)
@@ -25,6 +36,7 @@ pub fn rust_fmt(source_text: &str) -> String {
     let mut rustfmt = Command::new("rustfmt")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()
         .expect("Failed to run rustfmt (is it installed?)");
 
@@ -33,7 +45,15 @@ pub fn rust_fmt(source_text: &str) -> String {
     stdin.flush().unwrap();
 
     let output = rustfmt.wait_with_output().unwrap();
-    String::from_utf8(output.stdout).unwrap()
+    if output.status.success() {
+        String::from_utf8(output.stdout).unwrap()
+    } else {
+        // Formatting failed. Return unformatted code, to aid debugging.
+        let error =
+            String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
+        log!("FAILED TO FORMAT Rust code:\n{error}");
+        source_text.to_string()
+    }
 }
 
 /// Replace doc comments which start with `@` with plain comments or line breaks.
@@ -70,6 +90,4 @@ impl Replacer for CommentReplacer {
     }
 }
 
-lazy_static! {
-    static ref COMMENT_REGEX: Regex = Regex::new(r"[ \t]*//[/!]@(.*)").unwrap();
-}
+static COMMENT_REGEX: Lazy<Regex> = lazy_regex!(r"[ \t]*//[/!]@(.*)");

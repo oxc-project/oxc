@@ -65,6 +65,11 @@ impl IsolatedLintHandler {
                     if r.location.range == d.diagnostic.range {
                         continue;
                     }
+                    // If there is no message content for this span, then don't produce an additional diagnostic
+                    // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+                    if r.message.is_empty() {
+                        continue;
+                    }
                     inverted_diagnostics.push(DiagnosticReport {
                         diagnostic: lsp_types::Diagnostic {
                             range: r.location.range,
@@ -114,6 +119,7 @@ impl IsolatedLintHandler {
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: true,
+                    parse_regular_expression: true,
                     ..ParseOptions::default()
                 })
                 .parse();

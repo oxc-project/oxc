@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -6,7 +6,6 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_named_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Unexpected empty named import block.").with_label(span)
 }
 
@@ -16,12 +15,12 @@ pub struct NoEmptyNamedBlocks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces that named import blocks are not empty
+    /// Enforces that named import blocks are not empty.
     ///
     /// ### Why is this bad?
     ///
-    /// Empty named imports serve no practical purpose and
-    /// often result from accidental deletions or tool-generated code.
+    /// Empty named imports serve no practical purpose and often
+    /// result from accidental deletions or tool-generated code.
     ///
     /// ### Examples
     ///
@@ -48,40 +47,41 @@ impl Rule for NoEmptyNamedBlocks {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
-        // if "import 'foo'"
+
         let Some(specifiers) = import_decl.specifiers.as_ref() else {
             return;
         };
+
         if specifiers.is_empty() {
-            // for "import {} from 'mod'"
+            // import {} from 'mod'
             ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
                 fixer.delete_range(import_decl.span)
             });
+            return;
         }
 
-        let source_token_str = Span::new(import_decl.span.start, import_decl.source.span.start - 1)
-            .source_text(ctx.source_text());
-        // find is there anything between '{' and '}'
-        if let Some(start) = source_token_str.find('{') {
-            if let Some(end) = source_token_str[start..].find('}') {
-                let between_braces = &source_token_str[start + 1..start + end];
-                if between_braces.trim().is_empty() {
-                    ctx.diagnostic_with_fix(
-                        no_empty_named_blocks_diagnostic(import_decl.span),
-                        |fixer| {
-                            // "import a, {} from 'mod" => "import a from 'mod'"
-                            // we just remove the space between ',' and '}'
-                            if let Some(comma_idx) = source_token_str[..start].rfind(',') {
-                                let remove_start = comma_idx as u32;
-                                let remove_end = (start + end + 1) as u32;
-                                fixer.delete_range(Span::new(remove_start, remove_end))
-                            } else {
-                                fixer.noop()
-                            }
-                        },
-                    );
+        let [ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier)] = specifiers.as_slice()
+        else {
+            return;
+        };
+
+        let span = Span::new(specifier.span.end, import_decl.source.span.start);
+        let source_token_str = ctx.source_range(span);
+
+        // import Default, {} from 'mod'
+        if let Some(start) = source_token_str.find(',') {
+            let Some(end) = source_token_str[start..].find("from") else { return };
+
+            let start = span.start + start as u32;
+            let span = Span::new(start, start + end as u32);
+
+            ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
+                if start == specifier.span.end {
+                    fixer.replace(span, " ")
+                } else {
+                    fixer.delete_range(span)
                 }
-            }
+            });
         }
     }
 }
@@ -108,20 +108,22 @@ fn test() {
         "import type {}from'mod'",
         "import type {} from 'mod'",
         "import type{}from 'mod'",
+        "import{}from ''",
     ];
 
     let fix = vec![
-        ("import Default, {} from 'mod'", "import Default from 'mod'", None),
-        ("import {  } from 'mod'", "", None),
-        ("import a, {} from 'mod'", "import a from 'mod'", None),
-        ("import a, {         } from 'mod'", "import a from 'mod'", None),
-        ("import a,            {         } from 'mod'", "import a from 'mod'", None),
-        ("import a,      {    }       from 'mod'", "import a       from 'mod'", None),
-        ("import a,      {    }       from'mod'", "import a       from'mod'", None),
-        ("import type a,      {    }       from'mod'", "import type a       from'mod'", None),
-        ("import a,{} from 'mod'", "import a from 'mod'", None),
-        ("import type a,{} from 'foo'", "import type a from 'foo'", None),
-        ("import type {} from 'foo'", "", None),
+        ("import Default, {} from 'mod'", "import Default from 'mod'"),
+        ("import {  } from 'mod'", ""),
+        ("import a, {} from 'mod'", "import a from 'mod'"),
+        ("import a, {         } from 'mod'", "import a from 'mod'"),
+        ("import a,            {         } from 'mod'", "import a from 'mod'"),
+        ("import a,      {    }       from 'mod'", "import a from 'mod'"),
+        ("import a,      {    }       from'mod'", "import a from'mod'"),
+        ("import type a,      {    }       from'mod'", "import type a from'mod'"),
+        ("import a,{} from 'mod'", "import a from 'mod'"),
+        ("import type a,{} from 'foo'", "import type a from 'foo'"),
+        ("import type {} from 'foo'", ""),
+        ("import{}from ''", ""),
     ];
 
     Tester::new(NoEmptyNamedBlocks::NAME, NoEmptyNamedBlocks::PLUGIN, pass, fail)

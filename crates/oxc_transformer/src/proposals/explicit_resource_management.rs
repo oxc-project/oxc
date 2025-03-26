@@ -115,7 +115,11 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
         let scope_id = match &mut for_of_stmt.body {
             Statement::BlockStatement(block) => block.scope_id(),
-            _ => ctx.create_child_scope(for_of_stmt_scope_id, ScopeFlags::empty()),
+            _ => ctx.insert_scope_below_statement_from_scope_id(
+                &for_of_stmt.body,
+                for_of_stmt.scope_id(),
+                ScopeFlags::empty(),
+            ),
         };
         ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
         ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, &for_of_init_name);
@@ -559,7 +563,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let Some(using_ctx) = using_ctx else { return };
 
-        let block_stmt_sid = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::empty());
+        let block_stmt_sid = ctx.create_child_scope_of_current(ScopeFlags::empty());
 
         ctx.scoping_mut().change_scope_parent_id(switch_stmt_scope_id, Some(block_stmt_sid));
 
@@ -585,7 +589,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
         };
 
-        let catch = Self::create_catch_clause(&using_ctx, ctx.current_scope_id(), ctx);
+        let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
         let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
         *stmt = ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally));
     }

@@ -1065,29 +1065,30 @@ impl VariableDeclaration<'_> {
 
 impl VariableDeclarationKind {
     /// Returns `true` if declared using `var` (such as `var x`)
-    pub fn is_var(&self) -> bool {
-        matches!(self, Self::Var)
+    pub fn is_var(self) -> bool {
+        self == Self::Var
     }
 
     /// Returns `true` if declared using `const` (such as `const x`)
-    pub fn is_const(&self) -> bool {
-        matches!(self, Self::Const)
+    pub fn is_const(self) -> bool {
+        self == Self::Const
     }
 
     /// Returns `true` if declared using `let`, `const` or `using` (such as `let x` or `const x`)
-    pub fn is_lexical(&self) -> bool {
+    pub fn is_lexical(self) -> bool {
         matches!(self, Self::Const | Self::Let | Self::Using | Self::AwaitUsing)
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)
-    pub fn is_await(&self) -> bool {
-        matches!(self, Self::AwaitUsing)
+    pub fn is_await(self) -> bool {
+        self == Self::AwaitUsing
     }
 
     /// Returns the code syntax for this [`VariableDeclarationKind`].
-    /// For example, [`Var`][`VariableDeclarationKind::Var`] would return `"var"` and
-    /// [`AwaitUsing`][`VariableDeclarationKind::AwaitUsing`] would return `"await using"`.
-    pub fn as_str(&self) -> &'static str {
+    ///
+    /// For example, [`Var`][`VariableDeclarationKind::Var`] returns `"var"`,
+    /// [`AwaitUsing`][`VariableDeclarationKind::AwaitUsing`] returns `"await using"`.
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
@@ -1316,11 +1317,7 @@ impl<'a> Function<'a> {
 
     /// Returns `true` if this function uses overload signatures or `declare function` statements.
     pub fn is_typescript_syntax(&self) -> bool {
-        matches!(
-            self.r#type,
-            FunctionType::TSDeclareFunction | FunctionType::TSEmptyBodyFunctionExpression
-        ) || self.body.is_none()
-            || self.declare
+        self.r#type.is_typescript_syntax() || self.body.is_none() || self.declare
     }
 
     /// `true` for function expressions
@@ -1346,6 +1343,13 @@ impl<'a> Function<'a> {
     /// Returns `true` if this function's body has a `"use strict"` directive.
     pub fn has_use_strict_directive(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
+    }
+}
+
+impl FunctionType {
+    /// Returns `true` if it is a [`FunctionType::TSDeclareFunction`] or [`FunctionType::TSEmptyBodyFunctionExpression`].
+    pub fn is_typescript_syntax(&self) -> bool {
+        matches!(self, Self::TSDeclareFunction | Self::TSEmptyBodyFunctionExpression)
     }
 }
 
@@ -1403,8 +1407,8 @@ impl FormalParameter<'_> {
 
 impl FormalParameterKind {
     /// `true` when part of a TypeScript method or function signature.
-    pub fn is_signature(&self) -> bool {
-        matches!(self, Self::Signature)
+    pub fn is_signature(self) -> bool {
+        self == Self::Signature
     }
 }
 
@@ -1649,36 +1653,36 @@ impl<'a> ClassElement<'a> {
 
 impl PropertyDefinitionType {
     /// `true` for abstract properties and methods.
-    pub fn is_abstract(&self) -> bool {
-        matches!(self, Self::TSAbstractPropertyDefinition)
+    pub fn is_abstract(self) -> bool {
+        self == Self::TSAbstractPropertyDefinition
     }
 }
 
 impl MethodDefinitionKind {
     /// `true` for constructors.
-    pub fn is_constructor(&self) -> bool {
-        matches!(self, Self::Constructor)
+    pub fn is_constructor(self) -> bool {
+        self == Self::Constructor
     }
 
     /// `true` for regular methods.
-    pub fn is_method(&self) -> bool {
-        matches!(self, Self::Method)
+    pub fn is_method(self) -> bool {
+        self == Self::Method
     }
 
     /// `true` for setter methods.
-    pub fn is_set(&self) -> bool {
-        matches!(self, Self::Set)
+    pub fn is_set(self) -> bool {
+        self == Self::Set
     }
 
     /// `true` for getter methods.
-    pub fn is_get(&self) -> bool {
-        matches!(self, Self::Get)
+    pub fn is_get(self) -> bool {
+        self == Self::Get
     }
 
     /// Returns `true` if this method is a getter or a setter.
     ///
     /// Analogous to [`PropertyKind::is_accessor`].
-    pub fn is_accessor(&self) -> bool {
+    pub fn is_accessor(self) -> bool {
         matches!(self, Self::Get | Self::Set)
     }
 
@@ -1697,8 +1701,8 @@ impl MethodDefinitionType {
     /// Returns `true` if this method definition is a TypeScript `abstract` method.
     ///
     /// See: [`MethodDefinitionType::TSAbstractMethodDefinition`]
-    pub fn is_abstract(&self) -> bool {
-        matches!(self, Self::TSAbstractMethodDefinition)
+    pub fn is_abstract(self) -> bool {
+        self == Self::TSAbstractMethodDefinition
     }
 }
 
@@ -1778,8 +1782,8 @@ impl AccessorPropertyType {
     /// Returns `true` if this accessor property is a TypeScript `abstract` accessor.
     ///
     /// See: [`AccessorPropertyType::TSAbstractAccessorProperty`]
-    pub fn is_abstract(&self) -> bool {
-        matches!(self, Self::TSAbstractAccessorProperty)
+    pub fn is_abstract(self) -> bool {
+        self == Self::TSAbstractAccessorProperty
     }
 }
 
@@ -1900,7 +1904,7 @@ impl ImportPhase {
     ///
     /// - [`Source`][`ImportPhase::Source`] => `"source"`
     /// - [`Defer`][`ImportPhase::Defer`] => `"defer"`
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Source => "source",
             Self::Defer => "defer",

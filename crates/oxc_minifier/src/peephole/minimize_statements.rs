@@ -10,7 +10,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -30,7 +30,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, '_>) {
+    pub fn minimize_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
@@ -51,6 +56,7 @@ impl<'a> PeepholeOptimizations {
                     &mut new_stmts,
                     &mut result,
                     &mut is_control_flow_dead,
+                    state,
                     ctx,
                 )
                 .is_break()
@@ -69,14 +75,14 @@ impl<'a> PeepholeOptimizations {
                 Statement::ContinueStatement(s) if s.label.is_none() => {
                     if let Some(Ancestor::ForStatementBody(_)) = ctx.ancestors().nth(1) {
                         result.pop();
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
                 // "function f() { x(); return; }" => "function f() { x(); }"
                 Statement::ReturnStatement(s) if s.argument.is_none() => {
                     if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
                         result.pop();
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
                 _ => {}
@@ -96,7 +102,7 @@ impl<'a> PeepholeOptimizations {
                                     break 'return_loop;
                                 }
                             }
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             // "a(); return b;" => "return a(), b;"
                             let last_stmt = result.pop().unwrap();
                             let Statement::ReturnStatement(mut last_return) = last_stmt else {
@@ -124,7 +130,7 @@ impl<'a> PeepholeOptimizations {
                                 break 'return_loop;
                             };
 
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             let last_stmt = result.pop().unwrap();
                             let Statement::ReturnStatement(last_return) = last_stmt else {
                                 unreachable!()
@@ -175,7 +181,7 @@ impl<'a> PeepholeOptimizations {
                                     right,
                                     ctx,
                                 );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
+                                self.minimize_conditions_exit_expression(&mut expr, state, ctx);
                                 expr
                             };
                             let last_return_stmt =
@@ -191,7 +197,7 @@ impl<'a> PeepholeOptimizations {
                     let prev_stmt = &result[prev_index];
                     match prev_stmt {
                         Statement::ExpressionStatement(_) => {
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             // "a(); throw b;" => "throw a(), b;"
                             let last_stmt = result.pop().unwrap();
                             let Statement::ThrowStatement(mut last_throw) = last_stmt else {
@@ -221,7 +227,7 @@ impl<'a> PeepholeOptimizations {
                                 break 'throw_loop;
                             };
 
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             let last_stmt = result.pop().unwrap();
                             let Statement::ThrowStatement(last_throw) = last_stmt else {
                                 unreachable!()
@@ -263,7 +269,7 @@ impl<'a> PeepholeOptimizations {
                                     right,
                                     ctx,
                                 );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
+                                self.minimize_conditions_exit_expression(&mut expr, state, ctx);
                                 expr
                             };
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
@@ -279,12 +285,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn minimize_statement(
-        &mut self,
+        &self,
         stmt: Statement<'a>,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         match stmt {
@@ -298,35 +305,35 @@ impl<'a> PeepholeOptimizations {
                 result.push(Statement::ContinueStatement(s));
             }
             Statement::VariableDeclaration(var_decl) => {
-                self.handle_variable_declaration(var_decl, result);
+                self.handle_variable_declaration(var_decl, result, state);
             }
             Statement::ExpressionStatement(expr_stmt) => {
-                self.handle_expression_statement(expr_stmt, result, ctx);
+                self.handle_expression_statement(expr_stmt, result, state, ctx);
             }
             Statement::SwitchStatement(switch_stmt) => {
-                self.handle_switch_statement(switch_stmt, result, ctx);
+                self.handle_switch_statement(switch_stmt, result, state, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if self.handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if self.handle_if_statement(i, stmts, if_stmt, result, state, ctx).is_break() {
                     return ControlFlow::Break(());
                 }
             }
             Statement::ReturnStatement(ret_stmt) => {
-                self.handle_return_statement(ret_stmt, result, ctx, is_control_flow_dead);
+                self.handle_return_statement(ret_stmt, result, is_control_flow_dead, state, ctx);
             }
             Statement::ThrowStatement(throw_stmt) => {
-                self.handle_throw_statement(throw_stmt, result, ctx, is_control_flow_dead);
+                self.handle_throw_statement(throw_stmt, result, is_control_flow_dead, state, ctx);
             }
             Statement::ForStatement(for_stmt) => {
-                self.handle_for_statement(for_stmt, result, ctx);
+                self.handle_for_statement(for_stmt, result, state, ctx);
             }
             Statement::ForInStatement(for_in_stmt) => {
-                self.handle_for_in_statement(for_in_stmt, result, ctx);
+                self.handle_for_in_statement(for_in_stmt, result, state, ctx);
             }
             Statement::ForOfStatement(for_of_stmt) => {
-                self.handle_for_of_statement(for_of_stmt, result, ctx);
+                self.handle_for_of_statement(for_of_stmt, result, state, ctx);
             }
-            Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt),
+            Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt, state),
             stmt => result.push(stmt),
         }
         ControlFlow::Continue(())
@@ -363,24 +370,26 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_variable_declaration(
-        &mut self,
+        &self,
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
     ) {
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
             if var_decl.kind == prev_var_decl.kind {
                 var_decl.declarations.splice(0..0, prev_var_decl.declarations.drain(..));
                 result.pop();
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
         result.push(Statement::VariableDeclaration(var_decl));
     }
 
     fn handle_expression_statement(
-        &mut self,
+        &self,
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -388,15 +397,16 @@ impl<'a> PeepholeOptimizations {
             let b = &mut expr_stmt.expression;
             expr_stmt.expression = Self::join_sequence(a, b, ctx);
             result.pop();
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
         result.push(Statement::ExpressionStatement(expr_stmt));
     }
 
     fn handle_switch_statement(
-        &mut self,
+        &self,
         mut switch_stmt: Box<'a, SwitchStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -404,18 +414,19 @@ impl<'a> PeepholeOptimizations {
             let b = &mut switch_stmt.discriminant;
             switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
             result.pop();
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
     #[expect(clippy::cast_possible_truncation)]
     fn handle_if_statement(
-        &mut self,
+        &self,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
         mut if_stmt: Box<'a, IfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         // Absorb a previous expression statement
@@ -424,7 +435,7 @@ impl<'a> PeepholeOptimizations {
             let b = &mut if_stmt.test;
             if_stmt.test = Self::join_sequence(a, b, ctx);
             result.pop();
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
 
         if if_stmt.consequent.is_jump_statement() {
@@ -445,7 +456,7 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                     result.pop();
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
 
@@ -505,7 +516,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     body.extend(stmts.drain(i + 1..));
 
-                    self.minimize_statements(&mut body, ctx);
+                    self.minimize_statements(&mut body, state, ctx);
                     let span =
                         if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
                     let test = ctx.ast.move_expression(&mut if_stmt.test);
@@ -521,10 +532,10 @@ impl<'a> PeepholeOptimizations {
                     };
                     let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
                     let if_stmt = self
-                        .try_minimize_if(&mut if_stmt, ctx)
+                        .try_minimize_if(&mut if_stmt, state, ctx)
                         .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
                     result.push(if_stmt);
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                     return ControlFlow::Break(());
                 }
             }
@@ -537,10 +548,10 @@ impl<'a> PeepholeOptimizations {
                         if if_stmt.consequent.is_jump_statement() {
                             if let Some(stmt) = if_stmt.alternate.take() {
                                 if let Statement::BlockStatement(block_stmt) = stmt {
-                                    self.handle_block(result, block_stmt);
+                                    self.handle_block(result, block_stmt, state);
                                 } else {
                                     result.push(stmt);
-                                    self.mark_current_function_as_changed();
+                                    state.changed = true;
                                 }
                                 continue;
                             }
@@ -557,18 +568,19 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_return_statement(
-        &mut self,
+        &self,
         mut ret_stmt: Box<'a, ReturnStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: Ctx<'a, '_>,
         is_control_flow_dead: &mut bool,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             if let Some(argument) = &mut ret_stmt.argument {
                 let a = &mut prev_expr_stmt.expression;
                 *argument = Self::join_sequence(a, argument, ctx);
                 result.pop();
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
         result.push(Statement::ReturnStatement(ret_stmt));
@@ -576,27 +588,29 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_throw_statement(
-        &mut self,
+        &self,
         mut throw_stmt: Box<'a, ThrowStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: Ctx<'a, '_>,
         is_control_flow_dead: &mut bool,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut throw_stmt.argument;
             throw_stmt.argument = Self::join_sequence(a, b, ctx);
             result.pop();
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
         result.push(Statement::ThrowStatement(throw_stmt));
         *is_control_flow_dead = true;
     }
 
     fn handle_for_statement(
-        &mut self,
+        &self,
         mut for_stmt: Box<'a, ForStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         match result.last_mut() {
@@ -606,14 +620,14 @@ impl<'a> PeepholeOptimizations {
                         let a = &mut prev_expr_stmt.expression;
                         *init = Self::join_sequence(a, init, ctx);
                         result.pop();
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 } else {
                     for_stmt.init = Some(ForStatementInit::from(
                         ctx.ast.move_expression(&mut prev_expr_stmt.expression),
                     ));
                     result.pop();
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
             Some(Statement::VariableDeclaration(prev_var_decl)) => {
@@ -625,7 +639,7 @@ impl<'a> PeepholeOptimizations {
                                     .declarations
                                     .splice(0..0, prev_var_decl.declarations.drain(..));
                                 result.pop();
-                                self.mark_current_function_as_changed();
+                                state.changed = true;
                             }
                         }
                     }
@@ -634,7 +648,7 @@ impl<'a> PeepholeOptimizations {
                     for_stmt.init =
                         Some(ForStatementInit::VariableDeclaration(ctx.ast.alloc(var_decl)));
                     result.pop();
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
             _ => {}
@@ -643,9 +657,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_in_statement(
-        &mut self,
+        &self,
         mut for_in_stmt: Box<'a, ForInStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         match result.last_mut() {
@@ -675,7 +690,7 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                     result.pop();
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
             // "var a; for (a in b) c" => "for (var a in b) c"
@@ -700,7 +715,7 @@ impl<'a> PeepholeOptimizations {
                                     ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
                                 );
                                 result.pop();
-                                self.mark_current_function_as_changed();
+                                state.changed = true;
                             }
                         }
                     }
@@ -712,9 +727,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_for_of_statement(
-        &mut self,
+        &self,
         mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // "var a; for (a of b) c" => "for (var a of b) c"
@@ -739,7 +755,7 @@ impl<'a> PeepholeOptimizations {
                                 ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
                             );
                             result.pop();
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                         }
                     }
                 }
@@ -750,16 +766,17 @@ impl<'a> PeepholeOptimizations {
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
     fn handle_block(
-        &mut self,
+        &self,
         result: &mut Vec<'a, Statement<'a>>,
         block_stmt: Box<'a, BlockStatement<'a>>,
+        state: &mut State,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
         if keep_block {
             result.push(Statement::BlockStatement(block_stmt));
         } else {
             result.append(&mut block_stmt.unbox().body);
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 

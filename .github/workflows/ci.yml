@@ -79,7 +79,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
@@ -124,6 +124,7 @@ jobs:
           pnpm run build-wasi
           pnpm run build-npm-dir
           pnpm run test-browser
+          pnpm build-browser-bundle --npmDir npm-dir
 
   test-napi:
     name: Test NAPI
@@ -142,6 +143,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
@@ -157,7 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@7bc041cbb7ca9167c9e0e4ccbb26f48eb0f9d4e0 # v1.30.2
+      - uses: crate-ci/typos@d08e4083f112e684fb88f6babd9ae60a1f1cd84f # v1.30.3
         with:
           files: .
 
@@ -285,7 +287,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Restore dprint plugin cache
-        uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint

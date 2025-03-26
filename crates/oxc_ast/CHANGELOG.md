@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- 89cb368 ast/estree: Add decorators field to `AssignmentPattern` (#9967) (therewillbecode)
+- 4980b73 ast/estree: Add missing estree fields to `TSIndexSignature` and `TSIndexSignatureName` (#9968) (therewillbecode)
+- b9f80b9 ast/estree: Fix `TSFunctionType` and `TSCallSignatureDeclaration`  (#9959) (therewillbecode)
+- 0cdeedd ast/estree: Fix `ArrayPattern` (#9956) (therewillbecode)
+- 6fcd342 ast/estree: Fix `FormalParameter` (#9954) (therewillbecode)
+- 9d1035e ast/estree: Fix TS type def for `TSThisParameter` (#9942) (overlookmotel)
+- 8228b74 ast/estree: Fix `Function.this_param` (#9913) (hi-ogawa)
+- d69cc34 ast/estree: Fix `BindingIdentifier` (#9822) (hi-ogawa)
+- 5631ebd ast/extree: Fix `TSModuleDeclaration.global` (#9941) (overlookmotel)
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- db642eb ast/estree: Shorten raw deser code (#9944) (overlookmotel)
+- dc3e725 ast/estree: Expose `INCLUDE_TS_FIELDS` constant on `Serializer` (#9943) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+- 30990d2 ast_tools/estree: Re-order custom serializers (#9945) (overlookmotel)
+
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)- 68018e1 Ast changes (Boshen)
+
+### Performance
+
+- 5f97f28 ast/estree: Speed up raw deser for `JSXElement` (#9895) (overlookmotel)
+
+### Refactor
+
+- 62e2859 ast/ast_builder: Use `self.vec_from_iter` instead of `Vec::from_iter_in` for consistency (#9909) (Dunqing)
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)

@@ -47,7 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(Function)",
         "id": 1,
         "name": "foo",
         "node": "Function(foo)",

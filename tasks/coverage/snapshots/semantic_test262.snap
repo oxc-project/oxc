@@ -2,7 +2,7 @@ commit: bc5c1417
 
 semantic_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 42477/44293 (95.90%)
+Positive Passed: 42487/44293 (95.92%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -8396,30 +8396,10 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
-tasks/coverage/test262/test/language/statements/async-function/unscopables-with-in-nested-fn.js
-semantic error: Symbol flags mismatch for "ref":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/test262/test/language/statements/async-function/unscopables-with.js
-semantic error: Symbol flags mismatch for "ref":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/test262/test/language/statements/async-generator/eval-var-scope-syntax-err.js
 semantic error: Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
-
-tasks/coverage/test262/test/language/statements/async-generator/unscopables-with-in-nested-fn.js
-semantic error: Symbol flags mismatch for "ref":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/test262/test/language/statements/async-generator/unscopables-with.js
-semantic error: Symbol flags mismatch for "ref":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
 semantic error: Scope children mismatch:
@@ -14901,16 +14881,6 @@ Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(25): ScopeFlags(Function)
 
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-put-unresolvable-no-strict.js
-semantic error: Symbol flags mismatch for "fn":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-put-unresolvable-no-strict.js
-semantic error: Symbol flags mismatch for "fn":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-descriptors.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
@@ -15073,16 +15043,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(5))
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(7): [ScopeId(8)]
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-put-unresolvable-no-strict.js
-semantic error: Symbol flags mismatch for "fn":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-put-unresolvable-no-strict.js
-semantic error: Symbol flags mismatch for "fn":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-descriptors.js
 semantic error: Bindings mismatch:
@@ -15705,14 +15665,4 @@ rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["a", "b", "rest"]
-
-tasks/coverage/test262/test/language/statements/switch/scope-lex-async-function.js
-semantic error: Symbol flags mismatch for "x":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/test262/test/language/statements/switch/scope-lex-async-generator.js
-semantic error: Symbol flags mismatch for "x":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 

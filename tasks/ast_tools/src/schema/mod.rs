@@ -18,6 +18,7 @@ pub mod extensions {
     pub mod ast_builder;
     pub mod clone_in;
     pub mod content_eq;
+    pub mod dummy;
     pub mod estree;
     pub mod kind;
     pub mod layout;

@@ -63,6 +63,14 @@ pub fn create_ident_tokens(name: &str) -> TokenStream {
     }
 }
 
+/// Convert [`Ident`] to `String`, removing `r#` from start.
+///
+/// [`Ident`]: struct@Ident
+pub fn ident_name(ident: &Ident) -> String {
+    let name = ident.to_string();
+    if let Some(unprefixed) = name.strip_prefix("r#") { unprefixed.to_string() } else { name }
+}
+
 /// Convert integer to [`LitInt`].
 ///
 /// This prints without a `usize` postfix. i.e. `123` not `123usize`.

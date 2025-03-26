@@ -12,6 +12,7 @@ use super::{
         ast_builder::{AstBuilderStructField, AstBuilderType},
         clone_in::{CloneInStructField, CloneInType},
         content_eq::{ContentEqStructField, ContentEqType},
+        dummy::DummyStruct,
         estree::{ESTreeStruct, ESTreeStructField},
         kind::Kind,
         layout::{Layout, Offset},
@@ -39,6 +40,7 @@ pub struct StructDef {
     pub layout: Layout,
     pub span: SpanStruct,
     pub clone_in: CloneInType,
+    pub dummy: DummyStruct,
     pub content_eq: ContentEqType,
     pub estree: ESTreeStruct,
 }
@@ -72,6 +74,7 @@ impl StructDef {
             layout: Layout::default(),
             span: SpanStruct::default(),
             clone_in: CloneInType::default(),
+            dummy: DummyStruct::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeStruct::default(),
         }

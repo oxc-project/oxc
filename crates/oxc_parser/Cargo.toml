@@ -1,6 +1,6 @@
 [package]
 name = "oxc_parser"
-version = "0.60.0"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -45,6 +45,6 @@ pico-args = { workspace = true }
 [features]
 default = ["regular_expression"]
 # Parse regex
-regular_expression = ["oxc_regular_expression"]
+regular_expression = ["dep:oxc_regular_expression"]
 # Expose Lexer for benchmarks
 benchmarking = []

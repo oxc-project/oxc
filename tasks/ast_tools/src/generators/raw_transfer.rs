@@ -3,8 +3,7 @@
 use std::{borrow::Cow, fmt::Debug, str};
 
 use cow_utils::CowUtils;
-use lazy_static::lazy_static;
-use regex::{Captures, Regex, Replacer};
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -653,9 +652,7 @@ fn apply_converter_for_enum(converter_name: &str, offset: u32, schema: &Schema) 
     Some(value)
 }
 
-lazy_static! {
-    static ref THIS_REGEX: Regex = Regex::new(r"THIS\.([a-zA-Z_]+)").unwrap();
-}
+static THIS_REGEX: Lazy<Regex> = lazy_regex!(r"THIS\.([a-zA-Z_]+)");
 
 struct ThisReplacer<'d> {
     dependent_field_names: &'d mut FxHashSet<String>,
@@ -676,9 +673,7 @@ impl Replacer for ThisReplacer<'_> {
     }
 }
 
-lazy_static! {
-    static ref DESER_REGEX: Regex = Regex::new(r"DESER\[([A-Za-z0-9<>_]+)\]").unwrap();
-}
+static DESER_REGEX: Lazy<Regex> = lazy_regex!(r"DESER\[([A-Za-z0-9<>_]+)\]");
 
 struct DeserReplacer<'s> {
     schema: &'s Schema,
@@ -700,12 +695,8 @@ impl Replacer for DeserReplacer<'_> {
     }
 }
 
-lazy_static! {
-    static ref POS_REGEX: Regex = {
-        #[expect(clippy::trivial_regex)]
-        Regex::new("POS").unwrap()
-    };
-}
+#[expect(clippy::trivial_regex)]
+static POS_REGEX: Lazy<Regex> = lazy_regex!("POS");
 
 struct PosReplacer {
     offset: u32,
@@ -723,12 +714,8 @@ impl Replacer for PosReplacer {
     }
 }
 
-lazy_static! {
-    static ref POS_OFFSET_REGEX: Regex = Regex::new(
-        r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*\+\s*(\d+))?"
-    )
-    .unwrap();
-}
+static POS_OFFSET_REGEX: Lazy<Regex> =
+    lazy_regex!(r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*\+\s*(\d+))?");
 
 struct PosOffsetReplacer<'s, 'd> {
     schema: &'s Schema,
@@ -780,10 +767,7 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
     }
 }
 
-lazy_static! {
-    static ref IF_TS_REGEX: Regex =
-        Regex::new(r"/\* IF_TS \*/\s*([\s\S]*?)/\* END_IF_TS \*/\s*").unwrap();
-}
+static IF_TS_REGEX: Lazy<Regex> = lazy_regex!(r"/\* IF_TS \*/\s*([\s\S]*?)/\* END_IF_TS \*/\s*");
 
 struct IfTsReplacer {
     is_ts: bool,

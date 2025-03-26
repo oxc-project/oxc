@@ -249,6 +249,8 @@ const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_l
 /// Derives (for use with `#[generate_derive]`)
 const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveCloneIn,
+    &derives::DeriveDummy,
+    &derives::DeriveTakeIn,
     &derives::DeriveGetAddress,
     &derives::DeriveGetSpan,
     &derives::DeriveGetSpanMut,

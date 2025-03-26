@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- af78acb transformer: Add `StatementInjectorStore::move_insertions` method (#9951) (overlookmotel)
+
+### Bug Fixes
+
+- c7fc700 transformer/decorator: Do not lose `WeakMap` when decorator and class properties transforms combined (#9952) (overlookmotel)
+
+### Performance
+
+- 374050a transformer/jsx: Pre-allocate enough memory for `arguments` of `createElement`/`jsx` function (#9915) (Dunqing)
+
+### Refactor
+
+- fbb268a minifier, transformer: Replace `vec_from_iter` with `vec_from_array` for array (#9906) (Dunqing)
+- 7f06cec transformer: Construct new AST instead of calling `ast.clone_in()` (#9916) (Dunqing)
+- ffd4d13 transformer/decorator: Rename `enter_statement` to `exit_statement` (#9950) (overlookmotel)
+
+## [0.61.0] - 2025-03-20
+
+### Bug Fixes
+
+- 1774225 transformer/using: Incorrect scope ids for bindings (#9871) (camc314)
+
+### Refactor
+
+- dbe61c5 transformer/module-runner-transform: Remove redundant converison (#9912) (Dunqing)
+- ecdfe2e transformer/using: Move work to `exit_static_block` (#9713) (camc314)
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)

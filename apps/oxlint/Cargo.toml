@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.16.1"
+version = "0.16.3"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -48,7 +48,7 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 
 [dev-dependencies]
 insta = { workspace = true }
-regex = { workspace = true }
+lazy-regex = { workspace = true }
 
 [features]
 default = []

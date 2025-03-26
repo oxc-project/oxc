@@ -8,7 +8,7 @@ use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -210,7 +210,7 @@ impl Span {
     ///
     /// let span1 = Span::new(0, 5);
     /// let span2 = Span::new(3, 8);
-    /// let merged_span = span1.merge(&span2);
+    /// let merged_span = span1.merge(span2);
     /// assert_eq!(merged_span, Span::new(0, 8));
     /// ```
     #[must_use]
@@ -542,6 +542,15 @@ impl<'a> CloneIn<'a> for Span {
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
+    }
+}
+
+impl<'a> Dummy<'a> for Span {
+    /// Create a dummy [`Span`].
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn dummy(_allocator: &'a Allocator) -> Self {
+        SPAN
     }
 }
 

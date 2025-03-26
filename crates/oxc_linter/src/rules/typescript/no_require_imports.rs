@@ -1,4 +1,4 @@
-use regex::Regex;
+use lazy_regex::Regex;
 
 use oxc_ast::{
     AstKind,
@@ -393,7 +393,7 @@ fn test() {
         ("require?.('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         // covers global require in scope
         (
-            r"function foo() { 
+            r"function foo() {
             require('foo')
             }",
             None,

@@ -150,6 +150,28 @@ impl<T> ESTree for Init<'_, T> {
     }
 }
 
+/// Serialized as `"this"`.
+#[ast_meta]
+#[estree(ts_type = "'this'", raw_deser = "'this'")]
+pub struct This<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for This<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("this").serialize(serializer);
+    }
+}
+
+/// Serialized as `[]`.
+#[ast_meta]
+#[estree(ts_type = "[]", raw_deser = "[]")]
+pub struct EmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for EmptyArray<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
+    }
+}
+
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
 #[ts]
@@ -359,6 +381,68 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `Function`.
+///
+/// In TS AST, this adds `this_param` to start of the array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        /* IF_TS */
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        /* END_IF_TS */
+        params
+    "
+)]
+pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+
+impl ESTree for FunctionFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if S::INCLUDE_TS_FIELDS {
+            if let Some(this_param) = &self.0.this_param {
+                seq.serialize_element(this_param);
+            }
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
+/// Serializer for `extends` field of `TSInterfaceDeclaration`.
+///
+/// Serialize `extends` as an empty array if it's `None`.
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSInterfaceHeritage>",
+    raw_deser = "
+        const extendsArr = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
+        extendsArr === null ? [] : extendsArr
+    "
+)]
+pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
+
+impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(extends) = &self.0.extends {
+            extends.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `specifiers` field of `ImportDeclaration`.
 ///
 /// Serialize `specifiers` as an empty array if it's `None`.
@@ -392,7 +476,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     ts_type = "FunctionBody | Expression",
     raw_deser = "
         let body = DESER[Box<FunctionBody>](POS_OFFSET.body);
-        DESER[bool](POS_OFFSET.expression) ? body.body[0].expression : body
+        THIS.expression ? body.body[0].expression : body
     "
 )]
 pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
@@ -414,14 +498,14 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
     ts_type = "IdentifierReference | AssignmentTargetWithDefault",
     raw_deser = "
         const init = DESER[Option<Expression>](POS_OFFSET.init),
-            binding = DESER[IdentifierReference](POS_OFFSET.binding),
+            keyCopy = {...THIS.key},
             value = init === null
-                ? binding
+                ? keyCopy
                 : {
                     type: 'AssignmentPattern',
-                    start: DESER[u32](POS_OFFSET.span.start),
-                    end: DESER[u32](POS_OFFSET.span.end),
-                    left: binding,
+                    start: THIS.start,
+                    end: THIS.end,
+                    left: keyCopy,
                     right: init,
                 };
         value
@@ -538,26 +622,6 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
-#[ast_meta]
-#[estree(
-    ts_type = "Array<TSClassImplements>",
-    raw_deser = "
-        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
-        classImplements === null ? [] : classImplements
-    "
-)]
-pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
-
-impl ESTree for ClassImplements<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(implements) = &self.0.implements {
-            implements.serialize(serializer);
-        } else {
-            [(); 0].serialize(serializer);
-        }
-    }
-}
-
 // --------------------
 // JSX
 // --------------------
@@ -626,6 +690,41 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
+    }
+}
+
+/// Serializer for `implements` field of `Class`.
+///
+/// This field is only used in TS AST.
+/// `None` is serialized as empty array (`[]`).
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSClassImplements>",
+    raw_deser = "
+        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
+        classImplements === null ? [] : classImplements
+    "
+)]
+pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassImplements<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(implements) = &self.0.implements {
+            implements.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
+        }
+    }
+}
+
+/// Serializer for `global` field of `TSModuleDeclaration`.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
+pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+
+impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.kind.is_global().serialize(serializer);
     }
 }
 
