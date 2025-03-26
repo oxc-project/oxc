@@ -25,7 +25,6 @@ use super::printer::queue::{
     AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
 };
 use super::{TextLen, TextSize};
-use drop_bomb::DebugDropBomb;
 use std::num::NonZeroU8;
 use unicode_width::UnicodeWidthChar;
 
@@ -866,9 +865,6 @@ struct FitsMeasurer<'a, 'print> {
     indent_stack: FitsIndentStack<'print>,
     printer: &'print mut Printer<'a>,
     must_be_flat: bool,
-
-    /// Bomb that enforces that finish is explicitly called to restore the `fits_stack` and `fits_queue` vectors.
-    bomb: DebugDropBomb,
 }
 
 impl<'a, 'print> FitsMeasurer<'a, 'print> {
@@ -918,9 +914,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             indent_stack: fits_indent_stack,
             must_be_flat: false,
             printer,
-            bomb: DebugDropBomb::new(
-                "MeasurerFits must be `finished` to restore the `fits_queue` and `fits_stack`.",
-            ),
         }
     }
 
@@ -1247,9 +1240,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         Fits::Maybe
     }
 
-    fn finish(mut self) {
-        self.bomb.defuse();
-
+    fn finish(self) {
         let mut queue = self.queue.finish();
         queue.clear();
         self.printer.state.fits_queue = queue;

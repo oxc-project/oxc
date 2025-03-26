@@ -588,12 +588,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "drop_bomb"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bda8e21c04aca2ae33ffc2fd8c23134f3cac46db123ba97bd9d3f3b8a4a85e1"
-
-[[package]]
 name = "dtor"
 version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1788,7 +1782,6 @@ name = "oxc_formatter"
 version = "0.0.0"
 dependencies = [
  "countme",
- "drop_bomb",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",

@@ -26,8 +26,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 countme = "3.0.1"
-drop_bomb = "0.1.5"
-rustc-hash = "2.1.1"
+rustc-hash = { workspace = true }
 unicode-width = "0.1.12"
 
 [dev-dependencies]
