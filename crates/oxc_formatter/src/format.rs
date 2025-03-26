@@ -32,7 +32,8 @@ impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Directive<'a>> {
 
 impl<'a> Format<JsFormatContext<'a>> for Directive<'a> {
     fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
-        write!(f, [self.expression])
+        let source_text = f.context().source_text();
+        write!(f, [located_token_text(self.span, source_text)])
     }
 }
 

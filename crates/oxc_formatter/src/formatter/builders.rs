@@ -366,14 +366,10 @@ impl std::fmt::Debug for DynamicText<'_> {
 // }
 //
 /// Copies a source text 1:1 into the output text.
-pub fn located_token_text(_token: &SyntaxToken, _range: TextRange) -> LocatedTokenText {
-    todo!()
-    // let relative_range = range - token.text_range().start();
-    // let slice = token.token_text().slice(relative_range);
-
-    // debug_assert_no_newlines(&slice);
-
-    // LocatedTokenText { text: slice, source_position: range.start() }
+pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
+    let slice = span.source_text(source_text);
+    debug_assert_no_newlines(&slice);
+    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start }
 }
 
 pub struct LocatedTokenText {
@@ -381,20 +377,20 @@ pub struct LocatedTokenText {
     source_position: TextSize,
 }
 
-// impl<Context> Format<Context> for LocatedTokenText {
-// fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-// f.write_element(FormatElement::LocatedTokenText {
-// slice: self.text.clone(),
-// source_position: self.source_position,
-// })
-// }
-// }
+impl<Context> Format<Context> for LocatedTokenText {
+    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+        f.write_element(FormatElement::LocatedTokenText {
+            slice: self.text.clone(),
+            source_position: self.source_position,
+        })
+    }
+}
 
-// impl std::fmt::Debug for LocatedTokenText {
-// fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-// std::write!(f, "LocatedTokenText({})", self.text)
-// }
-// }
+impl std::fmt::Debug for LocatedTokenText {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::write!(f, "LocatedTokenText({})", self.text)
+    }
+}
 
 fn debug_assert_no_newlines(text: &str) {
     debug_assert!(

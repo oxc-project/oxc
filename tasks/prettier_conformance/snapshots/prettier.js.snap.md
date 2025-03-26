@@ -243,14 +243,14 @@ js compatibility: 0/645 (0.00%)
 | js/destructuring/destructuring.js | 💥 | 22.22% |
 | js/destructuring/issue-5988.js | 💥 | 0.00% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 11.54% |
-| js/directives/escaped.js | 💥 | 0.00% |
+| js/directives/escaped.js | 💥 | 12.90% |
 | js/directives/issue-7346.js | 💥 | 0.00% |
 | js/directives/last-line-0.js | 💥 | 0.00% |
 | js/directives/last-line-1.js | 💥 | 0.00% |
 | js/directives/last-line-2.js | 💥 | 0.00% |
-| js/directives/newline.js | 💥 | 20.00% |
-| js/directives/no-newline.js | 💥 | 0.00% |
-| js/directives/test.js | 💥 | 20.69% |
+| js/directives/newline.js | 💥 | 36.36% |
+| js/directives/no-newline.js | 💥 | 50.00% |
+| js/directives/test.js | 💥 | 20.00% |
 | js/dynamic-import/assertions.js | 💥 | 0.00% |
 | js/dynamic-import/test.js | 💥 | 0.00% |
 | js/empty-paren-comment/class-property.js | 💥 | 0.00% |
@@ -287,7 +287,7 @@ js compatibility: 0/645 (0.00%)
 | js/export-star/export-star-as-string2.js | 💥 | 0.00% |
 | js/export-star/export-star-as.js | 💥 | 0.00% |
 | js/export-star/export-star.js | 💥 | 0.00% |
-| js/expression_statement/no_regression.js | 💥 | 0.00% |
+| js/expression_statement/no_regression.js | 💥 | 66.67% |
 | js/expression_statement/use_strict.js | 💥 | 0.00% |
 | js/for/comment.js | 💥 | 40.91% |
 | js/for/continue-and-break-comment-1.js | 💥 | 31.94% |
