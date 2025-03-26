@@ -24,11 +24,10 @@ suite('commands', () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
 
     deepStrictEqual([
+      'oxc.applyAllFixesFile',
       'oxc.restartServer',
       'oxc.showOutputChannel',
       'oxc.toggleEnable',
-      'oxc.applyAllFixesFile',
-      'oxc.fixAll',
     ], oxcCommands);
   });
 
@@ -56,7 +55,7 @@ suite('commands', () => {
     await sleep(500);
   });
 
-  test('oxc.fixAll', async () => {
+  test('oxc.applyAllFixesFile', async () => {
     const edit = new WorkspaceEdit();
     edit.createFile(fileUri, {
       contents: Buffer.from('/* 😊 */debugger;'),
@@ -64,7 +63,7 @@ suite('commands', () => {
 
     await workspace.applyEdit(edit);
     await window.showTextDocument(fileUri);
-    await commands.executeCommand('oxc.fixAll', {
+    await commands.executeCommand('oxc.applyAllFixesFile', {
       uri: fileUri.toString(),
     });
     await workspace.saveAll();

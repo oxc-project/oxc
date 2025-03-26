@@ -1,45 +1,27 @@
 import { promises as fsPromises } from 'node:fs';
 
 import {
-  commands,
   ExtensionContext,
   RelativePattern,
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
-  Uri,
   window,
   workspace,
 } from 'vscode';
 
-import {
-  DidChangeWatchedFilesNotification,
-  ExecuteCommandRequest,
-  FileChangeType,
-  MessageType,
-  ShowMessageNotification,
-} from 'vscode-languageclient';
+import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
+import { applyAllFixesFile, OxcCommands, restartCommand, showOutputCommand, toggleEnable } from './commands';
 import { oxlintConfigFileName } from './Config';
 import { ConfigService } from './ConfigService';
+import { findOxlintrcConfigFiles, sendDidChangeWatchedFilesNotificationWith } from './utilities';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
-const commandPrefix = 'oxc';
-
-const enum OxcCommands {
-  RestartServer = `${commandPrefix}.restartServer`,
-  ApplyAllFixesFile = `${commandPrefix}.applyAllFixesFile`,
-  ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
-  ToggleEnable = `${commandPrefix}.toggleEnable`,
-}
-
-const enum LspCommands {
-  FixAll = 'oxc.fixAll',
-}
 
 let client: LanguageClient;
 
@@ -47,85 +29,13 @@ let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
-  const restartCommand = commands.registerCommand(
-    OxcCommands.RestartServer,
-    async () => {
-      if (!client) {
-        window.showErrorMessage('oxc client not found');
-        return;
-      }
-
-      try {
-        if (client.isRunning()) {
-          await client.restart();
-          // ToDo: refactor it on the server side.
-          // Do not touch watchers on client side, just simplify the restart of the server.
-          const configFiles = await findOxlintrcConfigFiles();
-          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-
-          window.showInformationMessage('oxc server restarted.');
-        } else {
-          await startClient();
-        }
-      } catch (err) {
-        client.error('Restarting client failed', err, 'force');
-      }
-    },
-  );
-
-  const showOutputCommand = commands.registerCommand(
-    OxcCommands.ShowOutputChannel,
-    () => {
-      client?.outputChannel?.show();
-    },
-  );
-
-  const toggleEnable = commands.registerCommand(
-    OxcCommands.ToggleEnable,
-    async () => {
-      await configService.config.updateEnable(!configService.config.enable);
-
-      if (client.isRunning()) {
-        if (!configService.config.enable) {
-          await client.stop();
-        }
-      } else {
-        if (configService.config.enable) {
-          await startClient();
-        }
-      }
-    },
-  );
-
-  const applyAllFixesFile = commands.registerCommand(
-    OxcCommands.ApplyAllFixesFile,
-    async () => {
-      if (!client) {
-        window.showErrorMessage('oxc client not found');
-        return;
-      }
-      const textEditor = window.activeTextEditor;
-      if (!textEditor) {
-        window.showErrorMessage('active text editor not found');
-        return;
-      }
-
-      const params = {
-        command: LspCommands.FixAll,
-        arguments: [{
-          uri: textEditor.document.uri.toString(),
-        }],
-      };
-
-      await client.sendRequest(ExecuteCommandRequest.type, params);
-    },
-  );
+  const clientGetter = () => client;
 
   context.subscriptions.push(
-    applyAllFixesFile,
-    restartCommand,
-    showOutputCommand,
-    toggleEnable,
+    applyAllFixesFile(clientGetter),
+    restartCommand(clientGetter),
+    showOutputCommand(clientGetter),
+    toggleEnable(clientGetter, configService.config),
     configService,
   );
 
@@ -312,16 +222,4 @@ function createFileEventWatchers(configRelativePath: string) {
       return workspace.createFileSystemWatcher(pattern);
     }),
   ];
-}
-
-async function findOxlintrcConfigFiles() {
-  return workspace.findFiles(`**/${oxlintConfigFileName}`);
-}
-
-async function sendDidChangeWatchedFilesNotificationWith(languageClient: LanguageClient, files: Uri[]) {
-  await languageClient.sendNotification(DidChangeWatchedFilesNotification.type, {
-    changes: files.map(file => {
-      return { uri: file.toString(), type: FileChangeType.Created };
-    }),
-  });
 }
