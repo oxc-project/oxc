@@ -1,4 +1,3 @@
-use countme::Count;
 use rustc_hash::FxHashMap;
 use std::fmt::{Debug, Formatter};
 use std::iter::FusedIterator;
@@ -183,10 +182,7 @@ impl<K: std::hash::Hash + Eq, V> CommentsMap<K, V> {
                 out_of_order.push(parts[in_order.dangling_range()].to_vec());
                 out_of_order.push(parts[in_order.trailing_range()].to_vec());
 
-                *entry = Entry::OutOfOrder(OutOfOrderEntry {
-                    leading_index: index,
-                    _count: Count::new(),
-                });
+                *entry = Entry::OutOfOrder(OutOfOrderEntry { leading_index: index });
 
                 match entry {
                     Entry::InOrder(_) => unreachable!(),
@@ -439,8 +435,6 @@ struct InOrderEntry {
 
     /// Index into the [CommentsMap::parts] vector where the trailing parts of this entry end
     trailing_end: Option<PartIndex>,
-
-    _count: Count<InOrderEntry>,
 }
 
 impl InOrderEntry {
@@ -450,7 +444,6 @@ impl InOrderEntry {
             dangling_start: PartIndex::from_len(range.end),
             trailing_start: None,
             trailing_end: None,
-            _count: Count::new(),
         }
     }
 
@@ -461,7 +454,6 @@ impl InOrderEntry {
             dangling_start: start,
             trailing_start: Some(PartIndex::from_len(range.end)),
             trailing_end: None,
-            _count: Count::new(),
         }
     }
 
@@ -472,7 +464,6 @@ impl InOrderEntry {
             dangling_start: start,
             trailing_start: Some(start),
             trailing_end: Some(PartIndex::from_len(range.end)),
-            _count: Count::new(),
         }
     }
 
@@ -549,7 +540,6 @@ impl InOrderEntry {
 struct OutOfOrderEntry {
     /// Index into the [CommentsMap::out_of_order] vector at which offset the leaading vec is stored.
     leading_index: usize,
-    _count: Count<OutOfOrderEntry>,
 }
 
 impl OutOfOrderEntry {
