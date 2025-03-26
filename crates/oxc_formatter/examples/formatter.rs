@@ -5,7 +5,7 @@ use std::{fs, path::Path};
 use pico_args::Arguments;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::Formatter;
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -27,7 +27,8 @@ fn main() -> Result<(), String> {
         println!("Parsed with Errors.");
     }
 
-    let code = Formatter::new(&allocator, options).build(program);
+    let options = FormatterOptions::default();
+    let code = Formatter::new(&allocator, options).build(&ret.program);
 
     println!("{code}");
 
