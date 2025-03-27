@@ -6,7 +6,7 @@ use super::Buffer;
 
 /// Utility trait that allows memorizing the output of a [Format].
 /// Useful to avoid re-formatting the same object twice.
-pub trait MemoizeContext {
+pub trait MemoizeFormat<'a> {
     /// Returns a formattable object that memoizes the result of `Format` by cloning.
     /// Mainly useful if the same sub-tree can appear twice in the formatted output because it's
     /// used inside of `if_group_breaks` or `if_group_fits_single_line`.
@@ -57,13 +57,13 @@ pub trait MemoizeContext {
     ///
     fn memoized(self) -> Memoized<Self>
     where
-        Self: Sized,
+        Self: Sized + Format<'a>,
     {
         Memoized::new(self)
     }
 }
 
-impl<T> MemoizeContext for T {}
+impl<'a, T> MemoizeFormat<'a> for T {}
 
 /// Memoizes the output of its inner [Format] to avoid re-formatting a potential expensive object.
 #[derive(Debug)]
@@ -72,9 +72,9 @@ pub struct Memoized<F> {
     memory: OnceCell<FormatResult<Option<FormatElement>>>,
 }
 
-impl<F> Memoized<F>
+impl<'ast, F> Memoized<F>
 where
-    F: Format,
+    F: Format<'ast>,
 {
     fn new(inner: F) -> Self {
         Self { inner, memory: OnceCell::new() }
@@ -136,7 +136,7 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&mut self, f: &mut Formatter) -> FormatResult<&[FormatElement]> {
+    pub fn inspect(&mut self, f: &mut Formatter<'_, 'ast>) -> FormatResult<&[FormatElement]> {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
@@ -148,11 +148,11 @@ where
     }
 }
 
-impl<F> Format for Memoized<F>
+impl<'ast, F> Format<'ast> for Memoized<F>
 where
-    F: Format,
+    F: Format<'ast>,
 {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result {

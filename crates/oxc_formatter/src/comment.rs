@@ -1,7 +1,7 @@
 use crate::formatter::prelude::{dynamic_text, if_group_breaks, text, write};
 use crate::formatter::{
-    CommentKind, CommentPlacement, CommentStyle, DecoratedComment, FormatResult, FormatRule,
-    Formatter, SourceComment, SyntaxTriviaPieceComments,
+    Buffer, CommentKind, CommentPlacement, CommentStyle, DecoratedComment, FormatResult,
+    FormatRule, Formatter, SourceComment, SyntaxTriviaPieceComments,
 };
 
 #[derive(Default)]

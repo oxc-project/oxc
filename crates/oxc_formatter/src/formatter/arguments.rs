@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 /// This struct is similar to a dynamic dispatch (using `dyn Format`) because it stores a pointer to the value.
 /// However, it doesn't store the pointer to `dyn Format`'s vtable, instead it statically resolves the function
 /// pointer of `Format::format` and stores it in `formatter`.
-pub struct Argument<'fmt> {
+pub struct Argument<'fmt, 'ast> {
     /// The value to format stored as a raw pointer where `lifetime` stores the value's lifetime.
     value: *const c_void,
 
@@ -17,24 +17,27 @@ pub struct Argument<'fmt> {
     lifetime: PhantomData<&'fmt ()>,
 
     /// The function pointer to `value`'s `Format::format` method
-    formatter: fn(*const c_void, &mut Formatter<'_>) -> FormatResult<()>,
+    formatter: fn(*const c_void, &mut Formatter<'_, 'ast>) -> FormatResult<()>,
 }
 
-impl Clone for Argument<'_> {
+impl Clone for Argument<'_, '_> {
     fn clone(&self) -> Self {
         *self
     }
 }
-impl Copy for Argument<'_> {}
+impl Copy for Argument<'_, '_> {}
 
-impl<'fmt> Argument<'fmt> {
+impl<'fmt, 'ast> Argument<'fmt, 'ast> {
     /// Called by the [biome_formatter::format_args] macro. Creates a mono-morphed value for formatting
     /// an object.
     #[doc(hidden)]
     #[inline]
-    pub fn new<F: Format>(value: &'fmt F) -> Self {
+    pub fn new<F: Format<'ast>>(value: &'fmt F) -> Self {
         #[inline(always)]
-        fn formatter<F: Format>(ptr: *const c_void, fmt: &mut Formatter) -> FormatResult<()> {
+        fn formatter<'ast, F: Format<'ast>>(
+            ptr: *const c_void,
+            fmt: &mut Formatter<'_, 'ast>,
+        ) -> FormatResult<()> {
             // SAFETY: Safe because the 'fmt lifetime is captured by the 'lifetime' field.
             F::fmt(unsafe { &*ptr.cast::<F>() }, fmt)
         }
@@ -48,14 +51,14 @@ impl<'fmt> Argument<'fmt> {
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
-    pub(super) fn format(&self, f: &mut Formatter) -> FormatResult<()> {
+    pub(super) fn format<'buf>(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         (self.formatter)(self.value, f)
     }
 }
 
-impl Format for Argument<'_> {
+impl<'buf, 'ast> Format<'ast> for Argument<'buf, 'ast> {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         self.format(f)
     }
 }
@@ -80,45 +83,45 @@ impl Format for Argument<'_> {
 /// # Ok(())
 /// # }
 /// ```
-pub struct Arguments<'fmt>(pub &'fmt [Argument<'fmt>]);
+pub struct Arguments<'fmt, 'ast>(pub &'fmt [Argument<'fmt, 'ast>]);
 
-impl<'fmt> Arguments<'fmt> {
+impl<'fmt, 'ast> Arguments<'fmt, 'ast> {
     #[doc(hidden)]
     #[inline(always)]
-    pub fn new(arguments: &'fmt [Argument<'fmt>]) -> Self {
+    pub fn new(arguments: &'fmt [Argument<'fmt, 'ast>]) -> Self {
         Self(arguments)
     }
 
     /// Returns the arguments
     #[inline]
-    pub fn items(&self) -> &'fmt [Argument<'fmt>] {
+    pub fn items(&self) -> &'fmt [Argument<'fmt, 'ast>] {
         self.0
     }
 }
 
-impl Copy for Arguments<'_> {}
+impl Copy for Arguments<'_, '_> {}
 
-impl Clone for Arguments<'_> {
+impl Clone for Arguments<'_, '_> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl Format for Arguments<'_> {
+impl<'ast> Format<'ast> for Arguments<'_, 'ast> {
     #[inline(always)]
-    fn fmt(&self, formatter: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, formatter: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         formatter.write_fmt(*self)
     }
 }
 
-impl std::fmt::Debug for Arguments<'_> {
+impl std::fmt::Debug for Arguments<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Arguments[...]")
     }
 }
 
-impl<'fmt> From<&'fmt Argument<'fmt>> for Arguments<'fmt> {
-    fn from(argument: &'fmt Argument<'fmt>) -> Self {
+impl<'fmt, 'ast> From<&'fmt Argument<'fmt, 'ast>> for Arguments<'fmt, 'ast> {
+    fn from(argument: &'fmt Argument<'fmt, 'ast>) -> Self {
         Arguments::new(std::slice::from_ref(argument))
     }
 }

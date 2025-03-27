@@ -7,8 +7,8 @@ use crate::{
     write,
 };
 
-impl<'a> Format for Program<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Program<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(
             f,
             [
@@ -22,14 +22,14 @@ impl<'a> Format for Program<'a> {
     }
 }
 
-impl<'a> Format for Hashbang<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Hashbang<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(f, [text("#!"), dynamic_text(self.value.as_str(), self.span.start)])
     }
 }
 
-impl<'a> Format for Vec<'a, Directive<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Vec<'ast, Directive<'ast>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for directive in self {
@@ -39,15 +39,15 @@ impl<'a> Format for Vec<'a, Directive<'a>> {
     }
 }
 
-impl<'a> Format for Directive<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Directive<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         write!(f, [located_token_text(self.span, source_text)])
     }
 }
 
-impl<'a> Format for Vec<'a, Statement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Vec<'ast, Statement<'ast>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for stmt in self {
@@ -57,8 +57,8 @@ impl<'a> Format for Vec<'a, Statement<'a>> {
     }
 }
 
-impl<'a> Format for Statement<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
+impl<'ast> Format<'ast> for Statement<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         match self {
             Statement::VariableDeclaration(stmt) => stmt.fmt(f),
             Statement::BlockStatement(stmt) => stmt.fmt(f),
@@ -67,8 +67,8 @@ impl<'a> Format for Statement<'a> {
     }
 }
 
-impl<'a> Format for VariableDeclaration<'a> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+impl<'ast> Format<'ast> for VariableDeclaration<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(
             f,
             [text("// TODO: VariableDeclaration @"), text(self.kind.as_str()), hard_line_break()]
@@ -76,8 +76,8 @@ impl<'a> Format for VariableDeclaration<'a> {
     }
 }
 
-impl<'a> Format for BlockStatement<'a> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+impl<'ast> Format<'ast> for BlockStatement<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(f, [text("{")])?;
 
         if block_statement::is_empty_block(self) {
@@ -107,8 +107,8 @@ mod block_statement {
     }
 }
 
-impl<'a> Format for StringLiteral<'a> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+impl<'ast> Format<'ast> for StringLiteral<'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(f, [text("\""), dynamic_text(self.value.as_str(), self.span.start), text("\";")])
     }
 }

@@ -687,7 +687,7 @@ pub struct SourceMarker {
     pub dest: TextSize,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Formatted<'a> {
     document: Document,
     context: FormatContext<'a>,
@@ -828,36 +828,36 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format {
+pub trait Format<'ast> {
     // Formats the object using the given formatter.
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()>;
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
 }
 
-impl<T> Format for &T
+impl<'ast, T> Format<'ast> for &T
 where
-    T: ?Sized + Format,
+    T: ?Sized + Format<'ast>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         Format::fmt(&**self, f)
     }
 }
 
-impl<T> Format for &mut T
+impl<'ast, T> Format<'ast> for &mut T
 where
-    T: ?Sized + Format,
+    T: ?Sized + Format<'ast>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         Format::fmt(&**self, f)
     }
 }
 
-impl<T> Format for Option<T>
+impl<'ast, T> Format<'ast> for Option<T>
 where
-    T: Format,
+    T: Format<'ast>,
 {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         match self {
             Some(value) => value.fmt(f),
             None => Ok(()),
@@ -865,7 +865,7 @@ where
     }
 }
 
-impl Format for () {
+impl<'ast> Format<'ast> for () {
     #[inline]
     fn fmt(&self, _: &mut Formatter) -> FormatResult<()> {
         // Intentionally left empty
@@ -888,7 +888,7 @@ impl<C> Default for FormatToken<C> {
     }
 }
 
-pub trait FormatWithRule: Format {
+pub trait FormatWithRule<'ast>: Format<'ast> {
     type Item;
 
     /// Returns the associated item
@@ -924,7 +924,7 @@ where
 // }
 // }
 
-impl<'b, T, R> FormatWithRule for FormatRefWithRule<'b, T, R>
+impl<'ast, 'b, T, R> FormatWithRule<'ast> for FormatRefWithRule<'b, T, R>
 where
     R: FormatRule<T>,
 {
@@ -935,7 +935,7 @@ where
     }
 }
 
-impl<'b, T, R> Format for FormatRefWithRule<'b, T, R>
+impl<'b, T, R> Format<'_> for FormatRefWithRule<'b, T, R>
 where
     R: FormatRule<T>,
 {
@@ -988,7 +988,7 @@ where
 /// ```
 ///
 #[inline(always)]
-pub fn write(output: &mut dyn Buffer, args: Arguments) -> FormatResult<()> {
+pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> FormatResult<()> {
     let mut f = Formatter::new(output);
 
     f.write_fmt(args)
@@ -1025,7 +1025,10 @@ pub fn write(output: &mut dyn Buffer, args: Arguments) -> FormatResult<()> {
 /// # Ok(())
 /// # }
 /// ```
-pub fn format<'a>(context: FormatContext<'a>, arguments: Arguments) -> FormatResult<Formatted<'a>> {
+pub fn format<'ast>(
+    context: FormatContext<'ast>,
+    arguments: Arguments<'_, 'ast>,
+) -> FormatResult<Formatted<'ast>> {
     let mut state = FormatState::new(context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 
