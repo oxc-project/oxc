@@ -21,6 +21,9 @@
 
 #![deny(rustdoc::broken_intra_doc_links)]
 
+mod generated {
+    mod visitor;
+}
 mod arguments;
 mod buffer;
 mod builders;
@@ -84,6 +87,7 @@ pub use buffer::{
 pub use builders::BestFitting;
 pub use format_element::{FormatElement, LINE_TERMINATORS, normalize_newlines};
 pub use group_id::GroupId;
+use oxc_ast::ast::Program;
 // use std::marker::PhantomData;
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -1026,10 +1030,11 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 /// # }
 /// ```
 pub fn format<'ast>(
+    program: &'ast Program<'ast>,
     context: FormatContext<'ast>,
     arguments: Arguments<'_, 'ast>,
 ) -> FormatResult<Formatted<'ast>> {
-    let mut state = FormatState::new(context);
+    let mut state = FormatState::new(program, context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 
     buffer.write_fmt(arguments)?;

@@ -29,6 +29,7 @@ impl<'a> Formatter<'a> {
         let options = JsFormatOptions::default();
         let context = FormatContext::new(program, options);
         let formatted = formatter::format(
+            program,
             context,
             formatter::Arguments::new(&[formatter::Argument::new(program)]),
         )

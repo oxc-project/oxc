@@ -13,9 +13,9 @@ impl<'ast> Format<'ast> for Program<'ast> {
             f,
             [
                 self.hashbang,
-                self.body,
                 format_leading_comments(self.span),
                 self.directives,
+                self.body,
                 hard_line_break()
             ]
         )

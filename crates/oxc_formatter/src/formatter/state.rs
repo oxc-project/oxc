@@ -1,3 +1,6 @@
+use oxc_ast::{AstKind, ast::Program};
+use oxc_data_structures::stack::NonEmptyStack;
+
 use super::{FormatContext, GroupId, SyntaxNode, SyntaxToken, UniqueGroupIdBuilder};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
@@ -5,9 +8,11 @@ use super::{FormatContext, GroupId, SyntaxNode, SyntaxToken, UniqueGroupIdBuilde
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
 /// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
-pub struct FormatState<'a> {
-    context: FormatContext<'a>,
+pub struct FormatState<'ast> {
+    context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
+
+    pub(crate) stack: NonEmptyStack<AstKind<'ast>>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -20,28 +25,29 @@ impl<'a> std::fmt::Debug for FormatState<'a> {
     }
 }
 
-impl<'a> FormatState<'a> {
+impl<'ast> FormatState<'ast> {
     /// Creates a new state with the given language specific context
-    pub fn new(context: FormatContext<'a>) -> Self {
+    pub fn new(program: &'ast Program<'ast>, context: FormatContext<'ast>) -> Self {
         Self {
             context,
             group_id_builder: Default::default(),
+            stack: NonEmptyStack::new(AstKind::Program(program)),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }
     }
 
-    pub fn into_context(self) -> FormatContext<'a> {
+    pub fn into_context(self) -> FormatContext<'ast> {
         self.context
     }
 
     /// Returns the context specifying how to format the current CST
-    pub fn context(&self) -> &FormatContext<'a> {
+    pub fn context(&self) -> &FormatContext<'ast> {
         &self.context
     }
 
     /// Returns a mutable reference to the context
-    pub fn context_mut(&mut self) -> &mut FormatContext<'a> {
+    pub fn context_mut(&mut self) -> &mut FormatContext<'ast> {
         &mut self.context
     }
 
