@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 /// This struct is similar to a dynamic dispatch (using `dyn Format`) because it stores a pointer to the value.
 /// However, it doesn't store the pointer to `dyn Format`'s vtable, instead it statically resolves the function
 /// pointer of `Format::format` and stores it in `formatter`.
-pub struct Argument<'fmt, Context> {
+pub struct Argument<'fmt> {
     /// The value to format stored as a raw pointer where `lifetime` stores the value's lifetime.
     value: *const c_void,
 
@@ -17,27 +17,24 @@ pub struct Argument<'fmt, Context> {
     lifetime: PhantomData<&'fmt ()>,
 
     /// The function pointer to `value`'s `Format::format` method
-    formatter: fn(*const c_void, &mut Formatter<'_, Context>) -> FormatResult<()>,
+    formatter: fn(*const c_void, &mut Formatter<'_>) -> FormatResult<()>,
 }
 
-impl<Context> Clone for Argument<'_, Context> {
+impl Clone for Argument<'_> {
     fn clone(&self) -> Self {
         *self
     }
 }
-impl<Context> Copy for Argument<'_, Context> {}
+impl Copy for Argument<'_> {}
 
-impl<'fmt, Context> Argument<'fmt, Context> {
+impl<'fmt> Argument<'fmt> {
     /// Called by the [biome_formatter::format_args] macro. Creates a mono-morphed value for formatting
     /// an object.
     #[doc(hidden)]
     #[inline]
-    pub fn new<F: Format<Context>>(value: &'fmt F) -> Self {
+    pub fn new<F: Format>(value: &'fmt F) -> Self {
         #[inline(always)]
-        fn formatter<F: Format<Context>, Context>(
-            ptr: *const c_void,
-            fmt: &mut Formatter<Context>,
-        ) -> FormatResult<()> {
+        fn formatter<F: Format>(ptr: *const c_void, fmt: &mut Formatter) -> FormatResult<()> {
             // SAFETY: Safe because the 'fmt lifetime is captured by the 'lifetime' field.
             F::fmt(unsafe { &*ptr.cast::<F>() }, fmt)
         }
@@ -45,20 +42,20 @@ impl<'fmt, Context> Argument<'fmt, Context> {
         Self {
             value: std::ptr::from_ref::<F>(value).cast::<std::ffi::c_void>(),
             lifetime: PhantomData,
-            formatter: formatter::<F, Context>,
+            formatter: formatter::<F>,
         }
     }
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
-    pub(super) fn format(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    pub(super) fn format(&self, f: &mut Formatter) -> FormatResult<()> {
         (self.formatter)(self.value, f)
     }
 }
 
-impl<Context> Format<Context> for Argument<'_, Context> {
+impl Format for Argument<'_> {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         self.format(f)
     }
 }
@@ -83,45 +80,45 @@ impl<Context> Format<Context> for Argument<'_, Context> {
 /// # Ok(())
 /// # }
 /// ```
-pub struct Arguments<'fmt, Context>(pub &'fmt [Argument<'fmt, Context>]);
+pub struct Arguments<'fmt>(pub &'fmt [Argument<'fmt>]);
 
-impl<'fmt, Context> Arguments<'fmt, Context> {
+impl<'fmt> Arguments<'fmt> {
     #[doc(hidden)]
     #[inline(always)]
-    pub fn new(arguments: &'fmt [Argument<'fmt, Context>]) -> Self {
+    pub fn new(arguments: &'fmt [Argument<'fmt>]) -> Self {
         Self(arguments)
     }
 
     /// Returns the arguments
     #[inline]
-    pub fn items(&self) -> &'fmt [Argument<'fmt, Context>] {
+    pub fn items(&self) -> &'fmt [Argument<'fmt>] {
         self.0
     }
 }
 
-impl<Context> Copy for Arguments<'_, Context> {}
+impl Copy for Arguments<'_> {}
 
-impl<Context> Clone for Arguments<'_, Context> {
+impl Clone for Arguments<'_> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<Context> Format<Context> for Arguments<'_, Context> {
+impl Format for Arguments<'_> {
     #[inline(always)]
-    fn fmt(&self, formatter: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, formatter: &mut Formatter) -> FormatResult<()> {
         formatter.write_fmt(*self)
     }
 }
 
-impl<Context> std::fmt::Debug for Arguments<'_, Context> {
+impl std::fmt::Debug for Arguments<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Arguments[...]")
     }
 }
 
-impl<'fmt, Context> From<&'fmt Argument<'fmt, Context>> for Arguments<'fmt, Context> {
-    fn from(argument: &'fmt Argument<'fmt, Context>) -> Self {
+impl<'fmt> From<&'fmt Argument<'fmt>> for Arguments<'fmt> {
+    fn from(argument: &'fmt Argument<'fmt>) -> Self {
         Arguments::new(std::slice::from_ref(argument))
     }
 }

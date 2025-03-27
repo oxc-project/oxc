@@ -688,18 +688,18 @@ pub struct SourceMarker {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Formatted<Context> {
+pub struct Formatted<'a> {
     document: Document,
-    context: Context,
+    context: FormatContext<'a>,
 }
 
-impl<Context> Formatted<Context> {
-    pub fn new(document: Document, context: Context) -> Self {
+impl<'a> Formatted<'a> {
+    pub fn new(document: Document, context: FormatContext<'a>) -> Self {
         Self { document, context }
     }
 
     /// Returns the context used during formatting.
-    pub fn context(&self) -> &Context {
+    pub fn context(&self) -> &FormatContext<'a> {
         &self.context
     }
 
@@ -714,10 +714,7 @@ impl<Context> Formatted<Context> {
     }
 }
 
-impl<'a, Context> Formatted<Context>
-where
-    Context: FormatContext<'a>,
-{
+impl<'a> Formatted<'a> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
 
@@ -831,36 +828,36 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format<Context> {
+pub trait Format {
     // Formats the object using the given formatter.
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()>;
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()>;
 }
 
-impl<T, Context> Format<Context> for &T
+impl<T> Format for &T
 where
-    T: ?Sized + Format<Context>,
+    T: ?Sized + Format,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         Format::fmt(&**self, f)
     }
 }
 
-impl<T, Context> Format<Context> for &mut T
+impl<T> Format for &mut T
 where
-    T: ?Sized + Format<Context>,
+    T: ?Sized + Format,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         Format::fmt(&**self, f)
     }
 }
 
-impl<T, Context> Format<Context> for Option<T>
+impl<T> Format for Option<T>
 where
-    T: Format<Context>,
+    T: Format,
 {
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         match self {
             Some(value) => value.fmt(f),
             None => Ok(()),
@@ -868,18 +865,16 @@ where
     }
 }
 
-impl<Context> Format<Context> for () {
+impl Format for () {
     #[inline]
-    fn fmt(&self, _: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, _: &mut Formatter) -> FormatResult<()> {
         // Intentionally left empty
         Ok(())
     }
 }
 
 pub trait FormatRule<T> {
-    type Context;
-
-    fn fmt(&self, item: &T, f: &mut Formatter<Self::Context>) -> FormatResult<()>;
+    fn fmt(&self, item: &T, f: &mut Formatter) -> FormatResult<()>;
 }
 
 /// Default implementation for formatting a token
@@ -893,7 +888,7 @@ impl<C> Default for FormatToken<C> {
     }
 }
 
-pub trait FormatWithRule<Context>: Format<Context> {
+pub trait FormatWithRule: Format {
     type Item;
 
     /// Returns the associated item
@@ -929,7 +924,7 @@ where
 // }
 // }
 
-impl<'b, T, R> FormatWithRule<R::Context> for FormatRefWithRule<'b, T, R>
+impl<'b, T, R> FormatWithRule for FormatRefWithRule<'b, T, R>
 where
     R: FormatRule<T>,
 {
@@ -940,12 +935,12 @@ where
     }
 }
 
-impl<'b, T, R> Format<R::Context> for FormatRefWithRule<'b, T, R>
+impl<'b, T, R> Format for FormatRefWithRule<'b, T, R>
 where
     R: FormatRule<T>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<R::Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         self.rule.fmt(self.item, f)
     }
 }
@@ -993,10 +988,7 @@ where
 /// ```
 ///
 #[inline(always)]
-pub fn write<Context>(
-    output: &mut dyn Buffer<Context = Context>,
-    args: Arguments<Context>,
-) -> FormatResult<()> {
+pub fn write(output: &mut dyn Buffer, args: Arguments) -> FormatResult<()> {
     let mut f = Formatter::new(output);
 
     f.write_fmt(args)
@@ -1033,13 +1025,7 @@ pub fn write<Context>(
 /// # Ok(())
 /// # }
 /// ```
-pub fn format<'a, Context>(
-    context: Context,
-    arguments: Arguments<Context>,
-) -> FormatResult<Formatted<Context>>
-where
-    Context: FormatContext<'a>,
-{
+pub fn format<'a>(context: FormatContext<'a>, arguments: Arguments) -> FormatResult<Formatted<'a>> {
     let mut state = FormatState::new(context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 

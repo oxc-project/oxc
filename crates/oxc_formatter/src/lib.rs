@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+mod comment;
 mod context;
 mod format;
 mod formatter;
@@ -8,8 +9,8 @@ mod options;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
-use crate::context::{JsFormatContext, JsFormatOptions};
 pub use crate::options::*;
+use crate::{context::JsFormatOptions, formatter::FormatContext};
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
@@ -26,7 +27,7 @@ impl<'a> Formatter<'a> {
         let source_text = program.source_text;
         self.source_text = source_text;
         let options = JsFormatOptions::default();
-        let context = JsFormatContext::new(program, options);
+        let context = FormatContext::new(program, options);
         let formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(program)]),

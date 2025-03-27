@@ -1,22 +1,41 @@
 use super::{
     CommentStyle, Comments, FormatOptions, FormatRule, SimpleFormatOptions, SourceComment,
 };
+use oxc_ast::ast::Program;
+
+use crate::context::JsFormatOptions;
 
 /// Context object storing data relevant when formatting an object.
-pub trait FormatContext<'a> {
-    type Options: FormatOptions;
+#[derive(Debug, Clone)]
+pub struct FormatContext<'a> {
+    options: JsFormatOptions,
 
-    type Style: CommentStyle;
+    source_text: &'a str,
 
-    /// Rule for formatting comments.
-    type CommentRule: FormatRule<SourceComment, Context = Self> + Default;
+    comments: Comments,
+}
+
+impl<'a> FormatContext<'a> {
+    pub fn new(program: &'a Program<'a>, options: JsFormatOptions) -> Self {
+        Self {
+            options,
+            source_text: program.source_text,
+            comments: Comments::from_oxc_comments(&program.comments),
+        }
+    }
 
     /// Returns the formatting options
-    fn options(&self) -> &Self::Options;
+    pub fn options(&self) -> &JsFormatOptions {
+        &self.options
+    }
 
     /// Returns a reference to the program's comments.
-    fn comments(&self) -> &Comments;
+    pub fn comments(&self) -> &Comments {
+        &self.comments
+    }
 
     /// Returns the formatting options
-    fn source_text(&self) -> &'a str;
+    pub fn source_text(&self) -> &'a str {
+        self.source_text
+    }
 }

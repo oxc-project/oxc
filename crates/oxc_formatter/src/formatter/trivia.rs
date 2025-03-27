@@ -8,6 +8,7 @@ use super::{
     comments::{CommentKind, CommentStyle},
 };
 use super::{SyntaxNode, SyntaxToken, TextSize};
+use crate::comment::FormatJsLeadingComment;
 use crate::write;
 // use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
 #[cfg(debug_assertions)]
@@ -56,11 +57,8 @@ pub enum FormatLeadingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a, 'b, Context> Format<Context> for FormatLeadingComments<'b>
-where
-    Context: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+impl<'a, 'b> Format for FormatLeadingComments<'b> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
 
         let leading_comments = match self {
@@ -70,7 +68,7 @@ where
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
+            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
             write!(f, [format_comment])?;
 
             match comment.kind() {
@@ -119,11 +117,8 @@ pub enum FormatTrailingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a, Context> Format<Context> for FormatTrailingComments<'_>
-where
-    Context: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+impl<'a> Format for FormatTrailingComments<'_> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let trailing_comments = match self {
             FormatTrailingComments::Node(span) => comments.trailing_comments(*span),
@@ -136,7 +131,7 @@ where
         for comment in trailing_comments {
             total_lines_before += comment.lines_before();
 
-            let format_comment = FormatRefWithRule::new(comment, Context::CommentRule::default());
+            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
 
             let should_nestle = previous_comment.is_some_and(|previous_comment| {
                 should_nestle_adjacent_doc_comments(previous_comment, comment)
@@ -282,11 +277,8 @@ impl FormatDanglingComments<'_> {
     }
 }
 
-impl<'a, Context> Format<Context> for FormatDanglingComments<'_>
-where
-    Context: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+impl<'a> Format for FormatDanglingComments<'_> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let dangling_comments = match self {
             FormatDanglingComments::Node { span, .. } => comments.dangling_comments(*span),
@@ -302,7 +294,7 @@ where
 
             for comment in dangling_comments {
                 let format_comment =
-                    FormatRefWithRule::new(comment, Context::CommentRule::default());
+                    FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
                     should_nestle_adjacent_doc_comments(previous_comment, comment)
@@ -377,11 +369,8 @@ pub struct FormatRemoved<'a> {
     token: &'a SyntaxToken,
 }
 
-impl<'a, C> Format<C> for FormatRemoved<'a>
-where
-    C: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
+impl<'a> Format for FormatRemoved<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
         write!(f, [format_skipped_token_trivia(self.token)])
@@ -392,26 +381,23 @@ where
 ///
 /// This will print the skipped token trivia that belong to `token` to `content`;
 /// `token` is then marked as consumed by the formatter.
-pub fn format_replaced<'a, 'content, Context>(
+pub fn format_replaced<'a, 'content>(
     token: &'a SyntaxToken,
-    content: &'content impl Format<Context>,
-) -> FormatReplaced<'a, 'content, Context> {
+    content: &'content impl Format,
+) -> FormatReplaced<'a, 'content> {
     FormatReplaced { token, content: Argument::new(content) }
 }
 
 /// Formats a token's skipped token trivia but uses the provided content instead
 /// of the token in the formatted output.
 #[derive(Copy, Clone)]
-pub struct FormatReplaced<'a, 'content, C> {
+pub struct FormatReplaced<'a, 'content> {
     token: &'a SyntaxToken,
-    content: Argument<'content, C>,
+    content: Argument<'content>,
 }
 
-impl<'a, C> Format<C> for FormatReplaced<'a, '_, C>
-where
-    C: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
+impl<'a> Format for FormatReplaced<'a, '_> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
         write!(f, [format_skipped_token_trivia(self.token)])?;
@@ -421,36 +407,33 @@ where
 }
 
 /// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-pub fn format_only_if_breaks<'a, 'content, Content, Context>(
+pub fn format_only_if_breaks<'a, 'content, Content>(
     token: &'a SyntaxToken,
     content: &'content Content,
-) -> FormatOnlyIfBreaks<'a, 'content, Context>
+) -> FormatOnlyIfBreaks<'a, 'content>
 where
-    Content: Format<Context>,
+    Content: Format,
 {
     FormatOnlyIfBreaks { token, content: Argument::new(content), group_id: None }
 }
 
 /// Formats a token with its skipped token trivia that only gets printed if its enclosing
 /// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'a, 'content, C> {
+pub struct FormatOnlyIfBreaks<'a, 'content> {
     token: &'a SyntaxToken,
-    content: Argument<'content, C>,
+    content: Argument<'content>,
     group_id: Option<GroupId>,
 }
 
-impl<C> FormatOnlyIfBreaks<'_, '_, C> {
+impl FormatOnlyIfBreaks<'_, '_> {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
     }
 }
 
-impl<'a, C> Format<C> for FormatOnlyIfBreaks<'a, '_, C>
-where
-    C: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
+impl<'a> Format for FormatOnlyIfBreaks<'a, '_> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         write!(
             f,
             [if_group_breaks(&Arguments::from(&self.content)).with_group_id(self.group_id),]
@@ -481,10 +464,7 @@ pub struct FormatSkippedTokenTrivia<'a> {
 
 impl<'a> FormatSkippedTokenTrivia<'a> {
     #[cold]
-    fn fmt_skipped<Context>(&self, f: &mut Formatter<Context>) -> FormatResult<()>
-    where
-        Context: FormatContext<'a>,
-    {
+    fn fmt_skipped<Context>(&self, f: &mut Formatter) -> FormatResult<()> {
         todo!()
         // Lines/spaces before the next token/comment
         // let (mut lines, mut spaces) = match self.token.prev_token() {
@@ -608,11 +588,8 @@ impl<'a> FormatSkippedTokenTrivia<'a> {
     }
 }
 
-impl<'a, Context> Format<Context> for FormatSkippedTokenTrivia<'a>
-where
-    Context: FormatContext<'a>,
-{
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+impl<'a> Format for FormatSkippedTokenTrivia<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
     }
 }
