@@ -644,50 +644,60 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
-        let mut bytes = s.value.as_bytes().iter().copied();
+        // Encoded string cannot be longer than 4 x length of `s.value`.
+        // The longest escape expansion is `\x00` (1 byte), which is printed as "\x00" (4 bytes).
+        // Reserve sufficient capacity for the longest possible output, so can skip bounds checks
+        // in the loop below.
+        self.code.reserve(s.value.len() * 4);
 
-        while let Some(b) = bytes.next() {
-            match b {
-                b'\x00' => {
-                    if bytes.clone().next().is_some_and(|next| next.is_ascii_digit()) {
-                        self.print_str("\\x00");
-                    } else {
-                        self.print_str("\\0");
+        let mut bytes = s.value.as_bytes().iter();
+
+        // SAFETY: We have reserved the maximum possible capacity required for this string
+        // even if every character required the longest escape.
+        // So all `print_str_unchecked_cap`, `print_byte_unchecked_cap`, and `print_bytes_unchecked_cap`
+        // calls in this loop are guaranteed not to exceed the buffer's capacity.
+        unsafe {
+            while let Some(&b) = bytes.next() {
+                match b {
+                    b'\x00' => {
+                        if bytes.clone().next().is_some_and(u8::is_ascii_digit) {
+                            self.code.print_str_unchecked_cap("\\x00");
+                        } else {
+                            self.code.print_str_unchecked_cap("\\0");
+                        }
                     }
-                }
-                b'\x07' => self.print_str("\\x07"),
-                b'\x08' => self.print_str("\\b"), // \b
-                b'\x0B' => self.print_str("\\v"), // \v
-                b'\x0C' => self.print_str("\\f"), // \f
-                b'\n' => {
-                    if quote == Quote::Backtick {
-                        self.print_ascii_byte(b'\n');
-                    } else {
-                        self.print_str("\\n");
+                    b'\x07' => self.code.print_str_unchecked_cap("\\x07"),
+                    b'\x08' => self.code.print_str_unchecked_cap("\\b"), // \b
+                    b'\x0B' => self.code.print_str_unchecked_cap("\\v"), // \v
+                    b'\x0C' => self.code.print_str_unchecked_cap("\\f"), // \f
+                    b'\n' => {
+                        if quote == Quote::Backtick {
+                            self.code.print_byte_unchecked_cap(b'\n');
+                        } else {
+                            self.code.print_str_unchecked_cap("\\n");
+                        }
                     }
-                }
-                b'\r' => self.print_str("\\r"),
-                b'\x1B' => self.print_str("\\x1B"),
-                b'\\' => self.print_str("\\\\"),
-                // Allow `U+2028` and `U+2029` in string literals
-                // <https://tc39.es/proposal-json-superset>
-                // <https://github.com/tc39/proposal-json-superset>
-                LS_OR_PS_FIRST_BYTE => {
-                    // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
-                    // so there must be 2 more bytes available to consume
-                    let next2 = unsafe {
-                        let next1 = bytes.next().unwrap_unchecked();
-                        let next2 = bytes.next().unwrap_unchecked();
-                        [next1, next2]
-                    };
-                    match next2 {
-                        LS_LAST_2_BYTES => self.print_str("\\u2028"),
-                        PS_LAST_2_BYTES => self.print_str("\\u2029"),
-                        _ => {
-                            // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
-                            // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
-                            unsafe {
-                                self.code.print_bytes_unchecked(&[
+                    b'\r' => self.code.print_str_unchecked_cap("\\r"),
+                    b'\x1B' => self.code.print_str_unchecked_cap("\\x1B"),
+                    b'\\' => self.code.print_str_unchecked_cap("\\\\"),
+                    // Allow `U+2028` and `U+2029` in string literals
+                    // <https://tc39.es/proposal-json-superset>
+                    // <https://github.com/tc39/proposal-json-superset>
+                    LS_OR_PS_FIRST_BYTE => {
+                        // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+                        // so there must be 2 more bytes available to consume
+                        let next2: [u8; 2] =
+                            bytes.as_slice().get_unchecked(..2).try_into().unwrap();
+                        bytes.next().unwrap_unchecked();
+                        bytes.next().unwrap_unchecked();
+
+                        match next2 {
+                            LS_LAST_2_BYTES => self.code.print_str_unchecked_cap("\\u2028"),
+                            PS_LAST_2_BYTES => self.code.print_str_unchecked_cap("\\u2029"),
+                            _ => {
+                                // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+                                // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+                                self.code.print_bytes_unchecked_cap(&[
                                     LS_OR_PS_FIRST_BYTE,
                                     next2[0],
                                     next2[1],
@@ -695,90 +705,93 @@ impl<'a> Codegen<'a> {
                             }
                         }
                     }
-                }
-                NBSP_FIRST_BYTE => {
-                    // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
-                    // so there must be 1 more byte available to consume
-                    let next = unsafe { bytes.next().unwrap_unchecked() };
-                    if next == NBSP_BYTES[1] {
-                        self.print_str("\\xA0");
-                    } else {
+                    NBSP_FIRST_BYTE => {
                         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
-                        // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
-                        unsafe { self.code.print_bytes_unchecked(&[NBSP_FIRST_BYTE, next]) };
-                    }
-                }
-                b'\'' => {
-                    if quote == Quote::Single {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'\'');
-                }
-                b'\"' => {
-                    if quote == Quote::Double {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'"');
-                }
-                b'`' => {
-                    if quote == Quote::Backtick {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'`');
-                }
-                b'$' => {
-                    if quote == Quote::Backtick && bytes.clone().next() == Some(b'{') {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'$');
-                }
-                LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
-                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-                    // so there must be 2 more bytes available to consume
-                    let next2 = unsafe {
-                        let next1 = bytes.next().unwrap_unchecked();
-                        let next2 = bytes.next().unwrap_unchecked();
-                        [next1, next2]
-                    };
-                    if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                        && s.lone_surrogates
-                    {
-                        // If `lone_surrogates` is set, string contains lone surrogates which are escaped
-                        // using the lossy replacement character (U+FFFD) as an escape marker.
-                        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-                        let hex1 = bytes.next().unwrap();
-                        let hex2 = bytes.next().unwrap();
-                        let hex3 = bytes.next().unwrap();
-                        let hex4 = bytes.next().unwrap();
-                        if [hex1, hex2, hex3, hex4] == [b'f', b'f', b'f', b'd'] {
-                            // Actual lossy replacement character
-                            self.print_str("\u{FFFD}");
+                        // so there must be 1 more byte available to consume
+                        let next = *bytes.next().unwrap_unchecked();
+                        if next == NBSP_BYTES[1] {
+                            self.code.print_str_unchecked_cap("\\xA0");
                         } else {
-                            // Lossy replacement character representing a lone surrogate
-                            assert!((hex1 | hex2 | hex3 | hex3).is_ascii());
-                            self.print_str("\\u");
-                            // SAFETY: Just checked all 4 bytes are ASCII
-                            unsafe { self.code.print_bytes_unchecked(&[hex1, hex2, hex3, hex4]) };
+                            // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
+                            // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+                            self.code.print_bytes_unchecked_cap(&[NBSP_FIRST_BYTE, next]);
                         }
-                    } else {
-                        // Another Unicode char beginning with 0xEF or `lone_surrogates` flag is unset.
+                    }
+                    b'\'' => {
+                        if quote == Quote::Single {
+                            self.code.print_byte_unchecked_cap(b'\\');
+                        }
+                        self.code.print_byte_unchecked_cap(b'\'');
+                    }
+                    b'\"' => {
+                        if quote == Quote::Double {
+                            self.code.print_byte_unchecked_cap(b'\\');
+                        }
+                        self.code.print_byte_unchecked_cap(b'"');
+                    }
+                    b'`' => {
+                        if quote == Quote::Backtick {
+                            self.code.print_byte_unchecked_cap(b'\\');
+                        }
+                        self.code.print_byte_unchecked_cap(b'`');
+                    }
+                    b'$' => {
+                        if bytes.clone().next().copied() == Some(b'{') {
+                            self.code.print_byte_unchecked_cap(b'\\');
+                        }
+                        self.code.print_byte_unchecked_cap(b'$');
+                    }
+                    LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
                         // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-                        // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string.
-                        unsafe {
-                            self.code.print_bytes_unchecked(&[
+                        // so there must be 2 more bytes available to consume
+                        let next2: [u8; 2] =
+                            bytes.as_slice().get_unchecked(..2).try_into().unwrap();
+                        bytes.next().unwrap_unchecked();
+                        bytes.next().unwrap_unchecked();
+
+                        if next2
+                            == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
+                            && s.lone_surrogates
+                        {
+                            // If `lone_surrogates` is set, string contains lone surrogates which are escaped
+                            // using the lossy replacement character (U+FFFD) as an escape marker.
+                            // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
+                            let hex: [u8; 4] = bytes.as_slice()[..4].try_into().unwrap();
+                            // SAFETY: `bytes.as_slice()[..4]` would have panicked if there were not
+                            // at least 4 bytes remaining
+                            for _i in 0..4 {
+                                bytes.next().unwrap_unchecked();
+                            }
+
+                            if hex == *b"fffd" {
+                                // Actual lossy replacement character
+                                self.code.print_str_unchecked_cap("\u{FFFD}");
+                            } else {
+                                // Lossy replacement character representing a lone surrogate.
+                                // Check all 4 hex chars are ASCII.
+                                assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
+                                self.code.print_str_unchecked_cap("\\u");
+                                // SAFETY: Just checked all 4 bytes are ASCII
+                                self.code.print_bytes_unchecked_cap(&hex);
+                            }
+                        } else {
+                            // Another Unicode char beginning with 0xEF or `lone_surrogates` flag is unset.
+                            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
+                            // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string.
+                            self.code.print_bytes_unchecked_cap(&[
                                 LOSSY_REPLACEMENT_CHAR_FIRST_BYTE,
                                 next2[0],
                                 next2[1],
                             ]);
                         }
                     }
-                }
-                _ => {
-                    // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
-                    // an invalid UTF-8 string. But none of the match arms above will match the remaining
-                    // bytes of the Unicode character, so we'll also print those remaining bytes on
-                    // next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
-                    unsafe { self.code.print_byte_unchecked(b) }
+                    _ => {
+                        // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
+                        // an invalid UTF-8 string. But none of the match arms above will match the remaining
+                        // bytes of the Unicode character, so we'll also print those remaining bytes on
+                        // next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
+                        self.code.print_byte_unchecked_cap(b);
+                    }
                 }
             }
         }
