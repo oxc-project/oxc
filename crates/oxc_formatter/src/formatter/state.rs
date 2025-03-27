@@ -5,8 +5,8 @@ use super::{FormatContext, GroupId, SyntaxNode, SyntaxToken, UniqueGroupIdBuilde
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
 /// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
-pub struct FormatState<Context> {
-    context: Context,
+pub struct FormatState<'a> {
+    context: FormatContext<'a>,
     group_id_builder: UniqueGroupIdBuilder,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
@@ -14,18 +14,15 @@ pub struct FormatState<Context> {
     // pub printed_tokens: PrintedTokens,
 }
 
-impl<Context> std::fmt::Debug for FormatState<Context>
-where
-    Context: std::fmt::Debug,
-{
+impl<'a> std::fmt::Debug for FormatState<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("FormatState").field("context", &self.context).finish()
     }
 }
 
-impl<Context> FormatState<Context> {
+impl<'a> FormatState<'a> {
     /// Creates a new state with the given language specific context
-    pub fn new(context: Context) -> Self {
+    pub fn new(context: FormatContext<'a>) -> Self {
         Self {
             context,
             group_id_builder: Default::default(),
@@ -34,17 +31,17 @@ impl<Context> FormatState<Context> {
         }
     }
 
-    pub fn into_context(self) -> Context {
+    pub fn into_context(self) -> FormatContext<'a> {
         self.context
     }
 
     /// Returns the context specifying how to format the current CST
-    pub fn context(&self) -> &Context {
+    pub fn context(&self) -> &FormatContext<'a> {
         &self.context
     }
 
     /// Returns a mutable reference to the context
-    pub fn context_mut(&mut self) -> &mut Context {
+    pub fn context_mut(&mut self) -> &mut FormatContext<'a> {
         &mut self.context
     }
 
@@ -106,10 +103,7 @@ impl<Context> FormatState<Context> {
     }
 }
 
-impl<'a, Context> FormatState<Context>
-where
-    Context: FormatContext<'a>,
-{
+impl<'a> FormatState<'a> {
     pub fn snapshot(&self) -> FormatStateSnapshot {
         todo!()
         // FormatStateSnapshot {

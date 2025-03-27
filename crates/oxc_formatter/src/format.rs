@@ -2,13 +2,13 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::formatter::{Buffer, Format, FormatResult, prelude::*};
-use crate::{JsFormatContext, write};
+use crate::{
+    formatter::{Buffer, Format, FormatContext, FormatResult, Formatter, prelude::*},
+    write,
+};
 
-pub type JsFormatter<'ast, 'buf> = Formatter<'buf, JsFormatContext<'ast>>;
-
-impl<'a> Format<JsFormatContext<'a>> for Program<'a> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Program<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         write!(
             f,
             [
@@ -22,14 +22,14 @@ impl<'a> Format<JsFormatContext<'a>> for Program<'a> {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for Hashbang<'a> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Hashbang<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         write!(f, [text("#!"), dynamic_text(self.value.as_str(), self.span.start)])
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Directive<'a>> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Vec<'a, Directive<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for directive in self {
@@ -39,15 +39,15 @@ impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Directive<'a>> {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for Directive<'a> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Directive<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         write!(f, [located_token_text(self.span, source_text)])
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Statement<'a>> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Vec<'a, Statement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for stmt in self {
@@ -57,8 +57,8 @@ impl<'a> Format<JsFormatContext<'a>> for Vec<'a, Statement<'a>> {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for Statement<'a> {
-    fn fmt(&self, f: &mut JsFormatter<'a, '_>) -> FormatResult<()> {
+impl<'a> Format for Statement<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult<()> {
         match self {
             Statement::VariableDeclaration(stmt) => stmt.fmt(f),
             Statement::BlockStatement(stmt) => stmt.fmt(f),
@@ -67,8 +67,8 @@ impl<'a> Format<JsFormatContext<'a>> for Statement<'a> {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for VariableDeclaration<'a> {
-    fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
+impl<'a> Format for VariableDeclaration<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         write!(
             f,
             [text("// TODO: VariableDeclaration @"), text(self.kind.as_str()), hard_line_break()]
@@ -76,8 +76,8 @@ impl<'a> Format<JsFormatContext<'a>> for VariableDeclaration<'a> {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for BlockStatement<'a> {
-    fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
+impl<'a> Format for BlockStatement<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         write!(f, [text("{")])?;
 
         if block_statement::is_empty_block(self) {
@@ -107,8 +107,8 @@ mod block_statement {
     }
 }
 
-impl<'a> Format<JsFormatContext<'a>> for StringLiteral<'a> {
-    fn fmt(&self, f: &mut JsFormatter) -> FormatResult<()> {
+impl<'a> Format for StringLiteral<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         write!(f, [text("\""), dynamic_text(self.value.as_str(), self.span.start), text("\";")])
     }
 }

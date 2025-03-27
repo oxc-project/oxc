@@ -1,3 +1,5 @@
+use crate::context::JsFormatOptions;
+
 use super::buffer::BufferSnapshot;
 use super::builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line};
 use super::prelude::*;
@@ -10,31 +12,28 @@ use super::{
 ///
 /// The formatter is passed to the [Format] implementation of every node in the CST so that they
 /// can use it to format their children.
-pub struct Formatter<'buf, Context> {
-    pub(super) buffer: &'buf mut dyn Buffer<Context = Context>,
+pub struct Formatter<'buf> {
+    pub(super) buffer: &'buf mut dyn Buffer,
 }
 
-impl<'a, 'buf, Context> Formatter<'buf, Context> {
+impl<'a, 'buf> Formatter<'buf> {
     /// Creates a new context that uses the given formatter context
-    pub fn new(buffer: &'buf mut (dyn Buffer<Context = Context> + 'buf)) -> Self {
+    pub fn new(buffer: &'buf mut (dyn Buffer + 'buf)) -> Self {
         Self { buffer }
     }
 
     /// Returns the format options
-    pub fn options(&self) -> &Context::Options
-    where
-        Context: FormatContext<'a>,
-    {
+    pub fn options(&self) -> &JsFormatOptions {
         self.context().options()
     }
 
     /// Returns the Context specifying how to format the current CST
-    pub fn context(&self) -> &Context {
+    pub fn context(&self) -> &FormatContext {
         self.state().context()
     }
 
     /// Returns a mutable reference to the context.
-    pub fn context_mut(&mut self) -> &mut Context {
+    pub fn context_mut(&mut self) -> &mut FormatContext {
         self.state_mut().context_mut()
     }
 
@@ -71,7 +70,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join(&'a mut self) -> JoinBuilder<'a, 'buf, (), Context> {
+    pub fn join(&'a mut self) -> JoinBuilder<'a, 'buf, ()> {
         JoinBuilder::new(self)
     }
 
@@ -102,10 +101,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join_with<Joiner>(&'a mut self, joiner: Joiner) -> JoinBuilder<'a, 'buf, Joiner, Context>
-    where
-        Joiner: Format<Context>,
-    {
+    pub fn join_with<Joiner>(&'a mut self, joiner: Joiner) -> JoinBuilder<'a, 'buf, Joiner> {
         JoinBuilder::with_separator(self, joiner)
     }
 
@@ -115,7 +111,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::soft_line_break_or_space] or [crate::builders::empty_line] depending on how many line breaks were
     /// separating the elements in the original file.
-    pub fn join_nodes_with_soft_line(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
+    pub fn join_nodes_with_soft_line(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line> {
         JoinNodesBuilder::new(soft_line_break_or_space(), self)
     }
 
@@ -125,7 +121,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::hard_line_break] or [crate::builders::empty_line] depending on how many line breaks were separating the
     /// elements in the original file.
-    pub fn join_nodes_with_hardline(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line, Context> {
+    pub fn join_nodes_with_hardline(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line> {
         JoinNodesBuilder::new(hard_line_break(), self)
     }
 
@@ -138,7 +134,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// This function should likely only be used in a `best_fitting!` context, where one variant attempts to
     /// force a list of nodes onto a single line without any possible breaks, then falls back to a broken
     /// out variant if the content does not fit.
-    pub fn join_nodes_with_space(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Space, Context> {
+    pub fn join_nodes_with_space(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Space> {
         JoinNodesBuilder::new(space(), self)
     }
 
@@ -193,12 +189,12 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn fill(&'a mut self) -> FillBuilder<'a, 'buf, Context> {
+    pub fn fill(&'a mut self) -> FillBuilder<'a, 'buf> {
         FillBuilder::new(self)
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(&mut self, content: &dyn Format<Context>) -> FormatResult<Option<FormatElement>> {
+    pub fn intern(&mut self, content: &dyn Format) -> FormatResult<Option<FormatElement>> {
         let mut buffer = VecBuffer::new(self.state_mut());
         crate::write!(&mut buffer, [content])?;
         let elements = buffer.into_vec();
@@ -217,10 +213,7 @@ impl<'a, 'buf, Context> Formatter<'buf, Context> {
     }
 }
 
-impl<'a, Context> Formatter<'_, Context>
-where
-    Context: FormatContext<'a>,
-{
+impl<'a> Formatter<'_> {
     /// Take a snapshot of the state of the formatter
     #[inline]
     pub fn state_snapshot(&self) -> FormatterSnapshot {
@@ -235,19 +228,14 @@ where
     }
 }
 
-impl<'a, Context> Formatter<'_, Context>
-where
-    Context: FormatContext<'a>,
-{
+impl<'a> Formatter<'_> {
     /// Returns the comments from the context.
     pub fn comments(&self) -> &Comments {
         self.context().comments()
     }
 }
 
-impl<Context> Buffer for Formatter<'_, Context> {
-    type Context = Context;
-
+impl<'a> Buffer for Formatter<'_> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         self.buffer.write_element(element)
@@ -258,18 +246,18 @@ impl<Context> Buffer for Formatter<'_, Context> {
     }
 
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments<Self::Context>) -> FormatResult<()> {
+    fn write_fmt(&mut self, arguments: Arguments) -> FormatResult<()> {
         for argument in arguments.items() {
             argument.format(self)?;
         }
         Ok(())
     }
 
-    fn state(&self) -> &FormatState<Self::Context> {
+    fn state(&self) -> &FormatState<'a> {
         self.buffer.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<Self::Context> {
+    fn state_mut(&mut self) -> &mut FormatState<'a> {
         self.buffer.state_mut()
     }
 

@@ -6,7 +6,7 @@ use super::Buffer;
 
 /// Utility trait that allows memorizing the output of a [Format].
 /// Useful to avoid re-formatting the same object twice.
-pub trait MemoizeFormat<Context> {
+pub trait MemoizeContext {
     /// Returns a formattable object that memoizes the result of `Format` by cloning.
     /// Mainly useful if the same sub-tree can appear twice in the formatted output because it's
     /// used inside of `if_group_breaks` or `if_group_fits_single_line`.
@@ -55,30 +55,29 @@ pub trait MemoizeFormat<Context> {
     /// # }
     /// ```
     ///
-    fn memoized(self) -> Memoized<Self, Context>
+    fn memoized(self) -> Memoized<Self>
     where
-        Self: Sized + Format<Context>,
+        Self: Sized,
     {
         Memoized::new(self)
     }
 }
 
-impl<T, Context> MemoizeFormat<Context> for T where T: Format<Context> {}
+impl<T> MemoizeContext for T {}
 
 /// Memoizes the output of its inner [Format] to avoid re-formatting a potential expensive object.
 #[derive(Debug)]
-pub struct Memoized<F, Context> {
+pub struct Memoized<F> {
     inner: F,
     memory: OnceCell<FormatResult<Option<FormatElement>>>,
-    options: PhantomData<Context>,
 }
 
-impl<F, Context> Memoized<F, Context>
+impl<F> Memoized<F>
 where
-    F: Format<Context>,
+    F: Format,
 {
     fn new(inner: F) -> Self {
-        Self { inner, memory: OnceCell::new(), options: PhantomData }
+        Self { inner, memory: OnceCell::new() }
     }
 
     /// Gives access to the memoized content.
@@ -137,7 +136,7 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&mut self, f: &mut Formatter<Context>) -> FormatResult<&[FormatElement]> {
+    pub fn inspect(&mut self, f: &mut Formatter) -> FormatResult<&[FormatElement]> {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
@@ -149,11 +148,11 @@ where
     }
 }
 
-impl<F, Context> Format<Context> for Memoized<F, Context>
+impl<F> Format for Memoized<F>
 where
-    F: Format<Context>,
+    F: Format,
 {
-    fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result {

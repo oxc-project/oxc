@@ -4,7 +4,6 @@ use std::{fmt, rc::Rc, str::FromStr};
 use oxc_allocator::Vec;
 use oxc_ast::{Comment, ast::Program};
 
-use crate::format::JsFormatter;
 use crate::formatter::formatter::Formatter;
 use crate::formatter::prelude::{dynamic_text, if_group_breaks, text};
 use crate::formatter::printer::PrinterOptions;
@@ -15,79 +14,6 @@ use crate::formatter::{
     SourceComment, SyntaxTriviaPieceComments,
 };
 use crate::write;
-
-#[derive(Debug, Clone)]
-pub struct JsFormatContext<'a> {
-    options: JsFormatOptions,
-    source_text: &'a str,
-    comments: Comments,
-    // cached_function_body: Option<(AnyJsFunctionBody, FormatElement)>,
-    // source_map: Option<TransformSourceMap>,
-}
-
-impl<'a> JsFormatContext<'a> {
-    pub fn new(program: &'a Program<'a>, options: JsFormatOptions) -> Self {
-        Self {
-            options,
-            source_text: program.source_text,
-            comments: Comments::from_oxc_comments(&program.comments),
-        }
-    }
-
-    pub fn source_text(&self) -> &'a str {
-        self.source_text
-    }
-}
-
-impl<'a> FormatContext<'a> for JsFormatContext<'a> {
-    type Options = JsFormatOptions;
-    type Style = JsCommentStyle;
-    type CommentRule = FormatJsLeadingComment<'a>;
-
-    fn options(&self) -> &Self::Options {
-        &self.options
-    }
-
-    fn source_text(&self) -> &'a str {
-        self.source_text
-    }
-
-    fn comments(&self) -> &Comments {
-        &self.comments
-    }
-}
-
-#[derive(Default)]
-pub struct FormatJsLeadingComment<'a> {
-    _phantom_data: PhantomData<&'a ()>,
-}
-
-impl<'a> FormatRule<SourceComment> for FormatJsLeadingComment<'a> {
-    type Context = JsFormatContext<'a>;
-    fn fmt(&self, comment: &SourceComment, f: &mut Formatter<Self::Context>) -> FormatResult<()> {
-        let text = comment.span.source_text(f.context().source_text());
-        write!(f, [dynamic_text(text, comment.span.start)])
-    }
-}
-
-#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
-pub struct JsCommentStyle;
-
-impl CommentStyle for JsCommentStyle {
-    fn is_suppression(text: &str) -> bool {
-        todo!()
-    }
-
-    fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind {
-        todo!()
-    }
-
-    fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
-        todo!()
-    }
-}
-
-// ---
 
 #[derive(Debug, Default, Clone)]
 pub struct JsFormatOptions {
@@ -539,8 +465,8 @@ impl FormatTrailingCommas {
     }
 }
 
-impl<'ast> Format<JsFormatContext<'_>> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter<JsFormatContext>) -> FormatResult<()> {
+impl<'ast> Format for FormatTrailingCommas {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         if f.options().trailing_commas.is_none() {
             return Ok(());
         }
