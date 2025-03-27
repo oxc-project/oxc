@@ -24,117 +24,154 @@ impl Quote {
 }
 
 /// String printer state.
-struct PrintStringState<'i> {
+struct PrintStringState<'s> {
     chunk_start: *const u8,
-    bytes: slice::Iter<'i, u8>,
+    bytes: slice::Iter<'s, u8>,
     quote: Quote,
+    quote_is_unknown: bool,
     lone_surrogates: bool,
+    allow_backtick: bool,
 }
 
 impl Codegen<'_> {
+    /// Print a [`StringLiteral`].
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
 
-        let quote = if self.options.minify {
-            let mut single_cost: i32 = 0;
-            let mut double_cost: i32 = 0;
-            let mut backtick_cost: i32 = 0;
-            let mut bytes = s.value.as_bytes().iter().peekable();
-            while let Some(b) = bytes.next() {
-                match b {
-                    b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
-                    b'\'' => single_cost += 1,
-                    b'"' => double_cost += 1,
-                    b'`' => backtick_cost += 1,
-                    b'$' => {
-                        if bytes.peek() == Some(&&b'{') {
-                            backtick_cost += 1;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            let mut quote = Quote::Double;
-            if allow_backtick && double_cost >= backtick_cost {
-                quote = Quote::Backtick;
-                if backtick_cost > single_cost {
-                    quote = Quote::Single;
-                }
-            } else if double_cost > single_cost {
-                quote = Quote::Single;
-            }
-            quote
-        } else {
-            self.quote
+        // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
+        // What is the best quote to use will be determined when first character needing escape is found.
+        // This avoids iterating through the string twice if it contains no quotes (common case).
+        // Don't print opening quote now, because we don't know what it is yet.
+        //
+        // If not in `minify` mode, print the quote requested in options.
+        let quote = self.quote;
+        let quote_is_unknown = self.options.minify;
+        if !quote_is_unknown {
+            quote.print(self);
         };
 
-        quote.print(self);
-        self.print_unquoted_utf16(s, quote);
-        quote.print(self);
-    }
-
-    fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
+        // Loop through bytes, looking for any which need to be escaped.
+        // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
         let mut state = PrintStringState {
             chunk_start: bytes.as_slice().as_ptr(),
             bytes,
             quote,
+            quote_is_unknown,
             lone_surrogates: s.lone_surrogates,
+            allow_backtick,
         };
 
+        // Loop through bytes.
         while let Some(&b) = state.bytes.clone().next() {
-            // Lookup whether byte needs escaping
+            // Look up whether byte needs escaping
             let escape = ESCAPES[b as usize];
             if escape == Escape::__ {
+                // No escape required.
                 // SAFETY: We just checked there's a byte to consume
                 unsafe { state.bytes.next().unwrap_unchecked() };
             } else {
-                // Flush bytes up to current position of `bytes` iterator to buffer.
-                // SAFETY: All escapes except `Escapes::__` match on 1st byte of a UTF-8 character,
-                // so `bytes` must be positioned on a UTF-8 boundary.
-                unsafe { flush(&mut state, &mut self.code) };
-
-                // SAFETY: We just checked there's a byte to consume
-                unsafe { state.bytes.next().unwrap_unchecked() };
-
-                // Execute byte handler
-                let byte_handler = BYTE_HANDLERS[escape as usize - 1];
-                byte_handler(&mut self.code, &mut state);
-
-                // Set `chunk_start` to current position of `bytes` iterator
-                state.chunk_start = state.bytes.as_slice().as_ptr();
+                self.handle_string_escape(escape, &mut state);
             }
         }
 
         // Flush any remaining bytes.
         // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
-        unsafe { flush(&mut state, &mut self.code) };
+        unsafe { self.flush(&mut state) };
+
+        // Print closing quote
+        state.quote.print(self);
     }
-}
 
-/// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
-///
-/// # SAFETY
-///
-/// `bytes` iterator must be positioned on a UTF-8 character boundary.
-unsafe fn flush(state: &mut PrintStringState, code: &mut CodeBuffer) {
-    let bytes_ptr = state.bytes.as_slice().as_ptr();
+    /// Print escape sequence for a byte.
+    fn handle_string_escape(&mut self, escape: Escape, state: &mut PrintStringState) {
+        // Flush bytes up to current position of `bytes` iterator to buffer.
+        // SAFETY: All escapes except `Escapes::__` match on 1st byte of a UTF-8 character,
+        // so `bytes` must be positioned on a UTF-8 boundary.
+        unsafe { self.flush(state) };
 
-    // SAFETY: `chunk_start` is pointer to start of `bytes` iterator at some point,
-    // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
-    let len = unsafe {
-        let offset = bytes_ptr.offset_from(state.chunk_start);
-        usize::try_from(offset).unwrap_unchecked()
-    };
+        // SAFETY: We just checked there's a byte to consume
+        unsafe { state.bytes.next().unwrap_unchecked() };
 
-    // SAFETY: `chunk_start` is within bounds of original `&str`.
-    // `bytes` iter cannot go past end of `&str` either.
-    // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
-    // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
-    // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
-    unsafe {
-        let slice = slice::from_raw_parts(state.chunk_start, len);
-        code.print_bytes_unchecked(slice);
+        // Execute byte handler
+        let byte_handler = BYTE_HANDLERS[escape as usize - 1];
+        byte_handler(&mut self.code, state);
+
+        // Set `chunk_start` to current position of `bytes` iterator.
+        // This usually just steps over current byte, but can skip more bytes if byte handler
+        // has advanced `bytes` iterator.
+        state.chunk_start = state.bytes.as_slice().as_ptr();
+    }
+
+    /// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
+    ///
+    /// If what quote character to use has not been decided yet, calculate the best quote character to use,
+    /// and print it before flushing.
+    ///
+    /// # SAFETY
+    ///
+    /// `bytes` iterator must be positioned on a UTF-8 character boundary.
+    unsafe fn flush(&mut self, state: &mut PrintStringState) {
+        if state.quote_is_unknown {
+            self.calculate_quote(state);
+        }
+
+        let bytes_ptr = state.bytes.as_slice().as_ptr();
+
+        // SAFETY: `chunk_start` is pointer to start of `bytes` iterator at some point,
+        // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
+        let len = unsafe {
+            let offset = bytes_ptr.offset_from(state.chunk_start);
+            usize::try_from(offset).unwrap_unchecked()
+        };
+
+        // SAFETY: `chunk_start` is within bounds of original `&str`.
+        // `bytes` iter cannot go past end of `&str` either.
+        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
+        // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
+        // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
+        unsafe {
+            let slice = slice::from_raw_parts(state.chunk_start, len);
+            self.code.print_bytes_unchecked(slice);
+        }
+    }
+
+    /// Calculate what quote character to use, and print that quote.
+    fn calculate_quote(&mut self, state: &mut PrintStringState) {
+        let mut bytes = state.bytes.clone();
+
+        let mut single_cost: i32 = 0;
+        let mut double_cost: i32 = 0;
+        let mut backtick_cost: i32 = 0;
+        while let Some(b) = bytes.next() {
+            match b {
+                b'\n' => backtick_cost = backtick_cost.saturating_sub(1),
+                b'\'' => single_cost += 1,
+                b'"' => double_cost += 1,
+                b'`' => backtick_cost += 1,
+                b'$' => {
+                    if bytes.clone().next() == Some(&b'{') {
+                        backtick_cost += 1;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        let mut quote = Quote::Double;
+        if state.allow_backtick && double_cost >= backtick_cost {
+            quote = Quote::Backtick;
+            if backtick_cost > single_cost {
+                quote = Quote::Single;
+            }
+        } else if double_cost > single_cost {
+            quote = Quote::Single;
+        }
+
+        quote.print(self);
+
+        state.quote = quote;
+        state.quote_is_unknown = false;
     }
 }
 
@@ -168,6 +205,8 @@ const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
 const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
 const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
 
+/// Escape codes.
+/// Used as index into `BYTE_HANDLERS`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 enum Escape {
@@ -190,6 +229,7 @@ enum Escape {
     NB = 16, // NBSP  - Non-breaking space (first byte)
 }
 
+/// Table mapping bytes to `Escape`s.
 static ESCAPES: [Escape; 256] = {
     #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
     use Escape::*;
@@ -216,6 +256,8 @@ static ESCAPES: [Escape; 256] = {
 
 type ByteHandler = fn(&mut CodeBuffer, &mut PrintStringState);
 
+/// Byte handlers.
+/// Indexed by `Escape as usize - 1`.
 static BYTE_HANDLERS: [ByteHandler; 16] = [
     print_null,
     print_bell,
@@ -234,6 +276,8 @@ static BYTE_HANDLERS: [ByteHandler; 16] = [
     print_ls_or_ps,
     print_non_breaking_space,
 ];
+
+// Byte handlers
 
 fn print_null(code: &mut CodeBuffer, state: &mut PrintStringState) {
     if state.bytes.clone().next().is_some_and(u8::is_ascii_digit) {
