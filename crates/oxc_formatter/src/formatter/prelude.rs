@@ -16,7 +16,5 @@ pub use super::format_element::tag::{LabelId, Tag, TagKind};
 // format_verbatim_skipped,
 // };
 
-pub use super::{
-    Buffer as _, BufferExtensions, Format, Format as _, FormatResult, SimpleFormatContext, format,
-};
+pub use super::{Buffer as _, BufferExtensions, Format, Format as _, FormatResult, format};
 pub use crate::{best_fitting, dbg_write, format, format_args, write};

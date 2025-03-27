@@ -2,8 +2,8 @@ use super::buffer::BufferSnapshot;
 use super::builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line};
 use super::prelude::*;
 use super::{
-    Arguments, Buffer, Comments, CstFormatContext, FormatContext, FormatState, FormatStateSnapshot,
-    GroupId, VecBuffer,
+    Arguments, Buffer, Comments, FormatContext, FormatState, FormatStateSnapshot, GroupId,
+    VecBuffer,
 };
 
 /// Handles the formatting of a CST and stores the context how the CST should be formatted (user preferences).
@@ -237,7 +237,7 @@ where
 
 impl<'a, Context> Formatter<'_, Context>
 where
-    Context: CstFormatContext<'a>,
+    Context: FormatContext<'a>,
 {
     /// Returns the comments from the context.
     pub fn comments(&self) -> &Comments {

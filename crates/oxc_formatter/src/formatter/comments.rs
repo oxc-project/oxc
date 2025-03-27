@@ -88,10 +88,7 @@ use oxc_span::Span;
 use self::map::CommentsMap;
 use super::buffer::Buffer;
 use super::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
-use super::{
-    CstFormatContext, Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken,
-    TextSize,
-};
+use super::{Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken, TextSize};
 use rustc_hash::FxHashSet;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
