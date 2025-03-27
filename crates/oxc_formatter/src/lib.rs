@@ -1,16 +1,20 @@
 #![allow(unused)]
 
+mod generated {
+    pub mod format;
+}
 mod comment;
 mod context;
-mod format;
 mod formatter;
 mod options;
+mod write;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
-pub use crate::options::*;
 use crate::{context::JsFormatOptions, formatter::FormatContext};
+
+pub use crate::options::*;
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,

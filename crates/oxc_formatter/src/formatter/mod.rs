@@ -21,9 +21,6 @@
 
 #![deny(rustdoc::broken_intra_doc_links)]
 
-mod generated {
-    mod visitor;
-}
 mod arguments;
 mod buffer;
 mod builders;
