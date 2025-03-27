@@ -23,7 +23,9 @@ impl Quote {
     }
 }
 
+/// String printer state.
 struct PrintStringState<'i> {
+    chunk_start: *const u8,
     bytes: slice::Iter<'i, u8>,
     quote: Quote,
     lone_surrogates: bool,
@@ -72,28 +74,67 @@ impl Codegen<'_> {
     }
 
     fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
+        let bytes = s.value.as_bytes().iter();
         let mut state = PrintStringState {
-            bytes: s.value.as_bytes().iter(),
+            chunk_start: bytes.as_slice().as_ptr(),
+            bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
         };
 
-        while let Some(&b) = state.bytes.next() {
+        while let Some(&b) = state.bytes.clone().next() {
             // Lookup whether byte needs escaping
             let escape = ESCAPES[b as usize];
             if escape == Escape::__ {
-                // No escape required.
-                // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
-                // an invalid UTF-8 string. But the escape table will contain `Escape::__` for
-                // the remaining bytes of the Unicode character, so we'll also print those remaining
-                // bytes on next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
-                unsafe { self.code.print_byte_unchecked(b) };
+                // SAFETY: We just checked there's a byte to consume
+                unsafe { state.bytes.next().unwrap_unchecked() };
             } else {
-                // Escape required. Call handler for this byte value.
+                // Flush bytes up to current position of `bytes` iterator to buffer.
+                // SAFETY: All escapes except `Escapes::__` match on 1st byte of a UTF-8 character,
+                // so `bytes` must be positioned on a UTF-8 boundary.
+                unsafe { flush(&mut state, &mut self.code) };
+
+                // SAFETY: We just checked there's a byte to consume
+                unsafe { state.bytes.next().unwrap_unchecked() };
+
+                // Execute byte handler
                 let byte_handler = BYTE_HANDLERS[escape as usize - 1];
                 byte_handler(&mut self.code, &mut state);
+
+                // Set `chunk_start` to current position of `bytes` iterator
+                state.chunk_start = state.bytes.as_slice().as_ptr();
             }
         }
+
+        // Flush any remaining bytes.
+        // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
+        unsafe { flush(&mut state, &mut self.code) };
+    }
+}
+
+/// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
+///
+/// # SAFETY
+///
+/// `bytes` iterator must be positioned on a UTF-8 character boundary.
+unsafe fn flush(state: &mut PrintStringState, code: &mut CodeBuffer) {
+    let bytes_ptr = state.bytes.as_slice().as_ptr();
+
+    // SAFETY: `chunk_start` is pointer to start of `bytes` iterator at some point,
+    // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
+    let len = unsafe {
+        let offset = bytes_ptr.offset_from(state.chunk_start);
+        usize::try_from(offset).unwrap_unchecked()
+    };
+
+    // SAFETY: `chunk_start` is within bounds of original `&str`.
+    // `bytes` iter cannot go past end of `&str` either.
+    // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
+    // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
+    // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
+    unsafe {
+        let slice = slice::from_raw_parts(state.chunk_start, len);
+        code.print_bytes_unchecked(slice);
     }
 }
 
@@ -191,7 +232,7 @@ static BYTE_HANDLERS: [ByteHandler; 16] = [
     print_dollar,
     print_lossy_replacement,
     print_ls_or_ps,
-    print_not_breaking_space,
+    print_non_breaking_space,
 ];
 
 fn print_null(code: &mut CodeBuffer, state: &mut PrintStringState) {
@@ -334,6 +375,7 @@ fn print_ls_or_ps(code: &mut CodeBuffer, state: &mut PrintStringState) {
         LS_LAST_2_BYTES => code.print_str("\\u2028"),
         PS_LAST_2_BYTES => code.print_str("\\u2029"),
         _ => {
+            // Some other character starting with 0xE2.
             // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
             // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
             unsafe { code.print_bytes_unchecked(&[LS_OR_PS_FIRST_BYTE, next2[0], next2[1]]) };
@@ -341,17 +383,19 @@ fn print_ls_or_ps(code: &mut CodeBuffer, state: &mut PrintStringState) {
     }
 }
 
-fn print_not_breaking_space(code: &mut CodeBuffer, state: &mut PrintStringState) {
+fn print_non_breaking_space(code: &mut CodeBuffer, state: &mut PrintStringState) {
     let bytes = &mut state.bytes;
 
     // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
     // so there must be 1 more byte available to consume
     let next = unsafe { *bytes.next().unwrap_unchecked() };
     if next == NBSP_BYTES[1] {
+        // Character is NBSP
         code.print_str("\\xA0");
     } else {
+        // Some other character starting with 0xC2.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
-        // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+        // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string.
         unsafe { code.print_bytes_unchecked(&[NBSP_FIRST_BYTE, next]) };
     }
 }
