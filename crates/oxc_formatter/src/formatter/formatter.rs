@@ -1,3 +1,5 @@
+use oxc_ast::AstKind;
+
 use crate::context::JsFormatOptions;
 
 use super::buffer::BufferSnapshot;
@@ -244,6 +246,10 @@ impl<'ast> Formatter<'_, 'ast> {
     /// Returns the comments from the context.
     pub fn comments(&self) -> &Comments {
         self.context().comments()
+    }
+
+    pub fn parent_kind(&self) -> &AstKind<'ast> {
+        self.state().stack.last()
     }
 }
 

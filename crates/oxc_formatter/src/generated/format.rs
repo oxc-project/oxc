@@ -1,30 +1,33 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
     formatter::{Buffer, Format, FormatContext, FormatResult, Formatter, prelude::*},
     write,
+    write::FormatWrite,
 };
+
+/// A hack for erasing the lifetime requirement.
+pub fn hack<'ast, T>(t: &T) -> &'ast T {
+    // SAFETY: This is not safe :-)
+    unsafe { std::mem::transmute(t) }
+}
 
 impl<'ast> Format<'ast> for Program<'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                self.hashbang,
-                format_leading_comments(self.span),
-                self.directives,
-                self.body,
-                hard_line_break()
-            ]
-        )
+        // f.format_program(self)
+        Ok(())
     }
 }
 
 impl<'ast> Format<'ast> for Hashbang<'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        write!(f, [text("#!"), dynamic_text(self.value.as_str(), self.span.start)])
+        f.state_mut().stack.push(AstKind::Hashbang(hack(self)));
+        // let result = block_stmt.fmt(self);
+        let result = self.write(f);
+        unsafe { f.state_mut().stack.pop_unchecked() };
+        result
     }
 }
 
