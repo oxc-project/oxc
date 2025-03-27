@@ -1,5 +1,3 @@
-#![expect(clippy::undocumented_unsafe_blocks)]
-
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
@@ -74,38 +72,26 @@ impl Codegen<'_> {
     }
 
     fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
-        // Encoded string cannot be longer than 4 x length of `s.value`.
-        // The longest escape expansion is `\x00` (1 byte), which is printed as "\x00" (4 bytes).
-        // Reserve sufficient capacity for the longest possible output, so can skip bounds checks
-        // in the loop below.
-        self.code.reserve(s.value.len() * 4);
-
         let mut state = PrintStringState {
             bytes: s.value.as_bytes().iter(),
             quote,
             lone_surrogates: s.lone_surrogates,
         };
 
-        // SAFETY: We have reserved the maximum possible capacity required for this string
-        // even if every character required the longest escape.
-        // So all `print_str_unchecked_cap`, `print_byte_unchecked_cap`, and `print_bytes_unchecked_cap`
-        // calls in this loop are guaranteed not to exceed the buffer's capacity.
-        unsafe {
-            while let Some(&b) = state.bytes.next() {
-                // Lookup whether byte needs escaping
-                let escape = ESCAPES[b as usize];
-                if escape == Escape::__ {
-                    // No escape required.
-                    // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
-                    // an invalid UTF-8 string. But none of the match arms above will match the remaining
-                    // bytes of the Unicode character, so we'll also print those remaining bytes on
-                    // next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
-                    self.code.print_byte_unchecked_cap(b);
-                } else {
-                    // Escape required. Call handler for this byte value.
-                    let byte_handler = BYTE_HANDLERS[escape as usize - 1];
-                    byte_handler(&mut self.code, &mut state);
-                }
+        while let Some(&b) = state.bytes.next() {
+            // Lookup whether byte needs escaping
+            let escape = ESCAPES[b as usize];
+            if escape == Escape::__ {
+                // No escape required.
+                // SAFETY: If `b` is not ASCII, will temporarily leave `CodeBuffer` containing
+                // an invalid UTF-8 string. But the escape table will contain `Escape::__` for
+                // the remaining bytes of the Unicode character, so we'll also print those remaining
+                // bytes on next turns of the loop, restoring `CodeBuffer` to a valid UTF-8 string.
+                unsafe { self.code.print_byte_unchecked(b) };
+            } else {
+                // Escape required. Call handler for this byte value.
+                let byte_handler = BYTE_HANDLERS[escape as usize - 1];
+                byte_handler(&mut self.code, &mut state);
             }
         }
     }
@@ -210,80 +196,78 @@ static BYTE_HANDLERS: [ByteHandler; 16] = [
 
 fn print_null(code: &mut CodeBuffer, state: &mut PrintStringState) {
     if state.bytes.clone().next().is_some_and(u8::is_ascii_digit) {
-        unsafe { code.print_str_unchecked_cap("\\x00") };
+        code.print_str("\\x00");
     } else {
-        unsafe { code.print_str_unchecked_cap("\\0") };
+        code.print_str("\\0");
     }
 }
 
 fn print_bell(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\x07") };
+    code.print_str("\\x07");
 }
 
 fn print_backspace(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\b") };
+    code.print_str("\\b");
 }
 
 fn print_vertical_tab(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\v") };
+    code.print_str("\\v");
 }
 
 fn print_form_field(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\f") };
+    code.print_str("\\f");
 }
 
 fn print_new_line(code: &mut CodeBuffer, state: &mut PrintStringState) {
     if state.quote == Quote::Backtick {
-        unsafe { code.print_byte_unchecked_cap(b'\n') };
+        code.print_ascii_byte(b'\n');
     } else {
-        unsafe { code.print_str_unchecked_cap("\\n") };
+        code.print_str("\\n");
     }
 }
 
 fn print_carriage_return(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\r") };
+    code.print_str("\\r");
 }
 
 fn print_escape(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\x1B") };
+    code.print_str("\\x1B");
 }
 
 fn print_backslash(code: &mut CodeBuffer, _state: &mut PrintStringState) {
-    unsafe { code.print_str_unchecked_cap("\\\\") };
+    code.print_str("\\\\");
 }
 
 fn print_single_quote(code: &mut CodeBuffer, state: &mut PrintStringState) {
-    unsafe {
-        if state.quote == Quote::Single {
-            code.print_byte_unchecked_cap(b'\\');
-        }
-        code.print_byte_unchecked_cap(b'\'');
+    if state.quote == Quote::Single {
+        code.print_str("\\'");
+    } else {
+        code.print_ascii_byte(b'\'');
     }
 }
 
 fn print_double_quote(code: &mut CodeBuffer, state: &mut PrintStringState) {
-    unsafe {
-        if state.quote == Quote::Double {
-            code.print_byte_unchecked_cap(b'\\');
-        }
-        code.print_byte_unchecked_cap(b'"');
+    if state.quote == Quote::Double {
+        code.print_str("\\\"");
+    } else {
+        code.print_ascii_byte(b'"');
     }
 }
 
 fn print_backtick(code: &mut CodeBuffer, state: &mut PrintStringState) {
-    unsafe {
-        if state.quote == Quote::Backtick {
-            code.print_byte_unchecked_cap(b'\\');
-        }
-        code.print_byte_unchecked_cap(b'`');
+    if state.quote == Quote::Backtick {
+        code.print_str("\\`");
+    } else {
+        code.print_ascii_byte(b'`');
     }
 }
 
 fn print_dollar(code: &mut CodeBuffer, state: &mut PrintStringState) {
     if state.bytes.clone().next().copied() == Some(b'{') {
-        unsafe { code.print_byte_unchecked_cap(b'\\') };
+        code.print_str("\\$");
+    } else {
+        code.print_ascii_byte(b'$');
     }
-    unsafe { code.print_byte_unchecked_cap(b'$') };
 }
 
 fn print_lossy_replacement(code: &mut CodeBuffer, state: &mut PrintStringState) {
@@ -315,25 +299,21 @@ fn print_lossy_replacement(code: &mut CodeBuffer, state: &mut PrintStringState) 
 
         if hex == *b"fffd" {
             // Actual lossy replacement character
-            unsafe { code.print_str_unchecked_cap("\u{FFFD}") };
+            code.print_str("\u{FFFD}");
         } else {
             // Lossy replacement character representing a lone surrogate.
             // Check all 4 hex chars are ASCII.
             assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-            unsafe { code.print_str_unchecked_cap("\\u") };
+            code.print_str("\\u");
             // SAFETY: Just checked all 4 bytes are ASCII
-            unsafe { code.print_bytes_unchecked_cap(&hex) };
+            unsafe { code.print_bytes_unchecked(&hex) };
         }
     } else {
         // Another Unicode char beginning with 0xEF or `lone_surrogates` flag is unset.
         // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
         // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string.
         unsafe {
-            code.print_bytes_unchecked_cap(&[
-                LOSSY_REPLACEMENT_CHAR_FIRST_BYTE,
-                next2[0],
-                next2[1],
-            ]);
+            code.print_bytes_unchecked(&[LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]]);
         }
     }
 }
@@ -350,15 +330,13 @@ fn print_ls_or_ps(code: &mut CodeBuffer, state: &mut PrintStringState) {
         next2
     };
 
-    unsafe {
-        match next2 {
-            LS_LAST_2_BYTES => code.print_str_unchecked_cap("\\u2028"),
-            PS_LAST_2_BYTES => code.print_str_unchecked_cap("\\u2029"),
-            _ => {
-                // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
-                // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
-                code.print_bytes_unchecked_cap(&[LS_OR_PS_FIRST_BYTE, next2[0], next2[1]]);
-            }
+    match next2 {
+        LS_LAST_2_BYTES => code.print_str("\\u2028"),
+        PS_LAST_2_BYTES => code.print_str("\\u2029"),
+        _ => {
+            // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+            // so printing those 3 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+            unsafe { code.print_bytes_unchecked(&[LS_OR_PS_FIRST_BYTE, next2[0], next2[1]]) };
         }
     }
 }
@@ -369,13 +347,11 @@ fn print_not_breaking_space(code: &mut CodeBuffer, state: &mut PrintStringState)
     // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
     // so there must be 1 more byte available to consume
     let next = unsafe { *bytes.next().unwrap_unchecked() };
-    unsafe {
-        if next == NBSP_BYTES[1] {
-            code.print_str_unchecked_cap("\\xA0");
-        } else {
-            // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
-            // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
-            code.print_bytes_unchecked_cap(&[NBSP_FIRST_BYTE, next]);
-        }
+    if next == NBSP_BYTES[1] {
+        code.print_str("\\xA0");
+    } else {
+        // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
+        // so printing those 2 bytes leaves `CodeBuffer` containing a valid UTF-8 string
+        unsafe { code.print_bytes_unchecked(&[NBSP_FIRST_BYTE, next]) };
     }
 }
