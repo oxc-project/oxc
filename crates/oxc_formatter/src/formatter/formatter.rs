@@ -12,13 +12,13 @@ use super::{
 ///
 /// The formatter is passed to the [Format] implementation of every node in the CST so that they
 /// can use it to format their children.
-pub struct Formatter<'buf> {
-    pub(super) buffer: &'buf mut dyn Buffer,
+pub struct Formatter<'buf, 'ast> {
+    pub(super) buffer: &'buf mut dyn Buffer<'ast>,
 }
 
-impl<'a, 'buf> Formatter<'buf> {
+impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// Creates a new context that uses the given formatter context
-    pub fn new(buffer: &'buf mut (dyn Buffer + 'buf)) -> Self {
+    pub fn new(buffer: &'buf mut (dyn Buffer<'ast> + 'buf)) -> Self {
         Self { buffer }
     }
 
@@ -28,12 +28,12 @@ impl<'a, 'buf> Formatter<'buf> {
     }
 
     /// Returns the Context specifying how to format the current CST
-    pub fn context(&self) -> &FormatContext {
+    pub fn context(&self) -> &FormatContext<'ast> {
         self.state().context()
     }
 
     /// Returns a mutable reference to the context.
-    pub fn context_mut(&mut self) -> &mut FormatContext {
+    pub fn context_mut(&mut self) -> &mut FormatContext<'ast> {
         self.state_mut().context_mut()
     }
 
@@ -70,7 +70,7 @@ impl<'a, 'buf> Formatter<'buf> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join(&'a mut self) -> JoinBuilder<'a, 'buf, ()> {
+    pub fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, ()> {
         JoinBuilder::new(self)
     }
 
@@ -101,7 +101,13 @@ impl<'a, 'buf> Formatter<'buf> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn join_with<Joiner>(&'a mut self, joiner: Joiner) -> JoinBuilder<'a, 'buf, Joiner> {
+    pub fn join_with<'fmt, Joiner>(
+        &'fmt mut self,
+        joiner: Joiner,
+    ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
+    where
+        Joiner: Format<'ast>,
+    {
         JoinBuilder::with_separator(self, joiner)
     }
 
@@ -111,7 +117,9 @@ impl<'a, 'buf> Formatter<'buf> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::soft_line_break_or_space] or [crate::builders::empty_line] depending on how many line breaks were
     /// separating the elements in the original file.
-    pub fn join_nodes_with_soft_line(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line> {
+    pub fn join_nodes_with_soft_line<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {
         JoinNodesBuilder::new(soft_line_break_or_space(), self)
     }
 
@@ -121,7 +129,9 @@ impl<'a, 'buf> Formatter<'buf> {
     /// This function inspects the input source and separates consecutive elements with either
     /// a [crate::builders::hard_line_break] or [crate::builders::empty_line] depending on how many line breaks were separating the
     /// elements in the original file.
-    pub fn join_nodes_with_hardline(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Line> {
+    pub fn join_nodes_with_hardline<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {
         JoinNodesBuilder::new(hard_line_break(), self)
     }
 
@@ -134,7 +144,9 @@ impl<'a, 'buf> Formatter<'buf> {
     /// This function should likely only be used in a `best_fitting!` context, where one variant attempts to
     /// force a list of nodes onto a single line without any possible breaks, then falls back to a broken
     /// out variant if the content does not fit.
-    pub fn join_nodes_with_space(&'a mut self) -> JoinNodesBuilder<'a, 'buf, Space> {
+    pub fn join_nodes_with_space<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Space> {
         JoinNodesBuilder::new(space(), self)
     }
 
@@ -189,12 +201,12 @@ impl<'a, 'buf> Formatter<'buf> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn fill(&'a mut self) -> FillBuilder<'a, 'buf> {
+    pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast> {
         FillBuilder::new(self)
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(&mut self, content: &dyn Format) -> FormatResult<Option<FormatElement>> {
+    pub fn intern(&mut self, content: &dyn Format<'ast>) -> FormatResult<Option<FormatElement>> {
         let mut buffer = VecBuffer::new(self.state_mut());
         crate::write!(&mut buffer, [content])?;
         let elements = buffer.into_vec();
@@ -213,7 +225,7 @@ impl<'a, 'buf> Formatter<'buf> {
     }
 }
 
-impl<'a> Formatter<'_> {
+impl<'a> Formatter<'a, '_> {
     /// Take a snapshot of the state of the formatter
     #[inline]
     pub fn state_snapshot(&self) -> FormatterSnapshot {
@@ -228,14 +240,14 @@ impl<'a> Formatter<'_> {
     }
 }
 
-impl<'a> Formatter<'_> {
+impl<'ast> Formatter<'_, 'ast> {
     /// Returns the comments from the context.
     pub fn comments(&self) -> &Comments {
         self.context().comments()
     }
 }
 
-impl<'a> Buffer for Formatter<'_> {
+impl<'buf, 'ast> Buffer<'ast> for Formatter<'buf, 'ast> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         self.buffer.write_element(element)
@@ -246,18 +258,18 @@ impl<'a> Buffer for Formatter<'_> {
     }
 
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments) -> FormatResult<()> {
+    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
         for argument in arguments.items() {
             argument.format(self)?;
         }
         Ok(())
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'ast> {
         self.buffer.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.buffer.state_mut()
     }
 

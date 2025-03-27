@@ -11,7 +11,7 @@ use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
 
 /// A trait for writing or formatting into [FormatElement]-accepting buffers or streams.
-pub trait Buffer<'a> {
+pub trait Buffer<'ast> {
     /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
     ///
     /// # Errors
@@ -55,15 +55,15 @@ pub trait Buffer<'a> {
     ///
     /// assert_eq!(buffer.into_vec(), vec![FormatElement::StaticText{ text: "Hello World" }]);
     /// ```
-    fn write_fmt(mut self: &mut Self, arguments: Arguments) -> FormatResult<()> {
+    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
         super::write(&mut self, arguments)
     }
 
     /// Returns the formatting state relevant for this formatting session.
-    fn state(&self) -> &FormatState<'a>;
+    fn state(&self) -> &FormatState<'ast>;
 
     /// Returns the mutable formatting state relevant for this formatting session.
-    fn state_mut(&mut self) -> &mut FormatState<'a>;
+    fn state_mut(&mut self) -> &mut FormatState<'ast>;
 
     /// Takes a snapshot of the Buffers state, excluding the formatter state.
     fn snapshot(&self) -> BufferSnapshot;
@@ -133,7 +133,7 @@ impl BufferSnapshot {
 }
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
-impl<'a, W: Buffer<'a> + ?Sized> Buffer<'a> for &mut W {
+impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         (**self).write_element(element)
     }
@@ -142,15 +142,15 @@ impl<'a, W: Buffer<'a> + ?Sized> Buffer<'a> for &mut W {
         (**self).elements()
     }
 
-    fn write_fmt(&mut self, args: Arguments) -> FormatResult<()> {
+    fn write_fmt(&mut self, args: Arguments<'_, 'ast>) -> FormatResult<()> {
         (**self).write_fmt(args)
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'ast> {
         (**self).state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast> {
         (**self).state_mut()
     }
 
@@ -167,22 +167,22 @@ impl<'a, W: Buffer<'a> + ?Sized> Buffer<'a> for &mut W {
 ///
 /// The buffer writes all elements into the internal elements buffer.
 #[derive(Debug)]
-pub struct VecBuffer<'a> {
-    state: &'a mut FormatState<'a>,
+pub struct VecBuffer<'buf, 'ast> {
+    state: &'buf mut FormatState<'ast>,
     elements: Vec<FormatElement>,
 }
 
-impl<'a> VecBuffer<'a> {
-    pub fn new(state: &'a mut FormatState<'a>) -> Self {
+impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
+    pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
         Self::new_with_vec(state, Vec::new())
     }
 
-    pub fn new_with_vec(state: &'a mut FormatState<'a>, elements: Vec<FormatElement>) -> Self {
+    pub fn new_with_vec(state: &'buf mut FormatState<'ast>, elements: Vec<FormatElement>) -> Self {
         Self { state, elements }
     }
 
     /// Creates a buffer with the specified capacity
-    pub fn with_capacity(capacity: usize, state: &'a mut FormatState<'a>) -> Self {
+    pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
         Self { state, elements: Vec::with_capacity(capacity) }
     }
 
@@ -197,7 +197,7 @@ impl<'a> VecBuffer<'a> {
     }
 }
 
-impl Deref for VecBuffer<'_> {
+impl Deref for VecBuffer<'_, '_> {
     type Target = [FormatElement];
 
     fn deref(&self) -> &Self::Target {
@@ -205,13 +205,13 @@ impl Deref for VecBuffer<'_> {
     }
 }
 
-impl DerefMut for VecBuffer<'_> {
+impl DerefMut for VecBuffer<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.elements
     }
 }
 
-impl<'a> Buffer<'a> for VecBuffer<'a> {
+impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         self.elements.push(element);
 
@@ -222,11 +222,11 @@ impl<'a> Buffer<'a> for VecBuffer<'a> {
         self
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'ast> {
         self.state
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.state
     }
 
@@ -318,8 +318,8 @@ pub struct PreambleBuffer<'a, 'buf, Preamble> {
     empty: bool,
 }
 
-impl<'a, 'buf, Preamble> PreambleBuffer<'a, 'buf, Preamble> {
-    pub fn new(inner: &'buf mut dyn Buffer, preamble: Preamble) -> Self {
+impl<'ast, 'buf, Preamble> PreambleBuffer<'ast, 'buf, Preamble> {
+    pub fn new(inner: &'buf mut dyn Buffer<'ast>, preamble: Preamble) -> Self {
         Self { inner, preamble, empty: true }
     }
 
@@ -329,9 +329,9 @@ impl<'a, 'buf, Preamble> PreambleBuffer<'a, 'buf, Preamble> {
     }
 }
 
-impl<'a, Preamble> Buffer<'a> for PreambleBuffer<'a, '_, Preamble>
+impl<'ast, Preamble> Buffer<'ast> for PreambleBuffer<'ast, '_, Preamble>
 where
-    Preamble: Format,
+    Preamble: Format<'ast>,
 {
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         if self.empty {
@@ -346,11 +346,11 @@ where
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'ast> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
     }
 
@@ -375,13 +375,13 @@ struct PreambleBufferSnapshot {
 }
 
 /// Buffer that allows you inspecting elements as they get written to the formatter.
-pub struct Inspect<'a, 'inner, Inspector> {
-    inner: &'inner mut dyn Buffer<'a>,
+pub struct Inspect<'ast, 'inner, Inspector> {
+    inner: &'inner mut dyn Buffer<'ast>,
     inspector: Inspector,
 }
 
-impl<'a, 'inner, Inspector> Inspect<'a, 'inner, Inspector> {
-    fn new(inner: &'inner mut dyn Buffer, inspector: Inspector) -> Self {
+impl<'ast, 'inner, Inspector> Inspect<'ast, 'inner, Inspector> {
+    fn new(inner: &'inner mut dyn Buffer<'ast>, inspector: Inspector) -> Self {
         Self { inner, inspector }
     }
 }
@@ -461,8 +461,8 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub struct RemoveSoftLinesBuffer<'a> {
-    inner: &'a mut dyn Buffer<'a>,
+pub struct RemoveSoftLinesBuffer<'buf, 'ast> {
+    inner: &'buf mut dyn Buffer<'ast>,
 
     /// Caches the interned elements after the soft line breaks have been removed.
     ///
@@ -477,9 +477,9 @@ pub struct RemoveSoftLinesBuffer<'a> {
     conditional_content_stack: Vec<Condition>,
 }
 
-impl<'a> RemoveSoftLinesBuffer<'a> {
+impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
     /// Creates a new buffer that removes the soft line breaks before writing them into `buffer`.
-    pub fn new(inner: &'a mut dyn Buffer) -> Self {
+    pub fn new(inner: &'buf mut dyn Buffer<'ast>) -> Self {
         Self { inner, interned_cache: FxHashMap::default(), conditional_content_stack: Vec::new() }
     }
 
@@ -589,7 +589,7 @@ fn clean_interned(
     }
 }
 
-impl<'a> Buffer<'a> for RemoveSoftLinesBuffer<'_> {
+impl<'buf, 'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'buf, 'ast> {
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         let mut element_statck = Vec::new();
         element_statck.push(element);
@@ -630,11 +630,11 @@ impl<'a> Buffer<'a> for RemoveSoftLinesBuffer<'_> {
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'ast> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
     }
 
@@ -647,10 +647,10 @@ impl<'a> Buffer<'a> for RemoveSoftLinesBuffer<'_> {
     }
 }
 
-pub trait BufferExtensions<'a>: Buffer<'a> + Sized {
+pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     /// Returns a new buffer that calls the passed inspector for every element that gets written to the output
     #[must_use]
-    fn inspect<F>(&mut self, inspector: F) -> Inspect<F>
+    fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, F>
     where
         F: FnMut(&FormatElement),
     {
@@ -712,7 +712,7 @@ pub trait BufferExtensions<'a>: Buffer<'a> + Sized {
     }
 }
 
-impl<'a, T> BufferExtensions<'a> for T where T: Buffer<'a> {}
+impl<'ast, T> BufferExtensions<'ast> for T where T: Buffer<'ast> {}
 
 #[derive(Debug)]
 pub struct Recording<'buf, Buffer> {
@@ -720,16 +720,16 @@ pub struct Recording<'buf, Buffer> {
     buffer: &'buf mut Buffer,
 }
 
-impl<'a, 'buf, B> Recording<'buf, B>
+impl<'ast, 'buf, B> Recording<'buf, B>
 where
-    B: Buffer<'a>,
+    B: Buffer<'ast>,
 {
     fn new(buffer: &'buf mut B) -> Self {
         Self { start: buffer.elements().len(), buffer }
     }
 
     #[inline(always)]
-    pub fn write_fmt(&mut self, arguments: Arguments) -> FormatResult<()> {
+    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
         self.buffer.write_fmt(arguments)
     }
 

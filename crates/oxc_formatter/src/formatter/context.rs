@@ -7,16 +7,16 @@ use crate::context::JsFormatOptions;
 
 /// Context object storing data relevant when formatting an object.
 #[derive(Debug, Clone)]
-pub struct FormatContext<'a> {
+pub struct FormatContext<'ast> {
     options: JsFormatOptions,
 
-    source_text: &'a str,
+    source_text: &'ast str,
 
     comments: Comments,
 }
 
-impl<'a> FormatContext<'a> {
-    pub fn new(program: &'a Program<'a>, options: JsFormatOptions) -> Self {
+impl<'ast> FormatContext<'ast> {
+    pub fn new(program: &'ast Program<'ast>, options: JsFormatOptions) -> Self {
         Self {
             options,
             source_text: program.source_text,
@@ -35,7 +35,7 @@ impl<'a> FormatContext<'a> {
     }
 
     /// Returns the formatting options
-    pub fn source_text(&self) -> &'a str {
+    pub fn source_text(&self) -> &'ast str {
         self.source_text
     }
 }

@@ -57,7 +57,7 @@ pub enum FormatLeadingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a, 'b> Format for FormatLeadingComments<'b> {
+impl<'a, 'b> Format<'_> for FormatLeadingComments<'b> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
 
@@ -117,7 +117,7 @@ pub enum FormatTrailingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a> Format for FormatTrailingComments<'_> {
+impl<'a> Format<'_> for FormatTrailingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let trailing_comments = match self {
@@ -277,7 +277,7 @@ impl FormatDanglingComments<'_> {
     }
 }
 
-impl<'a> Format for FormatDanglingComments<'_> {
+impl<'a> Format<'_> for FormatDanglingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let dangling_comments = match self {
@@ -369,7 +369,7 @@ pub struct FormatRemoved<'a> {
     token: &'a SyntaxToken,
 }
 
-impl<'a> Format for FormatRemoved<'a> {
+impl<'a> Format<'_> for FormatRemoved<'a> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
@@ -381,23 +381,23 @@ impl<'a> Format for FormatRemoved<'a> {
 ///
 /// This will print the skipped token trivia that belong to `token` to `content`;
 /// `token` is then marked as consumed by the formatter.
-pub fn format_replaced<'a, 'content>(
+pub fn format_replaced<'a, 'content, 'ast>(
     token: &'a SyntaxToken,
-    content: &'content impl Format,
-) -> FormatReplaced<'a, 'content> {
+    content: &'content impl Format<'ast>,
+) -> FormatReplaced<'a, 'content, 'ast> {
     FormatReplaced { token, content: Argument::new(content) }
 }
 
 /// Formats a token's skipped token trivia but uses the provided content instead
 /// of the token in the formatted output.
 #[derive(Copy, Clone)]
-pub struct FormatReplaced<'a, 'content> {
+pub struct FormatReplaced<'a, 'content, 'ast> {
     token: &'a SyntaxToken,
-    content: Argument<'content>,
+    content: Argument<'content, 'ast>,
 }
 
-impl<'a> Format for FormatReplaced<'a, '_> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+impl<'a, 'ast> Format<'ast> for FormatReplaced<'a, '_, 'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
         write!(f, [format_skipped_token_trivia(self.token)])?;
@@ -407,33 +407,33 @@ impl<'a> Format for FormatReplaced<'a, '_> {
 }
 
 /// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-pub fn format_only_if_breaks<'a, 'content, Content>(
+pub fn format_only_if_breaks<'a, 'content, 'ast, Content>(
     token: &'a SyntaxToken,
     content: &'content Content,
-) -> FormatOnlyIfBreaks<'a, 'content>
+) -> FormatOnlyIfBreaks<'a, 'content, 'ast>
 where
-    Content: Format,
+    Content: Format<'ast>,
 {
     FormatOnlyIfBreaks { token, content: Argument::new(content), group_id: None }
 }
 
 /// Formats a token with its skipped token trivia that only gets printed if its enclosing
 /// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'a, 'content> {
+pub struct FormatOnlyIfBreaks<'a, 'content, 'ast> {
     token: &'a SyntaxToken,
-    content: Argument<'content>,
+    content: Argument<'content, 'ast>,
     group_id: Option<GroupId>,
 }
 
-impl FormatOnlyIfBreaks<'_, '_> {
+impl FormatOnlyIfBreaks<'_, '_, '_> {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
     }
 }
 
-impl<'a> Format for FormatOnlyIfBreaks<'a, '_> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+impl<'a, 'ast> Format<'ast> for FormatOnlyIfBreaks<'a, '_, 'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(
             f,
             [if_group_breaks(&Arguments::from(&self.content)).with_group_id(self.group_id),]
@@ -464,7 +464,7 @@ pub struct FormatSkippedTokenTrivia<'a> {
 
 impl<'a> FormatSkippedTokenTrivia<'a> {
     #[cold]
-    fn fmt_skipped<Context>(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt_skipped(&self, f: &mut Formatter) -> FormatResult<()> {
         todo!()
         // Lines/spaces before the next token/comment
         // let (mut lines, mut spaces) = match self.token.prev_token() {
@@ -588,7 +588,7 @@ impl<'a> FormatSkippedTokenTrivia<'a> {
     }
 }
 
-impl<'a> Format for FormatSkippedTokenTrivia<'a> {
+impl<'a> Format<'_> for FormatSkippedTokenTrivia<'a> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
     }
