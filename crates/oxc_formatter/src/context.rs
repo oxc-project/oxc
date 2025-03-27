@@ -10,9 +10,9 @@ use crate::formatter::prelude::{dynamic_text, if_group_breaks, text};
 use crate::formatter::printer::PrinterOptions;
 use crate::formatter::{
     AttributePosition, BracketSameLine, BracketSpacing, Buffer, CommentKind, CommentPlacement,
-    CommentStyle, Comments, CstFormatContext, DecoratedComment, Expand, Format, FormatContext,
-    FormatOptions, FormatResult, FormatRule, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    QuoteStyle, SourceComment, SyntaxTriviaPieceComments,
+    CommentStyle, Comments, DecoratedComment, Expand, Format, FormatContext, FormatOptions,
+    FormatResult, FormatRule, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle,
+    SourceComment, SyntaxTriviaPieceComments,
 };
 use crate::write;
 
@@ -41,19 +41,16 @@ impl<'a> JsFormatContext<'a> {
 
 impl<'a> FormatContext<'a> for JsFormatContext<'a> {
     type Options = JsFormatOptions;
-
-    fn source_text(&self) -> &'a str {
-        self.source_text
-    }
+    type Style = JsCommentStyle;
+    type CommentRule = FormatJsLeadingComment<'a>;
 
     fn options(&self) -> &Self::Options {
         &self.options
     }
-}
 
-impl<'a> CstFormatContext<'a> for JsFormatContext<'a> {
-    type Style = JsCommentStyle;
-    type CommentRule = FormatJsLeadingComment<'a>;
+    fn source_text(&self) -> &'a str {
+        self.source_text
+    }
 
     fn comments(&self) -> &Comments {
         &self.comments

@@ -4,7 +4,7 @@ use super::comments::{SourceComment, is_doc_comment};
 use super::format_element::tag::VerbatimKind;
 use super::prelude::*;
 use super::{
-    Argument, Arguments, CstFormatContext, FormatRefWithRule, GroupId, TextRange,
+    Argument, Arguments, FormatContext, FormatRefWithRule, GroupId, TextRange,
     comments::{CommentKind, CommentStyle},
 };
 use super::{SyntaxNode, SyntaxToken, TextSize};
@@ -58,7 +58,7 @@ pub enum FormatLeadingComments<'a> {
 
 impl<'a, 'b, Context> Format<Context> for FormatLeadingComments<'b>
 where
-    Context: CstFormatContext<'a>,
+    Context: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
         let comments = f.context().comments().clone();
@@ -121,7 +121,7 @@ pub enum FormatTrailingComments<'a> {
 
 impl<'a, Context> Format<Context> for FormatTrailingComments<'_>
 where
-    Context: CstFormatContext<'a>,
+    Context: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
         let comments = f.context().comments().clone();
@@ -284,7 +284,7 @@ impl FormatDanglingComments<'_> {
 
 impl<'a, Context> Format<Context> for FormatDanglingComments<'_>
 where
-    Context: CstFormatContext<'a>,
+    Context: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
         let comments = f.context().comments().clone();
@@ -379,7 +379,7 @@ pub struct FormatRemoved<'a> {
 
 impl<'a, C> Format<C> for FormatRemoved<'a>
 where
-    C: CstFormatContext<'a>,
+    C: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
@@ -409,7 +409,7 @@ pub struct FormatReplaced<'a, 'content, C> {
 
 impl<'a, C> Format<C> for FormatReplaced<'a, '_, C>
 where
-    C: CstFormatContext<'a>,
+    C: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
@@ -448,7 +448,7 @@ impl<C> FormatOnlyIfBreaks<'_, '_, C> {
 
 impl<'a, C> Format<C> for FormatOnlyIfBreaks<'a, '_, C>
 where
-    C: CstFormatContext<'a>,
+    C: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
         write!(
@@ -483,7 +483,7 @@ impl<'a> FormatSkippedTokenTrivia<'a> {
     #[cold]
     fn fmt_skipped<Context>(&self, f: &mut Formatter<Context>) -> FormatResult<()>
     where
-        Context: CstFormatContext<'a>,
+        Context: FormatContext<'a>,
     {
         todo!()
         // Lines/spaces before the next token/comment
@@ -610,7 +610,7 @@ impl<'a> FormatSkippedTokenTrivia<'a> {
 
 impl<'a, Context> Format<Context> for FormatSkippedTokenTrivia<'a>
 where
-    Context: CstFormatContext<'a>,
+    Context: FormatContext<'a>,
 {
     fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
         if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
