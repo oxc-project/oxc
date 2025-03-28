@@ -5,7 +5,7 @@ use super::super::prelude::tag::GroupMode;
 use super::super::prelude::*;
 use super::super::{
     BufferExtensions, Format, FormatContext, FormatElement, FormatOptions, FormatResult, Formatter,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions, /*TransformSourceMap*/
+    IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
 };
 use super::tag::Tag;
 use crate::{format, write};
