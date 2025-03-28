@@ -623,6 +623,7 @@ impl<'a> Format<'a> for TSEnumMemberName<'a> {
         match self {
             TSEnumMemberName::Identifier(identifier) => identifier.format(p),
             TSEnumMemberName::String(string_literal) => string_literal.format(p),
+            TSEnumMemberName::TemplateString(template_literal) => template_literal.format(p),
         }
     }
 }
