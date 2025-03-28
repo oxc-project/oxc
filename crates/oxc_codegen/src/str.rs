@@ -91,17 +91,6 @@ impl PrintStringState<'_> {
         self.bytes.clone().next().copied()
     }
 
-    /// Peek next byte in `bytes` iterator, without checking not at end.
-    ///
-    /// # SAFETY
-    /// `bytes` iterator must not be at end.
-    #[inline]
-    unsafe fn peek_unchecked(&self) -> u8 {
-        debug_assert!(self.bytes.clone().next().is_some());
-        // SAFETY: Caller guarantees `bytes` iterator is not at end
-        unsafe { *self.bytes.clone().next().unwrap_unchecked() }
-    }
-
     /// Advance the `bytes` iterator by 1 byte.
     ///
     /// # SAFETY
@@ -538,7 +527,7 @@ fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
 fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
     // so there must be 1 more byte available to consume
-    let next = unsafe { state.peek_unchecked() };
+    let next = unsafe { *state.bytes.as_slice().get_unchecked(1) };
     if next == NBSP_LAST_BYTE {
         // Character is NBSP.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
