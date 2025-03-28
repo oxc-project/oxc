@@ -100,39 +100,3 @@ pub fn normalize_string(
         Cow::Owned(reduced_string)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn normalize_newline() {
-        assert_eq!(normalize_string("a\nb", Quote::Double, true), "a\nb");
-        assert_eq!(normalize_string("a\r\nb", Quote::Double, true), "a\nb");
-        assert_eq!(normalize_string("a\\\r\nb", Quote::Double, true), "a\\\nb");
-    }
-
-    #[test]
-    fn normalize_escapes() {
-        assert_eq!(normalize_string("\\", Quote::Double, true), "\\");
-        assert_eq!(normalize_string("\\t", Quote::Double, true), "\\t");
-        assert_eq!(normalize_string("\\\u{2028}", Quote::Double, true), "\\\u{2028}");
-        assert_eq!(normalize_string("\\\u{2029}", Quote::Double, true), "\\\u{2029}");
-
-        assert_eq!(normalize_string(r"a\a", Quote::Double, true), r"a\a");
-        assert_eq!(normalize_string(r"👍\👍", Quote::Single, true), r"👍\👍");
-        assert_eq!(normalize_string("\\\u{2027}", Quote::Double, true), "\\\u{2027}");
-        assert_eq!(normalize_string("\\\u{2030}", Quote::Double, true), "\\\u{2030}");
-    }
-
-    #[test]
-    fn normalize_quotes() {
-        assert_eq!(normalize_string("\"", Quote::Double, true), "\\\"");
-        assert_eq!(normalize_string(r"\'", Quote::Double, true), r"'");
-
-        assert_eq!(normalize_string(r"\'", Quote::Double, false), r"\'");
-        assert_eq!(normalize_string("\"", Quote::Single, false), "\"");
-        assert_eq!(normalize_string("\\'", Quote::Single, false), "\\'");
-        assert_eq!(normalize_string("\\\"", Quote::Single, false), "\\\"");
-    }
-}

@@ -465,7 +465,7 @@ impl FormatTrailingCommas {
     }
 }
 
-impl<'ast> Format<'ast> for FormatTrailingCommas {
+impl Format<'_> for FormatTrailingCommas {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         if f.options().trailing_commas.is_none() {
             return Ok(());

@@ -21,7 +21,7 @@ impl<'a> FormatWrite<'a> for BlockStatement<'a> {
                 write!(f, [hard_line_break()])?;
             }
         } else {
-            write!(f, [text("{")])?
+            write!(f, [text("{")])?;
         }
 
         write!(f, [text("}")])

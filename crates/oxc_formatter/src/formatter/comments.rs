@@ -826,7 +826,7 @@ impl Comments {
         let data = Rc::new(CommentsData {
             comments: map,
             #[cfg(debug_assertions)]
-            checked_suppressions: RefCell::new(Default::default()),
+            checked_suppressions: RefCell::new(FxHashSet::default()),
         });
         Self { data }
     }
@@ -1014,6 +1014,7 @@ impl Comments {
     }
 }
 
+#[derive(Default)]
 struct CommentsData {
     // root: Option<SyntaxNode>,
 
@@ -1031,19 +1032,6 @@ struct CommentsData {
     /// (thus, guarantees that the formatting isn't changed).
     #[cfg(debug_assertions)]
     checked_suppressions: RefCell<FxHashSet<SyntaxNode>>,
-}
-
-impl Default for CommentsData {
-    fn default() -> Self {
-        Self {
-            // root: None,
-            // is_suppression: |_| false,
-            comments: Default::default(),
-            // with_skipped: Default::default(),
-            #[cfg(debug_assertions)]
-            checked_suppressions: Default::default(),
-        }
-    }
 }
 
 impl std::fmt::Debug for CommentsData {

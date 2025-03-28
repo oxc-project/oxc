@@ -101,7 +101,7 @@ impl Default for PrinterOptions {
         PrinterOptions {
             indent_width: IndentWidth::default(),
             print_width: PrintWidth::default(),
-            indent_style: Default::default(),
+            indent_style: IndentStyle::default(),
             line_ending: LineEnding::Lf,
         }
     }

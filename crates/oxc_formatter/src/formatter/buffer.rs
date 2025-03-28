@@ -589,7 +589,7 @@ fn clean_interned(
     }
 }
 
-impl<'buf, 'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'buf, 'ast> {
+impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         let mut element_statck = Vec::new();
         element_statck.push(element);

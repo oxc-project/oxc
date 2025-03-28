@@ -287,7 +287,7 @@ impl std::fmt::Debug for StaticText {
 }
 
 /// Creates a text from a dynamic string and a range of the input source
-pub fn dynamic_text<'ast>(text: &'ast str, position: TextSize) -> DynamicText<'ast> {
+pub fn dynamic_text(text: &str, position: TextSize) -> DynamicText<'_> {
     debug_assert_no_newlines(text);
 
     DynamicText { text, position }
@@ -368,7 +368,7 @@ impl std::fmt::Debug for DynamicText<'_> {
 /// Copies a source text 1:1 into the output text.
 pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
     let slice = span.source_text(source_text);
-    debug_assert_no_newlines(&slice);
+    debug_assert_no_newlines(slice);
     LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start }
 }
 
@@ -1749,10 +1749,7 @@ impl Group<'_, '_> {
 
 impl<'ast> Format<'ast> for Group<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        let mode = match self.should_expand {
-            true => GroupMode::Expand,
-            false => GroupMode::Flat,
-        };
+        let mode = if self.should_expand { GroupMode::Expand } else { GroupMode::Flat };
 
         f.write_element(FormatElement::Tag(StartGroup(
             tag::Group::new().with_id(self.group_id).with_mode(mode),
@@ -2193,7 +2190,7 @@ pub struct FormatWith<T> {
     context: PhantomData<T>,
 }
 
-impl<'ast, T> Format<'ast> for FormatWith<T>
+impl<T> Format<'_> for FormatWith<T>
 where
     T: Fn(&mut Formatter) -> FormatResult<()>,
 {
@@ -2474,7 +2471,7 @@ where
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-pub fn has_lines_before<'a>(span: Span, source_text: &str) -> bool {
+pub fn has_lines_before(span: Span, source_text: &str) -> bool {
     // Count the newlines in the leading trivia of the next node
     source_text[..span.start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
         > 1

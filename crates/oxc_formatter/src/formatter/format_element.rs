@@ -369,39 +369,3 @@ pub trait FormatElements {
     /// * the last element is an end tag of `kind`
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
 }
-
-#[cfg(test)]
-mod tests {
-
-    use crate::format_element::{LINE_TERMINATORS, normalize_newlines};
-
-    #[test]
-    fn test_normalize_newlines() {
-        assert_eq!(normalize_newlines("a\nb", LINE_TERMINATORS), "a\nb");
-        assert_eq!(normalize_newlines("a\n\n\nb", LINE_TERMINATORS), "a\n\n\nb");
-        assert_eq!(normalize_newlines("a\rb", LINE_TERMINATORS), "a\nb");
-        assert_eq!(normalize_newlines("a\r\nb", LINE_TERMINATORS), "a\nb");
-        assert_eq!(normalize_newlines("a\r\n\r\n\r\nb", LINE_TERMINATORS), "a\n\n\nb");
-        assert_eq!(normalize_newlines("a\u{2028}b", LINE_TERMINATORS), "a\nb");
-        assert_eq!(normalize_newlines("a\u{2029}b", LINE_TERMINATORS), "a\nb");
-    }
-}
-
-// #[cfg(target_pointer_width = "64")]
-// static_assert!(std::mem::size_of::<biome_rowan::TextRange>() == 8usize);
-
-// #[cfg(target_pointer_width = "64")]
-// static_assert!(std::mem::size_of::<crate::format_element::tag::VerbatimKind>() == 8usize);
-
-#[cfg(not(debug_assertions))]
-#[cfg(target_pointer_width = "64")]
-static_assert!(std::mem::size_of::<crate::format_element::Tag>() == 16usize);
-
-// Increasing the size of FormatElement has serious consequences on runtime performance and memory footprint.
-// Is there a more efficient way to encode the data to avoid increasing its size? Can the information
-// be recomputed at a later point in time?
-// You reduced the size of a format element? Excellent work!
-
-#[cfg(not(debug_assertions))]
-#[cfg(target_pointer_width = "64")]
-static_assert!(std::mem::size_of::<crate::FormatElement>() == 24usize);

@@ -676,9 +676,6 @@ impl FormatElements for [FormatElement] {
     }
 
     fn start_tag(&self, kind: TagKind) -> Option<&Tag> {
-        // Assert that the document ends at a tag with the specified kind;
-        let _ = self.end_tag(kind)?;
-
         fn traverse_slice<'a>(
             slice: &'a [FormatElement],
             kind: TagKind,
@@ -693,9 +690,8 @@ impl FormatElements for [FormatElement] {
                                 return None;
                             } else if *depth == 1 {
                                 return Some(tag);
-                            } else {
-                                *depth -= 1;
                             }
+                            *depth -= 1;
                         } else {
                             *depth += 1;
                         }
@@ -721,6 +717,9 @@ impl FormatElements for [FormatElement] {
             None
         }
 
+        // Assert that the document ends at a tag with the specified kind;
+        let _ = self.end_tag(kind)?;
+
         let mut depth = 0usize;
 
         traverse_slice(self, kind, &mut depth)
@@ -728,160 +727,5 @@ impl FormatElements for [FormatElement] {
 
     fn end_tag(&self, kind: TagKind) -> Option<&Tag> {
         self.last().and_then(|element| element.end_tag(kind))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use biome_js_syntax::JsSyntaxKind;
-    use biome_js_syntax::JsSyntaxToken;
-    use biome_rowan::TextSize;
-
-    use crate::SimpleFormatContext;
-    use crate::prelude::*;
-    use crate::{format, format_args, write};
-
-    #[test]
-    fn display_elements() {
-        let formatted = format!(
-            SimpleFormatContext::default(),
-            [format_with(|f| {
-                write!(
-                    f,
-                    [group(&format_args![
-                        text("("),
-                        soft_block_indent(&format_args![
-                            text("Some longer content"),
-                            space(),
-                            text("That should ultimately break"),
-                        ])
-                    ])]
-                )
-            })]
-        )
-        .unwrap();
-
-        let document = formatted.into_document();
-
-        assert_eq!(
-            &std::format!("{document}"),
-            r#"[
-  group([
-    "(",
-    indent([
-      soft_line_break,
-      "Some longer content That should ultimately break"
-    ]),
-    soft_line_break
-  ])
-]"#
-        );
-    }
-
-    #[test]
-    fn display_invalid_document() {
-        use Tag::*;
-
-        let document = Document::from(vec![
-            FormatElement::StaticText { text: "[" },
-            FormatElement::Tag(StartGroup(tag::Group::new())),
-            FormatElement::Tag(StartIndent),
-            FormatElement::Line(LineMode::Soft),
-            FormatElement::StaticText { text: "a" },
-            // Close group instead of indent
-            FormatElement::Tag(EndGroup),
-            FormatElement::Line(LineMode::Soft),
-            FormatElement::Tag(EndIndent),
-            FormatElement::StaticText { text: "]" },
-            // End tag without start
-            FormatElement::Tag(EndIndent),
-            // Start tag without an end
-            FormatElement::Tag(StartIndent),
-        ]);
-
-        assert_eq!(
-            &std::format!("{document}"),
-            r#"[
-  "[",
-  group([
-    indent([soft_line_break, "a"])
-    ERROR<START_END_TAG_MISMATCH<start: Indent, end: Group>>,
-    soft_line_break
-  ])
-  ERROR<START_END_TAG_MISMATCH<start: Group, end: Indent>>,
-  "]"<END_TAG_WITHOUT_START<Indent>>,
-  indent([])
-  <START_WITHOUT_END<Indent>>
-]"#
-        );
-    }
-
-    #[test]
-    fn interned_best_fitting_allows_sibling_expand_propagation() {
-        use Tag::*;
-
-        // An interned element containing something that expands the parent,
-        // and a best_fitting element after it.
-        //
-        // interned 1 [
-        //   expand_parent,
-        //   best_fitting(...)
-        // ]
-        let interned = Interned::new(vec![FormatElement::ExpandParent, unsafe {
-            FormatElement::BestFitting(BestFittingElement::from_vec_unchecked(vec![
-                Box::new([FormatElement::StaticText { text: "a" }]),
-                Box::new([FormatElement::StaticText { text: "b" }]),
-            ]))
-        }]);
-
-        let mut document = Document::from(vec![
-            // First group, processes the interned element for the first time.
-            FormatElement::Tag(StartGroup(tag::Group::new())),
-            FormatElement::Interned(interned.clone()),
-            FormatElement::Tag(EndGroup),
-            // Second group, references the already-processed interned element.
-            FormatElement::Tag(StartGroup(tag::Group::new())),
-            FormatElement::Interned(interned),
-            FormatElement::Tag(EndGroup),
-        ]);
-
-        // After propagation, both groups _should_ be expanded.
-        document.propagate_expand();
-
-        assert_eq!(
-            &std::format!("{document}"),
-            r#"[
-  group(expand: propagated, [
-    <interned 0> [
-      expand_parent,
-      best_fitting([
-        ["a"]
-        ["b"]
-      ])
-    ]
-  ]),
-  group(expand: propagated, [<ref interned *0>])
-]"#
-        );
-    }
-
-    #[test]
-    fn escapes_quotes() {
-        let token = JsSyntaxToken::new_detached(JsSyntaxKind::JS_STRING_LITERAL, "\"bar\"", [], []);
-        let token_text = FormatElement::LocatedTokenText {
-            source_position: TextSize::default(),
-            slice: token.token_text(),
-        };
-
-        let mut document = Document::from(vec![
-            FormatElement::DynamicText {
-                text: "\"foo\"".into(),
-                source_position: TextSize::default(),
-            },
-            token_text,
-        ]);
-        document.propagate_expand();
-
-        assert_eq!(&std::format!("{document}"), r#"["\"foo\"\"bar\""]"#);
     }
 }

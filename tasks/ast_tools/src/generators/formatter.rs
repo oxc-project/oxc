@@ -64,6 +64,8 @@ impl Generator for FormatterFormatGenerator {
             .collect::<TokenStream>();
 
         let output = quote! {
+            #![allow(clippy::undocumented_unsafe_blocks)]
+
             use oxc_allocator::Vec;
             use oxc_ast::{AstKind, ast::*};
             use oxc_span::GetSpan;

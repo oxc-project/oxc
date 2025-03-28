@@ -57,7 +57,7 @@ pub enum FormatLeadingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a, 'b> Format<'_> for FormatLeadingComments<'b> {
+impl Format<'_> for FormatLeadingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
 
@@ -68,7 +68,7 @@ impl<'a, 'b> Format<'_> for FormatLeadingComments<'b> {
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
+            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
             write!(f, [format_comment])?;
 
             match comment.kind() {
@@ -98,7 +98,7 @@ impl<'a, 'b> Format<'_> for FormatLeadingComments<'b> {
                 },
             }
 
-            comment.mark_formatted()
+            comment.mark_formatted();
         }
 
         Ok(())
@@ -117,7 +117,7 @@ pub enum FormatTrailingComments<'a> {
     Comments(&'a [SourceComment]),
 }
 
-impl<'a> Format<'_> for FormatTrailingComments<'_> {
+impl Format<'_> for FormatTrailingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let trailing_comments = match self {
@@ -131,7 +131,7 @@ impl<'a> Format<'_> for FormatTrailingComments<'_> {
         for comment in trailing_comments {
             total_lines_before += comment.lines_before();
 
-            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
+            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
 
             let should_nestle = previous_comment.is_some_and(|previous_comment| {
                 should_nestle_adjacent_doc_comments(previous_comment, comment)
@@ -263,21 +263,21 @@ impl FormatDanglingComments<'_> {
 
     fn with_indent_mode(mut self, mode: DanglingIndentMode) -> Self {
         match &mut self {
-            FormatDanglingComments::Node { indent, .. } => *indent = mode,
-            FormatDanglingComments::Comments { indent, .. } => *indent = mode,
+            FormatDanglingComments::Node { indent, .. }
+            | FormatDanglingComments::Comments { indent, .. } => *indent = mode,
         }
         self
     }
 
     const fn indent(&self) -> DanglingIndentMode {
         match self {
-            FormatDanglingComments::Node { indent, .. } => *indent,
-            FormatDanglingComments::Comments { indent, .. } => *indent,
+            FormatDanglingComments::Node { indent, .. }
+            | FormatDanglingComments::Comments { indent, .. } => *indent,
         }
     }
 }
 
-impl<'a> Format<'_> for FormatDanglingComments<'_> {
+impl Format<'_> for FormatDanglingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let dangling_comments = match self {
@@ -293,8 +293,7 @@ impl<'a> Format<'_> for FormatDanglingComments<'_> {
             let mut previous_comment: Option<&SourceComment> = None;
 
             for comment in dangling_comments {
-                let format_comment =
-                    FormatRefWithRule::new(comment, FormatJsLeadingComment::default());
+                let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
                     should_nestle_adjacent_doc_comments(previous_comment, comment)
@@ -369,7 +368,7 @@ pub struct FormatRemoved<'a> {
     token: &'a SyntaxToken,
 }
 
-impl<'a> Format<'_> for FormatRemoved<'a> {
+impl Format<'_> for FormatRemoved<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
@@ -396,7 +395,7 @@ pub struct FormatReplaced<'a, 'content, 'ast> {
     content: Argument<'content, 'ast>,
 }
 
-impl<'a, 'ast> Format<'ast> for FormatReplaced<'a, '_, 'ast> {
+impl<'ast> Format<'ast> for FormatReplaced<'_, '_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         f.state_mut().track_token(self.token);
 
@@ -432,7 +431,7 @@ impl FormatOnlyIfBreaks<'_, '_, '_> {
     }
 }
 
-impl<'a, 'ast> Format<'ast> for FormatOnlyIfBreaks<'a, '_, 'ast> {
+impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, '_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         write!(
             f,
@@ -462,7 +461,7 @@ pub struct FormatSkippedTokenTrivia<'a> {
     token: &'a SyntaxToken,
 }
 
-impl<'a> FormatSkippedTokenTrivia<'a> {
+impl FormatSkippedTokenTrivia<'_> {
     #[cold]
     fn fmt_skipped(&self, f: &mut Formatter) -> FormatResult<()> {
         todo!()
@@ -588,7 +587,7 @@ impl<'a> FormatSkippedTokenTrivia<'a> {
     }
 }
 
-impl<'a> Format<'_> for FormatSkippedTokenTrivia<'a> {
+impl Format<'_> for FormatSkippedTokenTrivia<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
     }

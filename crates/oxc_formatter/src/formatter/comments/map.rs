@@ -226,6 +226,7 @@ impl<K: std::hash::Hash + Eq, V> CommentsMap<K, V> {
     }
 
     /// Returns an iterator over all leading, dangling, and trailing parts of `key`.
+    #[expect(clippy::iter_on_empty_collections)]
     pub fn parts(&self, key: &K) -> PartsIterator<V> {
         match self.index.get(key) {
             None => PartsIterator::Slice([].iter()),
@@ -569,6 +570,7 @@ impl OutOfOrderEntry {
 struct PartIndex(NonZeroU32);
 
 impl PartIndex {
+    #[expect(clippy::cast_possible_truncation)]
     fn from_len(value: usize) -> Self {
         Self(NonZeroU32::try_from(value as u32 + 1).unwrap())
     }
@@ -588,7 +590,7 @@ impl PartIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::comments::map::CommentsMap;
+    use super::CommentsMap;
 
     static EMPTY: [i32; 0] = [];
 

@@ -227,7 +227,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 }
 
-impl<'a> Formatter<'a, '_> {
+impl Formatter<'_, '_> {
     /// Take a snapshot of the state of the formatter
     #[inline]
     pub fn state_snapshot(&self) -> FormatterSnapshot {
@@ -254,7 +254,7 @@ impl<'ast> Formatter<'_, 'ast> {
     }
 }
 
-impl<'buf, 'ast> Buffer<'ast> for Formatter<'buf, 'ast> {
+impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
         self.buffer.write_element(element)
