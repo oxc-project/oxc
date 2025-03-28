@@ -185,8 +185,8 @@ impl PrintStringState<'_> {
         // SAFETY: `chunk_start` is within bounds of original `&str`.
         // `bytes` iter cannot go past end of `&str` either.
         // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
-        // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
-        // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
+        // `bytes` iterator is always positioned on a UTF-8 character boundary, as is `chunk_start`.
+        // Therefore the slice between these two must be a valid UTF-8 string.
         unsafe {
             let slice = slice::from_raw_parts(self.chunk_start, len);
             codegen.code.print_bytes_unchecked(slice);
