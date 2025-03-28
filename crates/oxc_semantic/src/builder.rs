@@ -425,6 +425,23 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
+
+        // `(function n(n) {})()`
+        //              ^ is not a redeclaration
+        // Since we put the function expression binding 'n' Symbol into the function itself scope,
+        // then defining a variable with the same name as the function name will be considered
+        // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
+        // is a function expression, then return None to tell the caller that it's not a redeclaration.
+        if self.scoping.symbol_flags(symbol_id).is_function()
+            && self
+                .nodes
+                .kind(self.scoping.symbol_declaration(symbol_id))
+                .as_function()
+                .is_some_and(Function::is_expression)
+        {
+            return None;
+        }
+
         if report_error {
             self.check_and_report_redeclaration(name, span, symbol_id, excludes);
         }
@@ -447,11 +464,7 @@ impl<'a> SemanticBuilder<'a> {
             None
         };
 
-        if (
-            flags.intersects(excludes)
-            // `function n() { let n; }`
-            //                     ^ is not a redeclaration
-            && !function_kind.is_some_and(Function::is_expression))
+        if flags.intersects(excludes)
             // Needs to further check if the previous declaration is a function and the function
             // is not allowed to be redeclared.
             // For example: `async function goo(); var goo;`
