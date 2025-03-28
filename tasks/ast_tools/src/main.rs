@@ -268,6 +268,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::Utf8ToUtf16ConverterGenerator,
     &generators::RawTransferGenerator,
     &generators::TypescriptGenerator,
+    &generators::FormatterGenerator,
 ];
 
 /// Attributes on structs and enums (not including those defined by derives/generators)
