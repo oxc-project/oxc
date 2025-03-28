@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -150,7 +150,7 @@ impl Rule for AriaRole {
                     return;
                 }
 
-                let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = aria_role else {
+                let JSXAttributeItem::Attribute(attr) = aria_role else {
                     return;
                 };
 
