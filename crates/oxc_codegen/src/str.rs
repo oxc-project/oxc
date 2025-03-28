@@ -75,6 +75,9 @@ impl Codegen<'_> {
 }
 
 /// String printer state.
+///
+/// Main purpose is to contain `bytes` iterator.
+/// This iterator must always be positioned on a UTF-8 character boundary.
 struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
@@ -101,7 +104,8 @@ impl PrintStringState<'_> {
     #[inline]
     unsafe fn consume_byte_unchecked(&mut self) {
         debug_assert!(self.bytes.clone().next().is_some());
-        // SAFETY: TODO
+        // SAFETY: Caller guarantees there is a byte to consume in `bytes` iterator,
+        // and that consuming it leaves the iterator on a UTF-8 char boundary.
         unsafe { self.bytes.next().unwrap_unchecked() };
     }
 
@@ -114,7 +118,8 @@ impl PrintStringState<'_> {
     #[inline]
     unsafe fn consume_bytes_unchecked<const N: usize>(&mut self) {
         debug_assert!(self.bytes.as_slice().len() >= N);
-        // SAFETY: TODO
+        // SAFETY: Caller guarantees there are `N` bytes to consume in `bytes` iterator,
+        // and that consuming them leaves the iterator on a UTF-8 char boundary.
         unsafe {
             for _i in 0..N {
                 self.bytes.next().unwrap_unchecked();
@@ -137,7 +142,7 @@ impl PrintStringState<'_> {
     ///   i.e. the current byte is ASCII.
     #[inline]
     unsafe fn flush_and_consume_byte(&mut self, codegen: &mut Codegen) {
-        // SAFETY: TODO
+        // SAFETY: Caller guarantees `flush_and_consume_bytes`'s requirements are met
         unsafe { self.flush_and_consume_bytes::<1>(codegen) };
     }
 
@@ -152,12 +157,9 @@ impl PrintStringState<'_> {
         self.flush(codegen);
 
         debug_assert!(self.bytes.as_slice().len() >= N);
-        // SAFETY: TODO
-        unsafe {
-            for _i in 0..N {
-                self.bytes.next().unwrap_unchecked();
-            }
-        }
+        // SAFETY: Caller guarantees there are `N` bytes to consume in `bytes` iterator,
+        // and that consuming them leaves the iterator on a UTF-8 char boundary
+        unsafe { self.consume_bytes_unchecked::<N>() };
 
         self.start_chunk();
     }
