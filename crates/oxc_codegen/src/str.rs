@@ -138,41 +138,67 @@ impl Codegen<'_> {
 
     /// Calculate what quote character to use, and print that quote.
     fn calculate_quote(&mut self, state: &mut PrintStringState) {
-        let mut bytes = state.bytes.clone();
-
-        let mut single_cost: i64 = 0;
-        let mut double_cost: i64 = 0;
-        let mut backtick_cost: i64 = 0;
-        while let Some(b) = bytes.next() {
-            match b {
-                b'\n' => backtick_cost -= 1,
-                b'\'' => single_cost += 1,
-                b'"' => double_cost += 1,
-                b'`' => backtick_cost += 1,
-                b'$' => {
-                    if bytes.clone().next() == Some(&b'{') {
-                        backtick_cost += 1;
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        let mut quote = Quote::Double;
-        if state.allow_backtick && double_cost >= backtick_cost {
-            quote = Quote::Backtick;
-            if backtick_cost > single_cost {
-                quote = Quote::Single;
-            }
-        } else if double_cost > single_cost {
-            quote = Quote::Single;
-        }
+        let bytes = state.bytes.clone();
+        let quote = if state.allow_backtick {
+            calculate_quote_maybe_backtick(bytes)
+        } else {
+            calculate_quote_no_backtick(bytes)
+        };
 
         quote.print(self);
 
         state.quote = quote;
         state.quote_is_unknown = false;
     }
+}
+
+fn calculate_quote_maybe_backtick(mut bytes: slice::Iter<'_, u8>) -> Quote {
+    // String length is max `u32::MAX`, so use `i64` to make overflow impossible
+    let mut single_cost: i64 = 0;
+    let mut double_cost: i64 = 0;
+    let mut backtick_cost: i64 = 0;
+    while let Some(b) = bytes.next() {
+        match b {
+            b'\n' => backtick_cost -= 1,
+            b'\'' => single_cost += 1,
+            b'"' => double_cost += 1,
+            b'`' => backtick_cost += 1,
+            b'$' => {
+                if bytes.clone().next() == Some(&b'{') {
+                    backtick_cost += 1;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[rustfmt::skip]
+    let quote = if double_cost >= backtick_cost {
+        if backtick_cost > single_cost {
+            Quote::Single
+        } else {
+            Quote::Backtick
+        }
+    } else if double_cost > single_cost {
+        Quote::Single
+    } else {
+        Quote::Double
+    };
+    quote
+}
+
+fn calculate_quote_no_backtick(bytes: slice::Iter<'_, u8>) -> Quote {
+    // String length is max `u32::MAX`, so `i64` cannot overflow
+    let mut single_cost: i64 = 0;
+    for &b in bytes {
+        match b {
+            b'\'' => single_cost += 1,
+            b'"' => single_cost -= 1,
+            _ => {}
+        }
+    }
+
+    if single_cost < 0 { Quote::Single } else { Quote::Double }
 }
 
 /// Convert `char` to UTF-8 bytes array.
