@@ -22,6 +22,59 @@ impl Quote {
     }
 }
 
+impl Codegen<'_> {
+    /// Print a [`StringLiteral`].
+    pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
+        self.add_source_mapping(s.span);
+
+        // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
+        // What is the best quote to use will be determined when first character needing escape is found.
+        // This avoids iterating through the string twice if it contains no quotes (common case).
+        // Don't print opening quote now, because we don't know what it is yet.
+        //
+        // If not in `minify` mode, print the quote requested in options.
+        let quote = self.quote;
+        let quote_is_unknown = self.options.minify;
+        if !quote_is_unknown {
+            quote.print(self);
+        };
+
+        // Loop through bytes, looking for any which need to be escaped.
+        // String is written to buffer in chunks.
+        let bytes = s.value.as_bytes().iter();
+        let mut state = PrintStringState {
+            chunk_start: bytes.as_slice().as_ptr(),
+            bytes,
+            quote,
+            quote_is_unknown,
+            lone_surrogates: s.lone_surrogates,
+            allow_backtick,
+        };
+
+        // Loop through bytes.
+        while let Some(b) = state.peek() {
+            // Look up whether byte needs escaping
+            let escape = ESCAPES.0[b as usize];
+            if escape == Escape::__ {
+                // No escape required.
+                // SAFETY: We just checked there's a byte to consume.
+                unsafe { state.consume_byte() };
+            } else {
+                // Escape may be required. Execute byte handler.
+                let byte_handler = BYTE_HANDLERS.0[escape as usize - 1];
+                byte_handler(self, &mut state);
+            }
+        }
+
+        // Flush any remaining bytes.
+        // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
+        unsafe { state.flush(self) };
+
+        // Print closing quote
+        state.quote.print(self);
+    }
+}
+
 /// String printer state.
 struct PrintStringState<'s> {
     chunk_start: *const u8,
@@ -148,11 +201,10 @@ impl PrintStringState<'_> {
             return self.quote;
         }
 
-        let bytes = self.bytes.clone();
         let quote = if self.allow_backtick {
-            calculate_quote_maybe_backtick(bytes)
+            self.calculate_quote_maybe_backtick()
         } else {
-            calculate_quote_no_backtick(bytes)
+            self.calculate_quote_no_backtick()
         };
 
         quote.print(codegen);
@@ -162,110 +214,58 @@ impl PrintStringState<'_> {
 
         quote
     }
-}
 
-impl Codegen<'_> {
-    /// Print a [`StringLiteral`].
-    pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
-        self.add_source_mapping(s.span);
-
-        // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
-        // What is the best quote to use will be determined when first character needing escape is found.
-        // This avoids iterating through the string twice if it contains no quotes (common case).
-        // Don't print opening quote now, because we don't know what it is yet.
-        //
-        // If not in `minify` mode, print the quote requested in options.
-        let quote = self.quote;
-        let quote_is_unknown = self.options.minify;
-        if !quote_is_unknown {
-            quote.print(self);
-        };
-
-        // Loop through bytes, looking for any which need to be escaped.
-        // String is written to buffer in chunks.
-        let bytes = s.value.as_bytes().iter();
-        let mut state = PrintStringState {
-            chunk_start: bytes.as_slice().as_ptr(),
-            bytes,
-            quote,
-            quote_is_unknown,
-            lone_surrogates: s.lone_surrogates,
-            allow_backtick,
-        };
-
-        // Loop through bytes.
-        while let Some(b) = state.peek() {
-            // Look up whether byte needs escaping
-            let escape = ESCAPES.0[b as usize];
-            if escape == Escape::__ {
-                // No escape required.
-                // SAFETY: We just checked there's a byte to consume.
-                unsafe { state.consume_byte() };
-            } else {
-                // Escape may be required. Execute byte handler.
-                let byte_handler = BYTE_HANDLERS.0[escape as usize - 1];
-                byte_handler(self, &mut state);
-            }
-        }
-
-        // Flush any remaining bytes.
-        // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
-        unsafe { state.flush(self) };
-
-        // Print closing quote
-        state.quote.print(self);
-    }
-}
-
-/// Calculate optimum quote character to use, when backtick (`) is an option.
-fn calculate_quote_maybe_backtick(mut bytes: slice::Iter<'_, u8>) -> Quote {
-    // String length is max `u32::MAX`, so use `i64` to make overflow impossible
-    let mut single_cost: i64 = 0;
-    let mut double_cost: i64 = 0;
-    let mut backtick_cost: i64 = 0;
-    while let Some(b) = bytes.next() {
-        match b {
-            b'\n' => backtick_cost -= 1,
-            b'\'' => single_cost += 1,
-            b'"' => double_cost += 1,
-            b'`' => backtick_cost += 1,
-            b'$' => {
-                if bytes.clone().next() == Some(&b'{') {
-                    backtick_cost += 1;
+    /// Calculate optimum quote character to use, when backtick (`) is an option.
+    fn calculate_quote_maybe_backtick(&self) -> Quote {
+        // String length is max `u32::MAX`, so use `i64` to make overflow impossible
+        let mut single_cost: i64 = 0;
+        let mut double_cost: i64 = 0;
+        let mut backtick_cost: i64 = 0;
+        let mut bytes = self.bytes.clone();
+        while let Some(b) = bytes.next() {
+            match b {
+                b'\n' => backtick_cost -= 1,
+                b'\'' => single_cost += 1,
+                b'"' => double_cost += 1,
+                b'`' => backtick_cost += 1,
+                b'$' => {
+                    if bytes.clone().next() == Some(&b'{') {
+                        backtick_cost += 1;
+                    }
                 }
+                _ => {}
             }
-            _ => {}
         }
-    }
 
-    #[rustfmt::skip]
-    let quote = if double_cost >= backtick_cost {
-        if backtick_cost > single_cost {
+        #[rustfmt::skip]
+        let quote = if double_cost >= backtick_cost {
+            if backtick_cost > single_cost {
+                Quote::Single
+            } else {
+                Quote::Backtick
+            }
+        } else if double_cost > single_cost {
             Quote::Single
         } else {
-            Quote::Backtick
-        }
-    } else if double_cost > single_cost {
-        Quote::Single
-    } else {
-        Quote::Double
-    };
-    quote
-}
-
-/// Calculate optimum quote character to use, when backtick (`) is not an option.
-fn calculate_quote_no_backtick(bytes: slice::Iter<'_, u8>) -> Quote {
-    // String length is max `u32::MAX`, so `i64` cannot overflow
-    let mut single_cost: i64 = 0;
-    for &b in bytes {
-        match b {
-            b'\'' => single_cost += 1,
-            b'"' => single_cost -= 1,
-            _ => {}
-        }
+            Quote::Double
+        };
+        quote
     }
 
-    if single_cost < 0 { Quote::Single } else { Quote::Double }
+    /// Calculate optimum quote character to use, when backtick (`) is not an option.
+    fn calculate_quote_no_backtick(&self) -> Quote {
+        // String length is max `u32::MAX`, so `i64` cannot overflow
+        let mut single_cost: i64 = 0;
+        for &b in self.bytes.clone() {
+            match b {
+                b'\'' => single_cost += 1,
+                b'"' => single_cost -= 1,
+                _ => {}
+            }
+        }
+
+        if single_cost < 0 { Quote::Single } else { Quote::Double }
+    }
 }
 
 /// Convert `char` to UTF-8 bytes array.
