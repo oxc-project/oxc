@@ -147,6 +147,7 @@ impl PrintStringState<'_> {
     ///
     /// * There must be at least `N` more bytes in the `bytes` iterator.
     /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
+    #[inline]
     unsafe fn flush_and_consume_bytes<const N: usize>(&mut self, codegen: &mut Codegen) {
         self.flush(codegen);
 
@@ -188,12 +189,17 @@ impl PrintStringState<'_> {
         }
     }
 
-    /// Calculate what quote character to use, and print that quote.
+    /// Calculate optimum quote character to use, and print that quote (as opening quote).
+    ///
+    /// Actual logic in separate `calculate_quote_impl` method, so that `calculate_quote` itself
+    /// is inlined, to create a fast path for when `quote_is_unknown` is `false`.
+    #[inline]
     fn calculate_quote(&mut self, codegen: &mut Codegen) -> Quote {
-        if !self.quote_is_unknown {
-            return self.quote;
-        }
+        #[expect(clippy::if_not_else)]
+        if !self.quote_is_unknown { self.quote } else { self.calculate_quote_impl(codegen) }
+    }
 
+    fn calculate_quote_impl(&mut self, codegen: &mut Codegen) -> Quote {
         let quote = if self.allow_backtick {
             self.calculate_quote_maybe_backtick()
         } else {
@@ -347,6 +353,7 @@ type ByteHandler = fn(&mut Codegen, &mut PrintStringState);
 /// Byte handlers.
 ///
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
+/// Must be in same order as discriminants in `Escape`.
 static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_null,
     print_bell,
