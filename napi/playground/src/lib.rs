@@ -25,10 +25,10 @@ use oxc::{
     syntax::reference::Reference,
     transformer::{TransformOptions, Transformer},
 };
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_index::Idx;
 use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
-use oxc_prettier::{Prettier, PrettierOptions};
 
 use crate::options::{OxcOptions, OxcRunOptions};
 
@@ -47,8 +47,8 @@ pub struct Oxc {
     pub codegen_text: String,
     pub codegen_sourcemap_text: Option<String>,
     pub formatted_text: String,
-    pub prettier_formatted_text: String,
-    pub prettier_ir_text: String,
+    pub formatter_formatted_text: String,
+    pub formatter_ir_text: String,
     comments: Vec<Comment>,
     diagnostics: Vec<OxcDiagnostic>,
     source_text: String,
@@ -150,7 +150,7 @@ impl Oxc {
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
         self.run_linter(&run_options, &path, &program, &linter_module_record);
 
-        self.run_prettier(&run_options, &source_text, source_type);
+        self.run_formatter(&run_options, &source_text, source_type);
 
         let scoping = semantic.into_scoping();
 
@@ -273,33 +273,34 @@ impl Oxc {
         }
     }
 
-    fn run_prettier(
+    fn run_formatter(
         &mut self,
         run_options: &OxcRunOptions,
         source_text: &str,
         source_type: SourceType,
     ) {
         let allocator = Allocator::default();
-        if run_options.prettier_format.unwrap_or_default()
-            || run_options.prettier_ir.unwrap_or_default()
+        if run_options.formatter_format.unwrap_or_default()
+            || run_options.formatter_ir.unwrap_or_default()
         {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
                 .parse();
 
-            let mut prettier = Prettier::new(&allocator, PrettierOptions::default());
+            let mut formatter = Formatter::new(&allocator, FormatterOptions::default());
 
-            if run_options.prettier_format.unwrap_or_default() {
-                self.prettier_formatted_text = prettier.build(&ret.program);
+            if run_options.formatter_format.unwrap_or_default() {
+                self.formatter_formatted_text = formatter.build(&ret.program);
             }
 
-            if run_options.prettier_ir.unwrap_or_default() {
-                let prettier_doc = prettier.doc(&ret.program).to_string();
-                self.prettier_ir_text = {
-                    let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                    Prettier::new(&allocator, PrettierOptions::default()).build(&ret.program)
-                };
-            }
+            // if run_options.formatter_ir.unwrap_or_default() {
+            // let formatter_doc = formatter.doc(&ret.program).to_string();
+            // self.formatter_ir_text = {
+            // let ret =
+            // Parser::new(&allocator, &formatter_doc, SourceType::default()).parse();
+            // Formatter::new(&allocator, FormatterOptions::default()).build(&ret.program)
+            // };
+            // }
         }
     }
 

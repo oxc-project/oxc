@@ -22,7 +22,7 @@ fn main() {
         "parser" => args.run_parser(),
         "semantic" => args.run_semantic(),
         "codegen" => args.run_codegen(),
-        // "prettier" => args.run_prettier(),
+        "formatter" => args.run_formatter(),
         "transformer" => args.run_transformer(),
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),

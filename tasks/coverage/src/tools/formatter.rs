@@ -5,7 +5,7 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_prettier::{Prettier, PrettierOptions};
+use oxc_formatter::{Formatter, FormatterOptions};
 
 use crate::{
     babel::BabelCase,
@@ -17,18 +17,18 @@ use crate::{
 
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let options = PrettierOptions::default();
+    let options = FormatterOptions::default();
 
     let allocator = Allocator::default();
     let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ParserReturn { program, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
-    let source_text1 = Prettier::new(&allocator, options).build(&program);
+    let source_text1 = Formatter::new(&allocator, options).build(&program);
 
     let allocator = Allocator::default();
     let ParserReturn { program, .. } =
         Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
-    let source_text2 = Prettier::new(&allocator, options).build(&program);
+    let source_text2 = Formatter::new(&allocator, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed
@@ -37,11 +37,11 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     }
 }
 
-pub struct PrettierTest262Case {
+pub struct FormatterTest262Case {
     base: Test262Case,
 }
 
-impl Case for PrettierTest262Case {
+impl Case for FormatterTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: Test262Case::new(path, code) }
     }
@@ -71,11 +71,11 @@ impl Case for PrettierTest262Case {
     }
 }
 
-pub struct PrettierBabelCase {
+pub struct FormatterBabelCase {
     base: BabelCase,
 }
 
-impl Case for PrettierBabelCase {
+impl Case for FormatterBabelCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: BabelCase::new(path, code) }
     }
@@ -104,11 +104,11 @@ impl Case for PrettierBabelCase {
     }
 }
 
-pub struct PrettierTypeScriptCase {
+pub struct FormatterTypeScriptCase {
     base: TypeScriptCase,
 }
 
-impl Case for PrettierTypeScriptCase {
+impl Case for FormatterTypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: TypeScriptCase::new(path, code) }
     }
@@ -143,11 +143,11 @@ impl Case for PrettierTypeScriptCase {
     }
 }
 
-pub struct PrettierMiscCase {
+pub struct FormatterMiscCase {
     base: MiscCase,
 }
 
-impl Case for PrettierMiscCase {
+impl Case for FormatterMiscCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: MiscCase::new(path, code) }
     }

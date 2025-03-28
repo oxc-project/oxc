@@ -182,7 +182,7 @@ fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
     test_files
 }
 
-/// Run `oxc_prettier` and compare the output with the Prettier's snapshot
+/// Run `oxc_formatter` and compare the output with the Prettier's snapshot
 fn test_snapshots(
     dir: &Path,
     test_files: &Vec<PathBuf>,
@@ -219,7 +219,7 @@ fn test_snapshots(
             .unwrap();
 
             let actual = replace_escape_and_eol(
-                &run_oxc_prettier(
+                &run_oxc_formatter(
                     &source_text,
                     SourceType::from_path(path).unwrap(),
                     *prettier_options,
@@ -380,7 +380,7 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
     input
 }
 
-fn run_oxc_prettier(
+fn run_oxc_formatter(
     source_text: &str,
     source_type: SourceType,
     formatter_options: FormatterOptions,
