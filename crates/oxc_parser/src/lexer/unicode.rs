@@ -206,18 +206,21 @@ impl<'a> Lexer<'a> {
     ///   * `https://mathiasbynens.be/notes/javascript-identifiers-es6`
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
-        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
+        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF,
+        // and is called a high surrogate or a lead surrogate.
         let is_pair =
             (0xD800..=0xDBFF).contains(&high) && self.peek_2_bytes() == Some([b'\\', b'u']);
         if !is_pair {
             return Some(SurrogatePair::CodePoint(high));
         }
 
+        // We checked above that next 2 chars are `\u`
         self.consume_2_chars();
 
         let low = self.hex_4_digits()?;
 
-        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF, and is called a low surrogate or a trail surrogate.
+        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF,
+        // and is called a low surrogate or a trail surrogate.
         if !(0xDC00..=0xDFFF).contains(&low) {
             return Some(SurrogatePair::HighLow(high, low));
         }
