@@ -446,7 +446,7 @@ pub enum TrailingSeparator {
 }
 
 impl FormatTrailingCommas {
-    /// This function returns corresponding [TrailingSeparator] for [format_separated] function.
+    /// This function returns corresponding [TrailingSeparator] for `format_separated` function.
     pub fn trailing_separator(&self, options: &JsFormatOptions) -> TrailingSeparator {
         if options.trailing_commas.is_none() {
             return TrailingSeparator::Omit;
