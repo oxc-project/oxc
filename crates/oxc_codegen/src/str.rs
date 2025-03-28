@@ -33,10 +33,12 @@ impl Codegen<'_> {
         // Don't print opening quote now, because we don't know what it is yet.
         //
         // If not in `minify` mode, print the quote requested in options.
-        let quote = self.quote;
-        let quote_is_unknown = self.options.minify;
-        if !quote_is_unknown {
+        let quote = if self.options.minify {
+            None
+        } else {
+            let quote = self.quote;
             quote.print(self);
+            Some(quote)
         };
 
         // Loop through bytes, looking for any which need to be escaped.
@@ -46,7 +48,6 @@ impl Codegen<'_> {
             chunk_start: bytes.as_slice().as_ptr(),
             bytes,
             quote,
-            quote_is_unknown,
             lone_surrogates: s.lone_surrogates,
             allow_backtick,
         };
@@ -69,8 +70,10 @@ impl Codegen<'_> {
         // Flush any remaining bytes
         state.flush(self);
 
-        // Print closing quote
-        state.quote.print(self);
+        // Print closing quote.
+        // SAFETY: `flush` calls `calculate_quote` which ensures `state.quote` is `Some`.
+        let quote = unsafe { state.quote.unwrap_unchecked() };
+        quote.print(self);
     }
 }
 
@@ -81,8 +84,7 @@ impl Codegen<'_> {
 struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
-    quote: Quote,
-    quote_is_unknown: bool,
+    quote: Option<Quote>,
     lone_surrogates: bool,
     allow_backtick: bool,
 }
@@ -197,8 +199,7 @@ impl PrintStringState<'_> {
     /// is inlined, to create a fast path for when `quote_is_unknown` is `false`.
     #[inline]
     fn calculate_quote(&mut self, codegen: &mut Codegen) -> Quote {
-        #[expect(clippy::if_not_else)]
-        if !self.quote_is_unknown { self.quote } else { self.calculate_quote_impl(codegen) }
+        if let Some(quote) = self.quote { quote } else { self.calculate_quote_impl(codegen) }
     }
 
     fn calculate_quote_impl(&mut self, codegen: &mut Codegen) -> Quote {
@@ -210,8 +211,7 @@ impl PrintStringState<'_> {
 
         quote.print(codegen);
 
-        self.quote = quote;
-        self.quote_is_unknown = false;
+        self.quote = Some(quote);
 
         quote
     }
