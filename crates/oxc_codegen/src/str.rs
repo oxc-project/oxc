@@ -365,7 +365,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
 fn print_null(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\x00` is ASCII
     unsafe { codegen.flush_and_consume_byte(state) };
-    if state.bytes.clone().next().is_some_and(u8::is_ascii_digit) {
+    if state.peek().is_some_and(|b| b.is_ascii_digit()) {
         codegen.print_str("\\x00");
     } else {
         codegen.print_str("\\0");
@@ -403,10 +403,11 @@ fn print_form_field(codegen: &mut Codegen, state: &mut PrintStringState) {
 // \n
 fn print_new_line(codegen: &mut Codegen, state: &mut PrintStringState) {
     if codegen.calculate_quote(state) == Quote::Backtick {
-        // SAFETY: `\f` is ASCII
+        // No need to escape.
+        // SAFETY: `\n` is ASCII.
         unsafe { state.consume_byte() };
     } else {
-        // SAFETY: `\f` is ASCII
+        // SAFETY: `\n` is ASCII
         unsafe { codegen.flush_and_consume_byte(state) };
         codegen.print_str("\\n");
     }
@@ -440,7 +441,8 @@ fn print_single_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
         unsafe { codegen.flush_and_consume_byte(state) };
         codegen.print_str("\\'");
     } else {
-        // SAFETY: `'` is ASCII
+        // No need to escape.
+        // SAFETY: `'` is ASCII.
         unsafe { state.consume_byte() };
     }
 }
@@ -452,7 +454,8 @@ fn print_double_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
         unsafe { codegen.flush_and_consume_byte(state) };
         codegen.print_str("\\\"");
     } else {
-        // SAFETY: `"` is ASCII
+        // No need to escape.
+        // SAFETY: `"` is ASCII.
         unsafe { state.consume_byte() };
     }
 }
@@ -464,19 +467,23 @@ fn print_backtick(codegen: &mut Codegen, state: &mut PrintStringState) {
         unsafe { codegen.flush_and_consume_byte(state) };
         codegen.print_str("\\`");
     } else {
-        // SAFETY: ` is ASCII
+        // No need to escape.
+        // SAFETY: ` is ASCII.
         unsafe { state.consume_byte() };
     }
 }
 
 // $
 fn print_dollar(codegen: &mut Codegen, state: &mut PrintStringState) {
-    if state.bytes.clone().next().copied() == Some(b'{') {
+    // Note: Check next byte is `{` first, to avoid calculating quote unless have to
+    let next = state.bytes.as_slice().get(1);
+    if next == Some(&b'{') && codegen.calculate_quote(state) == Quote::Backtick {
         // SAFETY: `$` is ASCII
         unsafe { codegen.flush_and_consume_byte(state) };
         codegen.print_str("\\$");
     } else {
-        // SAFETY: `$` is ASCII
+        // No need to escape.
+        // SAFETY: `$` is ASCII.
         unsafe { state.consume_byte() };
     }
 }
@@ -494,7 +501,7 @@ fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
         LS_LAST_2_BYTES => "\\u2028",
         PS_LAST_2_BYTES => "\\u2029",
         _ => {
-            // Some other character starting with 0xE2.
+            // Some other character starting with 0xE2. Advance past it.
             // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
             unsafe { state.consume_bytes::<3>() };
             return;
