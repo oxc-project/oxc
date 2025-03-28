@@ -249,7 +249,10 @@ export async function activate(context: ExtensionContext) {
   configService.onConfigChange = function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
     updateStatsBar(this.config.enable);
-    client.sendNotification('workspace/didChangeConfiguration', { settings });
+
+    if (client.isRunning()) {
+      client.sendNotification('workspace/didChangeConfiguration', { settings });
+    }
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
@@ -257,10 +260,12 @@ export async function activate(context: ExtensionContext) {
         ? createFileEventWatchers(configService.config.configPath)
         : undefined;
 
-      client.restart().then(async () => {
-        const configFiles = await findOxlintrcConfigFiles();
-        await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-      });
+      if (client.isRunning()) {
+        client.restart().then(async () => {
+          const configFiles = await findOxlintrcConfigFiles();
+          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
+        });
+      }
     }
   };
 
