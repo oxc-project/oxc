@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, BindingPattern, BindingPatternKind, BindingRestElement, CallExpression,
-        Expression, FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
+        Expression, FormalParameter, FormalParameters, FunctionBody, MethodDefinition, Statement,
+        TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -151,13 +152,7 @@ fn lint_empty_constructor<'a>(
 
     // allow constructors with access modifiers since they actually declare
     // class members
-    if constructor
-        .value
-        .params
-        .items
-        .iter()
-        .any(|param| param.accessibility.is_some() || param.readonly)
-    {
+    if constructor.value.params.items.iter().any(FormalParameter::has_modifier) {
         return;
     }
 
