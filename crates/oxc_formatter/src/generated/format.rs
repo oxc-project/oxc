@@ -1,6 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter.rs`
 
+#![allow(clippy::undocumented_unsafe_blocks)]
 use oxc_allocator::Vec;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;

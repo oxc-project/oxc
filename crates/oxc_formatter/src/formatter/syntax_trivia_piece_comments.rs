@@ -1,7 +1,7 @@
 use super::{TextRange, TextSize};
 
 #[derive(Debug, Clone)]
-pub struct SyntaxTriviaPieceComments {}
+pub struct SyntaxTriviaPieceComments;
 
 impl SyntaxTriviaPieceComments {
     pub fn text(&self) -> &str {

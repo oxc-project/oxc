@@ -19,7 +19,7 @@ pub struct FormatState<'ast> {
     // pub printed_tokens: PrintedTokens,
 }
 
-impl<'a> std::fmt::Debug for FormatState<'a> {
+impl std::fmt::Debug for FormatState<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("FormatState").field("context", &self.context).finish()
     }
@@ -30,7 +30,7 @@ impl<'ast> FormatState<'ast> {
     pub fn new(program: &'ast Program<'ast>, context: FormatContext<'ast>) -> Self {
         Self {
             context,
-            group_id_builder: Default::default(),
+            group_id_builder: UniqueGroupIdBuilder::default(),
             stack: NonEmptyStack::new(AstKind::Program(program)),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
@@ -109,7 +109,7 @@ impl<'ast> FormatState<'ast> {
     }
 }
 
-impl<'a> FormatState<'a> {
+impl FormatState<'_> {
     pub fn snapshot(&self) -> FormatStateSnapshot {
         todo!()
         // FormatStateSnapshot {
@@ -118,7 +118,7 @@ impl<'a> FormatState<'a> {
         // }
     }
 
-    pub fn restore_snapshot(&mut self, snapshot: FormatStateSnapshot) {
+    pub fn restore_snapshot(&mut self, _snapshot: FormatStateSnapshot) {
         todo!()
         // let FormatStateSnapshot {
         // #[cfg(debug_assertions)]
@@ -133,7 +133,6 @@ impl<'a> FormatState<'a> {
     }
 }
 
-pub struct FormatStateSnapshot {
-    // #[cfg(debug_assertions)]
-    // printed_tokens: printed_tokens::PrintedTokensSnapshot,
-}
+pub struct FormatStateSnapshot;
+// #[cfg(debug_assertions)]
+// printed_tokens: printed_tokens::PrintedTokensSnapshot,

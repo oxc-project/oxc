@@ -63,7 +63,7 @@ pub trait MemoizeFormat<'a> {
     }
 }
 
-impl<'a, T> MemoizeFormat<'a> for T {}
+impl<T> MemoizeFormat<'_> for T {}
 
 /// Memoizes the output of its inner [Format] to avoid re-formatting a potential expensive object.
 #[derive(Debug)]

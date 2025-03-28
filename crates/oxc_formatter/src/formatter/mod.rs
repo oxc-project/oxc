@@ -715,7 +715,7 @@ impl<'a> Formatted<'a> {
     }
 }
 
-impl<'a> Formatted<'a> {
+impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
 
@@ -866,7 +866,7 @@ where
     }
 }
 
-impl<'ast> Format<'ast> for () {
+impl Format<'_> for () {
     #[inline]
     fn fmt(&self, _: &mut Formatter) -> FormatResult<()> {
         // Intentionally left empty
@@ -925,7 +925,7 @@ where
 // }
 // }
 
-impl<'ast, 'b, T, R> FormatWithRule<'ast> for FormatRefWithRule<'b, T, R>
+impl<T, R> FormatWithRule<'_> for FormatRefWithRule<'_, T, R>
 where
     R: FormatRule<T>,
 {
@@ -936,7 +936,7 @@ where
     }
 }
 
-impl<'b, T, R> Format<'_> for FormatRefWithRule<'b, T, R>
+impl<T, R> Format<'_> for FormatRefWithRule<'_, T, R>
 where
     R: FormatRule<T>,
 {
@@ -1040,50 +1040,4 @@ pub fn format<'ast>(
     document.propagate_expand();
 
     Ok(Formatted::new(document, state.into_context()))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::LineWidth;
-    use biome_deserialize::json::deserialize_from_json_str;
-    use biome_deserialize_macros::Deserializable;
-    use biome_diagnostics::Error;
-
-    #[test]
-    fn test_out_of_range_line_width() {
-        #[derive(Debug, Default, Deserializable, Eq, PartialEq)]
-        struct TestConfig {
-            line_width: LineWidth,
-        }
-
-        struct DiagnosticPrinter<'a> {
-            diagnostics: &'a [Error],
-        }
-
-        impl<'a> DiagnosticPrinter<'a> {
-            fn new(diagnostics: &'a [Error]) -> Self {
-                Self { diagnostics }
-            }
-        }
-
-        impl std::fmt::Display for DiagnosticPrinter<'_> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                for diagnostic in self.diagnostics {
-                    diagnostic.description(f)?;
-                }
-                Ok(())
-            }
-        }
-
-        let source = r#"{ "lineWidth": 500 }"#;
-        let deserialized = deserialize_from_json_str::<TestConfig>(source, Default::default(), "");
-        assert_eq!(
-            format!("{}", DiagnosticPrinter::new(deserialized.diagnostics())),
-            "The number should be an integer between 1 and 320."
-        );
-        assert_eq!(
-            deserialized.into_deserialized().unwrap(),
-            TestConfig { line_width: LineWidth(80) }
-        );
-    }
 }

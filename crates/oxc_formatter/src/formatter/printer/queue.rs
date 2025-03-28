@@ -23,7 +23,7 @@ pub(super) trait Queue<'a> {
     fn pop(&mut self) -> Option<&'a FormatElement> {
         match self.stack().top() {
             Some(top_slice) => {
-                // SAFETY: Safe because queue ensures that slices inside `slices` are never empty.
+                // Safe because queue ensures that slices inside `slices` are never empty.
                 let next_index = self.next_index();
                 let element = &top_slice[next_index];
 
@@ -321,43 +321,5 @@ impl FitsEndPredicate for SingleEntryPredicate {
         };
 
         Ok(result)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::FormatElement;
-    use crate::format_element::LineMode;
-    use crate::prelude::Tag;
-    use crate::printer::queue::{PrintQueue, Queue};
-
-    #[test]
-    fn extend_back_pop_last() {
-        let mut queue =
-            PrintQueue::new(&[FormatElement::Tag(Tag::StartEntry), FormatElement::Space]);
-
-        assert_eq!(queue.pop(), Some(&FormatElement::Tag(Tag::StartEntry)));
-
-        queue.extend_back(&[FormatElement::Line(LineMode::SoftOrSpace)]);
-
-        assert_eq!(queue.pop(), Some(&FormatElement::Line(LineMode::SoftOrSpace)));
-        assert_eq!(queue.pop(), Some(&FormatElement::Space));
-
-        assert_eq!(queue.pop(), None);
-    }
-
-    #[test]
-    fn extend_back_empty_queue() {
-        let mut queue =
-            PrintQueue::new(&[FormatElement::Tag(Tag::StartEntry), FormatElement::Space]);
-
-        assert_eq!(queue.pop(), Some(&FormatElement::Tag(Tag::StartEntry)));
-        assert_eq!(queue.pop(), Some(&FormatElement::Space));
-
-        queue.extend_back(&[FormatElement::Line(LineMode::SoftOrSpace)]);
-
-        assert_eq!(queue.pop(), Some(&FormatElement::Line(LineMode::SoftOrSpace)));
-
-        assert_eq!(queue.pop(), None);
     }
 }

@@ -9,6 +9,7 @@ use std::marker::PhantomData;
 /// This struct is similar to a dynamic dispatch (using `dyn Format`) because it stores a pointer to the value.
 /// However, it doesn't store the pointer to `dyn Format`'s vtable, instead it statically resolves the function
 /// pointer of `Format::format` and stores it in `formatter`.
+#[derive(Clone, Copy)]
 pub struct Argument<'fmt, 'ast> {
     /// The value to format stored as a raw pointer where `lifetime` stores the value's lifetime.
     value: *const c_void,
@@ -19,13 +20,6 @@ pub struct Argument<'fmt, 'ast> {
     /// The function pointer to `value`'s `Format::format` method
     formatter: fn(*const c_void, &mut Formatter<'_, 'ast>) -> FormatResult<()>,
 }
-
-impl Clone for Argument<'_, '_> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-impl Copy for Argument<'_, '_> {}
 
 impl<'fmt, 'ast> Argument<'fmt, 'ast> {
     /// Called by the [biome_formatter::format_args] macro. Creates a mono-morphed value for formatting
@@ -51,12 +45,12 @@ impl<'fmt, 'ast> Argument<'fmt, 'ast> {
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
-    pub(super) fn format<'buf>(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+    pub(super) fn format(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         (self.formatter)(self.value, f)
     }
 }
 
-impl<'buf, 'ast> Format<'ast> for Argument<'buf, 'ast> {
+impl<'ast> Format<'ast> for Argument<'_, 'ast> {
     #[inline(always)]
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         self.format(f)
@@ -83,6 +77,7 @@ impl<'buf, 'ast> Format<'ast> for Argument<'buf, 'ast> {
 /// # Ok(())
 /// # }
 /// ```
+#[derive(Clone, Copy)]
 pub struct Arguments<'fmt, 'ast>(pub &'fmt [Argument<'fmt, 'ast>]);
 
 impl<'fmt, 'ast> Arguments<'fmt, 'ast> {
@@ -96,14 +91,6 @@ impl<'fmt, 'ast> Arguments<'fmt, 'ast> {
     #[inline]
     pub fn items(&self) -> &'fmt [Argument<'fmt, 'ast>] {
         self.0
-    }
-}
-
-impl Copy for Arguments<'_, '_> {}
-
-impl Clone for Arguments<'_, '_> {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 
@@ -123,45 +110,5 @@ impl std::fmt::Debug for Arguments<'_, '_> {
 impl<'fmt, 'ast> From<&'fmt Argument<'fmt, 'ast>> for Arguments<'fmt, 'ast> {
     fn from(argument: &'fmt Argument<'fmt, 'ast>) -> Self {
         Arguments::new(std::slice::from_ref(argument))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::format_element::tag::Tag;
-    use crate::prelude::*;
-    use crate::{FormatState, VecBuffer, format_args, write};
-
-    #[test]
-    fn test_nesting() {
-        let mut context = FormatState::new(());
-        let mut buffer = VecBuffer::new(&mut context);
-
-        write!(
-            &mut buffer,
-            [
-                text("function"),
-                space(),
-                text("a"),
-                space(),
-                group(&format_args!(text("("), text(")")))
-            ]
-        )
-        .unwrap();
-
-        assert_eq!(
-            buffer.into_vec(),
-            vec![
-                FormatElement::StaticText { text: "function" },
-                FormatElement::Space,
-                FormatElement::StaticText { text: "a" },
-                FormatElement::Space,
-                // Group
-                FormatElement::Tag(Tag::StartGroup(tag::Group::new())),
-                FormatElement::StaticText { text: "(" },
-                FormatElement::StaticText { text: ")" },
-                FormatElement::Tag(Tag::EndGroup)
-            ]
-        );
     }
 }
