@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -106,7 +106,7 @@ impl Rule for NoAutofocus {
 
         if self.ignore_non_dom {
             if HTML_TAG.contains(&element_type) {
-                if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+                if let JSXAttributeItem::Attribute(attr) = autofocus {
                     ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                         fixer.delete(&attr.span)
                     });
@@ -115,7 +115,7 @@ impl Rule for NoAutofocus {
             return;
         }
 
-        if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+        if let JSXAttributeItem::Attribute(attr) = autofocus {
             ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                 fixer.delete(&attr.span)
             });

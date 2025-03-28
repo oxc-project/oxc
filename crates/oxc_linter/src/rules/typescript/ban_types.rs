@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::TSTypeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -63,8 +63,8 @@ impl Rule for BanTypes {
         match node.kind() {
             AstKind::TSTypeReference(ty) => {
                 let name = match &ty.type_name {
-                    oxc_ast::ast::TSTypeName::IdentifierReference(v) => &v.name,
-                    oxc_ast::ast::TSTypeName::QualifiedName(_) => return,
+                    TSTypeName::IdentifierReference(v) => &v.name,
+                    TSTypeName::QualifiedName(_) => return,
                 };
 
                 match name.as_str() {
