@@ -25,7 +25,7 @@ static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 /// `$table` must be a `SafeByteMatchTable`.
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
-    ($lexer:ident, $delimiter:expr_2021, $table:ident) => {{
+    ($lexer:ident, $delimiter:literal, $table:ident) => {{
         debug_assert!($delimiter.is_ascii());
 
         if $lexer.context == LexerContext::JsxAttributeValue {
@@ -37,7 +37,7 @@ macro_rules! handle_string_literal {
         // SAFETY: Caller guarantees next byte is ASCII, so safe to advance past it.
         let after_opening_quote = $lexer.source.position().add(1);
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of string
         let next_byte = byte_search! {
             lexer: $lexer,
             table: $table,
@@ -74,7 +74,7 @@ macro_rules! handle_string_literal {
 }
 
 macro_rules! handle_string_literal_escape {
-    ($lexer:ident, $delimiter:expr_2021, $table:ident, $after_opening_quote:ident) => {{
+    ($lexer:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {{
         // Create arena string to hold unescaped string.
         // We don't know how long string will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
