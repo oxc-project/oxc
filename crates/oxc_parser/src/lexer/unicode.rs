@@ -163,29 +163,29 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
+        let b = self.peek_byte()?;
+
         // Reduce instructions and remove 1 branch by comparing against `A-F` and `a-f` simultaneously
         // https://godbolt.org/z/9caMMzvP3
-        let value = if let Some(b) = self.peek_byte() {
-            if b.is_ascii_digit() {
-                b - b'0'
-            } else {
-                // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
-                // but leaves lowercase as they are
-                let lower_case = b | 32;
-                if matches!(lower_case, b'a'..=b'f') {
-                    lower_case + 10 - b'a'
-                } else {
-                    return None;
-                }
-            }
+        let value = if b.is_ascii_digit() {
+            b - b'0'
         } else {
-            return None;
+            // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
+            // but leaves lowercase as they are
+            let lower_case = b | 32;
+            if matches!(lower_case, b'a'..=b'f') {
+                lower_case + 10 - b'a'
+            } else {
+                return None;
+            }
         };
+
         // Because of `b | 32` above, compiler cannot deduce that next byte is definitely ASCII
         // so `next_byte_unchecked` is necessary to produce compact assembly, rather than `consume_char`.
         // SAFETY: This code is only reachable if there is a byte remaining, and it's ASCII.
         // Therefore it's safe to consume that byte, and will leave position on a UTF-8 char boundary.
         unsafe { self.source.next_byte_unchecked() };
+
         Some(u32::from(value))
     }
 
