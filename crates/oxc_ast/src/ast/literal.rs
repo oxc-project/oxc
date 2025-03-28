@@ -76,6 +76,7 @@ pub struct StringLiteral<'a> {
     /// The value of the string.
     ///
     /// Any escape sequences in the raw code are unescaped.
+    #[estree(via = StringLiteralValue)]
     pub value: Atom<'a>,
 
     /// The raw string as it appears in source code.

@@ -50,29 +50,15 @@ enum Run {
     #[default]
     OnType,
 }
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Options {
     run: Run,
-    config_path: String,
+    config_path: Option<String>,
     flags: FxHashMap<String, String>,
 }
 
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            run: Run::default(),
-            config_path: OXC_CONFIG_FILE.into(),
-            flags: FxHashMap::default(),
-        }
-    }
-}
-
 impl Options {
-    fn get_config_path(&self) -> Option<PathBuf> {
-        if self.config_path.is_empty() { None } else { Some(PathBuf::from(&self.config_path)) }
-    }
-
     fn disable_nested_configs(&self) -> bool {
         self.flags.contains_key("disable_nested_config")
     }
@@ -142,11 +128,8 @@ impl LanguageServer for Backend {
         *self.options.lock().await = changed_options.clone();
 
         // revalidate the config and all open files
-        if changed_options
-            .get_config_path()
-            .is_some_and(|path| path.to_str().unwrap() != current_option.config_path)
-        {
-            info!("config path change detected {:?}", &changed_options.get_config_path());
+        if changed_options.config_path != current_option.config_path {
+            info!("config path change detected {:?}", &changed_options.config_path);
             self.init_linter_config().await;
             self.revalidate_open_files().await;
         }
@@ -515,7 +498,7 @@ impl Backend {
         let Ok(root_path) = uri.to_file_path() else {
             return None;
         };
-        let relative_config_path = self.options.lock().await.get_config_path();
+        let relative_config_path = self.options.lock().await.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
             let config = root_path.join(relative_config_path.unwrap());
             config.try_exists().expect("Invalid config file path");

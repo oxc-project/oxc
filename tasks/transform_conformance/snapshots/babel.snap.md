@@ -1016,8 +1016,8 @@ Symbol scope ID mismatch for "a":
 after transform: SymbolId(0): ScopeId(2)
 rebuilt        : SymbolId(8): ScopeId(0)
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(0): [Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
-rebuilt        : SymbolId(8): [Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+after transform: SymbolId(0): [Span { start: 27, end: 28 }, Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+rebuilt        : SymbolId(8): [Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
 Symbol reference IDs mismatch for "b":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(5): []
@@ -1486,7 +1486,7 @@ Symbol flags mismatch for "Animals":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(0): [Span { start: 41, end: 48 }]
+after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["Cat", "Dog"]
@@ -1521,7 +1521,7 @@ Symbol flags mismatch for "Animals":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(2): [Span { start: 65, end: 72 }, Span { start: 92, end: 99 }]
+after transform: SymbolId(2): [Span { start: 38, end: 45 }, Span { start: 65, end: 72 }, Span { start: 92, end: 99 }]
 rebuilt        : SymbolId(2): []
 
 * enum/export/input.ts
@@ -1541,7 +1541,7 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 40, end: 41 }]
+after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
 
 * enum/inferred/input.ts
@@ -1613,7 +1613,7 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 40, end: 41 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
 
 * enum/outer-references/input.ts
@@ -1697,7 +1697,7 @@ Symbol reference IDs mismatch for "N":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 83, end: 84 }]
+after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(0): []
 
 * exports/declare-shadowed/input.ts
@@ -1885,7 +1885,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 13, end: 16 }
 rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 70, end: 73 }]
+after transform: SymbolId(0): [Span { start: 13, end: 16 }, Span { start: 70, end: 73 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo2":
 after transform: SymbolId(1): SymbolFlags(Function | TypeImport)
@@ -1894,7 +1894,7 @@ Symbol span mismatch for "Foo2":
 after transform: SymbolId(1): Span { start: 43, end: 47 }
 rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
 Symbol redeclarations mismatch for "Foo2":
-after transform: SymbolId(1): [Span { start: 87, end: 91 }]
+after transform: SymbolId(1): [Span { start: 43, end: 47 }, Span { start: 87, end: 91 }]
 rebuilt        : SymbolId(1): []
 
 * imports/import-type-not-removed/input.ts
@@ -1959,7 +1959,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 22, end: 23 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/clobber-enum/input.ts
@@ -1973,7 +1973,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 30, end: 31 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/clobber-export/input.ts
@@ -1981,7 +1981,7 @@ Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 35, end: 36 }]
+after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/contentious-names/input.ts
@@ -2374,7 +2374,7 @@ Symbol span mismatch for "N":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/mutable-fail/input.ts
@@ -2417,7 +2417,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 22, end: 23 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "C":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -2429,13 +2429,13 @@ Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(Function)
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(4): [Span { start: 129, end: 130 }]
+after transform: SymbolId(4): [Span { start: 110, end: 111 }, Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(6): []
 Symbol flags mismatch for "D":
 after transform: SymbolId(6): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(9): SymbolFlags(Function)
 Symbol redeclarations mismatch for "D":
-after transform: SymbolId(6): [Span { start: 207, end: 208 }]
+after transform: SymbolId(6): [Span { start: 181, end: 182 }, Span { start: 207, end: 208 }]
 rebuilt        : SymbolId(9): []
 Symbol flags mismatch for "H":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
@@ -2444,7 +2444,7 @@ Symbol flags mismatch for "F":
 after transform: SymbolId(12): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(14): SymbolFlags(Class)
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(12): [Span { start: 325, end: 326 }]
+after transform: SymbolId(12): [Span { start: 308, end: 309 }, Span { start: 325, end: 326 }]
 rebuilt        : SymbolId(14): []
 Symbol flags mismatch for "G":
 after transform: SymbolId(14): SymbolFlags(NameSpaceModule | ValueModule)
@@ -2540,7 +2540,7 @@ Symbol span mismatch for "N":
 after transform: SymbolId(3): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "N":
-after transform: SymbolId(3): [Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
+after transform: SymbolId(3): [Span { start: 59, end: 60 }, Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
 rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "_N":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)

@@ -100,8 +100,8 @@ impl<'a> SymbolTester<'a> {
     ) -> Self {
         let symbols_with_target_name: Option<SymbolId> = semantic
             .scoping()
-            .iter_bindings()
-            .find_map(|(_, bindings)| bindings.get(target).copied());
+            .symbol_ids()
+            .find(|&symbol_id| semantic.scoping().symbol_name(symbol_id) == target);
 
         let data = match symbols_with_target_name {
             Some(symbol_id) => Ok(symbol_id),
@@ -144,6 +144,25 @@ impl<'a> SymbolTester<'a> {
                 } else {
                     Err(OxcDiagnostic::error(format!(
                         "Expected {} to intersect with flags {:?}, but it had {:?}",
+                        self.target_symbol_name, flags, found_flags
+                    )))
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
+    /// Checks if the resolved symbol has exactly the flags in `flags`, using [`SymbolFlags::eq()`]
+    pub fn equal_flags(mut self, flags: SymbolFlags) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                let found_flags = self.semantic.scoping().symbol_flags(symbol_id);
+                if found_flags == flags {
+                    Ok(symbol_id)
+                } else {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {} to equal flags {:?}, but it is {:?}",
                         self.target_symbol_name, flags, found_flags
                     )))
                 }

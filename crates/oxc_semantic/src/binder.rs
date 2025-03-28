@@ -63,7 +63,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     if let Some(symbol_id) =
                         builder.check_redeclaration(scope_id, span, &name, excludes, true)
                     {
-                        builder.add_redeclare_variable(symbol_id, span);
+                        builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
                         // remove current scope binding and add to target scope

@@ -1126,12 +1126,14 @@ function deserializeNumericLiteral(pos) {
 }
 
 function deserializeStringLiteral(pos) {
+  const raw = deserializeOptionStr(pos + 24);
+  const lossy = deserializeBool(pos + 40);
   return {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeStr(pos + 8),
-    raw: deserializeOptionStr(pos + 24),
+    value: (lossy && raw !== null) ? (0, eval)(raw) : deserializeStr(pos + 8),
+    raw,
   };
 }
 

@@ -1056,7 +1056,7 @@ Symbol flags mismatch for "c5":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "c5":
-after transform: SymbolId(1): [Span { start: 55, end: 57 }]
+after transform: SymbolId(1): [Span { start: 24, end: 26 }, Span { start: 55, end: 57 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3b.ts
@@ -1085,7 +1085,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 29, end: 32 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/avoidCycleWithVoidExpressionReturnedFromArrow.ts
@@ -1559,7 +1559,7 @@ Symbol reference IDs mismatch for "maker":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
 Symbol redeclarations mismatch for "maker":
-after transform: SymbolId(1): [Span { start: 121, end: 126 }]
+after transform: SymbolId(1): [Span { start: 44, end: 49 }, Span { start: 121, end: 126 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/circularlySimplifyingConditionalTypesNoCrash.ts
@@ -1879,7 +1879,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(3): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(1): [Span { start: 41, end: 42 }]
+after transform: SymbolId(1): [Span { start: 21, end: 22 }, Span { start: 41, end: 42 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "D":
 after transform: SymbolId(2): SymbolFlags(Class | Interface)
@@ -1888,7 +1888,7 @@ Symbol span mismatch for "D":
 after transform: SymbolId(2): Span { start: 61, end: 62 }
 rebuilt        : SymbolId(4): Span { start: 77, end: 78 }
 Symbol redeclarations mismatch for "D":
-after transform: SymbolId(2): [Span { start: 77, end: 78 }]
+after transform: SymbolId(2): [Span { start: 61, end: 62 }, Span { start: 77, end: 78 }]
 rebuilt        : SymbolId(4): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
@@ -1897,13 +1897,13 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(3): Span { start: 96, end: 99 }
 rebuilt        : SymbolId(5): Span { start: 129, end: 132 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(3): [Span { start: 129, end: 132 }]
+after transform: SymbolId(3): [Span { start: 96, end: 99 }, Span { start: 129, end: 132 }]
 rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(6): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(6): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Bar":
-after transform: SymbolId(6): [Span { start: 197, end: 200 }]
+after transform: SymbolId(6): [Span { start: 161, end: 164 }, Span { start: 197, end: 200 }]
 rebuilt        : SymbolId(6): []
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
@@ -1923,7 +1923,7 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 63, end: 66 }]
+after transform: SymbolId(0): [Span { start: 6, end: 9 }, Span { start: 63, end: 66 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleGenericOnSelfMember.ts
@@ -1937,7 +1937,7 @@ Symbol reference IDs mismatch for "Service":
 after transform: SymbolId(2): [ReferenceId(2), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(2): [ReferenceId(4), ReferenceId(5)]
 Symbol redeclarations mismatch for "Service":
-after transform: SymbolId(2): [Span { start: 108, end: 115 }]
+after transform: SymbolId(2): [Span { start: 45, end: 52 }, Span { start: 108, end: 115 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleTest1.ts
@@ -1977,7 +1977,7 @@ Symbol span mismatch for "Moclodule":
 after transform: SymbolId(0): Span { start: 47, end: 56 }
 rebuilt        : SymbolId(0): Span { start: 132, end: 141 }
 Symbol redeclarations mismatch for "Moclodule":
-after transform: SymbolId(0): [Span { start: 132, end: 141 }, Span { start: 178, end: 187 }]
+after transform: SymbolId(0): [Span { start: 47, end: 56 }, Span { start: 132, end: 141 }, Span { start: 178, end: 187 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleWithRecursiveReference.ts
@@ -2834,7 +2834,7 @@ Symbol span mismatch for "multiM":
 after transform: SymbolId(0): Span { start: 49, end: 55 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "multiM":
-after transform: SymbolId(0): [Span { start: 153, end: 159 }]
+after transform: SymbolId(0): [Span { start: 49, end: 55 }, Span { start: 153, end: 159 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/commentsMultiModuleSingleFile.ts
@@ -2851,7 +2851,7 @@ Symbol span mismatch for "multiM":
 after transform: SymbolId(0): Span { start: 42, end: 48 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "multiM":
-after transform: SymbolId(0): [Span { start: 176, end: 182 }]
+after transform: SymbolId(0): [Span { start: 42, end: 48 }, Span { start: 176, end: 182 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/commentsOnJSXExpressionsArePreserved.tsx
@@ -3342,7 +3342,7 @@ Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 25, end: 28 }]
+after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 25, end: 28 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(ConstEnum)
@@ -3359,7 +3359,7 @@ Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 20, end: 23 }]
+after transform: SymbolId(0): [Span { start: 6, end: 9 }, Span { start: 20, end: 23 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(ConstEnum)
@@ -3382,7 +3382,7 @@ Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 22, end: 25 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 22, end: 25 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(2): SymbolFlags(ConstEnum)
@@ -3402,7 +3402,7 @@ Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 7, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 46, end: 49 }]
+after transform: SymbolId(0): [Span { start: 7, end: 10 }, Span { start: 46, end: 49 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(ConstEnum)
@@ -3634,7 +3634,7 @@ Symbol reference IDs mismatch for "Enum1":
 after transform: SymbolId(0): [ReferenceId(23), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(50), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(55), ReferenceId(56), ReferenceId(57), ReferenceId(58), ReferenceId(59), ReferenceId(60), ReferenceId(61), ReferenceId(62), ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(68), ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(149), ReferenceId(209), ReferenceId(210)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(67), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(186), ReferenceId(187), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(194), ReferenceId(195), ReferenceId(196), ReferenceId(197), ReferenceId(198), ReferenceId(199), ReferenceId(200), ReferenceId(201), ReferenceId(202), ReferenceId(203), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(208)]
 Symbol redeclarations mismatch for "Enum1":
-after transform: SymbolId(0): [Span { start: 46, end: 51 }]
+after transform: SymbolId(0): [Span { start: 11, end: 16 }, Span { start: 46, end: 51 }]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "Enum1":
 after transform: SymbolId(92): [ReferenceId(150), ReferenceId(151), ReferenceId(152), ReferenceId(153), ReferenceId(154), ReferenceId(155), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(160), ReferenceId(161), ReferenceId(162), ReferenceId(163), ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(168), ReferenceId(169), ReferenceId(170), ReferenceId(171), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(175), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(180), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(186), ReferenceId(187), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(194), ReferenceId(195), ReferenceId(196), ReferenceId(197), ReferenceId(198), ReferenceId(199), ReferenceId(200), ReferenceId(201), ReferenceId(202), ReferenceId(203), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(208)]
@@ -3652,7 +3652,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(39): Span { start: 717, end: 718 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(39): [Span { start: 905, end: 906 }]
+after transform: SymbolId(39): [Span { start: 717, end: 718 }, Span { start: 905, end: 906 }]
 rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "B":
 after transform: SymbolId(40): SymbolFlags(NameSpaceModule | ValueModule)
@@ -3718,7 +3718,7 @@ Symbol span mismatch for "C":
 after transform: SymbolId(58): Span { start: 1341, end: 1342 }
 rebuilt        : SymbolId(30): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(58): [Span { start: 1524, end: 1525 }]
+after transform: SymbolId(58): [Span { start: 1341, end: 1342 }, Span { start: 1524, end: 1525 }]
 rebuilt        : SymbolId(30): []
 Symbol reference IDs mismatch for "I":
 after transform: SymbolId(63): [ReferenceId(35), ReferenceId(37), ReferenceId(39)]
@@ -3939,7 +3939,7 @@ Symbol reference IDs mismatch for "propName":
 after transform: SymbolId(11): [ReferenceId(13), ReferenceId(14), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
 Symbol redeclarations mismatch for "propName":
-after transform: SymbolId(11): [Span { start: 551, end: 569 }]
+after transform: SymbolId(11): [Span { start: 526, end: 534 }, Span { start: 551, end: 569 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/contextualExpressionTypecheckingDoesntBlowStack.ts
@@ -5131,7 +5131,7 @@ Symbol span mismatch for "m2":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 229, end: 322 }
 Symbol redeclarations mismatch for "m2":
-after transform: SymbolId(0): [Span { start: 229, end: 322 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 229, end: 322 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["m2", "module"]
@@ -5591,7 +5591,7 @@ Symbol span mismatch for "X":
 after transform: SymbolId(4): Span { start: 82, end: 83 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(4): [Span { start: 172, end: 173 }]
+after transform: SymbolId(4): [Span { start: 82, end: 83 }, Span { start: 172, end: 173 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "Y":
 after transform: SymbolId(5): SymbolFlags(NameSpaceModule | ValueModule)
@@ -5864,7 +5864,7 @@ Symbol reference IDs mismatch for "bar":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "bar":
-after transform: SymbolId(0): [Span { start: 26, end: 29 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 26, end: 29 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declInput3.ts
@@ -6154,7 +6154,7 @@ Symbol reference IDs mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "TranslationKeyEnum":
-after transform: SymbolId(1): [Span { start: 198, end: 216 }]
+after transform: SymbolId(1): [Span { start: 129, end: 147 }, Span { start: 198, end: 216 }]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "Translation":
 after transform: SymbolId(0) "Translation"
@@ -6188,7 +6188,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(6), ReferenceId(13), ReferenceId(14), ReferenceId(15)]
 rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5)]
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(0): [Span { start: 171, end: 176 }]
+after transform: SymbolId(0): [Span { start: 17, end: 22 }, Span { start: 171, end: 176 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Rect":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Interface)
@@ -6200,7 +6200,7 @@ Symbol reference IDs mismatch for "Rect":
 after transform: SymbolId(1): [ReferenceId(9)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "Rect":
-after transform: SymbolId(1): [Span { start: 237, end: 241 }]
+after transform: SymbolId(1): [Span { start: 93, end: 97 }, Span { start: 237, end: 241 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitExportAliasVisibiilityMarking.ts
@@ -6372,7 +6372,7 @@ Symbol reference IDs mismatch for "F":
 after transform: SymbolId(62): [ReferenceId(159), ReferenceId(161), ReferenceId(170), ReferenceId(176), ReferenceId(185), ReferenceId(191), ReferenceId(200), ReferenceId(210), ReferenceId(216), ReferenceId(225), ReferenceId(233), ReferenceId(234)]
 rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(62): [Span { start: 2610, end: 2631 }]
+after transform: SymbolId(62): [Span { start: 2588, end: 2589 }, Span { start: 2610, end: 2631 }]
 rebuilt        : SymbolId(4): []
 Symbol flags mismatch for "F":
 after transform: SymbolId(90): SymbolFlags(FunctionScopedVariable | TypeParameter)
@@ -6384,7 +6384,7 @@ Symbol reference IDs mismatch for "F":
 after transform: SymbolId(90): [ReferenceId(242), ReferenceId(244), ReferenceId(250), ReferenceId(256), ReferenceId(265), ReferenceId(271), ReferenceId(277), ReferenceId(287), ReferenceId(293), ReferenceId(299), ReferenceId(308)]
 rebuilt        : SymbolId(11): [ReferenceId(11)]
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(90): [Span { start: 3354, end: 3375 }]
+after transform: SymbolId(90): [Span { start: 3332, end: 3333 }, Span { start: 3354, end: 3375 }]
 rebuilt        : SymbolId(11): []
 Reference symbol mismatch for "dual":
 after transform: SymbolId(58) "dual"
@@ -6443,7 +6443,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 25, end: 26 }
 rebuilt        : SymbolId(2): Span { start: 78, end: 79 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 78, end: 79 }]
+after transform: SymbolId(0): [Span { start: 25, end: 26 }, Span { start: 78, end: 79 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "Y":
 after transform: SymbolId(3): SymbolFlags(Class | NameSpaceModule | Ambient)
@@ -6452,7 +6452,7 @@ Symbol span mismatch for "Y":
 after transform: SymbolId(3): Span { start: 128, end: 129 }
 rebuilt        : SymbolId(3): Span { start: 149, end: 150 }
 Symbol redeclarations mismatch for "Y":
-after transform: SymbolId(3): [Span { start: 149, end: 150 }]
+after transform: SymbolId(3): [Span { start: 128, end: 129 }, Span { start: 149, end: 150 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypeDistributivityPreservesConstraints.ts
@@ -6482,7 +6482,7 @@ Symbol reference IDs mismatch for "Color":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "Color":
-after transform: SymbolId(0): [Span { start: 100, end: 105 }]
+after transform: SymbolId(0): [Span { start: 13, end: 18 }, Span { start: 100, end: 105 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["const"]
@@ -6622,7 +6622,7 @@ Symbol flags mismatch for "ExpandoMerge":
 after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "ExpandoMerge":
-after transform: SymbolId(0): [Span { start: 71, end: 83 }]
+after transform: SymbolId(0): [Span { start: 19, end: 31 }, Span { start: 71, end: 83 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks1.ts
@@ -7085,7 +7085,7 @@ Symbol span mismatch for "m2":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
 Symbol redeclarations mismatch for "m2":
-after transform: SymbolId(0): [Span { start: 230, end: 323 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 230, end: 323 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["m2", "module"]
@@ -7188,7 +7188,7 @@ Symbol span mismatch for "m2":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
 Symbol redeclarations mismatch for "m2":
-after transform: SymbolId(0): [Span { start: 230, end: 323 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 230, end: 323 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["m2", "module"]
@@ -7205,7 +7205,7 @@ Symbol span mismatch for "m2":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(1): Span { start: 238, end: 331 }
 Symbol redeclarations mismatch for "m2":
-after transform: SymbolId(0): [Span { start: 238, end: 331 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 238, end: 331 }]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["m2", "module"]
@@ -7453,7 +7453,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 5, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 32, end: 35 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 32, end: 35 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 32, end: 35 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType2.ts
@@ -7470,7 +7470,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 5, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 25, end: 28 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 25, end: 28 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 25, end: 28 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType3.ts
@@ -7487,7 +7487,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 30, end: 33 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 30, end: 33 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 30, end: 33 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType4.ts
@@ -7504,7 +7504,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 23, end: 26 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 23, end: 26 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 23, end: 26 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultParameterAddsUndefinedWithStrictNullChecks.ts
@@ -8161,13 +8161,13 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 117, end: 120 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 117, end: 120 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(6): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Bar":
-after transform: SymbolId(6): [Span { start: 235, end: 238 }]
+after transform: SymbolId(6): [Span { start: 198, end: 201 }, Span { start: 235, end: 238 }]
 rebuilt        : SymbolId(4): []
 
 tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreMappedTypes.ts
@@ -8249,7 +8249,7 @@ Symbol span mismatch for "F":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(0): [Span { start: 50, end: 51 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 50, end: 51 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
@@ -8258,7 +8258,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(3): Span { start: 126, end: 129 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(3): [Span { start: 171, end: 174 }]
+after transform: SymbolId(3): [Span { start: 126, end: 129 }, Span { start: 171, end: 174 }]
 rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "Gar":
 after transform: SymbolId(6): SymbolFlags(NameSpaceModule | ValueModule)
@@ -8273,7 +8273,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(7): Span { start: 266, end: 269 }
 rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(7): [Span { start: 327, end: 330 }]
+after transform: SymbolId(7): [Span { start: 266, end: 269 }, Span { start: 327, end: 330 }]
 rebuilt        : SymbolId(12): []
 
 tasks/coverage/typescript/tests/cases/compiler/duplicateConstructSignature.ts
@@ -8338,7 +8338,7 @@ Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(0): [Span { start: 73, end: 74 }]
+after transform: SymbolId(0): [Span { start: 50, end: 51 }, Span { start: 73, end: 74 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["M"]
@@ -8892,7 +8892,7 @@ Symbol span mismatch for "E":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/errorConstructorSubtypes.ts
@@ -10725,7 +10725,7 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 82, end: 83 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 82, end: 83 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
@@ -11268,7 +11268,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 44, end: 47 }]
+after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 44, end: 47 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNullishProperty.ts
@@ -11303,7 +11303,7 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 37, end: 40 }]
+after transform: SymbolId(0): [Span { start: 6, end: 9 }, Span { start: 37, end: 40 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
@@ -11320,7 +11320,7 @@ Symbol span mismatch for "server":
 after transform: SymbolId(2): Span { start: 82, end: 88 }
 rebuilt        : SymbolId(1): Span { start: 152, end: 158 }
 Symbol redeclarations mismatch for "server":
-after transform: SymbolId(2): [Span { start: 152, end: 158 }]
+after transform: SymbolId(2): [Span { start: 82, end: 88 }, Span { start: 152, end: 158 }]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["Date", "http", "module"]
@@ -11475,7 +11475,7 @@ Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 84, end: 85 }]
+after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 84, end: 85 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty2.ts
@@ -11486,7 +11486,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 121, end: 122 }]
+after transform: SymbolId(0): [Span { start: 83, end: 84 }, Span { start: 121, end: 122 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultVariable.ts
@@ -11514,7 +11514,7 @@ Symbol reference IDs mismatch for "server":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol redeclarations mismatch for "server":
-after transform: SymbolId(0): [Span { start: 77, end: 83 }, Span { start: 149, end: 155 }]
+after transform: SymbolId(0): [Span { start: 15, end: 21 }, Span { start: 77, end: 83 }, Span { start: 149, end: 155 }]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["Date", "Object", "module"]
@@ -11545,7 +11545,7 @@ Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 84, end: 85 }]
+after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 84, end: 85 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
@@ -11556,7 +11556,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 116, end: 117 }]
+after transform: SymbolId(0): [Span { start: 78, end: 79 }, Span { start: 116, end: 117 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportImport.ts
@@ -11605,7 +11605,7 @@ Symbol span mismatch for "MsPortalFx":
 after transform: SymbolId(0): Span { start: 7, end: 17 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "MsPortalFx":
-after transform: SymbolId(0): [Span { start: 526, end: 536 }]
+after transform: SymbolId(0): [Span { start: 7, end: 17 }, Span { start: 526, end: 536 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "ViewModels":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -11700,7 +11700,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 73, end: 76 }]
+after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 73, end: 76 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndExportedMemberDeclaration.ts
@@ -11825,7 +11825,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 104, end: 105 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 104, end: 105 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "N":
 after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
@@ -12257,7 +12257,7 @@ Symbol reference IDs mismatch for "f":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 26, end: 27 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/functionExpressionAndLambdaMatchesFunction.ts
@@ -12308,7 +12308,7 @@ Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 56, end: 59 }, Span { start: 108, end: 111 }]
+after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 56, end: 59 }, Span { start: 108, end: 111 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
@@ -13172,7 +13172,7 @@ Symbol reference IDs mismatch for "C":
 after transform: SymbolId(4): [ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(5), ReferenceId(6)]
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(4): [Span { start: 100, end: 101 }]
+after transform: SymbolId(4): [Span { start: 66, end: 67 }, Span { start: 100, end: 101 }]
 rebuilt        : SymbolId(4): []
 Unresolved references mismatch:
 after transform: ["M"]
@@ -13201,7 +13201,7 @@ Symbol reference IDs mismatch for "C":
 after transform: SymbolId(4): [ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(5), ReferenceId(6)]
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(4): [Span { start: 100, end: 101 }]
+after transform: SymbolId(4): [Span { start: 66, end: 67 }, Span { start: 100, end: 101 }]
 rebuilt        : SymbolId(4): []
 Symbol flags mismatch for "N":
 after transform: SymbolId(7): SymbolFlags(NameSpaceModule | ValueModule)
@@ -13449,7 +13449,7 @@ Symbol reference IDs mismatch for "a1":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(111)]
 rebuilt        : SymbolId(4): [ReferenceId(3)]
 Symbol redeclarations mismatch for "a1":
-after transform: SymbolId(1): [Span { start: 724, end: 731 }]
+after transform: SymbolId(1): [Span { start: 18, end: 20 }, Span { start: 724, end: 731 }]
 rebuilt        : SymbolId(4): []
 
 tasks/coverage/typescript/tests/cases/compiler/getAccessorWithImpliedReturnTypeAndFunctionClassMerge.ts
@@ -13769,7 +13769,7 @@ Symbol reference IDs mismatch for "MyFunction":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 Symbol redeclarations mismatch for "MyFunction":
-after transform: SymbolId(0): [Span { start: 52, end: 62 }]
+after transform: SymbolId(0): [Span { start: 10, end: 20 }, Span { start: 52, end: 62 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpers.ts
@@ -13959,7 +13959,7 @@ Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 7, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 48, end: 51 }
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 48, end: 51 }]
+after transform: SymbolId(0): [Span { start: 7, end: 10 }, Span { start: 48, end: 51 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["m1"]
@@ -15092,7 +15092,7 @@ Symbol reference IDs mismatch for "B":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(5), ReferenceId(7)]
 rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 136, end: 137 }]
+after transform: SymbolId(1): [Span { start: 30, end: 31 }, Span { start: 136, end: 137 }]
 rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["A"]
@@ -15179,7 +15179,7 @@ Symbol reference IDs mismatch for "B":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 129, end: 130 }]
+after transform: SymbolId(1): [Span { start: 23, end: 24 }, Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["A"]
@@ -15211,7 +15211,7 @@ Symbol span mismatch for "B":
 after transform: SymbolId(1): Span { start: 30, end: 31 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 134, end: 135 }]
+after transform: SymbolId(1): [Span { start: 30, end: 31 }, Span { start: 134, end: 135 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces5.ts
@@ -15259,7 +15259,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(1): Span { start: 149, end: 152 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 149, end: 152 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 149, end: 152 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceClassMerging2.ts
@@ -15276,7 +15276,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(1): Span { start: 89, end: 92 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 89, end: 92 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 89, end: 92 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
@@ -15285,7 +15285,7 @@ Symbol span mismatch for "Bar":
 after transform: SymbolId(1): Span { start: 194, end: 197 }
 rebuilt        : SymbolId(2): Span { start: 273, end: 276 }
 Symbol redeclarations mismatch for "Bar":
-after transform: SymbolId(1): [Span { start: 273, end: 276 }]
+after transform: SymbolId(1): [Span { start: 194, end: 197 }, Span { start: 273, end: 276 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceContextualType.ts
@@ -15307,7 +15307,7 @@ Symbol span mismatch for "I2":
 after transform: SymbolId(1): Span { start: 42, end: 44 }
 rebuilt        : SymbolId(0): Span { start: 55, end: 57 }
 Symbol redeclarations mismatch for "I2":
-after transform: SymbolId(1): [Span { start: 55, end: 57 }]
+after transform: SymbolId(1): [Span { start: 42, end: 44 }, Span { start: 55, end: 57 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "I3":
 after transform: SymbolId(2): SymbolFlags(Function | Interface)
@@ -15316,7 +15316,7 @@ Symbol span mismatch for "I3":
 after transform: SymbolId(2): Span { start: 73, end: 75 }
 rebuilt        : SymbolId(1): Span { start: 89, end: 91 }
 Symbol redeclarations mismatch for "I3":
-after transform: SymbolId(2): [Span { start: 89, end: 91 }]
+after transform: SymbolId(2): [Span { start: 73, end: 75 }, Span { start: 89, end: 91 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "I4":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Interface)
@@ -15325,7 +15325,7 @@ Symbol span mismatch for "I4":
 after transform: SymbolId(3): Span { start: 109, end: 111 }
 rebuilt        : SymbolId(2): Span { start: 120, end: 129 }
 Symbol redeclarations mismatch for "I4":
-after transform: SymbolId(3): [Span { start: 120, end: 129 }]
+after transform: SymbolId(3): [Span { start: 109, end: 111 }, Span { start: 120, end: 129 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration5.ts
@@ -15659,7 +15659,7 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 38, end: 39 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 38, end: 39 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleNotReferencingInstanceNoConflict.ts
@@ -15967,7 +15967,7 @@ Symbol span mismatch for "schema":
 after transform: SymbolId(0): Span { start: 25, end: 31 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "schema":
-after transform: SymbolId(0): [Span { start: 168, end: 174 }, Span { start: 309, end: 315 }, Span { start: 464, end: 470 }, Span { start: 613, end: 619 }, Span { start: 756, end: 762 }, Span { start: 908, end: 914 }, Span { start: 1055, end: 1061 }, Span { start: 1187, end: 1193 }]
+after transform: SymbolId(0): [Span { start: 25, end: 31 }, Span { start: 168, end: 174 }, Span { start: 309, end: 315 }, Span { start: 464, end: 470 }, Span { start: 613, end: 619 }, Span { start: 756, end: 762 }, Span { start: 908, end: 914 }, Span { start: 1055, end: 1061 }, Span { start: 1187, end: 1193 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["Array", "undefined"]
@@ -16388,7 +16388,7 @@ Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 106, end: 107 }]
+after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 106, end: 107 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxMultilineAttributeValuesReact.tsx
@@ -16963,7 +16963,7 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["a"]
@@ -16993,7 +16993,7 @@ Symbol span mismatch for "X":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 163, end: 164 }]
+after transform: SymbolId(0): [Span { start: 14, end: 15 }, Span { start: 163, end: 164 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Y":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17031,7 +17031,7 @@ Symbol span mismatch for "my":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "my":
-after transform: SymbolId(0): [Span { start: 60, end: 62 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 60, end: 62 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "data":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17075,7 +17075,7 @@ Symbol span mismatch for "my":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "my":
-after transform: SymbolId(0): [Span { start: 56, end: 58 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 56, end: 58 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "data":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17140,7 +17140,7 @@ Symbol span mismatch for "my":
 after transform: SymbolId(2): Span { start: 72, end: 74 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "my":
-after transform: SymbolId(2): [Span { start: 202, end: 204 }]
+after transform: SymbolId(2): [Span { start: 72, end: 74 }, Span { start: 202, end: 204 }]
 rebuilt        : SymbolId(4): []
 Symbol flags mismatch for "buz":
 after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17457,7 +17457,7 @@ Symbol span mismatch for "My":
 after transform: SymbolId(1): Span { start: 30, end: 32 }
 rebuilt        : SymbolId(2): Span { start: 84, end: 86 }
 Symbol redeclarations mismatch for "My":
-after transform: SymbolId(1): [Span { start: 84, end: 86 }]
+after transform: SymbolId(1): [Span { start: 30, end: 32 }, Span { start: 84, end: 86 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "B":
 after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17472,7 +17472,7 @@ Symbol span mismatch for "My":
 after transform: SymbolId(5): Span { start: 135, end: 137 }
 rebuilt        : SymbolId(6): Span { start: 218, end: 220 }
 Symbol redeclarations mismatch for "My":
-after transform: SymbolId(5): [Span { start: 218, end: 220 }]
+after transform: SymbolId(5): [Span { start: 135, end: 137 }, Span { start: 218, end: 220 }]
 rebuilt        : SymbolId(6): []
 Symbol flags mismatch for "C":
 after transform: SymbolId(9): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17948,7 +17948,7 @@ Symbol span mismatch for "TypeScript":
 after transform: SymbolId(0): Span { start: 7, end: 17 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "TypeScript":
-after transform: SymbolId(0): [Span { start: 146, end: 156 }, Span { start: 535, end: 545 }, Span { start: 879, end: 889 }]
+after transform: SymbolId(0): [Span { start: 7, end: 17 }, Span { start: 146, end: 156 }, Span { start: 535, end: 545 }, Span { start: 879, end: 889 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Parser":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -17989,7 +17989,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 101, end: 102 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 227, end: 228 }]
+after transform: SymbolId(0): [Span { start: 101, end: 102 }, Span { start: 227, end: 228 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleMergeConstructor.ts
@@ -18048,7 +18048,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleReopenedTypeOtherBlock.ts
@@ -18068,7 +18068,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 82, end: 83 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 82, end: 83 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["I"]
@@ -18091,7 +18091,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 40, end: 41 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirective.ts
@@ -18433,7 +18433,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(5): Span { start: 95, end: 96 }
 rebuilt        : SymbolId(9): Span { start: 112, end: 113 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(5): [Span { start: 112, end: 113 }]
+after transform: SymbolId(5): [Span { start: 95, end: 96 }, Span { start: 112, end: 113 }]
 rebuilt        : SymbolId(9): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt6.ts
@@ -18628,7 +18628,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 43, end: 44 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 43, end: 44 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/namedFunctionExpressionInModule.ts
@@ -19287,7 +19287,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | Ambient)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(1): [Span { start: 61, end: 64 }]
+after transform: SymbolId(1): [Span { start: 22, end: 25 }, Span { start: 61, end: 64 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
@@ -20298,7 +20298,7 @@ Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 59, end: 62 }
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 59, end: 62 }]
+after transform: SymbolId(0): [Span { start: 15, end: 18 }, Span { start: 59, end: 62 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientFundule.ts
@@ -20312,7 +20312,7 @@ Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 62, end: 65 }
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 62, end: 65 }]
+after transform: SymbolId(0): [Span { start: 15, end: 18 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/partiallyDiscriminantedUnions.ts
@@ -20585,7 +20585,7 @@ Symbol span mismatch for "Q":
 after transform: SymbolId(3): Span { start: 92, end: 93 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Q":
-after transform: SymbolId(3): [Span { start: 190, end: 191 }]
+after transform: SymbolId(3): [Span { start: 92, end: 93 }, Span { start: 190, end: 191 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckCallbackOfInterfaceMethodWithTypeParameter.ts
@@ -20610,7 +20610,7 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 59, end: 62 }, Span { start: 74, end: 107 }]
+after transform: SymbolId(0): [Span { start: 7, end: 10 }, Span { start: 59, end: 62 }, Span { start: 74, end: 107 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface2.ts
@@ -22842,7 +22842,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 14, end: 17 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 56, end: 59 }]
+after transform: SymbolId(0): [Span { start: 14, end: 17 }, Span { start: 56, end: 59 }]
 rebuilt        : SymbolId(0): []
 Unresolved reference IDs mismatch for "C":
 after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6)]
@@ -23038,7 +23038,7 @@ Symbol span mismatch for "Sizing":
 after transform: SymbolId(0): Span { start: 12, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 39, end: 45 }
 Symbol redeclarations mismatch for "Sizing":
-after transform: SymbolId(0): [Span { start: 39, end: 45 }]
+after transform: SymbolId(0): [Span { start: 12, end: 18 }, Span { start: 39, end: 45 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/reexportWrittenCorrectlyInDeclaration.ts
@@ -23173,7 +23173,7 @@ Symbol reference IDs mismatch for "bar":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "bar":
-after transform: SymbolId(0): [Span { start: 22, end: 30 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 22, end: 30 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWithSameLetDeclarationName2.ts
@@ -23193,7 +23193,7 @@ Symbol reference IDs mismatch for "bar":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "bar":
-after transform: SymbolId(1): [Span { start: 40, end: 54 }]
+after transform: SymbolId(1): [Span { start: 28, end: 31 }, Span { start: 40, end: 54 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
@@ -23205,7 +23205,7 @@ Symbol reference IDs mismatch for "foo":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 60, end: 74 }]
+after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 60, end: 74 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName1.ts
@@ -23219,7 +23219,7 @@ Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 56, end: 68 }
 Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 56, end: 68 }]
+after transform: SymbolId(0): [Span { start: 15, end: 18 }, Span { start: 56, end: 68 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["foo"]
@@ -23244,7 +23244,7 @@ Symbol span mismatch for "myAssert":
 after transform: SymbolId(0): Span { start: 44, end: 52 }
 rebuilt        : SymbolId(0): Span { start: 91, end: 99 }
 Symbol redeclarations mismatch for "myAssert":
-after transform: SymbolId(0): [Span { start: 91, end: 99 }]
+after transform: SymbolId(0): [Span { start: 44, end: 52 }, Span { start: 91, end: 99 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveTypeAliasWithSameLetDeclarationName1.ts
@@ -23267,7 +23267,7 @@ Symbol reference IDs mismatch for "baz":
 after transform: SymbolId(1): [ReferenceId(1)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "baz":
-after transform: SymbolId(1): [Span { start: 30, end: 38 }]
+after transform: SymbolId(1): [Span { start: 17, end: 20 }, Span { start: 30, end: 38 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/restParamUsingMappedTypeOverUnionConstraint.ts
@@ -25184,7 +25184,7 @@ Symbol span mismatch for "m1":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "m1":
-after transform: SymbolId(0): [Span { start: 64, end: 66 }]
+after transform: SymbolId(0): [Span { start: 7, end: 9 }, Span { start: 64, end: 66 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/specedNoStackBlown.ts
@@ -25834,7 +25834,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 31, end: 32 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 31, end: 32 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/superWithGenericSpecialization.ts
@@ -25879,7 +25879,7 @@ Symbol span mismatch for "X":
 after transform: SymbolId(0): Span { start: 9, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 35, end: 36 }
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 35, end: 36 }]
+after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/symbolObserverMismatchingPolyfillsWorkTogether.ts
@@ -25918,7 +25918,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 49, end: 50 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 123, end: 124 }]
+after transform: SymbolId(0): [Span { start: 49, end: 50 }, Span { start: 123, end: 124 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/systemModuleAmbientDeclarations.ts
@@ -26001,19 +26001,19 @@ Symbol flags mismatch for "F":
 after transform: SymbolId(0): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(0): [Span { start: 37, end: 38 }]
+after transform: SymbolId(0): [Span { start: 16, end: 17 }, Span { start: 37, end: 38 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "C":
 after transform: SymbolId(2): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(2): [Span { start: 83, end: 84 }]
+after transform: SymbolId(2): [Span { start: 64, end: 65 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(4): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(4): [Span { start: 128, end: 129 }]
+after transform: SymbolId(4): [Span { start: 109, end: 110 }, Span { start: 128, end: 129 }]
 rebuilt        : SymbolId(6): []
 
 tasks/coverage/typescript/tests/cases/compiler/systemModuleNonTopLevelModuleMembers.ts
@@ -26374,7 +26374,7 @@ Symbol flags mismatch for "createElement":
 after transform: SymbolId(2): SymbolFlags(Function | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol redeclarations mismatch for "createElement":
-after transform: SymbolId(2): [Span { start: 243, end: 256 }]
+after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["Date", "React"]
@@ -26559,7 +26559,7 @@ Symbol reference IDs mismatch for "Mixin":
 after transform: SymbolId(0): [ReferenceId(3), ReferenceId(6)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "Mixin":
-after transform: SymbolId(0): [Span { start: 152, end: 157 }]
+after transform: SymbolId(0): [Span { start: 42, end: 47 }, Span { start: 152, end: 157 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeAnnotationBestCommonTypeInArrayLiteral.ts
@@ -26879,7 +26879,7 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(1): [ReferenceId(0)]
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(1): [Span { start: 29, end: 33 }]
+after transform: SymbolId(1): [Span { start: 11, end: 12 }, Span { start: 29, end: 33 }]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["Number"]
@@ -27275,7 +27275,7 @@ Symbol reference IDs mismatch for "I":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol redeclarations mismatch for "I":
-after transform: SymbolId(0): [Span { start: 35, end: 38 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 35, end: 38 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeVariableConstraintIntersections.ts
@@ -27352,7 +27352,7 @@ Symbol reference IDs mismatch for "I":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "I":
-after transform: SymbolId(0): [Span { start: 32, end: 33 }]
+after transform: SymbolId(0): [Span { start: 4, end: 19 }, Span { start: 32, end: 33 }]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "k":
 after transform: SymbolId(1): [ReferenceId(2)]
@@ -27632,7 +27632,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 61, end: 62 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 61, end: 62 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/unionCallMixedTypeParameterPresence.ts
@@ -27970,13 +27970,13 @@ Symbol flags mismatch for "C1":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C1":
-after transform: SymbolId(0): [Span { start: 46, end: 48 }]
+after transform: SymbolId(0): [Span { start: 26, end: 28 }, Span { start: 46, end: 48 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "C2":
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C2":
-after transform: SymbolId(3): [Span { start: 116, end: 118 }]
+after transform: SymbolId(3): [Span { start: 90, end: 92 }, Span { start: 116, end: 118 }]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersNotCheckedByNoUnusedLocals.ts
@@ -29777,7 +29777,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 35, end: 36 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "M":
 after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
@@ -29789,7 +29789,7 @@ Symbol flags mismatch for "D":
 after transform: SymbolId(2): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(4): SymbolFlags(Class)
 Symbol redeclarations mismatch for "D":
-after transform: SymbolId(2): [Span { start: 122, end: 123 }]
+after transform: SymbolId(2): [Span { start: 76, end: 77 }, Span { start: 122, end: 123 }]
 rebuilt        : SymbolId(4): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classBody/classWithEmptyBody.ts
@@ -29853,7 +29853,7 @@ Symbol flags mismatch for "C3":
 after transform: SymbolId(2): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C3":
-after transform: SymbolId(2): [Span { start: 104, end: 106 }]
+after transform: SymbolId(2): [Span { start: 86, end: 88 }, Span { start: 104, end: 106 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "C4":
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
@@ -29862,7 +29862,7 @@ Symbol span mismatch for "C4":
 after transform: SymbolId(3): Span { start: 122, end: 124 }
 rebuilt        : SymbolId(1): Span { start: 136, end: 138 }
 Symbol redeclarations mismatch for "C4":
-after transform: SymbolId(3): [Span { start: 136, end: 138 }]
+after transform: SymbolId(3): [Span { start: 122, end: 124 }, Span { start: 136, end: 138 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/mergedInheritedClassInterface.ts
@@ -29882,7 +29882,7 @@ Symbol reference IDs mismatch for "Child":
 after transform: SymbolId(2): [ReferenceId(4)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "Child":
-after transform: SymbolId(2): [Span { start: 213, end: 218 }]
+after transform: SymbolId(2): [Span { start: 150, end: 155 }, Span { start: 213, end: 218 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "ChildNoBaseClass":
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
@@ -29891,7 +29891,7 @@ Symbol span mismatch for "ChildNoBaseClass":
 after transform: SymbolId(3): Span { start: 294, end: 310 }
 rebuilt        : SymbolId(4): Span { start: 368, end: 384 }
 Symbol redeclarations mismatch for "ChildNoBaseClass":
-after transform: SymbolId(3): [Span { start: 368, end: 384 }]
+after transform: SymbolId(3): [Span { start: 294, end: 310 }, Span { start: 368, end: 384 }]
 rebuilt        : SymbolId(4): []
 Symbol reference IDs mismatch for "Grandchild":
 after transform: SymbolId(4): [ReferenceId(12)]
@@ -30239,7 +30239,7 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(3): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(1): [Span { start: 185, end: 186 }]
+after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 185, end: 186 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDestructuredBinding.ts
@@ -30335,7 +30335,7 @@ Symbol reference IDs mismatch for "Mixin":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(7)]
 Symbol redeclarations mismatch for "Mixin":
-after transform: SymbolId(0): [Span { start: 55, end: 60 }]
+after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 55, end: 60 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts
@@ -30366,7 +30366,7 @@ Symbol reference IDs mismatch for "Printable":
 after transform: SymbolId(9): [ReferenceId(8), ReferenceId(22)]
 rebuilt        : SymbolId(8): [ReferenceId(19)]
 Symbol redeclarations mismatch for "Printable":
-after transform: SymbolId(9): [Span { start: 287, end: 296 }]
+after transform: SymbolId(9): [Span { start: 247, end: 256 }, Span { start: 287, end: 296 }]
 rebuilt        : SymbolId(8): []
 Symbol flags mismatch for "Tagged":
 after transform: SymbolId(13): SymbolFlags(Function | Interface)
@@ -30378,7 +30378,7 @@ Symbol reference IDs mismatch for "Tagged":
 after transform: SymbolId(13): [ReferenceId(14), ReferenceId(19), ReferenceId(21)]
 rebuilt        : SymbolId(12): [ReferenceId(16), ReferenceId(18)]
 Symbol redeclarations mismatch for "Tagged":
-after transform: SymbolId(13): [Span { start: 596, end: 602 }]
+after transform: SymbolId(13): [Span { start: 557, end: 563 }, Span { start: 596, end: 602 }]
 rebuilt        : SymbolId(12): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesAnonymous.ts
@@ -30486,7 +30486,7 @@ Symbol span mismatch for "B":
 after transform: SymbolId(1): Span { start: 40, end: 41 }
 rebuilt        : SymbolId(0): Span { start: 62, end: 63 }
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 62, end: 63 }]
+after transform: SymbolId(1): [Span { start: 40, end: 41 }, Span { start: 62, end: 63 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts
@@ -30520,7 +30520,7 @@ Symbol reference IDs mismatch for "ApiItemContainerMixin":
 after transform: SymbolId(8): [ReferenceId(17), ReferenceId(19), ReferenceId(24)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
 Symbol redeclarations mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): [Span { start: 558, end: 579 }]
+after transform: SymbolId(8): [Span { start: 462, end: 483 }, Span { start: 558, end: 579 }]
 rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["ReadonlyArray"]
@@ -32050,7 +32050,7 @@ Symbol flags mismatch for "Animals":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(0): [Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
+after transform: SymbolId(0): [Span { start: 12, end: 19 }, Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["Cat", "Dog"]
@@ -32175,13 +32175,13 @@ Symbol flags mismatch for "EImpl1":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EImpl1":
-after transform: SymbolId(1): [Span { start: 238, end: 244 }]
+after transform: SymbolId(1): [Span { start: 197, end: 203 }, Span { start: 238, end: 244 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "EConst1":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EConst1":
-after transform: SymbolId(8): [Span { start: 351, end: 358 }]
+after transform: SymbolId(8): [Span { start: 290, end: 297 }, Span { start: 351, end: 358 }]
 rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "M2":
 after transform: SymbolId(16): SymbolFlags(NameSpaceModule | ValueModule)
@@ -32193,7 +32193,7 @@ Symbol flags mismatch for "EComp2":
 after transform: SymbolId(17): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EComp2":
-after transform: SymbolId(17): [Span { start: 684, end: 690 }]
+after transform: SymbolId(17): [Span { start: 591, end: 597 }, Span { start: 684, end: 690 }]
 rebuilt        : SymbolId(11): []
 Symbol flags mismatch for "M3":
 after transform: SymbolId(25): SymbolFlags(NameSpaceModule | ValueModule)
@@ -32205,7 +32205,7 @@ Symbol flags mismatch for "EInit":
 after transform: SymbolId(26): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EInit":
-after transform: SymbolId(26): [Span { start: 1009, end: 1014 }]
+after transform: SymbolId(26): [Span { start: 964, end: 969 }, Span { start: 1009, end: 1014 }]
 rebuilt        : SymbolId(17): []
 Symbol flags mismatch for "M4":
 after transform: SymbolId(32): SymbolFlags(NameSpaceModule | ValueModule)
@@ -32229,7 +32229,7 @@ Symbol span mismatch for "M6":
 after transform: SymbolId(42): Span { start: 1218, end: 1220 }
 rebuilt        : SymbolId(27): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M6":
-after transform: SymbolId(42): [Span { start: 1277, end: 1279 }]
+after transform: SymbolId(42): [Span { start: 1218, end: 1220 }, Span { start: 1277, end: 1279 }]
 rebuilt        : SymbolId(27): []
 Symbol flags mismatch for "A":
 after transform: SymbolId(43): SymbolFlags(NameSpaceModule | ValueModule)
@@ -33866,7 +33866,7 @@ Symbol flags mismatch for "Example":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Example":
-after transform: SymbolId(1): [Span { start: 93, end: 100 }]
+after transform: SymbolId(1): [Span { start: 43, end: 50 }, Span { start: 93, end: 100 }]
 rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "deco":
 after transform: SymbolId(0) "deco"
@@ -35872,7 +35872,7 @@ Symbol reference IDs mismatch for "nestedCtor":
 after transform: SymbolId(9): [ReferenceId(1), ReferenceId(2), ReferenceId(15)]
 rebuilt        : SymbolId(8): [ReferenceId(8)]
 Symbol redeclarations mismatch for "nestedCtor":
-after transform: SymbolId(9): [Span { start: 240, end: 262 }]
+after transform: SymbolId(9): [Span { start: 197, end: 207 }, Span { start: 240, end: 262 }]
 rebuilt        : SymbolId(8): []
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator10.ts
@@ -37733,19 +37733,19 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 37, end: 38 }]
+after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 37, end: 38 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(2): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(2): [Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
+after transform: SymbolId(2): [Span { start: 80, end: 81 }, Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
 after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(12): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(9): [Span { start: 336, end: 337 }]
+after transform: SymbolId(9): [Span { start: 310, end: 311 }, Span { start: 336, end: 337 }]
 rebuilt        : SymbolId(12): []
 Reference symbol mismatch for "N":
 after transform: SymbolId(7) "N"
@@ -37829,19 +37829,19 @@ Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 37, end: 38 }]
+after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 37, end: 38 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(2): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "E":
-after transform: SymbolId(2): [Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
+after transform: SymbolId(2): [Span { start: 80, end: 81 }, Span { start: 109, end: 110 }, Span { start: 143, end: 144 }, Span { start: 191, end: 192 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
 after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(12): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
-after transform: SymbolId(9): [Span { start: 336, end: 337 }]
+after transform: SymbolId(9): [Span { start: 310, end: 311 }, Span { start: 336, end: 337 }]
 rebuilt        : SymbolId(12): []
 Reference symbol mismatch for "N":
 after transform: SymbolId(7) "N"
@@ -38118,7 +38118,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 12, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 33, end: 34 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeAlias)
@@ -38127,7 +38127,7 @@ Symbol span mismatch for "B":
 after transform: SymbolId(1): Span { start: 67, end: 68 }
 rebuilt        : SymbolId(1): Span { start: 83, end: 84 }
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 83, end: 84 }]
+after transform: SymbolId(1): [Span { start: 67, end: 68 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-1.ts
@@ -38263,7 +38263,7 @@ Symbol reference IDs mismatch for "Directive":
 after transform: SymbolId(10): [ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(51), ReferenceId(54), ReferenceId(64), ReferenceId(93), ReferenceId(94), ReferenceId(108)]
 rebuilt        : SymbolId(3): [ReferenceId(13), ReferenceId(15), ReferenceId(19), ReferenceId(20)]
 Symbol redeclarations mismatch for "Directive":
-after transform: SymbolId(10): [Span { start: 381, end: 390 }]
+after transform: SymbolId(10): [Span { start: 318, end: 327 }, Span { start: 381, end: 390 }]
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "StepResult":
 after transform: SymbolId(26): SymbolFlags(TypeAlias | NameSpaceModule | ValueModule)
@@ -38275,7 +38275,7 @@ Symbol reference IDs mismatch for "StepResult":
 after transform: SymbolId(26): [ReferenceId(25), ReferenceId(29), ReferenceId(36), ReferenceId(41), ReferenceId(46), ReferenceId(90), ReferenceId(96), ReferenceId(97)]
 rebuilt        : SymbolId(8): [ReferenceId(23), ReferenceId(24), ReferenceId(33)]
 Symbol redeclarations mismatch for "StepResult":
-after transform: SymbolId(26): [Span { start: 1321, end: 1331 }]
+after transform: SymbolId(26): [Span { start: 1257, end: 1267 }, Span { start: 1321, end: 1331 }]
 rebuilt        : SymbolId(8): []
 Symbol reference IDs mismatch for "step":
 after transform: SymbolId(51): [ReferenceId(83), ReferenceId(84), ReferenceId(86)]
@@ -38412,7 +38412,7 @@ Symbol span mismatch for "M2":
 after transform: SymbolId(0): Span { start: 113, end: 115 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M2":
-after transform: SymbolId(0): [Span { start: 235, end: 237 }, Span { start: 518, end: 520 }, Span { start: 693, end: 695 }, Span { start: 892, end: 894 }]
+after transform: SymbolId(0): [Span { start: 113, end: 115 }, Span { start: 235, end: 237 }, Span { start: 518, end: 520 }, Span { start: 693, end: 695 }, Span { start: 892, end: 894 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "M3":
 after transform: SymbolId(10): SymbolFlags(NameSpaceModule | ValueModule)
@@ -38488,7 +38488,7 @@ Symbol span mismatch for "M2":
 after transform: SymbolId(0): Span { start: 113, end: 115 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M2":
-after transform: SymbolId(0): [Span { start: 234, end: 236 }, Span { start: 412, end: 414 }, Span { start: 586, end: 588 }]
+after transform: SymbolId(0): [Span { start: 113, end: 115 }, Span { start: 234, end: 236 }, Span { start: 412, end: 414 }, Span { start: 586, end: 588 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "M3":
 after transform: SymbolId(9): SymbolFlags(NameSpaceModule | ValueModule)
@@ -38740,7 +38740,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(0): [Span { start: 135, end: 140 }]
+after transform: SymbolId(0): [Span { start: 6, end: 11 }, Span { start: 135, end: 140 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "A":
 after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
@@ -38755,7 +38755,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(5): [ReferenceId(1), ReferenceId(5), ReferenceId(6), ReferenceId(8)]
 rebuilt        : SymbolId(7): [ReferenceId(7), ReferenceId(8), ReferenceId(9)]
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(5): [Span { start: 399, end: 404 }]
+after transform: SymbolId(5): [Span { start: 247, end: 252 }, Span { start: 399, end: 404 }]
 rebuilt        : SymbolId(7): []
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithStaticVariableAndNonExportedVarThatShareAName.ts
@@ -38775,7 +38775,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(14)]
 rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(0): [Span { start: 124, end: 129 }]
+after transform: SymbolId(0): [Span { start: 6, end: 11 }, Span { start: 124, end: 129 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "A":
 after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
@@ -38790,7 +38790,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(5): [ReferenceId(1), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(18)]
 rebuilt        : SymbolId(8): [ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(5): [Span { start: 362, end: 367 }]
+after transform: SymbolId(5): [Span { start: 221, end: 226 }, Span { start: 362, end: 367 }]
 rebuilt        : SymbolId(8): []
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/EnumAndModuleWithSameNameAndCommonRoot.ts
@@ -38810,7 +38810,7 @@ Symbol reference IDs mismatch for "enumdule":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(6), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
 Symbol redeclarations mismatch for "enumdule":
-after transform: SymbolId(0): [Span { start: 40, end: 48 }]
+after transform: SymbolId(0): [Span { start: 5, end: 13 }, Span { start: 40, end: 48 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
@@ -38833,16 +38833,16 @@ after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "enumdule":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | BlockScopedVariable)
 Symbol span mismatch for "enumdule":
 after transform: SymbolId(0): Span { start: 7, end: 15 }
-rebuilt        : SymbolId(4): Span { start: 118, end: 126 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "enumdule":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(6), ReferenceId(14)]
-rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(5), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
 Symbol redeclarations mismatch for "enumdule":
-after transform: SymbolId(0): [Span { start: 118, end: 126 }]
-rebuilt        : SymbolId(4): []
+after transform: SymbolId(0): [Span { start: 7, end: 15 }, Span { start: 118, end: 126 }]
+rebuilt        : SymbolId(0): [Span { start: 0, end: 0 }, Span { start: 118, end: 126 }]
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedClassesOfTheSameName.ts
 semantic error: Scope flags mismatch:
@@ -38876,7 +38876,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 90, end: 91 }]
+after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 90, end: 91 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "X":
 after transform: SymbolId(5): SymbolFlags(NameSpaceModule | ValueModule)
@@ -38885,7 +38885,7 @@ Symbol span mismatch for "X":
 after transform: SymbolId(5): Span { start: 294, end: 295 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(5): [Span { start: 366, end: 367 }]
+after transform: SymbolId(5): [Span { start: 294, end: 295 }, Span { start: 366, end: 367 }]
 rebuilt        : SymbolId(8): []
 Symbol flags mismatch for "Y":
 after transform: SymbolId(6): SymbolFlags(NameSpaceModule | ValueModule)
@@ -39160,7 +39160,7 @@ Symbol reference IDs mismatch for "clodule":
 after transform: SymbolId(6): [ReferenceId(4), ReferenceId(6), ReferenceId(15), ReferenceId(16)]
 rebuilt        : SymbolId(7): [ReferenceId(8), ReferenceId(9)]
 Symbol redeclarations mismatch for "clodule":
-after transform: SymbolId(6): [Span { start: 257, end: 264 }]
+after transform: SymbolId(6): [Span { start: 219, end: 226 }, Span { start: 257, end: 264 }]
 rebuilt        : SymbolId(7): []
 Symbol flags mismatch for "Point":
 after transform: SymbolId(7): SymbolFlags(FunctionScopedVariable | Interface)
@@ -39172,7 +39172,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(7): [ReferenceId(3)]
 rebuilt        : SymbolId(9): []
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(7): [Span { start: 340, end: 352 }]
+after transform: SymbolId(7): [Span { start: 288, end: 293 }, Span { start: 340, end: 352 }]
 rebuilt        : SymbolId(9): []
 Symbol flags mismatch for "fundule":
 after transform: SymbolId(9): SymbolFlags(Function | NameSpaceModule | ValueModule)
@@ -39181,7 +39181,7 @@ Symbol reference IDs mismatch for "fundule":
 after transform: SymbolId(9): [ReferenceId(8), ReferenceId(17), ReferenceId(18)]
 rebuilt        : SymbolId(10): [ReferenceId(10), ReferenceId(11)]
 Symbol redeclarations mismatch for "fundule":
-after transform: SymbolId(9): [Span { start: 539, end: 546 }]
+after transform: SymbolId(9): [Span { start: 490, end: 497 }, Span { start: 539, end: 546 }]
 rebuilt        : SymbolId(10): []
 Symbol flags mismatch for "Point":
 after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable | Interface)
@@ -39193,7 +39193,7 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(10): [ReferenceId(7)]
 rebuilt        : SymbolId(12): []
 Symbol redeclarations mismatch for "Point":
-after transform: SymbolId(10): [Span { start: 622, end: 634 }]
+after transform: SymbolId(10): [Span { start: 570, end: 575 }, Span { start: 622, end: 634 }]
 rebuilt        : SymbolId(12): []
 Unresolved references mismatch:
 after transform: ["fundule", "moduleA", "require"]
@@ -39496,7 +39496,7 @@ Symbol span mismatch for "x":
 after transform: SymbolId(9): Span { start: 231, end: 236 }
 rebuilt        : SymbolId(3): Span { start: 537, end: 538 }
 Symbol redeclarations mismatch for "x":
-after transform: SymbolId(9): [Span { start: 537, end: 538 }]
+after transform: SymbolId(9): [Span { start: 231, end: 236 }, Span { start: 537, end: 538 }]
 rebuilt        : SymbolId(3): []
 Reference symbol mismatch for "Component":
 after transform: SymbolId(1) "Component"
@@ -42038,7 +42038,7 @@ Symbol reference IDs mismatch for "FAILURE":
 after transform: SymbolId(63): [ReferenceId(55), ReferenceId(58), ReferenceId(66), ReferenceId(68)]
 rebuilt        : SymbolId(62): [ReferenceId(50), ReferenceId(54)]
 Symbol redeclarations mismatch for "FAILURE":
-after transform: SymbolId(63): [Span { start: 2256, end: 2263 }]
+after transform: SymbolId(63): [Span { start: 2229, end: 2236 }, Span { start: 2256, end: 2263 }]
 rebuilt        : SymbolId(62): []
 Symbol reference IDs mismatch for "langCodeSet":
 after transform: SymbolId(90): [ReferenceId(95), ReferenceId(97)]
@@ -44550,7 +44550,7 @@ Symbol reference IDs mismatch for "Derived":
 after transform: SymbolId(15): [ReferenceId(4), ReferenceId(30), ReferenceId(31), ReferenceId(48), ReferenceId(69), ReferenceId(70), ReferenceId(116), ReferenceId(117)]
 rebuilt        : SymbolId(16): [ReferenceId(30), ReferenceId(31)]
 Symbol redeclarations mismatch for "Derived":
-after transform: SymbolId(15): [Span { start: 842, end: 849 }]
+after transform: SymbolId(15): [Span { start: 689, end: 696 }, Span { start: 842, end: 849 }]
 rebuilt        : SymbolId(16): []
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(16): [ReferenceId(5)]
@@ -46205,7 +46205,7 @@ Symbol reference IDs mismatch for "fn":
 after transform: SymbolId(81): [ReferenceId(118)]
 rebuilt        : SymbolId(32): []
 Symbol redeclarations mismatch for "fn":
-after transform: SymbolId(81): [Span { start: 1621, end: 1627 }]
+after transform: SymbolId(81): [Span { start: 1594, end: 1596 }, Span { start: 1621, end: 1627 }]
 rebuilt        : SymbolId(32): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes2.ts

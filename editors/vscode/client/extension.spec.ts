@@ -16,7 +16,9 @@ suite('commands', () => {
 
   suiteTeardown(async () => {
     const edit = new WorkspaceEdit();
-    edit.deleteFile(fileUri);
+    edit.deleteFile(fileUri, {
+      ignoreIfNotExists: true,
+    });
     await workspace.applyEdit(edit);
   });
 

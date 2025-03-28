@@ -24,12 +24,12 @@ suite('Config', () => {
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.enable, true);
     strictEqual(config.trace, 'off');
-    strictEqual(config.configPath, '');
+    strictEqual(config.configPath, null);
     strictEqual(config.binPath, '');
     deepStrictEqual(config.flags, {});
   });
 
-  test('configPath defaults to empty string when using nested configs and configPath is empty', async () => {
+  test('configPath defaults to null when using nested configs and configPath is empty', async () => {
     const wsConfig = workspace.getConfiguration('oxc');
     await wsConfig.update('configPath', '');
     await wsConfig.update('flags', {});
@@ -37,12 +37,12 @@ suite('Config', () => {
     const config = new Config();
 
     deepStrictEqual(config.flags, {});
-    strictEqual(config.configPath, '');
+    strictEqual(config.configPath, null);
   });
 
   test('configPath defaults to .oxlintrc.json when not using nested configs and configPath is empty', async () => {
     const wsConfig = workspace.getConfiguration('oxc');
-    await wsConfig.update('configPath', '');
+    await wsConfig.update('configPath', undefined);
     await wsConfig.update('flags', { disable_nested_config: '' });
 
     const config = new Config();

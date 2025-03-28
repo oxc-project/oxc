@@ -427,7 +427,11 @@ impl PostTransformChecker<'_, '_> {
 
             // Check redeclarations match
             let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                let mut spans = scoping.symbol_redeclarations(symbol_id).to_vec();
+                let mut spans = scoping
+                    .symbol_redeclarations(symbol_id)
+                    .iter()
+                    .map(|rd| rd.span)
+                    .collect::<Vec<_>>();
                 spans.sort_unstable();
                 spans
             });

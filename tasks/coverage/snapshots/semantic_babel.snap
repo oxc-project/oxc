@@ -1556,7 +1556,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 21, end: 22 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-const-type/input.ts
@@ -1570,7 +1570,7 @@ Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
@@ -1584,7 +1584,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 29, end: 32 }]
+after transform: SymbolId(0): [Span { start: 11, end: 14 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum-babel-7/input.ts
@@ -1598,7 +1598,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 29, end: 32 }]
+after transform: SymbolId(0): [Span { start: 11, end: 14 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
@@ -1612,7 +1612,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 17, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum-babel-7/input.ts
@@ -1626,7 +1626,7 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }]
+after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 17, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-interface/input.ts
@@ -1640,7 +1640,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Function | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 26, end: 27 }]
+after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-type/input.ts
@@ -1654,7 +1654,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 21, end: 22 }]
+after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-ambient-class/input.ts
@@ -1679,7 +1679,7 @@ Symbol span mismatch for "a":
 after transform: SymbolId(1): Span { start: 20, end: 21 }
 rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(1): [Span { start: 31, end: 32 }]
+after transform: SymbolId(1): [Span { start: 20, end: 21 }, Span { start: 31, end: 32 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["M"]
@@ -1699,7 +1699,7 @@ Symbol span mismatch for "a":
 after transform: SymbolId(1): Span { start: 20, end: 21 }
 rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(1): [Span { start: 31, end: 32 }]
+after transform: SymbolId(1): [Span { start: 20, end: 21 }, Span { start: 31, end: 32 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["M"]
@@ -1716,7 +1716,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 104, end: 124 }]
+after transform: SymbolId(1): [Span { start: 16, end: 23 }, Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import)
@@ -1728,7 +1728,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 156, end: 160 }]
+after transform: SymbolId(2): [Span { start: 49, end: 50 }, Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Import)
@@ -1740,7 +1740,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 170, end: 174 }]
+after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let-babel-7/input.ts
@@ -1754,7 +1754,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 104, end: 124 }]
+after transform: SymbolId(1): [Span { start: 16, end: 23 }, Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import)
@@ -1766,7 +1766,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 156, end: 160 }]
+after transform: SymbolId(2): [Span { start: 49, end: 50 }, Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Import)
@@ -1778,7 +1778,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 170, end: 174 }]
+after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
@@ -1792,7 +1792,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 119, end: 139 }]
+after transform: SymbolId(1): [Span { start: 21, end: 28 }, Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | TypeImport)
@@ -1804,7 +1804,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 171, end: 175 }]
+after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | TypeImport)
@@ -1816,7 +1816,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 185, end: 189 }]
+after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let-babel-7/input.ts
@@ -1830,7 +1830,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 119, end: 139 }]
+after transform: SymbolId(1): [Span { start: 21, end: 28 }, Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | TypeImport)
@@ -1842,7 +1842,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 171, end: 175 }]
+after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | TypeImport)
@@ -1854,7 +1854,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 185, end: 189 }]
+after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-type/input.ts
@@ -1873,7 +1873,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 119, end: 139 }]
+after transform: SymbolId(1): [Span { start: 21, end: 28 }, Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | TypeImport)
@@ -1885,7 +1885,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 171, end: 175 }]
+after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | TypeImport)
@@ -1897,7 +1897,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 185, end: 189 }]
+after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-var-babel-7/input.ts
@@ -1911,7 +1911,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 119, end: 139 }]
+after transform: SymbolId(1): [Span { start: 21, end: 28 }, Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | TypeImport)
@@ -1923,7 +1923,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 171, end: 175 }]
+after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | TypeImport)
@@ -1935,7 +1935,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 185, end: 189 }]
+after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
@@ -1949,7 +1949,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 104, end: 124 }]
+after transform: SymbolId(1): [Span { start: 16, end: 23 }, Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Import)
@@ -1961,7 +1961,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 156, end: 160 }]
+after transform: SymbolId(2): [Span { start: 49, end: 50 }, Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Import)
@@ -1973,7 +1973,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 170, end: 174 }]
+after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var-babel-7/input.ts
@@ -1987,7 +1987,7 @@ Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Context":
-after transform: SymbolId(1): [Span { start: 104, end: 124 }]
+after transform: SymbolId(1): [Span { start: 16, end: 23 }, Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Import)
@@ -1999,7 +1999,7 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(2): [Span { start: 156, end: 160 }]
+after transform: SymbolId(2): [Span { start: 49, end: 50 }, Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Import)
@@ -2011,7 +2011,7 @@ Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
 Symbol redeclarations mismatch for "b":
-after transform: SymbolId(3): [Span { start: 170, end: 174 }]
+after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
@@ -2055,7 +2055,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 21, end: 22 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-function/input.ts
@@ -2072,7 +2072,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 24, end: 25 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 24, end: 25 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 24, end: 25 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-interface/input.ts
@@ -2094,7 +2094,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-var/input.ts
@@ -2111,7 +2111,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-interface/input.ts
@@ -2125,7 +2125,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 17, end: 18 }]
+after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-type/input.ts
@@ -2139,7 +2139,7 @@ Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 17, end: 18 }]
+after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-function/input.ts
@@ -2156,7 +2156,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 26, end: 27 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-let/input.ts
@@ -2173,7 +2173,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 21, end: 22 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-var/input.ts
@@ -2190,7 +2190,7 @@ Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 21, end: 22 }]
+after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-interface/input.ts
@@ -2204,7 +2204,7 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 17, end: 18 }]
+after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-type/input.ts
@@ -2218,7 +2218,7 @@ Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 17, end: 18 }]
+after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymous-function-generator/input.ts

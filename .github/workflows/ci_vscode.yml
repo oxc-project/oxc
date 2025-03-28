@@ -49,7 +49,7 @@ jobs:
 
       - name: Build Language Server
         working-directory: editors/vscode
-        run: pnpm run server:build:release
+        run: pnpm run server:build:debug
 
       - name: Compile VSCode
         working-directory: editors/vscode

@@ -65,7 +65,10 @@ impl<'a> Lexer<'a> {
         }
 
         let value = match self.peek_byte() {
-            Some(b'{') => self.unicode_code_point(),
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
             _ => self.surrogate_pair(),
         };
 
@@ -113,8 +116,11 @@ impl<'a> Lexer<'a> {
         text: &mut String<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
-        let value = match self.peek_char() {
-            Some('{') => self.unicode_code_point(),
+        let value = match self.peek_byte() {
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
             _ => self.surrogate_pair(),
         };
 
@@ -143,10 +149,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Decode unicode code point (`\u{ HexBytes }`).
+    ///
+    /// The opening `\u{` must already have been consumed before calling this method.
     fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_ascii_byte_eq(b'{') {
-            return None;
-        }
         let value = self.code_point()?;
         if !self.next_ascii_byte_eq(b'}') {
             return None;
@@ -163,29 +169,29 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
+        let b = self.peek_byte()?;
+
         // Reduce instructions and remove 1 branch by comparing against `A-F` and `a-f` simultaneously
         // https://godbolt.org/z/9caMMzvP3
-        let value = if let Some(b) = self.peek_byte() {
-            if b.is_ascii_digit() {
-                b - b'0'
-            } else {
-                // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
-                // but leaves lowercase as they are
-                let lower_case = b | 32;
-                if matches!(lower_case, b'a'..=b'f') {
-                    lower_case + 10 - b'a'
-                } else {
-                    return None;
-                }
-            }
+        let value = if b.is_ascii_digit() {
+            b - b'0'
         } else {
-            return None;
+            // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
+            // but leaves lowercase as they are
+            let lower_case = b | 32;
+            if matches!(lower_case, b'a'..=b'f') {
+                lower_case + 10 - b'a'
+            } else {
+                return None;
+            }
         };
+
         // Because of `b | 32` above, compiler cannot deduce that next byte is definitely ASCII
         // so `next_byte_unchecked` is necessary to produce compact assembly, rather than `consume_char`.
         // SAFETY: This code is only reachable if there is a byte remaining, and it's ASCII.
         // Therefore it's safe to consume that byte, and will leave position on a UTF-8 char boundary.
         unsafe { self.source.next_byte_unchecked() };
+
         Some(u32::from(value))
     }
 
@@ -206,18 +212,21 @@ impl<'a> Lexer<'a> {
     ///   * `https://mathiasbynens.be/notes/javascript-identifiers-es6`
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
-        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
+        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF,
+        // and is called a high surrogate or a lead surrogate.
         let is_pair =
             (0xD800..=0xDBFF).contains(&high) && self.peek_2_bytes() == Some([b'\\', b'u']);
         if !is_pair {
             return Some(SurrogatePair::CodePoint(high));
         }
 
+        // We checked above that next 2 chars are `\u`
         self.consume_2_chars();
 
         let low = self.hex_4_digits()?;
 
-        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF, and is called a low surrogate or a trail surrogate.
+        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF,
+        // and is called a low surrogate or a trail surrogate.
         if !(0xDC00..=0xDFFF).contains(&low) {
             return Some(SurrogatePair::HighLow(high, low));
         }

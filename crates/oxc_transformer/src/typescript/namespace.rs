@@ -458,18 +458,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     /// Check the namespace binding identifier if it is a redeclaration
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
-        // Only `enum`, `class`, `function` and `namespace` can be re-declared in same scope
-        ctx.scoping()
-            .symbol_flags(symbol_id)
-            .intersects(SymbolFlags::RegularEnum | SymbolFlags::Class | SymbolFlags::Function)
-            || {
-                // ```
-                // namespace Foo {}
-                // namespace Foo {} // is redeclaration
-                // ```
-                let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-                !redeclarations.is_empty() && redeclarations.contains(&id.span)
-            }
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        redeclarations.first().map_or_else(|| false, |rd| rd.span != id.span)
     }
 }
 

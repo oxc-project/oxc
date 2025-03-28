@@ -68,11 +68,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:5]
+   ╭─[no_redeclare.tsx:1:16]
  1 │ var a = 3; var a = 10; var a = 15;
-   ·     ┬                      ┬
-   ·     │                      ╰── It can not be redeclare here.
-   ·     ╰── 'a' is already defined.
+   ·                ┬           ┬
+   ·                │           ╰── It can not be redeclare here.
+   ·                ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
