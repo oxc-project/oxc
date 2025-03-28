@@ -67,7 +67,7 @@ pub use self::comments::{
 pub use self::context::FormatContext;
 pub use self::diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 use self::format_element::document::Document;
-#[cfg(debug_assertions)]
+// #[cfg(debug_assertions)]
 // use self::printed_tokens::PrintedTokens;
 use self::printer::{Printer, PrinterOptions};
 pub use self::syntax_element_key::SyntaxElementKey;

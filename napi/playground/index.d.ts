@@ -10,8 +10,8 @@ export declare class Oxc {
   codegenText: string
   codegenSourcemapText?: string
   formattedText: string
-  prettierFormattedText: string
-  prettierIrText: string
+  formatterFormattedText: string
+  formatterIrText: string
   constructor()
   getDiagnostics(): Array<OxcError>
   getComments(): Array<Comment>
@@ -96,8 +96,8 @@ export interface OxcRunOptions {
   syntax?: boolean
   lint?: boolean
   format?: boolean
-  prettierFormat?: boolean
-  prettierIr?: boolean
+  formatterFormat?: boolean
+  formatterIr?: boolean
   transform?: boolean
   typeCheck?: boolean
   scope?: boolean
