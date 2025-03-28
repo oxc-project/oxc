@@ -1,6 +1,6 @@
-use std::{fmt, mem};
+use std::{collections::hash_map::Entry, fmt, mem};
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
 use oxc_index::{Idx, IndexVec};
@@ -9,7 +9,7 @@ use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
     scope::{ScopeFlags, ScopeId},
-    symbol::{RedeclarationId, SymbolFlags, SymbolId},
+    symbol::{SymbolFlags, SymbolId},
 };
 
 pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
@@ -40,7 +40,6 @@ pub struct Scoping {
     pub(crate) symbol_scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
     pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
-    symbol_redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 
@@ -75,7 +74,6 @@ impl Default for Scoping {
             symbol_flags: IndexVec::new(),
             symbol_scope_ids: IndexVec::new(),
             symbol_declarations: IndexVec::new(),
-            symbol_redeclarations: IndexVec::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             scope_parent_ids: IndexVec::new(),
@@ -85,7 +83,7 @@ impl Default for Scoping {
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(allocator),
                 resolved_references: ArenaVec::new_in(allocator),
-                redeclaration_spans: ArenaVec::new_in(allocator),
+                symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 scope_child_ids: ArenaVec::new_in(allocator),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
@@ -106,7 +104,7 @@ pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Atom<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
-    redeclaration_spans: ArenaVec<'cell, ArenaVec<'cell, Span>>,
+    symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Span>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
     ///
@@ -196,12 +194,13 @@ impl Scoping {
 
     #[inline]
     pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
-        if let Some(redeclaration_id) = self.symbol_redeclarations[symbol_id] {
-            &self.cell.borrow_dependent().redeclaration_spans[redeclaration_id.index()]
-        } else {
-            static EMPTY: &[Span] = &[];
-            EMPTY
-        }
+        self.cell.borrow_dependent().symbol_redeclarations.get(&symbol_id).map_or_else(
+            || {
+                static EMPTY: &[Span] = &[];
+                EMPTY
+            },
+            |spans| spans.as_slice(),
+        )
     }
 
     #[inline]
@@ -242,31 +241,27 @@ impl Scoping {
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
-        self.symbol_spans.push(span);
-        self.symbol_flags.push(flags);
-        self.symbol_scope_ids.push(scope_id);
-        self.symbol_declarations.push(node_id);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(Atom::from_in(name, allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
         });
-        self.symbol_redeclarations.push(None)
+        self.symbol_spans.push(span);
+        self.symbol_flags.push(flags);
+        self.symbol_scope_ids.push(scope_id);
+        self.symbol_declarations.push(node_id)
     }
 
     pub fn add_symbol_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
-        if let Some(redeclaration_id) = self.symbol_redeclarations[symbol_id] {
-            self.cell.with_dependent_mut(|_, cell| {
-                cell.redeclaration_spans[redeclaration_id.index()].push(span);
-            });
-        } else {
-            self.cell.with_dependent_mut(|allocator, cell| {
-                let v = ArenaVec::from_array_in([span], allocator);
-                let redeclaration_id = cell.redeclaration_spans.len();
-                cell.redeclaration_spans.push(v);
-                self.symbol_redeclarations[symbol_id] =
-                    Some(RedeclarationId::from_usize(redeclaration_id));
-            });
-        };
+        self.cell.with_dependent_mut(|allocator, cell| {
+            match cell.symbol_redeclarations.entry(symbol_id) {
+                Entry::Occupied(mut entry) => {
+                    entry.get_mut().push(span);
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(ArenaVec::from_array_in([span], allocator));
+                }
+            }
+        });
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
@@ -779,7 +774,6 @@ impl Scoping {
             symbol_flags: self.symbol_flags.clone(),
             symbol_scope_ids: self.symbol_scope_ids.clone(),
             symbol_declarations: self.symbol_declarations.clone(),
-            symbol_redeclarations: self.symbol_redeclarations.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
             scope_parent_ids: self.scope_parent_ids.clone(),
@@ -793,9 +787,11 @@ impl Scoping {
                     resolved_references: cell
                         .resolved_references
                         .clone_in_with_semantic_ids(allocator),
-                    redeclaration_spans: cell
-                        .redeclaration_spans
-                        .clone_in_with_semantic_ids(allocator),
+                    symbol_redeclarations: cell
+                        .symbol_redeclarations
+                        .iter()
+                        .map(|(k, v)| (*k, v.clone_in_with_semantic_ids(allocator)))
+                        .collect(),
                     bindings: cell
                         .bindings
                         .iter()
