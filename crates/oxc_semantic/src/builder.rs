@@ -388,7 +388,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.scoping.union_symbol_flag(symbol_id, includes);
-            self.add_redeclare_variable(symbol_id, span);
+            self.add_redeclare_variable(symbol_id, includes, span);
             return symbol_id;
         }
 
@@ -561,8 +561,13 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.scoping.add_symbol_redeclaration(symbol_id, span);
+    pub(crate) fn add_redeclare_variable(
+        &mut self,
+        symbol_id: SymbolId,
+        flags: SymbolFlags,
+        span: Span,
+    ) {
+        self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
     }
 }
 

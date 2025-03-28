@@ -18,6 +18,8 @@ pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, Refer
 #[derive(Debug)]
 pub struct Redeclaration {
     pub span: Span,
+    pub declaration: NodeId,
+    pub flags: SymbolFlags,
 }
 
 /// # Symbol Table and Scope Tree
@@ -256,9 +258,15 @@ impl Scoping {
         self.symbol_declarations.push(node_id)
     }
 
-    pub fn add_symbol_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
+    pub fn add_symbol_redeclaration(
+        &mut self,
+        symbol_id: SymbolId,
+        flags: SymbolFlags,
+        declaration: NodeId,
+        span: Span,
+    ) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let redeclaration = Redeclaration { span };
+            let redeclaration = Redeclaration { span, declaration, flags };
             match cell.symbol_redeclarations.entry(symbol_id) {
                 Entry::Occupied(occupied) => {
                     occupied.into_mut().push(redeclaration);
@@ -798,7 +806,11 @@ impl Scoping {
                         .symbol_redeclarations
                         .iter()
                         .map(|(k, v)| {
-                            let v = v.iter().map(|r| Redeclaration { span: r.span });
+                            let v = v.iter().map(|r| Redeclaration {
+                                span: r.span,
+                                declaration: r.declaration,
+                                flags: r.flags,
+                            });
                             (*k, ArenaVec::from_iter_in(v, allocator))
                         })
                         .collect::<FxHashMap<_, _>>(),
