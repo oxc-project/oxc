@@ -282,9 +282,9 @@ export async function activate(context: ExtensionContext) {
     let bgColor = new ThemeColor(
       enable
         ? 'statusBarItem.activeBackground'
-        : 'statusBarItem.errorBackground',
+        : 'statusBarItem.warningBackground',
     );
-    myStatusBarItem.text = `oxc: ${enable ? '$(check-all)' : '$(circle-slash)'}`;
+    myStatusBarItem.text = `oxc: ${enable ? '$(check-all)' : '$(check)'}`;
 
     myStatusBarItem.backgroundColor = bgColor;
   }
