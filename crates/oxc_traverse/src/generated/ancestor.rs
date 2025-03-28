@@ -11249,6 +11249,7 @@ impl<'a, 't> GetAddress for TSEnumBodyWithoutMembers<'a, 't> {
 
 pub(crate) const OFFSET_TS_ENUM_MEMBER_SPAN: usize = offset_of!(TSEnumMember, span);
 pub(crate) const OFFSET_TS_ENUM_MEMBER_ID: usize = offset_of!(TSEnumMember, id);
+pub(crate) const OFFSET_TS_ENUM_MEMBER_COMPUTED: usize = offset_of!(TSEnumMember, computed);
 pub(crate) const OFFSET_TS_ENUM_MEMBER_INITIALIZER: usize = offset_of!(TSEnumMember, initializer);
 
 #[repr(transparent)]
@@ -11262,6 +11263,11 @@ impl<'a, 't> TSEnumMemberWithoutId<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -11298,6 +11304,11 @@ impl<'a, 't> TSEnumMemberWithoutInitializer<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_ID) as *const TSEnumMemberName<'a>)
         }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_COMPUTED) as *const bool) }
     }
 }
 

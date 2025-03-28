@@ -9748,15 +9748,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `computed`
     /// * `initializer`
     #[inline]
     pub fn ts_enum_member(
         self,
         span: Span,
         id: TSEnumMemberName<'a>,
+        computed: bool,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
-        TSEnumMember { span, id, initializer }
+        TSEnumMember { span, id, computed, initializer }
     }
 
     /// Build a [`TSEnumMemberName::Identifier`].
@@ -9821,6 +9823,24 @@ impl<'a> AstBuilder<'a> {
             raw,
             lone_surrogates,
         ))
+    }
+
+    /// Build a [`TSEnumMemberName::TemplateString`].
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `quasis`
+    /// * `expressions`
+    #[inline]
+    pub fn ts_enum_member_name_template_string(
+        self,
+        span: Span,
+        quasis: Vec<'a, TemplateElement<'a>>,
+        expressions: Vec<'a, Expression<'a>>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::TemplateString(self.alloc_template_literal(span, quasis, expressions))
     }
 
     /// Build a [`TSTypeAnnotation`].

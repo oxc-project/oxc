@@ -3805,6 +3805,9 @@ unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         TSEnumMemberName::String(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSEnumMemberName::TemplateString(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_enum_member_name(&mut *node, ctx);
 }

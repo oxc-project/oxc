@@ -1507,6 +1507,7 @@ impl GetSpanMut for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
             Self::String(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TemplateString(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
