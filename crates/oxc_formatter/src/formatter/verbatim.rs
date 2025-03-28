@@ -170,7 +170,7 @@
 //     FormatNodeOrVerbatim { inner }
 // }
 //
-// /// Formats a node or falls back to verbatim printing if formating this node fails.
+// /// Formats a node or falls back to verbatim printing if formatting this node fails.
 // #[derive(Copy, Clone)]
 // pub struct FormatNodeOrVerbatim<F> {
 //     inner: F,

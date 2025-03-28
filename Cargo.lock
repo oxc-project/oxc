@@ -1646,12 +1646,12 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_codegen",
+ "oxc_formatter",
  "oxc_isolated_declarations",
  "oxc_linter",
  "oxc_mangler",
  "oxc_minifier",
  "oxc_parser",
- "oxc_prettier",
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
@@ -1721,7 +1721,7 @@ dependencies = [
  "futures",
  "lazy-regex",
  "oxc",
- "oxc_prettier",
+ "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "pico-args",
@@ -2032,27 +2032,12 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_formatter",
  "oxc_index",
  "oxc_linter",
  "oxc_napi",
- "oxc_prettier",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "oxc_prettier"
-version = "0.0.0"
-dependencies = [
- "bitflags 2.9.0",
- "cow-utils",
- "oxc_allocator",
- "oxc_ast",
- "oxc_parser",
- "oxc_span",
- "oxc_syntax",
- "pico-args",
- "rustc-hash",
 ]
 
 [[package]]

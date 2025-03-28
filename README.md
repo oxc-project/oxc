@@ -207,7 +207,7 @@ With the Oxc minifier, you can expect faster minification times without sacrific
 
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
 
-The [prototype](https://github.com/oxc-project/oxc/tree/main/crates/oxc_prettier) is currently work in progress.
+The [prototype](https://github.com/oxc-project/oxc/tree/main/crates/oxc_formatter) is currently work in progress.
 
 ---
 

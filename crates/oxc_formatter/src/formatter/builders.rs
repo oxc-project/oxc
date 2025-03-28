@@ -449,7 +449,7 @@ impl std::fmt::Debug for LineSuffix<'_, '_> {
 }
 
 /// Inserts a boundary for line suffixes that forces the printer to print all pending line suffixes.
-/// Helpful if a line sufix shouldn't pass a certain point.
+/// Helpful if a line suffix shouldn't pass a certain point.
 ///
 /// ## Examples
 ///
@@ -755,14 +755,14 @@ impl Format<'_> for HardSpace {
 ///             2,
 ///             &format_args![indent(&format_args![
 ///                 hard_line_break(),
-///                 text("shoud be 3 tabs"),
+///                 text("should be 3 tabs"),
 ///             ])]
 ///         )])
 ///     ]
 /// )?;
 ///
 /// assert_eq!(
-///     "root\n\t\t\tshoud be 3 tabs",
+///     "root\n\t\t\tshould be 3 tabs",
 ///     block.print()?.as_code()
 /// );
 /// #    Ok(())
