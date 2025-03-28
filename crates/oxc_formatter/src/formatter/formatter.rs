@@ -249,7 +249,8 @@ impl<'ast> Formatter<'_, 'ast> {
     }
 
     pub fn parent_kind(&self) -> &AstKind<'ast> {
-        self.state().stack.last()
+        let stack = &self.state().stack;
+        stack.as_slice().get(stack.len() - 2).unwrap()
     }
 }
 
