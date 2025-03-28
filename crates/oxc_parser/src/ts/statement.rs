@@ -56,32 +56,25 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
         let span = self.start_span();
-        let id = self.parse_ts_enum_member_name()?;
+        let (id, computed) = self.parse_ts_enum_member_name()?;
         let initializer = if self.eat(Kind::Eq) {
             Some(self.parse_assignment_expression_or_higher()?)
         } else {
             None
         };
-        Ok(self.ast.ts_enum_member(self.end_span(span), id, initializer))
+        Ok(self.ast.ts_enum_member(self.end_span(span), id, computed, initializer))
     }
 
-    fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
+    fn parse_ts_enum_member_name(&mut self) -> Result<(TSEnumMemberName<'a>, bool)> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string()?;
-                Ok(TSEnumMemberName::String(self.alloc(literal)))
+                Ok((TSEnumMemberName::String(self.alloc(literal)), false))
             }
             Kind::LBrack => match self.parse_computed_property_name()? {
-                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::String(literal)),
+                Expression::StringLiteral(literal) => Ok((TSEnumMemberName::String(literal), true)),
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                    Ok(self.ast.ts_enum_member_name_string(
-                        template.span,
-                        template.quasi().unwrap(),
-                        Some(Atom::from(
-                            Span::new(template.span.start + 1, template.span.end - 1)
-                                .source_text(self.source_text),
-                        )),
-                    ))
+                    Ok((TSEnumMemberName::TemplateString(template), true))
                 }
                 Expression::NumericLiteral(literal) => {
                     Err(diagnostics::enum_member_cannot_have_numeric_name(literal.span()))
@@ -96,7 +89,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name()?;
-                Ok(TSEnumMemberName::Identifier(self.alloc(ident_name)))
+                Ok((TSEnumMemberName::Identifier(self.alloc(ident_name)), false))
             }
         }
     }
