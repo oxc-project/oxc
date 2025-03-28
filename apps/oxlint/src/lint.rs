@@ -316,8 +316,15 @@ impl Runner for LintRunner {
             }
         }
 
-        let mut options = LintServiceOptions::new(self.cwd, paths)
-            .with_cross_module(config_builder.plugins().has_import());
+        // TODO(refactor): pull this into a shared function, so that the language server can use
+        // the same functionality.
+        let use_cross_module = if use_nested_config {
+            nested_configs.values().any(|config| config.plugins().has_import())
+        } else {
+            config_builder.plugins().has_import()
+        };
+        let mut options =
+            LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build() {
             Ok(config) => config,
@@ -1056,5 +1063,11 @@ mod test {
         // Check that using a config which extends a config with overrides works as expected
         let args = &["overrides_same_directory"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_multi_file_analysis_imports() {
+        let args = &["issue_10054"];
+        Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
     }
 }
