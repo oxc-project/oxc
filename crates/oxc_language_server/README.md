@@ -22,11 +22,11 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 Returns the [Server Capabilities](#server-capabilities).\
 Initialization Options:
 
-| Option Key   | Value(s)               | Default          | Description                                                                                          |
-| ------------ | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `run`        | `"onSave" \| "onType"` | `"onType"`       | Should the server lint the files when the user is typing or saving                                   |
-| `configPath` | `<string>`             | `.oxlintrc.json` | Path to a oxlint configuration file, pass '' to enable nested configuration                          |
-| `flags`      | `Map<string, string>`  | `<empty>`        | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
+| Option Key   | Value(s)               | Default    | Description                                                                                          |
+| ------------ | ---------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `run`        | `"onSave" \| "onType"` | `"onType"` | Should the server lint the files when the user is typing or saving                                   |
+| `configPath` | `<string>` \| `null`   | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration              |
+| `flags`      | `Map<string, string>`  | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
 
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 

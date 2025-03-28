@@ -95,9 +95,9 @@
           "description": "Traces the communication between VS Code and the language server."
         },
         "oxc.configPath": {
-          "type": "string",
+          "type": ["string", "null"],
           "scope": "window",
-          "default": "",
+          "default": null,
           "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
         },
         "oxc.path.server": {

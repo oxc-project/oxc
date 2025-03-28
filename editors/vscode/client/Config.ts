@@ -8,7 +8,7 @@ export class Config implements ConfigInterface {
   private _runTrigger!: Trigger;
   private _enable!: boolean;
   private _trace!: TraceLevel;
-  private _configPath!: string;
+  private _configPath!: string | null;
   private _binPath: string | undefined;
   private _flags!: Record<string, string>;
 
@@ -24,7 +24,7 @@ export class Config implements ConfigInterface {
     this._runTrigger = conf.get<Trigger>('lint.run') || 'onType';
     this._enable = conf.get<boolean>('enable') ?? true;
     this._trace = conf.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = conf.get<string>('configPath') || (useNestedConfigs ? '' : oxlintConfigFileName);
+    this._configPath = conf.get<string | null>('configPath') || (useNestedConfigs ? null : oxlintConfigFileName);
     this._binPath = conf.get<string>('path.server');
     this._flags = flags;
   }
@@ -62,7 +62,7 @@ export class Config implements ConfigInterface {
       .update('trace.server', value);
   }
 
-  get configPath(): string {
+  get configPath(): string | null {
     return this._configPath;
   }
 
@@ -98,14 +98,14 @@ export class Config implements ConfigInterface {
   public toLanguageServerConfig(): LanguageServerConfig {
     return {
       run: this.runTrigger,
-      configPath: this.configPath,
+      configPath: this.configPath ?? null,
       flags: this.flags,
     };
   }
 }
 
 interface LanguageServerConfig {
-  configPath: string;
+  configPath: string | null;
   run: Trigger;
   flags: Record<string, string>;
 }
@@ -141,9 +141,9 @@ interface ConfigInterface {
    *
    * `oxc.configPath`
    *
-   * @default ".oxlintrc.json"
+   * @default null
    */
-  configPath: string;
+  configPath: string | null;
   /**
    * Path to LSP binary
    * `oxc.path.server`

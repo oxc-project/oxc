@@ -201,7 +201,9 @@ export async function activate(context: ExtensionContext) {
     })),
     synchronize: {
       // Notify the server about file config changes in the workspace
-      fileEvents: createFileEventWatchers(configService.config.configPath),
+      fileEvents: configService.config.configPath !== null
+        ? createFileEventWatchers(configService.config.configPath)
+        : undefined,
     },
     initializationOptions: {
       settings: configService.config.toLanguageServerConfig(),
@@ -251,7 +253,10 @@ export async function activate(context: ExtensionContext) {
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
+      client.clientOptions.synchronize.fileEvents = configService.config.configPath !== null
+        ? createFileEventWatchers(configService.config.configPath)
+        : undefined;
+
       client.restart().then(async () => {
         const configFiles = await findOxlintrcConfigFiles();
         await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
