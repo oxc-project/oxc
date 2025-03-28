@@ -109,7 +109,6 @@ macro_rules! handle_string_literal_escape {
                         // mean `!table.matches(b)` on this branch prevents exiting this loop until
                         // `source` is positioned on a UTF-8 character boundary again.
                         $lexer.source.next_byte_unchecked();
-                        continue;
                     }
                     b if b == $delimiter => {
                         // End of string found. Push last chunk to `str`.
