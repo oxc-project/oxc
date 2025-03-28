@@ -47,9 +47,9 @@ impl Lexer<'_> {
             self.source.set_position(after_closing_quote);
             Kind::Str
         } else {
-            self.source.advance_to_end();
+            self.advance_to_end();
             self.error(diagnostics::unterminated_string(self.unterminated_range()));
-            Kind::Undetermined
+            Kind::Eof
         }
     }
 
@@ -80,7 +80,7 @@ impl Lexer<'_> {
                     lexer: self,
                     table: JSX_CHILD_END_TABLE,
                     handle_eof: {
-                        return Kind::Undetermined;
+                        return Kind::Eof;
                     },
                 };
 
@@ -89,12 +89,13 @@ impl Lexer<'_> {
                 } else {
                     cold_branch(|| {
                         let start = self.offset();
+                        self.advance_to_end();
                         self.error(diagnostics::unexpected_jsx_end(
                             Span::new(start, start),
                             next_byte as char,
                             if next_byte == b'}' { "rbrace" } else { "gt" },
                         ));
-                        Kind::Undetermined
+                        Kind::Eof
                     })
                 }
             }

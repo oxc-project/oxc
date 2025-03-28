@@ -39,9 +39,9 @@ impl<'a> Lexer<'a> {
                 Kind::Skip
             }
             _ => {
-                self.consume_char();
+                self.advance_to_end();
                 self.error(diagnostics::invalid_character(c, self.unterminated_range()));
-                Kind::Undetermined
+                Kind::Eof
             }
         }
     }

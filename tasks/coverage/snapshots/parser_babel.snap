@@ -1,8 +1,8 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2303/2322 (99.18%)
-Positive Passed: 2282/2322 (98.28%)
+AST Parsed     : 2306/2322 (99.31%)
+Positive Passed: 2285/2322 (98.41%)
 Negative Passed: 1549/1673 (92.59%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
@@ -145,20 +145,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:31]
- 1 │ async( x = class { #x = await });
-   ·                               ─
-   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:31]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:33]
  1 │ async( x = class { #x = await }) => {}
-   ·                               ─
+   ·                                 ▲
    ╰────
+  help: Try insert a semicolon here
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
   × 'arguments' is not allowed in class field initializer
@@ -168,27 +162,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·      ─────────
  4 │   }
    ╰────
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js:1:26]
- 1 │ async( x = class { [await] = x })
-   ·                          ─
-   ╰────
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:30]
- 1 │ async( x = class { x = await });
-   ·                              ─
-   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:30]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:32]
  1 │ async( x = class { x = await }) => {}
-   ·                              ─
+   ·                                ▲
    ╰────
+  help: Try insert a semicolon here
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
   × Unexpected new.target expression
@@ -293,25 +274,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:1:10]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:1:6]
  1 │ <div>() => {}
-   ·          ▲
+   ·      ────┬────
+   ·          ╰── `<` expected
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:1:10]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:1:6]
  1 │ <div>() => {}
-   ·          ▲
+   ·      ────┬────
+   ·          ╰── `<` expected
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:2:15]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:2:4]
  1 │ // Same as `generic`. Verify that JSX doesn't change things.
  2 │ <T>(a: T): T => a;
-   ·               ▲
+   ·    ────────┬───────
+   ·            ╰── `<` expected
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
@@ -1495,7 +1479,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/348/input.js:1:2]
  1 │ 3in []
-   ·  ──
+   ·  ─────
    ╰────
 
   × Unexpected end of file
@@ -1540,7 +1524,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/353/input.js:1:2]
  1 │ 3x0
-   ·  ─
+   ·  ──
    ╰────
 
   × Unexpected end of file
@@ -1557,20 +1541,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/358/input.js:1:2]
  1 │ 3in[]
-   ·  ──
+   ·  ────
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/359/input.js:1:4]
  1 │ 0x3in[]
-   ·    ──
+   ·    ────
    ╰────
 
   × Unterminated string
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/360/input.js:1:1]
- 1 │ "Hello
-   · ───────
- 2 │ World"
+ 1 │ ╭─▶ "Hello
+ 2 │ ╰─▶ World"
    ╰────
 
   × Invalid Character `\`
@@ -1969,7 +1952,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid Character `‿`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/426/input.js:1:1]
  1 │ ‿ = 10
-   · ─
+   · ──────
    ╰────
 
   × Identifier `default` has already been declared
@@ -2122,13 +2105,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid Character `‌`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/450/input.js:1:1]
  1 │ ‌ = []
-   · ─
+   · ─────
    ╰────
 
   × Invalid Character `‍`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/451/input.js:1:1]
  1 │ ‍ = []
-   · ─
+   · ─────
    ╰────
 
   × Unterminated string
@@ -3930,10 +3913,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/200/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/200/input.js:1:4]
  1 │ 0o9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
@@ -3953,10 +3935,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/204/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/204/input.js:1:4]
  1 │ 0O9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
@@ -3976,10 +3957,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/208/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/208/input.js:1:4]
  1 │ 0b9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
@@ -4005,10 +3985,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/213/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/213/input.js:1:4]
  1 │ 0B9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
@@ -4439,20 +4418,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid Character `𖫵`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/326/input.js:1:6]
  1 │ var _𖫵 = 11;
-   ·      ─
+   ·      ───────
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/326/input.js:1:6]
- 1 │ var _𖫵 = 11;
-   ·      ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character `𫠞`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/327/input.js:1:5]
  1 │ var 𫠞_ = 12;
-   ·     ──
+   ·     ─────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -5509,11 +5481,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:22]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:41]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                      ─
+   ·                                         ▲
    ╰────
+  help: Try insert a semicolon here
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:10]
+ 1 │ async ({ x = [ await ], y = { await } }) => {}
+   ·          ─────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:25]
+ 1 │ async ({ x = [ await ], y = { await } }) => {}
+   ·                         ─────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Line terminator not permitted before arrow
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/newline-before-arrow/input.js:2:1]
@@ -5812,13 +5799,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-decimal/input.js:1:4]
  1 │ 1.0n
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-e/input.js:1:4]
  1 │ 2e9n
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
@@ -5830,7 +5817,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-octal-legacy/input.js:1:7]
  1 │ 016432n
-   ·       ─
+   ·       ──
    ╰────
 
   × The only valid meta property for import is import.meta
@@ -6167,11 +6154,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-10/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-10/input.js:2:1]
  1 │ 0x1_1_
-   ·       ▲
    ╰────
 
   × Invalid Character `)`
@@ -6195,7 +6180,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-102/input.js:1:6]
  1 │ (1_1__)
-   ·      ─
+   ·      ───
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-102/input.js:1:2]
+ 1 │ (1_1__)
+   ·  ───┬───
+   ·     ╰── `)` expected
    ╰────
 
   × Invalid Character `_`
@@ -6207,7 +6199,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-103/input.js:1:4]
  1 │ (1__1)
-   ·    ─
+   ·    ────
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-103/input.js:1:2]
+ 1 │ (1__1)
+   ·  ───┬──
+   ·     ╰── `)` expected
    ╰────
 
   × Invalid Character `.`
@@ -6219,7 +6218,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-105/input.js:1:6]
  1 │ (1_1._1_1)
-   ·      ─
+   ·      ──────
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-105/input.js:1:2]
+ 1 │ (1_1._1_1)
+   ·  ─────┬────
+   ·       ╰── `)` expected
    ╰────
 
   × Invalid Character `e`
@@ -6243,7 +6249,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-108/input.js:1:8]
  1 │ (1_1.1e_1)
-   ·        ─
+   ·        ────
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-108/input.js:1:2]
+ 1 │ (1_1.1e_1)
+   ·  ─────┬────
+   ·       ╰── `)` expected
    ╰────
 
   × Invalid Character `_`
@@ -6255,104 +6268,192 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-109/input.js:1:8]
  1 │ (1_1.1E_1)
-   ·        ─
+   ·        ────
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-11/input.js:1:7]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-109/input.js:1:2]
+ 1 │ (1_1.1E_1)
+   ·  ─────┬────
+   ·       ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-11/input.js:2:1]
  1 │ 0xa_1_
-   ·       ▲
    ╰────
 
-  × Invalid Character `)`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-110/input.js:1:8]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-110/input.js:2:1]
  1 │ (0x1_1_)
-   ·        ▲
    ╰────
 
-  × Invalid Character `)`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-111/input.js:1:8]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-110/input.js:1:2]
+ 1 │ (0x1_1_)
+   ·  ────┬───
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-111/input.js:2:1]
  1 │ (0xa_1_)
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-112/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-111/input.js:1:2]
+ 1 │ (0xa_1_)
+   ·  ────┬───
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-112/input.js:2:1]
  1 │ (0x_a_1)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-113/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-112/input.js:1:2]
+ 1 │ (0x_a_1)
+   ·  ────┬───
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-113/input.js:2:1]
  1 │ (0x__1_1_)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-114/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-113/input.js:1:2]
+ 1 │ (0x__1_1_)
+   ·  ─────┬────
+   ·       ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-114/input.js:2:1]
  1 │ (0x_1__1)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-115/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-114/input.js:1:2]
+ 1 │ (0x_1__1)
+   ·  ────┬────
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-115/input.js:2:1]
  1 │ (0x_1_1_)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-116/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-115/input.js:1:2]
+ 1 │ (0x_1_1_)
+   ·  ────┬────
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-116/input.js:2:1]
  1 │ (0o_1_1)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-117/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-116/input.js:1:2]
+ 1 │ (0o_1_1)
+   ·  ────┬───
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-117/input.js:2:1]
  1 │ (0o_11)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-118/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-117/input.js:1:2]
+ 1 │ (0o_11)
+   ·  ───┬───
+   ·     ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-118/input.js:2:1]
  1 │ (0o_01_1_)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-119/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-118/input.js:1:2]
+ 1 │ (0o_01_1_)
+   ·  ─────┬────
+   ·       ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-119/input.js:2:1]
  1 │ (0b_0_1_1)
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-12/input.js:1:3]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-119/input.js:1:2]
+ 1 │ (0b_0_1_1)
+   ·  ─────┬────
+   ·       ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-12/input.js:2:1]
  1 │ 0x_a_1
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-120/input.js:1:4]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-120/input.js:2:1]
  1 │ (0b_01_1_)
-   ·    ▲
    ╰────
 
-  × Invalid Character `)`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-121/input.js:1:9]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-120/input.js:1:2]
+ 1 │ (0b_01_1_)
+   ·  ─────┬────
+   ·       ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-121/input.js:2:1]
  1 │ (0b01_1_)
-   ·         ▲
    ╰────
 
-  × Invalid Character `)`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-122/input.js:1:8]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-121/input.js:1:2]
+ 1 │ (0b01_1_)
+   ·  ────┬────
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-122/input.js:2:1]
  1 │ (0o1_1_)
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-123/input.js:1:4]
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-122/input.js:1:2]
+ 1 │ (0o1_1_)
+   ·  ────┬───
+   ·      ╰── `)` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-123/input.js:2:1]
  1 │ (0o_1_1_)
-   ·    ▲
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-123/input.js:1:2]
+ 1 │ (0o_1_1_)
+   ·  ────┬────
+   ·      ╰── `)` expected
    ╰────
 
   × Invalid Character `}`
@@ -6376,7 +6477,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-126/input.js:1:6]
  1 │ {1_1__}
-   ·      ─
+   ·      ───
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-126/input.js:1:2]
+ 1 │ {1_1__}
+   ·  ───┬───
+   ·     ╰── `}` expected
    ╰────
 
   × Invalid Character `_`
@@ -6388,7 +6496,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-127/input.js:1:4]
  1 │ {1__1}
-   ·    ─
+   ·    ────
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-127/input.js:1:2]
+ 1 │ {1__1}
+   ·  ───┬──
+   ·     ╰── `}` expected
    ╰────
 
   × Invalid Character `.`
@@ -6400,13 +6515,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-129/input.js:1:6]
  1 │ {1_1._1_1}
-   ·      ─
+   ·      ──────
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-13/input.js:1:3]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-129/input.js:1:2]
+ 1 │ {1_1._1_1}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-13/input.js:2:1]
  1 │ 0x__1_1_
-   ·   ▲
    ╰────
 
   × Invalid Character `e`
@@ -6430,7 +6551,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-132/input.js:1:8]
  1 │ {1_1.1e_1}
-   ·        ─
+   ·        ────
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-132/input.js:1:2]
+ 1 │ {1_1.1e_1}
+   ·  ─────┬────
+   ·       ╰── `}` expected
    ╰────
 
   × Invalid Character `_`
@@ -6442,127 +6570,212 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-133/input.js:1:8]
  1 │ {1_1.1E_1}
-   ·        ─
+   ·        ────
    ╰────
 
-  × Invalid Character `}`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-134/input.js:1:8]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-133/input.js:1:2]
+ 1 │ {1_1.1E_1}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-134/input.js:2:1]
  1 │ {0x1_1_}
-   ·        ▲
    ╰────
 
-  × Invalid Character `}`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-135/input.js:1:8]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-134/input.js:1:2]
+ 1 │ {0x1_1_}
+   ·  ────┬───
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-135/input.js:2:1]
  1 │ {0xa_1_}
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-136/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-135/input.js:1:2]
+ 1 │ {0xa_1_}
+   ·  ────┬───
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-136/input.js:2:1]
  1 │ {0x_a_1}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-137/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-136/input.js:1:2]
+ 1 │ {0x_a_1}
+   ·  ────┬───
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-137/input.js:2:1]
  1 │ {0x__1_1_}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-138/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-137/input.js:1:2]
+ 1 │ {0x__1_1_}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-138/input.js:2:1]
  1 │ {0x_1__1}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-139/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-138/input.js:1:2]
+ 1 │ {0x_1__1}
+   ·  ────┬────
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-139/input.js:2:1]
  1 │ {0x_1_1_}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-14/input.js:1:3]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-139/input.js:1:2]
+ 1 │ {0x_1_1_}
+   ·  ────┬────
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-14/input.js:2:1]
  1 │ 0x_1__1
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-140/input.js:1:4]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-140/input.js:2:1]
  1 │ {0o_1_1}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-141/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-140/input.js:1:2]
+ 1 │ {0o_1_1}
+   ·  ────┬───
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-141/input.js:2:1]
  1 │ {0o_11}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-142/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-141/input.js:1:2]
+ 1 │ {0o_11}
+   ·  ───┬───
+   ·     ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-142/input.js:2:1]
  1 │ {0o_01_1_}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-143/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-142/input.js:1:2]
+ 1 │ {0o_01_1_}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-143/input.js:2:1]
  1 │ {0b_0_1_1}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-144/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-143/input.js:1:2]
+ 1 │ {0b_0_1_1}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-144/input.js:2:1]
  1 │ {0b_01_1_}
-   ·    ▲
    ╰────
 
-  × Invalid Character `}`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-145/input.js:1:9]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-144/input.js:1:2]
+ 1 │ {0b_01_1_}
+   ·  ─────┬────
+   ·       ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-145/input.js:2:1]
  1 │ {0b01_1_}
-   ·         ▲
    ╰────
 
-  × Invalid Character `}`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-146/input.js:1:8]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-145/input.js:1:2]
+ 1 │ {0b01_1_}
+   ·  ────┬────
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-146/input.js:2:1]
  1 │ {0o1_1_}
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-147/input.js:1:4]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-146/input.js:1:2]
+ 1 │ {0o1_1_}
+   ·  ────┬───
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-147/input.js:2:1]
  1 │ {0o_1_1_}
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-15/input.js:1:3]
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-147/input.js:1:2]
+ 1 │ {0o_1_1_}
+   ·  ────┬────
+   ·      ╰── `}` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-15/input.js:2:1]
  1 │ 0x_1_1_
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-16/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-16/input.js:2:1]
  1 │ 0o_1_1
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-17/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-17/input.js:2:1]
  1 │ 0o_11
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-18/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-18/input.js:2:1]
  1 │ 0o_01_1_
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-19/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-19/input.js:2:1]
  1 │ 0b_0_1_1
-   ·   ▲
    ╰────
 
   × Invalid Character `_`
@@ -6574,33 +6787,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-2/input.js:1:5]
  1 │ 1_1__
-   ·     ─
+   ·     ──
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-20/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-20/input.js:2:1]
  1 │ 0b_01_1_
-   ·   ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-21/input.js:1:8]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-21/input.js:2:1]
  1 │ 0b01_1_
-   ·        ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-22/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-22/input.js:2:1]
  1 │ 0o1_1_
-   ·       ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-23/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-23/input.js:2:1]
  1 │ 0o_1_1_
-   ·   ▲
    ╰────
 
   × Unexpected token
@@ -6609,22 +6816,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─
    ╰────
 
-  × Invalid Character `8`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-25/input.js:1:6]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-25/input.js:2:1]
  1 │ 0o01_8
-   ·      ▲
    ╰────
 
-  × Invalid Character `2`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-26/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-26/input.js:2:1]
  1 │ 0b2_1
-   ·   ▲
    ╰────
 
-  × Invalid Character `Z`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-27/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-27/input.js:2:1]
  1 │ 0xZ_1
-   ·   ▲
    ╰────
 
   × Invalid Character `;`
@@ -6648,7 +6852,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-3/input.js:1:3]
  1 │ 1__1
-   ·   ─
+   ·   ───
    ╰────
 
   × Invalid Character `_`
@@ -6660,7 +6864,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-30/input.js:1:5]
  1 │ 1_1__;
-   ·     ─
+   ·     ───
    ╰────
 
   × Invalid Character `_`
@@ -6672,7 +6876,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-31/input.js:1:3]
  1 │ 1__1;
-   ·   ─
+   ·   ────
    ╰────
 
   × Invalid Character `.`
@@ -6684,7 +6888,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-33/input.js:1:5]
  1 │ 1_1._1_1;
-   ·     ─
+   ·     ──────
    ╰────
 
   × Invalid Character `e`
@@ -6708,7 +6912,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-36/input.js:1:7]
  1 │ 1_1.1e_1;
-   ·       ─
+   ·       ────
    ╰────
 
   × Invalid Character `_`
@@ -6720,19 +6924,17 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-37/input.js:1:7]
  1 │ 1_1.1E_1;
-   ·       ─
+   ·       ────
    ╰────
 
-  × Invalid Character `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-38/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-38/input.js:2:1]
  1 │ 0x1_1_;
-   ·       ▲
    ╰────
 
-  × Invalid Character `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-39/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-39/input.js:2:1]
  1 │ 0xa_1_;
-   ·       ▲
    ╰────
 
   × Invalid Character `.`
@@ -6741,82 +6943,70 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-40/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-40/input.js:2:1]
  1 │ 0x_a_1;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-41/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-41/input.js:2:1]
  1 │ 0x__1_1_;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-42/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-42/input.js:2:1]
  1 │ 0x_1__1;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-43/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-43/input.js:2:1]
  1 │ 0x_1_1_;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-44/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-44/input.js:2:1]
  1 │ 0o_1_1;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-45/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-45/input.js:2:1]
  1 │ 0o_11;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-46/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-46/input.js:2:1]
  1 │ 0o_01_1_;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-47/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-47/input.js:2:1]
  1 │ 0b_0_1_1;
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-48/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-48/input.js:2:1]
  1 │ 0b_01_1_;
-   ·   ▲
    ╰────
 
-  × Invalid Character `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-49/input.js:1:8]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-49/input.js:2:1]
  1 │ 0b01_1_;
-   ·        ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-5/input.js:1:5]
  1 │ 1_1._1_1
-   ·     ─
+   ·     ─────
    ╰────
 
-  × Invalid Character `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-50/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-50/input.js:2:1]
  1 │ 0o1_1_;
-   ·       ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-51/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-51/input.js:2:1]
  1 │ 0o_1_1_;
-   ·   ▲
    ╰────
 
   × Invalid Character `,`
@@ -6840,7 +7030,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-54/input.js:1:5]
  1 │ 1_1__, 0
-   ·     ─
+   ·     ─────
    ╰────
 
   × Invalid Character `_`
@@ -6852,7 +7042,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-55/input.js:1:3]
  1 │ 1__1, 0
-   ·   ─
+   ·   ──────
    ╰────
 
   × Invalid Character `.`
@@ -6864,7 +7054,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-57/input.js:1:5]
  1 │ 1_1._1_1, 0
-   ·     ─
+   ·     ────────
    ╰────
 
   × Invalid Character `e`
@@ -6894,7 +7084,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-60/input.js:1:7]
  1 │ 1_1.1e_1, 0
-   ·       ─
+   ·       ──────
    ╰────
 
   × Invalid Character `_`
@@ -6906,55 +7096,47 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-61/input.js:1:7]
  1 │ 1_1.1E_1, 0
-   ·       ─
+   ·       ──────
    ╰────
 
-  × Invalid Character `,`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-62/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-62/input.js:2:1]
  1 │ 0x1_1_, 0
-   ·       ▲
    ╰────
 
-  × Invalid Character `,`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-63/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-63/input.js:2:1]
  1 │ 0xa_1_, 0
-   ·       ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-64/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-64/input.js:2:1]
  1 │ 0x_a_1, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-65/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-65/input.js:2:1]
  1 │ 0x__1_1_, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-66/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-66/input.js:2:1]
  1 │ 0x_1__1, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-67/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-67/input.js:2:1]
  1 │ 0x_1_1_, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-68/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-68/input.js:2:1]
  1 │ 0o_1_1, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-69/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-69/input.js:2:1]
  1 │ 0o_11, 0
-   ·   ▲
    ╰────
 
   × Invalid Character `E`
@@ -6963,40 +7145,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-70/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-70/input.js:2:1]
  1 │ 0o_01_1_, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-71/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-71/input.js:2:1]
  1 │ 0b_0_1_1, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-72/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-72/input.js:2:1]
  1 │ 0b_01_1_, 0
-   ·   ▲
    ╰────
 
-  × Invalid Character `,`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-73/input.js:1:8]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-73/input.js:2:1]
  1 │ 0b01_1_, 0
-   ·        ▲
    ╰────
 
-  × Invalid Character `,`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-74/input.js:1:7]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-74/input.js:2:1]
  1 │ 0o1_1_, 0
-   ·       ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-75/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-75/input.js:2:1]
  1 │ 0o_1_1_, 0
-   ·   ▲
    ╰────
 
   × Invalid Character `]`
@@ -7020,7 +7196,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-78/input.js:1:6]
  1 │ [1_1__]
-   ·      ─
+   ·      ───
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-78/input.js:1:2]
+ 1 │ [1_1__]
+   ·  ───┬───
+   ·     ╰── `]` expected
    ╰────
 
   × Invalid Character `_`
@@ -7032,7 +7215,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-79/input.js:1:4]
  1 │ [1__1]
-   ·    ─
+   ·    ────
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-79/input.js:1:2]
+ 1 │ [1__1]
+   ·  ───┬──
+   ·     ╰── `]` expected
    ╰────
 
   × Invalid Character `_`
@@ -7044,7 +7234,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-8/input.js:1:7]
  1 │ 1_1.1e_1
-   ·       ─
+   ·       ───
    ╰────
 
   × Invalid Character `.`
@@ -7056,7 +7246,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-81/input.js:1:6]
  1 │ [1_1._1_1]
-   ·      ─
+   ·      ──────
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-81/input.js:1:2]
+ 1 │ [1_1._1_1]
+   ·  ─────┬────
+   ·       ╰── `]` expected
    ╰────
 
   × Invalid Character `e`
@@ -7080,7 +7277,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-84/input.js:1:8]
  1 │ [1_1.1e_1]
-   ·        ─
+   ·        ────
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-84/input.js:1:2]
+ 1 │ [1_1.1e_1]
+   ·  ─────┬────
+   ·       ╰── `]` expected
    ╰────
 
   × Invalid Character `_`
@@ -7092,31 +7296,62 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-85/input.js:1:8]
  1 │ [1_1.1E_1]
-   ·        ─
+   ·        ────
    ╰────
 
-  × Invalid Character `]`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-86/input.js:1:8]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-85/input.js:1:2]
+ 1 │ [1_1.1E_1]
+   ·  ─────┬────
+   ·       ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-86/input.js:2:1]
  1 │ [0x1_1_]
-   ·        ▲
    ╰────
 
-  × Invalid Character `]`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-87/input.js:1:8]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-86/input.js:1:2]
+ 1 │ [0x1_1_]
+   ·  ────┬───
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-87/input.js:2:1]
  1 │ [0xa_1_]
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-88/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-87/input.js:1:2]
+ 1 │ [0xa_1_]
+   ·  ────┬───
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-88/input.js:2:1]
  1 │ [0x_a_1]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-89/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-88/input.js:1:2]
+ 1 │ [0x_a_1]
+   ·  ────┬───
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-89/input.js:2:1]
  1 │ [0x__1_1_]
-   ·    ▲
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-89/input.js:1:2]
+ 1 │ [0x__1_1_]
+   ·  ─────┬────
+   ·       ╰── `]` expected
    ╰────
 
   × Invalid Character `_`
@@ -7128,67 +7363,127 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-9/input.js:1:7]
  1 │ 1_1.1E_1
-   ·       ─
+   ·       ───
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-90/input.js:1:4]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-90/input.js:2:1]
  1 │ [0x_1__1]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-91/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-90/input.js:1:2]
+ 1 │ [0x_1__1]
+   ·  ────┬────
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-91/input.js:2:1]
  1 │ [0x_1_1_]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-92/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-91/input.js:1:2]
+ 1 │ [0x_1_1_]
+   ·  ────┬────
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-92/input.js:2:1]
  1 │ [0o_1_1]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-93/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-92/input.js:1:2]
+ 1 │ [0o_1_1]
+   ·  ────┬───
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-93/input.js:2:1]
  1 │ [0o_11]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-94/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-93/input.js:1:2]
+ 1 │ [0o_11]
+   ·  ───┬───
+   ·     ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-94/input.js:2:1]
  1 │ [0o_01_1_]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-95/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-94/input.js:1:2]
+ 1 │ [0o_01_1_]
+   ·  ─────┬────
+   ·       ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-95/input.js:2:1]
  1 │ [0b_0_1_1]
-   ·    ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-96/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-95/input.js:1:2]
+ 1 │ [0b_0_1_1]
+   ·  ─────┬────
+   ·       ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-96/input.js:2:1]
  1 │ [0b_01_1_]
-   ·    ▲
    ╰────
 
-  × Invalid Character `]`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-97/input.js:1:9]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-96/input.js:1:2]
+ 1 │ [0b_01_1_]
+   ·  ─────┬────
+   ·       ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-97/input.js:2:1]
  1 │ [0b01_1_]
-   ·         ▲
    ╰────
 
-  × Invalid Character `]`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-98/input.js:1:8]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-97/input.js:1:2]
+ 1 │ [0b01_1_]
+   ·  ────┬────
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-98/input.js:2:1]
  1 │ [0o1_1_]
-   ·        ▲
    ╰────
 
-  × Invalid Character `_`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-99/input.js:1:4]
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-98/input.js:1:2]
+ 1 │ [0o1_1_]
+   ·  ────┬───
+   ·      ╰── `]` expected
+   ╰────
+
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-99/input.js:2:1]
  1 │ [0o_1_1_]
-   ·    ▲
+   ╰────
+
+  × Expected `]` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-99/input.js:1:2]
+ 1 │ [0o_1_1_]
+   ·  ────┬────
+   ·      ╰── `]` expected
    ╰────
 
   × Invalid escape sequence
@@ -7200,19 +7495,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-leading-zero/input.js:1:2]
  1 │ 0_8
-   ·  ─
+   ·  ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-legacy-octal-literal/input.js:1:3]
  1 │ 00_0
-   ·   ─
+   ·   ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-non-octal-decimal-int/input.js:1:3]
  1 │ 08_0n
-   ·   ─
+   ·   ───
    ╰────
 
   × Invalid escape sequence
@@ -7304,6 +7599,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   #  wrongSpaces() {
    ·    ─
  3 │     return fail();
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/failure-spaces/input.js:2:3]
+ 1 │     class Spaces {
+ 2 │ ╭─▶   #  wrongSpaces() {
+ 3 │ │       return fail();
+ 4 │ │     }
+ 5 │ ├─▶ }
+   · ╰──── `}` expected
    ╰────
 
   × Identifier `x` has already been declared
@@ -8052,6 +8357,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-computed/input.js:3:3]
+ 2 │       #p = x
+ 3 │ ╭─▶   #[m] = 1
+ 4 │ ├─▶ }
+   · ╰──── `}` expected
+   ╰────
+
   × The operand of a 'delete' operator cannot be a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-delete-optional-private-property/input.js:4:18]
  3 │   constructor() {
@@ -8084,12 +8397,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-numeric-literal/input.js:2:3]
+ 1 │     class Foo {
+ 2 │ ╭─▶   #2 = y
+ 3 │ ├─▶ }
+   · ╰──── `}` expected
+   ╰────
+
   × Invalid Character `2`
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-numeric-start-identifier/input.js:2:4]
  1 │ class Foo {
  2 │   #2x = y
    ·    ─
  3 │ }
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-numeric-start-identifier/input.js:2:3]
+ 1 │     class Foo {
+ 2 │ ╭─▶   #2x = y
+ 3 │ ├─▶ }
+   · ╰──── `}` expected
    ╰────
 
   × Unexpected token
@@ -8108,12 +8437,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-spaces/input.js:2:3]
+ 1 │     class Spaces {
+ 2 │ ╭─▶   #  wrongSpaces;
+ 3 │ ├─▶ }
+   · ╰──── `}` expected
+   ╰────
+
   × Invalid Character `"`
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-string-literal/input.js:2:4]
  1 │ class Foo {
  2 │   #"p" = x
    ·    ─
  3 │ }
+   ╰────
+
+  × Expected `}` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-string-literal/input.js:2:3]
+ 1 │     class Foo {
+ 2 │ ╭─▶   #"p" = x
+ 3 │ ├─▶ }
+   · ╰──── `}` expected
    ╰────
 
   × Unexpected token
@@ -8229,11 +8574,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:26]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:34]
  1 │ async( x = class { [await] = x }) => {}
-   ·                          ─
+   ·                                  ▲
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected new.target expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target-invalid/input.js:1:9]
@@ -8998,7 +9344,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid Character `🀒`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_id_smp/input.js:1:5]
  1 │ var 🀒
-   ·     ─
+   ·     ──
    ╰────
 
   × Invalid Unicode escape sequence
@@ -9580,13 +9926,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0002/input.js:1:3]
  1 │ 3ea
-   ·   ─
+   ·   ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0003/input.js:1:2]
  1 │ 3in []
-   ·  ──
+   ·  ──────
    ╰────
 
   × Invalid Character `
@@ -9631,157 +9977,142 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0007/input.js:1:2]
  1 │ 3x
-   ·  ─
+   ·  ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0008/input.js:1:2]
  1 │ 3x0
-   ·  ─
+   ·  ───
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0009/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0009/input.js:2:1]
  1 │ 0x
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0010/input.js:1:3]
  1 │ 01a
-   ·   ─
+   ·   ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0011/input.js:1:4]
  1 │ 0o1a
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0012/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0012/input.js:2:1]
  1 │ 0o
-   ·   ▲
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0013/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0013/input.js:2:1]
  1 │ 0O
-   ·   ▲
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0014/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0014/input.js:2:1]
  1 │ 0o9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0015/input.js:1:4]
  1 │ 0o18
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0016/input.js:1:4]
  1 │ 0O1a
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0017/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0017/input.js:2:1]
  1 │ 0b
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0018/input.js:1:4]
  1 │ 0b1a
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0019/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0019/input.js:2:1]
  1 │ 0b9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0020/input.js:1:4]
  1 │ 0b18
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0021/input.js:1:4]
  1 │ 0b12
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `
-  │ `
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0022/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0022/input.js:2:1]
  1 │ 0B
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0023/input.js:1:4]
  1 │ 0B1a
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0024/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0024/input.js:2:1]
  1 │ 0B9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0025/input.js:1:4]
  1 │ 0B18
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0026/input.js:1:4]
  1 │ 0B12
-   ·    ─
+   ·    ──
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0027/input.js:1:3]
+  × Unexpected end of file
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0027/input.js:2:1]
  1 │ 0O9
-   ·   ▲
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0028/input.js:1:4]
  1 │ 0O18
-   ·    ─
+   ·    ──
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0029/input.js:1:2]
  1 │ 3in[]
-   ·  ──
+   ·  ─────
    ╰────
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0030/input.js:1:4]
  1 │ 0x3in[]
-   ·    ──
+   ·    ─────
    ╰────
 
   × Unterminated string
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0031/input.js:1:1]
- 1 │ "Hello
-   · ───────
- 2 │ World"
+ 1 │ ╭─▶ "Hello
+ 2 │ ╰─▶ World"
    ╰────
 
   × Invalid Unicode escape sequence
@@ -10024,13 +10355,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ i #= 42
    ·    ─
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0065/input.js:1:2]
- 1 │ i #= 42
-   ·  ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0066/input.js:1:1]
@@ -11395,16 +11719,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ─
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:10]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:6]
  1 │ <div>() => {}
-   ·          ▲
+   ·      ────┬────
+   ·          ╰── `<` expected
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:6]
  1 │ <div>() => {}
-   ·          ▲
+   ·      ────┬────
+   ·          ╰── `<` expected
    ╰────
 
   × Unexpected token
@@ -11538,12 +11864,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:15]
- 1 │ // Generics without trailing comma are disallowed in JSX
- 2 │ <T>(a: T): T => a;
-   ·               ▲
- 3 │ 
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:4]
+ 1 │     // Generics without trailing comma are disallowed in JSX
+ 2 │ ╭─▶ <T>(a: T): T => a;
+ 3 │ │   
+ 4 │ ├─▶ <T,>(a: T): T => a;
+   · ╰──── `<` expected
    ╰────
 
   × Keywords cannot contain escape characters
@@ -12811,10 +13138,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   );
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:8]
+  × Expected `<` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:4]
  1 │ <T>() => {}</T>;
-   ·        ▲
+   ·    ──────┬──────
+   ·          ╰── `<` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -13036,21 +13364,341 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Remove the duplicate modifier.
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:11]
- 1 │ // valid JSX
- 2 │ <in T>() => {}</in>;
-   ·           ▲
- 3 │ 
-   ╰────
+  × Expected `<` but found `EOF`
+     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:7]
+   1 │     // valid JSX
+   2 │ ╭─▶ <in T>() => {}</in>;
+   3 │ │   
+   4 │ │   type Covariant<out T> = {
+   5 │ │       x: T;
+   6 │ │   }
+   7 │ │   
+   8 │ │   declare let super_covariant: Covariant<unknown>;
+   9 │ │   declare let sub_covariant: Covariant<string>;
+  10 │ │   
+  11 │ │   super_covariant = sub_covariant;
+  12 │ │   sub_covariant = super_covariant;  // Error
+  13 │ │   
+  14 │ │   type Contravariant<in T> = {
+  15 │ │       f: (x: T) => void;
+  16 │ │   }
+  17 │ │   
+  18 │ │   declare let super_contravariant: Contravariant<unknown>;
+  19 │ │   declare let sub_contravariant: Contravariant<string>;
+  20 │ │   
+  21 │ │   super_contravariant = sub_contravariant;  // Error
+  22 │ │   sub_contravariant = super_contravariant;
+  23 │ │   
+  24 │ │   type Invariant<in out T> = {
+  25 │ │       f: (x: T) => T;
+  26 │ │   }
+  27 │ │   
+  28 │ │   declare let super_invariant: Invariant<unknown>;
+  29 │ │   declare let sub_invariant: Invariant<string>;
+  30 │ │   
+  31 │ │   super_invariant = sub_invariant;  // Error
+  32 │ │   sub_invariant = super_invariant;  // Error
+  33 │ │   
+  34 │ │   // Variance of various type constructors
+  35 │ │   
+  36 │ │   type T10<out T> = T;
+  37 │ │   type T11<in T> = keyof T;
+  38 │ │   type T12<out T, out K extends keyof T> = T[K];
+  39 │ │   type T13<in out T> = T[keyof T];
+  40 │ │   
+  41 │ │   // Variance annotation errors
+  42 │ │   
+  43 │ │   type Covariant1<in T> = {  // Error
+  44 │ │       x: T;
+  45 │ │   }
+  46 │ │   
+  47 │ │   type Contravariant1<out T> = keyof T;  // Error
+  48 │ │   
+  49 │ │   type Contravariant2<out T> = {  // Error
+  50 │ │       f: (x: T) => void;
+  51 │ │   }
+  52 │ │   
+  53 │ │   type Invariant1<in T> = {  // Error
+  54 │ │       f: (x: T) => T;
+  55 │ │   }
+  56 │ │   
+  57 │ │   type Invariant2<out T> = {  // Error
+  58 │ │       f: (x: T) => T;
+  59 │ │   }
+  60 │ │   
+  61 │ │   // Variance in circular types
+  62 │ │   
+  63 │ │   type Foo1<in T> = {  // Error
+  64 │ │       x: T;
+  65 │ │       f: FooFn1<T>;
+  66 │ │   }
+  67 │ │   
+  68 │ │   type FooFn1<T> = (foo: Bar1<T[]>) => void;
+  69 │ │   
+  70 │ │   type Bar1<T> = {
+  71 │ │       value: Foo1<T[]>;
+  72 │ │   }
+  73 │ │   
+  74 │ │   type Foo2<out T> = {  // Error
+  75 │ │       x: T;
+  76 │ │       f: FooFn2<T>;
+  77 │ │   }
+  78 │ │   
+  79 │ │   type FooFn2<T> = (foo: Bar2<T[]>) => void;
+  80 │ │   
+  81 │ │   type Bar2<T> = {
+  82 │ │       value: Foo2<T[]>;
+  83 │ │   }
+  84 │ │   
+  85 │ │   type Foo3<in out T> = {
+  86 │ │       x: T;
+  87 │ │       f: FooFn3<T>;
+  88 │ │   }
+  89 │ │   
+  90 │ │   type FooFn3<T> = (foo: Bar3<T[]>) => void;
+  91 │ │   
+  92 │ │   type Bar3<T> = {
+  93 │ │       value: Foo3<T[]>;
+  94 │ │   }
+  95 │ │   
+  96 │ │   // Wrong modifier usage
+  97 │ │   
+  98 │ │   type T20<public T> = T;  // Error
+  99 │ │   type T21<in out in T> = T;  // Error
+ 100 │ │   type T22<in out out T> = T;  // Error
+ 101 │ │   type T23<out in T> = T;  // Error
+ 102 │ │   
+ 103 │ │   declare function f1<in T>(x: T): void;  // Error
+ 104 │ │   declare function f2<out T>(): T;  // Error
+ 105 │ │   
+ 106 │ │   class C {
+ 107 │ │       in a = 0;  // Error
+ 108 │ │       out b = 0;  // Error
+ 109 │ │   }
+ 110 │ │   
+ 111 │ │   // Interface merging
+ 112 │ │   
+ 113 │ │   interface Baz<out T> {}
+ 114 │ │   interface Baz<in T> {}
+ 115 │ │   
+ 116 │ │   declare let baz1: Baz<unknown>;
+ 117 │ │   declare let baz2: Baz<string>;
+ 118 │ │   
+ 119 │ │   baz1 = baz2;  // Error
+ 120 │ │   baz2 = baz1;  // Error
+ 121 │ │   
+ 122 │ │   // Repro from #44572
+ 123 │ │   
+ 124 │ │   interface Parent<out A> {
+ 125 │ │       child: Child<A> | null;
+ 126 │ │       parent: Parent<A> | null;
+ 127 │ │   }
+ 128 │ │   
+ 129 │ │   interface Child<A, B = unknown> extends Parent<A> {
+ 130 │ │       readonly a: A;
+ 131 │ │       readonly b: B;
+ 132 │ │   }
+ 133 │ │   
+ 134 │ │   function fn<A>(inp: Child<A>) {
+ 135 │ │       const a: Child<unknown> = inp;
+ 136 │ │   }
+ 137 │ │   
+ 138 │ │   const pu: Parent<unknown> = { child: { a: 0, b: 0, child: null, parent: null }, parent: null };
+ 139 │ │   const notString: Parent<string> = pu;  // Error
+ 140 │ │   
+ 141 │ │   // Repro from comment in #44572
+ 142 │ │   
+ 143 │ │   declare class StateNode<TContext, in out TEvent extends { type: string }> {
+ 144 │ │       _storedEvent: TEvent;
+ 145 │ │       _action: ActionObject<TEvent>;
+ 146 │ │       _state: StateNode<TContext, any>;
+ 147 │ │   }
+ 148 │ │   
+ 149 │ │   interface ActionObject<TEvent extends { type: string }> {
+ 150 │ │       exec: (meta: StateNode<any, TEvent>) => void;
+ 151 │ │   }
+ 152 │ │   
+ 153 │ │   declare function createMachine<TEvent extends { type: string }>(action: ActionObject<TEvent>): StateNode<any, any>;
+ 154 │ │   
+ 155 │ │   declare function interpret<TContext>(machine: StateNode<TContext, any>): void;
+ 156 │ │   
+ 157 │ │   const machine = createMachine({} as any);
+ 158 │ │   
+ 159 │ │   interpret(machine);
+ 160 │ │   
+ 161 │ │   declare const qq: ActionObject<{ type: "PLAY"; value: number }>;
+ 162 │ │   
+ 163 │ ├─▶ createMachine<{ type: "PLAY"; value: number } | { type: "RESET" }>(qq);  // Error
+     · ╰──── `<` expected
+     ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:2:11]
- 1 │ // valid JSX
- 2 │ <in T>() => {}</in>;
-   ·           ▲
- 3 │ 
-   ╰────
+  × Expected `<` but found `EOF`
+     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:2:7]
+   1 │     // valid JSX
+   2 │ ╭─▶ <in T>() => {}</in>;
+   3 │ │   
+   4 │ │   type Covariant<out T> = {
+   5 │ │       x: T;
+   6 │ │   }
+   7 │ │   
+   8 │ │   declare let super_covariant: Covariant<unknown>;
+   9 │ │   declare let sub_covariant: Covariant<string>;
+  10 │ │   
+  11 │ │   super_covariant = sub_covariant;
+  12 │ │   sub_covariant = super_covariant;  // Error
+  13 │ │   
+  14 │ │   type Contravariant<in T> = {
+  15 │ │       f: (x: T) => void;
+  16 │ │   }
+  17 │ │   
+  18 │ │   declare let super_contravariant: Contravariant<unknown>;
+  19 │ │   declare let sub_contravariant: Contravariant<string>;
+  20 │ │   
+  21 │ │   super_contravariant = sub_contravariant;  // Error
+  22 │ │   sub_contravariant = super_contravariant;
+  23 │ │   
+  24 │ │   type Invariant<in out T> = {
+  25 │ │       f: (x: T) => T;
+  26 │ │   }
+  27 │ │   
+  28 │ │   declare let super_invariant: Invariant<unknown>;
+  29 │ │   declare let sub_invariant: Invariant<string>;
+  30 │ │   
+  31 │ │   super_invariant = sub_invariant;  // Error
+  32 │ │   sub_invariant = super_invariant;  // Error
+  33 │ │   
+  34 │ │   // Variance of various type constructors
+  35 │ │   
+  36 │ │   type T10<out T> = T;
+  37 │ │   type T11<in T> = keyof T;
+  38 │ │   type T12<out T, out K extends keyof T> = T[K];
+  39 │ │   type T13<in out T> = T[keyof T];
+  40 │ │   
+  41 │ │   // Variance annotation errors
+  42 │ │   
+  43 │ │   type Covariant1<in T> = {  // Error
+  44 │ │       x: T;
+  45 │ │   }
+  46 │ │   
+  47 │ │   type Contravariant1<out T> = keyof T;  // Error
+  48 │ │   
+  49 │ │   type Contravariant2<out T> = {  // Error
+  50 │ │       f: (x: T) => void;
+  51 │ │   }
+  52 │ │   
+  53 │ │   type Invariant1<in T> = {  // Error
+  54 │ │       f: (x: T) => T;
+  55 │ │   }
+  56 │ │   
+  57 │ │   type Invariant2<out T> = {  // Error
+  58 │ │       f: (x: T) => T;
+  59 │ │   }
+  60 │ │   
+  61 │ │   // Variance in circular types
+  62 │ │   
+  63 │ │   type Foo1<in T> = {  // Error
+  64 │ │       x: T;
+  65 │ │       f: FooFn1<T>;
+  66 │ │   }
+  67 │ │   
+  68 │ │   type FooFn1<T> = (foo: Bar1<T[]>) => void;
+  69 │ │   
+  70 │ │   type Bar1<T> = {
+  71 │ │       value: Foo1<T[]>;
+  72 │ │   }
+  73 │ │   
+  74 │ │   type Foo2<out T> = {  // Error
+  75 │ │       x: T;
+  76 │ │       f: FooFn2<T>;
+  77 │ │   }
+  78 │ │   
+  79 │ │   type FooFn2<T> = (foo: Bar2<T[]>) => void;
+  80 │ │   
+  81 │ │   type Bar2<T> = {
+  82 │ │       value: Foo2<T[]>;
+  83 │ │   }
+  84 │ │   
+  85 │ │   type Foo3<in out T> = {
+  86 │ │       x: T;
+  87 │ │       f: FooFn3<T>;
+  88 │ │   }
+  89 │ │   
+  90 │ │   type FooFn3<T> = (foo: Bar3<T[]>) => void;
+  91 │ │   
+  92 │ │   type Bar3<T> = {
+  93 │ │       value: Foo3<T[]>;
+  94 │ │   }
+  95 │ │   
+  96 │ │   // Wrong modifier usage
+  97 │ │   
+  98 │ │   type T20<public T> = T;  // Error
+  99 │ │   type T21<in out in T> = T;  // Error
+ 100 │ │   type T22<in out out T> = T;  // Error
+ 101 │ │   type T23<out in T> = T;  // Error
+ 102 │ │   
+ 103 │ │   declare function f1<in T>(x: T): void;  // Error
+ 104 │ │   declare function f2<out T>(): T;  // Error
+ 105 │ │   
+ 106 │ │   class C {
+ 107 │ │       in a = 0;  // Error
+ 108 │ │       out b = 0;  // Error
+ 109 │ │   }
+ 110 │ │   
+ 111 │ │   // Interface merging
+ 112 │ │   
+ 113 │ │   interface Baz<out T> {}
+ 114 │ │   interface Baz<in T> {}
+ 115 │ │   
+ 116 │ │   declare let baz1: Baz<unknown>;
+ 117 │ │   declare let baz2: Baz<string>;
+ 118 │ │   
+ 119 │ │   baz1 = baz2;  // Error
+ 120 │ │   baz2 = baz1;  // Error
+ 121 │ │   
+ 122 │ │   // Repro from #44572
+ 123 │ │   
+ 124 │ │   interface Parent<out A> {
+ 125 │ │       child: Child<A> | null;
+ 126 │ │       parent: Parent<A> | null;
+ 127 │ │   }
+ 128 │ │   
+ 129 │ │   interface Child<A, B = unknown> extends Parent<A> {
+ 130 │ │       readonly a: A;
+ 131 │ │       readonly b: B;
+ 132 │ │   }
+ 133 │ │   
+ 134 │ │   function fn<A>(inp: Child<A>) {
+ 135 │ │       const a: Child<unknown> = inp;
+ 136 │ │   }
+ 137 │ │   
+ 138 │ │   const pu: Parent<unknown> = { child: { a: 0, b: 0, child: null, parent: null }, parent: null };
+ 139 │ │   const notString: Parent<string> = pu;  // Error
+ 140 │ │   
+ 141 │ │   // Repro from comment in #44572
+ 142 │ │   
+ 143 │ │   declare class StateNode<TContext, in out TEvent extends { type: string }> {
+ 144 │ │       _storedEvent: TEvent;
+ 145 │ │       _action: ActionObject<TEvent>;
+ 146 │ │       _state: StateNode<TContext, any>;
+ 147 │ │   }
+ 148 │ │   
+ 149 │ │   interface ActionObject<TEvent extends { type: string }> {
+ 150 │ │       exec: (meta: StateNode<any, TEvent>) => void;
+ 151 │ │   }
+ 152 │ │   
+ 153 │ │   declare function createMachine<TEvent extends { type: string }>(action: ActionObject<TEvent>): StateNode<any, any>;
+ 154 │ │   
+ 155 │ │   declare function interpret<TContext>(machine: StateNode<TContext, any>): void;
+ 156 │ │   
+ 157 │ │   const machine = createMachine({} as any);
+ 158 │ │   
+ 159 │ │   interpret(machine);
+ 160 │ │   
+ 161 │ │   declare const qq: ActionObject<{ type: "PLAY"; value: number }>;
+ 162 │ │   
+ 163 │ ├─▶ createMachine<{ type: "PLAY"; value: number } | { type: "RESET" }>(qq);  // Error
+     · ╰──── `<` expected
+     ╰────
 
   × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]

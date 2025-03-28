@@ -8,7 +8,7 @@ use std::fmt;
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Kind {
-    Undetermined,
+    // Undetermined,
     #[default]
     Eof,
     Skip, // Whitespace, line breaks, comments
@@ -527,7 +527,7 @@ impl Kind {
 
     pub fn to_str(self) -> &'static str {
         match self {
-            Undetermined => "Unknown",
+            // Undetermined => "Unknown",
             Eof => "EOF",
             Skip => "Skipped",
             HashbangComment => "#!",

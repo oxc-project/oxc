@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
@@ -290,7 +290,7 @@ impl std::fmt::Display for ModifierKind {
 }
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Result<Modifiers<'a>> {
+    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
@@ -298,12 +298,12 @@ impl<'a> ParserImpl<'a> {
             let modifier_flags = self.cur_kind().into();
             let kind = self.cur_kind();
             self.bump_any();
-            let modifier = self.modifier(kind, self.end_span(span))?;
+            let modifier = self.modifier(kind, self.end_span(span));
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
-        Ok(Modifiers::new(modifiers, flags))
+        Modifiers::new(modifiers, flags)
     }
 
     fn at_modifier(&mut self) -> bool {
@@ -342,8 +342,12 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn modifier(&mut self, kind: Kind, span: Span) -> Result<Modifier> {
-        Ok(Modifier { span, kind: kind.try_into().map_err(|()| self.unexpected())? })
+    fn modifier(&mut self, kind: Kind, span: Span) -> Modifier {
+        let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
+            self.set_unexpected();
+            ModifierKind::Abstract // Dummy value
+        });
+        Modifier { span, kind: modifier_kind }
     }
 
     pub(crate) fn parse_modifiers(
@@ -433,7 +437,7 @@ impl<'a> ParserImpl<'a> {
         {
             return None;
         }
-        self.modifier(kind, self.end_span(span)).ok()
+        Some(self.modifier(kind, self.end_span(span)))
     }
 
     fn next_token_is_open_brace(&mut self) -> bool {
@@ -446,7 +450,7 @@ impl<'a> ParserImpl<'a> {
             && self.try_parse(Self::next_token_can_follow_modifier).is_some()
     }
 
-    fn next_token_can_follow_modifier(&mut self) -> Result<()> {
+    fn next_token_can_follow_modifier(&mut self) {
         let b = match self.cur_kind() {
             Kind::Const => self.peek_at(Kind::Enum),
             Kind::Export => {
@@ -464,14 +468,14 @@ impl<'a> ParserImpl<'a> {
             }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
         };
-        if b { Ok(()) } else { Err(self.unexpected()) }
+        if !b {
+            self.set_unexpected();
+        }
     }
 
-    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> Result<()> {
-        if self.next_token_is_on_same_line_and_can_follow_modifier() {
-            Ok(())
-        } else {
-            Err(self.unexpected())
+    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) {
+        if !self.next_token_is_on_same_line_and_can_follow_modifier() {
+            self.set_unexpected();
         }
     }
 

@@ -185,7 +185,8 @@ macro_rules! ascii_identifier_handler {
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
     lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
-    Kind::Undetermined
+    lexer.advance_to_end();
+    Kind::Eof
 });
 
 // <SPACE> <TAB> Normal Whitespace
