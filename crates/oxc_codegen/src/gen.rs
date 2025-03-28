@@ -3755,16 +3755,14 @@ impl Gen for TSEnumBody<'_> {
 
 impl Gen for TSEnumMember<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
-            TSEnumMemberName::TemplateString(decl) => decl.print(p, ctx),
-        }
-        if self.computed {
-            p.print_ascii_byte(b']');
+            TSEnumMemberName::TemplateString(decl) => {
+                let quasi = decl.quasis.first().unwrap();
+                p.add_source_mapping(quasi.span);
+                p.print_str(quasi.value.raw.as_str());
+            }
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();
