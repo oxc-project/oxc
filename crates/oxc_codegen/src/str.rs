@@ -56,7 +56,7 @@ impl PrintStringState<'_> {
     ///
     /// TODO
     unsafe fn consume_byte(&mut self) {
-        debug_assert!(!self.bytes.as_slice().is_empty());
+        debug_assert!(self.bytes.clone().next().is_some());
         // SAFETY: TODO
         unsafe { self.bytes.next().unwrap_unchecked() };
     }
@@ -76,8 +76,91 @@ impl PrintStringState<'_> {
         }
     }
 
+    // TODO: Should this method be unsafe?
     fn start_chunk(&mut self) {
         self.chunk_start = self.bytes.as_slice().as_ptr();
+    }
+
+    /// TODO
+    ///
+    /// # SAFETY
+    ///
+    /// TODO
+    unsafe fn flush_and_consume_byte(&mut self, codegen: &mut Codegen) {
+        // SAFETY: TODO
+        unsafe { self.flush_and_consume_bytes::<1>(codegen) };
+    }
+
+    /// TODO
+    ///
+    /// # SAFETY
+    ///
+    /// TODO
+    unsafe fn flush_and_consume_bytes<const N: usize>(&mut self, codegen: &mut Codegen) {
+        // SAFETY: TODO
+        unsafe { self.flush(codegen) };
+
+        debug_assert!(self.bytes.as_slice().len() >= N);
+        // SAFETY: TODO
+        unsafe {
+            for _i in 0..N {
+                self.bytes.next().unwrap_unchecked();
+            }
+        }
+
+        self.start_chunk();
+    }
+
+    /// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
+    ///
+    /// If what quote character to use has not been decided yet, calculate the best quote character to use,
+    /// and print it before flushing.
+    ///
+    /// # SAFETY
+    ///
+    /// `bytes` iterator must be positioned on a UTF-8 character boundary.
+    unsafe fn flush(&mut self, codegen: &mut Codegen) {
+        // If which quote character to use is not already known, calculate it and print opening quote
+        self.calculate_quote(codegen);
+
+        // SAFETY: `chunk_start` is pointer to current position of `bytes` iterator at some point,
+        // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
+        let len = unsafe {
+            let bytes_ptr = self.bytes.as_slice().as_ptr();
+            let offset = bytes_ptr.offset_from(self.chunk_start);
+            usize::try_from(offset).unwrap_unchecked()
+        };
+
+        // SAFETY: `chunk_start` is within bounds of original `&str`.
+        // `bytes` iter cannot go past end of `&str` either.
+        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
+        // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
+        // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
+        unsafe {
+            let slice = slice::from_raw_parts(self.chunk_start, len);
+            codegen.code.print_bytes_unchecked(slice);
+        }
+    }
+
+    /// Calculate what quote character to use, and print that quote.
+    fn calculate_quote(&mut self, codegen: &mut Codegen) -> Quote {
+        if !self.quote_is_unknown {
+            return self.quote;
+        }
+
+        let bytes = self.bytes.clone();
+        let quote = if self.allow_backtick {
+            calculate_quote_maybe_backtick(bytes)
+        } else {
+            calculate_quote_no_backtick(bytes)
+        };
+
+        quote.print(codegen);
+
+        self.quote = quote;
+        self.quote_is_unknown = false;
+
+        quote
     }
 }
 
@@ -127,92 +210,10 @@ impl Codegen<'_> {
 
         // Flush any remaining bytes.
         // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
-        unsafe { self.flush(&mut state) };
+        unsafe { state.flush(self) };
 
         // Print closing quote
         state.quote.print(self);
-    }
-
-    /// TODO
-    ///
-    /// # SAFETY
-    ///
-    /// TODO
-    unsafe fn flush_and_consume_byte(&mut self, state: &mut PrintStringState) {
-        // SAFETY: TODO
-        unsafe { self.flush_and_consume_bytes::<1>(state) };
-    }
-
-    /// TODO
-    ///
-    /// # SAFETY
-    ///
-    /// TODO
-    unsafe fn flush_and_consume_bytes<const N: usize>(&mut self, state: &mut PrintStringState) {
-        // SAFETY: TODO
-        unsafe { self.flush(state) };
-
-        debug_assert!(state.bytes.as_slice().len() >= N);
-        // SAFETY: TODO
-        unsafe {
-            for _i in 0..N {
-                state.bytes.next().unwrap_unchecked();
-            }
-        }
-
-        state.start_chunk();
-    }
-
-    /// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
-    ///
-    /// If what quote character to use has not been decided yet, calculate the best quote character to use,
-    /// and print it before flushing.
-    ///
-    /// # SAFETY
-    ///
-    /// `bytes` iterator must be positioned on a UTF-8 character boundary.
-    unsafe fn flush(&mut self, state: &mut PrintStringState) {
-        // If which quote character to use is not already known, calculate it and print opening quote
-        self.calculate_quote(state);
-
-        // SAFETY: `chunk_start` is pointer to current position of `bytes` iterator at some point,
-        // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
-        let len = unsafe {
-            let bytes_ptr = state.bytes.as_slice().as_ptr();
-            let offset = bytes_ptr.offset_from(state.chunk_start);
-            usize::try_from(offset).unwrap_unchecked()
-        };
-
-        // SAFETY: `chunk_start` is within bounds of original `&str`.
-        // `bytes` iter cannot go past end of `&str` either.
-        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
-        // Caller guarantees `bytes` iterator is positioned on a UTF-8 character boundary.
-        // `chunk_start` is too. Therefore the slice between these two must be a valid UTF-8 string.
-        unsafe {
-            let slice = slice::from_raw_parts(state.chunk_start, len);
-            self.code.print_bytes_unchecked(slice);
-        }
-    }
-
-    /// Calculate what quote character to use, and print that quote.
-    fn calculate_quote(&mut self, state: &mut PrintStringState) -> Quote {
-        if !state.quote_is_unknown {
-            return state.quote;
-        }
-
-        let bytes = state.bytes.clone();
-        let quote = if state.allow_backtick {
-            calculate_quote_maybe_backtick(bytes)
-        } else {
-            calculate_quote_no_backtick(bytes)
-        };
-
-        quote.print(self);
-
-        state.quote = quote;
-        state.quote_is_unknown = false;
-
-        quote
     }
 }
 
@@ -375,7 +376,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
 // \x00
 fn print_null(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\x00` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     if state.peek().is_some_and(|b| b.is_ascii_digit()) {
         codegen.print_str("\\x00");
     } else {
@@ -386,40 +387,40 @@ fn print_null(codegen: &mut Codegen, state: &mut PrintStringState) {
 // \x07
 fn print_bell(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\x07` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\x07");
 }
 
 // \b
 fn print_backspace(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\b` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\b");
 }
 
 // \v
 fn print_vertical_tab(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\v` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\v");
 }
 
 // \f
 fn print_form_field(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\f` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\f");
 }
 
 // \n
 fn print_new_line(codegen: &mut Codegen, state: &mut PrintStringState) {
-    if codegen.calculate_quote(state) == Quote::Backtick {
+    if state.calculate_quote(codegen) == Quote::Backtick {
         // No need to escape.
         // SAFETY: `\n` is ASCII.
         unsafe { state.consume_byte() };
     } else {
         // SAFETY: `\n` is ASCII
-        unsafe { codegen.flush_and_consume_byte(state) };
+        unsafe { state.flush_and_consume_byte(codegen) };
         codegen.print_str("\\n");
     }
 }
@@ -427,29 +428,29 @@ fn print_new_line(codegen: &mut Codegen, state: &mut PrintStringState) {
 // \r
 fn print_carriage_return(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\r` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\r");
 }
 
 // \x1B
 fn print_escape(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\x1B` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\x1B");
 }
 
 // \
 fn print_backslash(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: `\` is ASCII
-    unsafe { codegen.flush_and_consume_byte(state) };
+    unsafe { state.flush_and_consume_byte(codegen) };
     codegen.print_str("\\\\");
 }
 
 // '
 fn print_single_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
-    if codegen.calculate_quote(state) == Quote::Single {
+    if state.calculate_quote(codegen) == Quote::Single {
         // SAFETY: `'` is ASCII
-        unsafe { codegen.flush_and_consume_byte(state) };
+        unsafe { state.flush_and_consume_byte(codegen) };
         codegen.print_str("\\'");
     } else {
         // No need to escape.
@@ -460,9 +461,9 @@ fn print_single_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
 
 // "
 fn print_double_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
-    if codegen.calculate_quote(state) == Quote::Double {
+    if state.calculate_quote(codegen) == Quote::Double {
         // SAFETY: `"` is ASCII
-        unsafe { codegen.flush_and_consume_byte(state) };
+        unsafe { state.flush_and_consume_byte(codegen) };
         codegen.print_str("\\\"");
     } else {
         // No need to escape.
@@ -473,9 +474,9 @@ fn print_double_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
 
 // `
 fn print_backtick(codegen: &mut Codegen, state: &mut PrintStringState) {
-    if codegen.calculate_quote(state) == Quote::Backtick {
+    if state.calculate_quote(codegen) == Quote::Backtick {
         // SAFETY: ` is ASCII
-        unsafe { codegen.flush_and_consume_byte(state) };
+        unsafe { state.flush_and_consume_byte(codegen) };
         codegen.print_str("\\`");
     } else {
         // No need to escape.
@@ -488,9 +489,9 @@ fn print_backtick(codegen: &mut Codegen, state: &mut PrintStringState) {
 fn print_dollar(codegen: &mut Codegen, state: &mut PrintStringState) {
     // Note: Check next byte is `{` first, to avoid calculating quote unless have to
     let next = state.bytes.as_slice().get(1);
-    if next == Some(&b'{') && codegen.calculate_quote(state) == Quote::Backtick {
+    if next == Some(&b'{') && state.calculate_quote(codegen) == Quote::Backtick {
         // SAFETY: `$` is ASCII
-        unsafe { codegen.flush_and_consume_byte(state) };
+        unsafe { state.flush_and_consume_byte(codegen) };
         codegen.print_str("\\$");
     } else {
         // No need to escape.
@@ -522,7 +523,7 @@ fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: 0xE2 is always the start of a 3-byte Unicode character.
     // We haven't advanced `bytes` since start of this function, so `bytes` must be positioned on
     // a UTF-8 character boundary.
-    unsafe { codegen.flush_and_consume_bytes::<3>(state) };
+    unsafe { state.flush_and_consume_bytes::<3>(codegen) };
 
     codegen.print_str(replacement);
 }
@@ -537,7 +538,7 @@ fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStringState)
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
         // We haven't advanced `bytes` since start of this function, so `bytes` must be positioned on
         // a UTF-8 character boundary.
-        unsafe { codegen.flush_and_consume_bytes::<2>(state) };
+        unsafe { state.flush_and_consume_bytes::<2>(codegen) };
         codegen.print_str("\\xA0");
     } else {
         // Some other character starting with 0xC2. Advance past it.
@@ -574,7 +575,7 @@ fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) 
                 // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
                 unsafe {
                     state.consume_bytes::<3>();
-                    codegen.flush(state);
+                    state.flush(codegen);
                     state.consume_bytes::<4>();
                     state.start_chunk();
                 }
@@ -583,7 +584,7 @@ fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) 
 
             // Flush text before the lossy replacement character.
             // SAFETY: We haven't advanced `bytes` yet, so it must be positioned on a UTF-8 char boundary
-            unsafe { codegen.flush(state) };
+            unsafe { state.flush(codegen) };
 
             // Check all 4 hex bytes are ASCII
             assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
