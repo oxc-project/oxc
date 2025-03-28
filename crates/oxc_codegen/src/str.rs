@@ -322,10 +322,13 @@ enum Escape {
     LO = 16, // �     - U+FFFD lossy replacement character (first byte)
 }
 
+/// Struct which ensures content is aligned on 128.
 #[repr(C, align(128))]
 struct Aligned128<T>(T);
 
 /// Table mapping bytes to `Escape`s.
+///
+/// Aligned on 128, so top half (ASCII chars) occupies a pair of L1 cache lines.
 static ESCAPES: Aligned128<[Escape; 256]> = {
     #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
     use Escape::*;
@@ -356,6 +359,8 @@ type ByteHandler = fn(&mut Codegen, &mut PrintStringState);
 ///
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
+///
+/// Aligned on 128, so occupies a pair of L1 cache lines.
 static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_null,
     print_bell,
