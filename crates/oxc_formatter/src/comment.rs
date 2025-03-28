@@ -9,8 +9,9 @@ pub struct FormatJsLeadingComment;
 
 impl FormatRule<SourceComment> for FormatJsLeadingComment {
     fn fmt(&self, comment: &SourceComment, f: &mut Formatter) -> FormatResult<()> {
-        let text = comment.span.source_text(f.context().source_text());
-        write!(f, [dynamic_text(text, comment.span.start)])
+        // let text = comment.span.source_text(f.context().source_text());
+        // write!(f, [dynamic_text(text, comment.span.start)])
+        Ok(())
     }
 }
 
