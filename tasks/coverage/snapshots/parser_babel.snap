@@ -281,18 +281,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·                ╰── It can not be redeclared here
  5 │     }
    ╰────
-
-  × Identifier `x` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js:3:11]
- 2 │     static {
- 3 │       var x;
-   ·           ┬
-   ·           ╰── `x` has already been declared here
- 4 │       function x() {}
-   ·                ┬
-   ·                ╰── It can not be redeclared here
- 5 │     }
-   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -1346,16 +1334,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `foo` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-class-func/input.js:1:7]
- 1 │ class foo {};
-   ·       ─┬─
-   ·        ╰── `foo` has already been declared here
- 2 │ function foo () {};
-   ·          ─┬─
-   ·           ╰── It can not be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-class-let/input.js:1:7]
  1 │ class foo {};
    ·       ─┬─
@@ -1391,14 +1369,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ╰── `f` has already been declared here
    ╰────
 
-  × Identifier `f` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-gen/input.js:1:12]
- 1 │ { function f() {} function* f() {} }
-   ·            ┬                ┬
-   ·            │                ╰── It can not be redeclared here
-   ·            ╰── `f` has already been declared here
-   ╰────
-
   × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module/input.js:1:10]
  1 │ function foo() {}
@@ -1407,24 +1377,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ function foo() {}
    ·          ─┬─
    ·           ╰── It can not be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module/input.js:1:10]
- 1 │ function foo() {}
-   ·          ─┬─
-   ·           ╰── `foo` has already been declared here
- 2 │ function foo() {}
-   ·          ─┬─
-   ·           ╰── It can not be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module-sloppy/input.js:1:12]
- 1 │ { function foo() {} function foo() {} }
-   ·            ─┬─               ─┬─
-   ·             │                 ╰── It can not be redeclared here
-   ·             ╰── `foo` has already been declared here
    ╰────
 
   × Identifier `foo` has already been declared

@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1288/5754 (22.38%)
+Negative Passed: 1290/5754 (22.42%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -56,7 +56,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/amdDependenc
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/amdDependencyCommentName4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/amdModuleName2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anonymousClassExpression2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyDeclare.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyIdenticalToItself.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyIndexedAccessArrayNoException.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyMappedTypesError.ts
@@ -159,6 +158,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentExpor
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentedClassWithPrototypePropertyOnModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesEnum3.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autoTypeAssignedUsingDestructuringFromNeverNoCrash.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autolift3.ts
@@ -320,6 +320,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMemberI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMemberInitializerWithLamdaScoping4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMergedWithInterfaceMultipleBasesNoError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOrder2.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classPropertyErrorOnNameOnly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance1.ts
@@ -392,7 +393,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/configFileEx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conflictingDeclarationsImportFromNamespace1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conflictingDeclarationsImportFromNamespace2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conflictingMemberTypesInBases.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conflictingTypeParameterSymbolTransfer.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/consistentAliasVsNonAliasRecordBehavior.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access.ts
@@ -612,7 +612,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateErr
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateErrorClassExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateErrorNameNotFound.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierDifferentModifiers.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierInCatchBlock.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans3.ts
@@ -637,6 +636,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePac
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_withErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePropertiesInStrictMode.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateStringNamedProperty1.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateSymbolsExportMatching.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateTypeParameters1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateTypeParameters2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateTypeParameters3.ts
@@ -1947,7 +1947,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/systemModule
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/systemModule9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/taggedTemplateWithoutDeclaredHelper.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeBaseCalls.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeCastTest.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeVoidFunc.ts
@@ -2257,7 +2256,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_propertyAssignment.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_superClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useUnknownInCatchVariables01.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varAndFunctionShareName.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varNameConflictsWithImportInDifferentPartOfModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/vararg.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/variableDeclaratorResolvedDuringContextualTyping.ts
@@ -2855,6 +2853,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modul
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/importEmptyFromModuleNotExisted.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/multipleDefaultExports01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/multipleDefaultExports02.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/multipleDefaultExports04.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/multipleDefaultExports05.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/restParameters/readonlyRestParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesAssignmentError.ts
@@ -3273,7 +3272,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/fixSignatureCaching.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementationErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementations.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionNameConflicts.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/parameterInitializersForwardReferencing.2.ts
@@ -5196,6 +5194,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × Identifier `myFn` has already been declared
+   ╭─[typescript/tests/cases/compiler/anyDeclare.ts:3:9]
+ 2 │ module myMod {
+ 3 │     var myFn;
+   ·         ──┬─
+   ·           ╰── `myFn` has already been declared here
+ 4 │     function myFn() {  }
+   ·              ──┬─
+   ·                ╰── It can not be redeclared here
+ 5 │ }
+   ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts:18:9]
  17 │          */
@@ -5361,18 +5371,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·       ╰── It can not be redeclared here
  22 │ 
     ╰────
-
-  × Identifier `c2` has already been declared
-   ╭─[typescript/tests/cases/compiler/augmentedTypesClass2a.ts:2:7]
- 1 │ //// class then function
- 2 │ class c2 { public foo() { } } // error
-   ·       ─┬
-   ·        ╰── `c2` has already been declared here
- 3 │ function c2() { } // error
-   ·          ─┬
-   ·           ╰── It can not be redeclared here
- 4 │ var c2 = () => { }
-   ╰────
 
   × Identifier `c2` has already been declared
    ╭─[typescript/tests/cases/compiler/augmentedTypesClass2a.ts:2:7]
@@ -5558,65 +5556,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  20 │ 
     ╰────
 
-  × Identifier `m2a` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:25:8]
- 24 │ 
- 25 │ module m2a { var y = 2; }
-    ·        ─┬─
-    ·         ╰── `m2a` has already been declared here
- 26 │ function m2a() { }; // error since the module is instantiated
-    ·          ─┬─
-    ·           ╰── It can not be redeclared here
- 27 │ 
-    ╰────
-
-  × Identifier `m2b` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:28:8]
- 27 │ 
- 28 │ module m2b { export var y = 2; }
-    ·        ─┬─
-    ·         ╰── `m2b` has already been declared here
- 29 │ function m2b() { };  // error since the module is instantiated
-    ·          ─┬─
-    ·           ╰── It can not be redeclared here
- 30 │ 
-    ╰────
-
-  × Identifier `m2a` has already been declared
-   ╭─[typescript/tests/cases/compiler/augmentedTypesModules2.ts:5:8]
- 4 │ 
- 5 │ module m2a { var y = 2; }
-   ·        ─┬─
-   ·         ╰── `m2a` has already been declared here
- 6 │ function m2a() { }; // error since the module is instantiated
-   ·          ─┬─
+  × Identifier `x2` has already been declared
+   ╭─[typescript/tests/cases/compiler/augmentedTypesVar.ts:6:5]
+ 5 │ // var then function
+ 6 │ var x2 = 1; // error
+   ·     ─┬
+   ·      ╰── `x2` has already been declared here
+ 7 │ function x2() { } // error
+   ·          ─┬
    ·           ╰── It can not be redeclared here
- 7 │ 
+ 8 │ 
    ╰────
-
-  × Identifier `m2b` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules2.ts:8:8]
-  7 │ 
-  8 │ module m2b { export var y = 2; }
-    ·        ─┬─
-    ·         ╰── `m2b` has already been declared here
-  9 │ function m2b() { };  // error since the module is instantiated
-    ·          ─┬─
-    ·           ╰── It can not be redeclared here
- 10 │ 
-    ╰────
-
-  × Identifier `m2cc` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules2.ts:14:8]
- 13 │ 
- 14 │ module m2cc { export var y = 2; }
-    ·        ──┬─
-    ·          ╰── `m2cc` has already been declared here
- 15 │ function m2cc() { }; // error to have module first
-    ·          ──┬─
-    ·            ╰── It can not be redeclared here
- 16 │ 
-    ╰────
 
   × Identifier `x4` has already been declared
     ╭─[typescript/tests/cases/compiler/augmentedTypesVar.ts:13:5]
@@ -6001,16 +5951,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     public {[name:string]:VariableDeclaration};
    ·            ─
  3 │ }
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[typescript/tests/cases/compiler/classOverloadForFunction.ts:1:7]
- 1 │ class foo { };
-   ·       ─┬─
-   ·        ╰── `foo` has already been declared here
- 2 │ function foo() {}
-   ·          ─┬─
-   ·           ╰── It can not be redeclared here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -6646,6 +6586,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
    · ──
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]
+ 1 │ var foo: string;
+   ·     ─────┬─────
+   ·          ╰── `foo` has already been declared here
+ 2 │ function foo(): number { }
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+ 3 │ function foo(): number { }
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]
+ 1 │ var foo: string;
+   ·     ─────┬─────
+   ·          ╰── `foo` has already been declared here
+ 2 │ function foo(): number { }
+ 3 │ function foo(): number { }
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
    ╰────
 
   × Identifier `x` has already been declared
@@ -7711,6 +7673,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  20 │     return 0;
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[typescript/tests/cases/compiler/duplicateIdentifierInCatchBlock.ts:12:9]
+ 11 │ try { } catch (e) {
+ 12 │     var x;
+    ·         ┬
+    ·         ╰── `x` has already been declared here
+ 13 │     function x() { } // error
+    ·              ┬
+    ·              ╰── It can not be redeclared here
+ 14 │     function e() { } // error
+    ╰────
+
+  × Identifier `e` has already been declared
+    ╭─[typescript/tests/cases/compiler/duplicateIdentifierInCatchBlock.ts:11:16]
+ 10 │ 
+ 11 │ try { } catch (e) {
+    ·                ┬
+    ·                ╰── `e` has already been declared here
+ 12 │     var x;
+ 13 │     function x() { } // error
+ 14 │     function e() { } // error
+    ·              ┬
+    ·              ╰── It can not be redeclared here
+ 15 │     var p: string;
+    ╰────
+
   × Label `target` has already been declared
    ╭─[typescript/tests/cases/compiler/duplicateLabel1.ts:1:1]
  1 │ target:
@@ -7733,20 +7721,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·      ╰── It can not be redeclared here
  4 │   while (true) {
    ╰────
-
-  × Identifier `F` has already been declared
-    ╭─[typescript/tests/cases/compiler/duplicateSymbolsExportMatching.ts:49:12]
- 48 │ module M {
- 49 │     module F {
-    ·            ┬
-    ·            ╰── `F` has already been declared here
- 50 │         var t;
- 51 │     }
- 52 │     export function F() { } // Only one error for duplicate identifier (don't consider visibility)
-    ·                     ┬
-    ·                     ╰── It can not be redeclared here
- 53 │ }
-    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts:10:17]
@@ -9950,16 +9924,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  14 │ 
     ╰────
 
-  × Identifier `C` has already been declared
-    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:33:11]
- 32 │ 
- 33 │     class C { }
-    ·           ┬
-    ·           ╰── `C` has already been declared here
- 34 │     function C() { } // error
+  × Identifier `f` has already been declared
+    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:24:9]
+ 23 │ 
+ 24 │     var f;
+    ·         ┬
+    ·         ╰── `f` has already been declared here
+ 25 │     function f() { } //error
     ·              ┬
     ·              ╰── It can not be redeclared here
- 35 │ 
+ 26 │ 
     ╰────
 
   × Identifier `C2` has already been declared
@@ -12145,6 +12119,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │     function package() { }
    ╰────
 
+  × Identifier `package` has already been declared
+    ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:8:9]
+  7 │     let let = "blah";
+  8 │     var package = "hello"
+    ·         ───┬───
+    ·            ╰── `package` has already been declared here
+  9 │     function package() { }
+    ·              ───┬───
+    ·                 ╰── It can not be redeclared here
+ 10 │     function bar(private, implements, let) { }
+    ╰────
+
   × The keyword 'package' is reserved
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:9:14]
   8 │     var package = "hello"
@@ -13184,6 +13170,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ f `123qdawdrqw${ 1 }${
    ╰────
 
+  × Identifier `Point` has already been declared
+   ╭─[typescript/tests/cases/compiler/targetTypeCastTest.ts:1:13]
+ 1 │ declare var Point: { new(x:number, y:number): {x: number; y: number; }; }
+   ·             ──────────────────────────────┬──────────────────────────────
+   ·                                           ╰── `Point` has already been declared here
+ 2 │ 
+ 3 │ function Point(x, y) {
+   ·          ──┬──
+   ·            ╰── It can not be redeclared here
+ 4 │     this.x = x;
+   ╰────
+
   × Bad escape sequence in untagged template literal
    ╭─[typescript/tests/cases/compiler/templateLiteralEscapeSequence.ts:3:2]
  2 │ 
@@ -13621,6 +13619,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ var x1 = /[a-z/]$/i;
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `myFn` has already been declared
+   ╭─[typescript/tests/cases/compiler/varAndFunctionShareName.ts:1:5]
+ 1 │ var myFn;
+   ·     ──┬─
+   ·       ╰── `myFn` has already been declared here
+ 2 │ function myFn(): any { }
+   ·          ──┬─
+   ·            ╰── It can not be redeclared here
+   ╰────
 
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/varArgConstructorMemberParameter.ts:10:25]
@@ -16959,19 +16967,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Identifier `f` has already been declared
-   ╭─[typescript/tests/cases/conformance/es6/modules/multipleDefaultExports04.ts:1:25]
- 1 │ export default function f() {
-   ·                         ┬
-   ·                         ╰── `f` has already been declared here
- 2 │ }
- 3 │ 
- 4 │ export default function f() {
-   ·                         ┬
-   ·                         ╰── It can not be redeclared here
- 5 │ }
-   ╰────
-
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:1:11]
  1 │ const a = new.target;
@@ -19989,6 +19984,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·               ─┬─
    ·                ╰── `,` expected
    ╰────
+
+  × Identifier `fn2` has already been declared
+    ╭─[typescript/tests/cases/conformance/functions/functionNameConflicts.ts:8:9]
+  7 │ 
+  8 │     var fn2;
+    ·         ─┬─
+    ·          ╰── `fn2` has already been declared here
+  9 │     function fn2() { }
+    ·              ─┬─
+    ·               ╰── It can not be redeclared here
+ 10 │ }
+    ╰────
+
+  × Identifier `fn4` has already been declared
+    ╭─[typescript/tests/cases/conformance/functions/functionNameConflicts.ts:16:9]
+ 15 │ function func() {
+ 16 │     var fn4;
+    ·         ─┬─
+    ·          ╰── `fn4` has already been declared here
+ 17 │     function fn4() { }
+    ·              ─┬─
+    ·               ╰── It can not be redeclared here
+ 18 │ 
+    ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:9:25]

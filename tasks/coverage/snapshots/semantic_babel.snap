@@ -99,7 +99,6 @@ semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 semantic error: Identifier `x` has already been declared
-Identifier `x` has already been declared
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 semantic error: `await` is only allowed within async functions and at the top levels of modules
