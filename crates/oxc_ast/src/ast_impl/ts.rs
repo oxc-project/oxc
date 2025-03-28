@@ -20,7 +20,7 @@ impl<'a> TSEnumMemberName<'a> {
             Self::String(lit) => lit.value,
             Self::TemplateString(template) => template
                 .quasi()
-                .expect("`TSEnumMemberName::TemplateString` should have no substituion and at least one quasi"),
+                .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
     }
 }
