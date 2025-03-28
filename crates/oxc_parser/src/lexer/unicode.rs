@@ -65,7 +65,10 @@ impl<'a> Lexer<'a> {
         }
 
         let value = match self.peek_byte() {
-            Some(b'{') => self.unicode_code_point(),
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
             _ => self.surrogate_pair(),
         };
 
@@ -113,8 +116,11 @@ impl<'a> Lexer<'a> {
         text: &mut String<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
-        let value = match self.peek_char() {
-            Some('{') => self.unicode_code_point(),
+        let value = match self.peek_byte() {
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
             _ => self.surrogate_pair(),
         };
 
@@ -143,10 +149,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Decode unicode code point (`\u{ HexBytes }`).
+    ///
+    /// The opening `\u{` must already have been consumed before calling this method.
     fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_ascii_byte_eq(b'{') {
-            return None;
-        }
         let value = self.code_point()?;
         if !self.next_ascii_byte_eq(b'}') {
             return None;
