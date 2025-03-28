@@ -3,15 +3,13 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1549/1673 (92.59%)
+Negative Passed: 1551/1673 (92.71%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-var-sloppy/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
@@ -271,6 +269,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·                                          ─
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js:3:11]
+ 2 │     static {
+ 3 │       var x;
+   ·           ┬
+   ·           ╰── `x` has already been declared here
+ 4 │       function x() {}
+   ·                ┬
+   ·                ╰── It can not be redeclared here
+ 5 │     }
+   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js:3:11]
@@ -1248,6 +1258,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js:2:10]
+ 1 │ try {
+ 2 │ } catch (foo) {
+   ·          ─┬─
+   ·           ╰── `foo` has already been declared here
+ 3 │   function foo() {}
+   ·            ─┬─
+   ·             ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-let/input.js:2:10]
  1 │ try {
  2 │ } catch (foo) {
@@ -1324,6 +1346,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-class-func/input.js:1:7]
+ 1 │ class foo {};
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 2 │ function foo () {};
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-class-let/input.js:1:7]
  1 │ class foo {};
    ·       ─┬─
@@ -1359,6 +1391,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ╰── `f` has already been declared here
    ╰────
 
+  × Identifier `f` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-gen/input.js:1:12]
+ 1 │ { function f() {} function* f() {} }
+   ·            ┬                ┬
+   ·            │                ╰── It can not be redeclared here
+   ·            ╰── `f` has already been declared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module/input.js:1:10]
+ 1 │ function foo() {}
+   ·          ─┬─
+   ·           ╰── `foo` has already been declared here
+ 2 │ function foo() {}
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module/input.js:1:10]
  1 │ function foo() {}
@@ -1375,6 +1425,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ─┬─               ─┬─
    ·             │                 ╰── It can not be redeclared here
    ·             ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-module-sloppy/input.js:1:12]
+ 1 │ { function foo() {} function foo() {} }
+   ·            ─┬─               ─┬─
+   ·             │                 ╰── It can not be redeclared here
+   ·             ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-var-sloppy/input.js:2:12]
+ 1 │ {
+ 2 │   function foo() {}
+   ·            ─┬─
+   ·             ╰── `foo` has already been declared here
+ 3 │   var foo = 1;
+   ·       ───┬───
+   ·          ╰── It can not be redeclared here
+ 4 │ }
    ╰────
 
   × Identifier `f` has already been declared

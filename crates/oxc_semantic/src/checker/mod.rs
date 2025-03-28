@@ -16,6 +16,8 @@ use crate::{AstNode, builder::SemanticBuilder};
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();
 
+    let is_typescript = ctx.source_type.is_typescript();
+
     match kind {
         AstKind::Program(_) => {
             js::check_duplicate_class_elements(ctx);
@@ -76,6 +78,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_class(class, node, ctx);
             ts::check_class(class, ctx);
         }
+        AstKind::Function(func) if !is_typescript => {
+            js::check_function_redeclaration(func, ctx);
+        }
         AstKind::MethodDefinition(method) => {
             js::check_method_definition(method, ctx);
             ts::check_method_definition(method, ctx);
@@ -105,7 +110,12 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
         AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
-        AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
+        AstKind::VariableDeclarator(decl) => {
+            if !is_typescript {
+                js::check_variable_declarator_redeclaration(decl, ctx);
+            }
+            ts::check_variable_declarator(decl, ctx);
+        }
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),

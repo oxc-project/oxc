@@ -2,8 +2,878 @@ commit: bc5c1417
 
 parser_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44293/44293 (100.00%)
+Positive Passed: 44223/44293 (99.84%)
 Negative Passed: 4519/4519 (100.00%)
+Expect to Parse: tasks/coverage/test262/test/built-ins/JSON/parse/reviver-forward-modifies-object.js
+
+  × Identifier `assertOnlyOwnProperties` has already been declared
+    ╭─[test262/test/built-ins/JSON/parse/reviver-forward-modifies-object.js:13:10]
+ 12 │ 
+ 13 │ function assertOnlyOwnProperties(object, props, message) {
+    ·          ───────────┬───────────
+    ·                     ╰── `assertOnlyOwnProperties` has already been declared here
+ 14 │   assert.compareArray(Object.getOwnPropertyNames(object), props, `${message}: object should have no other properties than expected`);
+    ╰────
+    ╭─[test262/test/built-ins/JSON/parse/reviver-forward-modifies-object.js:49:10]
+ 48 │ 
+ 49 │ function assertOnlyOwnProperties(object, props, message) {
+    ·          ───────────┬───────────
+    ·                     ╰── It can not be redeclared here
+ 50 │   assert.compareArray(Object.getOwnPropertyNames(object), props, `${message}: object should have no other properties than expected`);
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T9.js
+
+  × Identifier `__string` has already been declared
+    ╭─[test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T9.js:13:5]
+ 12 │ 
+ 13 │ var __string;
+    ·     ────┬───
+    ·         ╰── `__string` has already been declared here
+ 14 │ 
+ 15 │ var __re = /1|12/;
+ 16 │ assert.sameValue(__re.exec(__string), null, '__re.exec() must return null');
+ 17 │ 
+ 18 │ function __string(){}
+    ·          ────┬───
+    ·              ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/prototype/test/S15.10.6.3_A1_T9.js
+
+  × Identifier `__string` has already been declared
+    ╭─[test262/test/built-ins/RegExp/prototype/test/S15.10.6.3_A1_T9.js:11:5]
+ 10 │ 
+ 11 │ var __string;
+    ·     ────┬───
+    ·         ╰── `__string` has already been declared here
+ 12 │ var __re = /1|12/;
+ 13 │ 
+ 14 │ assert.sameValue(
+ 15 │   __re.test(__string),
+ 16 │   __re.exec(__string) !== null,
+ 17 │   '__re.test() must return __re.exec(__string) !== null'
+ 18 │ );
+ 19 │ 
+ 20 │ function __string(){}
+    ·          ────┬───
+    ·              ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-var-with-function-declaration.js
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-var-with-function-declaration.js:10:5]
+  9 │ ---*/
+ 10 │ var f; function f() {}
+    ·     ┬           ┬
+    ·     │           ╰── It can not be redeclared here
+    ·     ╰── `f` has already been declared here
+ 11 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/destructuring/binding/syntax/recursive-array-and-object-patterns.js
+
+  × Identifier `fn4` has already been declared
+    ╭─[test262/test/language/destructuring/binding/syntax/recursive-array-and-object-patterns.js:24:10]
+ 23 │ 
+ 24 │ function fn4([], [[]], [[[[[[[[[x]]]]]]]]]) {}
+    ·          ─┬─
+    ·           ╰── `fn4` has already been declared here
+ 25 │ 
+ 26 │ function fn4([[x, y, ...z]]) {}
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-assignment-expression-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-assignment-expression-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-assignment-expression-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-assignment-expression-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-arrow-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-return-await-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-return-await-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-return-await-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-return-await-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-await-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-await-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-await-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-await-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-return-await-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-return-await-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-return-await-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-return-await-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-function-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-gen-await-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-gen-await-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-gen-await-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-async-gen-await-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-do-while-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-do-while-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-do-while-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-do-while-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-braceless-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-braceless-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-braceless-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-braceless-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-else-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-return-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-return-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-return-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-return-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-function-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-braceless-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-braceless-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-braceless-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-braceless-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-if-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-while-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-while-import-source-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-while-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/nested-while-script-code-valid.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/top-level-import-source-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/top-level-import-source-script-code-valid.js:17:5]
+ 16 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 17 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 18 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/top-level-script-code-valid.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/valid/top-level-script-code-valid.js:17:5]
+ 16 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 17 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 18 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-function-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-do-while-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-eval-script-code-host-resolves-module-code.js
+
+  × Identifier `smoosh` has already been declared
+    ╭─[test262/test/language/expressions/dynamic-import/usage/top-level-import-then-eval-script-code-host-resolves-module-code.js:27:5]
+ 26 │ // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+ 27 │ var smoosh; function smoosh() {}
+    ·     ───┬──           ───┬──
+    ·        │                ╰── It can not be redeclared here
+    ·        ╰── `smoosh` has already been declared here
+ 28 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/function-code/S10.2.1_A4_T2.js
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/function-code/S10.2.1_A4_T2.js:17:7]
+ 16 │ function f1(){
+ 17 │   var x;
+    ·       ┬
+    ·       ╰── `x` has already been declared here
+ 18 │   
+ 19 │   return x;
+ 20 │   
+ 21 │   function x(){
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 22 │     return 7;
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/function-code/S10.2.1_A4_T2.js:30:7]
+ 29 │ function f2(){
+ 30 │   var x;
+    ·       ┬
+    ·       ╰── `x` has already been declared here
+ 31 │   
+ 32 │   return typeof x;
+ 33 │   
+ 34 │   function x(){
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 35 │     return 7;
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/global-code/decl-func-dup.js
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/global-code/decl-func-dup.js:10:10]
+  9 │ ---*/
+ 10 │ function f() { return 1; } function f() { return 2; }
+    ·          ┬                          ┬
+    ·          │                          ╰── It can not be redeclared here
+    ·          ╰── `f` has already been declared here
+ 11 │ 
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S13.2.1_A6_T3.js
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S13.2.1_A6_T3.js:11:5]
+ 10 │ 
+ 11 │ var __func, y, b;
+    ·     ───┬──
+    ·        ╰── `__func` has already been declared here
+ 12 │ 
+ 13 │ function __func(arg1, arg2){
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+ 14 │     arg1++;
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S13_A19_T1.js
+
+  × Identifier `__decl` has already been declared
+    ╭─[test262/test/language/statements/function/S13_A19_T1.js:22:5]
+ 21 │ 
+ 22 │ var __decl = 1;
+    ·     ───┬──
+    ·        ╰── `__decl` has already been declared here
+ 23 │ 
+ 24 │ //since statement was evaluted __decl turns to 1 from function
+ 25 │ //////////////////////////////////////////////////////////////////////////////
+ 26 │ //CHECK#2
+ 27 │ if (__decl !== 1) {
+ 28 │     throw new Test262Error('#2: __decl === 1. Actual: __decl ==='+__decl);
+ 29 │ }
+ 30 │ //
+ 31 │ //////////////////////////////////////////////////////////////////////////////
+ 32 │ 
+ 33 │ function __decl(){return 1;}
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S13_A19_T2.js
+
+  × Identifier `__decl` has already been declared
+    ╭─[test262/test/language/statements/function/S13_A19_T2.js:24:9]
+ 23 │     
+ 24 │     var __decl = 1;
+    ·         ───┬──
+    ·            ╰── `__decl` has already been declared here
+ 25 │     
+ 26 │     //since statement was evaluted __decl turns to 1 from function
+ 27 │     //////////////////////////////////////////////////////////////////////////////
+ 28 │     //CHECK#2
+ 29 │     if (__decl !== 1) {
+ 30 │         throw new Test262Error('#2: __decl === 1. Actual: __decl ==='+__decl);
+ 31 │     }
+ 32 │     //
+ 33 │     //////////////////////////////////////////////////////////////////////////////
+ 34 │ 
+ 35 │     function __decl(){return 1;}
+    ·              ───┬──
+    ·                 ╰── It can not be redeclared here
+ 36 │ })();
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S13_A6_T1.js
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S13_A6_T1.js:13:10]
+ 12 │ 
+ 13 │ function __func(){return 1};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 14 │  
+ 15 │ var __store__func = __func;
+ 16 │  
+ 17 │ var __1 = __func();
+ 18 │  
+ 19 │  function __func(){return 'A'};
+    ·           ───┬──
+    ·              ╰── It can not be redeclared here
+ 20 │  
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S13_A6_T2.js
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S13_A6_T2.js:26:10]
+ 25 │ 
+ 26 │ function __func(){return "FIRST";};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 27 │ 
+ 28 │ //////////////////////////////////////////////////////////////////////////////
+ 29 │ //CHECK#2
+ 30 │ __result = __func();
+ 31 │ if (__result !== "SECOND") {
+ 32 │     throw new Test262Error('#2: __result === "SECOND". Actual: __result ==='+__result);
+ 33 │ }
+ 34 │ //
+ 35 │ //////////////////////////////////////////////////////////////////////////////
+ 36 │ 
+ 37 │ function __func(){return "SECOND";};
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5_T1.js
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S14_A5_T1.js:23:10]
+ 22 │ 
+ 23 │ function __func(){return "ascii"};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 24 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+    ·          ──────────────────┬─────────────────
+    ·                            ╰── It can not be redeclared here
+ 25 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
+    ╰────
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S14_A5_T1.js:24:10]
+ 23 │ function __func(){return "ascii"};
+ 24 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+    ·          ──────────────────┬─────────────────
+    ·                            ╰── `__func` has already been declared here
+ 25 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
+    ·          ─────────────┬────────────
+    ·                       ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5_T2.js
+
+  × Identifier `__func` has already been declared
+    ╭─[test262/test/language/statements/function/S14_A5_T2.js:23:10]
+ 22 │ 
+ 23 │ function __func(){return "ascii"};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 24 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+    ·          ──────────────────┬─────────────────
+    ·                            ╰── It can not be redeclared here
+    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -1810,6 +2680,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:24:18]
+ 23 │ 
+ 24 │ { async function f() {} async function f() {} }
+    ·                  ┬                     ┬
+    ·                  │                     ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:24:18]
+ 23 │ 
+ 24 │ { async function f() {} async function* f() {} }
+    ·                  ┬                      ┬
+    ·                  │                      ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:24:18]
  23 │ 
  24 │ { async function f() {} async function* f() {} }
@@ -1842,6 +2730,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ { async function f() {} function f() {} }
     ·                  ┬               ┬
     ·                  │               ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js:24:18]
+ 23 │ 
+ 24 │ { async function f() {} function f() {} }
+    ·                  ┬               ┬
+    ·                  │               ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js:24:18]
+ 23 │ 
+ 24 │ { async function f() {} function* f() {} }
+    ·                  ┬                ┬
+    ·                  │                ╰── It can not be redeclared here
     ·                  ╰── `f` has already been declared here
     ╰────
 
@@ -1882,6 +2788,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js:24:19]
+ 23 │ 
+ 24 │ { async function* f() {} async function f() {} }
+    ·                   ┬                     ┬
+    ·                   │                     ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:24:19]
+ 23 │ 
+ 24 │ { async function* f() {} async function* f() {} }
+    ·                   ┬                      ┬
+    ·                   │                      ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:24:19]
  23 │ 
  24 │ { async function* f() {} async function* f() {} }
@@ -1914,6 +2838,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ { async function* f() {} function f() {} }
     ·                   ┬               ┬
     ·                   │               ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js:24:19]
+ 23 │ 
+ 24 │ { async function* f() {} function f() {} }
+    ·                   ┬               ┬
+    ·                   │               ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js:24:19]
+ 23 │ 
+ 24 │ { async function* f() {} function* f() {} }
+    ·                   ┬                ┬
+    ·                   │                ╰── It can not be redeclared here
     ·                   ╰── `f` has already been declared here
     ╰────
 
@@ -1954,6 +2896,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js:24:9]
+ 23 │ 
+ 24 │ { class f {} async function f() {} }
+    ·         ┬                   ┬
+    ·         │                   ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:24:9]
+ 23 │ 
+ 24 │ { class f {} async function* f() {} }
+    ·         ┬                    ┬
+    ·         │                    ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:24:9]
  23 │ 
  24 │ { class f {} async function* f() {} }
@@ -1986,6 +2946,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ { class f {} function f() {} }
     ·         ┬             ┬
     ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js:23:9]
+ 22 │ 
+ 23 │ { class f {} function f() {} }
+    ·         ┬             ┬
+    ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js:24:9]
+ 23 │ 
+ 24 │ { class f {} function* f() {} }
+    ·         ┬              ┬
+    ·         │              ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
     ╰────
 
@@ -2183,6 +3161,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js:24:12]
+ 23 │ 
+ 24 │ { function f() {} async function f() {} }
+    ·            ┬                     ┬
+    ·            │                     ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:24:12]
+ 23 │ 
+ 24 │ { function f() {} async function* f() {} }
+    ·            ┬                      ┬
+    ·            │                      ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:24:12]
  23 │ 
  24 │ { function f() {} async function* f() {} }
@@ -2215,6 +3211,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ { function f() {} function f() {} }
     ·            ┬               ┬
     ·            │               ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js:23:12]
+ 22 │ 
+ 23 │ { function f() {} function f() {} }
+    ·            ┬               ┬
+    ·            │               ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js:24:12]
+ 23 │ 
+ 24 │ { function f() {} function* f() {} }
+    ·            ┬                ┬
+    ·            │                ╰── It can not be redeclared here
     ·            ╰── `f` has already been declared here
     ╰────
 
@@ -2255,6 +3269,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js:24:13]
+ 23 │ 
+ 24 │ { function* f() {} async function f() {} }
+    ·             ┬                     ┬
+    ·             │                     ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:24:13]
+ 23 │ 
+ 24 │ { function* f() {} async function* f() {} }
+    ·             ┬                      ┬
+    ·             │                      ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:24:13]
  23 │ 
  24 │ { function* f() {} async function* f() {} }
@@ -2287,6 +3319,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ { function* f() {} function f() {} }
     ·             ┬               ┬
     ·             │               ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js:24:13]
+ 23 │ 
+ 24 │ { function* f() {} function f() {} }
+    ·             ┬               ┬
+    ·             │               ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js:24:13]
+ 23 │ 
+ 24 │ { function* f() {} function* f() {} }
+    ·             ┬                ┬
+    ·             │                ╰── It can not be redeclared here
     ·             ╰── `f` has already been declared here
     ╰────
 
@@ -2327,6 +3377,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-function.js:40:9]
+ 39 │ 
+ 40 │ { { var f; } async function f() {}; }
+    ·         ┬                   ┬
+    ·         │                   ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js:40:9]
+ 39 │ 
+ 40 │ { { var f; } async function* f() {}; }
+    ·         ┬                    ┬
+    ·         │                    ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js:40:9]
  39 │ 
  40 │ { { var f; } async function* f() {}; }
@@ -2359,6 +3427,24 @@ Negative Passed: 4519/4519 (100.00%)
  39 │ { { var f; } function f() {} }
     ·         ┬             ┬
     ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-function.js:39:9]
+ 38 │ 
+ 39 │ { { var f; } function f() {} }
+    ·         ┬             ┬
+    ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-generator.js:40:9]
+ 39 │ 
+ 40 │ { { var f; } function* f() {}; }
+    ·         ┬              ┬
+    ·         │              ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
     ╰────
 
@@ -2525,6 +3611,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js:24:7]
+ 23 │ 
+ 24 │ { var f; async function f() {} }
+    ·       ┬                 ┬
+    ·       │                 ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:24:7]
+ 23 │ 
+ 24 │ { var f; async function* f() {} }
+    ·       ┬                  ┬
+    ·       │                  ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:24:7]
  23 │ 
  24 │ { var f; async function* f() {} }
@@ -2557,6 +3661,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ { var f; function f() {} }
     ·       ┬           ┬
     ·       │           ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js:23:7]
+ 22 │ 
+ 23 │ { var f; function f() {} }
+    ·       ┬           ┬
+    ·       │           ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js:24:7]
+ 23 │ 
+ 24 │ { var f; function* f() {} }
+    ·       ┬            ┬
+    ·       │            ╰── It can not be redeclared here
     ·       ╰── `f` has already been declared here
     ╰────
 
@@ -23759,6 +24881,17 @@ Negative Passed: 4519/4519 (100.00%)
     ·                  ╰── It can not be redeclared here
     ╰────
 
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-export-decl.js:17:17]
+ 16 │ 
+ 17 │ export function f() {}
+    ·                 ┬
+    ·                 ╰── `f` has already been declared here
+ 18 │ export function *f() {}
+    ·                  ┬
+    ·                  ╰── It can not be redeclared here
+    ╰────
+
   × Duplicated default export
     ╭─[test262/test/language/module-code/early-dup-export-dflt-id.js:18:8]
  17 │ var x, y;
@@ -23842,6 +24975,28 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `x` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-top-function-async-generator.js:19:10]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ async function* x() {}
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-top-function-async.js:19:10]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ async function x() {}
+    ·                ┬
+    ·                ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `x` has already been declared
     ╭─[test262/test/language/module-code/early-dup-top-function-async.js:19:10]
  18 │ 
  19 │ function x() {}
@@ -23861,6 +25016,28 @@ Negative Passed: 4519/4519 (100.00%)
  20 │ function* x() {}
     ·           ┬
     ·           ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-top-function-generator.js:19:10]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ function* x() {}
+    ·           ┬
+    ·           ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-top-function.js:19:10]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ function x() {}
+    ·          ┬
+    ·          ╰── It can not be redeclared here
     ╰────
 
   × Identifier `x` has already been declared
@@ -24020,6 +25197,28 @@ Negative Passed: 4519/4519 (100.00%)
     ·                               ╰── It can not be redeclared here
     ╰────
 
+  × Identifier `A` has already been declared
+    ╭─[test262/test/language/module-code/export-default-asyncfunction-declaration-binding-exists.js:22:7]
+ 21 │ 
+ 22 │ class A {};
+    ·       ┬
+    ·       ╰── `A` has already been declared here
+ 23 │ export default async function A() {}
+    ·                               ┬
+    ·                               ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `AG` has already been declared
+    ╭─[test262/test/language/module-code/export-default-asyncgenerator-declaration-binding-exists.js:22:7]
+ 21 │ 
+ 22 │ class AG {}
+    ·       ─┬
+    ·        ╰── `AG` has already been declared here
+ 23 │ export default async function * AG() {}
+    ·                                 ─┬
+    ·                                  ╰── It can not be redeclared here
+    ╰────
+
   × Identifier `AG` has already been declared
     ╭─[test262/test/language/module-code/export-default-asyncgenerator-declaration-binding-exists.js:22:7]
  21 │ 
@@ -24041,6 +25240,29 @@ Negative Passed: 4519/4519 (100.00%)
     ·                         ┬
     ·                         ╰── It can not be redeclared here
  24 │ 
+    ╰────
+
+  × Identifier `F` has already been declared
+    ╭─[test262/test/language/module-code/export-default-function-declaration-binding-exists.js:22:7]
+ 21 │ 
+ 22 │ class F {}
+    ·       ┬
+    ·       ╰── `F` has already been declared here
+ 23 │ export default function F() {}
+    ·                         ┬
+    ·                         ╰── It can not be redeclared here
+ 24 │ 
+    ╰────
+
+  × Identifier `G` has already been declared
+    ╭─[test262/test/language/module-code/export-default-generator-declaration-binding-exists.js:22:7]
+ 21 │ 
+ 22 │ class G {}
+    ·       ┬
+    ·       ╰── `G` has already been declared here
+ 23 │ export default function * G() {}
+    ·                           ┬
+    ·                           ╰── It can not be redeclared here
     ╰────
 
   × Identifier `G` has already been declared
@@ -24812,6 +26034,28 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ function f() {}
     ·          ┬
     ·          ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/module-code/parse-err-hoist-lex-fun.js:24:5]
+ 23 │ 
+ 24 │ var f;
+    ·     ┬
+    ·     ╰── `f` has already been declared here
+ 25 │ function f() {}
+    ·          ┬
+    ·          ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `g` has already been declared
+    ╭─[test262/test/language/module-code/parse-err-hoist-lex-gen.js:26:5]
+ 25 │ 
+ 26 │ var g;
+    ·     ┬
+    ·     ╰── `g` has already been declared here
+ 27 │ function* g() {}
+    ·           ┬
+    ·           ╰── It can not be redeclared here
     ╰────
 
   × Identifier `g` has already been declared
@@ -37371,6 +38615,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:24:37]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function f() {} default: async function f() {} }
+    ·                                     ┬                              ┬
+    ·                                     │                              ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:24:37]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function f() {} default: async function* f() {} }
+    ·                                     ┬                               ┬
+    ·                                     │                               ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:24:37]
  23 │ 
  24 │ switch (0) { case 1: async function f() {} default: async function* f() {} }
@@ -37403,6 +38665,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ switch (0) { case 1: async function f() {} default: function f() {} }
     ·                                     ┬                        ┬
     ·                                     │                        ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js:24:37]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function f() {} default: function f() {} }
+    ·                                     ┬                        ┬
+    ·                                     │                        ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js:24:37]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function f() {} default: function* f() {} }
+    ·                                     ┬                         ┬
+    ·                                     │                         ╰── It can not be redeclared here
     ·                                     ╰── `f` has already been declared here
     ╰────
 
@@ -37443,6 +38723,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js:24:38]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function* f() {} default: async function f() {} }
+    ·                                      ┬                              ┬
+    ·                                      │                              ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:24:38]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function* f() {} default: async function* f() {} }
+    ·                                      ┬                               ┬
+    ·                                      │                               ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:24:38]
  23 │ 
  24 │ switch (0) { case 1: async function* f() {} default: async function* f() {} }
@@ -37475,6 +38773,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ switch (0) { case 1: async function* f() {} default: function f() {} }
     ·                                      ┬                        ┬
     ·                                      │                        ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js:24:38]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function* f() {} default: function f() {} }
+    ·                                      ┬                        ┬
+    ·                                      │                        ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js:24:38]
+ 23 │ 
+ 24 │ switch (0) { case 1: async function* f() {} default: function* f() {} }
+    ·                                      ┬                         ┬
+    ·                                      │                         ╰── It can not be redeclared here
     ·                                      ╰── `f` has already been declared here
     ╰────
 
@@ -37515,6 +38831,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js:24:28]
+ 23 │ 
+ 24 │ switch (0) { case 1: class f {} default: async function f() {} }
+    ·                            ┬                            ┬
+    ·                            │                            ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:24:28]
+ 23 │ 
+ 24 │ switch (0) { case 1: class f {} default: async function* f() {} }
+    ·                            ┬                             ┬
+    ·                            │                             ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:24:28]
  23 │ 
  24 │ switch (0) { case 1: class f {} default: async function* f() {} }
@@ -37547,6 +38881,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ switch (0) { case 1: class f {} default: function f() {} }
     ·                            ┬                      ┬
     ·                            │                      ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js:23:28]
+ 22 │ 
+ 23 │ switch (0) { case 1: class f {} default: function f() {} }
+    ·                            ┬                      ┬
+    ·                            │                      ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js:24:28]
+ 23 │ 
+ 24 │ switch (0) { case 1: class f {} default: function* f() {} }
+    ·                            ┬                       ┬
+    ·                            │                       ╰── It can not be redeclared here
     ·                            ╰── `f` has already been declared here
     ╰────
 
@@ -37659,6 +39011,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js:24:31]
+ 23 │ 
+ 24 │ switch (0) { case 1: function f() {} default: async function f() {} }
+    ·                               ┬                              ┬
+    ·                               │                              ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:24:31]
+ 23 │ 
+ 24 │ switch (0) { case 1: function f() {} default: async function* f() {} }
+    ·                               ┬                               ┬
+    ·                               │                               ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:24:31]
  23 │ 
  24 │ switch (0) { case 1: function f() {} default: async function* f() {} }
@@ -37691,6 +39061,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ switch (0) { case 1: function f() {} default: function f() {} }
     ·                               ┬                        ┬
     ·                               │                        ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js:23:31]
+ 22 │ 
+ 23 │ switch (0) { case 1: function f() {} default: function f() {} }
+    ·                               ┬                        ┬
+    ·                               │                        ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js:24:31]
+ 23 │ 
+ 24 │ switch (0) { case 1: function f() {} default: function* f() {} }
+    ·                               ┬                         ┬
+    ·                               │                         ╰── It can not be redeclared here
     ·                               ╰── `f` has already been declared here
     ╰────
 
@@ -37731,6 +39119,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js:24:32]
+ 23 │ 
+ 24 │ switch (0) { case 1: function* f() {} default: async function f() {} }
+    ·                                ┬                              ┬
+    ·                                │                              ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:24:32]
+ 23 │ 
+ 24 │ switch (0) { case 1: function* f() {} default: async function* f() {} }
+    ·                                ┬                               ┬
+    ·                                │                               ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:24:32]
  23 │ 
  24 │ switch (0) { case 1: function* f() {} default: async function* f() {} }
@@ -37763,6 +39169,24 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ switch (0) { case 1: function* f() {} default: function f() {} }
     ·                                ┬                        ┬
     ·                                │                        ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js:24:32]
+ 23 │ 
+ 24 │ switch (0) { case 1: function* f() {} default: function f() {} }
+    ·                                ┬                        ┬
+    ·                                │                        ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js:24:32]
+ 23 │ 
+ 24 │ switch (0) { case 1: function* f() {} default: function* f() {} }
+    ·                                ┬                         ┬
+    ·                                │                         ╰── It can not be redeclared here
     ·                                ╰── `f` has already been declared here
     ╰────
 
@@ -37875,6 +39299,24 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js:24:26]
+ 23 │ 
+ 24 │ switch (0) { case 1: var f; default: async function f() {} }
+    ·                          ┬                          ┬
+    ·                          │                          ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:24:26]
+ 23 │ 
+ 24 │ switch (0) { case 1: var f; default: async function* f() {} }
+    ·                          ┬                           ┬
+    ·                          │                           ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:24:26]
  23 │ 
  24 │ switch (0) { case 1: var f; default: async function* f() {} }
@@ -37907,6 +39349,24 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ switch (0) { case 1: var f; default: function f() {} }
     ·                          ┬                    ┬
     ·                          │                    ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js:23:26]
+ 22 │ 
+ 23 │ switch (0) { case 1: var f; default: function f() {} }
+    ·                          ┬                    ┬
+    ·                          │                    ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js:24:26]
+ 23 │ 
+ 24 │ switch (0) { case 1: var f; default: function* f() {} }
+    ·                          ┬                     ┬
+    ·                          │                     ╰── It can not be redeclared here
     ·                          ╰── `f` has already been declared here
     ╰────
 
@@ -38109,6 +39569,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·                 ┬  ┬
     ·                 │  ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `e` has already been declared
+    ╭─[test262/test/language/statements/try/early-catch-function.js:23:14]
+ 22 │     try {
+ 23 │     } catch (e) {
+    ·              ┬
+    ·              ╰── `e` has already been declared here
+ 24 │         function e(){}
+    ·                  ┬
+    ·                  ╰── It can not be redeclared here
+ 25 │     }
     ╰────
 
   × Identifier `e` has already been declared
