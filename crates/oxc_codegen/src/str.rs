@@ -58,7 +58,7 @@ impl Codegen<'_> {
             if escape == Escape::__ {
                 // No escape required.
                 // SAFETY: We just checked there's a byte to consume.
-                unsafe { state.consume_byte() };
+                unsafe { state.consume_byte_unchecked() };
             } else {
                 // Escape may be required. Execute byte handler.
                 let byte_handler = BYTE_HANDLERS.0[escape as usize - 1];
@@ -66,9 +66,8 @@ impl Codegen<'_> {
             }
         }
 
-        // Flush any remaining bytes.
-        // SAFETY: `bytes` iterator is at end, which by definition is on a UTF-8 char boundary
-        unsafe { state.flush(self) };
+        // Flush any remaining bytes
+        state.flush(self);
 
         // Print closing quote
         state.quote.print(self);
@@ -103,23 +102,28 @@ impl PrintStringState<'_> {
         unsafe { *self.bytes.clone().next().unwrap_unchecked() }
     }
 
-    /// TODO
+    /// Advance the `bytes` iterator by 1 byte.
     ///
     /// # SAFETY
     ///
-    /// TODO
-    unsafe fn consume_byte(&mut self) {
+    /// * There must be at least 1 more byte in the `bytes` iterator.
+    /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
+    ///   i.e. the current byte is ASCII.
+    #[inline]
+    unsafe fn consume_byte_unchecked(&mut self) {
         debug_assert!(self.bytes.clone().next().is_some());
         // SAFETY: TODO
         unsafe { self.bytes.next().unwrap_unchecked() };
     }
 
-    /// TODO
+    /// Advance the `bytes` iterator by `N` bytes.
     ///
     /// # SAFETY
     ///
-    /// TODO
-    unsafe fn consume_bytes<const N: usize>(&mut self) {
+    /// * There must be at least `N` more bytes in the `bytes` iterator.
+    /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
+    #[inline]
+    unsafe fn consume_bytes_unchecked<const N: usize>(&mut self) {
         debug_assert!(self.bytes.as_slice().len() >= N);
         // SAFETY: TODO
         unsafe {
@@ -129,29 +133,33 @@ impl PrintStringState<'_> {
         }
     }
 
-    // TODO: Should this method be unsafe?
+    /// Set the start of next chunk to be current position of `bytes` iterator.
+    #[inline]
     fn start_chunk(&mut self) {
         self.chunk_start = self.bytes.as_slice().as_ptr();
     }
 
-    /// TODO
+    /// Flush current chunk to buffer, consume 1 byte, and start next chunk after that byte.
     ///
     /// # SAFETY
     ///
-    /// TODO
+    /// * There must be at least 1 more byte in the `bytes` iterator.
+    /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
+    ///   i.e. the current byte is ASCII.
+    #[inline]
     unsafe fn flush_and_consume_byte(&mut self, codegen: &mut Codegen) {
         // SAFETY: TODO
         unsafe { self.flush_and_consume_bytes::<1>(codegen) };
     }
 
-    /// TODO
+    /// Flush current chunk to buffer, consume `N` bytes, and start next chunk after those bytes.
     ///
     /// # SAFETY
     ///
-    /// TODO
+    /// * There must be at least `N` more bytes in the `bytes` iterator.
+    /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
     unsafe fn flush_and_consume_bytes<const N: usize>(&mut self, codegen: &mut Codegen) {
-        // SAFETY: TODO
-        unsafe { self.flush(codegen) };
+        self.flush(codegen);
 
         debug_assert!(self.bytes.as_slice().len() >= N);
         // SAFETY: TODO
@@ -166,13 +174,9 @@ impl PrintStringState<'_> {
 
     /// Flush all bytes from `chunk_start` up to current position of `bytes` iterator into buffer.
     ///
-    /// If what quote character to use has not been decided yet, calculate the best quote character to use,
+    /// If what quote character to use has not been decided yet, calculate the best quote character,
     /// and print it before flushing.
-    ///
-    /// # SAFETY
-    ///
-    /// `bytes` iterator must be positioned on a UTF-8 character boundary.
-    unsafe fn flush(&mut self, codegen: &mut Codegen) {
+    fn flush(&mut self, codegen: &mut Codegen) {
         // If which quote character to use is not already known, calculate it and print opening quote
         self.calculate_quote(codegen);
 
@@ -297,7 +301,8 @@ const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
     [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
 
 /// Escape codes.
-/// Used as index into `BYTE_HANDLERS`.
+///
+/// Discriminant - 1 is used as index into `BYTE_HANDLERS` (except for `__` variant).
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 enum Escape {
@@ -351,7 +356,8 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
 type ByteHandler = fn(&mut Codegen, &mut PrintStringState);
 
 /// Byte handlers.
-/// Indexed by `Escape as usize - 1`.
+///
+/// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_null,
     print_bell,
@@ -417,7 +423,7 @@ fn print_new_line(codegen: &mut Codegen, state: &mut PrintStringState) {
     if state.calculate_quote(codegen) == Quote::Backtick {
         // No need to escape.
         // SAFETY: `\n` is ASCII.
-        unsafe { state.consume_byte() };
+        unsafe { state.consume_byte_unchecked() };
     } else {
         // SAFETY: `\n` is ASCII
         unsafe { state.flush_and_consume_byte(codegen) };
@@ -455,7 +461,7 @@ fn print_single_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
     } else {
         // No need to escape.
         // SAFETY: `'` is ASCII.
-        unsafe { state.consume_byte() };
+        unsafe { state.consume_byte_unchecked() };
     }
 }
 
@@ -468,7 +474,7 @@ fn print_double_quote(codegen: &mut Codegen, state: &mut PrintStringState) {
     } else {
         // No need to escape.
         // SAFETY: `"` is ASCII.
-        unsafe { state.consume_byte() };
+        unsafe { state.consume_byte_unchecked() };
     }
 }
 
@@ -481,7 +487,7 @@ fn print_backtick(codegen: &mut Codegen, state: &mut PrintStringState) {
     } else {
         // No need to escape.
         // SAFETY: ` is ASCII.
-        unsafe { state.consume_byte() };
+        unsafe { state.consume_byte_unchecked() };
     }
 }
 
@@ -496,7 +502,7 @@ fn print_dollar(codegen: &mut Codegen, state: &mut PrintStringState) {
     } else {
         // No need to escape.
         // SAFETY: `$` is ASCII.
-        unsafe { state.consume_byte() };
+        unsafe { state.consume_byte_unchecked() };
     }
 }
 
@@ -515,7 +521,7 @@ fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
         _ => {
             // Some other character starting with 0xE2. Advance past it.
             // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
-            unsafe { state.consume_bytes::<3>() };
+            unsafe { state.consume_bytes_unchecked::<3>() };
             return;
         }
     };
@@ -543,7 +549,7 @@ fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStringState)
     } else {
         // Some other character starting with 0xC2. Advance past it.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character,
-        unsafe { state.consume_bytes::<2>() };
+        unsafe { state.consume_bytes_unchecked::<2>() };
     }
 }
 
@@ -574,30 +580,29 @@ fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) 
                 // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
                 // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
                 unsafe {
-                    state.consume_bytes::<3>();
+                    state.consume_bytes_unchecked::<3>();
                     state.flush(codegen);
-                    state.consume_bytes::<4>();
+                    state.consume_bytes_unchecked::<4>();
                     state.start_chunk();
                 }
                 return;
             }
 
-            // Flush text before the lossy replacement character.
-            // SAFETY: We haven't advanced `bytes` yet, so it must be positioned on a UTF-8 char boundary
-            unsafe { state.flush(codegen) };
+            // Flush text before the lossy replacement character
+            state.flush(codegen);
 
             // Check all 4 hex bytes are ASCII
             assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
 
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if aren't at least 7 bytes remaining.
-            // First 3 bytes are lossy replacement character, we just checked next 4 bytes are ASCII,
-            // so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes::<7>() };
+            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there aren't at least 7 bytes
+            // remaining. First 3 bytes are lossy replacement character, and we just checked that
+            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
+            unsafe { state.consume_bytes_unchecked::<7>() };
             state.start_chunk();
 
             // Lossy replacement character representing a lone surrogate.
             codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 bytes are ASCII
+            // SAFETY: Just checked all 4 hex bytes are ASCII
             unsafe { codegen.code.print_bytes_unchecked(&hex) };
 
             return;
@@ -607,5 +612,5 @@ fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) 
     // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
     // Advance past the character.
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes::<3>() };
+    unsafe { state.consume_bytes_unchecked::<3>() };
 }
