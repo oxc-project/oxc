@@ -82,11 +82,11 @@ impl Rule for NoRedeclare {
             ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
         }
 
-        for span in ctx.scoping().symbol_redeclarations(symbol_id) {
+        for rd in ctx.scoping().symbol_redeclarations(symbol_id) {
             if is_builtin {
-                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, *span));
+                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
             } else {
-                ctx.diagnostic(no_redeclare_diagnostic(name, decl_span, *span));
+                ctx.diagnostic(no_redeclare_diagnostic(name, decl_span, rd.span));
             }
         }
     }

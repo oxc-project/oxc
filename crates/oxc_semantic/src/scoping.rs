@@ -15,6 +15,11 @@ use oxc_syntax::{
 pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
 
+#[derive(Debug)]
+pub struct Redeclaration {
+    pub span: Span,
+}
+
 /// # Symbol Table and Scope Tree
 ///
 /// ## Symbol Table
@@ -104,7 +109,7 @@ pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Atom<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
-    symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Span>>,
+    symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Redeclaration>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
     ///
@@ -193,13 +198,13 @@ impl Scoping {
     }
 
     #[inline]
-    pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
+    pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Redeclaration] {
         self.cell.borrow_dependent().symbol_redeclarations.get(&symbol_id).map_or_else(
             || {
-                static EMPTY: &[Span] = &[];
+                static EMPTY: &[Redeclaration] = &[];
                 EMPTY
             },
-            |spans| spans.as_slice(),
+            |v| v.as_slice(),
         )
     }
 
@@ -253,12 +258,14 @@ impl Scoping {
 
     pub fn add_symbol_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
         self.cell.with_dependent_mut(|allocator, cell| {
+            let redeclaration = Redeclaration { span };
             match cell.symbol_redeclarations.entry(symbol_id) {
-                Entry::Occupied(mut entry) => {
-                    entry.get_mut().push(span);
+                Entry::Occupied(occupied) => {
+                    occupied.into_mut().push(redeclaration);
                 }
-                Entry::Vacant(entry) => {
-                    entry.insert(ArenaVec::from_array_in([span], allocator));
+                Entry::Vacant(vacant) => {
+                    let v = ArenaVec::from_array_in([redeclaration], allocator);
+                    vacant.insert(v);
                 }
             }
         });
@@ -790,8 +797,11 @@ impl Scoping {
                     symbol_redeclarations: cell
                         .symbol_redeclarations
                         .iter()
-                        .map(|(k, v)| (*k, v.clone_in_with_semantic_ids(allocator)))
-                        .collect(),
+                        .map(|(k, v)| {
+                            let v = v.iter().map(|r| Redeclaration { span: r.span });
+                            (*k, ArenaVec::from_iter_in(v, allocator))
+                        })
+                        .collect::<FxHashMap<_, _>>(),
                     bindings: cell
                         .bindings
                         .iter()

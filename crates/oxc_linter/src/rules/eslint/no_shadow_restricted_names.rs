@@ -103,8 +103,8 @@ impl Rule for NoShadowRestrictedNames {
         let span = ctx.scoping().symbol_span(symbol_id);
         ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
 
-        for &span in ctx.scoping().symbol_redeclarations(symbol_id) {
-            ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
+        for rd in ctx.scoping().symbol_redeclarations(symbol_id) {
+            ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, rd.span));
         }
     }
 }
