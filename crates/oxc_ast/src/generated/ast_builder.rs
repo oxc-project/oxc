@@ -9884,15 +9884,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `computed`
     /// * `initializer`
     #[inline]
     pub fn ts_enum_member(
         self,
         span: Span,
         id: TSEnumMemberName<'a>,
+        computed: bool,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
-        TSEnumMember { span, id, initializer }
+        TSEnumMember { span, id, computed, initializer }
     }
 
     /// Build a [`TSEnumMember`], and store it in the memory arena.
@@ -9902,15 +9904,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `computed`
     /// * `initializer`
     #[inline]
     pub fn alloc_ts_enum_member(
         self,
         span: Span,
         id: TSEnumMemberName<'a>,
+        computed: bool,
         initializer: Option<Expression<'a>>,
     ) -> Box<'a, TSEnumMember<'a>> {
-        Box::new_in(self.ts_enum_member(span, id, initializer), self.allocator)
+        Box::new_in(self.ts_enum_member(span, id, computed, initializer), self.allocator)
     }
 
     /// Build a [`TSEnumMemberName::Identifier`].
@@ -9970,6 +9974,24 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSEnumMemberName::String(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+    }
+
+    /// Build a [`TSEnumMemberName::TemplateString`].
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `quasis`
+    /// * `expressions`
+    #[inline]
+    pub fn ts_enum_member_name_template_string(
+        self,
+        span: Span,
+        quasis: Vec<'a, TemplateElement<'a>>,
+        expressions: Vec<'a, Expression<'a>>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::TemplateString(self.alloc_template_literal(span, quasis, expressions))
     }
 
     /// Build a [`TSTypeAnnotation`].

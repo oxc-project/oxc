@@ -2310,6 +2310,7 @@ impl ESTree for TSEnumMember<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
+        state.serialize_field("computed", &self.computed);
         state.serialize_field("initializer", &self.initializer);
         state.end();
     }
@@ -2320,6 +2321,7 @@ impl ESTree for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => it.serialize(serializer),
             Self::String(it) => it.serialize(serializer),
+            Self::TemplateString(it) => it.serialize(serializer),
         }
     }
 }

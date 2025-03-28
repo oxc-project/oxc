@@ -936,10 +936,11 @@ export interface TSEnumDeclaration extends Span {
 export interface TSEnumMember extends Span {
   type: 'TSEnumMember';
   id: TSEnumMemberName;
+  computed: boolean;
   initializer: Expression | null;
 }
 
-export type TSEnumMemberName = IdentifierName | StringLiteral;
+export type TSEnumMemberName = IdentifierName | StringLiteral | TemplateLiteral;
 
 export interface TSTypeAnnotation extends Span {
   type: 'TSTypeAnnotation';

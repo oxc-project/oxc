@@ -1613,10 +1613,10 @@ tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
 serde_json::from_str(oxc_json) error: number out of range at line 32 column 27
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-serde_json::from_str(oxc_json) error: number out of range at line 41 column 29
+serde_json::from_str(oxc_json) error: number out of range at line 42 column 29
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-serde_json::from_str(oxc_json) error: number out of range at line 41 column 29
+serde_json::from_str(oxc_json) error: number out of range at line 42 column 29
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fallbackToBindingPatternForTypeInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fatArrowSelf.ts

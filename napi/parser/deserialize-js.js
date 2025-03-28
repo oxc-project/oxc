@@ -1295,7 +1295,8 @@ function deserializeTSEnumMember(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeTSEnumMemberName(pos + 8),
-    initializer: deserializeOptionExpression(pos + 24),
+    computed: deserializeBool(pos + 24),
+    initializer: deserializeOptionExpression(pos + 32),
   };
 }
 
@@ -3540,6 +3541,8 @@ function deserializeTSEnumMemberName(pos) {
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
       return deserializeBoxStringLiteral(pos + 8);
+    case 2:
+      return deserializeBoxTemplateLiteral(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSEnumMemberName`);
   }
@@ -5216,7 +5219,7 @@ function deserializeVecTSEnumMember(pos) {
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
     arr.push(deserializeTSEnumMember(pos));
-    pos += 40;
+    pos += 48;
   }
   return arr;
 }
