@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
@@ -222,6 +224,73 @@ impl ESTree for NullLiteralRaw<'_> {
         #[expect(clippy::collection_is_never_read)] // Clippy is wrong!
         let raw = if self.0.span.is_unspanned() { None } else { Some(JsonSafeString("null")) };
         raw.serialize(serializer);
+    }
+}
+
+/// Serializer for `value` field of `StringLiteral`.
+///
+/// Handle when `lossy` flag is set, indicating the string contains lone surrogates.
+#[ast_meta]
+#[estree(
+    ts_type = "string",
+    raw_deser = "
+        const lossy = DESER[bool](POS_OFFSET.lossy);
+        (THIS.lossy && THIS.raw !== null) ? (0, eval)(THIS.raw) : DESER[Atom](POS_OFFSET.value)
+    "
+)]
+pub struct StringLiteralValue<'a, 'b>(pub &'b StringLiteral<'a>);
+
+impl ESTree for StringLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let lit = self.0;
+        #[expect(clippy::if_not_else)]
+        if !lit.lossy {
+            lit.value.serialize(serializer);
+        } else {
+            self.serialize_lossy(serializer);
+        }
+    }
+}
+
+impl StringLiteralValue<'_, '_> {
+    #[cold]
+    #[inline(never)]
+    fn serialize_lossy<S: Serializer>(&self, serializer: S) {
+        // String contains lone surrogates
+        let lit = self.0;
+        let raw =
+            lit.raw.expect("`StringLiteral` with `lossy` flag set must have `raw` field populated");
+        let raw = raw.as_str();
+        let quote = raw.as_bytes().first().copied().unwrap();
+        let raw_unquoted = &raw[1..raw.len() - 1];
+        let raw_with_quotes_escaped = if quote == b'"' {
+            // String was in double quotes in original source, so it's valid JSON
+            Cow::Borrowed(raw_unquoted)
+        } else {
+            // String was in single quotes in original source.
+            // We need to replace any `"` characters with `\"`, and then it's valid JSON.
+            // We *don't* escape `"` characters preceded by an odd number of `\`s,
+            // because they're already escaped.
+            // We could make this more performant, but it should be vanishingly rare to hit this path anyway.
+            let mut encoded = Vec::with_capacity(raw_unquoted.len());
+            let mut has_slash = false;
+            for &b in raw_unquoted.as_bytes() {
+                if b == b'\\' {
+                    has_slash = !has_slash;
+                } else if b == b'"' && !has_slash {
+                    encoded.push(b'\\');
+                } else {
+                    has_slash = false;
+                }
+                encoded.push(b);
+            }
+
+            // SAFETY: `raw_without_quotes` is a `&str`. `encoded` contains the exact same bytes,
+            // except we may have inserted `\` before `"`s. That cannot create invalid UTF-8.
+            let encoded = unsafe { String::from_utf8_unchecked(encoded) };
+            Cow::Owned(encoded)
+        };
+        JsonSafeString(&raw_with_quotes_escaped).serialize(serializer);
     }
 }
 
