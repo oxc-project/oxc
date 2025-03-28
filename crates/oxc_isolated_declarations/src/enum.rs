@@ -44,16 +44,14 @@ impl<'a> IsolatedDeclarations<'a> {
             prev_initializer_value.clone_from(&value);
 
             if let Some(value) = &value {
-                let member_name = match &member.id {
-                    TSEnumMemberName::Identifier(id) => id.name,
-                    TSEnumMemberName::String(str) => str.value,
-                };
+                let member_name = member.id.static_name();
                 prev_members.insert(member_name, value.clone());
             }
 
             let member = self.ast.ts_enum_member(
                 member.span,
                 member.id.clone_in(self.ast.allocator),
+                false,
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;

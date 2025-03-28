@@ -3755,9 +3755,16 @@ impl Gen for TSEnumBody<'_> {
 
 impl Gen for TSEnumMember<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.computed {
+            p.print_ascii_byte(b'[');
+        }
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
+            TSEnumMemberName::TemplateString(decl) => decl.print(p, ctx),
+        }
+        if self.computed {
+            p.print_ascii_byte(b']');
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();
