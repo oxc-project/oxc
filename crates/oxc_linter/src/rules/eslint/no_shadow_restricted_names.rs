@@ -100,11 +100,14 @@ impl Rule for NoShadowRestrictedNames {
             }
         }
 
-        let span = ctx.scoping().symbol_span(symbol_id);
-        ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
-
-        for rd in ctx.scoping().symbol_redeclarations(symbol_id) {
-            ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, rd.span));
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if redeclarations.is_empty() {
+            let span = ctx.scoping().symbol_span(symbol_id);
+            ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
+        } else {
+            for rd in redeclarations {
+                ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, rd.span));
+            }
         }
     }
 }

@@ -111,6 +111,12 @@ pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Atom<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
+    /// Redeclarations of a symbol.
+    ///
+    /// NOTE:
+    /// Once a symbol is redeclared, there are at least two entries here. The first
+    /// entry is the original symbol information, and the rest are redeclarations.
+    /// i.e. `symbol_redeclarations[symbol_id].len() >= 2` always.
     symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Redeclaration>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
@@ -265,6 +271,16 @@ impl Scoping {
         declaration: NodeId,
         span: Span,
     ) {
+        let is_first_redeclared =
+            !self.cell.borrow_dependent().symbol_redeclarations.contains_key(&symbol_id);
+        // Borrow checker doesn't allow us to call `self.symbol_span` in `with_dependent_mut`,
+        // so we need construct `Redeclaration` here.
+        let first_declaration = is_first_redeclared.then(|| Redeclaration {
+            span: self.symbol_span(symbol_id),
+            declaration: self.symbol_declaration(symbol_id),
+            flags: self.symbol_flags(symbol_id),
+        });
+
         self.cell.with_dependent_mut(|allocator, cell| {
             let redeclaration = Redeclaration { span, declaration, flags };
             match cell.symbol_redeclarations.entry(symbol_id) {
@@ -272,7 +288,12 @@ impl Scoping {
                     occupied.into_mut().push(redeclaration);
                 }
                 Entry::Vacant(vacant) => {
-                    let v = ArenaVec::from_array_in([redeclaration], allocator);
+                    let first_declaration = first_declaration.unwrap_or_else(|| {
+                        unreachable!(
+                            "The above step has already been checked, and it was first declared."
+                        )
+                    });
+                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
                     vacant.insert(v);
                 }
             }

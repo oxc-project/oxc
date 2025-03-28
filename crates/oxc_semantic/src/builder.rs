@@ -387,8 +387,8 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
-            self.scoping.union_symbol_flag(symbol_id, includes);
             self.add_redeclare_variable(symbol_id, includes, span);
+            self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;
         }
 

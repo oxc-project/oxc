@@ -148,7 +148,7 @@ Symbol flags mismatch for "Merge":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Merge":
-after transform: SymbolId(5): [Span { start: 103, end: 108 }]
+after transform: SymbolId(5): [Span { start: 70, end: 75 }, Span { start: 103, end: 108 }]
 rebuilt        : SymbolId(3): []
 Symbol reference IDs mismatch for "Merge":
 after transform: SymbolId(16): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
@@ -189,7 +189,7 @@ Symbol reference IDs mismatch for "T":
 after transform: SymbolId(9): [ReferenceId(8), ReferenceId(9)]
 rebuilt        : SymbolId(8): [ReferenceId(9)]
 Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 226, end: 227 }]
+after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
 rebuilt        : SymbolId(8): []
 
 * exports/type-and-non-type/input.ts
@@ -279,13 +279,13 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 79, end: 83 }]
+after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 83 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
 after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
 rebuilt        : SymbolId(1): SymbolFlags(Import)
 Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 170, end: 171 }]
+after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "B":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | TypeAlias)
@@ -297,7 +297,7 @@ Symbol reference IDs mismatch for "B":
 after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(2): [ReferenceId(2)]
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
+after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
 * ts-declaration-empty-output/input.d.ts
