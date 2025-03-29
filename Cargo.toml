@@ -22,7 +22,7 @@ rust-version = "1.85.0"
 absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents = "warn"
 unit-bindings = "warn"
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)', 'cfg(oxc_quote_is_nightly)'] }
 tail_expr_drop_order = "warn"
 unsafe_op_in_unsafe_fn = "warn"
 unused_unsafe = "warn"
@@ -120,6 +120,9 @@ oxc_minifier = { version = "0.61.2", path = "crates/oxc_minifier" }
 oxc_napi = { version = "0.61.2", path = "crates/oxc_napi" }
 oxc_parser = { version = "0.61.2", path = "crates/oxc_parser", features = ["regular_expression"] }
 oxc_parser_napi = { version = "0.61.2", path = "napi/parser" }
+oxc_quote = { version = "0.61.2", path = "crates/oxc_quote" }
+oxc_quote_proc = { version = "0.61.2", path = "crates/oxc_quote_proc" }
+oxc_quote_types = { version = "0.61.2", path = "crates/oxc_quote_types" }
 oxc_regular_expression = { version = "0.61.2", path = "crates/oxc_regular_expression" }
 oxc_semantic = { version = "0.61.2", path = "crates/oxc_semantic" }
 oxc_span = { version = "0.61.2", path = "crates/oxc_span" }
@@ -208,6 +211,7 @@ project-root = "0.2.2"
 rayon = "1.10.0"
 ropey = "1.6.1"
 rust-lapper = "1.1.0"
+rustc_version = "0.4.1"
 ryu-js = "1.0.1"
 saphyr = "0.0.3"
 schemars = "0.8.21"

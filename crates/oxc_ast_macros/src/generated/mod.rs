@@ -14,6 +14,7 @@ pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStre
         "GetSpanMut" => (quote!(::oxc_span::GetSpanMut), TokenStream::new()),
         "ContentEq" => (quote!(::oxc_span::ContentEq), TokenStream::new()),
         "ESTree" => (quote!(::oxc_estree::ESTree), TokenStream::new()),
+        "ToRust" => (quote!(::oxc_quote_types::ToRust), TokenStream::new()),
         _ => panic!("Invalid derive trait(generate_derive): {trait_name}"),
     }
 }

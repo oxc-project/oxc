@@ -25,6 +25,7 @@ oxc_ast_macros = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_estree = { workspace = true }
 oxc_span = { workspace = true }
+oxc_quote_types = { workspace = true }
 
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
@@ -36,4 +37,5 @@ serialize = [
   "oxc_allocator/serialize",
   "oxc_span/serialize",
   "oxc_estree/serialize",
+  "oxc_quote_types/serialize",
 ]

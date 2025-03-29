@@ -1,0 +1,15 @@
+style_edition = "2024"
+# Make Rust more readable given most people have wide screens nowadays.
+# This is also the setting used by [rustc](https://github.com/rust-lang/rust/blob/master/rustfmt.toml)
+use_small_heuristics = "Max"
+
+# Use field initialize shorthand if possible
+use_field_init_shorthand = true
+
+reorder_modules = true
+
+# Necessary to format the tests. Otherwise rustfmt chokes.
+# This is an exception here in the tests as they have very
+# extensive AST nodes to check against the output of the
+# quote macros, which are verbose and lengthy.
+max_width = 150

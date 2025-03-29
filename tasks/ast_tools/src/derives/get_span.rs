@@ -168,6 +168,7 @@ fn derive_struct(
     };
 
     quote! {
+        #[automatically_derived]
         impl #trait_ident for #ty {
             #[inline]
             fn #method_ident(#self_ty) -> #result_ty {
@@ -200,6 +201,7 @@ fn derive_enum(
     });
 
     quote! {
+        #[automatically_derived]
         impl #trait_ident for #ty {
             fn #method_ident(#self_ty) -> #result_ty {
                 match self {

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use indexmap::{IndexMap, IndexSet};
 use phf::{Set as PhfSet, phf_set};
 use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote};
+use quote::quote;
 use rustc_hash::FxBuildHasher;
 use syn::{Ident, LitInt};
 
@@ -37,7 +37,11 @@ pub fn is_reserved_name(name: &str) -> bool {
 ///
 /// [`Ident`]: struct@Ident
 pub fn create_ident(name: &str) -> Ident {
-    if is_reserved_name(name) { format_ident!("r#{name}") } else { create_safe_ident(name) }
+    if is_reserved_name(name) {
+        Ident::new_raw(name, Span::call_site())
+    } else {
+        create_safe_ident(name)
+    }
 }
 
 /// Create an [`Ident`] from a string, without checking it's not a reserved word.

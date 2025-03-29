@@ -29,6 +29,8 @@ mod generated {
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
+    #[cfg(feature = "serialize")]
+    mod derive_to_rust;
 }
 
 /// Dummy type to communicate the content of `nonmax::NonMaxU32` to `oxc_ast_tools`.

@@ -10,6 +10,7 @@ use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
 
+#[automatically_derived]
 impl GetSpan for Program<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -17,6 +18,7 @@ impl GetSpan for Program<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Expression<'_> {
     fn span(&self) -> Span {
         match self {
@@ -67,6 +69,7 @@ impl GetSpan for Expression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for IdentifierName<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -74,6 +77,7 @@ impl GetSpan for IdentifierName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for IdentifierReference<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -81,6 +85,7 @@ impl GetSpan for IdentifierReference<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BindingIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -88,6 +93,7 @@ impl GetSpan for BindingIdentifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for LabelIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -95,6 +101,7 @@ impl GetSpan for LabelIdentifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ThisExpression {
     #[inline]
     fn span(&self) -> Span {
@@ -102,6 +109,7 @@ impl GetSpan for ThisExpression {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ArrayExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -109,6 +117,7 @@ impl GetSpan for ArrayExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ArrayExpressionElement<'_> {
     fn span(&self) -> Span {
         match self {
@@ -161,6 +170,7 @@ impl GetSpan for ArrayExpressionElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Elision {
     #[inline]
     fn span(&self) -> Span {
@@ -168,6 +178,7 @@ impl GetSpan for Elision {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ObjectExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -175,6 +186,7 @@ impl GetSpan for ObjectExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ObjectPropertyKind<'_> {
     fn span(&self) -> Span {
         match self {
@@ -184,6 +196,7 @@ impl GetSpan for ObjectPropertyKind<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ObjectProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -191,6 +204,7 @@ impl GetSpan for ObjectProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for PropertyKey<'_> {
     fn span(&self) -> Span {
         match self {
@@ -243,6 +257,7 @@ impl GetSpan for PropertyKey<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TemplateLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -250,6 +265,7 @@ impl GetSpan for TemplateLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TaggedTemplateExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -257,6 +273,7 @@ impl GetSpan for TaggedTemplateExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TemplateElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -264,6 +281,7 @@ impl GetSpan for TemplateElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for MemberExpression<'_> {
     fn span(&self) -> Span {
         match self {
@@ -274,6 +292,7 @@ impl GetSpan for MemberExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ComputedMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -281,6 +300,7 @@ impl GetSpan for ComputedMemberExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for StaticMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -288,6 +308,7 @@ impl GetSpan for StaticMemberExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for PrivateFieldExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -295,6 +316,7 @@ impl GetSpan for PrivateFieldExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for CallExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -302,6 +324,7 @@ impl GetSpan for CallExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for NewExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -309,6 +332,7 @@ impl GetSpan for NewExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for MetaProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -316,6 +340,7 @@ impl GetSpan for MetaProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for SpreadElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -323,6 +348,7 @@ impl GetSpan for SpreadElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Argument<'_> {
     fn span(&self) -> Span {
         match self {
@@ -374,6 +400,7 @@ impl GetSpan for Argument<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for UpdateExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -381,6 +408,7 @@ impl GetSpan for UpdateExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for UnaryExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -388,6 +416,7 @@ impl GetSpan for UnaryExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BinaryExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -395,6 +424,7 @@ impl GetSpan for BinaryExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for PrivateInExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -402,6 +432,7 @@ impl GetSpan for PrivateInExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for LogicalExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -409,6 +440,7 @@ impl GetSpan for LogicalExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ConditionalExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -416,6 +448,7 @@ impl GetSpan for ConditionalExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -423,6 +456,7 @@ impl GetSpan for AssignmentExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
@@ -440,6 +474,7 @@ impl GetSpan for AssignmentTarget<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for SimpleAssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
@@ -455,6 +490,7 @@ impl GetSpan for SimpleAssignmentTarget<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetPattern<'_> {
     fn span(&self) -> Span {
         match self {
@@ -464,6 +500,7 @@ impl GetSpan for AssignmentTargetPattern<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ArrayAssignmentTarget<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -471,6 +508,7 @@ impl GetSpan for ArrayAssignmentTarget<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ObjectAssignmentTarget<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -478,6 +516,7 @@ impl GetSpan for ObjectAssignmentTarget<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetRest<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -485,6 +524,7 @@ impl GetSpan for AssignmentTargetRest<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetMaybeDefault<'_> {
     fn span(&self) -> Span {
         match self {
@@ -503,6 +543,7 @@ impl GetSpan for AssignmentTargetMaybeDefault<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetWithDefault<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -510,6 +551,7 @@ impl GetSpan for AssignmentTargetWithDefault<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetProperty<'_> {
     fn span(&self) -> Span {
         match self {
@@ -519,6 +561,7 @@ impl GetSpan for AssignmentTargetProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetPropertyIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -526,6 +569,7 @@ impl GetSpan for AssignmentTargetPropertyIdentifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentTargetPropertyProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -533,6 +577,7 @@ impl GetSpan for AssignmentTargetPropertyProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for SequenceExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -540,6 +585,7 @@ impl GetSpan for SequenceExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Super {
     #[inline]
     fn span(&self) -> Span {
@@ -547,6 +593,7 @@ impl GetSpan for Super {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AwaitExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -554,6 +601,7 @@ impl GetSpan for AwaitExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ChainExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -561,6 +609,7 @@ impl GetSpan for ChainExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ChainElement<'_> {
     fn span(&self) -> Span {
         match self {
@@ -573,6 +622,7 @@ impl GetSpan for ChainElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ParenthesizedExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -580,6 +630,7 @@ impl GetSpan for ParenthesizedExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Statement<'_> {
     fn span(&self) -> Span {
         match self {
@@ -619,6 +670,7 @@ impl GetSpan for Statement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Directive<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -626,6 +678,7 @@ impl GetSpan for Directive<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Hashbang<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -633,6 +686,7 @@ impl GetSpan for Hashbang<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BlockStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -640,6 +694,7 @@ impl GetSpan for BlockStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Declaration<'_> {
     fn span(&self) -> Span {
         match self {
@@ -655,6 +710,7 @@ impl GetSpan for Declaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for VariableDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -662,6 +718,7 @@ impl GetSpan for VariableDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for VariableDeclarator<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -669,6 +726,7 @@ impl GetSpan for VariableDeclarator<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for EmptyStatement {
     #[inline]
     fn span(&self) -> Span {
@@ -676,6 +734,7 @@ impl GetSpan for EmptyStatement {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExpressionStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -683,6 +742,7 @@ impl GetSpan for ExpressionStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for IfStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -690,6 +750,7 @@ impl GetSpan for IfStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for DoWhileStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -697,6 +758,7 @@ impl GetSpan for DoWhileStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for WhileStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -704,6 +766,7 @@ impl GetSpan for WhileStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ForStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -711,6 +774,7 @@ impl GetSpan for ForStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ForStatementInit<'_> {
     fn span(&self) -> Span {
         match self {
@@ -762,6 +826,7 @@ impl GetSpan for ForStatementInit<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ForInStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -769,6 +834,7 @@ impl GetSpan for ForInStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ForStatementLeft<'_> {
     fn span(&self) -> Span {
         match self {
@@ -787,6 +853,7 @@ impl GetSpan for ForStatementLeft<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ForOfStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -794,6 +861,7 @@ impl GetSpan for ForOfStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ContinueStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -801,6 +869,7 @@ impl GetSpan for ContinueStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BreakStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -808,6 +877,7 @@ impl GetSpan for BreakStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ReturnStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -815,6 +885,7 @@ impl GetSpan for ReturnStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for WithStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -822,6 +893,7 @@ impl GetSpan for WithStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for SwitchStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -829,6 +901,7 @@ impl GetSpan for SwitchStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for SwitchCase<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -836,6 +909,7 @@ impl GetSpan for SwitchCase<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for LabeledStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -843,6 +917,7 @@ impl GetSpan for LabeledStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ThrowStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -850,6 +925,7 @@ impl GetSpan for ThrowStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TryStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -857,6 +933,7 @@ impl GetSpan for TryStatement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for CatchClause<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -864,6 +941,7 @@ impl GetSpan for CatchClause<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for CatchParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -871,6 +949,7 @@ impl GetSpan for CatchParameter<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for DebuggerStatement {
     #[inline]
     fn span(&self) -> Span {
@@ -878,6 +957,7 @@ impl GetSpan for DebuggerStatement {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BindingPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -885,6 +965,7 @@ impl GetSpan for BindingPattern<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BindingPatternKind<'_> {
     fn span(&self) -> Span {
         match self {
@@ -896,6 +977,7 @@ impl GetSpan for BindingPatternKind<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AssignmentPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -903,6 +985,7 @@ impl GetSpan for AssignmentPattern<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ObjectPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -910,6 +993,7 @@ impl GetSpan for ObjectPattern<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BindingProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -917,6 +1001,7 @@ impl GetSpan for BindingProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ArrayPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -924,6 +1009,7 @@ impl GetSpan for ArrayPattern<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BindingRestElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -931,6 +1017,7 @@ impl GetSpan for BindingRestElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Function<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -938,6 +1025,7 @@ impl GetSpan for Function<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for FormalParameters<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -945,6 +1033,7 @@ impl GetSpan for FormalParameters<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for FormalParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -952,6 +1041,7 @@ impl GetSpan for FormalParameter<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for FunctionBody<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -959,6 +1049,7 @@ impl GetSpan for FunctionBody<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ArrowFunctionExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -966,6 +1057,7 @@ impl GetSpan for ArrowFunctionExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for YieldExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -973,6 +1065,7 @@ impl GetSpan for YieldExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Class<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -980,6 +1073,7 @@ impl GetSpan for Class<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ClassBody<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -987,6 +1081,7 @@ impl GetSpan for ClassBody<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ClassElement<'_> {
     fn span(&self) -> Span {
         match self {
@@ -999,6 +1094,7 @@ impl GetSpan for ClassElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for MethodDefinition<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1006,6 +1102,7 @@ impl GetSpan for MethodDefinition<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for PropertyDefinition<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1013,6 +1110,7 @@ impl GetSpan for PropertyDefinition<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for PrivateIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1020,6 +1118,7 @@ impl GetSpan for PrivateIdentifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for StaticBlock<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1027,6 +1126,7 @@ impl GetSpan for StaticBlock<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ModuleDeclaration<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1040,6 +1140,7 @@ impl GetSpan for ModuleDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for AccessorProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1047,6 +1148,7 @@ impl GetSpan for AccessorProperty<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1054,6 +1156,7 @@ impl GetSpan for ImportExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1061,6 +1164,7 @@ impl GetSpan for ImportDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportDeclarationSpecifier<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1071,6 +1175,7 @@ impl GetSpan for ImportDeclarationSpecifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1078,6 +1183,7 @@ impl GetSpan for ImportSpecifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportDefaultSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1085,6 +1191,7 @@ impl GetSpan for ImportDefaultSpecifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportNamespaceSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1092,6 +1199,7 @@ impl GetSpan for ImportNamespaceSpecifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for WithClause<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1099,6 +1207,7 @@ impl GetSpan for WithClause<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1106,6 +1215,7 @@ impl GetSpan for ImportAttribute<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ImportAttributeKey<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1115,6 +1225,7 @@ impl GetSpan for ImportAttributeKey<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExportNamedDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1122,6 +1233,7 @@ impl GetSpan for ExportNamedDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExportDefaultDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1129,6 +1241,7 @@ impl GetSpan for ExportDefaultDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExportAllDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1136,6 +1249,7 @@ impl GetSpan for ExportAllDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExportSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1143,6 +1257,7 @@ impl GetSpan for ExportSpecifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ExportDefaultDeclarationKind<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1196,6 +1311,7 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for ModuleExportName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1206,6 +1322,7 @@ impl GetSpan for ModuleExportName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for V8IntrinsicExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1213,6 +1330,7 @@ impl GetSpan for V8IntrinsicExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BooleanLiteral {
     #[inline]
     fn span(&self) -> Span {
@@ -1220,6 +1338,7 @@ impl GetSpan for BooleanLiteral {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for NullLiteral {
     #[inline]
     fn span(&self) -> Span {
@@ -1227,6 +1346,7 @@ impl GetSpan for NullLiteral {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for NumericLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1234,6 +1354,7 @@ impl GetSpan for NumericLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for StringLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1241,6 +1362,7 @@ impl GetSpan for StringLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for BigIntLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1248,6 +1370,7 @@ impl GetSpan for BigIntLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for RegExpLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1255,6 +1378,7 @@ impl GetSpan for RegExpLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1262,6 +1386,7 @@ impl GetSpan for JSXElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXOpeningElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1269,6 +1394,7 @@ impl GetSpan for JSXOpeningElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXClosingElement<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1276,6 +1402,7 @@ impl GetSpan for JSXClosingElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXFragment<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1283,6 +1410,7 @@ impl GetSpan for JSXFragment<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXOpeningFragment {
     #[inline]
     fn span(&self) -> Span {
@@ -1290,6 +1418,7 @@ impl GetSpan for JSXOpeningFragment {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXClosingFragment {
     #[inline]
     fn span(&self) -> Span {
@@ -1297,6 +1426,7 @@ impl GetSpan for JSXClosingFragment {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXElementName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1309,6 +1439,7 @@ impl GetSpan for JSXElementName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXNamespacedName<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1316,6 +1447,7 @@ impl GetSpan for JSXNamespacedName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1323,6 +1455,7 @@ impl GetSpan for JSXMemberExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXMemberExpressionObject<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1333,6 +1466,7 @@ impl GetSpan for JSXMemberExpressionObject<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXExpressionContainer<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1340,6 +1474,7 @@ impl GetSpan for JSXExpressionContainer<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXExpression<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1391,6 +1526,7 @@ impl GetSpan for JSXExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXEmptyExpression {
     #[inline]
     fn span(&self) -> Span {
@@ -1398,6 +1534,7 @@ impl GetSpan for JSXEmptyExpression {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXAttributeItem<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1407,6 +1544,7 @@ impl GetSpan for JSXAttributeItem<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1414,6 +1552,7 @@ impl GetSpan for JSXAttribute<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXSpreadAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1421,6 +1560,7 @@ impl GetSpan for JSXSpreadAttribute<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXAttributeName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1430,6 +1570,7 @@ impl GetSpan for JSXAttributeName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXAttributeValue<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1441,6 +1582,7 @@ impl GetSpan for JSXAttributeValue<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1448,6 +1590,7 @@ impl GetSpan for JSXIdentifier<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXChild<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1460,6 +1603,7 @@ impl GetSpan for JSXChild<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXSpreadChild<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1467,6 +1611,7 @@ impl GetSpan for JSXSpreadChild<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSXText<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1474,6 +1619,7 @@ impl GetSpan for JSXText<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSThisParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1481,6 +1627,7 @@ impl GetSpan for TSThisParameter<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSEnumDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1488,6 +1635,7 @@ impl GetSpan for TSEnumDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSEnumMember<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1495,6 +1643,7 @@ impl GetSpan for TSEnumMember<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSEnumMemberName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1504,6 +1653,7 @@ impl GetSpan for TSEnumMemberName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeAnnotation<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1511,6 +1661,7 @@ impl GetSpan for TSTypeAnnotation<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSLiteralType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1518,6 +1669,7 @@ impl GetSpan for TSLiteralType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSLiteral<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1531,6 +1683,7 @@ impl GetSpan for TSLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSType<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1575,6 +1728,7 @@ impl GetSpan for TSType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSConditionalType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1582,6 +1736,7 @@ impl GetSpan for TSConditionalType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSUnionType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1589,6 +1744,7 @@ impl GetSpan for TSUnionType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSIntersectionType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1596,6 +1752,7 @@ impl GetSpan for TSIntersectionType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSParenthesizedType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1603,6 +1760,7 @@ impl GetSpan for TSParenthesizedType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeOperator<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1610,6 +1768,7 @@ impl GetSpan for TSTypeOperator<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSArrayType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1617,6 +1776,7 @@ impl GetSpan for TSArrayType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSIndexedAccessType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1624,6 +1784,7 @@ impl GetSpan for TSIndexedAccessType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTupleType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1631,6 +1792,7 @@ impl GetSpan for TSTupleType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNamedTupleMember<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1638,6 +1800,7 @@ impl GetSpan for TSNamedTupleMember<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSOptionalType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1645,6 +1808,7 @@ impl GetSpan for TSOptionalType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSRestType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1652,6 +1816,7 @@ impl GetSpan for TSRestType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTupleElement<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1698,6 +1863,7 @@ impl GetSpan for TSTupleElement<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSAnyKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1705,6 +1871,7 @@ impl GetSpan for TSAnyKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSStringKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1712,6 +1879,7 @@ impl GetSpan for TSStringKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSBooleanKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1719,6 +1887,7 @@ impl GetSpan for TSBooleanKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNumberKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1726,6 +1895,7 @@ impl GetSpan for TSNumberKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNeverKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1733,6 +1903,7 @@ impl GetSpan for TSNeverKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSIntrinsicKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1740,6 +1911,7 @@ impl GetSpan for TSIntrinsicKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSUnknownKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1747,6 +1919,7 @@ impl GetSpan for TSUnknownKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNullKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1754,6 +1927,7 @@ impl GetSpan for TSNullKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSUndefinedKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1761,6 +1935,7 @@ impl GetSpan for TSUndefinedKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSVoidKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1768,6 +1943,7 @@ impl GetSpan for TSVoidKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSSymbolKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1775,6 +1951,7 @@ impl GetSpan for TSSymbolKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSThisType {
     #[inline]
     fn span(&self) -> Span {
@@ -1782,6 +1959,7 @@ impl GetSpan for TSThisType {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSObjectKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1789,6 +1967,7 @@ impl GetSpan for TSObjectKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSBigIntKeyword {
     #[inline]
     fn span(&self) -> Span {
@@ -1796,6 +1975,7 @@ impl GetSpan for TSBigIntKeyword {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeReference<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1803,6 +1983,7 @@ impl GetSpan for TSTypeReference<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1812,6 +1993,7 @@ impl GetSpan for TSTypeName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSQualifiedName<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1819,6 +2001,7 @@ impl GetSpan for TSQualifiedName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeParameterInstantiation<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1826,6 +2009,7 @@ impl GetSpan for TSTypeParameterInstantiation<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1833,6 +2017,7 @@ impl GetSpan for TSTypeParameter<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeParameterDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1840,6 +2025,7 @@ impl GetSpan for TSTypeParameterDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeAliasDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1847,6 +2033,7 @@ impl GetSpan for TSTypeAliasDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSClassImplements<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1854,6 +2041,7 @@ impl GetSpan for TSClassImplements<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSInterfaceDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1861,6 +2049,7 @@ impl GetSpan for TSInterfaceDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSInterfaceBody<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1868,6 +2057,7 @@ impl GetSpan for TSInterfaceBody<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSPropertySignature<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1875,6 +2065,7 @@ impl GetSpan for TSPropertySignature<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSSignature<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1887,6 +2078,7 @@ impl GetSpan for TSSignature<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSIndexSignature<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1894,6 +2086,7 @@ impl GetSpan for TSIndexSignature<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSCallSignatureDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1901,6 +2094,7 @@ impl GetSpan for TSCallSignatureDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSMethodSignature<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1908,6 +2102,7 @@ impl GetSpan for TSMethodSignature<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSConstructSignatureDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1915,6 +2110,7 @@ impl GetSpan for TSConstructSignatureDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSIndexSignatureName<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1922,6 +2118,7 @@ impl GetSpan for TSIndexSignatureName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSInterfaceHeritage<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1929,6 +2126,7 @@ impl GetSpan for TSInterfaceHeritage<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypePredicate<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1936,6 +2134,7 @@ impl GetSpan for TSTypePredicate<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypePredicateName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1945,6 +2144,7 @@ impl GetSpan for TSTypePredicateName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSModuleDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1952,6 +2152,7 @@ impl GetSpan for TSModuleDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSModuleDeclarationName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1961,6 +2162,7 @@ impl GetSpan for TSModuleDeclarationName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSModuleDeclarationBody<'_> {
     fn span(&self) -> Span {
         match self {
@@ -1970,6 +2172,7 @@ impl GetSpan for TSModuleDeclarationBody<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSModuleBlock<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1977,6 +2180,7 @@ impl GetSpan for TSModuleBlock<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1984,6 +2188,7 @@ impl GetSpan for TSTypeLiteral<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSInferType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1991,6 +2196,7 @@ impl GetSpan for TSInferType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeQuery<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1998,6 +2204,7 @@ impl GetSpan for TSTypeQuery<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeQueryExprName<'_> {
     fn span(&self) -> Span {
         match self {
@@ -2008,6 +2215,7 @@ impl GetSpan for TSTypeQueryExprName<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSImportType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2015,6 +2223,7 @@ impl GetSpan for TSImportType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSFunctionType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2022,6 +2231,7 @@ impl GetSpan for TSFunctionType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSConstructorType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2029,6 +2239,7 @@ impl GetSpan for TSConstructorType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSMappedType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2036,6 +2247,7 @@ impl GetSpan for TSMappedType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTemplateLiteralType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2043,6 +2255,7 @@ impl GetSpan for TSTemplateLiteralType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSAsExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2050,6 +2263,7 @@ impl GetSpan for TSAsExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSSatisfiesExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2057,6 +2271,7 @@ impl GetSpan for TSSatisfiesExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSTypeAssertion<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2064,6 +2279,7 @@ impl GetSpan for TSTypeAssertion<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSImportEqualsDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2071,6 +2287,7 @@ impl GetSpan for TSImportEqualsDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSModuleReference<'_> {
     fn span(&self) -> Span {
         match self {
@@ -2081,6 +2298,7 @@ impl GetSpan for TSModuleReference<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSExternalModuleReference<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2088,6 +2306,7 @@ impl GetSpan for TSExternalModuleReference<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNonNullExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2095,6 +2314,7 @@ impl GetSpan for TSNonNullExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for Decorator<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2102,6 +2322,7 @@ impl GetSpan for Decorator<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSExportAssignment<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2109,6 +2330,7 @@ impl GetSpan for TSExportAssignment<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSNamespaceExportDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2116,6 +2338,7 @@ impl GetSpan for TSNamespaceExportDeclaration<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for TSInstantiationExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2123,6 +2346,7 @@ impl GetSpan for TSInstantiationExpression<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSDocNullableType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2130,6 +2354,7 @@ impl GetSpan for JSDocNullableType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSDocNonNullableType<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2137,6 +2362,7 @@ impl GetSpan for JSDocNonNullableType<'_> {
     }
 }
 
+#[automatically_derived]
 impl GetSpan for JSDocUnknownType {
     #[inline]
     fn span(&self) -> Span {

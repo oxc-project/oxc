@@ -26,6 +26,7 @@ oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_estree = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
+oxc_quote_types = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
@@ -45,6 +46,7 @@ serialize = [
   "dep:serde",
   "oxc_index/serde",
   "oxc_estree/serialize",
+  "oxc_quote_types/serialize",
 ]
 
 [package.metadata.cargo-shear]

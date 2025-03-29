@@ -5,6 +5,7 @@
 use oxc_allocator::{CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
+use oxc_quote_types::ToRust;
 use oxc_span::ContentEq;
 
 use crate::precedence::{GetPrecedence, Precedence};
@@ -15,7 +16,7 @@ use crate::precedence::{GetPrecedence, Precedence};
 /// - [13.15 Assignment Operators](https://tc39.es/ecma262/#sec-assignment-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree, ToRust)]
 pub enum AssignmentOperator {
     /// `=`
     #[estree(rename = "=")]
@@ -159,7 +160,7 @@ impl AssignmentOperator {
 /// - [12.10 Binary Logical Operators](https://tc39.es/ecma262/#sec-binary-logical-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree, ToRust)]
 pub enum BinaryOperator {
     /// `==`
     #[estree(rename = "==")]
@@ -416,7 +417,7 @@ impl GetPrecedence for BinaryOperator {
 /// Logical binary operators
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree, ToRust)]
 pub enum LogicalOperator {
     /// `||`
     #[estree(rename = "||")]
@@ -496,7 +497,7 @@ impl GetPrecedence for LogicalOperator {
 /// - [12.5 Unary Operators](https://tc39.es/ecma262/#sec-unary-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree, ToRust)]
 pub enum UnaryOperator {
     /// `+`
     #[estree(rename = "+")]
@@ -576,7 +577,7 @@ impl UnaryOperator {
 /// Unary update operators.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree, ToRust)]
 pub enum UpdateOperator {
     /// `++`
     #[estree(rename = "++")]
