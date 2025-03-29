@@ -1,7 +1,5 @@
-use std::{fmt, marker::PhantomData, num::ParseIntError, rc::Rc, str::FromStr};
+use std::{fmt, num::ParseIntError, str::FromStr};
 
-use oxc_allocator::Vec;
-use oxc_ast::{Comment, ast::Program};
 
 pub use crate::formatter::{
     Buffer, Format, FormatResult, SourceComment, SyntaxTriviaPieceComments, token::string::Quote,
@@ -9,7 +7,7 @@ pub use crate::formatter::{
 use crate::{
     formatter::{
         formatter::Formatter,
-        prelude::{dynamic_text, if_group_breaks, text},
+        prelude::{if_group_breaks, text},
         printer::PrinterOptions,
     },
     write,

@@ -1,4 +1,5 @@
 #![allow(
+    unused,
     clippy::inline_always,
     clippy::missing_panics_doc,
     clippy::needless_pass_by_ref_mut,

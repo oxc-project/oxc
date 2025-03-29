@@ -1,7 +1,7 @@
 mod block_statement;
 
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{

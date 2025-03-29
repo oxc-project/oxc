@@ -1,16 +1,12 @@
 //! Provides builders for comments and skipped token trivia.
 
 // use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
-#[cfg(debug_assertions)]
-use std::cell::Cell;
-use std::ops::Sub;
 
 use oxc_span::Span;
 
 use super::{
-    Argument, Arguments, FormatContext, GroupId, SyntaxNode, SyntaxToken, TextRange, TextSize,
-    comments::{CommentKind, CommentStyle, SourceComment, is_doc_comment},
-    format_element::tag::VerbatimKind,
+    Argument, Arguments, GroupId, SyntaxToken,
+    comments::{CommentKind, SourceComment},
     prelude::*,
 };
 use crate::write;
