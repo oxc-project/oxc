@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn max_params_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(x0.to_string())
@@ -38,17 +38,56 @@ impl Default for MaxParamsConfig {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforce a maximum number of parameters in function definitions
+    ///
+    /// Enforce a maximum number of parameters in function definitions which by
+    /// default is three.
     ///
     /// ### Why is this bad?
-    /// Functions that take numerous parameters can be difficult to read and write because it requires the memorization of what each parameter is, its type, and the order they should appear in. As a result, many coders adhere to a convention that caps the number of parameters a function can take.
     ///
-    /// ### Example
+    /// Functions that take numerous parameters can be difficult to read and
+    /// write because it requires the memorization of what each parameter is,
+    /// its type, and the order they should appear in. As a result, many coders
+    /// adhere to a convention that caps the number of parameters a function
+    /// can take.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function foo (bar, baz, qux, qxx) {
     ///     doSomething();
     /// }
     /// ```
+    ///
+    /// ```javascript
+    /// let foo = (bar, baz, qux, qxx) => {
+    ///     doSomething();
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function foo (bar, baz, qux) {
+    ///     doSomething();
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// let foo = (bar, baz, qux) => {
+    ///     doSomething();
+    /// };
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// ### max
+    ///
+    /// `{ "max": number }`
+    ///
+    /// This option is for changing the maximum allowed number of function parameters.
+    ///
+    /// For example `{ "max": 4 }` would mean that having a function take four
+    /// parameters is allowed which overrides the default of three.
     MaxParams,
     eslint,
     style

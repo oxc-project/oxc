@@ -1,3364 +1,3379 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#![allow(unused_imports, clippy::match_same_arms)]
+#![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
-use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
+use oxc_estree::{
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
+    ser::{AppendTo, AppendToConcat},
+};
 
-use oxc_estree::ser::AppendTo;
-
+use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
 
-impl Serialize for Program<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Program")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        self.source_type.serialize(FlatMapSerializer(&mut map))?;
-        map.serialize_entry("hashbang", &self.hashbang)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for Program<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Program"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        );
+        self.source_type.serialize(FlatStructSerializer(&mut state));
+        state.serialize_field("hashbang", &self.hashbang);
+        state.end();
     }
 }
 
-impl Serialize for Expression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for Expression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Expression::BooleanLiteral(it) => it.serialize(serializer),
-            Expression::NullLiteral(it) => it.serialize(serializer),
-            Expression::NumericLiteral(it) => it.serialize(serializer),
-            Expression::BigIntLiteral(it) => it.serialize(serializer),
-            Expression::RegExpLiteral(it) => it.serialize(serializer),
-            Expression::StringLiteral(it) => it.serialize(serializer),
-            Expression::TemplateLiteral(it) => it.serialize(serializer),
-            Expression::Identifier(it) => it.serialize(serializer),
-            Expression::MetaProperty(it) => it.serialize(serializer),
-            Expression::Super(it) => it.serialize(serializer),
-            Expression::ArrayExpression(it) => it.serialize(serializer),
-            Expression::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Expression::AssignmentExpression(it) => it.serialize(serializer),
-            Expression::AwaitExpression(it) => it.serialize(serializer),
-            Expression::BinaryExpression(it) => it.serialize(serializer),
-            Expression::CallExpression(it) => it.serialize(serializer),
-            Expression::ChainExpression(it) => it.serialize(serializer),
-            Expression::ClassExpression(it) => it.serialize(serializer),
-            Expression::ConditionalExpression(it) => it.serialize(serializer),
-            Expression::FunctionExpression(it) => it.serialize(serializer),
-            Expression::ImportExpression(it) => it.serialize(serializer),
-            Expression::LogicalExpression(it) => it.serialize(serializer),
-            Expression::NewExpression(it) => it.serialize(serializer),
-            Expression::ObjectExpression(it) => it.serialize(serializer),
-            Expression::ParenthesizedExpression(it) => it.serialize(serializer),
-            Expression::SequenceExpression(it) => it.serialize(serializer),
-            Expression::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Expression::ThisExpression(it) => it.serialize(serializer),
-            Expression::UnaryExpression(it) => it.serialize(serializer),
-            Expression::UpdateExpression(it) => it.serialize(serializer),
-            Expression::YieldExpression(it) => it.serialize(serializer),
-            Expression::PrivateInExpression(it) => it.serialize(serializer),
-            Expression::JSXElement(it) => it.serialize(serializer),
-            Expression::JSXFragment(it) => it.serialize(serializer),
-            Expression::TSAsExpression(it) => it.serialize(serializer),
-            Expression::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Expression::TSTypeAssertion(it) => it.serialize(serializer),
-            Expression::TSNonNullExpression(it) => it.serialize(serializer),
-            Expression::TSInstantiationExpression(it) => it.serialize(serializer),
-            Expression::ComputedMemberExpression(it) => it.serialize(serializer),
-            Expression::StaticMemberExpression(it) => it.serialize(serializer),
-            Expression::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for IdentifierName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Identifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
+impl ESTree for IdentifierName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
+        state.end();
     }
 }
 
-impl Serialize for IdentifierReference<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Identifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
+impl ESTree for IdentifierReference<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
+        state.end();
     }
 }
 
-impl Serialize for BindingIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Identifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
+impl ESTree for BindingIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
+        state.end();
     }
 }
 
-impl Serialize for LabelIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Identifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
+impl ESTree for LabelIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.end();
     }
 }
 
-impl Serialize for ThisExpression {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ThisExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for ThisExpression {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ThisExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
     }
 }
 
-impl Serialize for ArrayExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrayExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elements", &self.elements)?;
-        map.end()
+impl ESTree for ArrayExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ArrayExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elements", &self.elements);
+        state.end();
     }
 }
 
-impl Serialize for ArrayExpressionElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ArrayExpressionElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ArrayExpressionElement::SpreadElement(it) => it.serialize(serializer),
-            ArrayExpressionElement::Elision(it) => it.serialize(serializer),
-            ArrayExpressionElement::BooleanLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::NullLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::NumericLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::BigIntLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::RegExpLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::StringLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::TemplateLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::Identifier(it) => it.serialize(serializer),
-            ArrayExpressionElement::MetaProperty(it) => it.serialize(serializer),
-            ArrayExpressionElement::Super(it) => it.serialize(serializer),
-            ArrayExpressionElement::ArrayExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::AssignmentExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::AwaitExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::BinaryExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::CallExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ChainExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ClassExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ConditionalExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::FunctionExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ImportExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::LogicalExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::NewExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ObjectExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ParenthesizedExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::SequenceExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ThisExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::UnaryExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::UpdateExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::YieldExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::PrivateInExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::JSXElement(it) => it.serialize(serializer),
-            ArrayExpressionElement::JSXFragment(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSAsExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSTypeAssertion(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSNonNullExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSInstantiationExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ComputedMemberExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::StaticMemberExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::SpreadElement(it) => it.serialize(serializer),
+            Self::Elision(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ObjectExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("properties", &self.properties)?;
-        map.end()
+impl ESTree for Elision {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ElisionConverter(self).serialize(serializer)
     }
 }
 
-impl Serialize for ObjectPropertyKind<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ObjectExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("properties", &self.properties);
+        state.end();
+    }
+}
+
+impl ESTree for ObjectPropertyKind<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ObjectPropertyKind::ObjectProperty(it) => it.serialize(serializer),
-            ObjectPropertyKind::SpreadProperty(it) => it.serialize(serializer),
+            Self::ObjectProperty(it) => it.serialize(serializer),
+            Self::SpreadProperty(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ObjectProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectProperty")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("method", &self.method)?;
-        map.serialize_entry("shorthand", &self.shorthand)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.end()
+impl ESTree for ObjectProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &self.method);
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &self.kind);
+        state.end();
     }
 }
 
-impl Serialize for PropertyKey<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for PropertyKey<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyKey::StaticIdentifier(it) => it.serialize(serializer),
-            PropertyKey::PrivateIdentifier(it) => it.serialize(serializer),
-            PropertyKey::BooleanLiteral(it) => it.serialize(serializer),
-            PropertyKey::NullLiteral(it) => it.serialize(serializer),
-            PropertyKey::NumericLiteral(it) => it.serialize(serializer),
-            PropertyKey::BigIntLiteral(it) => it.serialize(serializer),
-            PropertyKey::RegExpLiteral(it) => it.serialize(serializer),
-            PropertyKey::StringLiteral(it) => it.serialize(serializer),
-            PropertyKey::TemplateLiteral(it) => it.serialize(serializer),
-            PropertyKey::Identifier(it) => it.serialize(serializer),
-            PropertyKey::MetaProperty(it) => it.serialize(serializer),
-            PropertyKey::Super(it) => it.serialize(serializer),
-            PropertyKey::ArrayExpression(it) => it.serialize(serializer),
-            PropertyKey::ArrowFunctionExpression(it) => it.serialize(serializer),
-            PropertyKey::AssignmentExpression(it) => it.serialize(serializer),
-            PropertyKey::AwaitExpression(it) => it.serialize(serializer),
-            PropertyKey::BinaryExpression(it) => it.serialize(serializer),
-            PropertyKey::CallExpression(it) => it.serialize(serializer),
-            PropertyKey::ChainExpression(it) => it.serialize(serializer),
-            PropertyKey::ClassExpression(it) => it.serialize(serializer),
-            PropertyKey::ConditionalExpression(it) => it.serialize(serializer),
-            PropertyKey::FunctionExpression(it) => it.serialize(serializer),
-            PropertyKey::ImportExpression(it) => it.serialize(serializer),
-            PropertyKey::LogicalExpression(it) => it.serialize(serializer),
-            PropertyKey::NewExpression(it) => it.serialize(serializer),
-            PropertyKey::ObjectExpression(it) => it.serialize(serializer),
-            PropertyKey::ParenthesizedExpression(it) => it.serialize(serializer),
-            PropertyKey::SequenceExpression(it) => it.serialize(serializer),
-            PropertyKey::TaggedTemplateExpression(it) => it.serialize(serializer),
-            PropertyKey::ThisExpression(it) => it.serialize(serializer),
-            PropertyKey::UnaryExpression(it) => it.serialize(serializer),
-            PropertyKey::UpdateExpression(it) => it.serialize(serializer),
-            PropertyKey::YieldExpression(it) => it.serialize(serializer),
-            PropertyKey::PrivateInExpression(it) => it.serialize(serializer),
-            PropertyKey::JSXElement(it) => it.serialize(serializer),
-            PropertyKey::JSXFragment(it) => it.serialize(serializer),
-            PropertyKey::TSAsExpression(it) => it.serialize(serializer),
-            PropertyKey::TSSatisfiesExpression(it) => it.serialize(serializer),
-            PropertyKey::TSTypeAssertion(it) => it.serialize(serializer),
-            PropertyKey::TSNonNullExpression(it) => it.serialize(serializer),
-            PropertyKey::TSInstantiationExpression(it) => it.serialize(serializer),
-            PropertyKey::ComputedMemberExpression(it) => it.serialize(serializer),
-            PropertyKey::StaticMemberExpression(it) => it.serialize(serializer),
-            PropertyKey::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::StaticIdentifier(it) => it.serialize(serializer),
+            Self::PrivateIdentifier(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for PropertyKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for PropertyKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyKind::Init => serializer.serialize_unit_variant("PropertyKind", 0, "init"),
-            PropertyKind::Get => serializer.serialize_unit_variant("PropertyKind", 1, "get"),
-            PropertyKind::Set => serializer.serialize_unit_variant("PropertyKind", 2, "set"),
+            Self::Init => JsonSafeString("init").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
 
-impl Serialize for TemplateLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TemplateLiteral")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("quasis", &self.quasis)?;
-        map.serialize_entry("expressions", &self.expressions)?;
-        map.end()
+impl ESTree for TemplateLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expressions", &self.expressions);
+        state.serialize_field("quasis", &self.quasis);
+        state.end();
     }
 }
 
-impl Serialize for TaggedTemplateExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TaggedTemplateExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("tag", &self.tag)?;
-        map.serialize_entry("quasi", &self.quasi)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
+impl ESTree for TaggedTemplateExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TaggedTemplateExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("tag", &self.tag);
+        state.serialize_field("quasi", &self.quasi);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.end();
     }
 }
 
-impl Serialize for TemplateElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TemplateElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("tail", &self.tail)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
+impl ESTree for TemplateElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("tail", &self.tail);
+        state.end();
     }
 }
 
-impl Serialize for TemplateElementValue<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("cooked", &self.cooked)?;
-        map.end()
+impl ESTree for TemplateElementValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("raw", &self.raw);
+        state.serialize_field("cooked", &self.cooked);
+        state.end();
     }
 }
 
-impl Serialize for MemberExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for MemberExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            MemberExpression::ComputedMemberExpression(it) => it.serialize(serializer),
-            MemberExpression::StaticMemberExpression(it) => it.serialize(serializer),
-            MemberExpression::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ComputedMemberExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("property", &self.expression)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &true)?;
-        map.end()
+impl ESTree for ComputedMemberExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("object", &self.object);
+        state.serialize_field("property", &self.expression);
+        state.serialize_field("computed", &crate::serialize::True(self));
+        state.serialize_field("optional", &self.optional);
+        state.end();
     }
 }
 
-impl Serialize for StaticMemberExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("property", &self.property)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &false)?;
-        map.end()
+impl ESTree for StaticMemberExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("object", &self.object);
+        state.serialize_field("property", &self.property);
+        state.serialize_field("computed", &crate::serialize::False(self));
+        state.serialize_field("optional", &self.optional);
+        state.end();
     }
 }
 
-impl Serialize for PrivateFieldExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("field", &self.field)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &false)?;
-        map.end()
+impl ESTree for PrivateFieldExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("object", &self.object);
+        state.serialize_field("property", &self.field);
+        state.serialize_field("computed", &crate::serialize::False(self));
+        state.serialize_field("optional", &self.optional);
+        state.end();
     }
 }
 
-impl Serialize for CallExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "CallExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("callee", &self.callee)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.end()
+impl ESTree for CallExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("CallExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("callee", &self.callee);
+        state.serialize_field("arguments", &self.arguments);
+        state.serialize_field("optional", &self.optional);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.end();
     }
 }
 
-impl Serialize for NewExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "NewExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("callee", &self.callee)?;
-        map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
+impl ESTree for NewExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("NewExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("callee", &self.callee);
+        state.serialize_field("arguments", &self.arguments);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.end();
     }
 }
 
-impl Serialize for MetaProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MetaProperty")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("meta", &self.meta)?;
-        map.serialize_entry("property", &self.property)?;
-        map.end()
+impl ESTree for MetaProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("MetaProperty"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("meta", &self.meta);
+        state.serialize_field("property", &self.property);
+        state.end();
     }
 }
 
-impl Serialize for SpreadElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "SpreadElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for SpreadElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("SpreadElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for Argument<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for Argument<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Argument::SpreadElement(it) => it.serialize(serializer),
-            Argument::BooleanLiteral(it) => it.serialize(serializer),
-            Argument::NullLiteral(it) => it.serialize(serializer),
-            Argument::NumericLiteral(it) => it.serialize(serializer),
-            Argument::BigIntLiteral(it) => it.serialize(serializer),
-            Argument::RegExpLiteral(it) => it.serialize(serializer),
-            Argument::StringLiteral(it) => it.serialize(serializer),
-            Argument::TemplateLiteral(it) => it.serialize(serializer),
-            Argument::Identifier(it) => it.serialize(serializer),
-            Argument::MetaProperty(it) => it.serialize(serializer),
-            Argument::Super(it) => it.serialize(serializer),
-            Argument::ArrayExpression(it) => it.serialize(serializer),
-            Argument::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Argument::AssignmentExpression(it) => it.serialize(serializer),
-            Argument::AwaitExpression(it) => it.serialize(serializer),
-            Argument::BinaryExpression(it) => it.serialize(serializer),
-            Argument::CallExpression(it) => it.serialize(serializer),
-            Argument::ChainExpression(it) => it.serialize(serializer),
-            Argument::ClassExpression(it) => it.serialize(serializer),
-            Argument::ConditionalExpression(it) => it.serialize(serializer),
-            Argument::FunctionExpression(it) => it.serialize(serializer),
-            Argument::ImportExpression(it) => it.serialize(serializer),
-            Argument::LogicalExpression(it) => it.serialize(serializer),
-            Argument::NewExpression(it) => it.serialize(serializer),
-            Argument::ObjectExpression(it) => it.serialize(serializer),
-            Argument::ParenthesizedExpression(it) => it.serialize(serializer),
-            Argument::SequenceExpression(it) => it.serialize(serializer),
-            Argument::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Argument::ThisExpression(it) => it.serialize(serializer),
-            Argument::UnaryExpression(it) => it.serialize(serializer),
-            Argument::UpdateExpression(it) => it.serialize(serializer),
-            Argument::YieldExpression(it) => it.serialize(serializer),
-            Argument::PrivateInExpression(it) => it.serialize(serializer),
-            Argument::JSXElement(it) => it.serialize(serializer),
-            Argument::JSXFragment(it) => it.serialize(serializer),
-            Argument::TSAsExpression(it) => it.serialize(serializer),
-            Argument::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Argument::TSTypeAssertion(it) => it.serialize(serializer),
-            Argument::TSNonNullExpression(it) => it.serialize(serializer),
-            Argument::TSInstantiationExpression(it) => it.serialize(serializer),
-            Argument::ComputedMemberExpression(it) => it.serialize(serializer),
-            Argument::StaticMemberExpression(it) => it.serialize(serializer),
-            Argument::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::SpreadElement(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for UpdateExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "UpdateExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("prefix", &self.prefix)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for UpdateExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("UpdateExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("prefix", &self.prefix);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for UnaryExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "UnaryExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for UnaryExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("UnaryExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("prefix", &crate::serialize::True(self));
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for BinaryExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BinaryExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
+impl ESTree for BinaryExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("BinaryExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("right", &self.right);
+        state.end();
     }
 }
 
-impl Serialize for PrivateInExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateInExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
+impl ESTree for PrivateInExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("BinaryExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("operator", &crate::serialize::In(self));
+        state.serialize_field("right", &self.right);
+        state.end();
     }
 }
 
-impl Serialize for LogicalExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "LogicalExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
+impl ESTree for LogicalExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("LogicalExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("right", &self.right);
+        state.end();
     }
 }
 
-impl Serialize for ConditionalExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ConditionalExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("test", &self.test)?;
-        map.serialize_entry("consequent", &self.consequent)?;
-        map.serialize_entry("alternate", &self.alternate)?;
-        map.end()
+impl ESTree for ConditionalExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ConditionalExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("test", &self.test);
+        state.serialize_field("consequent", &self.consequent);
+        state.serialize_field("alternate", &self.alternate);
+        state.end();
     }
 }
 
-impl Serialize for AssignmentExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
+impl ESTree for AssignmentExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AssignmentExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.end();
     }
 }
 
-impl Serialize for AssignmentTarget<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AssignmentTarget<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            AssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
-            AssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
-            AssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
-            AssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
-            AssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
-            AssignmentTarget::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTarget::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for SimpleAssignmentTarget<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for SimpleAssignmentTarget<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for AssignmentTargetPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AssignmentTargetPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetPattern::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTargetPattern::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ArrayAssignmentTarget<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrayAssignmentTarget")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
-        map.end()
+impl ESTree for ArrayAssignmentTarget<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ArrayPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
+        state.end();
     }
 }
 
-impl Serialize for ObjectAssignmentTarget<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectAssignmentTarget")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
+impl ESTree for ObjectAssignmentTarget<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ObjectPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field(
             "properties",
             &AppendTo { array: &self.properties, after: &self.rest },
-        )?;
-        map.end()
+        );
+        state.end();
     }
 }
 
-impl Serialize for AssignmentTargetRest<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "RestElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.target)?;
-        map.end()
+impl ESTree for AssignmentTargetRest<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("RestElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.target);
+        state.end();
     }
 }
 
-impl Serialize for AssignmentTargetMaybeDefault<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AssignmentTargetMaybeDefault<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetMaybeDefault::TSAsExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSSatisfiesExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSNonNullExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSTypeAssertion(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSInstantiationExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::StaticMemberExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetWithDefault(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for AssignmentTargetWithDefault<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetWithDefault")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
-        map.end()
+impl ESTree for AssignmentTargetWithDefault<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.binding);
+        state.serialize_field("right", &self.init);
+        state.end();
     }
 }
 
-impl Serialize for AssignmentTargetProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AssignmentTargetProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetProperty::AssignmentTargetPropertyProperty(it) => {
-                it.serialize(serializer)
-            }
+            Self::AssignmentTargetPropertyIdentifier(it) => it.serialize(serializer),
+            Self::AssignmentTargetPropertyProperty(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyIdentifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
-        map.end()
+impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &crate::serialize::False(self));
+        state.serialize_field("shorthand", &crate::serialize::True(self));
+        state.serialize_field("computed", &crate::serialize::False(self));
+        state.serialize_field("key", &self.binding);
+        state.serialize_field(
+            "value",
+            &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
+        );
+        state.serialize_field("kind", &crate::serialize::Init(self));
+        state.end();
     }
 }
 
-impl Serialize for AssignmentTargetPropertyProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyProperty")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.end()
+impl ESTree for AssignmentTargetPropertyProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &crate::serialize::False(self));
+        state.serialize_field("shorthand", &crate::serialize::False(self));
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.name);
+        state.serialize_field("value", &self.binding);
+        state.serialize_field("kind", &crate::serialize::Init(self));
+        state.end();
     }
 }
 
-impl Serialize for SequenceExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "SequenceExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expressions", &self.expressions)?;
-        map.end()
+impl ESTree for SequenceExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("SequenceExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expressions", &self.expressions);
+        state.end();
     }
 }
 
-impl Serialize for Super {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Super")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for Super {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Super"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
     }
 }
 
-impl Serialize for AwaitExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AwaitExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for AwaitExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AwaitExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for ChainExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ChainExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
+impl ESTree for ChainExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ChainExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
     }
 }
 
-impl Serialize for ChainElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ChainElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ChainElement::CallExpression(it) => it.serialize(serializer),
-            ChainElement::TSNonNullExpression(it) => it.serialize(serializer),
-            ChainElement::ComputedMemberExpression(it) => it.serialize(serializer),
-            ChainElement::StaticMemberExpression(it) => it.serialize(serializer),
-            ChainElement::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ParenthesizedExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ParenthesizedExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
+impl ESTree for ParenthesizedExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
     }
 }
 
-impl Serialize for Statement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for Statement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Statement::BlockStatement(it) => it.serialize(serializer),
-            Statement::BreakStatement(it) => it.serialize(serializer),
-            Statement::ContinueStatement(it) => it.serialize(serializer),
-            Statement::DebuggerStatement(it) => it.serialize(serializer),
-            Statement::DoWhileStatement(it) => it.serialize(serializer),
-            Statement::EmptyStatement(it) => it.serialize(serializer),
-            Statement::ExpressionStatement(it) => it.serialize(serializer),
-            Statement::ForInStatement(it) => it.serialize(serializer),
-            Statement::ForOfStatement(it) => it.serialize(serializer),
-            Statement::ForStatement(it) => it.serialize(serializer),
-            Statement::IfStatement(it) => it.serialize(serializer),
-            Statement::LabeledStatement(it) => it.serialize(serializer),
-            Statement::ReturnStatement(it) => it.serialize(serializer),
-            Statement::SwitchStatement(it) => it.serialize(serializer),
-            Statement::ThrowStatement(it) => it.serialize(serializer),
-            Statement::TryStatement(it) => it.serialize(serializer),
-            Statement::WhileStatement(it) => it.serialize(serializer),
-            Statement::WithStatement(it) => it.serialize(serializer),
-            Statement::VariableDeclaration(it) => it.serialize(serializer),
-            Statement::FunctionDeclaration(it) => it.serialize(serializer),
-            Statement::ClassDeclaration(it) => it.serialize(serializer),
-            Statement::TSTypeAliasDeclaration(it) => it.serialize(serializer),
-            Statement::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Statement::TSEnumDeclaration(it) => it.serialize(serializer),
-            Statement::TSModuleDeclaration(it) => it.serialize(serializer),
-            Statement::TSImportEqualsDeclaration(it) => it.serialize(serializer),
-            Statement::ImportDeclaration(it) => it.serialize(serializer),
-            Statement::ExportAllDeclaration(it) => it.serialize(serializer),
-            Statement::ExportDefaultDeclaration(it) => it.serialize(serializer),
-            Statement::ExportNamedDeclaration(it) => it.serialize(serializer),
-            Statement::TSExportAssignment(it) => it.serialize(serializer),
-            Statement::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
+            Self::BlockStatement(it) => it.serialize(serializer),
+            Self::BreakStatement(it) => it.serialize(serializer),
+            Self::ContinueStatement(it) => it.serialize(serializer),
+            Self::DebuggerStatement(it) => it.serialize(serializer),
+            Self::DoWhileStatement(it) => it.serialize(serializer),
+            Self::EmptyStatement(it) => it.serialize(serializer),
+            Self::ExpressionStatement(it) => it.serialize(serializer),
+            Self::ForInStatement(it) => it.serialize(serializer),
+            Self::ForOfStatement(it) => it.serialize(serializer),
+            Self::ForStatement(it) => it.serialize(serializer),
+            Self::IfStatement(it) => it.serialize(serializer),
+            Self::LabeledStatement(it) => it.serialize(serializer),
+            Self::ReturnStatement(it) => it.serialize(serializer),
+            Self::SwitchStatement(it) => it.serialize(serializer),
+            Self::ThrowStatement(it) => it.serialize(serializer),
+            Self::TryStatement(it) => it.serialize(serializer),
+            Self::WhileStatement(it) => it.serialize(serializer),
+            Self::WithStatement(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::TSEnumDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
+            Self::ImportDeclaration(it) => it.serialize(serializer),
+            Self::ExportAllDeclaration(it) => it.serialize(serializer),
+            Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Self::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Self::TSExportAssignment(it) => it.serialize(serializer),
+            Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for Directive<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Directive")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("directive", &self.directive)?;
-        map.end()
+impl ESTree for Directive<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("directive", &self.directive);
+        state.end();
     }
 }
 
-impl Serialize for Hashbang<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Hashbang")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
+impl ESTree for Hashbang<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Hashbang"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &self.value);
+        state.end();
     }
 }
 
-impl Serialize for BlockStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BlockStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for BlockStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("BlockStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for Declaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for Declaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Declaration::VariableDeclaration(it) => it.serialize(serializer),
-            Declaration::FunctionDeclaration(it) => it.serialize(serializer),
-            Declaration::ClassDeclaration(it) => it.serialize(serializer),
-            Declaration::TSTypeAliasDeclaration(it) => it.serialize(serializer),
-            Declaration::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Declaration::TSEnumDeclaration(it) => it.serialize(serializer),
-            Declaration::TSModuleDeclaration(it) => it.serialize(serializer),
-            Declaration::TSImportEqualsDeclaration(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::TSEnumDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for VariableDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "VariableDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("declarations", &self.declarations)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
+impl ESTree for VariableDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("VariableDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("declarations", &self.declarations);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_ts_field("declare", &self.declare);
+        state.end();
     }
 }
 
-impl Serialize for VariableDeclarationKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for VariableDeclarationKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            VariableDeclarationKind::Var => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 0, "var")
-            }
-            VariableDeclarationKind::Const => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 1, "const")
-            }
-            VariableDeclarationKind::Let => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 2, "let")
-            }
-            VariableDeclarationKind::Using => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 3, "using")
-            }
-            VariableDeclarationKind::AwaitUsing => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 4, "await using")
-            }
+            Self::Var => JsonSafeString("var").serialize(serializer),
+            Self::Let => JsonSafeString("let").serialize(serializer),
+            Self::Const => JsonSafeString("const").serialize(serializer),
+            Self::Using => JsonSafeString("using").serialize(serializer),
+            Self::AwaitUsing => JsonSafeString("await using").serialize(serializer),
         }
     }
 }
 
-impl Serialize for VariableDeclarator<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "VariableDeclarator")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("init", &self.init)?;
-        map.serialize_entry("definite", &self.definite)?;
-        map.end()
+impl ESTree for VariableDeclarator<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("init", &self.init);
+        state.serialize_ts_field("definite", &self.definite);
+        state.end();
     }
 }
 
-impl Serialize for EmptyStatement {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "EmptyStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for EmptyStatement {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("EmptyStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
     }
 }
 
-impl Serialize for ExpressionStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ExpressionStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
+impl ESTree for ExpressionStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state
+            .serialize_ts_field("directive", &crate::serialize::ExpressionStatementDirective(self));
+        state.end();
     }
 }
 
-impl Serialize for IfStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "IfStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("test", &self.test)?;
-        map.serialize_entry("consequent", &self.consequent)?;
-        map.serialize_entry("alternate", &self.alternate)?;
-        map.end()
+impl ESTree for IfStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("IfStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("test", &self.test);
+        state.serialize_field("consequent", &self.consequent);
+        state.serialize_field("alternate", &self.alternate);
+        state.end();
     }
 }
 
-impl Serialize for DoWhileStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "DoWhileStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("body", &self.body)?;
-        map.serialize_entry("test", &self.test)?;
-        map.end()
+impl ESTree for DoWhileStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("DoWhileStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.serialize_field("test", &self.test);
+        state.end();
     }
 }
 
-impl Serialize for WhileStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "WhileStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("test", &self.test)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for WhileStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("WhileStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("test", &self.test);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for ForStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ForStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("init", &self.init)?;
-        map.serialize_entry("test", &self.test)?;
-        map.serialize_entry("update", &self.update)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for ForStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ForStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("init", &self.init);
+        state.serialize_field("test", &self.test);
+        state.serialize_field("update", &self.update);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for ForStatementInit<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ForStatementInit<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ForStatementInit::VariableDeclaration(it) => it.serialize(serializer),
-            ForStatementInit::BooleanLiteral(it) => it.serialize(serializer),
-            ForStatementInit::NullLiteral(it) => it.serialize(serializer),
-            ForStatementInit::NumericLiteral(it) => it.serialize(serializer),
-            ForStatementInit::BigIntLiteral(it) => it.serialize(serializer),
-            ForStatementInit::RegExpLiteral(it) => it.serialize(serializer),
-            ForStatementInit::StringLiteral(it) => it.serialize(serializer),
-            ForStatementInit::TemplateLiteral(it) => it.serialize(serializer),
-            ForStatementInit::Identifier(it) => it.serialize(serializer),
-            ForStatementInit::MetaProperty(it) => it.serialize(serializer),
-            ForStatementInit::Super(it) => it.serialize(serializer),
-            ForStatementInit::ArrayExpression(it) => it.serialize(serializer),
-            ForStatementInit::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ForStatementInit::AssignmentExpression(it) => it.serialize(serializer),
-            ForStatementInit::AwaitExpression(it) => it.serialize(serializer),
-            ForStatementInit::BinaryExpression(it) => it.serialize(serializer),
-            ForStatementInit::CallExpression(it) => it.serialize(serializer),
-            ForStatementInit::ChainExpression(it) => it.serialize(serializer),
-            ForStatementInit::ClassExpression(it) => it.serialize(serializer),
-            ForStatementInit::ConditionalExpression(it) => it.serialize(serializer),
-            ForStatementInit::FunctionExpression(it) => it.serialize(serializer),
-            ForStatementInit::ImportExpression(it) => it.serialize(serializer),
-            ForStatementInit::LogicalExpression(it) => it.serialize(serializer),
-            ForStatementInit::NewExpression(it) => it.serialize(serializer),
-            ForStatementInit::ObjectExpression(it) => it.serialize(serializer),
-            ForStatementInit::ParenthesizedExpression(it) => it.serialize(serializer),
-            ForStatementInit::SequenceExpression(it) => it.serialize(serializer),
-            ForStatementInit::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ForStatementInit::ThisExpression(it) => it.serialize(serializer),
-            ForStatementInit::UnaryExpression(it) => it.serialize(serializer),
-            ForStatementInit::UpdateExpression(it) => it.serialize(serializer),
-            ForStatementInit::YieldExpression(it) => it.serialize(serializer),
-            ForStatementInit::PrivateInExpression(it) => it.serialize(serializer),
-            ForStatementInit::JSXElement(it) => it.serialize(serializer),
-            ForStatementInit::JSXFragment(it) => it.serialize(serializer),
-            ForStatementInit::TSAsExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSTypeAssertion(it) => it.serialize(serializer),
-            ForStatementInit::TSNonNullExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSInstantiationExpression(it) => it.serialize(serializer),
-            ForStatementInit::ComputedMemberExpression(it) => it.serialize(serializer),
-            ForStatementInit::StaticMemberExpression(it) => it.serialize(serializer),
-            ForStatementInit::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ForInStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ForInStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("right", &self.right)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for ForInStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ForInStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for ForStatementLeft<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ForStatementLeft<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ForStatementLeft::VariableDeclaration(it) => it.serialize(serializer),
-            ForStatementLeft::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            ForStatementLeft::TSAsExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSNonNullExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSTypeAssertion(it) => it.serialize(serializer),
-            ForStatementLeft::TSInstantiationExpression(it) => it.serialize(serializer),
-            ForStatementLeft::ComputedMemberExpression(it) => it.serialize(serializer),
-            ForStatementLeft::StaticMemberExpression(it) => it.serialize(serializer),
-            ForStatementLeft::PrivateFieldExpression(it) => it.serialize(serializer),
-            ForStatementLeft::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            ForStatementLeft::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for ForOfStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ForOfStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("await", &self.r#await)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("right", &self.right)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for ForOfStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ForOfStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("await", &self.r#await);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for ContinueStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ContinueStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("label", &self.label)?;
-        map.end()
+impl ESTree for ContinueStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ContinueStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("label", &self.label);
+        state.end();
     }
 }
 
-impl Serialize for BreakStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BreakStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("label", &self.label)?;
-        map.end()
+impl ESTree for BreakStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("BreakStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("label", &self.label);
+        state.end();
     }
 }
 
-impl Serialize for ReturnStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ReturnStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for ReturnStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ReturnStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for WithStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "WithStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for WithStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("WithStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("object", &self.object);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for SwitchStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "SwitchStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("discriminant", &self.discriminant)?;
-        map.serialize_entry("cases", &self.cases)?;
-        map.end()
+impl ESTree for SwitchStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("SwitchStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("discriminant", &self.discriminant);
+        state.serialize_field("cases", &self.cases);
+        state.end();
     }
 }
 
-impl Serialize for SwitchCase<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "SwitchCase")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("test", &self.test)?;
-        map.serialize_entry("consequent", &self.consequent)?;
-        map.end()
+impl ESTree for SwitchCase<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("SwitchCase"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("consequent", &self.consequent);
+        state.serialize_field("test", &self.test);
+        state.end();
     }
 }
 
-impl Serialize for LabeledStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "LabeledStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("label", &self.label)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for LabeledStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("LabeledStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.serialize_field("label", &self.label);
+        state.end();
     }
 }
 
-impl Serialize for ThrowStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ThrowStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for ThrowStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ThrowStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for TryStatement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TryStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("block", &self.block)?;
-        map.serialize_entry("handler", &self.handler)?;
-        map.serialize_entry("finalizer", &self.finalizer)?;
-        map.end()
+impl ESTree for TryStatement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TryStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("block", &self.block);
+        state.serialize_field("handler", &self.handler);
+        state.serialize_field("finalizer", &self.finalizer);
+        state.end();
     }
 }
 
-impl Serialize for CatchClause<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "CatchClause")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("param", &self.param)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for CatchClause<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("CatchClause"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("param", &self.param);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for CatchParameter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "CatchParameter")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("pattern", &self.pattern)?;
-        map.end()
+impl ESTree for CatchParameter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        self.pattern.kind.serialize(FlatStructSerializer(&mut state));
+        state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
+        state.serialize_ts_field("optional", &self.pattern.optional);
+        state.end();
     }
 }
 
-impl Serialize for DebuggerStatement {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "DebuggerStatement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for DebuggerStatement {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("DebuggerStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
     }
 }
 
-impl Serialize for BindingPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        self.kind.serialize(FlatMapSerializer(&mut map))?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.end()
+impl ESTree for BindingPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        self.kind.serialize(FlatStructSerializer(&mut state));
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
+        state.serialize_ts_field("optional", &self.optional);
+        state.end();
     }
 }
 
-impl Serialize for BindingPatternKind<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for BindingPatternKind<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            BindingPatternKind::BindingIdentifier(it) => it.serialize(serializer),
-            BindingPatternKind::ObjectPattern(it) => it.serialize(serializer),
-            BindingPatternKind::ArrayPattern(it) => it.serialize(serializer),
-            BindingPatternKind::AssignmentPattern(it) => it.serialize(serializer),
+            Self::BindingIdentifier(it) => it.serialize(serializer),
+            Self::ObjectPattern(it) => it.serialize(serializer),
+            Self::ArrayPattern(it) => it.serialize(serializer),
+            Self::AssignmentPattern(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for AssignmentPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentPattern")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
+impl ESTree for AssignmentPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.end();
     }
 }
 
-impl Serialize for ObjectPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectPattern")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
+impl ESTree for ObjectPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ObjectPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field(
             "properties",
             &AppendTo { array: &self.properties, after: &self.rest },
-        )?;
-        map.end()
+        );
+        state.end();
     }
 }
 
-impl Serialize for BindingProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BindingProperty")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("shorthand", &self.shorthand)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.end()
+impl ESTree for BindingProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &crate::serialize::False(self));
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &crate::serialize::Init(self));
+        state.end();
     }
 }
 
-impl Serialize for ArrayPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrayPattern")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
-        map.end()
+impl ESTree for ArrayPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ArrayPattern"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
+        state.end();
     }
 }
 
-impl Serialize for BindingRestElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "RestElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
+impl ESTree for BindingRestElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("RestElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
     }
 }
 
-impl Serialize for Function<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("type", &self.r#type)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("generator", &self.generator)?;
-        map.serialize_entry("async", &self.r#async)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("thisParam", &self.this_param)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for Function<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("expression", &crate::serialize::False(self));
+        state.serialize_field("generator", &self.generator);
+        state.serialize_field("async", &self.r#async);
+        state.serialize_field("params", &crate::serialize::FunctionFormalParameters(self));
+        state.serialize_field("body", &self.body);
+        state.serialize_ts_field("declare", &self.declare);
+        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("returnType", &self.return_type);
+        state.end();
     }
 }
 
-impl Serialize for FunctionType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for FunctionType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            FunctionType::FunctionDeclaration => {
-                serializer.serialize_unit_variant("FunctionType", 0, "FunctionDeclaration")
+            Self::FunctionDeclaration => {
+                JsonSafeString("FunctionDeclaration").serialize(serializer)
             }
-            FunctionType::FunctionExpression => {
-                serializer.serialize_unit_variant("FunctionType", 1, "FunctionExpression")
-            }
-            FunctionType::TSDeclareFunction => {
-                serializer.serialize_unit_variant("FunctionType", 2, "TSDeclareFunction")
-            }
-            FunctionType::TSEmptyBodyFunctionExpression => serializer.serialize_unit_variant(
-                "FunctionType",
-                3,
-                "TSEmptyBodyFunctionExpression",
-            ),
-        }
-    }
-}
-
-impl Serialize for FormalParameter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("decorators", &self.decorators)?;
-        self.pattern.kind.serialize(FlatMapSerializer(&mut map))?;
-        map.serialize_entry("typeAnnotation", &self.pattern.type_annotation)?;
-        map.serialize_entry("optional", &self.pattern.optional)?;
-        map.serialize_entry("accessibility", &self.accessibility)?;
-        map.serialize_entry("readonly", &self.readonly)?;
-        map.serialize_entry("override", &self.r#override)?;
-        map.end()
-    }
-}
-
-impl Serialize for FormalParameterKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            FormalParameterKind::FormalParameter => {
-                serializer.serialize_unit_variant("FormalParameterKind", 0, "FormalParameter")
-            }
-            FormalParameterKind::UniqueFormalParameters => serializer.serialize_unit_variant(
-                "FormalParameterKind",
-                1,
-                "UniqueFormalParameters",
-            ),
-            FormalParameterKind::ArrowFormalParameters => {
-                serializer.serialize_unit_variant("FormalParameterKind", 2, "ArrowFormalParameters")
-            }
-            FormalParameterKind::Signature => {
-                serializer.serialize_unit_variant("FormalParameterKind", 3, "Signature")
+            Self::FunctionExpression => JsonSafeString("FunctionExpression").serialize(serializer),
+            Self::TSDeclareFunction => JsonSafeString("TSDeclareFunction").serialize(serializer),
+            Self::TSEmptyBodyFunctionExpression => {
+                JsonSafeString("TSEmptyBodyFunctionExpression").serialize(serializer)
             }
         }
     }
 }
 
-impl Serialize for FunctionBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "FunctionBody")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("statements", &self.statements)?;
-        map.end()
+impl ESTree for FormalParameters<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::FormalParametersConverter(self).serialize(serializer)
     }
 }
 
-impl Serialize for ArrowFunctionExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrowFunctionExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("async", &self.r#async)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for FormalParameter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        self.pattern.kind.serialize(FlatStructSerializer(&mut state));
+        state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
+        state.serialize_ts_field("optional", &self.pattern.optional);
+        state.serialize_ts_field("decorators", &self.decorators);
+        state.end();
     }
 }
 
-impl Serialize for YieldExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "YieldExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("delegate", &self.delegate)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
-    }
-}
-
-impl Serialize for Class<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("type", &self.r#type)?;
-        map.serialize_entry("decorators", &self.decorators)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("superClass", &self.super_class)?;
-        map.serialize_entry("superTypeParameters", &self.super_type_parameters)?;
-        map.serialize_entry("implements", &self.implements)?;
-        map.serialize_entry("body", &self.body)?;
-        map.serialize_entry("abstract", &self.r#abstract)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
-    }
-}
-
-impl Serialize for ClassType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for FormalParameterKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ClassType::ClassDeclaration => {
-                serializer.serialize_unit_variant("ClassType", 0, "ClassDeclaration")
+            Self::FormalParameter => JsonSafeString("FormalParameter").serialize(serializer),
+            Self::UniqueFormalParameters => {
+                JsonSafeString("UniqueFormalParameters").serialize(serializer)
             }
-            ClassType::ClassExpression => {
-                serializer.serialize_unit_variant("ClassType", 1, "ClassExpression")
+            Self::ArrowFormalParameters => {
+                JsonSafeString("ArrowFormalParameters").serialize(serializer)
             }
+            Self::Signature => JsonSafeString("Signature").serialize(serializer),
         }
     }
 }
 
-impl Serialize for ClassBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ClassBody")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for FunctionBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("BlockStatement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.statements },
+        );
+        state.end();
     }
 }
 
-impl Serialize for ClassElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ArrowFunctionExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ArrowFunctionExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &crate::serialize::Null(self));
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("generator", &crate::serialize::False(self));
+        state.serialize_field("async", &self.r#async);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("body", &crate::serialize::ArrowFunctionExpressionBody(self));
+        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("returnType", &self.return_type);
+        state.end();
+    }
+}
+
+impl ESTree for YieldExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("YieldExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("delegate", &self.delegate);
+        state.serialize_field("argument", &self.argument);
+        state.end();
+    }
+}
+
+impl ESTree for Class<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("superClass", &self.super_class);
+        state.serialize_field("body", &self.body);
+        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
+        state.serialize_ts_field("implements", &crate::serialize::ClassImplements(self));
+        state.serialize_ts_field("abstract", &self.r#abstract);
+        state.serialize_ts_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for ClassType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ClassElement::StaticBlock(it) => it.serialize(serializer),
-            ClassElement::MethodDefinition(it) => it.serialize(serializer),
-            ClassElement::PropertyDefinition(it) => it.serialize(serializer),
-            ClassElement::AccessorProperty(it) => it.serialize(serializer),
-            ClassElement::TSIndexSignature(it) => it.serialize(serializer),
+            Self::ClassDeclaration => JsonSafeString("ClassDeclaration").serialize(serializer),
+            Self::ClassExpression => JsonSafeString("ClassExpression").serialize(serializer),
         }
     }
 }
 
-impl Serialize for MethodDefinition<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("type", &self.r#type)?;
-        map.serialize_entry("decorators", &self.decorators)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("static", &self.r#static)?;
-        map.serialize_entry("override", &self.r#override)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("accessibility", &self.accessibility)?;
-        map.end()
+impl ESTree for ClassBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ClassBody"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for MethodDefinitionType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ClassElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            MethodDefinitionType::MethodDefinition => {
-                serializer.serialize_unit_variant("MethodDefinitionType", 0, "MethodDefinition")
-            }
-            MethodDefinitionType::TSAbstractMethodDefinition => serializer.serialize_unit_variant(
-                "MethodDefinitionType",
-                1,
-                "TSAbstractMethodDefinition",
-            ),
+            Self::StaticBlock(it) => it.serialize(serializer),
+            Self::MethodDefinition(it) => it.serialize(serializer),
+            Self::PropertyDefinition(it) => it.serialize(serializer),
+            Self::AccessorProperty(it) => it.serialize(serializer),
+            Self::TSIndexSignature(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for PropertyDefinition<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("type", &self.r#type)?;
-        map.serialize_entry("decorators", &self.decorators)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("static", &self.r#static)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.serialize_entry("override", &self.r#override)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("definite", &self.definite)?;
-        map.serialize_entry("readonly", &self.readonly)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("accessibility", &self.accessibility)?;
-        map.end()
+impl ESTree for MethodDefinition<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("static", &self.r#static);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("value", &self.value);
+        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_ts_field("override", &self.r#override);
+        state.serialize_ts_field("optional", &self.optional);
+        state.serialize_ts_field("accessibility", &self.accessibility);
+        state.end();
     }
 }
 
-impl Serialize for PropertyDefinitionType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for MethodDefinitionType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyDefinitionType::PropertyDefinition => {
-                serializer.serialize_unit_variant("PropertyDefinitionType", 0, "PropertyDefinition")
-            }
-            PropertyDefinitionType::TSAbstractPropertyDefinition => serializer
-                .serialize_unit_variant(
-                    "PropertyDefinitionType",
-                    1,
-                    "TSAbstractPropertyDefinition",
-                ),
-        }
-    }
-}
-
-impl Serialize for MethodDefinitionKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            MethodDefinitionKind::Constructor => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 0, "constructor")
-            }
-            MethodDefinitionKind::Method => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 1, "method")
-            }
-            MethodDefinitionKind::Get => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 2, "get")
-            }
-            MethodDefinitionKind::Set => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 3, "set")
+            Self::MethodDefinition => JsonSafeString("MethodDefinition").serialize(serializer),
+            Self::TSAbstractMethodDefinition => {
+                JsonSafeString("TSAbstractMethodDefinition").serialize(serializer)
             }
         }
     }
 }
 
-impl Serialize for PrivateIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateIdentifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
+impl ESTree for PropertyDefinition<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("static", &self.r#static);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_ts_field("declare", &self.declare);
+        state.serialize_ts_field("override", &self.r#override);
+        state.serialize_ts_field("optional", &self.optional);
+        state.serialize_ts_field("definite", &self.definite);
+        state.serialize_ts_field("readonly", &self.readonly);
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
+        state.serialize_ts_field("accessibility", &self.accessibility);
+        state.end();
     }
 }
 
-impl Serialize for StaticBlock<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "StaticBlock")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
-    }
-}
-
-impl Serialize for ModuleDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for PropertyDefinitionType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ModuleDeclaration::ImportDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportAllDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportDefaultDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportNamedDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::TSExportAssignment(it) => it.serialize(serializer),
-            ModuleDeclaration::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for AccessorPropertyType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            AccessorPropertyType::AccessorProperty => {
-                serializer.serialize_unit_variant("AccessorPropertyType", 0, "AccessorProperty")
-            }
-            AccessorPropertyType::TSAbstractAccessorProperty => serializer.serialize_unit_variant(
-                "AccessorPropertyType",
-                1,
-                "TSAbstractAccessorProperty",
-            ),
-        }
-    }
-}
-
-impl Serialize for AccessorProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("type", &self.r#type)?;
-        map.serialize_entry("decorators", &self.decorators)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("static", &self.r#static)?;
-        map.serialize_entry("definite", &self.definite)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("accessibility", &self.accessibility)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("phase", &self.phase)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
-            "specifiers",
-            &crate::serialize::OptionVecDefault::from(&self.specifiers),
-        )?;
-        map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("phase", &self.phase)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
-        map.serialize_entry("importKind", &self.import_kind)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportPhase {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ImportPhase::Source => serializer.serialize_unit_variant("ImportPhase", 0, "source"),
-            ImportPhase::Defer => serializer.serialize_unit_variant("ImportPhase", 1, "defer"),
-        }
-    }
-}
-
-impl Serialize for ImportDeclarationSpecifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ImportDeclarationSpecifier::ImportSpecifier(it) => it.serialize(serializer),
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(it) => it.serialize(serializer),
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for ImportSpecifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportSpecifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("imported", &self.imported)?;
-        map.serialize_entry("local", &self.local)?;
-        map.serialize_entry("importKind", &self.import_kind)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportDefaultSpecifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportDefaultSpecifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("local", &self.local)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportNamespaceSpecifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportNamespaceSpecifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("local", &self.local)?;
-        map.end()
-    }
-}
-
-impl Serialize for WithClause<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "WithClause")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
-        map.serialize_entry("withEntries", &self.with_entries)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ImportAttribute")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportAttributeKey<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ImportAttributeKey::Identifier(it) => it.serialize(serializer),
-            ImportAttributeKey::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for ExportNamedDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ExportNamedDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("declaration", &self.declaration)?;
-        map.serialize_entry("specifiers", &self.specifiers)?;
-        map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("exportKind", &self.export_kind)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
-        map.end()
-    }
-}
-
-impl Serialize for ExportDefaultDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ExportDefaultDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("declaration", &self.declaration)?;
-        map.serialize_entry("exported", &self.exported)?;
-        map.end()
-    }
-}
-
-impl Serialize for ExportAllDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ExportAllDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("exported", &self.exported)?;
-        map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
-        map.serialize_entry("exportKind", &self.export_kind)?;
-        map.end()
-    }
-}
-
-impl Serialize for ExportSpecifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ExportSpecifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("local", &self.local)?;
-        map.serialize_entry("exported", &self.exported)?;
-        map.serialize_entry("exportKind", &self.export_kind)?;
-        map.end()
-    }
-}
-
-impl Serialize for ExportDefaultDeclarationKind<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ClassDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BooleanLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NullLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NumericLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BigIntLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::RegExpLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::StringLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TemplateLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::Identifier(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::MetaProperty(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::Super(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ArrayExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::AssignmentExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::AwaitExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BinaryExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::CallExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ChainExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ClassExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ConditionalExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::FunctionExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ImportExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::LogicalExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NewExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ObjectExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ParenthesizedExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::SequenceExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ThisExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::UnaryExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::UpdateExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::YieldExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::PrivateInExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::JSXElement(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::JSXFragment(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSAsExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSTypeAssertion(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSNonNullExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSInstantiationExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ComputedMemberExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::StaticMemberExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::PrivateFieldExpression(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for ModuleExportName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ModuleExportName::IdentifierName(it) => it.serialize(serializer),
-            ModuleExportName::IdentifierReference(it) => it.serialize(serializer),
-            ModuleExportName::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for BooleanLiteral {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &crate::serialize::boolean_literal_raw(self))?;
-        map.end()
-    }
-}
-
-impl Serialize for NullLiteral {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &())?;
-        map.serialize_entry("raw", &crate::serialize::null_literal_raw(self))?;
-        map.end()
-    }
-}
-
-impl Serialize for NumericLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
-    }
-}
-
-impl Serialize for StringLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
-    }
-}
-
-impl Serialize for BigIntLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &())?;
-        map.serialize_entry("bigint", &crate::serialize::bigint_literal_bigint(self))?;
-        map.end()
-    }
-}
-
-impl Serialize for RegExpLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Literal")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("regex", &self.regex)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::EmptyObject)?;
-        map.end()
-    }
-}
-
-impl Serialize for RegExp<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("pattern", &self.pattern)?;
-        map.serialize_entry("flags", &self.flags)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("openingElement", &self.opening_element)?;
-        map.serialize_entry("closingElement", &self.closing_element)?;
-        map.serialize_entry("children", &self.children)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXOpeningElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXOpeningElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("selfClosing", &self.self_closing)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("attributes", &self.attributes)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXClosingElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXClosingElement")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXFragment<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXFragment")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("openingFragment", &self.opening_fragment)?;
-        map.serialize_entry("closingFragment", &self.closing_fragment)?;
-        map.serialize_entry("children", &self.children)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXOpeningFragment {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXOpeningFragment")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXClosingFragment {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXClosingFragment")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXNamespacedName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXNamespacedName")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("namespace", &self.namespace)?;
-        map.serialize_entry("property", &self.property)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXMemberExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXMemberExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("property", &self.property)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXExpressionContainer<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXExpressionContainer")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXExpression::EmptyExpression(it) => it.serialize(serializer),
-            JSXExpression::BooleanLiteral(it) => it.serialize(serializer),
-            JSXExpression::NullLiteral(it) => it.serialize(serializer),
-            JSXExpression::NumericLiteral(it) => it.serialize(serializer),
-            JSXExpression::BigIntLiteral(it) => it.serialize(serializer),
-            JSXExpression::RegExpLiteral(it) => it.serialize(serializer),
-            JSXExpression::StringLiteral(it) => it.serialize(serializer),
-            JSXExpression::TemplateLiteral(it) => it.serialize(serializer),
-            JSXExpression::Identifier(it) => it.serialize(serializer),
-            JSXExpression::MetaProperty(it) => it.serialize(serializer),
-            JSXExpression::Super(it) => it.serialize(serializer),
-            JSXExpression::ArrayExpression(it) => it.serialize(serializer),
-            JSXExpression::ArrowFunctionExpression(it) => it.serialize(serializer),
-            JSXExpression::AssignmentExpression(it) => it.serialize(serializer),
-            JSXExpression::AwaitExpression(it) => it.serialize(serializer),
-            JSXExpression::BinaryExpression(it) => it.serialize(serializer),
-            JSXExpression::CallExpression(it) => it.serialize(serializer),
-            JSXExpression::ChainExpression(it) => it.serialize(serializer),
-            JSXExpression::ClassExpression(it) => it.serialize(serializer),
-            JSXExpression::ConditionalExpression(it) => it.serialize(serializer),
-            JSXExpression::FunctionExpression(it) => it.serialize(serializer),
-            JSXExpression::ImportExpression(it) => it.serialize(serializer),
-            JSXExpression::LogicalExpression(it) => it.serialize(serializer),
-            JSXExpression::NewExpression(it) => it.serialize(serializer),
-            JSXExpression::ObjectExpression(it) => it.serialize(serializer),
-            JSXExpression::ParenthesizedExpression(it) => it.serialize(serializer),
-            JSXExpression::SequenceExpression(it) => it.serialize(serializer),
-            JSXExpression::TaggedTemplateExpression(it) => it.serialize(serializer),
-            JSXExpression::ThisExpression(it) => it.serialize(serializer),
-            JSXExpression::UnaryExpression(it) => it.serialize(serializer),
-            JSXExpression::UpdateExpression(it) => it.serialize(serializer),
-            JSXExpression::YieldExpression(it) => it.serialize(serializer),
-            JSXExpression::PrivateInExpression(it) => it.serialize(serializer),
-            JSXExpression::JSXElement(it) => it.serialize(serializer),
-            JSXExpression::JSXFragment(it) => it.serialize(serializer),
-            JSXExpression::TSAsExpression(it) => it.serialize(serializer),
-            JSXExpression::TSSatisfiesExpression(it) => it.serialize(serializer),
-            JSXExpression::TSTypeAssertion(it) => it.serialize(serializer),
-            JSXExpression::TSNonNullExpression(it) => it.serialize(serializer),
-            JSXExpression::TSInstantiationExpression(it) => it.serialize(serializer),
-            JSXExpression::ComputedMemberExpression(it) => it.serialize(serializer),
-            JSXExpression::StaticMemberExpression(it) => it.serialize(serializer),
-            JSXExpression::PrivateFieldExpression(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for JSXEmptyExpression {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXEmptyExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXAttributeItem<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeItem::Attribute(it) => it.serialize(serializer),
-            JSXAttributeItem::SpreadAttribute(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for JSXAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXAttribute")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXSpreadAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXSpreadAttribute")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeName::Identifier(it) => it.serialize(serializer),
-            JSXAttributeName::NamespacedName(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for JSXAttributeValue<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeValue::StringLiteral(it) => it.serialize(serializer),
-            JSXAttributeValue::ExpressionContainer(it) => it.serialize(serializer),
-            JSXAttributeValue::Element(it) => it.serialize(serializer),
-            JSXAttributeValue::Fragment(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for JSXIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXIdentifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXChild<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXChild::Text(it) => it.serialize(serializer),
-            JSXChild::Element(it) => it.serialize(serializer),
-            JSXChild::Fragment(it) => it.serialize(serializer),
-            JSXChild::ExpressionContainer(it) => it.serialize(serializer),
-            JSXChild::Spread(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for JSXSpreadChild<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXSpreadChild")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXText<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXText")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSThisParameter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSThisParameter")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSEnumDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSEnumDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("members", &self.members)?;
-        map.serialize_entry("const", &self.r#const)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSEnumMember<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSEnumMember")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("initializer", &self.initializer)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSEnumMemberName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSEnumMemberName::Identifier(it) => it.serialize(serializer),
-            TSEnumMemberName::String(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSTypeAnnotation<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeAnnotation")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSLiteralType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSLiteralType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("literal", &self.literal)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSLiteral::BooleanLiteral(it) => it.serialize(serializer),
-            TSLiteral::NullLiteral(it) => it.serialize(serializer),
-            TSLiteral::NumericLiteral(it) => it.serialize(serializer),
-            TSLiteral::BigIntLiteral(it) => it.serialize(serializer),
-            TSLiteral::RegExpLiteral(it) => it.serialize(serializer),
-            TSLiteral::StringLiteral(it) => it.serialize(serializer),
-            TSLiteral::TemplateLiteral(it) => it.serialize(serializer),
-            TSLiteral::UnaryExpression(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSType::TSAnyKeyword(it) => it.serialize(serializer),
-            TSType::TSBigIntKeyword(it) => it.serialize(serializer),
-            TSType::TSBooleanKeyword(it) => it.serialize(serializer),
-            TSType::TSIntrinsicKeyword(it) => it.serialize(serializer),
-            TSType::TSNeverKeyword(it) => it.serialize(serializer),
-            TSType::TSNullKeyword(it) => it.serialize(serializer),
-            TSType::TSNumberKeyword(it) => it.serialize(serializer),
-            TSType::TSObjectKeyword(it) => it.serialize(serializer),
-            TSType::TSStringKeyword(it) => it.serialize(serializer),
-            TSType::TSSymbolKeyword(it) => it.serialize(serializer),
-            TSType::TSUndefinedKeyword(it) => it.serialize(serializer),
-            TSType::TSUnknownKeyword(it) => it.serialize(serializer),
-            TSType::TSVoidKeyword(it) => it.serialize(serializer),
-            TSType::TSArrayType(it) => it.serialize(serializer),
-            TSType::TSConditionalType(it) => it.serialize(serializer),
-            TSType::TSConstructorType(it) => it.serialize(serializer),
-            TSType::TSFunctionType(it) => it.serialize(serializer),
-            TSType::TSImportType(it) => it.serialize(serializer),
-            TSType::TSIndexedAccessType(it) => it.serialize(serializer),
-            TSType::TSInferType(it) => it.serialize(serializer),
-            TSType::TSIntersectionType(it) => it.serialize(serializer),
-            TSType::TSLiteralType(it) => it.serialize(serializer),
-            TSType::TSMappedType(it) => it.serialize(serializer),
-            TSType::TSNamedTupleMember(it) => it.serialize(serializer),
-            TSType::TSQualifiedName(it) => it.serialize(serializer),
-            TSType::TSTemplateLiteralType(it) => it.serialize(serializer),
-            TSType::TSThisType(it) => it.serialize(serializer),
-            TSType::TSTupleType(it) => it.serialize(serializer),
-            TSType::TSTypeLiteral(it) => it.serialize(serializer),
-            TSType::TSTypeOperatorType(it) => it.serialize(serializer),
-            TSType::TSTypePredicate(it) => it.serialize(serializer),
-            TSType::TSTypeQuery(it) => it.serialize(serializer),
-            TSType::TSTypeReference(it) => it.serialize(serializer),
-            TSType::TSUnionType(it) => it.serialize(serializer),
-            TSType::TSParenthesizedType(it) => it.serialize(serializer),
-            TSType::JSDocNullableType(it) => it.serialize(serializer),
-            TSType::JSDocNonNullableType(it) => it.serialize(serializer),
-            TSType::JSDocUnknownType(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSConditionalType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSConditionalType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("checkType", &self.check_type)?;
-        map.serialize_entry("extendsType", &self.extends_type)?;
-        map.serialize_entry("trueType", &self.true_type)?;
-        map.serialize_entry("falseType", &self.false_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSUnionType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSUnionType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("types", &self.types)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSIntersectionType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSIntersectionType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("types", &self.types)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSParenthesizedType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSParenthesizedType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeOperator<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeOperator")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeOperatorOperator {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSTypeOperatorOperator::Keyof => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 0, "keyof")
-            }
-            TSTypeOperatorOperator::Unique => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 1, "unique")
-            }
-            TSTypeOperatorOperator::Readonly => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 2, "readonly")
+            Self::PropertyDefinition => JsonSafeString("PropertyDefinition").serialize(serializer),
+            Self::TSAbstractPropertyDefinition => {
+                JsonSafeString("TSAbstractPropertyDefinition").serialize(serializer)
             }
         }
     }
 }
 
-impl Serialize for TSArrayType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSArrayType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elementType", &self.element_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSIndexedAccessType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSIndexedAccessType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("objectType", &self.object_type)?;
-        map.serialize_entry("indexType", &self.index_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTupleType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTupleType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elementTypes", &self.element_types)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNamedTupleMember<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNamedTupleMember")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("elementType", &self.element_type)?;
-        map.serialize_entry("label", &self.label)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSOptionalType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSOptionalType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSRestType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSRestType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTupleElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for MethodDefinitionKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTupleElement::TSOptionalType(it) => it.serialize(serializer),
-            TSTupleElement::TSRestType(it) => it.serialize(serializer),
-            TSTupleElement::TSAnyKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSBigIntKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSBooleanKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSIntrinsicKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNeverKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNullKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNumberKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSObjectKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSStringKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSSymbolKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSUndefinedKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSUnknownKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSVoidKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSArrayType(it) => it.serialize(serializer),
-            TSTupleElement::TSConditionalType(it) => it.serialize(serializer),
-            TSTupleElement::TSConstructorType(it) => it.serialize(serializer),
-            TSTupleElement::TSFunctionType(it) => it.serialize(serializer),
-            TSTupleElement::TSImportType(it) => it.serialize(serializer),
-            TSTupleElement::TSIndexedAccessType(it) => it.serialize(serializer),
-            TSTupleElement::TSInferType(it) => it.serialize(serializer),
-            TSTupleElement::TSIntersectionType(it) => it.serialize(serializer),
-            TSTupleElement::TSLiteralType(it) => it.serialize(serializer),
-            TSTupleElement::TSMappedType(it) => it.serialize(serializer),
-            TSTupleElement::TSNamedTupleMember(it) => it.serialize(serializer),
-            TSTupleElement::TSQualifiedName(it) => it.serialize(serializer),
-            TSTupleElement::TSTemplateLiteralType(it) => it.serialize(serializer),
-            TSTupleElement::TSThisType(it) => it.serialize(serializer),
-            TSTupleElement::TSTupleType(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeLiteral(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeOperatorType(it) => it.serialize(serializer),
-            TSTupleElement::TSTypePredicate(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeQuery(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeReference(it) => it.serialize(serializer),
-            TSTupleElement::TSUnionType(it) => it.serialize(serializer),
-            TSTupleElement::TSParenthesizedType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocNullableType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocNonNullableType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocUnknownType(it) => it.serialize(serializer),
+            Self::Constructor => JsonSafeString("constructor").serialize(serializer),
+            Self::Method => JsonSafeString("method").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSAnyKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSAnyKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for PrivateIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("PrivateIdentifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.end();
     }
 }
 
-impl Serialize for TSStringKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSStringKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for StaticBlock<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("StaticBlock"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.end();
     }
 }
 
-impl Serialize for TSBooleanKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSBooleanKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNumberKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNumberKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNeverKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNeverKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSIntrinsicKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSIntrinsicKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSUnknownKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSUnknownKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNullKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNullKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSUndefinedKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSUndefinedKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSVoidKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSVoidKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSSymbolKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSSymbolKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSThisType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSThisType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSObjectKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSObjectKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSBigIntKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSBigIntKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeReference<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeReference")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeName", &self.type_name)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ModuleDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypeName::IdentifierReference(it) => it.serialize(serializer),
-            TSTypeName::QualifiedName(it) => it.serialize(serializer),
+            Self::ImportDeclaration(it) => it.serialize(serializer),
+            Self::ExportAllDeclaration(it) => it.serialize(serializer),
+            Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Self::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Self::TSExportAssignment(it) => it.serialize(serializer),
+            Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSQualifiedName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSQualifiedName")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("right", &self.right)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeParameterInstantiation<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeParameterInstantiation")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("params", &self.params)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeParameter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeParameter")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("constraint", &self.constraint)?;
-        map.serialize_entry("default", &self.default)?;
-        map.serialize_entry("in", &self.r#in)?;
-        map.serialize_entry("out", &self.out)?;
-        map.serialize_entry("const", &self.r#const)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeParameterDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeParameterDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("params", &self.params)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeAliasDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeAliasDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSAccessibility {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AccessorPropertyType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSAccessibility::Private => {
-                serializer.serialize_unit_variant("TSAccessibility", 0, "private")
-            }
-            TSAccessibility::Protected => {
-                serializer.serialize_unit_variant("TSAccessibility", 1, "protected")
-            }
-            TSAccessibility::Public => {
-                serializer.serialize_unit_variant("TSAccessibility", 2, "public")
+            Self::AccessorProperty => JsonSafeString("AccessorProperty").serialize(serializer),
+            Self::TSAbstractAccessorProperty => {
+                JsonSafeString("TSAbstractAccessorProperty").serialize(serializer)
             }
         }
     }
 }
 
-impl Serialize for TSClassImplements<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSClassImplements")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
+impl ESTree for AccessorProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("static", &self.r#static);
+        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_ts_field("definite", &self.definite);
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
+        state.serialize_ts_field("accessibility", &self.accessibility);
+        state.end();
     }
 }
 
-impl Serialize for TSInterfaceDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSInterfaceDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("extends", &self.extends)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("body", &self.body)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
+impl ESTree for ImportExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("source", &self.source);
+        state.serialize_field("options", &crate::serialize::ImportExpressionOptions(self));
+        state.end();
     }
 }
 
-impl Serialize for TSInterfaceBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSInterfaceBody")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("body", &self.body)?;
-        map.end()
+impl ESTree for ImportDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("specifiers", &crate::serialize::ImportDeclarationSpecifiers(self));
+        state.serialize_field("source", &self.source);
+        state.serialize_field("attributes", &crate::serialize::ImportDeclarationWithClause(self));
+        state.serialize_ts_field("importKind", &self.import_kind);
+        state.end();
     }
 }
 
-impl Serialize for TSPropertySignature<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSPropertySignature")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("readonly", &self.readonly)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSSignature<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportPhase {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSSignature::TSIndexSignature(it) => it.serialize(serializer),
-            TSSignature::TSPropertySignature(it) => it.serialize(serializer),
-            TSSignature::TSCallSignatureDeclaration(it) => it.serialize(serializer),
-            TSSignature::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
-            TSSignature::TSMethodSignature(it) => it.serialize(serializer),
+            Self::Source => JsonSafeString("source").serialize(serializer),
+            Self::Defer => JsonSafeString("defer").serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSIndexSignature<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSIndexSignature")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("parameters", &self.parameters)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("readonly", &self.readonly)?;
-        map.serialize_entry("static", &self.r#static)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSCallSignatureDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSCallSignatureDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("thisParam", &self.this_param)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSMethodSignatureKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportDeclarationSpecifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSMethodSignatureKind::Method => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 0, "method")
-            }
-            TSMethodSignatureKind::Get => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 1, "get")
-            }
-            TSMethodSignatureKind::Set => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 2, "set")
-            }
+            Self::ImportSpecifier(it) => it.serialize(serializer),
+            Self::ImportDefaultSpecifier(it) => it.serialize(serializer),
+            Self::ImportNamespaceSpecifier(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSMethodSignature<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSMethodSignature")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("thisParam", &self.this_param)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.end()
+impl ESTree for ImportSpecifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportSpecifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("imported", &self.imported);
+        state.serialize_field("local", &self.local);
+        state.serialize_ts_field("importKind", &self.import_kind);
+        state.end();
     }
 }
 
-impl Serialize for TSConstructSignatureDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSConstructSignatureDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.end()
+impl ESTree for ImportDefaultSpecifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportDefaultSpecifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("local", &self.local);
+        state.end();
     }
 }
 
-impl Serialize for TSIndexSignatureName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Identifier")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
+impl ESTree for ImportNamespaceSpecifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportNamespaceSpecifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("local", &self.local);
+        state.end();
     }
 }
 
-impl Serialize for TSInterfaceHeritage<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSInterfaceHeritage")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
+impl ESTree for WithClause<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("WithClause"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("attributesKeyword", &self.attributes_keyword);
+        state.serialize_field("withEntries", &self.with_entries);
+        state.end();
     }
 }
 
-impl Serialize for TSTypePredicate<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypePredicate")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("parameterName", &self.parameter_name)?;
-        map.serialize_entry("asserts", &self.asserts)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
+impl ESTree for ImportAttribute<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ImportAttribute"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.end();
     }
 }
 
-impl Serialize for TSTypePredicateName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportAttributeKey<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypePredicateName::Identifier(it) => it.serialize(serializer),
-            TSTypePredicateName::This(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSModuleDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSModuleDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("body", &self.body)?;
-        map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("declare", &self.declare)?;
-        map.end()
+impl ESTree for ExportNamedDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("declaration", &self.declaration);
+        state.serialize_field("specifiers", &self.specifiers);
+        state.serialize_field("source", &self.source);
+        state.serialize_field(
+            "attributes",
+            &crate::serialize::ExportNamedDeclarationWithClause(self),
+        );
+        state.serialize_ts_field("exportKind", &self.export_kind);
+        state.end();
     }
 }
 
-impl Serialize for TSModuleDeclarationKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ExportDefaultDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportDefaultDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("declaration", &self.declaration);
+        state.end();
+    }
+}
+
+impl ESTree for ExportAllDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportAllDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("exported", &self.exported);
+        state.serialize_field("source", &self.source);
+        state
+            .serialize_field("attributes", &crate::serialize::ExportAllDeclarationWithClause(self));
+        state.serialize_ts_field("exportKind", &self.export_kind);
+        state.end();
+    }
+}
+
+impl ESTree for ExportSpecifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportSpecifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("local", &self.local);
+        state.serialize_field("exported", &self.exported);
+        state.serialize_ts_field("exportKind", &self.export_kind);
+        state.end();
+    }
+}
+
+impl ESTree for ExportDefaultDeclarationKind<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationKind::Global => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 0, "global")
-            }
-            TSModuleDeclarationKind::Module => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 1, "module")
-            }
-            TSModuleDeclarationKind::Namespace => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 2, "namespace")
-            }
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSModuleDeclarationName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ModuleExportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationName::Identifier(it) => it.serialize(serializer),
-            TSModuleDeclarationName::StringLiteral(it) => it.serialize(serializer),
+            Self::IdentifierName(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
 
-impl Serialize for TSModuleDeclarationBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for V8IntrinsicExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("V8IntrinsicExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("arguments", &self.arguments);
+        state.end();
+    }
+}
+
+impl ESTree for BooleanLiteral {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("raw", &crate::serialize::BooleanLiteralRaw(self));
+        state.end();
+    }
+}
+
+impl ESTree for NullLiteral {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &crate::serialize::Null(self));
+        state.serialize_field("raw", &crate::serialize::NullLiteralRaw(self));
+        state.end();
+    }
+}
+
+impl ESTree for NumericLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("raw", &self.raw);
+        state.end();
+    }
+}
+
+impl ESTree for StringLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &crate::serialize::StringLiteralValue(self));
+        state.serialize_field("raw", &self.raw);
+        state.end();
+    }
+}
+
+impl ESTree for BigIntLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &crate::serialize::BigIntLiteralValue(self));
+        state.serialize_field("raw", &self.raw);
+        state.serialize_field("bigint", &crate::serialize::BigIntLiteralBigint(self));
+        state.end();
+    }
+}
+
+impl ESTree for RegExpLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Literal"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &crate::serialize::RegExpLiteralValue(self));
+        state.serialize_field("raw", &self.raw);
+        state.serialize_field("regex", &self.regex);
+        state.end();
+    }
+}
+
+impl ESTree for RegExp<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("pattern", &self.pattern);
+        state.serialize_field("flags", &self.flags);
+        state.end();
+    }
+}
+
+impl ESTree for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpPatternConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for RegExpFlags {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpFlagsConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for JSXElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("openingElement", &self.opening_element);
+        state.serialize_field("closingElement", &self.closing_element);
+        state.serialize_field("children", &self.children);
+        state.end();
+    }
+}
+
+impl ESTree for JSXOpeningElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("attributes", &self.attributes);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("selfClosing", &self.self_closing);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.end();
+    }
+}
+
+impl ESTree for JSXClosingElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXClosingElement"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.end();
+    }
+}
+
+impl ESTree for JSXFragment<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXFragment"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("openingFragment", &self.opening_fragment);
+        state.serialize_field("closingFragment", &self.closing_fragment);
+        state.serialize_field("children", &self.children);
+        state.end();
+    }
+}
+
+impl ESTree for JSXOpeningFragment {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("attributes", &crate::serialize::JSXOpeningFragmentAttributes(self));
+        state.serialize_field("selfClosing", &crate::serialize::False(self));
+        state.end();
+    }
+}
+
+impl ESTree for JSXClosingFragment {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXClosingFragment"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for JSXElementName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationBody::TSModuleDeclaration(it) => it.serialize(serializer),
-            TSModuleDeclarationBody::TSModuleBlock(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSTypeLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeLiteral")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("members", &self.members)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSInferType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSInferType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeParameter", &self.type_parameter)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeQuery<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeQuery")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("exprName", &self.expr_name)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeQueryExprName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSTypeQueryExprName::TSImportType(it) => it.serialize(serializer),
-            TSTypeQueryExprName::IdentifierReference(it) => it.serialize(serializer),
-            TSTypeQueryExprName::QualifiedName(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSImportType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSImportType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("isTypeOf", &self.is_type_of)?;
-        map.serialize_entry("parameter", &self.parameter)?;
-        map.serialize_entry("qualifier", &self.qualifier)?;
-        map.serialize_entry("attributes", &self.attributes)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSImportAttributes<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSImportAttributes")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
-        map.serialize_entry("elements", &self.elements)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSImportAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSImportAttribute")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSImportAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSImportAttributeName::Identifier(it) => it.serialize(serializer),
-            TSImportAttributeName::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSFunctionType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSFunctionType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("thisParam", &self.this_param)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSConstructorType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSConstructorType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("abstract", &self.r#abstract)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("returnType", &self.return_type)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSMappedType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSMappedType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeParameter", &self.type_parameter)?;
-        map.serialize_entry("nameType", &self.name_type)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("readonly", &self.readonly)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSMappedTypeModifierOperator {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSMappedTypeModifierOperator::True => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 0, "true")
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => {
+                crate::serialize::JSXElementIdentifierReference(it).serialize(serializer)
             }
-            TSMappedTypeModifierOperator::Plus => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 1, "+")
-            }
-            TSMappedTypeModifierOperator::Minus => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 2, "-")
-            }
-            TSMappedTypeModifierOperator::None => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 3, "none")
-            }
-        }
-    }
-}
-
-impl Serialize for TSTemplateLiteralType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTemplateLiteralType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("quasis", &self.quasis)?;
-        map.serialize_entry("types", &self.types)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSAsExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSAsExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSSatisfiesExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSSatisfiesExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSTypeAssertion<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSTypeAssertion")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSImportEqualsDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSImportEqualsDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("moduleReference", &self.module_reference)?;
-        map.serialize_entry("importKind", &self.import_kind)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSModuleReference<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            TSModuleReference::ExternalModuleReference(it) => it.serialize(serializer),
-            TSModuleReference::IdentifierReference(it) => it.serialize(serializer),
-            TSModuleReference::QualifiedName(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl Serialize for TSExternalModuleReference<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSExternalModuleReference")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNonNullExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNonNullExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for Decorator<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Decorator")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSExportAssignment<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSExportAssignment")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNamespaceExportDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNamespaceExportDeclaration")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("id", &self.id)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSInstantiationExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSInstantiationExpression")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for ImportOrExportKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ImportOrExportKind::Value => {
-                serializer.serialize_unit_variant("ImportOrExportKind", 0, "value")
-            }
-            ImportOrExportKind::Type => {
-                serializer.serialize_unit_variant("ImportOrExportKind", 1, "type")
+            Self::NamespacedName(it) => it.serialize(serializer),
+            Self::MemberExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => {
+                crate::serialize::JSXElementThisExpression(it).serialize(serializer)
             }
         }
     }
 }
 
-impl Serialize for JSDocNullableType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSDocNullableType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("postfix", &self.postfix)?;
-        map.end()
+impl ESTree for JSXNamespacedName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXNamespacedName"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("namespace", &self.namespace);
+        state.serialize_field("name", &self.name);
+        state.end();
     }
 }
 
-impl Serialize for JSDocNonNullableType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSDocNonNullableType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
-        map.serialize_entry("postfix", &self.postfix)?;
-        map.end()
+impl ESTree for JSXMemberExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXMemberExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("object", &self.object);
+        state.serialize_field("property", &self.property);
+        state.end();
     }
 }
 
-impl Serialize for JSDocUnknownType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSDocUnknownType")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
+impl ESTree for JSXMemberExpressionObject<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::IdentifierReference(it) => {
+                crate::serialize::JSXElementIdentifierReference(it).serialize(serializer)
+            }
+            Self::MemberExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => {
+                crate::serialize::JSXElementThisExpression(it).serialize(serializer)
+            }
+        }
+    }
+}
+
+impl ESTree for JSXExpressionContainer<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXExpressionContainer"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for JSXExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::EmptyExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSXEmptyExpression {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXEmptyExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for JSXAttributeItem<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Attribute(it) => it.serialize(serializer),
+            Self::SpreadAttribute(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSXAttribute<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXAttribute"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("value", &self.value);
+        state.end();
+    }
+}
+
+impl ESTree for JSXSpreadAttribute<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXSpreadAttribute"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.end();
+    }
+}
+
+impl ESTree for JSXAttributeName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::NamespacedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSXAttributeValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::ExpressionContainer(it) => it.serialize(serializer),
+            Self::Element(it) => it.serialize(serializer),
+            Self::Fragment(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSXIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXIdentifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.end();
+    }
+}
+
+impl ESTree for JSXChild<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Text(it) => it.serialize(serializer),
+            Self::Element(it) => it.serialize(serializer),
+            Self::Fragment(it) => it.serialize(serializer),
+            Self::ExpressionContainer(it) => it.serialize(serializer),
+            Self::Spread(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSXSpreadChild<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXSpreadChild"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for JSXText<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXText"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("raw", &self.raw);
+        state.end();
+    }
+}
+
+impl ESTree for TSThisParameter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &crate::serialize::This(self));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSEnumDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("members", &self.members);
+        state.serialize_field("const", &self.r#const);
+        state.serialize_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for TSEnumMember<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumMember"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("initializer", &self.initializer);
+        state.end();
+    }
+}
+
+impl ESTree for TSEnumMemberName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::String(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSTypeAnnotation<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSLiteralType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSLiteralType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("literal", &self.literal);
+        state.end();
+    }
+}
+
+impl ESTree for TSLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::TSAnyKeyword(it) => it.serialize(serializer),
+            Self::TSBigIntKeyword(it) => it.serialize(serializer),
+            Self::TSBooleanKeyword(it) => it.serialize(serializer),
+            Self::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            Self::TSNeverKeyword(it) => it.serialize(serializer),
+            Self::TSNullKeyword(it) => it.serialize(serializer),
+            Self::TSNumberKeyword(it) => it.serialize(serializer),
+            Self::TSObjectKeyword(it) => it.serialize(serializer),
+            Self::TSStringKeyword(it) => it.serialize(serializer),
+            Self::TSSymbolKeyword(it) => it.serialize(serializer),
+            Self::TSUndefinedKeyword(it) => it.serialize(serializer),
+            Self::TSUnknownKeyword(it) => it.serialize(serializer),
+            Self::TSVoidKeyword(it) => it.serialize(serializer),
+            Self::TSArrayType(it) => it.serialize(serializer),
+            Self::TSConditionalType(it) => it.serialize(serializer),
+            Self::TSConstructorType(it) => it.serialize(serializer),
+            Self::TSFunctionType(it) => it.serialize(serializer),
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::TSIndexedAccessType(it) => it.serialize(serializer),
+            Self::TSInferType(it) => it.serialize(serializer),
+            Self::TSIntersectionType(it) => it.serialize(serializer),
+            Self::TSLiteralType(it) => it.serialize(serializer),
+            Self::TSMappedType(it) => it.serialize(serializer),
+            Self::TSNamedTupleMember(it) => it.serialize(serializer),
+            Self::TSTemplateLiteralType(it) => it.serialize(serializer),
+            Self::TSThisType(it) => it.serialize(serializer),
+            Self::TSTupleType(it) => it.serialize(serializer),
+            Self::TSTypeLiteral(it) => it.serialize(serializer),
+            Self::TSTypeOperatorType(it) => it.serialize(serializer),
+            Self::TSTypePredicate(it) => it.serialize(serializer),
+            Self::TSTypeQuery(it) => it.serialize(serializer),
+            Self::TSTypeReference(it) => it.serialize(serializer),
+            Self::TSUnionType(it) => it.serialize(serializer),
+            Self::TSParenthesizedType(it) => it.serialize(serializer),
+            Self::JSDocNullableType(it) => it.serialize(serializer),
+            Self::JSDocNonNullableType(it) => it.serialize(serializer),
+            Self::JSDocUnknownType(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSConditionalType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSConditionalType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("checkType", &self.check_type);
+        state.serialize_field("extendsType", &self.extends_type);
+        state.serialize_field("trueType", &self.true_type);
+        state.serialize_field("falseType", &self.false_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSUnionType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSUnionType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("types", &self.types);
+        state.end();
+    }
+}
+
+impl ESTree for TSIntersectionType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSIntersectionType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("types", &self.types);
+        state.end();
+    }
+}
+
+impl ESTree for TSParenthesizedType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeOperator<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeOperator"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("operator", &self.operator);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeOperatorOperator {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Keyof => JsonSafeString("keyof").serialize(serializer),
+            Self::Unique => JsonSafeString("unique").serialize(serializer),
+            Self::Readonly => JsonSafeString("readonly").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSArrayType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSArrayType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elementType", &self.element_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSIndexedAccessType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSIndexedAccessType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("objectType", &self.object_type);
+        state.serialize_field("indexType", &self.index_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSTupleType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTupleType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elementTypes", &self.element_types);
+        state.end();
+    }
+}
+
+impl ESTree for TSNamedTupleMember<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNamedTupleMember"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("elementType", &self.element_type);
+        state.serialize_field("label", &self.label);
+        state.serialize_field("optional", &self.optional);
+        state.end();
+    }
+}
+
+impl ESTree for TSOptionalType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSOptionalType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSRestType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSRestType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSTupleElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::TSOptionalType(it) => it.serialize(serializer),
+            Self::TSRestType(it) => it.serialize(serializer),
+            Self::TSAnyKeyword(it) => it.serialize(serializer),
+            Self::TSBigIntKeyword(it) => it.serialize(serializer),
+            Self::TSBooleanKeyword(it) => it.serialize(serializer),
+            Self::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            Self::TSNeverKeyword(it) => it.serialize(serializer),
+            Self::TSNullKeyword(it) => it.serialize(serializer),
+            Self::TSNumberKeyword(it) => it.serialize(serializer),
+            Self::TSObjectKeyword(it) => it.serialize(serializer),
+            Self::TSStringKeyword(it) => it.serialize(serializer),
+            Self::TSSymbolKeyword(it) => it.serialize(serializer),
+            Self::TSUndefinedKeyword(it) => it.serialize(serializer),
+            Self::TSUnknownKeyword(it) => it.serialize(serializer),
+            Self::TSVoidKeyword(it) => it.serialize(serializer),
+            Self::TSArrayType(it) => it.serialize(serializer),
+            Self::TSConditionalType(it) => it.serialize(serializer),
+            Self::TSConstructorType(it) => it.serialize(serializer),
+            Self::TSFunctionType(it) => it.serialize(serializer),
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::TSIndexedAccessType(it) => it.serialize(serializer),
+            Self::TSInferType(it) => it.serialize(serializer),
+            Self::TSIntersectionType(it) => it.serialize(serializer),
+            Self::TSLiteralType(it) => it.serialize(serializer),
+            Self::TSMappedType(it) => it.serialize(serializer),
+            Self::TSNamedTupleMember(it) => it.serialize(serializer),
+            Self::TSTemplateLiteralType(it) => it.serialize(serializer),
+            Self::TSThisType(it) => it.serialize(serializer),
+            Self::TSTupleType(it) => it.serialize(serializer),
+            Self::TSTypeLiteral(it) => it.serialize(serializer),
+            Self::TSTypeOperatorType(it) => it.serialize(serializer),
+            Self::TSTypePredicate(it) => it.serialize(serializer),
+            Self::TSTypeQuery(it) => it.serialize(serializer),
+            Self::TSTypeReference(it) => it.serialize(serializer),
+            Self::TSUnionType(it) => it.serialize(serializer),
+            Self::TSParenthesizedType(it) => it.serialize(serializer),
+            Self::JSDocNullableType(it) => it.serialize(serializer),
+            Self::JSDocNonNullableType(it) => it.serialize(serializer),
+            Self::JSDocUnknownType(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSAnyKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSAnyKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSStringKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSStringKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSBooleanKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSBooleanKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSNumberKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNumberKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSNeverKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNeverKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSIntrinsicKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSIntrinsicKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSUnknownKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSUnknownKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSNullKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNullKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSUndefinedKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSUndefinedKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSVoidKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSVoidKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSSymbolKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSSymbolKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSThisType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSThisType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSObjectKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSObjectKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSBigIntKeyword {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSBigIntKeyword"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeReference<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeReference"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeName", &self.type_name);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSQualifiedName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeParameterInstantiation<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeParameterInstantiation"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("params", &self.params);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeParameter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeParameter"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("constraint", &self.constraint);
+        state.serialize_field("default", &self.default);
+        state.serialize_field("in", &self.r#in);
+        state.serialize_field("out", &self.out);
+        state.serialize_field("const", &self.r#const);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeParameterDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeParameterDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("params", &self.params);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeAliasDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeAliasDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for TSAccessibility {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Private => JsonSafeString("private").serialize(serializer),
+            Self::Protected => JsonSafeString("protected").serialize(serializer),
+            Self::Public => JsonSafeString("public").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSClassImplements<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSClassImplements"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.end();
+    }
+}
+
+impl ESTree for TSInterfaceDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSInterfaceDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("extends", &crate::serialize::TSInterfaceDeclarationExtends(self));
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("body", &self.body);
+        state.serialize_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for TSInterfaceBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSInterfaceBody"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("body", &self.body);
+        state.end();
+    }
+}
+
+impl ESTree for TSPropertySignature<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("optional", &self.optional);
+        state.serialize_field("readonly", &self.readonly);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("static", &crate::serialize::False(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSSignature<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::TSIndexSignature(it) => it.serialize(serializer),
+            Self::TSPropertySignature(it) => it.serialize(serializer),
+            Self::TSCallSignatureDeclaration(it) => it.serialize(serializer),
+            Self::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
+            Self::TSMethodSignature(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSIndexSignature<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSIndexSignature"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("parameters", &self.parameters);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("readonly", &self.readonly);
+        state.serialize_field("static", &self.r#static);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSCallSignatureDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSCallSignatureDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("returnType", &self.return_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSMethodSignatureKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Method => JsonSafeString("method").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSMethodSignature<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSMethodSignature"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("optional", &self.optional);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("returnType", &self.return_type);
+        state.serialize_field("accessibility", &crate::serialize::Null(self));
+        state.serialize_field("readonly", &crate::serialize::False(self));
+        state.serialize_field("static", &crate::serialize::False(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSConstructSignatureDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSConstructSignatureDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("returnType", &self.return_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSIndexSignatureName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("decorators", &crate::serialize::EmptyArray(self));
+        state.serialize_field("optional", &crate::serialize::False(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSInterfaceHeritage<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypePredicate<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypePredicate"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("parameterName", &self.parameter_name);
+        state.serialize_field("asserts", &self.asserts);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypePredicateName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::This(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSModuleDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("body", &self.body);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("declare", &self.declare);
+        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(self));
+        state.end();
+    }
+}
+
+impl ESTree for TSModuleDeclarationKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Global => JsonSafeString("global").serialize(serializer),
+            Self::Module => JsonSafeString("module").serialize(serializer),
+            Self::Namespace => JsonSafeString("namespace").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSModuleDeclarationName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSModuleDeclarationBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleBlock(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSModuleBlock<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleBlock"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        );
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeLiteral"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("members", &self.members);
+        state.end();
+    }
+}
+
+impl ESTree for TSInferType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSInferType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeParameter", &self.type_parameter);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeQuery<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeQuery"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("exprName", &self.expr_name);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeQueryExprName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSImportType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSImportType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("argument", &self.argument);
+        state.serialize_field("options", &self.options);
+        state.serialize_field("qualifier", &self.qualifier);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.serialize_field("isTypeOf", &self.is_type_of);
+        state.end();
+    }
+}
+
+impl ESTree for TSFunctionType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSFunctionType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("returnType", &self.return_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSConstructorType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSConstructorType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("abstract", &self.r#abstract);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
+        state.serialize_field("returnType", &self.return_type);
+        state.end();
+    }
+}
+
+impl ESTree for TSMappedType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSMappedType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeParameter", &self.type_parameter);
+        state.serialize_field("nameType", &self.name_type);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("optional", &self.optional);
+        state.serialize_field("readonly", &self.readonly);
+        state.end();
+    }
+}
+
+impl ESTree for TSMappedTypeModifierOperator {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::True => JsonSafeString("true").serialize(serializer),
+            Self::Plus => JsonSafeString("+").serialize(serializer),
+            Self::Minus => JsonSafeString("-").serialize(serializer),
+            Self::None => JsonSafeString("none").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSTemplateLiteralType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTemplateLiteralType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("quasis", &self.quasis);
+        state.serialize_field("types", &self.types);
+        state.end();
+    }
+}
+
+impl ESTree for TSAsExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSAsExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSSatisfiesExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSSatisfiesExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSTypeAssertion<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeAssertion"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.end();
+    }
+}
+
+impl ESTree for TSImportEqualsDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSImportEqualsDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.serialize_field("moduleReference", &self.module_reference);
+        state.serialize_field("importKind", &self.import_kind);
+        state.end();
+    }
+}
+
+impl ESTree for TSModuleReference<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::ExternalModuleReference(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSExternalModuleReference<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSExternalModuleReference"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for TSNonNullExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNonNullExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for Decorator<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Decorator"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for TSExportAssignment<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSExportAssignment"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.end();
+    }
+}
+
+impl ESTree for TSNamespaceExportDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSNamespaceExportDeclaration"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("id", &self.id);
+        state.end();
+    }
+}
+
+impl ESTree for TSInstantiationExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSInstantiationExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("expression", &self.expression);
+        state.serialize_field("typeParameters", &self.type_parameters);
+        state.end();
+    }
+}
+
+impl ESTree for ImportOrExportKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Value => JsonSafeString("value").serialize(serializer),
+            Self::Type => JsonSafeString("type").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for JSDocNullableType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSDocNullableType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("postfix", &self.postfix);
+        state.end();
+    }
+}
+
+impl ESTree for JSDocNonNullableType<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSDocNonNullableType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("postfix", &self.postfix);
+        state.end();
+    }
+}
+
+impl ESTree for JSDocUnknownType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSDocUnknownType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for CommentKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Line => JsonSafeString("Line").serialize(serializer),
+            Self::Block => JsonSafeString("Block").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for Comment {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.kind);
+        state.serialize_field("value", &crate::serialize::CommentValue(self));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
     }
 }

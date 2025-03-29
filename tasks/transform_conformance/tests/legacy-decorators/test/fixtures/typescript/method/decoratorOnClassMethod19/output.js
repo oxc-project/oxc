@@ -7,9 +7,9 @@ class C1 {
     static {
         babelHelpers.decorate([
             decorator((x) => x.#x),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", []),
-            __metadata("design:returntype", void 0)
+            babelHelpers.decorateMetadata("design:type", Function),
+            babelHelpers.decorateMetadata("design:paramtypes", []),
+            babelHelpers.decorateMetadata("design:returntype", void 0)
         ], C1.prototype, "y", null);
     }
 }
@@ -19,9 +19,9 @@ class C2 {
     static {
         babelHelpers.decorate([
             babelHelpers.decorateParam(0, decorator((x) => x.#x)),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [Object]),
-            __metadata("design:returntype", void 0)
+            babelHelpers.decorateMetadata("design:type", Function),
+            babelHelpers.decorateMetadata("design:paramtypes", [Object]),
+            babelHelpers.decorateMetadata("design:returntype", void 0)
         ], C2.prototype, "y", null);
     }
 }

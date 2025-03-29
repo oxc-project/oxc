@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
 
 fn static_promise_diagnostic(static_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use `new` on `Promise.{static_name}`"))

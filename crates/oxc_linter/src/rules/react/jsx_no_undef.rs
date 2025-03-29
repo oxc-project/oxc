@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
     AstKind,
+    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {
@@ -64,7 +64,7 @@ impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
-                let reference = ctx.symbols().get_reference(ident.reference_id());
+                let reference = ctx.scoping().get_reference(ident.reference_id());
                 if reference.symbol_id().is_some() {
                     return;
                 }

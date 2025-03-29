@@ -2,18 +2,25 @@ use std::fmt::Write;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
-use oxc_mangler::{MangleOptions, Mangler};
+use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn mangle(source_text: &str, top_level: bool) -> String {
+fn mangle(source_text: &str, options: MangleOptions) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
-    let symbol_table =
-        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
-    CodeGenerator::new().with_symbol_table(Some(symbol_table)).build(&program).code
+    let symbol_table = Mangler::new().with_options(options).build(&program);
+    CodeGenerator::new().with_scoping(Some(symbol_table)).build(&program).code
+}
+
+#[test]
+fn direct_eval() {
+    let source_text = "function foo() { let NO_MANGLE; eval('') }";
+    let options = MangleOptions::default();
+    let mangled = mangle(source_text, options);
+    assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
 }
 
 #[test]
@@ -54,14 +61,31 @@ fn mangler() {
         "export const foo = 1; foo",
         "const foo = 1; foo; export { foo }",
     ];
+    let keep_name_cases = [
+        "function _() { function foo() { var x } }",
+        "function _() { var foo = function() { var x } }",
+        "function _() { var foo = () => { var x } }",
+        "function _() { class Foo { foo() { var x } } }",
+        "function _() { var Foo = class { foo() { var x } } }",
+    ];
 
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
-        write!(w, "{case}\n{}\n", mangle(case, false)).unwrap();
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
         w
     });
     top_level_cases.into_iter().fold(&mut snapshot, |w, case| {
-        write!(w, "{case}\n{}\n", mangle(case, true)).unwrap();
+        let options = MangleOptions { top_level: true, ..MangleOptions::default() };
+        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
+        w
+    });
+    keep_name_cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions {
+            keep_names: MangleOptionsKeepNames::all_true(),
+            ..MangleOptions::default()
+        };
+        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
         w
     });
 

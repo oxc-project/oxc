@@ -17,10 +17,13 @@ pub use crate::{
     source_type::{
         Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
     },
-    span::{GetSpan, GetSpanMut, Span, SPAN},
+    span::{GetSpan, GetSpanMut, SPAN, Span},
 };
 
 mod generated {
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
 }

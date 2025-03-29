@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
         SimpleAssignmentTarget,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,7 +14,7 @@ use crate::{
     context::LintContext,
     fixer::RuleFixer,
     rule::Rule,
-    utils::{get_node_name, parse_general_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, get_node_name, parse_general_jest_fn_call},
 };
 
 fn use_jest_spy_on(span: Span) -> OxcDiagnostic {

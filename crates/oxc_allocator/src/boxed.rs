@@ -12,7 +12,9 @@ use std::{
 };
 
 #[cfg(any(feature = "serialize", test))]
-use serde::{Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
 
@@ -64,7 +66,7 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
-    #[expect(unsafe_code, clippy::missing_safety_doc)]
+    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
@@ -100,28 +102,6 @@ impl<T> Box<'_, T> {
 }
 
 impl<T: ?Sized> Box<'_, T> {
-    /// Create a [`Box`] from a raw pointer to a value.
-    ///
-    /// The [`Box`] takes ownership of the data pointed to by `ptr`.
-    ///
-    /// # SAFETY
-    /// Data pointed to by `ptr` must live as long as `'alloc`.
-    /// This requirement is met if the pointer was obtained from other data in the arena.
-    ///
-    /// Data pointed to by `ptr` must *only* be used for this `Box`. i.e. it must be unique,
-    /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
-    ///
-    /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
-    //
-    // `#[inline(always)]` because this is a no-op
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
-
-        Self(ptr, PhantomData)
-    }
-
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
     //
     // `#[inline(always)]` because this is a no-op
@@ -182,15 +162,16 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 
 #[cfg(any(feature = "serialize", test))]
-impl<T> Serialize for Box<'_, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.deref().serialize(s)
+impl<T: Serialize> Serialize for Box<'_, T> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.deref().serialize(serializer)
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<T: ESTree> ESTree for Box<'_, T> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        self.deref().serialize(serializer);
     }
 }
 
@@ -244,8 +225,21 @@ mod test {
     fn box_serialize() {
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
-        let b = serde_json::to_string(&b).unwrap();
-        assert_eq!(b, "\"x\"");
+        let s = serde_json::to_string(&b).unwrap();
+        assert_eq!(s, r#""x""#);
+    }
+
+    #[test]
+    fn box_serialize_estree() {
+        use oxc_estree::{CompactTSSerializer, ESTree};
+
+        let allocator = Allocator::default();
+        let b = Box::new_in("x", &allocator);
+
+        let mut serializer = CompactTSSerializer::new();
+        b.serialize(&mut serializer);
+        let s = serializer.into_string();
+        assert_eq!(s, r#""x""#);
     }
 
     #[test]

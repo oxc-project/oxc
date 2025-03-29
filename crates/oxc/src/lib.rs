@@ -1,5 +1,3 @@
-#![doc = include_str!("../README.md")]
-
 #[cfg(feature = "full")]
 mod compiler;
 
@@ -19,6 +17,12 @@ pub mod ast {
     pub use oxc_ast::*;
 }
 
+#[cfg(feature = "ast_visit")]
+pub mod ast_visit {
+    #[doc(inline)]
+    pub use oxc_ast_visit::*;
+}
+
 pub mod diagnostics {
     //! Error data types and utilities for handling/reporting them.
     //!
@@ -35,6 +39,7 @@ pub mod parser {
     pub use oxc_parser::*;
 }
 
+#[cfg(feature = "regular_expression")]
 pub mod regular_expression {
     #[doc(inline)]
     pub use oxc_regular_expression::*;

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_allocator"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,9 +16,12 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
+oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
+oxc_estree = { workspace = true, optional = true }
+
 allocator-api2 = { workspace = true }
 bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more", "allocator-api2"] }
@@ -28,8 +31,10 @@ simdutf8 = { workspace = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
+oxc_estree = { workspace = true, features = ["serialize"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-serialize = ["dep:serde"]
+from_raw_parts = []
+serialize = ["dep:serde", "oxc_estree/serialize"]

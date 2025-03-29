@@ -2,9 +2,7 @@ use std::mem;
 
 use napi_derive::napi;
 
-use oxc_napi::OxcError;
-
-use crate::magic_string::MagicString;
+use oxc_napi::{Comment, OxcError};
 
 #[napi(object)]
 #[derive(Default)]
@@ -16,19 +14,33 @@ pub struct ParserOptions {
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
 
-    /// Emit `ParenthesizedExpression` in AST.
+    /// Return an AST which includes TypeScript-related properties, or excludes them.
+    ///
+    /// `'js'` is default for JS / JSX files.
+    /// `'ts'` is default for TS / TSX files.
+    /// The type of the file is determined from `lang` option, or extension of provided `filename`.
+    #[napi(ts_type = "'js' | 'ts'")]
+    pub ast_type: Option<String>,
+
+    /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
-    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
-    /// containing the expression inside parentheses.
+    /// (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+    /// have a single `expression` property containing the expression inside parentheses.
     ///
-    /// Default: true
+    /// @default true
     pub preserve_parens: Option<bool>,
+
+    /// Produce semantic errors with an additional AST pass.
+    /// Semantic errors depend on symbols and scopes, where the parser does not construct.
+    /// This adds a small performance overhead.
+    ///
+    /// @default false
+    pub show_semantic_errors: Option<bool>,
 }
 
 #[napi]
 pub struct ParseResult {
-    pub(crate) source_text: String,
     pub(crate) program: String,
     pub(crate) module: EcmaScriptModule,
     pub(crate) comments: Vec<Comment>,
@@ -56,20 +68,6 @@ impl ParseResult {
     pub fn errors(&mut self) -> Vec<OxcError> {
         mem::take(&mut self.errors)
     }
-
-    #[napi(getter)]
-    pub fn magic_string(&mut self) -> MagicString {
-        MagicString::new(mem::take(&mut self.source_text))
-    }
-}
-
-#[napi(object)]
-pub struct Comment {
-    #[napi(ts_type = "'Line' | 'Block'")]
-    pub r#type: String,
-    pub value: String,
-    pub start: u32,
-    pub end: u32,
 }
 
 #[napi(object)]

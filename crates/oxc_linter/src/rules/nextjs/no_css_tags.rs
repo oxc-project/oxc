@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_value, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::get_string_literal_prop_value};
 
 fn no_css_tags_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not include stylesheets manually.")

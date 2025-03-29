@@ -3,7 +3,7 @@ mod jsx;
 mod print;
 mod typescript;
 
-use crate::{ir::Doc, Prettier};
+use crate::{Prettier, ir::Doc};
 
 pub trait Format<'a> {
     #[must_use]

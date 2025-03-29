@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn avoid_new_promise_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid creating new promises").with_label(span)
@@ -53,7 +53,9 @@ impl Rule for AvoidNew {
             return;
         };
 
-        if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident) {
+        if ident.name == "Promise"
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+        {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }
     }
@@ -70,6 +72,7 @@ fn test() {
         "new Horse()",
         "new PromiseLikeThing()",
         "new Promise.resolve()",
+        "var Promise = a; new Promise()",
     ];
 
     let fail = vec![

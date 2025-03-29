@@ -1,10 +1,10 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn prefer_logical_operator_over_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")

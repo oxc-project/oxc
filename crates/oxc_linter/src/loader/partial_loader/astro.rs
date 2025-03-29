@@ -74,7 +74,7 @@ impl<'a> AstroPartialLoader<'a> {
                 break;
             };
             // check for the / of a self closing script tag
-            if let Some('/') = self.source_text.chars().nth(js_start - 2) {
+            if self.source_text.chars().nth(js_start - 2) == Some('/') {
                 js_end = pointer;
             // find "</script>" if no self closing tag was found
             } else if let Some(offset) =

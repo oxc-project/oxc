@@ -9,8 +9,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedGeneralJestFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, ParsedJestFnCallNew,
+        PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call,
     },
 };
 
@@ -141,8 +141,8 @@ impl RequireTopLevelDescribe {
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;
-        let scopes = ctx.scopes();
-        let is_top = scopes.get_flags(node.scope_id()).is_top();
+        let scopes = ctx.scoping();
+        let is_top = scopes.scope_flags(node.scope_id()).is_top();
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

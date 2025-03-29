@@ -1,5 +1,5 @@
 var _myAsyncMethod2;
-var _myAsyncMethod = new WeakMap();
+var _myAsyncMethod = /* @__PURE__ */ new WeakMap();
 class MyClass {
   constructor() {
     var _this = this;
@@ -8,7 +8,7 @@ class MyClass {
     }));
   }
 }
-_myAsyncMethod2 = new WeakMap(), class MyClass2 {
+_myAsyncMethod2 = /* @__PURE__ */ new WeakMap(), class MyClass2 {
   constructor() {
     var _this2 = this;
     babelHelpers.classPrivateFieldInitSpec(this, _myAsyncMethod2, babelHelpers.asyncToGenerator(function* () {
@@ -16,7 +16,7 @@ _myAsyncMethod2 = new WeakMap(), class MyClass2 {
     }));
   }
 };
-var _myAsyncMethod3 = new WeakMap();
+var _myAsyncMethod3 = /* @__PURE__ */ new WeakMap();
 export default class MyClass3 {
   constructor() {
     var _this3 = this;

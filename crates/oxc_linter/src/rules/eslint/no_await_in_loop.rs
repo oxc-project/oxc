@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, Statement},
     AstKind,
+    ast::{Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)
@@ -66,7 +66,7 @@ impl Rule for NoAwaitInLoop {
             _ => return,
         };
 
-        let nodes = ctx.semantic().nodes();
+        let nodes = ctx.nodes();
         // Perform validation for AwaitExpression and ForOfStatement that contains await
         let mut parent_node = nodes.parent_node(node.id());
         let mut is_in_loop = false;

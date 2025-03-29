@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{TSInterfaceDeclaration, TSTypeLiteral},
     AstKind,
+    ast::{TSInterfaceDeclaration, TSTypeLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
     span: Span,
@@ -153,7 +153,7 @@ fn check_interface_declaration(
     allow_interfaces: AllowInterfaces,
     allow_with_name: &str,
 ) {
-    if let AllowInterfaces::Always = allow_interfaces {
+    if matches!(allow_interfaces, AllowInterfaces::Always) {
         return;
     };
     if interface.id.name.as_str() == allow_with_name {
@@ -190,7 +190,7 @@ fn check_type_literal(
     allow_object_types: AllowObjectTypes,
     allow_with_name: &str,
 ) {
-    if let AllowObjectTypes::Always = allow_object_types {
+    if matches!(allow_object_types, AllowObjectTypes::Always) {
         return;
     };
     let Some(parent_node) = ctx.nodes().parent_node(node_id) else {
@@ -257,132 +257,93 @@ fn test() {
 			}
 			    ",
             None,
-            None,
-            None,
         ),
         (
             "
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived {
 			  age: number;
 			}
-			
+
 			// valid because extending multiple interfaces can be used instead of a union type
 			interface Both extends Base, Derived {}
 			    ",
             None,
-            None,
-            None,
         ),
-        (
-            "interface Base {}",
-            Some(serde_json::json!([{ "allowInterfaces": "always" }])),
-            None,
-            None,
-        ),
+        ("interface Base {}", Some(serde_json::json!([{ "allowInterfaces": "always" }]))),
         (
             "
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived extends Base {}
 			      ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
-            None,
-            None,
         ),
         (
             "
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Derived {}
 			      ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
-            None,
-            None,
         ),
-        ("let value: object;", None, None, None),
-        ("let value: Object;", None, None, None),
-        ("let value: { inner: true };", None, None, None),
-        ("type MyNonNullable<T> = T & {};", None, None, None),
-        (
-            "type Base = {};",
-            Some(serde_json::json!([{ "allowObjectTypes": "always" }])),
-            None,
-            None,
-        ),
-        ("type Base = {};", Some(serde_json::json!([{ "allowWithName": "Base" }])), None, None),
-        (
-            "type BaseProps = {};",
-            Some(serde_json::json!([{ "allowWithName": "BaseProps" }])),
-            None,
-            None,
-        ),
-        ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Base" }])), None, None),
-        (
-            "interface BaseProps {}",
-            Some(serde_json::json!([{ "allowWithName": "BaseProps" }])),
-            None,
-            None,
-        ),
+        ("let value: object;", None),
+        ("let value: Object;", None),
+        ("let value: { inner: true };", None),
+        ("type MyNonNullable<T> = T & {};", None),
+        ("type Base = {};", Some(serde_json::json!([{ "allowObjectTypes": "always" }]))),
+        ("type Base = {};", Some(serde_json::json!([{ "allowWithName": "Base" }]))),
+        ("type BaseProps = {};", Some(serde_json::json!([{ "allowWithName": "BaseProps" }]))),
+        ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Base" }]))),
+        ("interface BaseProps {}", Some(serde_json::json!([{ "allowWithName": "BaseProps" }]))),
     ];
 
     let fail = vec![
-        ("interface Base {}", None, None, None),
-        (
-            "interface Base {}",
-            Some(serde_json::json!([{ "allowInterfaces": "never" }])),
-            None,
-            None,
-        ),
+        ("interface Base {}", None),
+        ("interface Base {}", Some(serde_json::json!([{ "allowInterfaces": "never" }]))),
         (
             "
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Other {}
 			      ",
             None,
-            None,
-            None,
         ),
         (
             "
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Derived {}
 			      ",
             None,
-            None,
-            None,
         ),
         (
             "
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			const derived = class Derived {};
 			      ",
-            None,
-            None,
             None,
         ),
         (
@@ -390,15 +351,13 @@ fn test() {
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived extends Base {}
 			      ",
             None,
-            None,
-            None,
         ),
-        ("interface Base extends Array<number> {}", None, None, None),
-        ("interface Base extends Array<number | {}> {}", None, None, None),
+        ("interface Base extends Array<number> {}", None),
+        ("interface Base extends Array<number | {}> {}", None),
         (
             "
 			interface Derived {
@@ -407,8 +366,6 @@ fn test() {
 			interface Base extends Array<Derived> {}
 			      ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -416,10 +373,8 @@ fn test() {
 			interface Base extends R {}
 			      ",
             None,
-            None,
-            None,
         ),
-        ("interface Base<T> extends Derived<T> {}", None, None, None),
+        ("interface Base<T> extends Derived<T> {}", None),
         (
             "
 			declare namespace BaseAndDerived {
@@ -428,13 +383,11 @@ fn test() {
 			}
 			      ",
             None,
-            None,
-            None,
         ),
-        ("type Base = {};", None, None, None),
-        ("type Base = {};", Some(serde_json::json!([{ "allowObjectTypes": "never" }])), None, None),
-        ("let value: {};", None, None, None),
-        ("let value: {};", Some(serde_json::json!([{ "allowObjectTypes": "never" }])), None, None),
+        ("type Base = {};", None),
+        ("type Base = {};", Some(serde_json::json!([{ "allowObjectTypes": "never" }]))),
+        ("let value: {};", None),
+        ("let value: {};", Some(serde_json::json!([{ "allowObjectTypes": "never" }]))),
         (
             "
 			let value: {
@@ -442,18 +395,11 @@ fn test() {
 			};
 			      ",
             None,
-            None,
-            None,
         ),
-        ("type MyUnion<T> = T | {};", None, None, None),
-        (
-            "type Base = {} | null;",
-            Some(serde_json::json!([{ "allowWithName": "Base" }])),
-            None,
-            None,
-        ),
-        ("type Base = {};", Some(serde_json::json!([{ "allowWithName": "Mismatch" }])), None, None),
-        ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }])), None, None),
+        ("type MyUnion<T> = T | {};", None),
+        ("type Base = {} | null;", Some(serde_json::json!([{ "allowWithName": "Base" }]))),
+        ("type Base = {};", Some(serde_json::json!([{ "allowWithName": "Mismatch" }]))),
+        ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }]))),
     ];
 
     Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail).test_and_snapshot();

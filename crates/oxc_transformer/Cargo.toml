@@ -1,6 +1,6 @@
 [package]
 name = "oxc_transformer"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -24,7 +24,8 @@ doctest = false
 oxc-browserslist = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_data_structures = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["rope", "stack"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_parser = { workspace = true }
@@ -37,10 +38,8 @@ oxc_traverse = { workspace = true }
 base64 = { workspace = true }
 compact_str = { workspace = true }
 cow-utils = { workspace = true }
-dashmap = { workspace = true }
 indexmap = { workspace = true }
 itoa = { workspace = true }
-lazy_static = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -51,8 +50,6 @@ insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true }
+oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
-
-[features]
-default = []
-wasm = ["oxc-browserslist/wasm_bindgen"]
+similar = { workspace = true }

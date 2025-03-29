@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FormalParameters, MemberExpression},
     AstKind,
+    ast::{Argument, Expression, FormalParameters, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_await_to_callbacks(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `async`/`await` to the callback pattern").with_label(span)

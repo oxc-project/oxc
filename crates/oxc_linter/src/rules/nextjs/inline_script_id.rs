@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
     AstKind,
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn inline_script_id_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

@@ -2,24 +2,24 @@ use std::ops::Range;
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
+use lazy_regex::Regex;
 use oxc_ast::{
-    ast::{Statement, SwitchCase, SwitchStatement},
     AstKind,
+    ast::{Statement, SwitchCase, SwitchStatement},
 };
 use oxc_cfg::{
-    graph::{
-        visit::{neighbors_filtered_by_edge_weight, EdgeRef},
-        Direction,
-    },
     BlockNodeId, EdgeType, ErrorEdgeKind, InstructionKind,
+    graph::{
+        Direction,
+        visit::{EdgeRef, neighbors_filtered_by_edge_weight},
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a 'break' statement before 'case'.").with_label(span)
@@ -394,13 +394,13 @@ impl NoFallthrough {
 
         if let Some(end) = end {
             let range = start..end;
-            if is_fallthrough_comment_in_range(range.clone()) {
+            if is_fallthrough_comment_in_range(range) {
                 return Some(Span::new(start, end));
             }
         }
 
         let range = start..fall.span.start;
-        if is_fallthrough_comment_in_range(range.clone()) {
+        if is_fallthrough_comment_in_range(range) {
             Some(Span::new(start, fall.span.start))
         } else {
             None

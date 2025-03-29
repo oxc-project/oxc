@@ -1,12 +1,9 @@
-use std::sync::OnceLock;
+use std::sync::{OnceLock, RwLock};
 
-use dashmap::DashMap;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use super::EngineTargets;
-
-type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[serde(untagged)]
@@ -15,14 +12,14 @@ pub enum BrowserslistQuery {
     Multiple(Vec<String>),
 }
 
-fn cache() -> &'static FxDashMap<BrowserslistQuery, EngineTargets> {
-    static CACHE: OnceLock<FxDashMap<BrowserslistQuery, EngineTargets>> = OnceLock::new();
-    CACHE.get_or_init(FxDashMap::default)
+fn cache() -> &'static RwLock<FxHashMap<BrowserslistQuery, EngineTargets>> {
+    static CACHE: OnceLock<RwLock<FxHashMap<BrowserslistQuery, EngineTargets>>> = OnceLock::new();
+    CACHE.get_or_init(|| RwLock::new(FxHashMap::default()))
 }
 
 impl BrowserslistQuery {
     pub fn exec(&self) -> Result<EngineTargets, String> {
-        if let Some(v) = cache().get(self) {
+        if let Some(v) = cache().read().unwrap().get(self) {
             return Ok(v.clone());
         }
 
@@ -54,7 +51,7 @@ impl BrowserslistQuery {
             Err(err) => return Err(format!("failed to resolve query: {err}")),
         };
 
-        cache().insert(self.clone(), result.clone());
+        cache().write().unwrap().insert(self.clone(), result.clone());
 
         Ok(result)
     }

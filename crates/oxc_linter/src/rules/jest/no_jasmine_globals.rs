@@ -1,8 +1,8 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentExpression, CallExpression, Expression, MemberExpression, SimpleAssignmentTarget,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -45,9 +45,9 @@ const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
-        let symbol_table = ctx.symbols();
+        let symbol_table = ctx.scoping();
         let jasmine_references = ctx
-            .scopes()
+            .scoping()
             .root_unresolved_references()
             .iter()
             .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(key));

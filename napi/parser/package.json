@@ -1,26 +1,86 @@
 {
-  "name": "@oxc-parser/binding",
-  "private": true,
+  "name": "oxc-parser",
+  "version": "0.61.2",
+  "main": "index.js",
+  "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
-    "build": "napi build --no-dts-cache --platform --js bindings.js --release",
-    "test": "vitest --typecheck run ./test"
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild-dev": "node patch.mjs",
+    "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
+    "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
+    "build-browser-bundle": "node build-browser-bundle.mjs",
+    "test": "pnpm run test-node run && tsc",
+    "test-node": "vitest --dir ./test",
+    "test-browser": "vitest -c vitest.config.browser.mts",
+    "bench": "vitest bench --run ./bench.bench.mjs"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "description": "Oxc Parser Node API",
+  "keywords": [
+    "oxc",
+    "parser"
+  ],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "napi/parser"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "wrap.cjs",
+    "wrap.mjs",
+    "wasm.mjs",
+    "bindings.js",
+    "webcontainer-fallback.js",
+    "deserialize-js.js",
+    "deserialize-ts.js"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
+  },
+  "devDependencies": {
+    "@codspeed/vitest-plugin": "^4.0.0",
+    "@napi-rs/wasm-runtime": "^0.2.7",
+    "@vitest/browser": "3.0.9",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.51.0",
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "parser",
+    "packageName": "@oxc-parser/binding",
     "targets": [
       "x86_64-pc-windows-msvc",
       "aarch64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
       "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
       "x86_64-apple-darwin",
-      "aarch64-apple-darwin"
+      "aarch64-apple-darwin",
+      "wasm32-wasip1-threads"
     ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    },
     "dtsHeaderFile": "header.js"
-  },
-  "dependencies": {
-    "@oxc-project/types": "workspace:^"
   }
 }

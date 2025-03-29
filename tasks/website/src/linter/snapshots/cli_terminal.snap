@@ -67,8 +67,8 @@ Handle Warnings
                               your project
 
 Output
-    -f, --format=ARG          Use a specific output format (default, json, unix, checkstyle, github,
-                              stylish)
+    -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
+                              `default`, `github`, `json`, `junit`, `stylish`, `unix`
 
 Miscellaneous
         --silent              Do not display any diagnostics
@@ -76,10 +76,19 @@ Miscellaneous
         --print-config        This option outputs the configuration to be used. When present, no
                               linting is performed and only config-related options are valid.
 
+Inline Configuration Comments
+        --report-unused-disable-directives  Report directive comments like `// eslint-disable-line`
+                              when no errors would have been reported on that line anyway.
+        --report-unused-disable-directives-severity=SEVERITY  Same as
+                              `--report-unused-disable-directives`, but allows you to specify the
+                              severity level of the reported errors. Only one of these two options
+                              can be used at a time.
+
 Available positional items:
     PATH                      Single file, single path or list of paths
 
 Available options:
         --rules               list all the rules that are currently registered
+        --disable-nested-config  Disables the automatic loading of nested configuration files.
     -h, --help                Prints help information
     -V, --version             Prints version information

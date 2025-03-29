@@ -1,4 +1,4 @@
-use crate::StringCharAt;
+use crate::{StringCharAt, string_char_at::StringCharAtResult};
 
 pub trait StringCharCodeAt {
     /// `String.prototype.charCodeAt ( pos )`
@@ -8,7 +8,11 @@ pub trait StringCharCodeAt {
 
 impl StringCharCodeAt for &str {
     fn char_code_at(&self, index: Option<f64>) -> Option<u32> {
-        self.char_at(index).map(|c| c as u32)
+        match self.char_at(index) {
+            StringCharAtResult::Value(c) => Some(c as u32),
+            StringCharAtResult::InvalidChar(v) => Some(u32::from(v)),
+            StringCharAtResult::OutOfRange => None,
+        }
     }
 }
 
@@ -28,7 +32,7 @@ mod test {
         assert_eq!(s.char_code_at(Some(-1.0)), None);
         assert_eq!(s.char_code_at(None), Some(97));
         assert_eq!(s.char_code_at(Some(0.0)), Some(97));
-        assert_eq!(s.char_code_at(Some(f64::NAN)), None);
+        assert_eq!(s.char_code_at(Some(f64::NAN)), Some(97));
         assert_eq!(s.char_code_at(Some(f64::INFINITY)), None);
     }
 }

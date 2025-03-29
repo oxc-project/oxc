@@ -23,11 +23,7 @@ impl TypeScriptRewriteExtensions {
         options.rewrite_import_extensions.map(|mode| Self { mode })
     }
 
-    pub fn rewrite_extensions<'a>(
-        &self,
-        source: &mut StringLiteral<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn rewrite_extensions<'a>(&self, source: &mut StringLiteral<'a>, ctx: &TraverseCtx<'a>) {
         let value = source.value.as_str();
         if !value.contains(['/', '\\']) {
             return;

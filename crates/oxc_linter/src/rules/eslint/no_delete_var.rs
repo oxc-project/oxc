@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_delete_var_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("variables should not be deleted").with_label(span)

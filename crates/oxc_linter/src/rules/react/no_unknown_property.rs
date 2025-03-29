@@ -1,24 +1,23 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::OnceLock};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{phf_map, phf_set, Map, Set};
+use phf::{Map, Set, phf_map, phf_set};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::get_jsx_attribute_name,
-    AstNode,
 };
 
 fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {
@@ -426,12 +425,15 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-lazy_static! {
-    static ref DOM_PROPERTIES_LOWER_MAP: FxHashMap<Cow<'static, str>, &'static str> =
+fn dom_properties_lower_map() -> &'static FxHashMap<Cow<'static, str>, &'static str> {
+    static DOM_PROPERTIES_LOWER_MAP: OnceLock<FxHashMap<Cow<'static, str>, &'static str>> =
+        OnceLock::new();
+    DOM_PROPERTIES_LOWER_MAP.get_or_init(|| {
         DOM_PROPERTIES_NAMES
             .iter()
             .map(|it| (it.cow_to_ascii_lowercase(), *it))
-            .collect::<FxHashMap<_, _>>();
+            .collect::<FxHashMap<_, _>>()
+    })
 }
 
 /// Checks if an attribute name is a valid `data-*` attribute:
@@ -544,7 +546,7 @@ impl Rule for NoUnknownProperty {
                     return;
                 }
 
-                DOM_PROPERTIES_LOWER_MAP
+                dom_properties_lower_map()
                     .get(&name.cow_to_ascii_lowercase())
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(

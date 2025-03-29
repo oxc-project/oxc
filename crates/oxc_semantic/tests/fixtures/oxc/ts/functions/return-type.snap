@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
+snapshot_kind: text
 ---
 [
   {
@@ -84,7 +85,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(Function)",
         "id": 1,
         "name": "Foo",
         "node": "Function(Foo)",

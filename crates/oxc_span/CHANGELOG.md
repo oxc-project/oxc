@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.54.0] - 2025-03-04
+
+### Features
+
+- a9f0d2b ast_tools: Generate field offset assertions for more types (#9449) (overlookmotel)
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+- 124b3cb ast_tools: Add `#[builder(skip)]` attribute for structs and enums (#9205) (overlookmotel)
+
+### Documentation
+
+- 3414824 oxc: Enable `clippy::too_long_first_doc_paragraph` (#9237) (Boshen)
+
+### Refactor
+
+- 007c857 span: Manually derive `Deserialize` for `CompactStr` (#9249) (overlookmotel)
+- be27164 span: Implement `Serialize` manually for `Atom` (#9196) (overlookmotel)
+
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+- 81bed37 span: `f64::content_eq` return `false` for `0` and `-0` (#9007) (overlookmotel)
+
+### Refactor
+
+- c58f785 ast: Simplify serializing `SourceType` (#8936) (overlookmotel)
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+- 7ddd219 ast: Rename `#[estree(always_flatten)]` attr to `#[estree(flatten)]` (#8871) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- e930cae span: Combine `Span` type and impls in 1 file (#8900) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Refactor

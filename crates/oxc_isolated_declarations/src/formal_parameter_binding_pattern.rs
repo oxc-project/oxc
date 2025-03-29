@@ -1,7 +1,6 @@
 use oxc_allocator::CloneIn;
-use oxc_ast::{
-    ast::BindingPatternKind, visit::walk_mut::walk_binding_pattern_kind, AstBuilder, VisitMut,
-};
+use oxc_ast::{AstBuilder, ast::BindingPatternKind};
+use oxc_ast_visit::{VisitMut, walk_mut::walk_binding_pattern_kind};
 
 pub struct FormalParameterBindingPattern<'a> {
     ast: AstBuilder<'a>,

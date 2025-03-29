@@ -46,7 +46,7 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl = semantic.scopes().get_binding(semantic.scopes().root_scope_id(), target);
+        let decl = semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target);
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,
@@ -66,7 +66,7 @@ impl<'a> SymbolTester<'a> {
         target: &str,
     ) -> Self {
         let mut symbols_with_target_name: Vec<SymbolId> = semantic
-            .scopes()
+            .scoping()
             .iter_bindings()
             .filter_map(|(_, bindings)| bindings.get(target).copied())
             .collect();
@@ -99,9 +99,9 @@ impl<'a> SymbolTester<'a> {
         target: &str,
     ) -> Self {
         let symbols_with_target_name: Option<SymbolId> = semantic
-            .scopes()
-            .iter_bindings()
-            .find_map(|(_, bindings)| bindings.get(target).copied());
+            .scoping()
+            .symbol_ids()
+            .find(|&symbol_id| semantic.scoping().symbol_name(symbol_id) == target);
 
         let data = match symbols_with_target_name {
             Some(symbol_id) => Ok(symbol_id),
@@ -120,7 +120,7 @@ impl<'a> SymbolTester<'a> {
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let found_flags = self.semantic.symbols().get_flags(symbol_id);
+                let found_flags = self.semantic.scoping().symbol_flags(symbol_id);
                 if found_flags.contains(flags) {
                     Ok(symbol_id)
                 } else {
@@ -138,12 +138,31 @@ impl<'a> SymbolTester<'a> {
     pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let found_flags = self.semantic.symbols().get_flags(symbol_id);
+                let found_flags = self.semantic.scoping().symbol_flags(symbol_id);
                 if found_flags.intersects(flags) {
                     Ok(symbol_id)
                 } else {
                     Err(OxcDiagnostic::error(format!(
                         "Expected {} to intersect with flags {:?}, but it had {:?}",
+                        self.target_symbol_name, flags, found_flags
+                    )))
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
+    /// Checks if the resolved symbol has exactly the flags in `flags`, using [`SymbolFlags::eq()`]
+    pub fn equal_flags(mut self, flags: SymbolFlags) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                let found_flags = self.semantic.scoping().symbol_flags(symbol_id);
+                if found_flags == flags {
+                    Ok(symbol_id)
+                } else {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {} to equal flags {:?}, but it is {:?}",
                         self.target_symbol_name, flags, found_flags
                     )))
                 }
@@ -181,8 +200,8 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let refs = {
-                    self.semantic.symbols().get_resolved_reference_ids(symbol_id).iter().map(
-                        |&reference_id| self.semantic.symbols().get_reference(reference_id).clone(),
+                    self.semantic.scoping().get_resolved_reference_ids(symbol_id).iter().map(
+                        |&reference_id| self.semantic.scoping().get_reference(reference_id).clone(),
                     )
                 };
                 let num_accepted = refs.filter(filter).count();
@@ -204,7 +223,7 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
-                let scope_flags = self.semantic.scopes().get_flags(scope_id);
+                let scope_flags = self.semantic.scoping().scope_flags(scope_id);
                 if scope_flags.contains(expected_flags) {
                     Ok(symbol_id)
                 } else {
@@ -223,7 +242,7 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
-                let scope_flags = self.semantic.scopes().get_flags(scope_id);
+                let scope_flags = self.semantic.scoping().scope_flags(scope_id);
                 if scope_flags.contains(excluded_flags) {
                     Err(OxcDiagnostic::error(format!(
                         "Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}"
@@ -282,11 +301,7 @@ impl<'a> Expect<(Rc<Semantic<'a>>, SymbolId), Result<(), OxcDiagnostic>> for Sym
     {
         let Ok(symbol_id) = self.test_result else { return self };
         let did_pass = expectation((Rc::clone(&self.semantic), symbol_id));
-        if let Err(e) = did_pass {
-            Self { test_result: Err(e), ..self }
-        } else {
-            self
-        }
+        if let Err(e) = did_pass { Self { test_result: Err(e), ..self } } else { self }
     }
 }
 

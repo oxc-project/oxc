@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression},
     AstKind,
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_single_promise_in_promise_methods_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -86,28 +86,31 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             return;
         }
 
-        let info = call_expr
+        let (span, method_name) = call_expr
             .callee
             .get_member_expr()
             .expect("callee is a member expression")
             .static_property_info()
             .expect("callee is a static property");
 
-        let diagnostic = no_single_promise_in_promise_methods_diagnostic(info.0, info.1);
+        let diagnostic = no_single_promise_in_promise_methods_diagnostic(span, method_name);
+
+        let is_directly_in_await = ctx
+            .nodes()
+            // get first non-parenthesis parent node
+            .ancestor_kinds(node.id())
+            .skip(1) // first node is the call expr
+            .find(|kind| !is_ignorable_kind(kind))
+            // check if it's an `await ...` expression
+            .is_some_and(|kind| matches!(kind, AstKind::AwaitExpression(_)));
+
+        if !is_directly_in_await && method_name == "all" {
+            return ctx.diagnostic(diagnostic);
+        }
+
         if is_fixable(node.id(), ctx) {
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let elem_text = fixer.source_range(first.span());
-
-                let is_directly_in_await = ctx
-                    .semantic()
-                    .nodes()
-                    // get first non-parenthesis parent node
-                    .ancestors(node.id())
-                    .skip(1) // first node is the call expr
-                    .find(|parent| !is_ignorable_kind(&parent.kind()))
-                    // check if it's an `await ...` expression
-                    .is_some_and(|parent| matches!(parent.kind(), AstKind::AwaitExpression(_)));
-
                 let call_span = call_expr.span;
 
                 if is_directly_in_await {
@@ -127,7 +130,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
 }
 
 fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    for parent in ctx.semantic().nodes().ancestors(call_node_id).skip(1) {
+    for parent in ctx.nodes().ancestors(call_node_id).skip(1) {
         match parent.kind() {
             AstKind::CallExpression(_)
             | AstKind::VariableDeclarator(_)
@@ -178,6 +181,7 @@ fn test() {
         "new Promise.all([promise])",
         "globalThis.Promise.all([promise])",
         "Promise.allSettled([promise])",
+        "Promise.all('one').then(something);",
     ];
 
     let fail = vec![
@@ -247,10 +251,11 @@ fn test() {
         "Promise.all([x] satisfies any[]).then()",
         "Promise.all([x as const]).then()",
         "Promise.all([x!]).then()",
+        "Promise.all(['one']).then(something);",
     ];
 
     let fix = vec![
-        ("Promise.all([null]).then()", "Promise.resolve(null).then()", None),
+        ("Promise.all([null]).then()", "Promise.all([null]).then()", None),
         ("await Promise.all([x]);", "await x;", None),
         ("await Promise.all([x as Promise<number>]);", "await x as Promise<number>;", None),
         ("while(true) { await Promise.all([x]); }", "while(true) { await x; }", None),
@@ -260,6 +265,11 @@ fn test() {
         (
             "function foo () { return Promise.all([x]); }",
             "function foo () { return Promise.all([x]); }",
+            None,
+        ),
+        (
+            "Promise.all(['one']).then((result) => result[0]);",
+            "Promise.all(['one']).then((result) => result[0]);",
             None,
         ),
     ];

@@ -3,7 +3,7 @@ var _s = import.meta.refreshSig();
 export default function Bar() {
   _s();
   useContext(X);
-  return _jsx(Foo, {});
+  return /* @__PURE__ */ _jsx(Foo, {});
 }
 _s(Bar, "useContext{}");
 _c = Bar;

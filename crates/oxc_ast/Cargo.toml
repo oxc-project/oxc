@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,11 +16,12 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["inline_string"] }
 oxc_estree = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_span = { workspace = true }
@@ -28,22 +29,13 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
-nonmax = { workspace = true }
-num-bigint = { workspace = true }
-num-traits = { workspace = true }
-
-serde = { workspace = true, features = ["derive"], optional = true }
-serde_json = { workspace = true, optional = true }
 
 [features]
 default = []
 serialize = [
-  "dep:serde",
-  "dep:serde_json",
   "oxc_allocator/serialize",
   "oxc_regular_expression/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
-  "oxc_syntax/to_js_string",
   "oxc_estree/serialize",
 ]

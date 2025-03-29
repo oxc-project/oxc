@@ -30,10 +30,10 @@ struct NeverGrowInPlaceAllocator;
 #[expect(unsafe_code, clippy::undocumented_unsafe_blocks)]
 unsafe impl GlobalAlloc for NeverGrowInPlaceAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        System.alloc(layout)
+        unsafe { System.alloc(layout) }
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout);
+        unsafe { System.dealloc(ptr, layout) };
     }
 }

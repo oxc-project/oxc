@@ -30,7 +30,6 @@ impl<'a> TSType<'a> {
             TSType::TSTypeReference(reference) => {
                 Some(reference.type_name.get_identifier_reference())
             }
-            TSType::TSQualifiedName(name) => Some(name.left.get_identifier_reference()),
             TSType::TSTypeQuery(query) => match &query.expr_name {
                 TSTypeQueryExprName::IdentifierReference(ident) => Some(ident),
                 _ => None,

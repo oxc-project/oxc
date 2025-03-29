@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         AccessorProperty, ClassBody, ClassElement, MethodDefinition, MethodDefinitionKind,
         PrivateIdentifier, PropertyDefinition,
     },
-    AstKind,
 };
 use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
@@ -11,28 +11,28 @@ use oxc_syntax::class::{ClassId, ElementKind};
 use crate::{AstNodes, NodeId};
 
 use super::{
-    table::{Element, PrivateIdentifierReference},
     ClassTable,
+    table::{Element, PrivateIdentifierReference},
 };
 
 #[derive(Debug, Default)]
-pub struct ClassTableBuilder {
+pub struct ClassTableBuilder<'a> {
     pub current_class_id: Option<ClassId>,
-    pub classes: ClassTable,
+    pub classes: ClassTable<'a>,
 }
 
-impl ClassTableBuilder {
+impl<'a> ClassTableBuilder<'a> {
     pub fn new() -> Self {
         Self { current_class_id: None, classes: ClassTable::default() }
     }
 
-    pub fn build(self) -> ClassTable {
+    pub fn build(self) -> ClassTable<'a> {
         self.classes
     }
 
     pub fn declare_class_body(
         &mut self,
-        class: &ClassBody,
+        class: &ClassBody<'a>,
         current_node_id: NodeId,
         nodes: &AstNodes,
     ) {
@@ -55,7 +55,7 @@ impl ClassTableBuilder {
         }
     }
 
-    pub fn declare_class_accessor(&mut self, property: &AccessorProperty) {
+    pub fn declare_class_accessor(&mut self, property: &AccessorProperty<'a>) {
         let is_private = property.key.is_private_identifier();
         let name = property.key.name();
 
@@ -64,7 +64,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.into(),
+                        name,
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -75,7 +75,7 @@ impl ClassTableBuilder {
         }
     }
 
-    pub fn declare_class_property(&mut self, property: &PropertyDefinition) {
+    pub fn declare_class_property(&mut self, property: &PropertyDefinition<'a>) {
         let is_private = property.key.is_private_identifier();
         let name = property.key.name();
 
@@ -84,7 +84,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.into(),
+                        name,
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -97,7 +97,7 @@ impl ClassTableBuilder {
 
     pub fn add_private_identifier_reference(
         &mut self,
-        ident: &PrivateIdentifier,
+        ident: &PrivateIdentifier<'a>,
         current_node_id: NodeId,
         nodes: &AstNodes,
     ) {
@@ -110,7 +110,7 @@ impl ClassTableBuilder {
 
                     let reference = PrivateIdentifierReference::new(
                         current_node_id,
-                        ident.name.to_compact_str(),
+                        ident.name,
                         ident.span,
                         element_ids,
                     );
@@ -120,7 +120,7 @@ impl ClassTableBuilder {
         }
     }
 
-    pub fn declare_class_method(&mut self, method: &MethodDefinition) {
+    pub fn declare_class_method(&mut self, method: &MethodDefinition<'a>) {
         if method.kind.is_constructor() || method.value.is_typescript_syntax() {
             return;
         }
@@ -132,7 +132,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.into(),
+                        name,
                         method.key.span(),
                         method.r#static,
                         is_private,

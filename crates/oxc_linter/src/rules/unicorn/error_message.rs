@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, NewExpression},
     AstKind,
+    ast::{Argument, CallExpression, Expression, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
@@ -27,9 +27,14 @@ pub struct ErrorMessage;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces a `message` value to be passed in when creating an instance of a built-in `Error` object, which leads to more readable and debuggable code.
+    /// Enforces providing a `message` when creating built-in `Error` objects to
+    /// improve readability and debugging.
     ///
     /// ### Why is this bad?
+    ///
+    /// Throwing an `Error` without a message, like `throw new Error()`, provides no context
+    /// on what went wrong, making debugging harder. A clear error message improves
+    /// code clarity and helps developers quickly identify issues.
     ///
     /// ### Examples
     ///
@@ -71,48 +76,37 @@ impl Rule for ErrorMessage {
             return;
         }
 
-        let constructor_name = &callee.name;
-        let message_argument_idx = usize::from(constructor_name.as_str() == "AggregateError");
-
-        // If message is `SpreadElement` or there is `SpreadElement` before message
-        if args
-            .iter()
-            .enumerate()
-            .any(|(i, arg)| i <= message_argument_idx && matches!(arg, Argument::SpreadElement(_)))
-        {
+        // If there is `SpreadElement` before message
+        if matches!(args.first(), Some(Argument::SpreadElement(_))) {
             return;
         }
 
+        let constructor_name = &callee.name;
+        let message_argument_idx = usize::from(callee.name == "AggregateError");
         let message_argument = args.get(message_argument_idx);
 
         let Some(arg) = message_argument else {
-            return ctx.diagnostic(missing_message(constructor_name.as_str(), span));
+            return ctx.diagnostic(missing_message(constructor_name, span));
         };
 
-        match arg {
-            Argument::StringLiteral(lit) => {
-                if lit.value.is_empty() {
-                    ctx.diagnostic(empty_message(lit.span));
-                }
+        let diagnostic = match arg {
+            Argument::ArrayExpression(array_expr) => not_string(array_expr.span),
+            Argument::ObjectExpression(object_expr) => not_string(object_expr.span),
+            Argument::StringLiteral(lit) if lit.value.is_empty() => empty_message(lit.span),
+            Argument::TemplateLiteral(template_lit)
+                if template_lit.span.source_text(ctx.source_text()).len() == 2 =>
+            {
+                empty_message(template_lit.span)
             }
-            Argument::TemplateLiteral(template_lit) => {
-                if template_lit.span.source_text(ctx.source_text()).len() == 2 {
-                    ctx.diagnostic(empty_message(template_lit.span));
-                }
-            }
-            Argument::ObjectExpression(object_expr) => {
-                ctx.diagnostic(not_string(object_expr.span));
-            }
-            Argument::ArrayExpression(array_expr) => {
-                ctx.diagnostic(not_string(array_expr.span));
-            }
-            _ => {}
-        }
+            _ => return,
+        };
+
+        ctx.diagnostic(diagnostic);
     }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-const BUILT_IN_ERRORS: &[&str] = &[
+const BUILT_IN_ERRORS: [&str; 9] = [
     "Error",
     "EvalError",
     "RangeError",

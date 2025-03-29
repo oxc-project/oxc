@@ -1,5 +1,5 @@
 use oxc_ast::ast::CallExpression;
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 pub const PROMISE_STATIC_METHODS: Set<&'static str> = phf_set! {

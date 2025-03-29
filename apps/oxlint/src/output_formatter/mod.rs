@@ -55,8 +55,9 @@ impl FromStr for OutputFormat {
 pub struct LintCommandInfo {
     /// The number of files that were linted.
     pub number_of_files: usize,
-    /// The number of lint rules that were run.
-    pub number_of_rules: usize,
+    /// The number of lint rules that were run. If the number varies and can't be clearly
+    /// computed, then this defaults to None.
+    pub number_of_rules: Option<usize>,
     /// The used CPU threads count
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
@@ -158,10 +159,6 @@ mod test {
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
 
-    /// disabled for windows
-    /// stylish will output the offset which will be different for windows
-    /// when there are multiple lines (`\r\n` vs `\n`)
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn test_output_formatter_diagnostic_stylish() {
         let args = &["--format=stylish", "test.js"];

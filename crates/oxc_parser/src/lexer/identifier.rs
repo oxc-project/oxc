@@ -9,9 +9,8 @@ use oxc_syntax::identifier::{
 use crate::diagnostics;
 
 use super::{
-    cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
-    Kind, Lexer, SourcePosition,
+    Kind, Lexer, SourcePosition, cold_branch,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -48,11 +47,10 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
-    #[expect(clippy::unnecessary_safety_comment)]
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
-        let after_first = self.source.position().add(1);
+        let after_first = unsafe { self.source.position().add(1) };
 
         // Consume bytes which are part of identifier
         let next_byte = byte_search! {

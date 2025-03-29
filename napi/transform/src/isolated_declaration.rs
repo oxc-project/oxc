@@ -70,7 +70,8 @@ pub fn isolated_declaration(
         .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
         .build(&transformed_ret.program);
 
-    let errors = ret.errors.into_iter().chain(transformed_ret.errors).map(OxcError::from).collect();
+    let diagnostics = ret.errors.into_iter().chain(transformed_ret.errors).collect::<Vec<_>>();
+    let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
 
     IsolatedDeclarationsResult {
         code: codegen_ret.code,

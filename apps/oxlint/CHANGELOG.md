@@ -4,6 +4,126 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2025-03-25
+
+### Refactor
+
+- 6432707 rust: Use `lazy-regex` (#10004) (Boshen)
+
+## [0.16.2] - 2025-03-21
+
+### Bug Fixes
+
+- f649fb3 linter: Reclassify `unicorn/no-document-cookie` as restriction (#9933) (camchenry)
+
+### Documentation
+
+- 46a12c6 linter: Tell about junit `--format` options (#9931) (Sysix)
+
+## [0.16.1] - 2025-03-20
+
+### Features
+
+- 8e3d9be linter: Support `--report-unused-disable-directive` (#9223) (1zumii)
+
+### Bug Fixes
+
+- e6f7c74 linter: Import and fix tests for typescript::no_unnecessary_parameter_property_assignment (#9720) (Ulrich Stark)
+
+### Performance
+
+- 84fa538 minify: Use mimalloc-safe to replace mimalloc (#9810) (LongYinan)
+
+### Refactor
+
+- b34cf94 oxlint: Remove `jemallocator` (#9823) (Boshen)
+
+## [0.16.0] - 2025-03-16
+
+- 225e266 linter: [**BREAKING**] Enable `--experimental-nested-config` by default and add `--disable-nested-config` option (#9760) (camchenry)
+
+### Features
+
+
+### Bug Fixes
+
+- 22f18ac linter: Improve `jsx-a11y/anchor-ambiguous-text` diagnostic message (#9789) (1zumii)
+
+## [0.15.15] - 2025-03-12
+
+### Features
+
+- 474a57b linter: A new multi-file analysis runtime (#9383) (branchseer)
+
+### Bug Fixes
+
+- ab594f1 linter: Turn oxc/no-redundant-constructor-init into typescript/no-unnecessary-parameter-property-assignment (#9618) (Uli)
+
+## [0.15.14] - 2025-03-11
+
+### Features
+
+- 41f32ea linter: Allow adding more overrides via `extends` configs (#9475) (camchenry)
+- fb7cf10 linter: Allowing `plugins` to be extended with `extends` (#9473) (camchenry)
+- fc74849 linter: Inherit `rules` via the extended config files (#9308) (camchenry)
+
+### Bug Fixes
+
+- 4ca62ab linter: Output right file line and column for `.vue`, `.astro` and `.svelte` files (#9484) (Sysix)
+- 3105159 linter: Do not output number of rules with nested configs (#9476) (camchenry)
+- 5ecda01 linter: Support nested extending (#9472) (camchenry)
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+### Testing
+
+- 934a387 linter: Remove test dependency on oxlint (#9513) (camchenry)
+
+## [0.15.13] - 2025-03-04
+
+### Features
+
+- 4ad328b linter: Add oxc/no-redundant-constructor-init (#9299) (Ben Jones)
+
+## [0.15.12] - 2025-02-23
+
+### Features
+
+- 9bc3017 linter: Add support for nested config files (#9153) (camchenry)
+- cc8dd48 linter: Add unicorn/no-invalid-fetch-options rule (#9212) (Mikhail Baev)
+- af13b1b linter: Promote `eslint/no-eval` to `correctness` (#9231) (dalaoshu)
+- 542bbd7 linter: Support `import-x` plugin name (#9074) (Sysix)
+- cded0ad oxlint: Add `--experimental-nested-config` option (#9152) (camchenry)
+
+### Bug Fixes
+
+- 4ed9d76 linter: Do not use nested configs with `--config` option (#9155) (camchenry)
+
+### Refactor
+
+- 63bb214 oxc: Apply `clippy::redundant_clone` (#9252) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+### Testing
+
+- e49c92d linter: Ensure CLI filters take precedence over nested configs (#9156) (camchenry)
+
+## [0.15.11] - 2025-02-16
+
+### Features
+
+- 5d508a4 linter: Support `env` and `globals` in `overrides` configuration (#8915) (Sysix)
+
+### Bug Fixes
+
+- 47c1649 linter: Output line/column for `--format=stylish` instead of offset + length (#9136) (Sysix)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.15.10] - 2025-02-06
 
 ### Features

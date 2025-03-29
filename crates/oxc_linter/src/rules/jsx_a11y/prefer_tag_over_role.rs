@@ -1,19 +1,18 @@
-use lazy_static::lazy_static;
 use phf::phf_map;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {
@@ -80,16 +79,14 @@ impl PreferTagOverRole {
     }
 }
 
-lazy_static! {
-    static ref ROLE_TO_TAG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
-        "checkbox" => "input",
-        "button" => "button",
-        "heading" => "h1,h2,h3,h4,h5,h6",
-        "link" => "a,area",
-        "rowgroup" => "tbody,tfoot,thead",
-        "banner" => "header",
-    };
-}
+const ROLE_TO_TAG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
+    "checkbox" => "input",
+    "button" => "button",
+    "heading" => "h1,h2,h3,h4,h5,h6",
+    "link" => "a,area",
+    "rowgroup" => "tbody,tfoot,thead",
+    "banner" => "header",
+};
 
 impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

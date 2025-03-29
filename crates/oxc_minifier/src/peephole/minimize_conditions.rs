@@ -1,33 +1,31 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::{constant_evaluation::ValueType, ToInt32};
-use oxc_span::{ContentEq, GetSpan};
+use oxc_ecmascript::{ToInt32, constant_evaluation::DetermineValueType};
+use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 /// Minimize Conditions
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let mut changed = false;
         loop {
             let mut local_change = false;
             if let Some(folded_expr) = match expr {
-                Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
+                Expression::UnaryExpression(e) => self.try_minimize_not(e, ctx),
                 Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
-                Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
-                    .or_else(|| {
-                        self.try_compress_logical_expression_to_assignment_expression(e, ctx)
-                    }),
+                Expression::LogicalExpression(e) => self.minimize_logical_expression(e, ctx),
                 Expression::ConditionalExpression(logical_expr) => {
-                    if Self::try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx) {
+                    if self.try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx) {
                         local_change = true;
                     }
                     self.try_minimize_conditional(logical_expr, ctx)
@@ -53,7 +51,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
         if changed {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -64,6 +62,7 @@ impl<'a> PeepholeOptimizations {
     // associative. For example, the "+" operator is not associative for
     // floating-point numbers.
     pub fn join_with_left_associative_op(
+        &self,
         span: Span,
         op: LogicalOperator,
         a: Expression<'a>,
@@ -75,7 +74,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
-                    .push(Self::join_with_left_associative_op(span, op, right, b, ctx));
+                    .push(self.join_with_left_associative_op(span, op, right, b, ctx));
             }
             return Expression::SequenceExpression(sequence_expr);
         }
@@ -87,7 +86,7 @@ impl<'a> PeepholeOptimizations {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
                     let right = ctx.ast.move_expression(&mut logical_expr.left);
-                    a = Self::join_with_left_associative_op(span, op, a, right, ctx);
+                    a = self.join_with_left_associative_op(span, op, a, right, ctx);
                     b = ctx.ast.move_expression(&mut logical_expr.right);
                     continue;
                 }
@@ -96,16 +95,18 @@ impl<'a> PeepholeOptimizations {
         }
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
-        ctx.ast.expression_logical(span, a, op, b)
+        let mut logic_expr = ctx.ast.logical_expression(span, a, op, b);
+        self.minimize_logical_expression(&mut logic_expr, ctx)
+            .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logic_expr)))
     }
 
     // `typeof foo === 'number'` -> `typeof foo == 'number'`
-    //  ^^^^^^^^^^ `ValueType::from(&e.left).is_string()` is `true`.
+    //  ^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_string()` is `true`.
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
-    //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
+    //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
     // `x >> +y !== 0` -> `x >> +y`
-    //  ^^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
+    //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -113,8 +114,8 @@ impl<'a> PeepholeOptimizations {
         if !e.operator.is_equality() {
             return None;
         }
-        let left = ValueType::from(&e.left);
-        let right = ValueType::from(&e.right);
+        let left = e.left.value_type(&ctx);
+        let right = e.right.value_type(&ctx);
         if left.is_undetermined() || right.is_undetermined() {
             return None;
         }
@@ -153,141 +154,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Compress `foo === null || foo === undefined` into `foo == null`.
-    ///
-    /// `foo === null || foo === undefined` => `foo == null`
-    /// `foo !== null && foo !== undefined` => `foo != null`
-    ///
-    /// Also supports `(a = foo.bar) === null || a === undefined` which commonly happens when
-    /// optional chaining is lowered. (`(a=foo.bar)==null`)
-    ///
-    /// This compression assumes that `document.all` is a normal object.
-    /// If that assumption does not hold, this compression is not allowed.
-    /// - `document.all === null || document.all === undefined` is `false`
-    /// - `document.all == null` is `true`
-    fn try_compress_is_null_or_undefined(
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let op = expr.operator;
-        let target_ops = match op {
-            LogicalOperator::Or => (BinaryOperator::StrictEquality, BinaryOperator::Equality),
-            LogicalOperator::And => (BinaryOperator::StrictInequality, BinaryOperator::Inequality),
-            LogicalOperator::Coalesce => return None,
-        };
-        if let Some(new_expr) = Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &mut expr.left,
-            &mut expr.right,
-            expr.span,
-            target_ops,
-            ctx,
-        ) {
-            return Some(new_expr);
-        }
-        let Expression::LogicalExpression(left) = &mut expr.left else {
-            return None;
-        };
-        if left.operator != op {
-            return None;
-        }
-        let new_span = Span::new(left.right.span().start, expr.span.end);
-        Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &mut left.right,
-            &mut expr.right,
-            new_span,
-            target_ops,
-            ctx,
-        )
-        .map(|new_expr| {
-            ctx.ast.expression_logical(
-                expr.span,
-                ctx.ast.move_expression(&mut left.left),
-                expr.operator,
-                new_expr,
-            )
-        })
-    }
-
-    fn try_compress_is_null_or_undefined_for_left_and_right(
-        left: &mut Expression<'a>,
-        right: &mut Expression<'a>,
-        span: Span,
-        (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        enum LeftPairValueResult {
-            Null(Span),
-            Undefined,
-        }
-
-        let (
-            Expression::BinaryExpression(left_binary_expr),
-            Expression::BinaryExpression(right_binary_expr),
-        ) = (left, right)
-        else {
-            return None;
-        };
-        if left_binary_expr.operator != find_op || right_binary_expr.operator != find_op {
-            return None;
-        }
-
-        let is_null_or_undefined = |a: &Expression| {
-            if a.is_null() {
-                Some(LeftPairValueResult::Null(a.span()))
-            } else if ctx.is_expression_undefined(a) {
-                Some(LeftPairValueResult::Undefined)
-            } else {
-                None
-            }
-        };
-        let (left_value, (left_non_value_expr, left_id_name)) = {
-            let left_value;
-            let left_non_value;
-            if let Some(v) = is_null_or_undefined(&left_binary_expr.left) {
-                left_value = v;
-                let left_non_value_id =
-                    Self::extract_id_or_assign_to_id(&left_binary_expr.right)?.name;
-                left_non_value = (&mut left_binary_expr.right, left_non_value_id);
-            } else {
-                left_value = is_null_or_undefined(&left_binary_expr.right)?;
-                let left_non_value_id =
-                    Self::extract_id_or_assign_to_id(&left_binary_expr.left)?.name;
-                left_non_value = (&mut left_binary_expr.left, left_non_value_id);
-            }
-            (left_value, left_non_value)
-        };
-
-        let (right_value, right_id) = Self::commutative_pair(
-            (&right_binary_expr.left, &right_binary_expr.right),
-            |a| match left_value {
-                LeftPairValueResult::Null(_) => ctx.is_expression_undefined(a).then_some(None),
-                LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
-            },
-            |b| {
-                if let Expression::Identifier(id) = b {
-                    Some(id)
-                } else {
-                    None
-                }
-            },
-        )?;
-
-        if left_id_name != right_id.name {
-            return None;
-        }
-
-        let null_expr_span = match left_value {
-            LeftPairValueResult::Null(span) => span,
-            LeftPairValueResult::Undefined => right_value.unwrap(),
-        };
-        Some(ctx.ast.expression_binary(
-            span,
-            ctx.ast.move_expression(left_non_value_expr),
-            replace_op,
-            ctx.ast.expression_null_literal(null_expr_span),
-        ))
-    }
-
     /// Returns the identifier or the assignment target's identifier of the given expression.
     pub fn extract_id_or_assign_to_id<'b>(
         expr: &'b Expression<'a>,
@@ -310,7 +176,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
     fn try_compress_normal_assignment_to_combined_logical_assignment(
-        &mut self,
+        &self,
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> bool {
@@ -322,7 +188,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return false };
-        let new_op = logical_expr.operator.to_assignment_operator();
+        // NOTE: if the right hand side is an anonymous function, applying this compression will
+        // set the `name` property of that function.
+        // Since codes relying on the fact that function's name is undefined should be rare,
+        // we do this compression even if `keep_names` is enabled.
 
         let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -337,37 +206,10 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut logical_expr.right);
         true
-    }
-
-    /// Compress `a || (a = b)` to `a ||= b`
-    fn try_compress_logical_expression_to_assignment_expression(
-        &self,
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
-        }
-        let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
-            return None;
-        };
-        if assignment_expr.operator != AssignmentOperator::Assign {
-            return None;
-        }
-        let new_op = expr.operator.to_assignment_operator();
-        if !Self::has_no_side_effect_for_evaluation_same_target(
-            &assignment_expr.left,
-            &expr.left,
-            ctx,
-        ) {
-            return None;
-        }
-        assignment_expr.span = expr.span;
-        assignment_expr.operator = new_op;
-        Some(ctx.ast.move_expression(&mut expr.right))
     }
 
     /// Compress `a = a + b` to `a += b`
@@ -390,59 +232,6 @@ impl<'a> PeepholeOptimizations {
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut binary_expr.right);
         true
-    }
-
-    /// Returns `true` if the assignment target and expression have no side effect for *evaluation* and points to the same reference.
-    ///
-    /// Evaluation here means `Evaluation` in the spec.
-    /// <https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-evaluation>
-    ///
-    /// Matches the following cases (`a` can be `this`):
-    ///
-    /// - `a`, `a`
-    /// - `a.b`, `a.b`
-    /// - `a["b"]`, `a["b"]`
-    /// - `a[0]`, `a[0]`
-    fn has_no_side_effect_for_evaluation_same_target(
-        assignment_target: &AssignmentTarget,
-        expr: &Expression,
-        ctx: Ctx<'a, '_>,
-    ) -> bool {
-        if let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
-        ) = (assignment_target, expr)
-        {
-            return write_id_ref.name == read_id_ref.name;
-        }
-        if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberExpression::ComputedMemberExpression(e) = write_expr {
-                if !matches!(
-                    e.expression,
-                    Expression::StringLiteral(_) | Expression::NumericLiteral(_)
-                ) {
-                    return false;
-                }
-            }
-            let has_same_object = match &write_expr.object() {
-                // It should also return false when the reference might refer to a reference value created by a with statement
-                // when the minifier supports with statements
-                Expression::Identifier(ident) => !ctx.is_global_reference(ident),
-                Expression::ThisExpression(_) => {
-                    expr.as_member_expression().is_some_and(|read_expr| {
-                        matches!(read_expr.object(), Expression::ThisExpression(_))
-                    })
-                }
-                _ => false,
-            };
-            if !has_same_object {
-                return false;
-            }
-            if let Some(read_expr) = expr.as_member_expression() {
-                return write_expr.content_eq(read_expr);
-            }
-        }
-        false
     }
 
     /// Compress `a = a + b` to `a += b`
@@ -489,8 +278,8 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
     use oxc_syntax::es_target::ESTarget;
 
@@ -503,9 +292,9 @@ mod test {
         test("function f(){if(x){a()}x=3}", "function f(){x&&a(),x=3}");
         test("function f(){if(x){a?.()}x=3}", "function f(){x&&a?.(),x=3}");
 
-        // test("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
+        test("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
         test("function f(){if(x){a()}}", "function f(){x&&a()}");
-        // test("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
+        test("function f(){if(x){throw 1}}", "function f(){if(x)throw 1}");
 
         // Try it out with functions
         test("function f(){if(x){foo()}}", "function f(){x&&foo()}");
@@ -531,7 +320,7 @@ mod test {
             "function f() { if (e1) do foo(); while (e2); else foo2(); }",
         );
         // Test an obscure case with do and while
-        // test("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
+        test("if(x){do{foo()}while(y)}else bar()", "if(x)do foo();while(y);else bar()");
 
         // Play with nested IFs
         test("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
@@ -542,27 +331,27 @@ mod test {
             "function f(){x?y?foo():bar():baz()}",
         );
 
-        // test("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
+        test("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)for(;e2;)e3&&foo();else bar()");
 
-        // test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
+        test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
         // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-        // test("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
+        test("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
 
         // NOTE - technically we can remove the blocks since both the parent
         // and child have elses. But we don't since it causes ambiguities in
         // some cases where not all descendent ifs having elses
-        // test(
-        // "if(x){ if(y){var x;}else{var z;} }else{var w}",
-        // "if(x)if(y)var x;else var z;else var w",
-        // );
-        // test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+        test(
+            "if(x){ if(y){var x;}else{var z;} }else{var w}",
+            "if(x)if(y)var x;else var z;else var w",
+        );
+        test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
 
         // Here's some of the ambiguous cases
-        // test(
-        // "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
-        // "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
-        // );
+        test(
+            "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
+            "a ? b ? (f1(), f2()) : c && f3() : d && f4();",
+        );
 
         test_same("function f(){foo()}");
         test_same("switch(x){case y: foo()}");
@@ -588,7 +377,7 @@ mod test {
     fn test_fold_returns() {
         test("function f(){if(x)return 1;else return 2}", "function f(){return x?1:2}");
         test("function f(){if(x)return 1;return 2}", "function f(){return x?1:2}");
-        test("function f(){if(x)return;return 2}", "function f(){return x?void 0:2}");
+        test("function f(){if(x)return;return 2}", "function f(){if (!x) return 2;}");
         test("function f(){if(x)return 1+x;else return 2-x}", "function f(){return x?1+x:2-x}");
         test("function f(){if(x)return 1+x;return 2-x}", "function f(){return x?1+x:2-x}");
         test(
@@ -596,8 +385,8 @@ mod test {
             "function f(){return x?(y+=1):(y+=2)}",
         );
 
-        test("function f(){if(x)return;else return 2-x}", "function f(){return x?void 0:2-x}");
-        test("function f(){if(x)return;return 2-x}", "function f(){return x?void 0:2-x}");
+        test("function f(){if(x)return;else return 2-x}", "function f(){if (!x) return 2 - x;}");
+        test("function f(){if(x)return;return 2-x}", "function f(){if (!x) return 2 - x;}");
         test("function f(){if(x)return x;else return}", "function f(){if(x)return x;}");
         test("function f(){if(x)return x;return}", "function f(){if(x)return x}");
 
@@ -608,37 +397,33 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs1() {
         test(
             "function f() {if (x) return 1; if (y) return 1}",
-            "function f() {if (x||y) return 1;}",
+            "function f() {if (x || y) return 1;}",
         );
-        test(
-            "function f() {if (x) return 1; if (y) foo(); else return 1}",
-            "function f() {if ((!x)&&y) foo(); else return 1;}",
-        );
+        // test(
+        //     "function f() {if (x) return 1; if (y) foo(); else return 1}",
+        //     "function f() {if ((!x)&&y) foo(); else return 1;}",
+        // );
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs2() {
-        // combinable but not yet done
-        test_same("function f() {if (x) throw 1; if (y) throw 1}");
+        test("function f() {if (x) throw 1; if (y) throw 1}", "function f() {if (x || y) throw 1}");
         // Can't combine, side-effect
-        test("function f(){ if (x) g(); if (y) g() }", "function f(){ x&&g(); y&&g() }");
-        test("function f(){ if (x) g?.(); if (y) g?.() }", "function f(){ x&&g?.(); y&&g?.() }");
+        test("function f(){ if (x) g(); if (y) g() }", "function f(){ x&&g(), y&&g() }");
+        test("function f(){ if (x) g?.(); if (y) g?.() }", "function f(){ x&&g?.(), y&&g?.() }");
         // Can't combine, side-effect
-        test(
-            "function f(){ if (x) y = 0; if (y) y = 0; }",
-            "function f(){ x&&(y = 0); y&&(y = 0); }",
-        );
+        test("function f(){ if (x) y = 0; if (y) y = 0; }", "function f(){ x&&(y = 0), y &&= 0 }");
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs3() {
-        test_same("function f() {if (x) return 1; if (y) {g();f()}}");
+        test(
+            "function f() {if (x) return 1; if (y) {g();f()}}",
+            "function f() { if (x) return 1; y && (g(), f()) }",
+        );
     }
 
     /** Try to minimize assignments */
@@ -727,8 +512,8 @@ mod test {
     fn test_not_cond() {
         test("function f(){if(!x)foo()}", "function f(){x||foo()}");
         test("function f(){if(!x)b=1}", "function f(){x||(b=1)}");
-        // test("if(!x)z=1;else if(y)z=2", "x ? y&&(z=2) : z=1;");
-        // test("if(x)y&&(z=2);else z=1;", "x ? y&&(z=2) : z=1");
+        test("if(!x)z=1;else if(y)z=2", "x ? y&&(z=2) : z=1;");
+        test("if(x)y&&(z=2);else z=1;", "x ? y&&(z=2) : z=1");
         test("function f(){if(!(x=1))a.b=1}", "function f(){(x=1)||(a.b=1)}");
     }
 
@@ -743,9 +528,7 @@ mod test {
 
     #[test]
     fn test_fold_logical_op_string_compare() {
-        // side-effects
-        // There is two way to parse two &&'s and both are correct.
-        test("if (foo() && false) z()", "foo() && !1");
+        test("if (foo() && false) z()", "foo()");
     }
 
     #[test]
@@ -762,7 +545,7 @@ mod test {
         test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+        test("x = !(y() && true)", "x = !y()");
 
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
@@ -932,9 +715,9 @@ mod test {
         // These could be simplified to "for(;;) ..."
         test("for(;!!true;) foo()", "for(;;) foo()");
         // Verify function deletion tracking.
-        // test("if(!!true||function(){}) {}", "if(1) {}");
+        test("if(!!true||function(){}) {}", "");
         // Don't bother with FOR inits as there are normalized out.
-        test("for(!!true;;) foo()", "for(!0;;) foo()");
+        test("for(!!true;;) foo()", "for(;;) foo()");
 
         // These test tryMinimizeCondition
         test("for(;!!x;) foo()", "for(;x;) foo()");
@@ -957,31 +740,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_fold_loop_break_late() {
+    fn test_fold_loop_break() {
         test("for(;;) if (a) break", "for(;!a;);");
         test_same("for(;;) if (a) { f(); break }");
-        test("for(;;) if (a) break; else f()", "for(;!a;) { { f(); } }");
+        test("for(;;) if (a) break; else f()", "for(;!a;) f()");
         test("for(;a;) if (b) break", "for(;a && !b;);");
-        test("for(;a;) { if (b) break; if (c) break; }", "for(;(a && !b);) if (c) break;");
+        test("for(;a;) { if (b) break; if (c) break; }", "for (;a && !(b || c););");
         test("for(;(a && !b);) if (c) break;", "for(;(a && !b) && !c;);");
-        test("for(;;) { if (foo) { break; var x; } } x;", "var x; for(;!foo;) {} x;");
+        // test("for(;;) { if (foo) { break; var x; } } x;", "var x; for(;!foo;) {} x;");
 
         // 'while' is normalized to 'for'
-        test("while(true) if (a) break", "for(;1&&!a;);");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_fold_loop_break_early() {
-        test_same("for(;;) if (a) break");
-        test_same("for(;;) if (a) { f(); break }");
-        test_same("for(;;) if (a) break; else f()");
-        test_same("for(;a;) if (b) break");
-        test_same("for(;a;) { if (b) break; if (c) break; }");
-
-        test_same("while(1) if (a) break");
-        test_same("for (; 1; ) if (a) break");
+        test("while(true) if (a) break", "for(;!a;);");
     }
 
     #[test]
@@ -1203,72 +972,70 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_duplicate_return() {
         test("function f() { return; }", "function f(){}");
         test_same("function f() { return a; }");
+        test("function f() { if (x) { return a } return a; }", "function f() { return x, a; }");
+        test_same("function f() { try { if (x) return a; } catch {} return a; }");
         test(
-            "function f() { if (x) { return a } return a; }",
-            "function f() { if (x) {} return a; }",
+            "function f() { try { if (x) {} } catch {} return 1; }",
+            "function f() { try { x } catch {} return 1; }",
         );
-        test_same("function f() { try { if (x) { return a } } catch(e) {} return a; }");
-        test_same("function f() { try { if (x) {} } catch(e) {} return 1; }");
 
         // finally clauses may have side effects
-        test_same("function f() { try { if (x) { return a } } finally { a++ } return a; }");
+        test_same("function f() { try { if (x) return a } finally { a++ } return a; }");
         // but they don't matter if the result doesn't have side effects and can't
         // be affect by side-effects.
-        test(
-            "function f() { try { if (x) { return 1 } } finally {} return 1; }",
-            "function f() { try { if (x) {} } finally {} return 1; }",
-        );
+        // test(
+        //     "function f() { try { if (x) return 1 } finally {} return 1; }",
+        //     "function f() { try { if (x) {} } finally {} return 1; }",
+        // );
 
-        test(
-            "function f() { switch(a){ case 1: return a; } return a; }",
-            "function f() { switch(a){ case 1: } return a; }",
-        );
+        // test(
+        //     "function f() { switch(a){ case 1: return a; } return a; }",
+        //     "function f() { switch(a){ case 1: } return a; }",
+        // );
 
-        test(
-            concat!(
-                "function f() { switch(a){ ",
-                "  case 1: return a; case 2: return a; } return a; }"
-            ),
-            concat!("function f() { switch(a){ ", "  case 1: break; case 2: } return a; }"),
-        );
+        // test(
+        //     concat!(
+        //         "function f() { switch(a){ ",
+        //         "  case 1: return a; case 2: return a; } return a; }"
+        //     ),
+        //     concat!("function f() { switch(a){ ", "  case 1: break; case 2: } return a; }"),
+        // );
     }
 
     #[test]
-    #[ignore]
     fn test_remove_duplicate_throw() {
         test_same("function f() { throw a; }");
-        test("function f() { if (x) { throw a } throw a; }", "function f() { if (x) {} throw a; }");
-        test_same("function f() { try { if (x) {throw a} } catch(e) {} throw a; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {f()} throw 1; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {f()} throw 1; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {throw 1}}");
-        test(
-            "function f() { try { if (x) {throw 1} } catch(e) {throw 1} throw 1; }",
-            "function f() { try { if (x) {throw 1} } catch(e) {} throw 1; }",
-        );
+        test("function f() { if (x) { throw a } throw a; }", "function f() { throw x, a; }");
+        test_same("function f() { try { if (x) throw a } catch {} throw a; }");
+        test_same("function f() { try { if (x) throw 1 } catch {f()} throw 1; }");
+        test_same("function f() { try { if (x) throw 1 } catch {f()} throw 1; }");
+        test_same("function f() { try { if (x) throw 1 } catch {throw 1}}");
+        // test(
+        //     "function f() { try { if (x) throw 1 } catch {throw 1} throw 1; }",
+        //     "function f() { try { if (x) throw 1 } catch {} throw 1; }",
+        // );
 
         // finally clauses may have side effects
-        test_same("function f() { try { if (x) { throw a } } finally { a++ } throw a; }");
+        test_same("function f() { try { if (x) throw a } finally { a++ } throw a; }");
         // but they don't matter if the result doesn't have side effects and can't
         // be affect by side-effects.
-        test(
-            "function f() { try { if (x) { throw 1 } } finally {} throw 1; }",
-            "function f() { try { if (x) {} } finally {} throw 1; }",
-        );
+        // test(
+        //     "function f() { try { if (x) throw 1 } finally {} throw 1; }",
+        //     "function f() { try { if (x) {} } finally {} throw 1; }",
+        // );
 
-        test(
-            "function f() { switch(a){ case 1: throw a; } throw a; }",
-            "function f() { switch(a){ case 1: } throw a; }",
-        );
+        // test(
+        //     "function f() { switch(a){ case 1: throw a; } throw a; }",
+        //     "function f() { switch(a){ case 1: } throw a; }",
+        // );
 
-        test(
-            concat!("function f() { switch(a){ ", "case 1: throw a; case 2: throw a; } throw a; }"),
-            concat!("function f() { switch(a){ case 1: break; case 2: } throw a; }"),
-        );
+        // test(
+        //     concat!("function f() { switch(a){ ", "case 1: throw a; case 2: throw a; } throw a; }"),
+        //     concat!("function f() { switch(a){ case 1: break; case 2: } throw a; }"),
+        // );
     }
 
     #[test]
@@ -1299,24 +1066,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause1() {
-        test(
-            "function f() { if (x) throw 1; else f() }",
-            "function f() { if (x) throw 1; { f() } }",
-        );
+        test("function f() { if (x) throw 1; else f() }", "function f() { if (x) throw 1; f() }");
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause2() {
-        test(
-            "function f() { if (x) return 1; else f() }",
-            "function f() { if (x) return 1; { f() } }",
-        );
-        test("function f() { if (x) return; else f() }", "function f() { if (x) {} else { f() } }");
+        test("function f() { if (x) return 1; else f() }", "function f() { if (x) return 1; f() }");
+        test("function f() { if (x) return; else f() }", "function f() { x || f() }");
         // This case is handled by minimize exit points.
-        test_same("function f() { if (x) return; f() }");
+        test("function f() { if (x) return; f() }", "function f() { x || f() }");
     }
 
     #[test]
@@ -1498,49 +1257,49 @@ mod test {
     fn compress_binary_boolean() {
         test("a instanceof b === true", "a instanceof b");
         test("a instanceof b == true", "a instanceof b");
-        test("a instanceof b === false", "!(a instanceof b)");
-        test("a instanceof b == false", "!(a instanceof b)");
+        test("a instanceof b === false", "a instanceof b");
+        test("a instanceof b == false", "a instanceof b");
 
-        test("a instanceof b !== true", "!(a instanceof b)");
-        test("a instanceof b != true", "!(a instanceof b)");
+        test("a instanceof b !== true", "a instanceof b");
+        test("a instanceof b != true", "a instanceof b");
         test("a instanceof b !== false", "a instanceof b");
         test("a instanceof b != false", "a instanceof b");
 
         test("delete x === true", "delete x");
         test("delete x == true", "delete x");
-        test("delete x === false", "!(delete x)");
-        test("delete x == false", "!(delete x)");
+        test("delete x === false", "delete x");
+        test("delete x == false", "delete x");
 
-        test("delete x !== true", "!(delete x)");
-        test("delete x != true", "!(delete x)");
+        test("delete x !== true", "delete x");
+        test("delete x != true", "delete x");
         test("delete x !== false", "delete x");
         test("delete x != false", "delete x");
     }
 
     #[test]
     fn compress_binary_number() {
-        test("if(x >> +y == 0){}", "!(x >> +y)");
-        test("if(x >> +y === 0){}", "!(x >> +y)");
+        test("if(x >> +y == 0){}", "x >> +y");
+        test("if(x >> +y === 0){}", "x >> +y");
         test("if(x >> +y != 0){}", "x >> +y");
         test("if(x >> +y !== 0){}", "x >> +y");
         test("if((-0 != +0) !== false){}", "");
         test_same("foo(x >> y == 0)");
 
-        test("(x = 1) === 1", "(x = 1) == 1");
-        test("(x = 1) !== 1", "(x = 1) != 1");
-        test("!0 + null !== 1", "!0 + null != 1");
+        test("v = (x = 1) === 1", "v = (x = 1) == 1");
+        test("v = (x = 1) !== 1", "v = (x = 1) != 1");
+        test("v = !0 + null !== 1", "v = !1");
     }
 
     #[test]
     fn test_try_compress_type_of_equal_string() {
-        test("typeof foo === 'number'", "typeof foo == 'number'");
-        test("'number' === typeof foo", "typeof foo == 'number'");
-        test("typeof foo === `number`", "typeof foo == 'number'");
-        test("`number` === typeof foo", "typeof foo == 'number'");
-        test("typeof foo !== 'number'", "typeof foo != 'number'");
-        test("'number' !== typeof foo", "typeof foo != 'number'");
-        test("typeof foo !== `number`", "typeof foo != 'number'");
-        test("`number` !== typeof foo", "typeof foo != 'number'");
+        test("v = typeof foo === 'number'", "v = typeof foo == 'number'");
+        test("v = 'number' === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo === `number`", "v = typeof foo == 'number'");
+        test("v = `number` === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo !== 'number'", "v = typeof foo != 'number'");
+        test("v = 'number' !== typeof foo", "v = typeof foo != 'number'");
+        test("v = typeof foo !== `number`", "v = typeof foo != 'number'");
+        test("v = `number` !== typeof foo", "v = typeof foo != 'number'");
     }
 
     #[test]
@@ -1558,15 +1317,13 @@ mod test {
         test("x ? a = 0 : a = 1", "a = x ? 0 : 1");
         test(
             "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
-            "a = x ? function foo() { return 'a' } : function bar() { return 'b' }",
+            "a = x ? function () { return 'a' } : function () { return 'b' }",
         );
 
         // a.b might have a side effect
         test_same("x ? a.b = 0 : a.b = 1");
-        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function
-        test_same("x ? a = () => 'a' : a = () => 'b'");
-        test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
-        test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
+        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
+        test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
         // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
         // so cannot be fold to `a += x ? 0 : 1`
@@ -1577,39 +1334,39 @@ mod test {
 
     #[test]
     fn test_fold_is_null_or_undefined() {
-        test("foo === null || foo === undefined", "foo == null");
-        test("foo === undefined || foo === null", "foo == null");
-        test("foo === null || foo === void 0", "foo == null");
-        test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
-        test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
-        test_same("foo === void 0 || bar === null");
-        test_same("var undefined = 1; foo === null || foo === undefined");
-        test_same("foo !== 1 && foo === void 0 || foo === null");
-        test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
+        test("v = foo === null || foo === undefined", "v = foo == null");
+        test("v = foo === undefined || foo === null", "v = foo == null");
+        test("v = foo === null || foo === void 0", "v = foo == null");
+        test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
+        test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
+        test_same("v = foo === void 0 || bar === null");
+        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test_same("v = foo !== 1 && foo === void 0 || foo === null");
+        test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
-        test("foo !== null && foo !== undefined", "foo != null");
-        test("foo !== undefined && foo !== null", "foo != null");
-        test("foo !== null && foo !== void 0", "foo != null");
-        test("foo !== null && foo !== void 0 && foo !== 1", "foo != null && foo !== 1");
-        test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
-        test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
-        test_same("foo !== void 0 && bar !== null");
+        test("v = foo !== null && foo !== undefined", "v = foo != null");
+        test("v = foo !== undefined && foo !== null", "v = foo != null");
+        test("v = foo !== null && foo !== void 0", "v = foo != null");
+        test("v = foo !== null && foo !== void 0 && foo !== 1", "v = foo != null && foo !== 1");
+        test("v = foo !== 1 && foo !== null && foo !== void 0", "v = foo !== 1 && foo != null");
+        test("v = foo !== 1 || foo !== void 0 && foo !== null", "v = foo !== 1 || foo != null");
+        test_same("v = foo !== void 0 && bar !== null");
 
-        test("(_foo = foo) === null || _foo === undefined", "(_foo = foo) == null");
-        test("(_foo = foo) === null || _foo === void 0", "(_foo = foo) == null");
-        test("(_foo = foo.bar) === null || _foo === undefined", "(_foo = foo.bar) == null");
-        test("(_foo = foo) !== null && _foo !== undefined", "(_foo = foo) != null");
-        test("(_foo = foo) === undefined || _foo === null", "(_foo = foo) == null");
-        test("(_foo = foo) === void 0 || _foo === null", "(_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === undefined", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === void 0", "v = (_foo = foo) == null");
+        test("v = (_foo = foo.bar) === null || _foo === undefined", "v = (_foo = foo.bar) == null");
+        test("v = (_foo = foo) !== null && _foo !== undefined", "v = (_foo = foo) != null");
+        test("v = (_foo = foo) === undefined || _foo === null", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === void 0 || _foo === null", "v = (_foo = foo) == null");
         test(
-            "(_foo = foo) === null || _foo === void 0 || _foo === 1",
-            "(_foo = foo) == null || _foo === 1",
+            "v = (_foo = foo) === null || _foo === void 0 || _foo === 1",
+            "v = (_foo = foo) == null || _foo === 1",
         );
         test(
-            "_foo === 1 || (_foo = foo) === null || _foo === void 0",
-            "_foo === 1 || (_foo = foo) == null",
+            "v = _foo === 1 || (_foo = foo) === null || _foo === void 0",
+            "v = _foo === 1 || (_foo = foo) == null",
         );
-        test_same("(_foo = foo) === void 0 || bar === null");
+        test_same("v = (_foo = foo) === void 0 || bar === null");
     }
 
     #[test]
@@ -1621,7 +1378,7 @@ mod test {
         test("x && (x = g())", "x &&= g()");
         test("x ?? (x = g())", "x ??= g()");
 
-        // `||=`, `&&=`, `??=` sets the name property of the function
+        // `||=`, `&&=`, `??=` sets the name property of the function, but we ignore that difference
         // Example case: `let f = false; f || (f = () => {}); console.log(f.name)`
         test("x || (x = () => 'a')", "x ||= () => 'a'");
 
@@ -1668,6 +1425,11 @@ mod test {
         test_same("var x; x.y = x.y || 1");
         // This case is not supported, since the minifier does not support with statements
         // test_same("var x; with (z) { x = x || 1 }");
+
+        // `||=`, `&&=`, `??=` sets the name property of the function, while `= x || y` does not
+        // but we ignore that difference
+        // Example case: `let f = false; f = f || (() => {}); console.log(f.name)`
+        test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
         let target = ESTarget::ES2019;
         let code = "var x; x = x || 1";

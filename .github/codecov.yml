@@ -13,10 +13,9 @@ coverage:
 ignore:
   - "**/main.rs"
   - "**/examples"
+  - "**/generated/**"
   - "tasks"
   - "editor"
   - "napi"
-  - "crates/oxc_ast/src/generated"
-  - "crates/oxc_traverse/src/generated"
-  - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_diagnostics"
+  - "crates/oxc_napi"

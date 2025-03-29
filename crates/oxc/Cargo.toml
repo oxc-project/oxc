@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,9 +28,10 @@ required-features = ["full"]
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_regular_expression = { workspace = true }
+oxc_parser = { workspace = true, features = [] }
+oxc_regular_expression = { workspace = true, optional = true }
 
+oxc_ast_visit = { workspace = true, optional = true }
 oxc_cfg = { workspace = true, optional = true }
 oxc_codegen = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
@@ -43,6 +44,8 @@ oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
 [features]
+default = ["regular_expression"]
+
 full = [
   "codegen",
   "mangler",
@@ -50,7 +53,9 @@ full = [
   "semantic",
   "transformer",
   "isolated_declarations",
+  "ast_visit",
   "cfg",
+  "regular_expression",
 ]
 
 semantic = ["oxc_semantic"]
@@ -60,15 +65,17 @@ codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg"]
 isolated_declarations = ["oxc_isolated_declarations"]
+ast_visit = ["oxc_ast_visit"]
+regular_expression = ["oxc_regular_expression", "oxc_parser/regular_expression"]
 
 serialize = [
+  "oxc_allocator/from_raw_parts",
   "oxc_ast/serialize",
+  "oxc_ast_visit/serialize",
   "oxc_semantic?/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
-
-wasm = ["oxc_transformer/wasm"]
 
 [package.metadata.docs.rs]
 all-features = true

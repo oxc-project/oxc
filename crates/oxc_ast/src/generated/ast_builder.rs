@@ -3,11 +3,7 @@
 
 //! AST node factories
 
-#![expect(
-    clippy::default_trait_access,
-    clippy::too_many_arguments,
-    clippy::fn_params_excessive_bools
-)]
+#![expect(clippy::default_trait_access)]
 
 use std::cell::Cell;
 
@@ -94,7 +90,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Program`] with `ScopeId`.
+    /// Build a [`Program`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_program_with_scope_id`] instead.
     ///
@@ -134,7 +130,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`Program`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Program`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::program_with_scope_id`] instead.
     ///
@@ -280,6 +276,34 @@ impl<'a> AstBuilder<'a> {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn expression_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> Expression<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
     /// Build an [`Expression::TemplateLiteral`].
     ///
     /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
@@ -311,6 +335,31 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Expression::Identifier(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build an [`Expression::Identifier`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn expression_identifier_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> Expression<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Expression::Identifier(self.alloc_identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
     }
 
     /// Build an [`Expression::MetaProperty`].
@@ -400,6 +449,54 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`Expression::ArrowFunctionExpression`] with `scope_id` and `pure`.
+    ///
+    /// This node contains an [`ArrowFunctionExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// * `async`
+    /// * `type_parameters`
+    /// * `params`
+    /// * `return_type`
+    /// * `body`: See `expression` for whether this arrow expression returns an expression.
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[inline]
+    pub fn expression_arrow_function_with_scope_id_and_pure<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+        pure: bool,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        Expression::ArrowFunctionExpression(
+            self.alloc_arrow_function_expression_with_scope_id_and_pure(
+                span,
+                expression,
+                r#async,
+                type_parameters,
+                params,
+                return_type,
+                body,
+                scope_id,
+                pure,
+            ),
+        )
+    }
+
     /// Build an [`Expression::AssignmentExpression`].
     ///
     /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
@@ -461,7 +558,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -469,7 +566,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Expression<'a>
@@ -479,9 +576,43 @@ impl<'a> AstBuilder<'a> {
         Expression::CallExpression(self.alloc_call_expression(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
+        ))
+    }
+
+    /// Build an [`Expression::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn expression_call_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Expression::CallExpression(self.alloc_call_expression_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
         ))
     }
 
@@ -508,7 +639,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -522,7 +653,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -540,11 +671,65 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
             declare,
+        ))
+    }
+
+    /// Build an [`Expression::ClassExpression`] with `scope_id`.
+    ///
+    /// This node contains a [`Class`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the class.
+    /// * `id`: Class identifier, AKA the name
+    /// * `type_parameters`
+    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `implements`: Interface implementation clause for TypeScript classes.
+    /// * `body`
+    /// * `abstract`: Whether the class is abstract
+    /// * `declare`: Whether the class was `declare`ed
+    /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn expression_class_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        r#type: ClassType,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
+        super_class: Option<Expression<'a>>,
+        super_type_arguments: T2,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+    {
+        Expression::ClassExpression(self.alloc_class_with_scope_id(
+            span,
+            r#type,
+            decorators,
+            id,
+            type_parameters,
+            super_class,
+            super_type_arguments,
+            implements,
+            body,
+            r#abstract,
+            declare,
+            scope_id,
         ))
     }
 
@@ -623,6 +808,65 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`Expression::FunctionExpression`] with `scope_id` and `pure`.
+    ///
+    /// This node contains a [`Function`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `id`: The function identifier. [`None`] for anonymous function expressions.
+    /// * `generator`: Is this a generator function?
+    /// * `async`
+    /// * `declare`
+    /// * `type_parameters`
+    /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// * `params`: Function parameters.
+    /// * `return_type`: The TypeScript return type annotation.
+    /// * `body`: The function body.
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[inline]
+    pub fn expression_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+        self,
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+        pure: bool,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure(
+            span,
+            r#type,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
+            scope_id,
+            pure,
+        ))
+    }
+
     /// Build an [`Expression::ImportExpression`].
     ///
     /// This node contains an [`ImportExpression`] that will be stored in the memory arena.
@@ -630,17 +874,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn expression_import(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc_import_expression(span, source, arguments, phase))
+        Expression::ImportExpression(self.alloc_import_expression(span, source, options, phase))
     }
 
     /// Build an [`Expression::LogicalExpression`].
@@ -671,14 +915,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_new<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -687,7 +931,38 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters,
+            type_arguments,
+        ))
+    }
+
+    /// Build an [`Expression::NewExpression`] with `pure`.
+    ///
+    /// This node contains a [`NewExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `arguments`
+    /// * `type_arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn expression_new_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        type_arguments: T1,
+        pure: bool,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Expression::NewExpression(self.alloc_new_expression_with_pure(
+            span,
+            callee,
+            arguments,
+            type_arguments,
+            pure,
         ))
     }
 
@@ -749,14 +1024,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_tagged_template<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -765,7 +1040,7 @@ impl<'a> AstBuilder<'a> {
             span,
             tag,
             quasi,
-            type_parameters,
+            type_arguments,
         ))
     }
 
@@ -843,19 +1118,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn expression_private_in(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::PrivateInExpression(
-            self.alloc_private_in_expression(span, left, operator, right),
-        )
+        Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -1007,6 +1278,26 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`Expression::V8IntrinsicExpression`].
+    ///
+    /// This node contains a [`V8IntrinsicExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn expression_v_8_intrinsic(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> Expression<'a> {
+        Expression::V8IntrinsicExpression(
+            self.alloc_v_8_intrinsic_expression(span, name, arguments),
+        )
+    }
+
     /// Build an [`IdentifierName`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_identifier_name`] instead.
@@ -1075,7 +1366,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
 
-    /// Build an [`IdentifierReference`] with `ReferenceId`.
+    /// Build an [`IdentifierReference`] with `reference_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_identifier_reference_with_reference_id`] instead.
     ///
@@ -1100,7 +1391,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build an [`IdentifierReference`] with `ReferenceId`, and store it in the memory arena.
+    /// Build an [`IdentifierReference`] with `reference_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::identifier_reference_with_reference_id`] instead.
     ///
@@ -1158,7 +1449,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
     }
 
-    /// Build a [`BindingIdentifier`] with `SymbolId`.
+    /// Build a [`BindingIdentifier`] with `symbol_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_binding_identifier_with_symbol_id`] instead.
     ///
@@ -1183,7 +1474,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`BindingIdentifier`] with `SymbolId`, and store it in the memory arena.
+    /// Build a [`BindingIdentifier`] with `symbol_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::binding_identifier_with_symbol_id`] instead.
     ///
@@ -1548,14 +1839,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TaggedTemplateExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1564,7 +1855,7 @@ impl<'a> AstBuilder<'a> {
             span,
             tag,
             quasi,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -1576,20 +1867,20 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
     /// * `quasi`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TaggedTemplateExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.tagged_template_expression(span, tag, quasi, type_parameters),
+            self.tagged_template_expression(span, tag, quasi, type_arguments),
             self.allocator,
         )
     }
@@ -1600,16 +1891,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, tail, value }
+        TemplateElement { span, value, tail }
     }
 
     /// Build a [`TemplateElement`], and store it in the memory arena.
@@ -1618,16 +1909,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn alloc_template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> Box<'a, TemplateElement<'a>> {
-        Box::new_in(self.template_element(span, tail, value), self.allocator)
+        Box::new_in(self.template_element(span, value, tail), self.allocator)
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].
@@ -1826,7 +2117,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -1834,7 +2125,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> CallExpression<'a>
@@ -1844,9 +2135,10 @@ impl<'a> AstBuilder<'a> {
         CallExpression {
             span,
             callee,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
             arguments,
             optional,
+            pure: Default::default(),
         }
     }
 
@@ -1857,7 +2149,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -1865,7 +2157,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Box<'a, CallExpression<'a>>
@@ -1873,7 +2165,71 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.call_expression(span, callee, type_parameters, arguments, optional),
+            self.call_expression(span, callee, type_arguments, arguments, optional),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`CallExpression`] with `pure`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_call_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn call_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> CallExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        CallExpression {
+            span,
+            callee,
+            type_arguments: type_arguments.into_in(self.allocator),
+            arguments,
+            optional,
+            pure,
+        }
+    }
+
+    /// Build a [`CallExpression`] with `pure`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::call_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn alloc_call_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> Box<'a, CallExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Box::new_in(
+            self.call_expression_with_pure(span, callee, type_arguments, arguments, optional, pure),
             self.allocator,
         )
     }
@@ -1886,14 +2242,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> NewExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1902,7 +2258,8 @@ impl<'a> AstBuilder<'a> {
             span,
             callee,
             arguments,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
+            pure: Default::default(),
         }
     }
 
@@ -1914,19 +2271,78 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `arguments`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.new_expression(span, callee, arguments, type_parameters), self.allocator)
+        Box::new_in(self.new_expression(span, callee, arguments, type_arguments), self.allocator)
+    }
+
+    /// Build a [`NewExpression`] with `pure`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_new_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `arguments`
+    /// * `type_arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        type_arguments: T1,
+        pure: bool,
+    ) -> NewExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        NewExpression {
+            span,
+            callee,
+            arguments,
+            type_arguments: type_arguments.into_in(self.allocator),
+            pure,
+        }
+    }
+
+    /// Build a [`NewExpression`] with `pure`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::new_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `arguments`
+    /// * `type_arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn alloc_new_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        type_arguments: T1,
+        pure: bool,
+    ) -> Box<'a, NewExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Box::new_in(
+            self.new_expression_with_pure(span, callee, arguments, type_arguments, pure),
+            self.allocator,
+        )
     }
 
     /// Build a [`MetaProperty`].
@@ -2128,17 +2544,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
-        PrivateInExpression { span, left, operator, right }
+        PrivateInExpression { span, left, right }
     }
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
@@ -2148,17 +2562,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn alloc_private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Box<'a, PrivateInExpression<'a>> {
-        Box::new_in(self.private_in_expression(span, left, operator, right), self.allocator)
+        Box::new_in(self.private_in_expression(span, left, right), self.allocator)
     }
 
     /// Build a [`LogicalExpression`].
@@ -2302,6 +2714,29 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn simple_assignment_target_assignment_target_identifier_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> SimpleAssignmentTarget<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        SimpleAssignmentTarget::AssignmentTargetIdentifier(
+            self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
+        )
+    }
+
     /// Build a [`SimpleAssignmentTarget::TSAsExpression`].
     ///
     /// This node contains a [`TSAsExpression`] that will be stored in the memory arena.
@@ -2383,31 +2818,6 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             type_annotation,
-        ))
-    }
-
-    /// Build a [`SimpleAssignmentTarget::TSInstantiationExpression`].
-    ///
-    /// This node contains a [`TSInstantiationExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_parameters`
-    #[inline]
-    pub fn simple_assignment_target_ts_instantiation_expression<T1>(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-        type_parameters: T1,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
-    {
-        SimpleAssignmentTarget::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
-            span,
-            expression,
-            type_parameters,
         ))
     }
 
@@ -2649,8 +3059,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_assignment_target_property_property(
@@ -2707,8 +3117,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_property(
@@ -2727,8 +3137,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn alloc_assignment_target_property_property(
@@ -2861,7 +3271,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `type_parameters`
+    /// * `type_arguments`
     /// * `arguments`
     /// * `optional`
     #[inline]
@@ -2869,7 +3279,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         callee: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> ChainElement<'a>
@@ -2879,9 +3289,43 @@ impl<'a> AstBuilder<'a> {
         ChainElement::CallExpression(self.alloc_call_expression(
             span,
             callee,
-            type_parameters,
+            type_arguments,
             arguments,
             optional,
+        ))
+    }
+
+    /// Build a [`ChainElement::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn chain_element_call_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> ChainElement<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        ChainElement::CallExpression(self.alloc_call_expression_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
         ))
     }
 
@@ -2943,6 +3387,24 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> Statement<'a> {
         Statement::BlockStatement(self.alloc_block_statement(span, body))
+    }
+
+    /// Build a [`Statement::BlockStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`BlockStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_block_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::BlockStatement(self.alloc_block_statement_with_scope_id(span, body, scope_id))
     }
 
     /// Build a [`Statement::BreakStatement`].
@@ -3045,6 +3507,30 @@ impl<'a> AstBuilder<'a> {
         Statement::ForInStatement(self.alloc_for_in_statement(span, left, right, body))
     }
 
+    /// Build a [`Statement::ForInStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`ForInStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_for_in_with_scope_id(
+        self,
+        span: Span,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::ForInStatement(
+            self.alloc_for_in_statement_with_scope_id(span, left, right, body, scope_id),
+        )
+    }
+
     /// Build a [`Statement::ForOfStatement`].
     ///
     /// This node contains a [`ForOfStatement`] that will be stored in the memory arena.
@@ -3067,6 +3553,32 @@ impl<'a> AstBuilder<'a> {
         Statement::ForOfStatement(self.alloc_for_of_statement(span, r#await, left, right, body))
     }
 
+    /// Build a [`Statement::ForOfStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`ForOfStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `await`
+    /// * `left`
+    /// * `right`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_for_of_with_scope_id(
+        self,
+        span: Span,
+        r#await: bool,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::ForOfStatement(
+            self.alloc_for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
+        )
+    }
+
     /// Build a [`Statement::ForStatement`].
     ///
     /// This node contains a [`ForStatement`] that will be stored in the memory arena.
@@ -3087,6 +3599,32 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Statement<'a> {
         Statement::ForStatement(self.alloc_for_statement(span, init, test, update, body))
+    }
+
+    /// Build a [`Statement::ForStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`ForStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `init`
+    /// * `test`
+    /// * `update`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_for_with_scope_id(
+        self,
+        span: Span,
+        init: Option<ForStatementInit<'a>>,
+        test: Option<Expression<'a>>,
+        update: Option<Expression<'a>>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::ForStatement(
+            self.alloc_for_statement_with_scope_id(span, init, test, update, body, scope_id),
+        )
     }
 
     /// Build a [`Statement::IfStatement`].
@@ -3155,6 +3693,31 @@ impl<'a> AstBuilder<'a> {
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
         Statement::SwitchStatement(self.alloc_switch_statement(span, discriminant, cases))
+    }
+
+    /// Build a [`Statement::SwitchStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`SwitchStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `discriminant`
+    /// * `cases`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_switch_with_scope_id(
+        self,
+        span: Span,
+        discriminant: Expression<'a>,
+        cases: Vec<'a, SwitchCase<'a>>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::SwitchStatement(self.alloc_switch_statement_with_scope_id(
+            span,
+            discriminant,
+            cases,
+            scope_id,
+        ))
     }
 
     /// Build a [`Statement::ThrowStatement`].
@@ -3330,7 +3893,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.block_statement(span, body), self.allocator)
     }
 
-    /// Build a [`BlockStatement`] with `ScopeId`.
+    /// Build a [`BlockStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_block_statement_with_scope_id`] instead.
     ///
@@ -3348,7 +3911,7 @@ impl<'a> AstBuilder<'a> {
         BlockStatement { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`BlockStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`BlockStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::block_statement_with_scope_id`] instead.
     ///
@@ -3444,6 +4007,65 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`Declaration::FunctionDeclaration`] with `scope_id` and `pure`.
+    ///
+    /// This node contains a [`Function`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `id`: The function identifier. [`None`] for anonymous function expressions.
+    /// * `generator`: Is this a generator function?
+    /// * `async`
+    /// * `declare`
+    /// * `type_parameters`
+    /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// * `params`: Function parameters.
+    /// * `return_type`: The TypeScript return type annotation.
+    /// * `body`: The function body.
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[inline]
+    pub fn declaration_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+        self,
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+        pure: bool,
+    ) -> Declaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure(
+            span,
+            r#type,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
+            scope_id,
+            pure,
+        ))
+    }
+
     /// Build a [`Declaration::ClassDeclaration`].
     ///
     /// This node contains a [`Class`] that will be stored in the memory arena.
@@ -3455,7 +4077,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -3469,7 +4091,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -3487,11 +4109,65 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
             declare,
+        ))
+    }
+
+    /// Build a [`Declaration::ClassDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`Class`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the class.
+    /// * `id`: Class identifier, AKA the name
+    /// * `type_parameters`
+    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `implements`: Interface implementation clause for TypeScript classes.
+    /// * `body`
+    /// * `abstract`: Whether the class is abstract
+    /// * `declare`: Whether the class was `declare`ed
+    /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn declaration_class_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        r#type: ClassType,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
+        super_class: Option<Expression<'a>>,
+        super_type_arguments: T2,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+    {
+        Declaration::ClassDeclaration(self.alloc_class_with_scope_id(
+            span,
+            r#type,
+            decorators,
+            id,
+            type_parameters,
+            super_class,
+            super_type_arguments,
+            implements,
+            body,
+            r#abstract,
+            declare,
+            scope_id,
         ))
     }
 
@@ -3523,6 +4199,40 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             type_annotation,
             declare,
+        ))
+    }
+
+    /// Build a [`Declaration::TSTypeAliasDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSTypeAliasDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
+    /// * `type_parameters`
+    /// * `type_annotation`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn declaration_ts_type_alias_with_scope_id<T1>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_parameters: T1,
+        type_annotation: TSType<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+    {
+        Declaration::TSTypeAliasDeclaration(self.alloc_ts_type_alias_declaration_with_scope_id(
+            span,
+            id,
+            type_parameters,
+            type_annotation,
+            declare,
+            scope_id,
         ))
     }
 
@@ -3561,6 +4271,44 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`Declaration::TSInterfaceDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSInterfaceDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`: The identifier (name) of the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
+    /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `body`
+    /// * `declare`: `true` for `declare interface Foo {}`
+    /// * `scope_id`
+    #[inline]
+    pub fn declaration_ts_interface_with_scope_id<T1, T2>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        type_parameters: T1,
+        body: T2,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+    {
+        Declaration::TSInterfaceDeclaration(self.alloc_ts_interface_declaration_with_scope_id(
+            span,
+            id,
+            extends,
+            type_parameters,
+            body,
+            declare,
+            scope_id,
+        ))
+    }
+
     /// Build a [`Declaration::TSEnumDeclaration`].
     ///
     /// This node contains a [`TSEnumDeclaration`] that will be stored in the memory arena.
@@ -3585,6 +4333,34 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`Declaration::TSEnumDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSEnumDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `members`
+    /// * `const`: `true` for const enums
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn declaration_ts_enum_with_scope_id(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        members: Vec<'a, TSEnumMember<'a>>,
+        r#const: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a> {
+        Declaration::TSEnumDeclaration(
+            self.alloc_ts_enum_declaration_with_scope_id(
+                span, id, members, r#const, declare, scope_id,
+            ),
+        )
+    }
+
     /// Build a [`Declaration::TSModuleDeclaration`].
     ///
     /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
@@ -3606,6 +4382,32 @@ impl<'a> AstBuilder<'a> {
     ) -> Declaration<'a> {
         Declaration::TSModuleDeclaration(
             self.alloc_ts_module_declaration(span, id, body, kind, declare),
+        )
+    }
+
+    /// Build a [`Declaration::TSModuleDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`: The name of the module/namespace being declared.
+    /// * `body`
+    /// * `kind`: The keyword used to define this module declaration.
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn declaration_ts_module_with_scope_id(
+        self,
+        span: Span,
+        id: TSModuleDeclarationName<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
+        kind: TSModuleDeclarationKind,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a> {
+        Declaration::TSModuleDeclaration(
+            self.alloc_ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
         )
     }
 
@@ -3928,7 +4730,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_statement(span, init, test, update, body), self.allocator)
     }
 
-    /// Build a [`ForStatement`] with `ScopeId`.
+    /// Build a [`ForStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_statement_with_scope_id`] instead.
     ///
@@ -3952,7 +4754,7 @@ impl<'a> AstBuilder<'a> {
         ForStatement { span, init, test, update, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_statement_with_scope_id`] instead.
     ///
@@ -4044,7 +4846,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_in_statement(span, left, right, body), self.allocator)
     }
 
-    /// Build a [`ForInStatement`] with `ScopeId`.
+    /// Build a [`ForInStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_in_statement_with_scope_id`] instead.
     ///
@@ -4066,7 +4868,7 @@ impl<'a> AstBuilder<'a> {
         ForInStatement { span, left, right, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForInStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForInStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_in_statement_with_scope_id`] instead.
     ///
@@ -4160,7 +4962,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_of_statement(span, r#await, left, right, body), self.allocator)
     }
 
-    /// Build a [`ForOfStatement`] with `ScopeId`.
+    /// Build a [`ForOfStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_of_statement_with_scope_id`] instead.
     ///
@@ -4184,7 +4986,7 @@ impl<'a> AstBuilder<'a> {
         ForOfStatement { span, r#await, left, right, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForOfStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForOfStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_of_statement_with_scope_id`] instead.
     ///
@@ -4379,7 +5181,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.switch_statement(span, discriminant, cases), self.allocator)
     }
 
-    /// Build a [`SwitchStatement`] with `ScopeId`.
+    /// Build a [`SwitchStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_switch_statement_with_scope_id`] instead.
     ///
@@ -4399,7 +5201,7 @@ impl<'a> AstBuilder<'a> {
         SwitchStatement { span, discriminant, cases, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`SwitchStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`SwitchStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::switch_statement_with_scope_id`] instead.
     ///
@@ -4624,7 +5426,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.catch_clause(span, param, body), self.allocator)
     }
 
-    /// Build a [`CatchClause`] with `ScopeId`.
+    /// Build a [`CatchClause`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_catch_clause_with_scope_id`] instead.
     ///
@@ -4652,7 +5454,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`CatchClause`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`CatchClause`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::catch_clause_with_scope_id`] instead.
     ///
@@ -4784,6 +5586,29 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         BindingPatternKind::BindingIdentifier(self.alloc_binding_identifier(span, name))
+    }
+
+    /// Build a [`BindingPatternKind::BindingIdentifier`] with `symbol_id`.
+    ///
+    /// This node contains a [`BindingIdentifier`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The identifier name being bound.
+    /// * `symbol_id`: Unique identifier for this binding.
+    #[inline]
+    pub fn binding_pattern_kind_binding_identifier_with_symbol_id<A>(
+        self,
+        span: Span,
+        name: A,
+        symbol_id: SymbolId,
+    ) -> BindingPatternKind<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        BindingPatternKind::BindingIdentifier(
+            self.alloc_binding_identifier_with_symbol_id(span, name, symbol_id),
+        )
     }
 
     /// Build a [`BindingPatternKind::ObjectPattern`].
@@ -5093,6 +5918,7 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
+            pure: Default::default(),
         }
     }
 
@@ -5152,9 +5978,9 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Function`] with `ScopeId`.
+    /// Build a [`Function`] with `scope_id` and `pure`.
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5169,8 +5995,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn function_with_scope_id<T1, T2, T3, T4, T5>(
+    pub fn function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5184,6 +6011,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5205,12 +6033,13 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
+            pure,
         }
     }
 
-    /// Build a [`Function`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Function`] with `scope_id` and `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5225,8 +6054,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
+    pub fn alloc_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5240,6 +6070,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5249,7 +6080,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Box::new_in(
-            self.function_with_scope_id(
+            self.function_with_scope_id_and_pure(
                 span,
                 r#type,
                 id,
@@ -5262,6 +6093,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
                 scope_id,
+                pure,
             ),
             self.allocator,
         )
@@ -5438,6 +6270,7 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
+            pure: Default::default(),
         }
     }
 
@@ -5484,9 +6317,9 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `ScopeId`.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`.
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5497,8 +6330,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+    pub fn arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -5508,6 +6342,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
         body: T4,
         scope_id: ScopeId,
+        pure: bool,
     ) -> ArrowFunctionExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5524,12 +6359,13 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
+            pure,
         }
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `ScopeId`, and store it in the memory arena.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5540,8 +6376,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn alloc_arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+    pub fn alloc_arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -5551,6 +6388,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
         body: T4,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Box<'a, ArrowFunctionExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5559,7 +6397,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Box::new_in(
-            self.arrow_function_expression_with_scope_id(
+            self.arrow_function_expression_with_scope_id_and_pure(
                 span,
                 expression,
                 r#async,
@@ -5568,6 +6406,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
                 scope_id,
+                pure,
             ),
             self.allocator,
         )
@@ -5620,7 +6459,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5634,7 +6473,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -5652,7 +6491,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
-            super_type_parameters: super_type_parameters.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
             r#abstract,
@@ -5672,7 +6511,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5686,7 +6525,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -5705,7 +6544,7 @@ impl<'a> AstBuilder<'a> {
                 id,
                 type_parameters,
                 super_class,
-                super_type_parameters,
+                super_type_arguments,
                 implements,
                 body,
                 r#abstract,
@@ -5715,7 +6554,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Class`] with `ScopeId`.
+    /// Build a [`Class`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_with_scope_id`] instead.
     ///
@@ -5726,7 +6565,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5741,7 +6580,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -5760,7 +6599,7 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
-            super_type_parameters: super_type_parameters.into_in(self.allocator),
+            super_type_arguments: super_type_arguments.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
             r#abstract,
@@ -5769,7 +6608,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`Class`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Class`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_with_scope_id`] instead.
     ///
@@ -5780,7 +6619,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5795,7 +6634,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -5815,7 +6654,7 @@ impl<'a> AstBuilder<'a> {
                 id,
                 type_parameters,
                 super_class,
-                super_type_parameters,
+                super_type_arguments,
                 implements,
                 body,
                 r#abstract,
@@ -5868,6 +6707,24 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::StaticBlock(self.alloc_static_block(span, body))
+    }
+
+    /// Build a [`ClassElement::StaticBlock`] with `scope_id`.
+    ///
+    /// This node contains a [`StaticBlock`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn class_element_static_block_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> ClassElement<'a> {
+        ClassElement::StaticBlock(self.alloc_static_block_with_scope_id(span, body, scope_id))
     }
 
     /// Build a [`ClassElement::MethodDefinition`].
@@ -6332,7 +7189,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.static_block(span, body), self.allocator)
     }
 
-    /// Build a [`StaticBlock`] with `ScopeId`.
+    /// Build a [`StaticBlock`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_static_block_with_scope_id`] instead.
     ///
@@ -6350,7 +7207,7 @@ impl<'a> AstBuilder<'a> {
         StaticBlock { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`StaticBlock`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`StaticBlock`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::static_block_with_scope_id`] instead.
     ///
@@ -6439,19 +7296,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
         ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
             span,
-            declaration,
             exported,
+            declaration,
         ))
     }
 
@@ -6625,17 +7482,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments, phase }
+        ImportExpression { span, source, options, phase }
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -6645,17 +7502,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn alloc_import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, arguments, phase), self.allocator)
+        Box::new_in(self.import_expression(span, source, options, phase), self.allocator)
     }
 
     /// Build an [`ImportDeclaration`].
@@ -6991,6 +7848,32 @@ impl<'a> AstBuilder<'a> {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build an [`ImportAttributeKey::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn import_attribute_key_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> ImportAttributeKey<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ImportAttributeKey::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
     /// Build an [`ExportNamedDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_export_named_declaration`] instead.
@@ -7068,16 +7951,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, declaration, exported }
+        ExportDefaultDeclaration { span, exported, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7086,16 +7969,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, declaration, exported), self.allocator)
+        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
     }
 
     /// Build an [`ExportAllDeclaration`].
@@ -7250,6 +8133,73 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`ExportDefaultDeclarationKind::FunctionDeclaration`] with `scope_id` and `pure`.
+    ///
+    /// This node contains a [`Function`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `id`: The function identifier. [`None`] for anonymous function expressions.
+    /// * `generator`: Is this a generator function?
+    /// * `async`
+    /// * `declare`
+    /// * `type_parameters`
+    /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// * `params`: Function parameters.
+    /// * `return_type`: The TypeScript return type annotation.
+    /// * `body`: The function body.
+    /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[inline]
+    pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure<
+        T1,
+        T2,
+        T3,
+        T4,
+        T5,
+    >(
+        self,
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+        pure: bool,
+    ) -> ExportDefaultDeclarationKind<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        ExportDefaultDeclarationKind::FunctionDeclaration(
+            self.alloc_function_with_scope_id_and_pure(
+                span,
+                r#type,
+                id,
+                generator,
+                r#async,
+                declare,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                body,
+                scope_id,
+                pure,
+            ),
+        )
+    }
+
     /// Build an [`ExportDefaultDeclarationKind::ClassDeclaration`].
     ///
     /// This node contains a [`Class`] that will be stored in the memory arena.
@@ -7261,7 +8211,7 @@ impl<'a> AstBuilder<'a> {
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
     /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_parameters`: Type parameters passed to super class.
+    /// * `super_type_arguments`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -7275,7 +8225,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        super_type_parameters: T2,
+        super_type_arguments: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         body: T3,
         r#abstract: bool,
@@ -7293,11 +8243,65 @@ impl<'a> AstBuilder<'a> {
             id,
             type_parameters,
             super_class,
-            super_type_parameters,
+            super_type_arguments,
             implements,
             body,
             r#abstract,
             declare,
+        ))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ClassDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`Class`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the class.
+    /// * `id`: Class identifier, AKA the name
+    /// * `type_parameters`
+    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `implements`: Interface implementation clause for TypeScript classes.
+    /// * `body`
+    /// * `abstract`: Whether the class is abstract
+    /// * `declare`: Whether the class was `declare`ed
+    /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn export_default_declaration_kind_class_declaration_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        r#type: ClassType,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
+        super_class: Option<Expression<'a>>,
+        super_type_arguments: T2,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> ExportDefaultDeclarationKind<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+    {
+        ExportDefaultDeclarationKind::ClassDeclaration(self.alloc_class_with_scope_id(
+            span,
+            r#type,
+            decorators,
+            id,
+            type_parameters,
+            super_class,
+            super_type_arguments,
+            implements,
+            body,
+            r#abstract,
+            declare,
+            scope_id,
         ))
     }
 
@@ -7336,6 +8340,46 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`ExportDefaultDeclarationKind::TSInterfaceDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSInterfaceDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`: The identifier (name) of the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
+    /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `body`
+    /// * `declare`: `true` for `declare interface Foo {}`
+    /// * `scope_id`
+    #[inline]
+    pub fn export_default_declaration_kind_ts_interface_declaration_with_scope_id<T1, T2>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        type_parameters: T1,
+        body: T2,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> ExportDefaultDeclarationKind<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+    {
+        ExportDefaultDeclarationKind::TSInterfaceDeclaration(
+            self.alloc_ts_interface_declaration_with_scope_id(
+                span,
+                id,
+                extends,
+                type_parameters,
+                body,
+                declare,
+                scope_id,
+            ),
+        )
+    }
+
     /// Build a [`ModuleExportName::IdentifierName`].
     ///
     /// ## Parameters
@@ -7366,6 +8410,29 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
 
+    /// Build a [`ModuleExportName::IdentifierReference`] with `reference_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn module_export_name_identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> ModuleExportName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ModuleExportName::IdentifierReference(self.identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
+    }
+
     /// Build a [`ModuleExportName::StringLiteral`].
     ///
     /// ## Parameters
@@ -7383,6 +8450,68 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
+    }
+
+    /// Build a [`ModuleExportName::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn module_export_name_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> ModuleExportName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        ModuleExportName::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
+    /// Build a [`V8IntrinsicExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_v_8_intrinsic_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn v_8_intrinsic_expression(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> V8IntrinsicExpression<'a> {
+        V8IntrinsicExpression { span, name, arguments }
+    }
+
+    /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::v_8_intrinsic_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn alloc_v_8_intrinsic_expression(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> Box<'a, V8IntrinsicExpression<'a>> {
+        Box::new_in(self.v_8_intrinsic_expression(span, name, arguments), self.allocator)
     }
 
     /// Build a [`BooleanLiteral`].
@@ -7484,7 +8613,12 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator), raw }
+        StringLiteral {
+            span,
+            value: value.into_in(self.allocator),
+            raw,
+            lone_surrogates: Default::default(),
+        }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -7506,6 +8640,55 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
+    }
+
+    /// Build a [`StringLiteral`] with `lone_surrogates`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lone_surrogates }
+    }
+
+    /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn alloc_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(
+            self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
+            self.allocator,
+        )
     }
 
     /// Build a [`BigIntLiteral`].
@@ -7646,7 +8829,7 @@ impl<'a> AstBuilder<'a> {
     /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
+    /// * `type_arguments`: Type parameters for generic JSX elements.
     #[inline]
     pub fn jsx_opening_element<T1>(
         self,
@@ -7654,7 +8837,7 @@ impl<'a> AstBuilder<'a> {
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> JSXOpeningElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -7664,7 +8847,7 @@ impl<'a> AstBuilder<'a> {
             self_closing,
             name,
             attributes,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -7677,7 +8860,7 @@ impl<'a> AstBuilder<'a> {
     /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
+    /// * `type_arguments`: Type parameters for generic JSX elements.
     #[inline]
     pub fn alloc_jsx_opening_element<T1>(
         self,
@@ -7685,13 +8868,13 @@ impl<'a> AstBuilder<'a> {
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, JSXOpeningElement<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.jsx_opening_element(span, self_closing, name, attributes, type_parameters),
+            self.jsx_opening_element(span, self_closing, name, attributes, type_arguments),
             self.allocator,
         )
     }
@@ -7771,6 +8954,50 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`JSXOpeningFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
+        JSXOpeningFragment { span }
+    }
+
+    /// Build a [`JSXOpeningFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_opening_fragment(self, span: Span) -> Box<'a, JSXOpeningFragment> {
+        Box::new_in(self.jsx_opening_fragment(span), self.allocator)
+    }
+
+    /// Build a [`JSXClosingFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
+        JSXClosingFragment { span }
+    }
+
+    /// Build a [`JSXClosingFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_closing_fragment(self, span: Span) -> Box<'a, JSXClosingFragment> {
+        Box::new_in(self.jsx_closing_fragment(span), self.allocator)
+    }
+
     /// Build a [`JSXElementName::Identifier`].
     ///
     /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
@@ -7801,6 +9028,31 @@ impl<'a> AstBuilder<'a> {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
 
+    /// Build a [`JSXElementName::IdentifierReference`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn jsx_element_name_identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> JSXElementName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXElementName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
+    }
+
     /// Build a [`JSXElementName::NamespacedName`].
     ///
     /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
@@ -7808,15 +9060,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_element_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXElementName<'a> {
-        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXElementName::MemberExpression`].
@@ -7855,15 +9107,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName { span, namespace, property }
+        JSXNamespacedName { span, namespace, name }
     }
 
     /// Build a [`JSXNamespacedName`], and store it in the memory arena.
@@ -7873,15 +9125,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn alloc_jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> Box<'a, JSXNamespacedName<'a>> {
-        Box::new_in(self.jsx_namespaced_name(span, namespace, property), self.allocator)
+        Box::new_in(self.jsx_namespaced_name(span, namespace, name), self.allocator)
     }
 
     /// Build a [`JSXMemberExpression`].
@@ -7937,6 +9189,29 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`JSXMemberExpressionObject::IdentifierReference`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn jsx_member_expression_object_identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXMemberExpressionObject::IdentifierReference(
+            self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
+        )
     }
 
     /// Build a [`JSXMemberExpressionObject::MemberExpression`].
@@ -8160,15 +9435,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_attribute_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXAttributeName<'a> {
-        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXAttributeValue::StringLiteral`].
@@ -8190,6 +9465,34 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`JSXAttributeValue::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn jsx_attribute_value_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> JSXAttributeValue<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXAttributeValue::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
@@ -8301,12 +9604,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_child_text<A>(self, span: Span, value: A) -> JSXChild<'a>
+    pub fn jsx_child_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXChild<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXChild::Text(self.alloc_jsx_text(span, value))
+        JSXChild::Text(self.alloc_jsx_text(span, value, raw))
     }
 
     /// Build a [`JSXChild::Element`].
@@ -8421,12 +9725,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
+    pub fn jsx_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXText<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXText { span, value: value.into_in(self.allocator) }
+        JSXText { span, value: value.into_in(self.allocator), raw }
     }
 
     /// Build a [`JSXText`], and store it in the memory arena.
@@ -8436,12 +9741,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
+    pub fn alloc_jsx_text<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> Box<'a, JSXText<'a>>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Box::new_in(self.jsx_text(span, value), self.allocator)
+        Box::new_in(self.jsx_text(span, value, raw), self.allocator)
     }
 
     /// Build a [`TSThisParameter`].
@@ -8534,7 +9845,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_enum_declaration(span, id, members, r#const, declare), self.allocator)
     }
 
-    /// Build a [`TSEnumDeclaration`] with `ScopeId`.
+    /// Build a [`TSEnumDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_declaration_with_scope_id`] instead.
     ///
@@ -8565,7 +9876,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSEnumDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSEnumDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_enum_declaration_with_scope_id`] instead.
     ///
@@ -8664,6 +9975,34 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
 
+    /// Build a [`TSEnumMemberName::String`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn ts_enum_member_name_string_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
     /// Build a [`TSTypeAnnotation`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_annotation`] instead.
@@ -8736,17 +10075,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BooleanLiteral(self.alloc_boolean_literal(span, value))
     }
 
-    /// Build a [`TSLiteral::NullLiteral`].
-    ///
-    /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
-        TSLiteral::NullLiteral(self.alloc_null_literal(span))
-    }
-
     /// Build a [`TSLiteral::NumericLiteral`].
     ///
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
@@ -8788,24 +10116,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
     }
 
-    /// Build a [`TSLiteral::RegExpLiteral`].
-    ///
-    /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn ts_literal_reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
-    }
-
     /// Build a [`TSLiteral::StringLiteral`].
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
@@ -8825,6 +10135,34 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSLiteral::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn ts_literal_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> TSLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSLiteral::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].
@@ -9046,6 +10384,37 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`TSType::TSConditionalType`] with `scope_id`.
+    ///
+    /// This node contains a [`TSConditionalType`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `check_type`: The type before `extends` in the test expression.
+    /// * `extends_type`: The type `check_type` is being tested against.
+    /// * `true_type`: The type evaluated to if the test is true.
+    /// * `false_type`: The type evaluated to if the test is false.
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_type_conditional_type_with_scope_id(
+        self,
+        span: Span,
+        check_type: TSType<'a>,
+        extends_type: TSType<'a>,
+        true_type: TSType<'a>,
+        false_type: TSType<'a>,
+        scope_id: ScopeId,
+    ) -> TSType<'a> {
+        TSType::TSConditionalType(self.alloc_ts_conditional_type_with_scope_id(
+            span,
+            check_type,
+            extends_type,
+            true_type,
+            false_type,
+            scope_id,
+        ))
+    }
+
     /// Build a [`TSType::TSConstructorType`].
     ///
     /// This node contains a [`TSConstructorType`] that will be stored in the memory arena.
@@ -9113,38 +10482,75 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`TSType::TSFunctionType`] with `scope_id`.
+    ///
+    /// This node contains a [`TSFunctionType`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_type_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSType<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        TSType::TSFunctionType(self.alloc_ts_function_type_with_scope_id(
+            span,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            scope_id,
+        ))
+    }
+
     /// Build a [`TSType::TSImportType`].
     ///
     /// This node contains a [`TSImportType`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -9243,6 +10649,43 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`TSType::TSMappedType`] with `scope_id`.
+    ///
+    /// This node contains a [`TSMappedType`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `name_type`
+    /// * `type_annotation`
+    /// * `optional`: Optional modifier on type annotation
+    /// * `readonly`: Readonly modifier before keyed index signature
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_type_mapped_type_with_scope_id<T1>(
+        self,
+        span: Span,
+        type_parameter: T1,
+        name_type: Option<TSType<'a>>,
+        type_annotation: Option<TSType<'a>>,
+        optional: TSMappedTypeModifierOperator,
+        readonly: TSMappedTypeModifierOperator,
+        scope_id: ScopeId,
+    ) -> TSType<'a>
+    where
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+    {
+        TSType::TSMappedType(self.alloc_ts_mapped_type_with_scope_id(
+            span,
+            type_parameter,
+            name_type,
+            type_annotation,
+            optional,
+            readonly,
+            scope_id,
+        ))
+    }
+
     /// Build a [`TSType::TSNamedTupleMember`].
     ///
     /// This node contains a [`TSNamedTupleMember`] that will be stored in the memory arena.
@@ -9266,24 +10709,6 @@ impl<'a> AstBuilder<'a> {
             label,
             optional,
         ))
-    }
-
-    /// Build a [`TSType::TSQualifiedName`].
-    ///
-    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `left`
-    /// * `right`
-    #[inline]
-    pub fn ts_type_qualified_name(
-        self,
-        span: Span,
-        left: TSTypeName<'a>,
-        right: IdentifierName<'a>,
-    ) -> TSType<'a> {
-        TSType::TSQualifiedName(self.alloc_ts_qualified_name(span, left, right))
     }
 
     /// Build a [`TSType::TSTemplateLiteralType`].
@@ -9396,18 +10821,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSType::TSTypeQuery(self.alloc_ts_type_query(span, expr_name, type_parameters))
+        TSType::TSTypeQuery(self.alloc_ts_type_query(span, expr_name, type_arguments))
     }
 
     /// Build a [`TSType::TSTypeReference`].
@@ -9417,18 +10842,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSType::TSTypeReference(self.alloc_ts_type_reference(span, type_name, type_parameters))
+        TSType::TSTypeReference(self.alloc_ts_type_reference(span, type_name, type_arguments))
     }
 
     /// Build a [`TSType::TSUnionType`].
@@ -9560,7 +10985,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSConditionalType`] with `ScopeId`.
+    /// Build a [`TSConditionalType`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_conditional_type_with_scope_id`] instead.
     ///
@@ -9591,7 +11016,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSConditionalType`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSConditionalType`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_conditional_type_with_scope_id`] instead.
     ///
@@ -10292,22 +11717,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSTypeReference<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSTypeReference {
-            span,
-            type_name,
-            type_parameters: type_parameters.into_in(self.allocator),
-        }
+        TSTypeReference { span, type_name, type_arguments: type_arguments.into_in(self.allocator) }
     }
 
     /// Build a [`TSTypeReference`], and store it in the memory arena.
@@ -10317,18 +11738,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `type_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_type_reference<T1>(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSTypeReference<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_reference(span, type_name, type_parameters), self.allocator)
+        Box::new_in(self.ts_type_reference(span, type_name, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypeName::IdentifierReference`].
@@ -10344,6 +11765,31 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`TSTypeName::IdentifierReference`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn ts_type_name_identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> TSTypeName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSTypeName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
     }
 
     /// Build a [`TSTypeName::QualifiedName`].
@@ -10579,7 +12025,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`.
+    /// Build a [`TSTypeAliasDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_alias_declaration_with_scope_id`] instead.
     ///
@@ -10613,7 +12059,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSTypeAliasDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_type_alias_declaration_with_scope_id`] instead.
     ///
@@ -10657,13 +12103,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_class_implements<T1>(
         self,
         span: Span,
         expression: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSClassImplements<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -10671,7 +12117,7 @@ impl<'a> AstBuilder<'a> {
         TSClassImplements {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -10682,18 +12128,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_class_implements<T1>(
         self,
         span: Span,
         expression: TSTypeName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSClassImplements<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_class_implements(span, expression, type_parameters), self.allocator)
+        Box::new_in(self.ts_class_implements(span, expression, type_arguments), self.allocator)
     }
 
     /// Build a [`TSInterfaceDeclaration`].
@@ -10763,7 +12209,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`.
+    /// Build a [`TSInterfaceDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_interface_declaration_with_scope_id`] instead.
     ///
@@ -10801,7 +12247,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSInterfaceDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_interface_declaration_with_scope_id`] instead.
     ///
@@ -11066,6 +12512,41 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`TSSignature::TSConstructSignatureDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSConstructSignatureDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`
+    /// * `params`
+    /// * `return_type`
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_signature_construct_signature_declaration_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        scope_id: ScopeId,
+    ) -> TSSignature<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        TSSignature::TSConstructSignatureDeclaration(
+            self.alloc_ts_construct_signature_declaration_with_scope_id(
+                span,
+                type_parameters,
+                params,
+                return_type,
+                scope_id,
+            ),
+        )
+    }
+
     /// Build a [`TSSignature::TSMethodSignature`].
     ///
     /// This node contains a [`TSMethodSignature`] that will be stored in the memory arena.
@@ -11109,6 +12590,55 @@ impl<'a> AstBuilder<'a> {
             this_param,
             params,
             return_type,
+        ))
+    }
+
+    /// Build a [`TSSignature::TSMethodSignature`] with `scope_id`.
+    ///
+    /// This node contains a [`TSMethodSignature`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `key`
+    /// * `computed`
+    /// * `optional`
+    /// * `kind`
+    /// * `type_parameters`
+    /// * `this_param`
+    /// * `params`
+    /// * `return_type`
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_signature_method_signature_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        key: PropertyKey<'a>,
+        computed: bool,
+        optional: bool,
+        kind: TSMethodSignatureKind,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSSignature<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        TSSignature::TSMethodSignature(self.alloc_ts_method_signature_with_scope_id(
+            span,
+            key,
+            computed,
+            optional,
+            kind,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            scope_id,
         ))
     }
 
@@ -11336,7 +12866,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSMethodSignature`] with `ScopeId`.
+    /// Build a [`TSMethodSignature`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_method_signature_with_scope_id`] instead.
     ///
@@ -11385,7 +12915,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSMethodSignature`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSMethodSignature`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_method_signature_with_scope_id`] instead.
     ///
@@ -11496,7 +13026,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`.
+    /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_construct_signature_declaration_with_scope_id`] instead.
     ///
@@ -11529,7 +13059,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_construct_signature_declaration_with_scope_id`] instead.
     ///
@@ -11620,13 +13150,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_interface_heritage<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSInterfaceHeritage<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -11634,7 +13164,7 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceHeritage {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -11645,18 +13175,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_interface_heritage<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSInterfaceHeritage<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_interface_heritage(span, expression, type_parameters), self.allocator)
+        Box::new_in(self.ts_interface_heritage(span, expression, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypePredicate`].
@@ -11785,7 +13315,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_module_declaration(span, id, body, kind, declare), self.allocator)
     }
 
-    /// Build a [`TSModuleDeclaration`] with `ScopeId`.
+    /// Build a [`TSModuleDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_module_declaration_with_scope_id`] instead.
     ///
@@ -11809,7 +13339,7 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclaration { span, id, body, kind, declare, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`TSModuleDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSModuleDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_module_declaration_with_scope_id`] instead.
     ///
@@ -11853,6 +13383,27 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
 
+    /// Build a [`TSModuleDeclarationName::Identifier`] with `symbol_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The identifier name being bound.
+    /// * `symbol_id`: Unique identifier for this binding.
+    #[inline]
+    pub fn ts_module_declaration_name_identifier_with_symbol_id<A>(
+        self,
+        span: Span,
+        name: A,
+        symbol_id: SymbolId,
+    ) -> TSModuleDeclarationName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSModuleDeclarationName::Identifier(
+            self.binding_identifier_with_symbol_id(span, name, symbol_id),
+        )
+    }
+
     /// Build a [`TSModuleDeclarationName::StringLiteral`].
     ///
     /// ## Parameters
@@ -11870,6 +13421,32 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> TSModuleDeclarationName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSModuleDeclarationName::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].
@@ -11893,6 +13470,32 @@ impl<'a> AstBuilder<'a> {
     ) -> TSModuleDeclarationBody<'a> {
         TSModuleDeclarationBody::TSModuleDeclaration(
             self.alloc_ts_module_declaration(span, id, body, kind, declare),
+        )
+    }
+
+    /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`: The name of the module/namespace being declared.
+    /// * `body`
+    /// * `kind`: The keyword used to define this module declaration.
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_module_declaration_body_module_declaration_with_scope_id(
+        self,
+        span: Span,
+        id: TSModuleDeclarationName<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
+        kind: TSModuleDeclarationKind,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSModuleDeclarationBody<'a> {
+        TSModuleDeclarationBody::TSModuleDeclaration(
+            self.alloc_ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
         )
     }
 
@@ -12019,18 +13622,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSTypeQuery<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSTypeQuery { span, expr_name, type_parameters: type_parameters.into_in(self.allocator) }
+        TSTypeQuery { span, expr_name, type_arguments: type_arguments.into_in(self.allocator) }
     }
 
     /// Build a [`TSTypeQuery`], and store it in the memory arena.
@@ -12040,18 +13643,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expr_name`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_type_query<T1>(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSTypeQuery<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.ts_type_query(span, expr_name, type_parameters), self.allocator)
+        Box::new_in(self.ts_type_query(span, expr_name, type_arguments), self.allocator)
     }
 
     /// Build a [`TSTypeQueryExprName::TSImportType`].
@@ -12060,32 +13663,32 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -12095,32 +13698,32 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options: options.into_in(self.allocator),
             qualifier,
-            attributes: attributes.into_in(self.allocator),
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
+            is_type_of,
         }
     }
 
@@ -12130,144 +13733,29 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(
-                span,
-                is_type_of,
-                parameter,
-                qualifier,
-                attributes,
-                type_parameters,
-            ),
+            self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
             self.allocator,
         )
-    }
-
-    /// Build a [`TSImportAttributes`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> TSImportAttributes<'a> {
-        TSImportAttributes { span, attributes_keyword, elements }
-    }
-
-    /// Build a [`TSImportAttributes`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn alloc_ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> Box<'a, TSImportAttributes<'a>> {
-        Box::new_in(self.ts_import_attributes(span, attributes_keyword, elements), self.allocator)
-    }
-
-    /// Build a [`TSImportAttribute`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> TSImportAttribute<'a> {
-        TSImportAttribute { span, name, value }
-    }
-
-    /// Build a [`TSImportAttribute`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn alloc_ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> Box<'a, TSImportAttribute<'a>> {
-        Box::new_in(self.ts_import_attribute(span, name, value), self.allocator)
-    }
-
-    /// Build a [`TSImportAttributeName::Identifier`].
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    #[inline]
-    pub fn ts_import_attribute_name_identifier<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::Identifier(self.identifier_name(span, name))
-    }
-
-    /// Build a [`TSImportAttributeName::StringLiteral`].
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn ts_import_attribute_name_string_literal<A>(
-        self,
-        span: Span,
-        value: A,
-        raw: Option<Atom<'a>>,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSFunctionType`].
@@ -12301,6 +13789,7 @@ impl<'a> AstBuilder<'a> {
             this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -12331,6 +13820,83 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.ts_function_type(span, type_parameters, this_param, params, return_type),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`TSFunctionType`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_function_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSFunctionType<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        TSFunctionType {
+            span,
+            type_parameters: type_parameters.into_in(self.allocator),
+            this_param: this_param.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSFunctionType`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_function_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn alloc_ts_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSFunctionType<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        Box::new_in(
+            self.ts_function_type_with_scope_id(
+                span,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                scope_id,
+            ),
             self.allocator,
         )
     }
@@ -12470,7 +14036,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSMappedType`] with `ScopeId`.
+    /// Build a [`TSMappedType`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_mapped_type_with_scope_id`] instead.
     ///
@@ -12507,7 +14073,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSMappedType`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSMappedType`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_mapped_type_with_scope_id`] instead.
     ///

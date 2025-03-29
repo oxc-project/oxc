@@ -1,6 +1,6 @@
 [package]
 name = "oxc_estree"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -12,12 +12,18 @@ repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
 
-[dependencies]
-serde = { workspace = true, optional = true }
-
 [lints]
 workspace = true
 
+[lib]
+doctest = false
+
+[dependencies]
+oxc_data_structures = { workspace = true, features = ["code_buffer"], optional = true }
+
+itoa = { workspace = true, optional = true }
+ryu-js = { workspace = true, optional = true }
+
 [features]
 default = []
-serialize = ["dep:serde"]
+serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:ryu-js"]

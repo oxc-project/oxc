@@ -1,6 +1,6 @@
 use std::{hash::Hash, path::Path};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -12,7 +12,7 @@ pub use error::UnknownExtension;
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
+#[generate_derive(Dummy, ESTree)]
 #[estree(no_type, flatten)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -31,6 +31,7 @@ pub struct SourceType {
 /// JavaScript or TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(Dummy)]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
     JavaScript = 0,
@@ -43,7 +44,7 @@ pub enum Language {
 /// Script or Module
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
+#[generate_derive(Dummy, ESTree)]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
     Script = 0,
@@ -63,6 +64,7 @@ pub enum ModuleKind {
 /// JSX for JavaScript and TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(Dummy)]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.
@@ -95,7 +97,7 @@ impl ContentEq for SourceType {
 }
 
 /// Valid file extensions
-pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
     /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
@@ -545,7 +547,6 @@ mod tests {
     }
 
     #[test]
-    #[expect(clippy::similar_names)]
     fn test_d_ts_from_path() {
         let dts = SourceType::from_path("foo.d.ts").unwrap();
         let dmts = SourceType::from_path("foo.d.mts").unwrap();

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.15.10"
+version = "0.16.3"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -13,21 +13,25 @@ repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
 
+[features]
+ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
+
 [lints]
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }
-oxc_macros = { workspace = true }
+oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
@@ -37,27 +41,31 @@ oxc_syntax = { workspace = true, features = ["serialize"] }
 
 #
 bitflags = { workspace = true }
+constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
-dashmap = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
+indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
+javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
+lazy-regex = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
-regex = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }
+self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

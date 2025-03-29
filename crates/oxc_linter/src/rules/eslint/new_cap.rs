@@ -1,12 +1,12 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
+use lazy_regex::Regex;
 use oxc_ast::{
-    ast::{ChainElement, ComputedMemberExpression, Expression},
     AstKind,
+    ast::{ChainElement, ComputedMemberExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
     let msg = if *cap == GetCapResult::Lower {

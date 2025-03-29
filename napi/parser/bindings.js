@@ -60,7 +60,13 @@ const isMuslFromChildProcess = () => {
 }
 
 function requireNative() {
-  if (process.platform === 'android') {
+  if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
+    try {
+      nativeBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH);
+    } catch (err) {
+      loadErrors.push(err);
+    }
+  } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
         return require('./parser.android-arm64.node')
@@ -353,6 +359,14 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   }
 }
 
+if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
+  try {
+    nativeBinding = require('./webcontainer-fallback.js');
+  } catch (err) {
+    loadErrors.push(err)
+  }
+}
+
 if (!nativeBinding) {
   if (loadErrors.length > 0) {
     // TODO Link to documentation with potential fixes
@@ -364,13 +378,14 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-module.exports.MagicString = nativeBinding.MagicString
 module.exports.ParseResult = nativeBinding.ParseResult
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
+module.exports.getBufferOffset = nativeBinding.getBufferOffset
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
-module.exports.parseWithoutReturn = nativeBinding.parseWithoutReturn
+module.exports.parseSyncRaw = nativeBinding.parseSyncRaw
+module.exports.rawTransferSupported = nativeBinding.rawTransferSupported
 module.exports.Severity = nativeBinding.Severity

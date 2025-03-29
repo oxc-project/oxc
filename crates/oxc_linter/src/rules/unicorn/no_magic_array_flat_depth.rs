@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression},
     AstKind,
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_magic_array_flat_map_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Magic number for `Array.prototype.flat` depth is not allowed.")
@@ -60,7 +60,7 @@ impl Rule for NoMagicArrayFlatDepth {
 
         let first_arg = call_expression.arguments.first().expect("missing argument");
         let Some(Expression::NumericLiteral(arg)) =
-            first_arg.as_expression().map(oxc_ast::ast::Expression::without_parentheses)
+            first_arg.as_expression().map(Expression::without_parentheses)
         else {
             return;
         };
@@ -74,7 +74,7 @@ impl Rule for NoMagicArrayFlatDepth {
         };
 
         let has_explaining_comment =
-            ctx.semantic().comments_range(arguments_span.start..arguments_span.end).count() != 0;
+            ctx.comments_range(arguments_span.start..arguments_span.end).count() != 0;
 
         if has_explaining_comment {
             return;

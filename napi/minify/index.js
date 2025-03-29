@@ -60,7 +60,13 @@ const isMuslFromChildProcess = () => {
 }
 
 function requireNative() {
-  if (process.platform === 'android') {
+  if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
+    try {
+      nativeBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH);
+    } catch (err) {
+      loadErrors.push(err);
+    }
+  } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
         return require('./minify.android-arm64.node')

@@ -142,7 +142,6 @@ struct ModuleGraphVisitor {
 }
 
 impl ModuleGraphVisitor {
-    #[expect(clippy::too_many_arguments)]
     fn filter_fold_while<
         T,
         Filter: Fn(ModulePair, &ModuleRecord) -> bool,
@@ -172,7 +171,6 @@ impl ModuleGraphVisitor {
         .into_inner()
     }
 
-    #[expect(clippy::too_many_arguments)]
     fn filter_fold_recursive<
         T,
         Filter: Fn(ModulePair, &ModuleRecord) -> bool,
@@ -191,7 +189,7 @@ impl ModuleGraphVisitor {
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
         macro_rules! accumulate {
-            ($acc:expr) => {
+            ($acc:expr_2021) => {
                 accumulator = $acc;
 
                 if accumulator.is_done() {

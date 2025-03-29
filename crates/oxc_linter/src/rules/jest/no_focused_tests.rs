@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, MemberExpressionElement,
-        ParsedGeneralJestFnCall, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, MemberExpressionElement, ParsedGeneralJestFnCall,
+        PossibleJestNode, parse_general_jest_fn_call,
     },
 };
 

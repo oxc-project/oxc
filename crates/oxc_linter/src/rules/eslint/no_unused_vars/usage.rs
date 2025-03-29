@@ -1,11 +1,11 @@
 //! This module contains logic for checking if any [`Reference`]s to a
 //! [`Symbol`] are considered a usage.
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
-use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, ignored::FoundStatus};
 
 impl<'a> Symbol<'_, 'a> {
     // =========================================================================
@@ -354,7 +354,7 @@ impl<'a> Symbol<'_, 'a> {
     ///   reference was not used by others, or `false` if it was.
     ///
     /// ## Examples
-    /// ```
+    /// ```text
     /// let a = 0;
     /// // should return true
     /// a++;
@@ -616,9 +616,6 @@ impl<'a> Symbol<'_, 'a> {
         let Some(ref_node) = self.get_ref_relevant_node(reference) else {
             return false;
         };
-        if !matches!(ref_node.kind(), AstKind::CallExpression(_) | AstKind::NewExpression(_)) {
-            return false;
-        }
 
         // Do the easy/fast path if possible. If we know its a class/fn from
         // flags, that means it's declared within this file in an understandable
@@ -692,7 +689,7 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
-        for scope_id in self.scopes().ancestors(call_scope_id) {
+        for scope_id in self.scoping().scope_ancestors(call_scope_id) {
             if scope_id == container_id {
                 return true;
             } else if scope_id == decl_scope_id {
@@ -746,7 +743,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::AssignmentTarget(target) if needs_variable_identifier => {
                     return match target {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            self.symbols().get_reference(id.reference_id()).symbol_id()
+                            self.scoping().get_reference(id.reference_id()).symbol_id()
                         }
                         _ => None,
                     };

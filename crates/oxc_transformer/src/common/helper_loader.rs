@@ -22,12 +22,12 @@
 //!
 //! ### Runtime ([`HelperLoaderMode::Runtime`])
 //!
-//! Uses `@babel/runtime` as a dependency, importing helper functions from the runtime.
+//! Uses `@oxc-project/runtime` as a dependency, importing helper functions from the runtime.
 //!
 //! Generated code example:
 //!
 //! ```js
-//! import helperName from "@babel/runtime/helpers/helperName";
+//! import helperName from "@oxc-project/runtime/helpers/helperName";
 //! helperName(...arguments);
 //! ```
 //!
@@ -70,13 +70,13 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     NONE,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::TransformCtx;
@@ -110,7 +110,7 @@ pub enum HelperLoaderMode {
     ///
     /// Example output:
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]
@@ -122,7 +122,7 @@ pub enum HelperLoaderMode {
 pub struct HelperLoaderOptions {
     #[serde(default = "default_as_module_name")]
     /// The module name to import helper functions from.
-    /// Default: `@babel/runtime`
+    /// Default: `@oxc-project/runtime`
     pub module_name: Cow<'static, str>,
     pub mode: HelperLoaderMode,
 }
@@ -134,7 +134,7 @@ impl Default for HelperLoaderOptions {
 }
 
 fn default_as_module_name() -> Cow<'static, str> {
-    Cow::Borrowed("@babel/runtime")
+    Cow::Borrowed("@oxc-project/runtime")
 }
 
 /// Available helpers.
@@ -166,6 +166,8 @@ pub enum Helper {
     CheckInRHS,
     Decorate,
     DecorateParam,
+    DecorateMetadata,
+    UsingCtx,
 }
 
 impl Helper {
@@ -197,7 +199,13 @@ impl Helper {
             Self::CheckInRHS => "checkInRHS",
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
+            Self::DecorateMetadata => "decorateMetadata",
+            Self::UsingCtx => "usingCtx",
         }
+    }
+
+    pub const fn pure(self) -> bool {
+        matches!(self, Self::ClassPrivateFieldLooseKey)
     }
 }
 
@@ -224,7 +232,6 @@ impl HelperLoaderStore<'_> {
 // Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
 impl<'a> TransformCtx<'a> {
     /// Load and call a helper function and return a `CallExpression`.
-    #[expect(dead_code)]
     pub fn helper_call(
         &self,
         helper: Helper,
@@ -233,7 +240,8 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.call_expression(span, callee, NONE, arguments, false)
+        let pure = helper.pure();
+        ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
     }
 
     /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -245,7 +253,8 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        let pure = helper.pure();
+        ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
     }
 
     /// Load a helper function and return a callee expression.
@@ -305,20 +314,14 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     // Construct string directly in arena without an intermediate temp allocation
-    fn get_runtime_source(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
-        let helper_name = helper.name();
-        let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
-        let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);
-        source.push_str(&self.module_name);
-        source.push_str("/helpers/");
-        source.push_str(helper_name);
-        Atom::from(source)
+    fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        ctx.ast.atom_from_strs_array([&self.module_name, "/helpers/", helper.name()])
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
-        let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
+        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let object =
             ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));

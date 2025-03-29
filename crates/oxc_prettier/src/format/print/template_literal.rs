@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text, Prettier,
+    Prettier, array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text,
 };
 
 pub enum TemplateLiteralLike<'a, 'b> {
@@ -72,7 +72,7 @@ pub fn print_tagged_template_literal<'a>(
     let mut parts = Vec::new_in(p.allocator);
 
     parts.push(tagged_template_literal.tag.format(p));
-    if let Some(type_parameters) = &tagged_template_literal.type_parameters {
+    if let Some(type_parameters) = &tagged_template_literal.type_arguments {
         parts.push(type_parameters.format(p));
     }
     parts.push(line_suffix_boundary!());

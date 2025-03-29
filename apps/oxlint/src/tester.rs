@@ -1,11 +1,11 @@
 #[cfg(test)]
-use crate::cli::{lint_command, LintRunner};
+use crate::cli::{LintRunner, lint_command};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]
 use cow_utils::CowUtils;
 #[cfg(test)]
-use regex::Regex;
+use lazy_regex::Regex;
 #[cfg(test)]
 use std::{env, path::PathBuf};
 #[cfg(test)]
@@ -53,17 +53,17 @@ impl Tester {
             let options = lint_command().run_inner(*args).unwrap();
             let args_string = args.join(" ");
 
-            output.extend_from_slice("########## \n".as_bytes());
+            output.extend_from_slice(b"########## \n");
             output.extend_from_slice(format!("arguments: {args_string}\n").as_bytes());
             output.extend_from_slice(
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
-            output.extend_from_slice("----------\n".as_bytes());
+            output.extend_from_slice(b"----------\n");
             let result = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
 
-            output.extend_from_slice("----------\n".as_bytes());
+            output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());
-            output.extend_from_slice("----------\n".as_bytes());
+            output.extend_from_slice(b"----------\n");
 
             output.push(b'\n');
         }

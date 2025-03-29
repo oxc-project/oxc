@@ -3,7 +3,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::count_comment_lines};
 
 fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("File has too many lines ({count})."))
@@ -82,38 +82,11 @@ impl Rule for MaxLines {
     #[expect(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
-            let mut comment_lines: usize = 0;
-            for comment in ctx.semantic().comments() {
-                let comment_span = comment.content_span();
-                if comment.is_line() {
-                    let comment_line = ctx.source_text()[..comment_span.start as usize]
-                        .lines()
-                        .next_back()
-                        .unwrap_or("");
-                    if line_has_just_comment(comment_line, "//") {
-                        comment_lines += 1;
-                    }
-                } else {
-                    let mut start_line =
-                        ctx.source_text()[..comment_span.start as usize].lines().count();
-                    let comment_start_line = ctx.source_text()[..comment_span.start as usize]
-                        .lines()
-                        .next_back()
-                        .unwrap_or("");
-                    if !line_has_just_comment(comment_start_line, "/*") {
-                        start_line += 1;
-                    }
-                    let mut end_line =
-                        ctx.source_text()[..=comment_span.end as usize].lines().count();
-                    let comment_end_line =
-                        ctx.source_text()[comment_span.end as usize..].lines().next().unwrap_or("");
-                    if line_has_just_comment(comment_end_line, "*/") {
-                        end_line += 1;
-                    }
-                    comment_lines += end_line - start_line;
-                }
-            }
-            comment_lines
+            ctx.semantic()
+                .comments()
+                .iter()
+                .map(|comment| count_comment_lines(comment, ctx.source_text()))
+                .sum()
         } else {
             0
         };
@@ -136,14 +109,6 @@ impl Rule for MaxLines {
                 Span::new(end, end),
             ));
         }
-    }
-}
-
-fn line_has_just_comment(line: &str, comment_chars: &str) -> bool {
-    if let Some(line) = line.trim().strip_prefix(comment_chars) {
-        line.is_empty()
-    } else {
-        false
     }
 }
 

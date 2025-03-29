@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Expression, Statement},
     AstKind,
+    ast::{Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.")

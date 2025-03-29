@@ -1,9 +1,9 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_img_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `<img>` element due to slower LCP and higher bandwidth.")

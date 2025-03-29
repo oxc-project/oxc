@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array, fill, group, hardline, if_break, indent, ir::Doc, line, softline, text, Format, Prettier,
+    Format, Prettier, array, fill, group, hardline, if_break, indent, ir::Doc, line, softline, text,
 };
 
 pub enum ArrayLike<'a, 'b> {
@@ -240,7 +240,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &ArrayLike<'a, '_>) -> Doc<'a>
         if needs_forced_trailing_comma {
             return text!(",");
         }
-        if !p.should_print_es5_comma() {
+        if !p.options.trailing_comma.should_print_es5() {
             return text!("");
         }
         if should_use_concise_formatting {

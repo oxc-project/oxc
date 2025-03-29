@@ -1,13 +1,16 @@
 use oxc_ast::{
-    ast::{match_assignment_target_pattern, Argument, AssignmentTarget, Expression},
     AstKind,
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentTarget, Expression,
+        match_assignment_target_pattern,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unsafe_optional_chaining_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe usage of optional chaining")
@@ -122,6 +125,13 @@ impl Rule for NoUnsafeOptionalChaining {
             AstKind::AssignmentTargetWithDefault(target) => {
                 if matches!(target.binding, match_assignment_target_pattern!(AssignmentTarget)) {
                     Self::check_unsafe_usage(&target.init, ctx);
+                }
+            }
+            AstKind::ArrayExpression(arr_expr) => {
+                for elem in &arr_expr.elements {
+                    if let ArrayExpressionElement::SpreadElement(spread_exp) = elem {
+                        Self::check_unsafe_usage(&spread_exp.argument, ctx);
+                    }
                 }
             }
             _ => {}
@@ -266,6 +276,7 @@ fn test() {
         ("x?.f?.<T>();", None),
         ("f?.<Q>();", None),
         ("a?.c?.b<c>", None),
+        ("const baz = {...obj?.foo };", None),
     ];
 
     let fail = vec![
@@ -273,6 +284,10 @@ fn test() {
         ("with (obj?.foo) {};", None),
         ("async function foo() { with ( await obj?.foo) {}; }", None),
         ("(foo ? obj?.foo : obj?.bar).bar", None),
+        ("const a = [...obj?.foo];", None),
+        ("const b = [...c, ...obj?.foo];", None),
+        ("const s = [], t = [...obj?.foo];", None),
+        ("const c = () => ([...(obj?.foo)]);", None),
     ];
 
     Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)

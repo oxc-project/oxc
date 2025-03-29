@@ -11,15 +11,18 @@ use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
 use oxc::{
-    codegen::CodegenReturn,
+    CompilerInterface,
+    allocator::Allocator,
+    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
+    parser::Parser,
+    semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        DecoratorOptions, EnvOptions, HelperLoaderMode, HelperLoaderOptions,
-        InjectGlobalVariablesConfig, InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
+        InjectImport, JsxRuntime, ModuleRunnerTransform, ProposalOptions,
+        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
-    CompilerInterface,
 };
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
@@ -61,7 +64,7 @@ pub struct TransformResult {
     /// Example:
     ///
     /// ```text
-    /// { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+    /// { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
     /// ```
     #[napi(ts_type = "Record<string, string>")]
     pub helpers_used: FxHashMap<String, String>,
@@ -134,6 +137,9 @@ pub struct TransformOptions {
     /// Inject Plugin
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
+
+    /// Decorator plugin
+    pub decorator: Option<DecoratorOptions>,
 }
 
 impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
@@ -152,7 +158,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
                 .unwrap_or_default(),
-            decorator: DecoratorOptions::default(),
+            decorator: options
+                .decorator
+                .map(oxc::transformer::DecoratorOptions::from)
+                .unwrap_or_default(),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {
@@ -165,6 +174,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
+            proposals: ProposalOptions { explicit_resource_management: false },
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
@@ -258,6 +268,37 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                     },
                 }
             }),
+        }
+    }
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct DecoratorOptions {
+    /// Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+    ///
+    /// Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+    /// This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+    /// @default false
+    pub legacy: Option<bool>,
+
+    /// Enables emitting decorator metadata.
+    ///
+    /// This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+    /// in TypeScript, and it only works when `legacy` is true.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
+    /// @default false
+    pub emit_decorator_metadata: Option<bool>,
+}
+
+impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
+    fn from(options: DecoratorOptions) -> Self {
+        oxc::transformer::DecoratorOptions {
+            legacy: options.legacy.unwrap_or_default(),
+            emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
         }
     }
 }
@@ -440,7 +481,7 @@ pub enum HelperMode {
     /// Example:
     ///
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]
@@ -660,7 +701,7 @@ pub fn transform(
         Ok(compiler) => compiler,
         Err(errors) => {
             return TransformResult {
-                errors: errors.into_iter().map(OxcError::from).collect(),
+                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
                 ..Default::default()
             };
         }
@@ -674,6 +715,109 @@ pub fn transform(
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
         helpers_used: compiler.helpers_used,
-        errors: compiler.errors.into_iter().map(OxcError::from).collect(),
+        errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
+    }
+}
+
+#[derive(Default)]
+#[napi(object)]
+pub struct ModuleRunnerTransformOptions {
+    /// Enable source map generation.
+    ///
+    /// When `true`, the `sourceMap` field of transform result objects will be populated.
+    ///
+    /// @default false
+    ///
+    /// @see {@link SourceMap}
+    pub sourcemap: Option<bool>,
+}
+
+#[derive(Default)]
+#[napi(object)]
+pub struct ModuleRunnerTransformResult {
+    /// The transformed code.
+    ///
+    /// If parsing failed, this will be an empty string.
+    pub code: String,
+
+    /// The source map for the transformed code.
+    ///
+    /// This will be set if {@link TransformOptions#sourcemap} is `true`.
+    pub map: Option<SourceMap>,
+
+    // Import sources collected during transformation.
+    pub deps: Vec<String>,
+
+    // Dynamic import sources collected during transformation.
+    pub dynamic_deps: Vec<String>,
+
+    /// Parse and transformation errors.
+    ///
+    /// Oxc's parser recovers from common syntax errors, meaning that
+    /// transformed code may still be available even if there are errors in this
+    /// list.
+    pub errors: Vec<OxcError>,
+}
+
+/// Transform JavaScript code to a Vite Node runnable module.
+///
+/// @param filename The name of the file being transformed.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// ModuleRunnerTransformOptions} for more information.
+///
+/// @returns an object containing the transformed code, source maps, and any
+/// errors that occurred during parsing or transformation.
+///
+/// @deprecated Only works for Vite.
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn module_runner_transform(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> ModuleRunnerTransformResult {
+    let file_path = Path::new(&filename);
+    let source_type = SourceType::from_path(file_path);
+    let source_type = match source_type {
+        Ok(s) => s,
+        Err(err) => {
+            return ModuleRunnerTransformResult {
+                code: String::default(),
+                map: None,
+                deps: vec![],
+                dynamic_deps: vec![],
+                errors: vec![OxcError::new(err.to_string())],
+            };
+        }
+    };
+
+    let allocator = Allocator::default();
+    let mut parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut program = parser_ret.program;
+
+    let SemanticBuilderReturn { semantic, errors } =
+        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+    parser_ret.errors.extend(errors);
+
+    let scoping = semantic.into_scoping();
+    let (deps, dynamic_deps) =
+        ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
+
+    let CodegenReturn { code, map, .. } = CodeGenerator::new()
+        .with_options(CodegenOptions {
+            source_map_path: options.and_then(|opts| {
+                opts.sourcemap.as_ref().and_then(|s| s.then(|| file_path.to_path_buf()))
+            }),
+            ..Default::default()
+        })
+        .build(&program);
+
+    ModuleRunnerTransformResult {
+        code,
+        map: map.map(Into::into),
+        deps: deps.into_iter().collect::<Vec<String>>(),
+        dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
+        errors: OxcError::from_diagnostics(&filename, &source_text, parser_ret.errors),
     }
 }

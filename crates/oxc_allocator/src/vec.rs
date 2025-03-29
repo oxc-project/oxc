@@ -9,16 +9,15 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::ManuallyDrop,
     ops,
-    ptr::NonNull,
     slice::SliceIndex,
 };
 
-use allocator_api2::vec::Vec as InnerVec;
-use bumpalo::Bump;
+use crate::vec2::Vec as InnerVec;
 #[cfg(any(feature = "serialize", test))]
-use serde::{ser::SerializeSeq, Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Allocator, Box};
 
@@ -35,7 +34,7 @@ use crate::{Allocator, Box};
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<T, &'alloc Bump>>);
+pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -65,7 +64,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
+        Self(InnerVec::new_in(allocator.bump()))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -118,7 +117,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
+        Self(InnerVec::with_capacity_in(capacity, allocator.bump()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -132,7 +131,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump()));
+        let mut vec = InnerVec::with_capacity_in(capacity, allocator.bump());
         vec.extend(iter);
         Self(vec)
     }
@@ -163,46 +162,12 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
-        Self(ManuallyDrop::new(vec))
-    }
-
-    /// Converts the vector into [`Box<[T]>`][owned slice].
-    ///
-    /// Any excess capacity the vector has will not be included in the slice.
-    /// The excess memory will be leaked in the arena (i.e. not reused by another allocation).
-    ///
-    /// # Examples
-    /// ```
-    /// use oxc_allocator::{Allocator, Vec};
-    ///
-    /// let allocator = Allocator::default();
-    /// let mut v = Vec::with_capacity_in(10, &allocator);
-    /// v.extend([1, 2, 3]);
-    /// let b = v.into_boxed_slice();
-    ///
-    /// assert_eq!(&*b, &[1, 2, 3]);
-    /// assert_eq!(b.len(), 3);
-    /// ```
-    ///
-    /// [owned slice]: Box
-    #[inline]
-    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
-        let inner = ManuallyDrop::into_inner(self.0);
-        let slice = inner.leak();
-        let ptr = NonNull::from(slice);
-        // SAFETY: `ptr` points to a valid slice `[T]`.
-        // `allocator_api2::vec::Vec::leak` consumes the inner `Vec` without dropping it.
-        // Lifetime of returned `Box<'alloc, [T]>` is same as lifetime of consumed `Vec<'alloc, T>`,
-        // so data in the `Box` must be valid for its lifetime.
-        // `Vec` uniquely owned the data, and we have consumed the `Vec`, so the new `Box` has
-        // unique ownership of the data (no aliasing).
-        // `ptr` was created from a `&mut [T]`.
-        unsafe { Box::from_non_null(ptr) }
+        Self(vec)
     }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = InnerVec<T, &'alloc Bump>;
+    type Target = InnerVec<'alloc, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -212,21 +177,18 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
     #[inline]
-    fn deref_mut(&mut self) -> &mut InnerVec<T, &'alloc Bump> {
+    fn deref_mut(&mut self) -> &mut InnerVec<'alloc, T> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <InnerVec<T, &'alloc Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <InnerVec<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
-        let inner = ManuallyDrop::into_inner(self.0);
-        // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
-        // Wrap it in `ManuallyDrop` to prevent that.
-        inner.into_iter()
+        self.0.into_iter()
     }
 }
 
@@ -273,19 +235,16 @@ where
 }
 
 #[cfg(any(feature = "serialize", test))]
-impl<T> Serialize for Vec<'_, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut seq = s.serialize_seq(Some(self.0.len()))?;
-        for e in self.0.iter() {
-            seq.serialize_element(e)?;
-        }
-        seq.end()
+impl<T: Serialize> Serialize for Vec<'_, T> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.as_slice().serialize(serializer)
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<T: ESTree> ESTree for Vec<'_, T> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        self.as_slice().serialize(serializer);
     }
 }
 
@@ -298,15 +257,14 @@ impl<T: Hash> Hash for Vec<'_, T> {
 
 impl<T: Debug> Debug for Vec<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let inner = &*self.0;
-        f.debug_tuple("Vec").field(inner).finish()
+        f.debug_tuple("Vec").field(&self.0).finish()
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::Vec;
-    use crate::{Allocator, Box};
+    use crate::Allocator;
 
     #[test]
     fn vec_with_capacity() {
@@ -329,8 +287,22 @@ mod test {
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
         v.push("x");
-        let v = serde_json::to_string(&v).unwrap();
-        assert_eq!(v, "[\"x\"]");
+        let s = serde_json::to_string(&v).unwrap();
+        assert_eq!(s, r#"["x"]"#);
+    }
+
+    #[test]
+    fn vec_serialize_estree() {
+        use oxc_estree::{CompactTSSerializer, ESTree};
+
+        let allocator = Allocator::default();
+        let mut v = Vec::new_in(&allocator);
+        v.push("x");
+
+        let mut serializer = CompactTSSerializer::new();
+        v.serialize(&mut serializer);
+        let s = serializer.into_string();
+        assert_eq!(s, r#"["x"]"#);
     }
 
     #[test]
@@ -338,20 +310,5 @@ mod test {
         fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
             program
         }
-    }
-
-    #[test]
-    fn vec_to_boxed_slice() {
-        let allocator = Allocator::default();
-        let mut v = Vec::with_capacity_in(10, &allocator);
-        v.extend([1, 2, 3]);
-
-        let b = v.into_boxed_slice();
-        // Check return value is an `oxc_allocator::Box`, not an `allocator_api2::boxed::Box`
-        let b: Box<[u8]> = b;
-
-        assert_eq!(&*b, &[1, 2, 3]);
-        // Check length of slice is equal to what `v.len()` was, not `v.capacity()`
-        assert_eq!(b.len(), 3);
     }
 }

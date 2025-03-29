@@ -12,12 +12,42 @@ export interface ArrowFunctionsOptions {
   spec?: boolean
 }
 
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
 export interface CompilerAssumptions {
   ignoreFunctionLength?: boolean
   noDocumentAll?: boolean
   objectRestNoSymbols?: boolean
   pureGetters?: boolean
   setPublicClassFields?: boolean
+}
+
+export interface DecoratorOptions {
+  /**
+   * Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+   *
+   * Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+   * This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+   * @default false
+   */
+  legacy?: boolean
+  /**
+   * Enables emitting decorator metadata.
+   *
+   * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+   * in TypeScript, and it only works when `legacy` is true.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
+   * @default false
+   */
+  emitDecoratorMetadata?: boolean
 }
 
 export interface ErrorLabel {
@@ -38,7 +68,7 @@ export declare const enum HelperMode {
    * Example:
    *
    * ```js
-   * import helperName from "@babel/runtime/helpers/helperName";
+   * import helperName from "@oxc-project/runtime/helpers/helperName";
    * helperName(...arguments);
    * ```
    */
@@ -176,11 +206,65 @@ export interface JsxOptions {
   refresh?: boolean | ReactRefreshOptions
 }
 
+/**
+ * Transform JavaScript code to a Vite Node runnable module.
+ *
+ * @param filename The name of the file being transformed.
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * ModuleRunnerTransformOptions} for more information.
+ *
+ * @returns an object containing the transformed code, source maps, and any
+ * errors that occurred during parsing or transformation.
+ *
+ * @deprecated Only works for Vite.
+ */
+export declare function moduleRunnerTransform(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
+
+export interface ModuleRunnerTransformOptions {
+  /**
+   * Enable source map generation.
+   *
+   * When `true`, the `sourceMap` field of transform result objects will be populated.
+   *
+   * @default false
+   *
+   * @see {@link SourceMap}
+   */
+  sourcemap?: boolean
+}
+
+export interface ModuleRunnerTransformResult {
+  /**
+   * The transformed code.
+   *
+   * If parsing failed, this will be an empty string.
+   */
+  code: string
+  /**
+   * The source map for the transformed code.
+   *
+   * This will be set if {@link TransformOptions#sourcemap} is `true`.
+   */
+  map?: SourceMap
+  deps: Array<string>
+  dynamicDeps: Array<string>
+  /**
+   * Parse and transformation errors.
+   *
+   * Oxc's parser recovers from common syntax errors, meaning that
+   * transformed code may still be available even if there are errors in this
+   * list.
+   */
+  errors: Array<OxcError>
+}
+
 export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
   helpMessage?: string
+  codeframe?: string
 }
 
 export interface ReactRefreshOptions {
@@ -203,6 +287,17 @@ export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
   Advice = 'Advice'
+}
+
+export interface SourceMap {
+  file?: string
+  mappings: string
+  names: Array<string>
+  sourceRoot?: string
+  sources: Array<string>
+  sourcesContent?: Array<string>
+  version: number
+  x_google_ignoreList?: Array<number>
 }
 
 /**
@@ -270,6 +365,8 @@ export interface TransformOptions {
   define?: Record<string, string>
   /** Inject Plugin */
   inject?: Record<string, string | [string, string]>
+  /** Decorator plugin */
+  decorator?: DecoratorOptions
 }
 
 export interface TransformResult {
@@ -310,7 +407,7 @@ export interface TransformResult {
    * Example:
    *
    * ```text
-   * { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+   * { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
    * ```
    */
   helpersUsed: Record<string, string>

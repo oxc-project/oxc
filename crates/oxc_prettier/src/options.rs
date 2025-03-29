@@ -54,6 +54,10 @@ pub struct PrettierOptions {
     /// Default: true
     pub bracket_spacing: bool,
 
+    /// Configure how wraps object literals when they could fit on one line or span multiple lines.
+    /// Default: [ObjectWrap::Preserve]
+    pub object_wrap: ObjectWrap,
+
     /// Put the `>` of a multi-line HTML (HTML, JSX) element at the end of the last line
     /// instead of being alone on the next line (does not apply to self closing elements).
     /// Default: false
@@ -77,6 +81,7 @@ impl Default for PrettierOptions {
             jsx_single_quote: false,
             trailing_comma: TrailingComma::default(),
             bracket_spacing: true,
+            object_wrap: ObjectWrap::default(),
             bracket_same_line: false,
             arrow_parens: ArrowParens::default(),
         }
@@ -166,16 +171,16 @@ pub enum TrailingComma {
 }
 
 impl TrailingComma {
-    pub fn is_all(self) -> bool {
-        self == Self::All
+    pub fn should_print_es5(self) -> bool {
+        self.should_print_comma_impl(false)
     }
 
-    pub fn is_es5(self) -> bool {
-        self == Self::ES5
+    pub fn should_print_all(self) -> bool {
+        self.should_print_comma_impl(true)
     }
 
-    pub fn is_none(self) -> bool {
-        self == Self::None
+    fn should_print_comma_impl(self, level_all: bool) -> bool {
+        matches!(self, Self::All) || (matches!(self, Self::ES5) && !level_all)
     }
 }
 
@@ -187,6 +192,33 @@ impl FromStr for TrailingComma {
             "all" => Self::All,
             "es5" => Self::ES5,
             "none" => Self::None,
+            _ => Self::default(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum ObjectWrap {
+    /// Keep as multi-line, if there is a newline between the opening brace and first property.
+    #[default]
+    Preserve,
+    /// Fit to a single line when possible.
+    Collapse,
+}
+
+impl ObjectWrap {
+    pub fn is_preserve(self) -> bool {
+        matches!(self, Self::Preserve)
+    }
+}
+
+impl FromStr for ObjectWrap {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "preserve" => Self::Preserve,
+            "collapse" => Self::Collapse,
             _ => Self::default(),
         })
     }

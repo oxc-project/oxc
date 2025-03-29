@@ -11,8 +11,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind,
-        KnownMemberExpressionProperty, PossibleJestNode,
+        JestFnKind, KnownMemberExpressionProperty, PossibleJestNode, is_type_of_jest_fn_call,
+        parse_expect_jest_fn_call,
     },
 };
 

@@ -3,11 +3,16 @@ use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
-    pub fn minimize_for_statement(&mut self, for_stmt: &mut ForStatement<'a>, ctx: Ctx<'a, '_>) {
+    pub fn minimize_for_statement(
+        &self,
+        for_stmt: &mut ForStatement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
@@ -45,19 +50,22 @@ impl<'a> PeepholeOptimizations {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
-                e => Self::minimize_not(e.span(), e, ctx),
+                e => self.minimize_not(e.span(), e, ctx),
             };
 
             if let Some(test) = &mut for_stmt.test {
-                let e = ctx.ast.move_expression(test);
-                *test = ctx.ast.expression_logical(test.span(), e, LogicalOperator::And, expr);
+                let left = ctx.ast.move_expression(test);
+                let mut logical_expr =
+                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
+                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
 
             let alternate = if_stmt.alternate.take();
             for_stmt.body = Self::drop_first_statement(span, body, alternate, ctx);
-            self.mark_current_function_as_changed();
+            state.changed = true;
             return;
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
@@ -83,15 +91,18 @@ impl<'a> PeepholeOptimizations {
             let expr = ctx.ast.move_expression(&mut if_stmt.test);
 
             if let Some(test) = &mut for_stmt.test {
-                let e = ctx.ast.move_expression(test);
-                *test = ctx.ast.expression_logical(test.span(), e, LogicalOperator::And, expr);
+                let left = ctx.ast.move_expression(test);
+                let mut logical_expr =
+                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
+                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
 
             let consequent = ctx.ast.move_statement(&mut if_stmt.consequent);
             for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 

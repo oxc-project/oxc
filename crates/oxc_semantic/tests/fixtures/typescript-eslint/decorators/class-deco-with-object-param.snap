@@ -6,14 +6,22 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSTypeAnnotation",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(deco)",
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 0,
+            "id": 1,
             "name": "param",
             "node": "BindingRestElement",
             "references": []
@@ -23,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
       {
         "children": [],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
+        "id": 3,
         "node": "Class(Foo)",
         "symbols": []
       }
@@ -33,8 +41,22 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
     "node": "Program",
     "symbols": [
       {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "deco",
+        "node": "Function(deco)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "deco",
+            "node_id": 19
+          }
+        ]
+      },
+      {
         "flags": "SymbolFlags(Class)",
-        "id": 1,
+        "id": 2,
         "name": "Foo",
         "node": "Class(Foo)",
         "references": []

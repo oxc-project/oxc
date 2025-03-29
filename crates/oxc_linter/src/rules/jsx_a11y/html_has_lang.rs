@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn missing_lang_prop(span: Span) -> OxcDiagnostic {
@@ -114,29 +114,29 @@ fn test() {
     }
 
     let pass = vec![
-        (r"<div />;", None, None, None),
-        (r#"<html lang="en" />"#, None, None, None),
-        (r#"<html lang="en-US" />"#, None, None, None),
-        (r#"<html lang={"en-US"} />"#, None, None, None),
-        (r"<html lang={`en-US`} />", None, None, None),
-        (r"<html lang={`${foo}`} />", None, None, None),
-        (r"<html lang={foo} />;", None, None, None),
-        (r"<html lang />;", None, None, None),
-        (r"<HTML />;", None, None, None),
-        ("<HTMLTop lang='en' />", None, Some(settings()), None),
+        (r"<div />;", None, None),
+        (r#"<html lang="en" />"#, None, None),
+        (r#"<html lang="en-US" />"#, None, None),
+        (r#"<html lang={"en-US"} />"#, None, None),
+        (r"<html lang={`en-US`} />", None, None),
+        (r"<html lang={`${foo}`} />", None, None),
+        (r"<html lang={foo} />;", None, None),
+        (r"<html lang />;", None, None),
+        (r"<HTML />;", None, None),
+        ("<HTMLTop lang='en' />", None, Some(settings())),
     ];
 
     let fail = vec![
-        (r"<html />;", None, None, None),
-        (r"<html {...props} />;", None, None, None),
-        (r"<html lang={undefined} />;", None, None, None),
-        (r"<html lang={null} />;", None, None, None),
-        (r"<html lang={false} />;", None, None, None),
-        (r"<html lang={1} />;", None, None, None),
-        (r"<html lang={''} />;", None, None, None),
-        (r"<html lang={``} />;", None, None, None),
-        (r#"<html lang="" />;"#, None, None, None),
-        ("<HTMLTop />", None, Some(settings()), None),
+        (r"<html />;", None, None),
+        (r"<html {...props} />;", None, None),
+        (r"<html lang={undefined} />;", None, None),
+        (r"<html lang={null} />;", None, None),
+        (r"<html lang={false} />;", None, None),
+        (r"<html lang={1} />;", None, None),
+        (r"<html lang={''} />;", None, None),
+        (r"<html lang={``} />;", None, None),
+        (r#"<html lang="" />;"#, None, None),
+        ("<HTMLTop />", None, Some(settings())),
     ];
 
     Tester::new(HtmlHasLang::NAME, HtmlHasLang::PLUGIN, pass, fail)

@@ -12,8 +12,8 @@ use oxc::{
 };
 
 use super::{
+    TESTS_ROOT, TypeScriptCase,
     meta::{Baseline, BaselineFile},
-    TypeScriptCase, TESTS_ROOT,
 };
 use crate::{
     suite::{Case, Suite, TestResult},

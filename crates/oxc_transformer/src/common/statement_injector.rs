@@ -12,7 +12,7 @@
 //! self.ctx.statement_injector.insert_many_after(address, statements);
 //! ```
 
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::hash_map::Entry};
 
 use rustc_hash::FxHashMap;
 
@@ -40,6 +40,11 @@ impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.ctx.statement_injector.insert_into_statements(statements, ctx);
+    }
+
+    #[inline]
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.statement_injector.assert_no_insertions_remaining();
     }
 }
 
@@ -148,6 +153,33 @@ impl<'a> StatementInjectorStore<'a> {
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
     }
+
+    /// Move insertions from one [`Address`] to another.
+    ///
+    /// Use this if you convert one statement to another, and other code may have attached
+    /// insertions to the original statement.
+    #[inline]
+    pub fn move_insertions<A1: GetAddress, A2: GetAddress>(
+        &self,
+        old_target: &A1,
+        new_target: &A2,
+    ) {
+        self.move_insertions_address(old_target.address(), new_target.address());
+    }
+
+    fn move_insertions_address(&self, old_address: Address, new_address: Address) {
+        let mut insertions = self.insertions.borrow_mut();
+        let Some(mut adjacent_stmts) = insertions.remove(&old_address) else { return };
+
+        match insertions.entry(new_address) {
+            Entry::Occupied(entry) => {
+                entry.into_mut().append(&mut adjacent_stmts);
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(adjacent_stmts);
+            }
+        }
+    }
 }
 
 // Internal methods
@@ -156,7 +188,7 @@ impl<'a> StatementInjectorStore<'a> {
     fn insert_into_statements(
         &self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let mut insertions = self.insertions.borrow_mut();
         if insertions.is_empty() {
@@ -174,25 +206,36 @@ impl<'a> StatementInjectorStore<'a> {
         let mut new_statements = ctx.ast.vec_with_capacity(statements.len() + new_statement_count);
 
         for stmt in statements.drain(..) {
-            if let Some(mut adjacent_stmts) = insertions.remove(&stmt.address()) {
-                let first_after_stmt_index = adjacent_stmts
-                    .iter()
-                    .position(|s| matches!(s.direction, Direction::After))
-                    .unwrap_or(adjacent_stmts.len());
-                if first_after_stmt_index != 0 {
-                    let right = adjacent_stmts.split_off(first_after_stmt_index);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
-                    new_statements.push(stmt);
-                    new_statements.extend(right.into_iter().map(|s| s.stmt));
-                } else {
-                    new_statements.push(stmt);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+            match insertions.remove(&stmt.address()) {
+                Some(mut adjacent_stmts) => {
+                    let first_after_stmt_index = adjacent_stmts
+                        .iter()
+                        .position(|s| matches!(s.direction, Direction::After))
+                        .unwrap_or(adjacent_stmts.len());
+                    if first_after_stmt_index != 0 {
+                        let right = adjacent_stmts.split_off(first_after_stmt_index);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                        new_statements.push(stmt);
+                        new_statements.extend(right.into_iter().map(|s| s.stmt));
+                    } else {
+                        new_statements.push(stmt);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                    }
                 }
-            } else {
-                new_statements.push(stmt);
+                _ => {
+                    new_statements.push(stmt);
+                }
             }
         }
 
         *statements = new_statements;
+    }
+
+    // Assertion for checking if no remaining insertions are left.
+    // `#[inline(always)]` because this is a no-op in release mode
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn assert_no_insertions_remaining(&self) {
+        debug_assert!(self.insertions.borrow().is_empty());
     }
 }

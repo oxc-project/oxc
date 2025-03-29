@@ -47,16 +47,12 @@
 //! [`Derive`]: crate::Derive
 //! [`Generator`]: crate::Generator
 
-use indexmap::{IndexMap, IndexSet};
 use oxc_index::IndexVec;
-use rustc_hash::FxBuildHasher;
-use syn::Ident;
 
 use crate::{
-    log, log_success,
-    schema::Derives,
-    schema::{File, FileId, Schema},
-    Codegen,
+    Codegen, log, log_success,
+    schema::{Derives, File, FileId, Schema},
+    utils::FxIndexMap,
 };
 
 pub mod attr;
@@ -68,46 +64,42 @@ use load::load_file;
 use parse::parse;
 use skeleton::Skeleton;
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
-type FxIndexSet<K> = IndexSet<K, FxBuildHasher>;
-
 /// Analyse the files with provided paths, and generate a [`Schema`].
 pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
-    // Load files and populate `Vec` of skeletons + mapping from type name to `TypeId`.
+    // Load files and populate `skeletons` and `meta_skeletons` + mapping from type name to `TypeId`.
+    // `skeletons` contains details of types marked with `#[ast]` attribute.
+    // `meta_skeletons` contains details of types marked with `#[ast_meta]` attribute.
+    // Meta types are not part of the AST, but associated with it.
     // `TypeId` is index into `skeletons`.
+    // `MetaId` is index into `meta_skeletons`.
     let mut skeletons = FxIndexMap::default();
+    let mut meta_skeletons = FxIndexMap::default();
 
     let files = file_paths
         .iter()
         .enumerate()
         .map(|(file_id, &file_path)| {
             let file_id = FileId::from_usize(file_id);
-            analyse_file(file_id, file_path, &mut skeletons)
+            analyse_file(file_id, file_path, &mut skeletons, &mut meta_skeletons)
         })
         .collect::<IndexVec<_, _>>();
 
     // Convert skeletons into schema
-    parse(skeletons, files, codegen)
+    parse(skeletons, meta_skeletons, files, codegen)
 }
 
-/// Analyse file with provided path and add types to `skeletons`.
+/// Analyse file with provided path and add types to `skeletons` and `meta_skeletons`.
 ///
 /// Returns a [`File`].
 fn analyse_file(
     file_id: FileId,
     file_path: &str,
     skeletons: &mut FxIndexMap<String, Skeleton>,
+    meta_skeletons: &mut FxIndexMap<String, Skeleton>,
 ) -> File {
     log!("Load {file_path}... ");
-    load_file(file_id, file_path, skeletons);
+    load_file(file_id, file_path, skeletons, meta_skeletons);
     log_success!();
 
     File::new(file_path)
-}
-
-/// Convert [`Ident`] to `String`, removing `r#` from start.
-///
-/// [`Ident`]: struct@Ident
-fn ident_name(ident: &Ident) -> String {
-    ident.to_string().trim_start_matches("r#").to_string()
 }

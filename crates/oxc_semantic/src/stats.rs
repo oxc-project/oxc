@@ -1,17 +1,20 @@
 use std::cell::Cell;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
     },
-    visit::walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
-    AstKind, Visit,
+};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
 macro_rules! assert_ge {
-    ($left:expr, $right:expr, $($msg_args:tt)+) => {
+    ($left:expr_2021, $right:expr_2021, $($msg_args:tt)+) => {
         match (&$left, &$right) {
             (left, right) => if !(left >= right) {
                 panic!(
@@ -23,7 +26,7 @@ macro_rules! assert_ge {
         }
     };
 
-    ($left:expr, $right:expr) => {
+    ($left:expr_2021, $right:expr_2021) => {
         match (&$left, &$right) {
             (left, right) => if !(left >= right) {
                 panic!(
@@ -34,7 +37,7 @@ macro_rules! assert_ge {
         }
     };
 
-    ($lhs:expr, $rhs:expr,) => {
+    ($lhs:expr_2021, $rhs:expr_2021,) => {
         assert_le!($lhs, $rhs);
     };
 }

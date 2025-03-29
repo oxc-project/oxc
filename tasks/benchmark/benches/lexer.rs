@@ -1,10 +1,11 @@
 #![expect(clippy::disallowed_methods)]
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, Visit};
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
+use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
-    lexer::{Kind, Lexer},
     Parser,
+    lexer::{Kind, Lexer},
 };
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};

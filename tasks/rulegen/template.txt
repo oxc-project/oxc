@@ -19,12 +19,15 @@ fn {{snake_rule_name}}_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct {{pascal_rule_name}};
 
+// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Briefly describe the rule's purpose.
     ///
     /// ### Why is this bad?
     ///
+    /// Explain why violating this rule is problematic.
     ///
     /// ### Examples
     ///
@@ -41,7 +44,6 @@ declare_oxc_lint!(
     {{mod_name}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-             
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'

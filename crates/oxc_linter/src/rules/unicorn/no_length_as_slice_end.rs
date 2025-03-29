@@ -1,10 +1,13 @@
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression, AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression,
 };
 
 fn no_length_as_slice_end_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
@@ -57,14 +60,14 @@ impl Rule for NoLengthAsSliceEnd {
             return;
         }
 
-        if call_expr.arguments.iter().any(oxc_ast::ast::Argument::is_spread) {
+        if call_expr.arguments.iter().any(Argument::is_spread) {
             return;
         }
 
         let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr.arguments
             [1]
         .as_expression()
-        .map(oxc_ast::ast::Expression::without_parentheses)
+        .map(Expression::without_parentheses)
         .and_then(|e| e.get_member_expr()) else {
             return;
         };

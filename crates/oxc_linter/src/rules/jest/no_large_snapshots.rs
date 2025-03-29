@@ -1,19 +1,19 @@
 use std::{ops::Deref, path::Path};
 
+use lazy_regex::Regex;
 use oxc_ast::{
-    ast::{Expression, ExpressionStatement, MemberExpression},
     AstKind,
+    ast::{Expression, ExpressionStatement, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{iter_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call},
 };
 
 // TODO: re-word diagnostic messages
@@ -167,7 +167,7 @@ impl Rule for NoLargeSnapshots {
         });
 
         if is_snap {
-            for node in ctx.nodes().iter().collect::<Vec<_>>() {
+            for node in ctx.nodes().iter() {
                 if let AstKind::ExpressionStatement(expr_stmt) = node.kind() {
                     self.report_in_expr_stmt(expr_stmt, ctx);
                 }

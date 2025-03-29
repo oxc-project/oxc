@@ -2,44 +2,49 @@ use oxc_index::IndexVec;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
-    punctuated::Punctuated, token::Comma, AttrStyle, Attribute, Expr, ExprLit, Field, Fields,
-    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList, PathArguments,
-    PathSegment, Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
+    AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument, Generics, Ident, ItemEnum,
+    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypePath, TypeReference,
+    Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
 };
 
 use crate::{
+    DERIVES, GENERATORS, Result,
     codegen::Codegen,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, OptionDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
+        PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
     },
-    Result, DERIVES, GENERATORS,
+    utils::{FxIndexMap, FxIndexSet, ident_name},
 };
 
 use super::{
+    Derives,
     attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
-    ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
-    Derives, FxIndexMap, FxIndexSet,
 };
 
 /// Parse [`Skeleton`]s into [`TypeDef`]s.
 pub fn parse(
     skeletons: FxIndexMap<String, Skeleton>,
+    meta_skeletons: FxIndexMap<String, Skeleton>,
     files: IndexVec<FileId, File>,
     codegen: &Codegen,
 ) -> Schema {
-    // Split `skeletons` into a `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
+    // Split `skeletons` into an `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
     let (type_names, skeletons_vec) = skeletons.into_iter().unzip();
+    // Split `meta_skeletons` into an `IndexSet<String>` (meta names) and `IndexVec<MetaId, Skeleton>` (skeletons)
+    let (meta_names, meta_skeletons_vec) = meta_skeletons.into_iter().unzip();
 
-    let parser = Parser::new(type_names, files, codegen);
-    parser.parse_all(skeletons_vec)
+    let parser = Parser::new(type_names, meta_names, files, codegen);
+    parser.parse_all(skeletons_vec, meta_skeletons_vec)
 }
 
 /// Types parser.
 struct Parser<'c> {
     /// Index hash set indexed by type ID, containing type names
     type_names: FxIndexSet<String>,
+    /// Index hash set indexed by meta ID, containing meta names
+    meta_names: FxIndexSet<String>,
     /// Source files
     files: IndexVec<FileId, File>,
     /// Reference to `CodeGen`
@@ -62,11 +67,13 @@ impl<'c> Parser<'c> {
     /// Create [`Parser`].
     fn new(
         type_names: FxIndexSet<String>,
+        meta_names: FxIndexSet<String>,
         files: IndexVec<FileId, File>,
         codegen: &'c Codegen,
     ) -> Self {
         Self {
             type_names,
+            meta_names,
             files,
             codegen,
             extra_types: vec![],
@@ -78,12 +85,28 @@ impl<'c> Parser<'c> {
     }
 
     /// Parse all [`Skeleton`]s into [`TypeDef`]s and return [`Schema`].
-    fn parse_all(mut self, skeletons: IndexVec<TypeId, Skeleton>) -> Schema {
+    fn parse_all(
+        mut self,
+        skeletons: IndexVec<TypeId, Skeleton>,
+        meta_skeletons: IndexVec<MetaId, Skeleton>,
+    ) -> Schema {
+        let metas = meta_skeletons
+            .into_iter_enumerated()
+            .map(|(meta_id, skeleton)| self.parse_meta_type(meta_id, skeleton))
+            .collect::<IndexVec<_, _>>();
+
         let mut types = skeletons
             .into_iter_enumerated()
             .map(|(type_id, skeleton)| self.parse_type(type_id, skeleton))
             .collect::<IndexVec<_, _>>();
         types.extend(self.extra_types);
+
+        let meta_names = self
+            .meta_names
+            .into_iter()
+            .enumerate()
+            .map(|(meta_id, meta_name)| (meta_name, MetaId::from_usize(meta_id)))
+            .collect();
 
         let type_names = self
             .type_names
@@ -92,7 +115,7 @@ impl<'c> Parser<'c> {
             .map(|(type_id, type_name)| (type_name, TypeId::from_usize(type_id)))
             .collect();
 
-        Schema { types, type_names, files: self.files }
+        Schema { types, type_names, metas, meta_names, files: self.files }
     }
 
     /// Get [`TypeId`] for type name.
@@ -144,7 +167,7 @@ impl<'c> Parser<'c> {
     }
 
     /// Get type name for a [`TypeId`].
-    fn type_name(&mut self, type_id: TypeId) -> &str {
+    fn type_name(&self, type_id: TypeId) -> &str {
         &self.type_names[type_id.index()]
     }
 
@@ -180,9 +203,10 @@ impl<'c> Parser<'c> {
 
     /// Parse [`StructSkeleton`] to yield a [`TypeDef`].
     fn parse_struct(&mut self, type_id: TypeId, skeleton: StructSkeleton) -> TypeDef {
-        let StructSkeleton { name, item, file_id } = skeleton;
+        let StructSkeleton { name, item, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Struct(StructDef::new(
@@ -190,7 +214,9 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            visibility,
             generated_derives,
             fields,
         ));
@@ -253,10 +279,11 @@ impl<'c> Parser<'c> {
 
     /// Parse [`EnumSkeleton`] to yield a [`TypeDef`].
     fn parse_enum(&mut self, type_id: TypeId, skeleton: EnumSkeleton) -> TypeDef {
-        let EnumSkeleton { name, item, inherits, file_id } = skeleton;
+        let EnumSkeleton { name, item, inherits, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Enum(EnumDef::new(
@@ -264,7 +291,9 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            visibility,
             generated_derives,
             variants,
             inherits,
@@ -344,11 +373,7 @@ impl<'c> Parser<'c> {
         let type_id = self
             .parse_type_name(ty)
             .unwrap_or_else(|| panic!("Cannot parse type reference: {}", ty.to_token_stream()));
-        let visibility = match &field.vis {
-            SynVisibility::Public(_) => Visibility::Public,
-            SynVisibility::Restricted(_) => Visibility::Restricted,
-            SynVisibility::Inherited => Visibility::Private,
-        };
+        let visibility = convert_visibility(&field.vis);
 
         // Get doc comment
         let mut doc_comment = None;
@@ -493,7 +518,7 @@ impl<'c> Parser<'c> {
     ///
     /// [`Derive`]: crate::Derive
     /// [`Generator`]: crate::Generator
-    fn parse_type_attrs(&mut self, type_def: &mut TypeDef, attrs: &[Attribute]) {
+    fn parse_type_attrs(&self, type_def: &mut TypeDef, attrs: &[Attribute]) {
         for attr in attrs {
             if !matches!(attr.style, AttrStyle::Outer) {
                 continue;
@@ -577,7 +602,7 @@ impl<'c> Parser<'c> {
     ///
     /// [`Derive`]: crate::Derive
     /// [`Generator`]: crate::Generator
-    fn parse_ast_attr(&mut self, type_def: &mut TypeDef, attr: &Attribute) {
+    fn parse_ast_attr(&self, type_def: &mut TypeDef, attr: &Attribute) {
         let parts = match &attr.meta {
             Meta::Path(_) => return,
             Meta::List(meta_list) => meta_list
@@ -662,6 +687,47 @@ impl<'c> Parser<'c> {
 
         (derives, plural_name)
     }
+
+    /// Parse [`Skeleton`] to yield a [`MetaType`].
+    fn parse_meta_type(&self, meta_id: MetaId, skeleton: Skeleton) -> MetaType {
+        let (type_name, file_id, attrs) = match skeleton {
+            Skeleton::Struct(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
+            Skeleton::Enum(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
+        };
+
+        let mut meta_type = MetaType::new(meta_id, type_name.to_string(), file_id);
+
+        // Process attributes
+        for attr in &attrs {
+            if !matches!(attr.style, AttrStyle::Outer) {
+                continue;
+            }
+            let Some(attr_ident) = attr.path().get_ident() else { continue };
+            let attr_name = ident_name(attr_ident);
+            if attr_name == "ast_meta" {
+                continue;
+            }
+
+            let Some((processor, positions)) = self.codegen.attr_processor(&attr_name) else {
+                continue;
+            };
+
+            // Check attribute is legal in this position
+            check_attr_position(
+                positions,
+                AttrPositions::Meta,
+                &type_name,
+                &attr_name,
+                "meta type",
+            );
+
+            let location = AttrLocation::Meta(&mut meta_type);
+            let result = process_attr(processor, &attr_name, location, &attr.meta);
+            assert!(result.is_ok(), "Invalid use of `#[{attr_name}]` on `{type_name}` meta type");
+        }
+
+        meta_type
+    }
 }
 
 /// Check generics.
@@ -718,7 +784,7 @@ fn process_attr(
             for meta in parts {
                 match &meta {
                     Meta::Path(path) => {
-                        let part_name = path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(path.get_ident().ok_or(())?);
                         process_attr_part(
                             processor,
                             attr_name,
@@ -727,7 +793,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::NameValue(name_value) => {
-                        let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                         let str = convert_expr_to_string(&name_value.value);
                         process_attr_part(
                             processor,
@@ -737,7 +803,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::List(meta_list) => {
-                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                         let list = parse_attr_part_list(meta_list)?;
                         process_attr_part(
                             processor,
@@ -761,16 +827,16 @@ fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>
         .into_iter()
         .map(|meta| match meta {
             Meta::Path(path) => {
-                let part_name = path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(path.get_ident().ok_or(())?);
                 Ok(AttrPartListElement::Tag(part_name))
             }
             Meta::NameValue(name_value) => {
-                let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                 let str = convert_expr_to_string(&name_value.value);
                 Ok(AttrPartListElement::String(part_name, str))
             }
             Meta::List(meta_list) => {
-                let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                 let list = parse_attr_part_list(&meta_list)?;
                 Ok(AttrPartListElement::List(part_name, list))
             }
@@ -845,4 +911,13 @@ fn check_attr_position(
         "`{type_name}` type has `#[{attr_name}]` attribute on a {position_debug_str}, \
         but `#[{attr_name}]` is not legal in this position."
     );
+}
+
+/// Convert `syn::Visibility` to our `Visibility` type.
+fn convert_visibility(vis: &SynVisibility) -> Visibility {
+    match vis {
+        SynVisibility::Public(_) => Visibility::Public,
+        SynVisibility::Restricted(_) => Visibility::Restricted,
+        SynVisibility::Inherited => Visibility::Private,
+    }
 }

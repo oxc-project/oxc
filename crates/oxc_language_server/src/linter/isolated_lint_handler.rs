@@ -12,16 +12,15 @@ use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverit
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    loader::{JavaScriptSource, Loader, LINT_PARTIAL_LOADER_EXT},
-    Linter, ModuleRecord,
+    LINTABLE_EXTENSIONS, Linter, ModuleRecord,
+    loader::{JavaScriptSource, Loader},
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::VALID_EXTENSIONS;
 
+use crate::DiagnosticReport;
 use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
 use crate::linter::offset_to_position;
-use crate::DiagnosticReport;
 
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,
@@ -63,6 +62,11 @@ impl IsolatedLintHandler {
                 }]);
                 for r in related_info {
                     if r.location.range == d.diagnostic.range {
+                        continue;
+                    }
+                    // If there is no message content for this span, then don't produce an additional diagnostic
+                    // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+                    if r.message.is_empty() {
                         continue;
                     }
                     inverted_diagnostics.push(DiagnosticReport {
@@ -114,6 +118,7 @@ impl IsolatedLintHandler {
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: true,
+                    parse_regular_expression: true,
                     ..ParseOptions::default()
                 })
                 .parse();
@@ -181,9 +186,8 @@ impl IsolatedLintHandler {
 
     fn should_lint_path(path: &Path) -> bool {
         static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
-        let wanted_exts = WANTED_EXTENSIONS.get_or_init(|| {
-            VALID_EXTENSIONS.iter().chain(LINT_PARTIAL_LOADER_EXT.iter()).copied().collect()
-        });
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
         path.extension()
             .and_then(std::ffi::OsStr::to_str)

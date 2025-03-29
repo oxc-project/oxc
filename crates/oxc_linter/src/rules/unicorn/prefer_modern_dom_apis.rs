@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_modern_dom_apis_diagnostic(
     good_method: &str,

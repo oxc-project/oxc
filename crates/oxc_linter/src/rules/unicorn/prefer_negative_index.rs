@@ -1,15 +1,15 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, ArrayExpressionElement, BinaryExpression, BinaryOperator, Expression,
         StaticMemberExpression,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::is_same_expression, AstNode};
+use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule, utils::is_same_expression};
 
 fn prefer_negative_index_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer negative index over .length - index when possible").with_label(span)

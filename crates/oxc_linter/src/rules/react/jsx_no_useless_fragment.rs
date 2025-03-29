@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName, JSXExpression,
         JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,9 +11,9 @@ use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {

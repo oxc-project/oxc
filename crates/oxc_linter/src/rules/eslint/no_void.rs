@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `void` operator")

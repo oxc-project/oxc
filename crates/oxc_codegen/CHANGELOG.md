@@ -4,6 +4,152 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- eaea5fd parser: Handle invalid surrogate pair as lossy (#9964) (hi-ogawa)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 8abb4f6 parser: Correctly set `export_kind` for `ExportNamedDeclaration` (#9827) (camc314)
+
+## [0.58.0] - 2025-03-13
+
+### Bug Fixes
+
+- 475b48f ast: Change `ImportExpression::attributes` to `options` (#9665) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+
+### Refactor
+
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+### Features
+
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- 75f06ad codegen: Do not print comments when only `annotation_comments` is enabled (#9518) (Dunqing)
+- 9c6ae9f parser: `@__NO_SIDE_EFFECTS` only affects const variable decl (#9517) (Boshen)
+- b7d5513 parser: Parse `@__NO_SIDE_EFFECTS__` between `export default` and `async function` (#9514) (Boshen)
+- 58defe3 parser: Mark expression as pure in chain expression (#9479) (sapphi-red)
+- 2a03689 parser: Mark expressions on the left side of logical and conditional expressions as pure (#9414) (sapphi-red)
+
+### Performance
+
+
+### Refactor
+
+- 19c4835 codegen: Simplify printing comments between arguments in call-like expressions (#9501) (Dunqing)
+
+## [0.53.0] - 2025-02-26
+
+### Performance
+
+- 35ee399 codegen: Use `iter::repeat_n` in `CodeBuffer` (#9325) (overlookmotel)
+
+### Refactor
+
+- 9d98444 codegen, data_structures: Move `CodeBuffer` into `oxc_data_structures` crate (#9326) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+### Bug Fixes
+
+- 1cc1669 codegen: Fix `clippy::unused_peekable` warning (#9236) (Boshen)
+
+### Refactor
+
+- 97cc1c8 ast: Remove `TSLiteral::NullLiteral` (replaced by `TSNullKeyword`) (#9147) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+### Testing
+
+- 51c4491 codegen: Clean up esbuild tests (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+- 9091387 ast: [**BREAKING**] Remove `TSType::TSQualifiedName` (#9051) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- d9684af codegen: Fix missing StringLiteral sourcemap (#9064) (hi-ogawa)
+
+## [0.49.0] - 2025-02-10
+
+### Features
+
+- b4ee617 codegen: Prefer backquotes over double / single quotes (#8839) (sapphi-red)
+
+### Bug Fixes
+
+- be71b03 codegen: Parenthesis is lacking when a pure comment is placed before a function expression inside a call expression (#8968) (Dunqing)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FormalParameter},
     AstKind,
+    ast::{Argument, Expression, FormalParameter},
 };
 use oxc_span::Atom;
 use phf::{phf_set, set::Set};
@@ -46,7 +46,6 @@ pub fn as_endpoint_registration<'a, 'n>(
 ///
 /// This will yield a lot of false positives if not called on the results of
 /// [`as_endpoint_registration`].
-#[expect(clippy::similar_names)]
 pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
     let params = match maybe_handler {
         Expression::FunctionExpression(f) => &f.params,

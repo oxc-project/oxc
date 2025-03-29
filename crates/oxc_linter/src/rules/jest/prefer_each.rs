@@ -8,7 +8,7 @@ use rustc_hash::FxHashSet;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_jest_fn_call},
 };
 
 fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {

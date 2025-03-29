@@ -1,4 +1,4 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,7 +73,7 @@ impl Rule for PreferRestParams {
             {
                 return;
             }
-            let binding = ctx.scopes().find_binding(node.scope_id(), "arguments");
+            let binding = ctx.scoping().find_binding(node.scope_id(), "arguments");
             if binding.is_none() {
                 ctx.diagnostic(prefer_rest_params_diagnostic(node.span()));
             }

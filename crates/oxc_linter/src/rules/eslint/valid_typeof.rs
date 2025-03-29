@@ -1,11 +1,11 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
@@ -31,24 +31,60 @@ pub struct ValidTypeof {
 }
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforce comparing `typeof` expressions against valid strings
+    ///
+    /// Enforce comparing `typeof` expressions against valid strings.
     ///
     /// ### Why is this bad?
-    /// It is usually a typing mistake to compare the result of a `typeof`
-    /// operator to other string literals.
     ///
-    /// ### Example
+    /// For a vast majority of use cases, the result of the `typeof` operator is one of the
+    /// following string literals: `"undefined"`, `"object"`, `"boolean"`, `"number"`, `"string"`,
+    /// `"function"`, `"symbol"`, and `"bigint"`. It is usually a typing mistake to compare the
+    /// result of a `typeof` operator to other string literals.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// // requireStringLiterals: false
-    /// // incorrect:
     /// typeof foo === "strnig"
-    /// // correct:
-    /// typeof foo === "string"
-    /// typeof foo === baz
+    /// typeof foo == "undefimed"
+    /// typeof bar != "nunber"     // spellchecker:disable-line
+    /// typeof bar !== "fucntion"     // spellchecker:disable-line
+    /// ```
     ///
-    /// // requireStringLiterals: true
-    /// // incorrect:
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// typeof foo === "string"
+    /// typeof bar == "undefined"
     /// typeof foo === baz
+    /// typeof bar === typeof qux
+    /// ```js
+    ///
+    /// ### Options
+    ///
+    /// #### requireStringLiterals
+    ///
+    /// `{ type: boolean, default: false }`
+    ///
+    /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
+    /// expressions with only string literals or other `typeof` expressions, and disallows
+    /// comparisons to any other value. Default is `false`.
+    ///
+    /// With `requireStringLiterals` set to `true` the following are examples of incorrect code:
+    /// ```js
+    /// typeof foo === undefined
+    /// typeof bar == Object
+    /// typeof baz === "strnig"
+    /// typeof qux === "some invalid type"
+    /// typeof baz === anotherVariable
+    /// typeof foo == 5
+    /// ```
+    ///
+    /// With `requireStringLiterals` set to `true` the following are examples of correct code:
+    /// ```js
+    /// typeof foo === "undefined"
+    /// typeof bar == "object"
+    /// typeof baz === "string"
+    /// typeof bar === typeof qux
     /// ```
     ValidTypeof,
     eslint,
@@ -98,7 +134,9 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined" && ctx.is_reference_to_global_variable(ident) {
+            if ident.name == "undefined"
+                && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+            {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
                         not_string(

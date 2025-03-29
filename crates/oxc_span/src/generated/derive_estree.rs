@@ -1,40 +1,39 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#![allow(unused_imports, clippy::match_same_arms)]
+#![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
-use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
-
-use oxc_estree::ser::AppendTo;
+use oxc_estree::{
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
+    ser::{AppendTo, AppendToConcat},
+};
 
 use crate::source_type::*;
 use crate::span::*;
 
-impl Serialize for Span {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.start)?;
-        map.serialize_entry("end", &self.end)?;
-        map.end()
+impl ESTree for Span {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.start);
+        state.serialize_field("end", &self.end);
+        state.end();
     }
 }
 
-impl Serialize for SourceType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("sourceType", &self.module_kind)?;
-        map.end()
+impl ESTree for SourceType {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("sourceType", &self.module_kind);
+        state.end();
     }
 }
 
-impl Serialize for ModuleKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ModuleKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0, "script"),
-            ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1, "module"),
-            ModuleKind::Unambiguous => {
-                serializer.serialize_unit_variant("ModuleKind", 2, "unambiguous")
-            }
+            Self::Script => JsonSafeString("script").serialize(serializer),
+            Self::Module => JsonSafeString("module").serialize(serializer),
+            Self::Unambiguous => JsonSafeString("unambiguous").serialize(serializer),
         }
     }
 }

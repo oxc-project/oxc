@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
     AstKind,
+    ast::{Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_array_for_each_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `Array#forEach`")

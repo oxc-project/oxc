@@ -1,3 +1,5 @@
+#![allow(clippy::literal_string_with_formatting_args)]
+
 mod ecmascript;
 mod mangler;
 mod peephole;
@@ -8,6 +10,7 @@ use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
+#[track_caller]
 pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) {
     let source_type = SourceType::default();
     let first = run(source_text, source_type, Some(options));

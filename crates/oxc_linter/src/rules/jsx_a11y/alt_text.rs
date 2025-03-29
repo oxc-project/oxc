@@ -1,19 +1,19 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXOpeningElement},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
         get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         object_has_accessible_child,
     },
-    AstNode,
 };
 
 fn missing_alt_prop(span: Span) -> OxcDiagnostic {

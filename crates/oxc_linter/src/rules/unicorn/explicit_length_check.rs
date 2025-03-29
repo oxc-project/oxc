@@ -1,8 +1,8 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         BinaryExpression, Expression, LogicalExpression, MemberExpression, StaticMemberExpression,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,10 +10,10 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_boolean_ancestor, is_boolean_node},
-    AstNode,
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {

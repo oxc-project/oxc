@@ -5,7 +5,7 @@ use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Allocator, CloneIn};
 
 use crate::{node::NodeId, symbol::SymbolId};
 
@@ -13,10 +13,26 @@ use oxc_ast_macros::ast;
 
 #[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[builder(default)]
 #[clone_in(default)]
 #[content_eq(skip)]
 #[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
+
+impl<'alloc> CloneIn<'alloc> for ReferenceId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips reference_id field
+        unreachable!();
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
+    }
+}
 
 impl Idx for ReferenceId {
     #[expect(clippy::cast_possible_truncation)]
@@ -33,26 +49,10 @@ impl Idx for ReferenceId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for ReferenceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type ReferenceId = number;
-export type ReferenceFlags = {
-    None: 0,
-    Read: 0b1,
-    Write: 0b10,
-    Type: 0b100,
-    Value: 0b11
-}
-"#;
 
 bitflags! {
     /// Describes how a symbol is being referenced in the AST.

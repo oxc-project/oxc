@@ -1,12 +1,12 @@
 use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use oxc_ast::{
-    ast::{CallExpression, Expression, Statement},
     AstKind,
+    ast::{CallExpression, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_node_name, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
     },
 };
 

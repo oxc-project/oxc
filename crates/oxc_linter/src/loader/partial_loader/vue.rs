@@ -1,7 +1,7 @@
 use memchr::memmem::Finder;
 use oxc_span::SourceType;
 
-use super::{find_script_closing_angle, JavaScriptSource, SCRIPT_END, SCRIPT_START};
+use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
@@ -33,11 +33,15 @@ impl<'a> VuePartialLoader<'a> {
 
     fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
-        let script_end_finder = Finder::new(SCRIPT_END);
 
         // find opening "<script"
         let offset = script_start_finder.find(self.source_text[*pointer..].as_bytes())?;
         *pointer += offset + SCRIPT_START.len();
+
+        // skip `<script-`
+        if !self.source_text[*pointer..].starts_with([' ', '>']) {
+            return self.parse_script(pointer);
+        }
 
         // find closing ">"
         let offset = find_script_closing_angle(self.source_text, *pointer)?;
@@ -51,6 +55,7 @@ impl<'a> VuePartialLoader<'a> {
         let js_start = *pointer;
 
         // find "</script>"
+        let script_end_finder = Finder::new(SCRIPT_END);
         let offset = script_end_finder.find(self.source_text[*pointer..].as_bytes())?;
         let js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
@@ -235,5 +240,16 @@ mod test {
         });"
             .trim()
         );
+    }
+
+    #[test]
+    fn test_script_in_template() {
+        let source_text = r"
+        <template><script-view /></template>
+        <script>a</script>
+        ";
+        let sources = VuePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "a");
     }
 }

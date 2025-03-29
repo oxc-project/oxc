@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,7 +124,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if call_expr.type_parameters.is_some() || Self::has_return_type(factory_node) {
+        if call_expr.type_arguments.is_some() || Self::has_return_type(factory_node) {
             return;
         }
 

@@ -1,12 +1,4 @@
-use phf::{phf_map, phf_set, Map};
-
-pub const PRE_DEFINE_VAR: Map<&'static str, bool> = phf_map! {
-    "undefined" => false,
-    "Infinity" => false,
-    "NaN" => false,
-    "eval" => false,
-    "arguments" => false,
-};
+use phf::phf_set;
 
 pub const GLOBAL_OBJECT_NAMES: phf::Set<&'static str> = phf_set! {
     "global",

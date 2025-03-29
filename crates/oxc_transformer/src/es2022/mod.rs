@@ -50,10 +50,15 @@ impl<'a> Traverse<'a> for ES2022<'a, '_> {
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(class_properties) = &mut self.class_properties {
-            class_properties.enter_class_body(body, ctx);
-        } else if let Some(class_static_block) = &mut self.class_static_block {
-            class_static_block.enter_class_body(body, ctx);
+        match &mut self.class_properties {
+            Some(class_properties) => {
+                class_properties.enter_class_body(body, ctx);
+            }
+            _ => {
+                if let Some(class_static_block) = &mut self.class_static_block {
+                    class_static_block.enter_class_body(body, ctx);
+                }
+            }
         }
     }
 

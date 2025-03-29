@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,10 +8,10 @@ use oxc_span::Span;
 use phf::phf_map;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
@@ -97,17 +97,17 @@ fn test() {
     }
 
     let pass = vec![
-        ("<div />", None, None, None),
-        ("<button role='main' />", None, None, None),
-        ("<MyComponent role='button' />", None, None, None),
-        ("<button role={`${foo}button`} />", None, None, None),
-        ("<Button role={`${foo}button`} />", None, Some(settings()), None),
+        ("<div />", None, None),
+        ("<button role='main' />", None, None),
+        ("<MyComponent role='button' />", None, None),
+        ("<button role={`${foo}button`} />", None, None),
+        ("<Button role={`${foo}button`} />", None, Some(settings())),
     ];
 
     let fail = vec![
-        ("<button role='button' />", None, None, None),
-        ("<body role='document' />", None, None, None),
-        ("<Button role='button' />", None, Some(settings()), None),
+        ("<button role='button' />", None, None),
+        ("<body role='document' />", None, None),
+        ("<Button role='button' />", None, Some(settings())),
     ];
 
     let fix = vec![

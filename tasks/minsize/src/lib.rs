@@ -7,15 +7,15 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use flate2::{write::GzEncoder, Compression};
-use humansize::{format_size, DECIMAL};
+use flate2::{Compression, write::GzEncoder};
+use humansize::{DECIMAL, format_size};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_tasks_common::{project_root, TestFile, TestFiles};
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
 
@@ -137,17 +137,16 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(
         &allocator,
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
-    .build(symbols, scopes, &mut program);
+    .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
-        .with_symbol_table(ret.symbol_table)
+        .with_scoping(ret.scoping)
         .build(&program)
         .code
 }

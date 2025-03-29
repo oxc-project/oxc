@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 
-use crate::{diagnostics, ParserImpl};
+use crate::{ParserImpl, diagnostics};
 
 pub trait CoverGrammar<'a, T>: Sized {
     fn cover(value: T, p: &mut ParserImpl<'a>) -> Result<Self>;
@@ -55,7 +55,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
             }
             Expression::TSTypeAssertion(expr) => Ok(SimpleAssignmentTarget::TSTypeAssertion(expr)),
             Expression::TSInstantiationExpression(expr) => {
-                Ok(SimpleAssignmentTarget::TSInstantiationExpression(expr))
+                Err(diagnostics::invalid_lhs_assignment(expr.span()))
             }
             expr => Err(diagnostics::invalid_assignment(expr.span())),
         }

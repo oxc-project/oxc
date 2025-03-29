@@ -17,20 +17,25 @@
     "**/CHANGELOG.md",
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
-    "napi/{transform,minify}/index.js",
+    "napi/{transform,minify,playground}/index.js",
+    "napi/{parser,transform,minify,playground}/index.d.ts",
+    "napi/{parser,transform,minify,playground}/*.wasi-browser.js",
+    "napi/{parser,transform,minify,playground}/*.wasi.cjs",
+    "napi/{parser,transform,minify,playground}/wasi-worker-browser.mjs",
+    "napi/{parser,transform,minify,playground}/wasi-worker.mjs",
+    "napi/{parser,transform,minify,playground}/browser.js",
     "napi/parser/bindings.js",
-    "napi/{parser,transform,minify}/index.d.ts",
     "npm/*/package.json",
     "npm/oxlint/configuration_schema.json",
     "npm/oxc-wasm/**",
     "npm/runtime/src",
-    ".github/.generated_ast_watch_list.yml"
+    ".github/generated/ast_changes_watch_list.yml"
   ],
   "plugins": [
-    "https://plugins.dprint.dev/typescript-0.93.3.wasm",
-    "https://plugins.dprint.dev/json-0.19.4.wasm",
-    "https://plugins.dprint.dev/markdown-0.17.8.wasm",
+    "https://plugins.dprint.dev/typescript-0.94.0.wasm",
+    "https://plugins.dprint.dev/json-0.20.0.wasm",
+    "https://plugins.dprint.dev/markdown-0.18.0.wasm",
     "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.0.wasm",
-    "https://plugins.dprint.dev/toml-0.6.3.wasm"
+    "https://plugins.dprint.dev/toml-0.7.0.wasm"
   ]
 }

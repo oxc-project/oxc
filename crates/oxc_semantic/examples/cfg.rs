@@ -4,14 +4,14 @@ use std::{env, path::Path, sync::Arc};
 use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_cfg::{
+    DisplayDot, EdgeType,
     graph::{
         dot::{Config, Dot},
         visit::EdgeRef,
     },
-    DisplayDot, EdgeType,
 };
 use oxc_parser::Parser;
-use oxc_semantic::{dot::DebugDot, SemanticBuilder};
+use oxc_semantic::{SemanticBuilder, dot::DebugDot};
 use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
 

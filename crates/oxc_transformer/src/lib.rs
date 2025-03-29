@@ -8,11 +8,11 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::SPAN;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
 // Core
 mod common;
@@ -31,6 +31,7 @@ mod es2020;
 mod es2021;
 mod es2022;
 mod jsx;
+mod proposals;
 mod regexp;
 mod typescript;
 
@@ -49,6 +50,7 @@ use es2020::ES2020;
 use es2021::ES2021;
 use es2022::ES2022;
 use jsx::Jsx;
+use proposals::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
 use typescript::TypeScript;
@@ -60,18 +62,18 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        babel::{BabelEnvOptions, BabelOptions},
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
+        babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::*,
+    proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 
 #[non_exhaustive]
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
@@ -79,13 +81,13 @@ pub struct TransformerReturn {
 
 pub struct Transformer<'a> {
     ctx: TransformCtx<'a>,
-    // options: TransformOptions,
     allocator: &'a Allocator,
 
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     jsx: JsxOptions,
     env: EnvOptions,
+    proposals: ProposalOptions,
 }
 
 impl<'a> Transformer<'a> {
@@ -98,13 +100,13 @@ impl<'a> Transformer<'a> {
             decorator: options.decorator,
             jsx: options.jsx.clone(),
             env: options.env,
+            proposals: options.proposals,
         }
     }
 
-    pub fn build_with_symbols_and_scopes(
+    pub fn build_with_scoping(
         mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
@@ -122,6 +124,10 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
+            explicit_resource_management: self
+                .proposals
+                .explicit_resource_management
+                .then(|| ExplicitResourceManagement::new(&self.ctx)),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -138,10 +144,10 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
+        let scoping = traverse_mut(&mut transformer, allocator, program, scoping);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
-        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
+        TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
     }
 }
 
@@ -149,6 +155,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     decorator: Decorator<'a, 'ctx>,
+    explicit_resource_management: Option<ExplicitResourceManagement<'a, 'ctx>>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
@@ -169,6 +176,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_program(program, ctx);
         }
         self.x1_jsx.enter_program(program, ctx);
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_program(program, ctx);
+        }
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -251,6 +261,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.enter_class(class, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
@@ -274,6 +285,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_static_block(block, ctx);
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.exit_static_block(block, ctx);
+        }
         self.x2_es2022.exit_static_block(block, ctx);
     }
 
@@ -373,6 +387,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_function_body(body, ctx);
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_function_body(body, ctx);
+        }
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -419,6 +436,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_method_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_method_definition(def, ctx);
         }
@@ -445,6 +463,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_property_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
@@ -464,6 +483,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_accessor_property(node, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }
@@ -533,7 +553,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
-        self.decorator.enter_statement(stmt, ctx);
+        self.decorator.exit_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
@@ -553,6 +573,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_statement(stmt, ctx);
         }
         self.x2_es2018.enter_statement(stmt, ctx);
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_statement(stmt, ctx);
+        }
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -592,6 +615,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
+        }
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_for_of_statement(stmt, ctx);
         }
         self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }

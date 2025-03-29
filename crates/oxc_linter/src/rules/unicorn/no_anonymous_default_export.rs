@@ -1,16 +1,19 @@
-use std::fmt;
-
 use oxc_ast::{
-    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
     AstKind,
+    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
 fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> OxcDiagnostic {
+    let kind = match kind {
+        ErrorNodeKind::Function => "function",
+        ErrorNodeKind::Class => "class",
+    };
+
     OxcDiagnostic::warn(format!("This {kind} default export is missing a name"))
         // TODO: suggest a name. https://github.com/sindresorhus/eslint-plugin-unicorn/blob/d3e4b805da31c6ed7275e2e2e770b6b0fbcf11c2/rules/no-anonymous-default-export.js#L41
         .with_label(span)
@@ -21,14 +24,15 @@ pub struct NoAnonymousDefaultExport;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow anonymous functions and classes as the default export
+    ///
+    /// Disallows anonymous functions and classes as default exports.
     ///
     /// ### Why is this bad?
-    /// Naming default exports improves codebase searchability by ensuring
-    /// consistent identifier use for a module's default export, both where it's
-    /// declared and where it's imported.
     ///
-    /// ### Example
+    /// Naming default exports improves searchability and ensures consistent
+    /// identifiers for a module’s default export in both declaration and import.
+    ///
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -61,73 +65,66 @@ declare_oxc_lint!(
 
 impl Rule for NoAnonymousDefaultExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let problem_node = match node.kind() {
+        let result = match node.kind() {
             // ESM: export default
             AstKind::ExportDefaultDeclaration(export_decl) => match &export_decl.declaration {
-                ExportDefaultDeclarationKind::ClassDeclaration(class_decl) => class_decl
-                    .id
-                    .as_ref()
-                    .map_or(Some((export_decl.span, ErrorNodeKind::Class)), |_| None),
-                ExportDefaultDeclarationKind::FunctionDeclaration(function_decl) => function_decl
-                    .id
-                    .as_ref()
-                    .map_or(Some((export_decl.span, ErrorNodeKind::Function)), |_| None),
-                ExportDefaultDeclarationKind::ArrowFunctionExpression(_) => {
-                    Some((export_decl.span, ErrorNodeKind::Function))
+                ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
+                    if class_decl.id.is_none() =>
+                {
+                    Some((class_decl.span, ErrorNodeKind::Class))
                 }
-                ExportDefaultDeclarationKind::ParenthesizedExpression(expr) => {
-                    let expr = expr.expression.get_inner_expression();
-                    match expr {
-                        Expression::ClassExpression(class_expr) => class_expr
-                            .id
-                            .as_ref()
-                            .map_or(Some((class_expr.span, ErrorNodeKind::Class)), |_| None),
-                        Expression::FunctionExpression(func_expr) => func_expr
-                            .id
-                            .as_ref()
-                            .map_or(Some((func_expr.span, ErrorNodeKind::Function)), |_| None),
-                        _ => None,
-                    }
+                ExportDefaultDeclarationKind::FunctionDeclaration(function_decl)
+                    if function_decl.id.is_none() =>
+                {
+                    Some((function_decl.span, ErrorNodeKind::Function))
                 }
-                _ => None,
+                _ => {
+                    export_decl.declaration.as_expression().and_then(is_anonymous_class_or_function)
+                }
             },
             // CommonJS: module.exports
-            AstKind::AssignmentExpression(expr) if is_common_js_export(expr) => match &expr.right {
-                Expression::ClassExpression(class_expr) => {
-                    class_expr.id.as_ref().map_or(Some((expr.span, ErrorNodeKind::Class)), |_| None)
-                }
-                Expression::FunctionExpression(function_expr) => function_expr
-                    .id
-                    .as_ref()
-                    .map_or(Some((expr.span, ErrorNodeKind::Function)), |_| None),
-                Expression::ArrowFunctionExpression(_) => {
-                    Some((expr.span, ErrorNodeKind::Function))
-                }
-                _ => None,
-            },
-            _ => None,
+            AstKind::AssignmentExpression(expr)
+                if is_top_expr(ctx, node) && is_common_js_export(expr) =>
+            {
+                is_anonymous_class_or_function(&expr.right)
+            }
+            _ => return,
         };
 
-        if let Some((span, error_kind)) = problem_node {
+        if let Some((span, error_kind)) = result {
             ctx.diagnostic(no_anonymous_default_export_diagnostic(span, error_kind));
         };
     }
 }
 
+fn is_anonymous_class_or_function(expr: &Expression) -> Option<(Span, ErrorNodeKind)> {
+    Some(match expr.get_inner_expression() {
+        Expression::ClassExpression(expr) if expr.id.is_none() => (expr.span, ErrorNodeKind::Class),
+        Expression::FunctionExpression(expr) if expr.id.is_none() => {
+            (expr.span, ErrorNodeKind::Function)
+        }
+        Expression::ArrowFunctionExpression(expr) => (expr.span, ErrorNodeKind::Function),
+        _ => return None,
+    })
+}
+
 fn is_common_js_export(expr: &AssignmentExpression) -> bool {
-    if let AssignmentTarget::StaticMemberExpression(member_expr) = &expr.left {
-        if let Expression::Identifier(object_ident) = &member_expr.object {
-            if object_ident.name != "module" {
-                return false;
-            }
+    match &expr.left {
+        AssignmentTarget::AssignmentTargetIdentifier(id) => id.name == "exports",
+        AssignmentTarget::StaticMemberExpression(mem_expr) if !mem_expr.optional => {
+            mem_expr.object.is_specific_id("module") && mem_expr.property.name == "exports"
         }
-
-        if member_expr.property.name != "exports" {
-            return false;
-        }
+        _ => false,
     }
+}
 
-    true
+fn is_top_expr(ctx: &LintContext, node: &AstNode) -> bool {
+    if !ctx.scoping().scope_flags(node.scope_id()).is_top() {
+        return false;
+    };
+
+    let parent = ast_util::iter_outer_expressions(ctx, node.id()).next();
+    matches!(parent, Some(AstKind::ExpressionStatement(_)))
 }
 
 #[derive(Clone, Copy)]
@@ -136,39 +133,99 @@ enum ErrorNodeKind {
     Class,
 }
 
-impl fmt::Display for ErrorNodeKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Function => "function".fmt(f),
-            Self::Class => "class".fmt(f),
-        }
-    }
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"export default class Foo {}",
-        r"export default function foo () {}",
         r"const foo = () => {}; export default foo;",
         r"module.exports = class Foo {};",
         r"module.exports = function foo () {};",
         r"const foo = () => {}; module.exports = foo;",
-        // TODO: need handle this situation?
-        // r"module['exports'] = function foo () {};",
+        ("export default function named() {}"),
+        ("export default class named {}"),
+        ("export default []"),
+        ("export default {}"),
+        ("export default 1"),
+        ("export default false"),
+        ("export default 0n"),
+        ("notExports = class {}"),
+        ("notModule.exports = class {}"),
+        ("module.notExports = class {}"),
+        ("module.exports.foo = class {}"),
+        ("alert(exports = class {})"),
+        ("foo = module.exports = class {}"),
     ];
 
     let fail = vec![
-        r"export default class {}",
-        r"export default function () {}",
-        r"export default () => {};",
-        r"module.exports = class {}",
-        r"module.exports = function () {}",
-        r"module.exports = () => {}",
-        "export default (async function * () {})",
-        "export default (class extends class {} {})",
+        ("export default function () {}"),
+        ("export default class {}"),
+        ("export default () => {}"),
+        ("export default function * () {}"),
+        ("export default async function () {}"),
+        ("export default async function * () {}"),
+        ("export default async () => {}"),
+        ("export default class {}"),
+        ("export default class extends class {} {}"),
+        ("export default class{}"),
+        ("export default class {}"),
+        ("let Foo, Foo_, foo, foo_
+			export default class {}"),
+        ("let Foo, Foo_, foo, foo_
+			export default (class{})"),
+        ("export default (class extends class {} {})"),
+        ("let Exports, Exports_, exports, exports_
+			exports = class {}"),
+        ("module.exports = class {}"),
+        ("export default function () {}"),
+        ("export default function* () {}"),
+        ("export default async function* () {}"),
+        ("export default async function*() {}"),
+        ("export default async function *() {}"),
+        ("export default async function   *   () {}"),
+        ("export default async function * /* comment */ () {}"),
+        ("export default async function * // comment
+			() {}"),
+        ("let Foo, Foo_, foo, foo_
+			export default async function * () {}"),
+        ("let Foo, Foo_, foo, foo_
+			export default (async function * () {})"),
+        ("let Exports, Exports_, exports, exports_
+			exports = function() {}"),
+        ("module.exports = function() {}"),
+        ("export default () => {}"),
+        ("export default async () => {}"),
+        ("export default () => {};"),
+        ("export default() => {}"),
+        ("export default foo => {}"),
+        ("export default (( () => {} ))"),
+        ("/* comment 1 */ export /* comment 2 */ default /* comment 3 */  () => {}"),
+        ("// comment 1
+			export
+			// comment 2
+			default
+			// comment 3
+			() => {}"),
+        ("let Foo, Foo_, foo, foo_
+			export default async () => {}"),
+        ("let Exports, Exports_, exports, exports_
+			exports = (( () => {} ))"),
+        ("// comment 1
+			module
+			// comment 2
+			.exports
+			// comment 3
+			=
+			// comment 4
+			() => {};"),
+        ("(( exports = (( () => {} )) ))"),
+        ("(( module.exports = (( () => {} )) ))"),
+        ("(( exports = (( () => {} )) ));"),
+        ("(( module.exports = (( () => {} )) ));"),
+        ("@decorator export default class {}"),
+        ("export default @decorator(class {}) class extends class {} {}"),
+        ("module.exports = @decorator(class {}) class extends class {} {}"),
+        ("@decorator @decorator(class {}) export default class {}"),
     ];
 
     Tester::new(NoAnonymousDefaultExport::NAME, NoAnonymousDefaultExport::PLUGIN, pass, fail)

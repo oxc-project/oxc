@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
     AstKind,
+    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -20,12 +20,12 @@ fn consistent_existence_index_check_diagnostic(
         if replacement.replacement_value == "-1" { "non-existence" } else { "existence" };
 
     let label = format!(
-        "Prefer `{replacement_operator} {replacement_value}` over `{original_operator} {original_value}` to check {existenceOrNonExistence}.",
-        replacement_operator = replacement.replacement_operator,
-        replacement_value = replacement.replacement_value,
-        original_operator = replacement.original_operator,
-        original_value = replacement.original_value,
-        existenceOrNonExistence = existence_or_non_existence,
+        "Prefer `{} {}` over `{} {}` to check {}.",
+        replacement.replacement_operator,
+        replacement.replacement_value,
+        replacement.original_operator,
+        replacement.original_value,
+        existence_or_non_existence,
     );
 
     OxcDiagnostic::warn(label).with_label(span)
@@ -34,34 +34,33 @@ fn consistent_existence_index_check_diagnostic(
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce consistent style for element existence checks with `indexOf()`, `lastIndexOf()`, `findIndex()`, and `findLastIndex()`
+    /// Enforce consistent style for element existence checks with `indexOf()`,
+    /// `lastIndexOf()`, `findIndex()`, and `findLastIndex()`. This ensures
+    /// that comparisons are performed in a standard and clear way.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule is only meant to enforce a specific style and make comparisons more clear.
+    /// This rule is meant to enforce a specific style and improve code clarity.
+    /// Using inconsistent comparison styles (e.g., `index < 0`, `index >= 0`)
+    /// can make the intention behind the code unclear, especially in large
+    /// codebases.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// const index = foo.indexOf('bar');
     /// if (index < 0) {}
-    /// ```
     ///
-    /// ``` javascript
     /// const index = foo.indexOf('bar');
     /// if (index >= 0) {}
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// const index = foo.indexOf('bar');
     /// if (index === -1) {}
-    /// ```
     ///
-    /// ``` javascript
     /// const index = foo.indexOf('bar');
     /// if (index !== -1) {}
     /// ```
@@ -87,12 +86,12 @@ impl Rule for ConsistentExistenceIndexCheck {
             return;
         };
 
-        let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
+        let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
         else {
             return;
         };
 
-        let declaration_node_id = ctx.symbols().get_declaration(symbol_id);
+        let declaration_node_id = ctx.scoping().symbol_declaration(symbol_id);
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
@@ -116,9 +115,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let replacement = get_replacement(right, operator);
-
-            let Some(replacement) = &replacement else {
+            let Some(replacement) = &get_replacement(right, operator) else {
                 return;
             };
 
@@ -135,7 +132,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                     let mut operator_replacement_text = operator_source.to_string();
 
                     for (index, text) in operator_matches {
-                        let comments = ctx.semantic().comments_range(operator_start..operator_end);
+                        let comments = ctx.comments_range(operator_start..operator_end);
 
                         let start = operator_start + u32::try_from(index).unwrap_or(0);
                         let length = u32::try_from(text.len()).unwrap_or(0);
@@ -182,49 +179,33 @@ struct GetReplacementOutput {
 
 fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetReplacementOutput> {
     match operator {
-        BinaryOperator::LessThan => {
-            if right.is_number_0() {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "===",
-                    replacement_value: "-1",
-                    original_operator: "<",
-                    original_value: "0",
-                });
-            }
-
-            None
+        BinaryOperator::LessThan if right.is_number_0() => Some(GetReplacementOutput {
+            replacement_operator: "===",
+            replacement_value: "-1",
+            original_operator: "<",
+            original_value: "0",
+        }),
+        BinaryOperator::GreaterThan if is_negative_one(right.get_inner_expression()) => {
+            Some(GetReplacementOutput {
+                replacement_operator: "!==",
+                replacement_value: "-1",
+                original_operator: ">",
+                original_value: "-1",
+            })
         }
-        BinaryOperator::GreaterThan => {
-            if is_negative_one(right.get_inner_expression()) {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "!==",
-                    replacement_value: "-1",
-                    original_operator: ">",
-                    original_value: "-1",
-                });
-            }
-
-            None
-        }
-        BinaryOperator::GreaterEqualThan => {
-            if right.is_number_0() {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "!==",
-                    replacement_value: "-1",
-                    original_operator: ">=",
-                    original_value: "0",
-                });
-            }
-
-            None
-        }
+        BinaryOperator::GreaterEqualThan if right.is_number_0() => Some(GetReplacementOutput {
+            replacement_operator: "!==",
+            replacement_value: "-1",
+            original_operator: ">=",
+            original_value: "0",
+        }),
         _ => None,
     }
 }
 
 fn is_negative_one(expression: &Expression) -> bool {
     if let Expression::UnaryExpression(unary_expression) = expression {
-        if let UnaryOperator::UnaryNegation = unary_expression.operator {
+        if unary_expression.operator == UnaryOperator::UnaryNegation {
             if let Expression::NumericLiteral(value) =
                 &unary_expression.argument.get_inner_expression()
             {
@@ -436,14 +417,14 @@ fn test() {
         (
             r"
                     const index = foo.indexOf(bar);
-        
+
                     function foo () {
                         if (index < 0) {}
                     }
                     ",
             r"
                     const index = foo.indexOf(bar);
-        
+
                     function foo () {
                         if (index === -1) {}
                     }

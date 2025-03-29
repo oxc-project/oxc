@@ -1,0 +1,46 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:1]
+ 1 │ prom.then(fn1, fn2)
+   · ───────────────────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:1]
+ 1 │ prom.then(fn1, (fn2))
+   · ─────────────────────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:1]
+ 1 │ prom.then(null, fn2)
+   · ────────────────────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:1]
+ 1 │ prom.then(undefined, fn2)
+   · ─────────────────────────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:18]
+ 1 │ function foo() { prom.then(x => {}, () => {}) }
+   ·                  ────────────────────────────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:2:6]
+ 1 │ function foo() {
+ 2 │            prom.then(function a() { }, function b() {}).then(fn1, fn2)
+   ·            ───────────────────────────────────────────────────────────
+ 3 │          }
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.

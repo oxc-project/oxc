@@ -1,18 +1,17 @@
-use lazy_static::lazy_static;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
     AstKind,
+    ast::{Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{
+    AstNode,
     ast_util::{outermost_paren, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
@@ -54,6 +53,8 @@ declare_oxc_lint!(
     fix
 );
 
+static CUSTOM_ERROR_REGEX_PATTERN: Lazy<Regex> = lazy_regex!(r"^(?:[A-Z][\da-z]*)*Error$");
+
 impl Rule for ThrowNewError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -92,11 +93,6 @@ impl Rule for ThrowNewError {
             fixer.insert_text_before_range(call_expr.span, "new ")
         });
     }
-}
-
-lazy_static! {
-    static ref CUSTOM_ERROR_REGEX_PATTERN: Regex =
-        Regex::new(r"^(?:[A-Z][\da-z]*)*Error$").unwrap();
 }
 
 #[test]

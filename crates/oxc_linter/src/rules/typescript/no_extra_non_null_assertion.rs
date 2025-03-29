@@ -1,12 +1,12 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
@@ -22,12 +22,47 @@ declare_oxc_lint!(
     /// Disallow extra non-null assertions.
     ///
     /// ### Why is this bad?
-    /// The `!` non-null assertion operator in TypeScript is used to assert that a value's type does not include null or undefined. Using the operator any more than once on a single value does nothing.
     ///
-    /// ### Example
+    /// The `!` non-null assertion operator in TypeScript is used to assert that a value's type
+    /// does not include null or undefined. Using the operator any more than once on a single value
+    /// does nothing.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// const foo: { bar: number } | null = null;
     /// const bar = foo!!!.bar;
+    /// ```
+    ///
+    /// ```ts
+    /// function foo(bar: number | undefined) {
+    ///   const bar: number = bar!!!;
+    /// }
+    /// ```
+    ///
+    /// ```ts
+    /// function foo(bar?: { n: number }) {
+    ///   return bar!?.n;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// const foo: { bar: number } | null = null;
+    /// const bar = foo!.bar;
+    /// ```
+    ///
+    /// ```ts
+    /// function foo(bar: number | undefined) {
+    ///  const bar: number = bar!;
+    /// }
+    /// ```
+    ///
+    /// ```ts
+    /// function foo(bar?: { n: number }) {
+    ///   return bar?.n;
+    /// }
     /// ```
     NoExtraNonNullAssertion,
     typescript,
@@ -86,6 +121,7 @@ fn test() {
     ];
 
     let fail = vec![
+        "const foo: { bar: number } | null = null; const bar = foo!!!.bar;",
         "const foo: { bar: number } | null = null; const bar = foo!!.bar; ",
         "function foo(bar: number | undefined) { const a: number = bar!!; }",
         "function foo(bar?: { n: number }) { return bar!?.n; }",

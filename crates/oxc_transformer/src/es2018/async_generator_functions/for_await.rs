@@ -1,7 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
@@ -23,11 +23,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         )
     }
 
-    pub(crate) fn transform_statement(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub(crate) fn transform_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let (for_of, label) = match stmt {
             Statement::LabeledStatement(labeled) => {
                 let LabeledStatement { label, body, .. } = labeled.as_mut();
@@ -83,17 +79,17 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         // with a block statement, this way we can ensure can insert statement correctly.
         // e.g. `if (true) statement` to `if (true) { statement }`
         if !allow_multiple_statements {
-            new_stmt = Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+            new_stmt = ctx.ast.statement_block_with_scope_id(
                 SPAN,
                 ctx.ast.vec1(new_stmt),
                 parent_scope_id,
-            ));
+            );
         }
         *stmt = new_stmt;
     }
 
     pub(self) fn transform_for_of_statement(
-        &mut self,
+        &self,
         stmt: &mut ForOfStatement<'a>,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
@@ -141,7 +137,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 if block.body.is_empty() {
                     // If the block is empty, we don’t need to add it to the body;
                     // instead, we need to remove the useless scope.
-                    ctx.scopes_mut().delete_scope(block.scope_id());
+                    ctx.scoping_mut().delete_scope(block.scope_id());
                 } else {
                     statements.push(ctx.ast.move_statement(stmt_body));
                 }
@@ -257,7 +253,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
-            let for_statement = Statement::ForStatement(ctx.ast.alloc_for_statement_with_scope_id(
+            let for_statement = ctx.ast.statement_for_with_scope_id(
                 SPAN,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
@@ -327,20 +323,16 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // Handle the for-of statement move to the body of new for-statement
                     let for_statement_body_scope_id = for_of_scope_id;
                     {
-                        ctx.scopes_mut().change_parent_id(
+                        ctx.scoping_mut().change_scope_parent_id(
                             for_statement_body_scope_id,
                             Some(for_statement_scope_id),
                         );
                     }
 
-                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
-                        SPAN,
-                        body,
-                        for_of_scope_id,
-                    ))
+                    ctx.ast.statement_block_with_scope_id(SPAN, body, for_of_scope_id)
                 },
                 for_statement_scope_id,
-            ));
+            );
 
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
@@ -412,7 +404,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 ctx.ast.expression_null_literal(SPAN),
                             ),
                         ),
-                        Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+                        ctx.ast.statement_block_with_scope_id(
                             SPAN,
                             ctx.ast.vec1(ctx.ast.statement_expression(
                                 SPAN,
@@ -433,7 +425,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 ),
                             )),
                             if_block_scope_id,
-                        )),
+                        ),
                         None,
                     )
                 };
@@ -451,14 +443,14 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                         ctx.ast.statement_if(
                             SPAN,
                             iterator_had_error_key.create_read_expression(ctx),
-                            Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+                            ctx.ast.statement_block_with_scope_id(
                                 SPAN,
                                 ctx.ast.vec1(ctx.ast.statement_throw(
                                     SPAN,
                                     iterator_error_key.create_read_expression(ctx),
                                 )),
                                 if_block_scope_id,
-                            )),
+                            ),
                             None,
                         )
                     };

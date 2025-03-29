@@ -2,11 +2,8 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    ast::{Class, Function, TSImportType},
-    visit::walk,
-    Visit,
-};
+use oxc_ast::ast::{Class, Function, TSImportType};
+use oxc_ast_visit::{Visit, walk};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_syntax::scope::ScopeFlags;

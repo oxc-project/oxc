@@ -3,11 +3,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     ast_util::is_function_node,
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
-    AstNode,
 };
 
 fn missing_name_diagnostic(span: Span) -> OxcDiagnostic {

@@ -2,9 +2,9 @@
 
 use std::ptr;
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -12,7 +12,7 @@ use oxc_syntax::{
 
 use crate::SemanticBuilder;
 
-pub(crate) trait Binder<'a> {
+pub trait Binder<'a> {
     #[expect(unused_variables)]
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
 }
@@ -20,16 +20,16 @@ pub(crate) trait Binder<'a> {
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let (includes, excludes) = match self.kind {
-            VariableDeclarationKind::Const => (
+            VariableDeclarationKind::Const
+            | VariableDeclarationKind::Using
+            | VariableDeclarationKind::AwaitUsing => (
                 SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 SymbolFlags::BlockScopedVariableExcludes,
             ),
             VariableDeclarationKind::Let => {
                 (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
             }
-            VariableDeclarationKind::Var
-            | VariableDeclarationKind::Using
-            | VariableDeclarationKind::AwaitUsing => {
+            VariableDeclarationKind::Var => {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
@@ -39,86 +39,92 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
-            return;
-        }
+        } else {
+            // ------------------ var hosting ------------------
+            let mut target_scope_id = builder.current_scope_id;
+            let mut var_scope_ids = vec![];
 
-        // ------------------ var hosting ------------------
-        let mut target_scope_id = builder.current_scope_id;
-        let mut var_scope_ids = vec![];
-
-        // Collect all scopes where variable hoisting can occur
-        for scope_id in builder.scope.ancestors(target_scope_id) {
-            let flags = builder.scope.get_flags(scope_id);
-            if flags.is_var() {
-                target_scope_id = scope_id;
-                break;
-            }
-            var_scope_ids.push(scope_id);
-        }
-
-        self.id.bound_names(&mut |ident| {
-            let span = ident.span;
-            let name = ident.name;
-            let mut declared_symbol_id = None;
-
-            for &scope_id in &var_scope_ids {
-                if let Some(symbol_id) =
-                    builder.check_redeclaration(scope_id, span, &name, excludes, true)
-                {
-                    builder.add_redeclare_variable(symbol_id, span);
-                    declared_symbol_id = Some(symbol_id);
-
-                    // remove current scope binding and add to target scope
-                    // avoid same symbols appear in multi-scopes
-                    builder.scope.remove_binding(scope_id, &name);
-                    builder.scope.add_binding(target_scope_id, &name, symbol_id);
-                    builder.symbols.scope_ids[symbol_id] = target_scope_id;
+            // Collect all scopes where variable hoisting can occur
+            for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
+                let flags = builder.scoping.scope_flags(scope_id);
+                if flags.is_var() {
+                    target_scope_id = scope_id;
                     break;
                 }
+                var_scope_ids.push(scope_id);
             }
 
-            // If a variable is already declared in the hoisted scopes,
-            // we don't need to create another symbol with the same name
-            // to make sure they point to the same symbol.
-            let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                builder.declare_symbol_on_scope(span, &name, target_scope_id, includes, excludes)
+            self.id.bound_names(&mut |ident| {
+                let span = ident.span;
+                let name = ident.name;
+                let mut declared_symbol_id = None;
+
+                for &scope_id in &var_scope_ids {
+                    if let Some(symbol_id) =
+                        builder.check_redeclaration(scope_id, span, &name, excludes, true)
+                    {
+                        builder.add_redeclare_variable(symbol_id, includes, span);
+                        declared_symbol_id = Some(symbol_id);
+
+                        // remove current scope binding and add to target scope
+                        // avoid same symbols appear in multi-scopes
+                        builder.scoping.remove_binding(scope_id, &name);
+                        builder.scoping.add_binding(target_scope_id, &name, symbol_id);
+                        builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                        break;
+                    }
+                }
+
+                // If a variable is already declared in the hoisted scopes,
+                // we don't need to create another symbol with the same name
+                // to make sure they point to the same symbol.
+                let symbol_id = declared_symbol_id.unwrap_or_else(|| {
+                    builder.declare_symbol_on_scope(
+                        span,
+                        &name,
+                        target_scope_id,
+                        includes,
+                        excludes,
+                    )
+                });
+                ident.symbol_id.set(Some(symbol_id));
+
+                // Finally, add the variable to all hoisted scopes
+                // to support redeclaration checks when declaring variables with the same name later.
+                for &scope_id in &var_scope_ids {
+                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                }
             });
-            ident.symbol_id.set(Some(symbol_id));
+        }
 
-            // Finally, add the variable to all hoisted scopes
-            // to support redeclaration checks when declaring variables with the same name later.
-            for &scope_id in &var_scope_ids {
-                builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+        // Save `@__NO_SIDE_EFFECTS__` for function initializers.
+        if let BindingPatternKind::BindingIdentifier(id) = &self.id.kind {
+            if let Some(symbol_id) = id.symbol_id.get() {
+                if let Some(init) = &self.init {
+                    if match init {
+                        Expression::FunctionExpression(func) => func.pure,
+                        Expression::ArrowFunctionExpression(func) => func.pure,
+                        _ => false,
+                    } {
+                        builder.scoping.no_side_effects.insert(symbol_id);
+                    }
+                }
             }
-        });
+        }
     }
 }
 
 impl<'a> Binder<'a> for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if !self.declare {
-            let Some(ident) = &self.id else { return };
-            let symbol_id = builder.declare_symbol(
-                ident.span,
-                &ident.name,
-                SymbolFlags::Class,
-                if self.is_declaration() {
-                    SymbolFlags::ClassExcludes
-                } else {
-                    SymbolFlags::empty()
-                },
-            );
-            ident.symbol_id.set(Some(symbol_id));
-        }
+        let Some(ident) = &self.id else { return };
+        let symbol_id = builder.declare_symbol(
+            ident.span,
+            &ident.name,
+            SymbolFlags::Class,
+            SymbolFlags::ClassExcludes,
+        );
+        ident.symbol_id.set(Some(symbol_id));
     }
-}
-
-// It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
-// unless the source text matched by this production is not strict mode code
-// and the duplicate entries are only bound by FunctionDeclarations.
-// https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
-fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
-    flags.is_function() || (source_type.is_script() && flags.is_top())
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
@@ -145,11 +151,9 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let current_scope_id = builder.current_scope_id;
-        let scope_flags = builder.current_scope_flags();
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
-                let symbol_id = builder.symbols.create_symbol(
+                let symbol_id = builder.scoping.create_symbol(
                     ident.span,
                     ident.name.into(),
                     SymbolFlags::Function,
@@ -157,35 +161,19 @@ impl<'a> Binder<'a> for Function<'a> {
                     builder.current_node_id,
                 );
                 ident.symbol_id.set(Some(symbol_id));
-            } else if self.r#type == FunctionType::FunctionDeclaration {
-                // The visitor is already inside the function scope,
-                // retrieve the parent scope for the function id to bind to.
-
-                let (includes, excludes) =
-                    if (scope_flags.is_strict_mode() || self.r#async || self.generator)
-                        && !function_as_var(scope_flags, builder.source_type)
-                    {
-                        (
-                            SymbolFlags::Function | SymbolFlags::BlockScopedVariable,
-                            SymbolFlags::BlockScopedVariableExcludes,
-                        )
-                    } else {
-                        (
-                            SymbolFlags::FunctionScopedVariable,
-                            SymbolFlags::FunctionScopedVariableExcludes,
-                        )
-                    };
-
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
-                ident.symbol_id.set(Some(symbol_id));
-            } else if self.r#type == FunctionType::FunctionExpression {
-                // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
-                // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
+            } else {
                 let symbol_id = builder.declare_symbol(
                     ident.span,
                     &ident.name,
                     SymbolFlags::Function,
-                    SymbolFlags::empty(),
+                    if builder.source_type.is_typescript() {
+                        SymbolFlags::FunctionExcludes
+                    } else {
+                        // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
+                        // doesn't care about non-strict mode, so we need to exclude this,
+                        // and further check in checker.
+                        SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
+                    },
                 );
                 ident.symbol_id.set(Some(symbol_id));
             }
@@ -195,12 +183,19 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flags = builder.scope.get_flags_mut(current_scope_id);
+            let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
             };
+        }
+
+        // Save `@__NO_SIDE_EFFECTS__`
+        if self.pure {
+            if let Some(symbold_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
+                builder.scoping.no_side_effects.insert(symbold_id);
+            }
         }
     }
 }
@@ -412,9 +407,22 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let symbol_id = builder.declare_symbol(
+        let scope_id = if matches!(
+            builder.nodes.parent_kind(builder.current_node_id),
+            Some(AstKind::TSInferType(_))
+        ) {
+            builder
+                .scoping
+                .scope_ancestors(builder.current_scope_id)
+                .find(|scope_id| builder.scoping.scope_flags(*scope_id).is_ts_conditional())
+        } else {
+            None
+        };
+
+        let symbol_id = builder.declare_symbol_on_scope(
             self.name.span,
             &self.name.name,
+            scope_id.unwrap_or(builder.current_scope_id),
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,
         );

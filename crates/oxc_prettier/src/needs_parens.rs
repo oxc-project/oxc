@@ -3,12 +3,12 @@
 //! See <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/needs-parens.js>
 
 use oxc_ast::{
-    ast::{
-        match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ForStatementInit, ForStatementLeft, MemberExpression, ObjectExpression,
-        SimpleAssignmentTarget,
-    },
     AstKind,
+    ast::{
+        AssignmentTarget, ChainElement, ExportDefaultDeclarationKind, Expression, ForStatementInit,
+        ForStatementLeft, MemberExpression, ObjectExpression, SimpleAssignmentTarget,
+        match_member_expression,
+    },
 };
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
@@ -16,11 +16,11 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{binaryish::BinaryishOperator, Prettier};
+use crate::{Prettier, binaryish::BinaryishOperator, utils};
 
 impl<'a> Prettier<'a> {
-    // NOTE: Why this takes `mut`...?
-    pub(crate) fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
+    // NOTE: This `mut` is only for `should_wrap_function_for_export_default()`
+    pub fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
         }
@@ -500,44 +500,16 @@ impl<'a> Prettier<'a> {
             return b || !self.need_parens(self.current_kind());
         }
 
-        if !Self::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
+        if !utils::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
             return false;
         }
 
-        let lhs = Self::get_left_side_path_name(kind);
+        // NOTE: This requires `mut self` for `need_parens()`
+        let lhs = utils::get_left_side_path_name(kind);
         self.stack.push(lhs);
         let result = self.should_wrap_function_for_export_default();
         self.stack.pop();
         result
-    }
-
-    fn has_naked_left_side(kind: AstKind<'a>) -> bool {
-        matches!(
-            kind,
-            AstKind::AssignmentExpression(_)
-                | AstKind::BinaryExpression(_)
-                | AstKind::LogicalExpression(_)
-                | AstKind::ConditionalExpression(_)
-                | AstKind::CallExpression(_)
-                | AstKind::MemberExpression(_)
-                | AstKind::SequenceExpression(_)
-                | AstKind::TaggedTemplateExpression(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::ChainExpression(_)
-        ) || matches!(kind, AstKind::UpdateExpression(e) if !e.prefix)
-    }
-
-    fn get_left_side_path_name(kind: AstKind<'a>) -> AstKind<'a> {
-        match kind {
-            AstKind::CallExpression(e) => AstKind::from_expression(&e.callee),
-            AstKind::ConditionalExpression(e) => AstKind::from_expression(&e.test),
-            AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
-            AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
-            AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
-            AstKind::BinaryExpression(e) => AstKind::from_expression(&e.left),
-            AstKind::LogicalExpression(e) => AstKind::from_expression(&e.left),
-            _ => panic!("need to handle {}", kind.debug_name()),
-        }
     }
 
     fn is_binary_cast_expression(&self, _span: Span) -> bool {
@@ -588,9 +560,6 @@ impl<'a> Prettier<'a> {
                 AssignmentTarget::TSTypeAssertion(e) => {
                     Self::starts_with_no_lookahead_token(&e.expression, span)
                 }
-                AssignmentTarget::TSInstantiationExpression(e) => {
-                    Self::starts_with_no_lookahead_token(&e.expression, span)
-                }
             },
             match_member_expression!(Expression) => {
                 Self::starts_with_no_lookahead_token(e.to_member_expression().object(), span)
@@ -633,9 +602,6 @@ impl<'a> Prettier<'a> {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                         SimpleAssignmentTarget::TSTypeAssertion(e) => {
-                            Self::starts_with_no_lookahead_token(&e.expression, span)
-                        }
-                        SimpleAssignmentTarget::TSInstantiationExpression(e) => {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                     }

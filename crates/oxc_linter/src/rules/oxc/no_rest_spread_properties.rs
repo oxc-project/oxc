@@ -1,9 +1,9 @@
-use oxc_ast::{ast::AssignmentTarget, AstKind};
+use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_rest_spread_properties_diagnostic(
     span: Span,

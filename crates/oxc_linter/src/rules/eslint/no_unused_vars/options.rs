@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
-use regex::Regex;
 use serde_json::Value;
 
 /// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
@@ -255,10 +255,11 @@ impl<R> IgnorePattern<R> {
     /// See also [`Option::expect`].
     #[inline]
     pub fn expect(self, msg: &str) -> R {
-        if let Self::Some(r) = self {
-            r
-        } else {
-            panic!("{}", msg)
+        match self {
+            Self::Some(r) => r,
+            _ => {
+                panic!("{}", msg)
+            }
         }
     }
 
@@ -289,15 +290,13 @@ where
 }
 
 impl TryFrom<Option<&str>> for IgnorePattern<Regex> {
-    type Error = regex::Error;
+    type Error = lazy_regex::regex::Error;
 
     fn try_from(value: Option<&str>) -> Result<Self, Self::Error> {
         match value {
             None => Ok(Self::None),
             Some("^_") => Ok(Self::Default),
-            Some(pattern) => {
-                regex::RegexBuilder::new(pattern).unicode(true).build().map(Self::Some)
-            }
+            Some(pattern) => RegexBuilder::new(pattern).build().map(Self::Some),
         }
     }
 }
@@ -570,9 +569,9 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                 })
             }
             Value::Null => Ok(Self::default()),
-            _ => Err(OxcDiagnostic::error(
-                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}",
-            )),
+            _ => Err(OxcDiagnostic::error(format!(
+                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
+            ))),
         }
     }
 }

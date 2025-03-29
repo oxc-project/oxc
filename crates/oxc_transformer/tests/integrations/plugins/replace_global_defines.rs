@@ -2,20 +2,18 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
 use crate::codegen;
 
-pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
+pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
@@ -44,7 +42,7 @@ fn shadowed() {
     .unwrap();
     test_same("(function (undefined) { let x = typeof undefined })()", config.clone());
     test_same("(function (NaN) { let x = typeof NaN })()", config.clone());
-    test_same("(function (process) { let x = process.env.NODE_ENV })()", config.clone());
+    test_same("(function (process) { let x = process.env.NODE_ENV })()", config);
 }
 
 #[test]
@@ -57,7 +55,7 @@ fn dot() {
     test("process", "process", config.clone());
 
     // computed member expression
-    test("process['env'].NODE_ENV", "production", config.clone());
+    test("process['env'].NODE_ENV", "production", config);
 }
 
 #[test]
@@ -73,7 +71,7 @@ fn dot_with_overlap() {
 
     test("import.meta.env = 0", "__foo__ = 0", config.clone());
     test("import.meta.env.NODE_ENV = 0", "__foo__.NODE_ENV = 0", config.clone());
-    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", config.clone());
+    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", config);
 }
 
 #[test]
@@ -86,7 +84,7 @@ fn dot_define_is_member_expr_postfix() {
     test(
         "console.log(__OBJ__.process.env.SOMEVAR)",
         "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
-        config.clone(),
+        config,
     );
 }
 
@@ -133,7 +131,7 @@ fn optional_chain() {
 
     test_same("a[b][c]", config.clone());
     test_same("a?.[b][c]", config.clone());
-    test_same("a[b]?.[c]", config.clone());
+    test_same("a[b]?.[c]", config);
 }
 
 #[test]
@@ -152,7 +150,7 @@ fn dot_define_with_destruct() {
     test(
         "const {[any]: alias} = process.env.NODE_ENV",
         "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
-        config.clone(),
+        config,
     );
 
     // should filterout unused key even rhs objectExpr has SpreadElement
@@ -165,7 +163,7 @@ fn dot_define_with_destruct() {
     test(
         "const {a} = process.env.NODE_ENV",
         "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
-        config.clone(),
+        config,
     );
 }
 
@@ -233,13 +231,15 @@ console.log(
 )
         ",
         "console.log([a = 0,b.c = 0,b['c'] = 0], [ident = 0,ident = 0,ident = 0], [dot.chain = 0,dot.chain = 0,dot.chain = 0\n]);",
-        config.clone(),
+        config,
     );
 }
 
 #[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
+    use oxc_sourcemap::SourcemapVisualizer;
+
     let config = ReplaceGlobalDefinesConfig::new(&[
         ("__OBJECT__", r#"{"hello": "test"}"#),
         ("__STRING__", r#""development""#),
@@ -267,9 +267,8 @@ log(__MEMBER__);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions {
             single_quote: true,

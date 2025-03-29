@@ -9,7 +9,7 @@ use crate::{
     utils::create_ident,
 };
 
-use super::{extensions, Derives, FileId, TypeId};
+use super::{Derives, FileId, TypeId, extensions};
 
 mod r#box;
 mod cell;
@@ -19,12 +19,12 @@ mod primitive;
 mod r#struct;
 mod r#type;
 mod vec;
+pub use r#box::BoxDef;
 pub use cell::CellDef;
+pub use r#enum::{Discriminant, EnumDef, VariantDef};
 pub use option::OptionDef;
 pub use primitive::PrimitiveDef;
-pub use r#box::BoxDef;
-pub use r#enum::{Discriminant, EnumDef, VariantDef};
-pub use r#struct::{FieldDef, StructDef, Visibility};
+pub use r#struct::{FieldDef, StructDef};
 pub use r#type::TypeDef;
 pub use vec::VecDef;
 
@@ -76,29 +76,17 @@ pub trait Def {
     /// Get lifetime (if type has one).
     /// Lifetime is anonymous (`'_`) if `anon` is true.
     fn lifetime_maybe_anon(&self, schema: &Schema, anon: bool) -> TokenStream {
-        if anon {
-            self.lifetime_anon(schema)
-        } else {
-            self.lifetime(schema)
-        }
+        if anon { self.lifetime_anon(schema) } else { self.lifetime(schema) }
     }
 
     /// Get lifetime (if type has one).
     fn lifetime(&self, schema: &Schema) -> TokenStream {
-        if self.has_lifetime(schema) {
-            quote!( <'a> )
-        } else {
-            quote!()
-        }
+        if self.has_lifetime(schema) { quote!( <'a> ) } else { quote!() }
     }
 
     /// Get anonymous lifetime (if type has one).
     fn lifetime_anon(&self, schema: &Schema) -> TokenStream {
-        if self.has_lifetime(schema) {
-            quote!( <'_> )
-        } else {
-            quote!()
-        }
+        if self.has_lifetime(schema) { quote!( <'_> ) } else { quote!() }
     }
 
     /// Get inner type, if type has one.
@@ -125,4 +113,13 @@ pub trait Def {
             &schema.types[self.id()]
         }
     }
+}
+
+/// Visibility of a struct / enum / struct field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    /// `pub(crate)` or `pub(super)`
+    Restricted,
+    Private,
 }

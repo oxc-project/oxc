@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{BinaryExpression, Expression},
     AstKind,
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn comparison_with_na_n(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")

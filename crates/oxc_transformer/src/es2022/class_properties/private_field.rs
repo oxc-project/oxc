@@ -3,27 +3,27 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{ast::*, NONE};
+use oxc_allocator::Box as ArenaBox;
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{
-    ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
+    Ancestor, BoundIdentifier, TraverseCtx, ast_operations::get_var_name_from_node,
 };
 
 use crate::{
+    TransformCtx,
     common::helper_loader::Helper,
     utils::ast_builder::{create_bind_call, create_call_call, create_member_callee},
-    TransformCtx,
 };
 
 use super::{
+    ClassProperties, ResolvedPrivateProp,
     class_details::ResolvedGetSetPrivateProp,
     utils::{
         create_assignment, create_underscore_ident_name,
         debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
     },
-    ClassProperties, ResolvedPrivateProp,
 };
 
 impl<'a> ClassProperties<'a, '_> {
@@ -61,29 +61,32 @@ impl<'a> ClassProperties<'a, '_> {
         let span = field_expr.span;
         let object = ctx.ast.move_expression(&mut field_expr.object);
         let resolved = if is_assignment {
-            if let Some(prop) = self.classes_stack.find_writeable_private_prop(&field_expr.field) {
-                prop
-            } else {
-                // Early return for read-only error
-                return self.create_sequence_with_read_only_error(
-                    &field_expr.field.name,
-                    object,
-                    None,
-                    span,
-                    ctx,
-                );
+            match self.classes_stack.find_writeable_private_prop(&field_expr.field) {
+                Some(prop) => prop,
+                _ => {
+                    // Early return for read-only error
+                    return self.create_sequence_with_read_only_error(
+                        &field_expr.field.name,
+                        object,
+                        None,
+                        span,
+                        ctx,
+                    );
+                }
             }
-        } else if let Some(prop) = self.classes_stack.find_readable_private_prop(&field_expr.field)
-        {
-            prop
         } else {
-            // Early return for write-only error
-            return self.create_sequence_with_write_only_error(
-                &field_expr.field.name,
-                object,
-                span,
-                ctx,
-            );
+            match self.classes_stack.find_readable_private_prop(&field_expr.field) {
+                Some(prop) => prop,
+                _ => {
+                    // Early return for write-only error
+                    return self.create_sequence_with_write_only_error(
+                        &field_expr.field.name,
+                        object,
+                        span,
+                        ctx,
+                    );
+                }
+            }
         };
 
         let ResolvedPrivateProp {
@@ -127,13 +130,13 @@ impl<'a> ClassProperties<'a, '_> {
                         // `_prop.call(object)`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
-                        ctx.symbols_mut()
+                        ctx.scoping_mut()
                             .delete_resolved_reference(class_symbol_id, object_reference_id);
                         // `_prop`
                         prop_ident
                     }
                 } else {
-                    ctx.symbols_mut()
+                    ctx.scoping_mut()
                         .delete_resolved_reference(class_symbol_id, object_reference_id);
                     // `_prop._`
                     Self::create_underscore_member_expression(prop_ident, span, ctx)
@@ -203,13 +206,13 @@ impl<'a> ClassProperties<'a, '_> {
         is_declaration: bool,
         class_symbol_id: Option<SymbolId>,
         object: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<(SymbolId, ReferenceId)> {
         if is_declaration {
             if let Some(class_symbol_id) = class_symbol_id {
                 if let Expression::Identifier(ident) = object {
                     let reference_id = ident.reference_id();
-                    if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
+                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
                         if symbol_id == class_symbol_id {
                             return Some((class_symbol_id, reference_id));
                         }
@@ -288,7 +291,7 @@ impl<'a> ClassProperties<'a, '_> {
         call_expr: &mut CallExpression<'a>,
         callee: Expression<'a>,
         context: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         // Substitute `<callee>.call` as callee of call expression
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
@@ -579,7 +582,7 @@ impl<'a> ClassProperties<'a, '_> {
     // `transform_assignment_expression` can be elided.
     #[inline]
     fn transform_static_assignment_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         prop_binding: &BoundIdentifier<'a>,
         class_binding: &BoundIdentifier<'a>,
@@ -615,7 +618,7 @@ impl<'a> ClassProperties<'a, '_> {
             );
 
             // Delete reference for `object` as `object.#prop` has been removed
-            ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+            ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
             if operator == AssignmentOperator::Assign {
                 // `Class.#prop = value` -> `_prop._ = value`
@@ -989,7 +992,7 @@ impl<'a> ClassProperties<'a, '_> {
             let (get_expr, object, class_ident) = if let Some(object_reference) = object_reference {
                 // Delete reference for `object` as `object.#prop` is being removed
                 let (class_symbol_id, object_reference_id) = object_reference;
-                ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+                ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
                 // `_prop._`
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);
@@ -1463,7 +1466,7 @@ impl<'a> ClassProperties<'a, '_> {
     #[inline]
     fn convert_chain_expression_to_expression(
         expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Expression::ChainExpression(chain_expr) = ctx.ast.move_expression(expr) else {
             unreachable!()
@@ -1484,7 +1487,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// be handled by optional-chaining plugin correctly.
     fn ensure_optional_expression_wrapped_by_chain_expression(
         expr: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         if Self::has_optional_expression(&expr) {
             let chain_element = match expr {
@@ -1858,7 +1861,7 @@ impl<'a> ClassProperties<'a, '_> {
         private_field: ArenaBox<'a, PrivateInExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let PrivateInExpression { left, right, span, .. } = private_field.unbox();
+        let PrivateInExpression { left, right, span } = private_field.unbox();
 
         let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
             self.classes_stack.find_private_prop(&left);
@@ -2076,7 +2079,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr_target(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         AssignmentTarget::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2085,7 +2088,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expression(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2094,7 +2097,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
         ctx.ast.member_expression_static(span, object, create_underscore_ident_name(ctx), false)
     }
@@ -2130,7 +2133,6 @@ impl<'a> ClassProperties<'a, '_> {
     /// * Setter: `_prop.call(_assertClassBrand(Class, object), value)`
     /// * Prop: `_privateFieldSet(_prop, object, value)`
     /// * Prop binding is `None`: `_writeOnlyError("#method")`
-    #[expect(clippy::too_many_arguments)]
     fn create_private_setter(
         &self,
         private_name: &str,
@@ -2165,18 +2167,16 @@ impl<'a> ClassProperties<'a, '_> {
         }
     }
 
-    /// * [`Helper::ReadOnlyError`]: `_readOnlyError("#method")`
-    /// * [`Helper::WriteOnlyError`]: `_writeOnlyError("#method")`
+    /// * [`Helper::ReadOnlyError`][]: `_readOnlyError("#method")`
+    /// * [`Helper::WriteOnlyError`][]: `_writeOnlyError("#method")`
     fn create_throw_error(
         &self,
         helper: Helper,
         private_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut message = ArenaString::with_capacity_in(private_name.len() + 1, ctx.ast.allocator);
-        message.push('#');
-        message.push_str(private_name);
-        let message = ctx.ast.expression_string_literal(SPAN, message.into_bump_str(), None);
+        let message = ctx.ast.atom_from_strs_array(["#", private_name]);
+        let message = ctx.ast.expression_string_literal(SPAN, message, None);
         self.ctx.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 

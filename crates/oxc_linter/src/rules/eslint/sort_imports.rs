@@ -7,8 +7,8 @@ use std::{
 use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
-    ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
     AstKind,
+    ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -303,7 +303,7 @@ impl SortImports {
         // import { /* comment */ a, b, c, d } from 'foo.js'
         // ```
         // I use ImportStatement's span to check if there are comments between the specifiers.
-        let is_fixable = !ctx.semantic().has_comments_between(current.span);
+        let is_fixable = !ctx.has_comments_between(current.span);
 
         if is_fixable {
             // Safe to index because we know that `specifiers` is at least 2 element long

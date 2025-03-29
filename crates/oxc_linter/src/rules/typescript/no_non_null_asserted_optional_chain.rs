@@ -1,21 +1,25 @@
 use oxc_ast::{
-    ast::{match_member_expression, ChainElement, Expression},
     AstKind,
+    ast::{ChainElement, Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
-fn no_non_null_asserted_optional_chain_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("non-null assertions after an optional chain expression")
-        .with_help("Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.")
-        .with_labels([span, span1])
+fn no_non_null_asserted_optional_chain_diagnostic(
+    chain_span: Span,
+    assertion_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.")
+        .with_help("Remove the non-null assertion.")
+        .with_label(assertion_span.primary_label("non-null assertion made after optional chain"))
+        .and_label(chain_span.label("optional chain used"))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,19 +31,35 @@ declare_oxc_lint!(
     /// Disallow non-null assertions after an optional chain expression.
     ///
     /// ### Why is this bad?
-    /// `?.` optional chain expressions provide undefined if an object is null or undefined.
-    /// Using a `!` non-null assertion to assert the result of an `?.` optional chain expression is non-nullable is likely wrong.
     ///
-    /// Most of the time, either the object was not nullable and did not need the `?.` for its property lookup, or the `!` is incorrect and introducing a type safety hole.
+    /// By design, optional chain expressions (`?.`) provide `undefined` as the expression's value, if the object being
+    /// accessed is `null` or `undefined`, instead of throwing an error. Using a non-null assertion (`!`) to assert the
+    /// result of an optional chain expression is contradictory and likely wrong, as it indicates the code is both expecting
+    /// the value to be potentially `null` or `undefined` and non-null at the same time.
     ///
-    /// ### Example
+    /// In most cases, either:
+    /// 1. The object is not nullable and did not need the `?.` for its property lookup
+    /// 2. The non-null assertion is incorrect and introduces a type safety hole.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
     /// ```ts
     /// foo?.bar!;
     /// foo?.bar()!;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```ts
+    /// foo?.bar;
+    /// foo.bar!;
+    /// ```
     NoNonNullAssertedOptionalChain,
     typescript,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {
@@ -89,10 +109,14 @@ impl Rule for NoNonNullAssertedOptionalChain {
         if let Some(chain_span) = chain_span {
             let chain_span_end = chain_span.end;
             let non_null_end = non_null_expr.span.end - 1;
-            ctx.diagnostic(no_non_null_asserted_optional_chain_diagnostic(
-                Span::new(chain_span_end, chain_span_end),
-                Span::new(non_null_end, non_null_end),
-            ));
+            let diagnostic = no_non_null_asserted_optional_chain_diagnostic(
+                Span::sized(chain_span_end, 1),
+                Span::sized(non_null_end, 1),
+            );
+            // ctx.diagnostic(diagnostic);
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                fixer.delete_range(Span::sized(non_null_end, 1))
+            });
         }
     }
 
@@ -142,11 +166,24 @@ fn test() {
         "(foo?.bar!)()",
     ];
 
+    let fix = vec![
+        ("foo?.bar!", "foo?.bar"),
+        ("foo?.['bar']!", "foo?.['bar']"),
+        ("foo?.bar()!", "foo?.bar()"),
+        ("(foo?.bar)!.baz", "(foo?.bar).baz"),
+        ("(foo?.bar)!().baz", "(foo?.bar)().baz"),
+        ("(foo?.bar)!", "(foo?.bar)"),
+        ("(foo?.bar)!()", "(foo?.bar)()"),
+        ("(foo?.bar!)", "(foo?.bar)"),
+        ("(foo?.bar!)()", "(foo?.bar)()"),
+    ];
+
     Tester::new(
         NoNonNullAssertedOptionalChain::NAME,
         NoNonNullAssertedOptionalChain::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

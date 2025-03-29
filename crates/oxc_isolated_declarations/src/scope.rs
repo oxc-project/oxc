@@ -3,7 +3,8 @@ use std::cell::Cell;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, visit::walk::*, Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, walk::*};
 use oxc_span::Atom;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
@@ -117,7 +118,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             self.add_reference(ident.name, KindFlags::Value);
             // `typeof Type<Parameters>`
             //              ^^^^^^^^^^^
-            if let Some(type_parameters) = &ty.type_parameters {
+            if let Some(type_parameters) = &ty.type_arguments {
                 self.visit_ts_type_parameter_instantiation(type_parameters);
             }
         } else {

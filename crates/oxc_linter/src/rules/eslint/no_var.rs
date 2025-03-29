@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPattern, BindingPatternKind, VariableDeclarationKind},
     AstKind,
+    ast::{BindingPattern, BindingPatternKind, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_var_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected var, use let or const instead.")
@@ -86,13 +86,10 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
             }
         }
         BindingPatternKind::AssignmentPattern(_) => true,
-        BindingPatternKind::ArrayPattern(array_pat) => array_pat.elements.iter().any(|elem| {
-            if let Some(elem) = elem {
-                is_written_to(elem, ctx)
-            } else {
-                false
-            }
-        }),
+        BindingPatternKind::ArrayPattern(array_pat) => array_pat
+            .elements
+            .iter()
+            .any(|elem| if let Some(elem) = elem { is_written_to(elem, ctx) } else { false }),
     }
 }
 

@@ -1,15 +1,15 @@
-use regex::Regex;
+use lazy_regex::Regex;
 
 use oxc_ast::{
-    ast::{Argument, TSModuleReference},
     AstKind,
+    ast::{Argument, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected \"import\" statement instead of \"require\" call")
@@ -147,9 +147,9 @@ impl Rule for NoRequireImports {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if node.scope_id() != ctx.scopes().root_scope_id() {
+                if node.scope_id() != ctx.scoping().root_scope_id() {
                     if let Some(id) = call_expr.callee.get_identifier_reference() {
-                        if !id.is_global_reference_name("require", ctx.symbols()) {
+                        if !id.is_global_reference_name("require", ctx.scoping()) {
                             return;
                         }
                     }
@@ -187,7 +187,7 @@ impl Rule for NoRequireImports {
                     }
                 }
 
-                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
+                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
                     return;
                 }
 
@@ -393,7 +393,7 @@ fn test() {
         ("require?.('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         // covers global require in scope
         (
-            r"function foo() { 
+            r"function foo() {
             require('foo')
             }",
             None,

@@ -9,7 +9,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
 };
 
@@ -28,6 +28,10 @@ pub struct PreferHooksInOrder;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Ensures that hooks are in the order that they are called in.
+    ///
+    /// ### Why is this bad?
+    ///
     /// While hooks can be setup in any order, they're always called by `jest` in this
     /// specific order:
     /// 1. `beforeAll`
@@ -38,95 +42,91 @@ declare_oxc_lint!(
     /// This rule aims to make that more obvious by enforcing grouped hooks be setup in
     /// that order within tests.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// describe('foo', () => {
+    ///   beforeEach(() => {
+    ///     seedMyDatabase();
+    ///   });
+    ///   beforeAll(() => {
+    ///     createMyDatabase();
+    ///   });
+    ///   it('accepts this input', () => {
+    ///     // ...
+    ///   });
+    ///   it('returns that value', () => {
+    ///     // ...
+    ///   });
+    ///   describe('when the database has specific values', () => {
+    ///     const specificValue = '...';
     ///     beforeEach(() => {
-    ///         seedMyDatabase();
+    ///       seedMyDatabase(specificValue);
     ///     });
-    ///     beforeAll(() => {
-    ///         createMyDatabase();
+    ///     it('accepts that input', () => {
+    ///       // ...
     ///     });
-    ///     it('accepts this input', () => {
-    ///         // ...
+    ///     it('throws an error', () => {
+    ///       // ...
     ///     });
-    ///     it('returns that value', () => {
-    ///         // ...
+    ///     afterEach(() => {
+    ///       clearLogger();
     ///     });
-    ///     describe('when the database has specific values', () => {
-    ///         const specificValue = '...';
-    ///         beforeEach(() => {
-    ///             seedMyDatabase(specificValue);
-    ///         });
-    ///
-    ///         it('accepts that input', () => {
-    ///             // ...
-    ///         });
-    ///         it('throws an error', () => {
-    ///             // ...
-    ///         });
-    ///         afterEach(() => {
-    ///             clearLogger();
-    ///         });
-    ///         beforeEach(() => {
-    ///             mockLogger();
-    ///         });
-    ///         it('logs a message', () => {
-    ///             // ...
-    ///         });
+    ///     beforeEach(() => {
+    ///       mockLogger();
     ///     });
-    ///     afterAll(() => {
-    ///         removeMyDatabase();
+    ///     it('logs a message', () => {
+    ///        // ...
     ///     });
+    ///   });
+    ///   afterAll(() => {
+    ///     removeMyDatabase();
+    ///   });
     /// });
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// // valid
     /// describe('foo', () => {
-    ///     beforeAll(() => {
-    ///         createMyDatabase();
-    ///     });
-    ///
+    ///   beforeAll(() => {
+    ///     createMyDatabase();
+    ///   });
+    ///   beforeEach(() => {
+    ///     seedMyDatabase();
+    ///   });
+    ///   it('accepts this input', () => {
+    ///     // ...
+    ///   });
+    ///   it('returns that value', () => {
+    ///     // ...
+    ///   });
+    ///   describe('when the database has specific values', () => {
+    ///     const specificValue = '...';
     ///     beforeEach(() => {
-    ///         seedMyDatabase();
+    ///       seedMyDatabase(specificValue);
     ///     });
-    ///
-    ///     it('accepts this input', () => {
-    ///         // ...
+    ///     it('accepts that input', () => {
+    ///       // ...
     ///     });
-    ///     it('returns that value', () => {
-    ///         // ...
+    ///     it('throws an error', () => {
+    ///       // ...
     ///     });
-    ///     describe('when the database has specific values', () => {
-    ///         const specificValue = '...';
-    ///         beforeEach(() => {
-    ///             seedMyDatabase(specificValue);
-    ///         });
-    ///         it('accepts that input', () => {
-    ///             // ...
-    ///         });
-    ///         it('throws an error', () => {
-    ///             // ...
-    ///         });
-    ///         beforeEach(() => {
-    ///             mockLogger();
-    ///         });
-    ///         afterEach(() => {
-    ///             clearLogger();
-    ///         });
-    ///         it('logs a message', () => {
-    ///             // ...
-    ///         });
+    ///     beforeEach(() => {
+    ///       mockLogger();
     ///     });
-    ///     afterAll(() => {
-    ///         removeMyDatabase();
+    ///     afterEach(() => {
+    ///       clearLogger();
     ///     });
+    ///     it('logs a message', () => {
+    ///       // ...
+    ///     });
+    ///   });
+    ///   afterAll(() => {
+    ///     removeMyDatabase();
+    ///   });
     /// });
     /// ```
-    ///
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/prefer-hooks-in-order.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
@@ -137,6 +137,7 @@ declare_oxc_lint!(
     ///      "vitest/prefer-hooks-in-order": "error"
     ///   }
     /// }
+    /// ```
     PreferHooksInOrder,
     jest,
     style,
@@ -147,42 +148,44 @@ impl Rule for PreferHooksInOrder {
         let mut previous_hook_orders: FxHashMap<ScopeId, (u8, Span)> = FxHashMap::default();
 
         for node in ctx.nodes() {
-            if let AstKind::CallExpression(call_expr) = node.kind() {
-                let possible_jest_node = &PossibleJestNode { node, original: None };
-                let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
-                    parse_jest_fn_call(call_expr, possible_jest_node, ctx)
-                else {
-                    previous_hook_orders.remove(&node.scope_id());
-                    continue;
-                };
-
-                if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
-                    previous_hook_orders.remove(&node.scope_id());
-                    continue;
-                }
-
-                let previous_hook_order = previous_hook_orders.get(&node.scope_id());
-
-                let hook_name = jest_fn_call.name.as_ref();
-                let Some(hook_order) = get_hook_order(hook_name) else {
-                    continue;
-                };
-
-                if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
-                    if hook_order < *previous_hook_order {
-                        let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
-                            continue;
-                        };
-
-                        ctx.diagnostic(reorder_hooks(
-                            (hook_name, call_expr.span),
-                            (previous_hook_name, *previous_hook_span),
-                        ));
-                        continue;
-                    }
-                }
-                previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
+            let AstKind::CallExpression(call_expr) = node.kind() else {
+                continue;
             };
+
+            let possible_jest_node = &PossibleJestNode { node, original: None };
+            let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
+                parse_jest_fn_call(call_expr, possible_jest_node, ctx)
+            else {
+                previous_hook_orders.remove(&node.scope_id());
+                continue;
+            };
+
+            if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
+                previous_hook_orders.remove(&node.scope_id());
+                continue;
+            }
+
+            let previous_hook_order = previous_hook_orders.get(&node.scope_id());
+
+            let hook_name = jest_fn_call.name.as_ref();
+            let Some(hook_order) = get_hook_order(hook_name) else {
+                continue;
+            };
+
+            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
+                if hook_order < *previous_hook_order {
+                    let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
+                        continue;
+                    };
+
+                    ctx.diagnostic(reorder_hooks(
+                        (hook_name, call_expr.span),
+                        (previous_hook_name, *previous_hook_span),
+                    ));
+                    continue;
+                }
+            }
+            previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
         }
     }
 }

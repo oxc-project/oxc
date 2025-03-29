@@ -11,7 +11,6 @@ on:
   push:
     branches:
       - main
-      - "renovate/**"
     paths:
       - ".github/workflows/**"
 
@@ -24,7 +23,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: taiki-e/install-action@1936c8cfe365805f86ceb097d570620cc3a19932 # v2.47.25
+      - uses: taiki-e/install-action@a433d87f121760c7447ab86390794f9a2dce31cf # v2.49.33
         with:
           tool: zizmor
 
@@ -34,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@f6091c0113d1dcf9b98e269ee48e8a7e51b7bdd4 # v3
+        uses: github/codeql-action/upload-sarif@5f8171a638ada777af81d42b55959a643bb29017 # v3.28.12
         with:
           sarif_file: results.sarif
           category: zizmor

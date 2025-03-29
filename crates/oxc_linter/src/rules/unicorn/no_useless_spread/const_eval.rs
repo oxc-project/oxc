@@ -1,5 +1,5 @@
 use oxc_ast::ast::{
-    match_expression, Argument, CallExpression, ConditionalExpression, Expression, NewExpression,
+    Argument, CallExpression, ConditionalExpression, Expression, NewExpression, match_expression,
 };
 
 use crate::ast_util::{is_method_call, is_new_expression};

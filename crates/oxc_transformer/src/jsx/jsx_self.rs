@@ -30,7 +30,7 @@
 
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Span, SPAN};
+use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -65,7 +65,7 @@ impl<'a> JsxSelf<'a, '_> {
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
-            let flags = ctx.scopes().get_flags(scope_id);
+            let flags = ctx.scoping().scope_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {
                 continue;
             }
@@ -84,7 +84,7 @@ impl<'a> JsxSelf<'a, '_> {
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
         let key = ctx.ast.property_key_static_identifier(SPAN, SELF);

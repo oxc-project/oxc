@@ -172,15 +172,9 @@ fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| !e.file_type().is_dir())
-        .filter(|e| {
-            // TODO: Use `Option::is_none_or` once our MSRV reaches 1.82.0
-            match e.path().file_name() {
-                Some(name) => name != FORMAT_TEST_SPEC_NAME,
-                None => true,
-            }
-        })
+        .filter(|e| e.path().file_name().is_none_or(|name| name != FORMAT_TEST_SPEC_NAME))
         .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
-        .filter(|e| filter.map_or(true, |name| e.path().to_string_lossy().contains(name)))
+        .filter(|e| filter.is_none_or(|name| e.path().to_string_lossy().contains(name)))
         .map(|e| e.path().to_path_buf())
         .collect();
     test_files.sort_unstable();
@@ -393,7 +387,11 @@ fn run_oxc_prettier(
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            preserve_parens: false,
+            allow_v8_intrinsics: true,
+            ..ParseOptions::default()
+        })
         .parse();
     Prettier::new(&allocator, prettier_options).build(&ret.program)
 }

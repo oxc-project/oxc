@@ -46,7 +46,7 @@
 
 use std::borrow::Cow;
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
@@ -179,13 +179,17 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
         };
 
         let callee = {
-            let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
+            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "RegExp");
             ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source, None)),
-            Argument::from(ctx.ast.expression_string_literal(SPAN, flags.to_string(), None)),
+            Argument::from(ctx.ast.expression_string_literal(
+                SPAN,
+                flags.to_inline_string().as_str(),
+                None,
+            )),
         ]);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
@@ -242,7 +246,7 @@ fn try_parse_pattern<'a>(
     pattern_span_offset: u32,
     flags_text: &'a str,
     flags_span_offset: u32,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
     use oxc_regular_expression::{LiteralParser, Options};
 

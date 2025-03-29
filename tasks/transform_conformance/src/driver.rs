@@ -1,19 +1,20 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
+    CompilerInterface,
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     parser::ParseOptions,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
-    CompilerInterface,
 };
 use oxc_tasks_transform_checker::check_semantic_after_transform;
 
 pub struct Driver {
     check_semantic: bool,
     allow_return_outside_function: bool,
+    print_annotation_comments: bool,
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
@@ -32,7 +33,11 @@ impl CompilerInterface for Driver {
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
-        Some(CodegenOptions { comments: false, ..CodegenOptions::default() })
+        Some(CodegenOptions {
+            comments: false,
+            annotation_comments: self.print_annotation_comments,
+            ..CodegenOptions::default()
+        })
     }
 
     fn check_semantic_error(&self) -> bool {
@@ -57,11 +62,9 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = check_semantic_after_transform(
-                &transformer_return.symbols,
-                &transformer_return.scopes,
-                program,
-            ) {
+            if let Some(errors) =
+                check_semantic_after_transform(&transformer_return.scoping, program)
+            {
                 self.errors.extend(errors);
             }
         }
@@ -73,11 +76,13 @@ impl Driver {
     pub fn new(
         check_semantic: bool,
         allow_return_outside_function: bool,
+        print_annotation_comments: bool,
         options: TransformOptions,
     ) -> Self {
         Self {
             check_semantic,
             allow_return_outside_function,
+            print_annotation_comments,
             options,
             printed: String::new(),
             errors: vec![],

@@ -1,10 +1,10 @@
 use memchr::{memchr, memrchr};
-use oxc_ast::{ast::BinaryOperator, AstKind};
+use oxc_ast::{AstKind, ast::BinaryOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnexpectedMultiline;
@@ -117,7 +117,7 @@ impl Rule for NoUnexpectedMultiline {
                     return;
                 }
 
-                let start = if let Some(generics) = &call_expr.type_parameters {
+                let start = if let Some(generics) = &call_expr.type_arguments {
                     generics.span.end
                 } else {
                     call_expr.callee.span().end
@@ -153,7 +153,7 @@ impl Rule for NoUnexpectedMultiline {
                 }
             }
             AstKind::TaggedTemplateExpression(tagged_template_expr) => {
-                let start = if let Some(generics) = &tagged_template_expr.type_parameters {
+                let start = if let Some(generics) = &tagged_template_expr.type_arguments {
                     generics.span.end
                 } else {
                     tagged_template_expr.tag.span().end

@@ -95,11 +95,12 @@ impl<T> SparseStack<T> {
     /// Push an entry to the stack.
     #[inline]
     pub fn push(&mut self, value: Option<T>) {
-        let has_value = if let Some(value) = value {
-            self.values.push(value);
-            true
-        } else {
-            false
+        let has_value = match value {
+            Some(value) => {
+                self.values.push(value);
+                true
+            }
+            _ => false,
         };
         self.has_values.push(has_value);
     }

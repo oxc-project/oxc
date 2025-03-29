@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
+    ast::{JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn iframe_has_title_diagnostic(span: Span) -> OxcDiagnostic {

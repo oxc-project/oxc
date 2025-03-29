@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_duplicate_case_diagnostic(first: Span, second: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate case label")

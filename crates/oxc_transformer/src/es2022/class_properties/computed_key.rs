@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::TraverseCtx;
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{ClassProperties, utils::create_assignment};
 
 impl<'a> ClassProperties<'a, '_> {
     /// Substitute temp var for method computed key.
@@ -79,7 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// Create `let _x;` statement and insert it.
     /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
     fn create_computed_key_temp_var(
-        &mut self,
+        &self,
         key: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {
@@ -131,7 +131,7 @@ impl<'a> ClassProperties<'a, '_> {
                 unreachable!();
             };
             assert!(ident.name.starts_with('_'));
-            assert!(ctx.symbols().get_reference(ident.reference_id()).symbol_id().is_some());
+            assert!(ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_some());
             assert!(ident.span.is_empty());
             assert!(prop.value.is_none());
         }
@@ -179,8 +179,8 @@ fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
         // TODO(improve-on-babel): That case is rare.
         // Test for it in first pass over class elements, and avoid temp vars where possible.
         Expression::Identifier(ident) => {
-            match ctx.symbols().get_reference(ident.reference_id()).symbol_id() {
-                Some(symbol_id) => ctx.symbols().symbol_is_mutated(symbol_id),
+            match ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
+                Some(symbol_id) => ctx.scoping().symbol_is_mutated(symbol_id),
                 None => true,
             }
         }

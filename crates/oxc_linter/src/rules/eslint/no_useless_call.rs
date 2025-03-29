@@ -1,13 +1,14 @@
 use oxc_ast::{
+    AstKind,
     ast::{CallExpression, ChainElement, Expression, MemberExpression},
-    match_member_expression, AstKind,
+    match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::ContentEq;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_call_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Avoid unnecessary use of .{name}()"))

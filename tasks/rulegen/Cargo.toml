@@ -16,13 +16,13 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 convert_case = { workspace = true }
 handlebars = { workspace = true }
-lazy_static = { workspace = true }
-regex = { workspace = true }
+lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

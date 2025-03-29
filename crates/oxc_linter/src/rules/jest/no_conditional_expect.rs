@@ -9,8 +9,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
+        parse_expect_jest_fn_call,
     },
 };
 
@@ -31,11 +31,16 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Jest only considers a test to have failed if it throws an error, meaning if calls to assertion functions like expect occur in conditional code such as a catch statement, tests can end up passing but not actually test anything.
-    /// Additionally, conditionals tend to make tests more brittle and complex, as they increase the amount of mental thinking needed to understand what is actually being tested.
+    /// Jest only considers a test to have failed if it throws an error, meaning if calls to
+    /// assertion functions like expect occur in conditional code such as a catch statement,
+    /// tests can end up passing but not actually test anything. Additionally, conditionals
+    /// tend to make tests more brittle and complex, as they increase the amount of mental
+    /// thinking needed to understand what is actually being tested.
     ///
-    /// ### Example
-    /// ```javascript
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// it('foo', () => {
     ///   doTest && expect(1).toBe(2);
     /// });
@@ -46,20 +51,47 @@ declare_oxc_lint!(
     ///   }
     /// });
     ///
+    /// it('baz', async () => {
+    ///   try {
+    ///     await foo();
+    ///   } catch (err) {
+    ///     expect(err).toMatchObject({ code: 'MODULE_NOT_FOUND' });
+    ///   }
+    /// });
+    ///
     /// it('throws an error', async () => {
     ///   await foo().catch(error => expect(error).toBeInstanceOf(error));
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-conditional-expect.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// it('foo', () => {
+    ///   expect(!value).toBe(false);
+    /// });
     ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///      "vitest/no-conditional-expect": "error"
+    /// function getValue() {
+    ///   if (process.env.FAIL) {
+    ///     return 1;
     ///   }
+    ///   return 2;
     /// }
+    ///
+    /// it('foo', () => {
+    ///   expect(getValue()).toBe(2);
+    /// });
+    ///
+    /// it('validates the request', () => {
+    ///   try {
+    ///     processRequest(request);
+    ///   } catch { } finally {
+    ///     expect(validRequest).toHaveBeenCalledWith(request);
+    ///   }
+    /// });
+    ///
+    /// it('throws an error', async () => {
+    ///   await expect(foo).rejects.toThrow(Error);
+    /// });
     /// ```
     NoConditionalExpect,
     jest,
@@ -73,28 +105,25 @@ struct InConditional(bool);
 impl Rule for NoConditionalExpect {
     fn run_on_jest_node<'a, 'c>(
         &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
+        possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        run(jest_node, ctx);
-    }
-}
+        let node = possible_jest_node.node;
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+            else {
+                return;
+            };
 
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
-            return;
-        };
+            // Record visited nodes for avoid infinite loop.
+            let mut visited = FxHashSet::default();
 
-        // Record visited nodes for avoid infinite loop.
-        let mut visited = FxHashSet::default();
-
-        // When first visiting the node, we assume it's not in a conditional block.
-        let has_condition_or_catch = check_parents(node, &mut visited, InConditional(false), ctx);
-        if matches!(has_condition_or_catch, InConditional(true)) {
-            ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
+            // When first visiting the node, we assume it's not in a conditional block.
+            let has_condition_or_catch =
+                check_parents(node, &mut visited, InConditional(false), ctx);
+            if matches!(has_condition_or_catch, InConditional(true)) {
+                ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
+            }
         }
     }
 }
@@ -137,7 +166,6 @@ fn check_parents<'a>(
         | AstKind::SwitchStatement(_)
         | AstKind::IfStatement(_)
         | AstKind::ConditionalExpression(_)
-        | AstKind::AwaitExpression(_)
         | AstKind::LogicalExpression(_) => {
             return check_parents(parent_node, visited, InConditional(true), ctx);
         }
@@ -145,7 +173,7 @@ fn check_parents<'a>(
             let Some(ident) = &function.id else {
                 return InConditional(false);
             };
-            let symbol_table = ctx.semantic().symbols();
+            let symbol_table = ctx.scoping();
             let symbol_id = ident.symbol_id();
 
             // Consider cases like:
@@ -439,6 +467,12 @@ fn test() {
                         }
                     }
                 }",
+            None,
+        ),
+        (
+            "it('throws an error', async () => {
+                await expect(foo).rejects.toThrow(Error);
+            });",
             None,
         ),
     ];

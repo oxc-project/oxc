@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn consistent_empty_array_spread_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer consistent types when spreading a ternary in an array literal.")

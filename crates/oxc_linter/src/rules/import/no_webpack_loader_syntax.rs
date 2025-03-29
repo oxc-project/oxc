@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 impl Rule for NoWebpackLoaderSyntax {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // not in top level
-        if node.scope_id() != ctx.scopes().root_scope_id() {
+        if node.scope_id() != ctx.scoping().root_scope_id() {
             return;
         }
 

@@ -12,10 +12,10 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_isolated_declarations --example isolated_declarations`
 // or `just example isolated_declarations`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).expect("{name} not found");
+    let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
 
@@ -26,7 +26,7 @@ fn main() {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }
-        return;
+        return Ok(());
     }
 
     println!("Original:\n");
@@ -47,4 +47,6 @@ fn main() {
             println!("{error:?}");
         }
     }
+
+    Ok(())
 }

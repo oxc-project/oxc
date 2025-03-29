@@ -4,10 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
 };
 
 fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {

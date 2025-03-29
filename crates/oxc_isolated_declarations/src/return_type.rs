@@ -2,16 +2,17 @@ use std::cell::Cell;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{
+    AstBuilder,
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
         ReturnStatement, TSType, TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
     },
-    AstBuilder, Visit,
 };
+use oxc_ast_visit::Visit;
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
+use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
 
 /// Infer return type from return statement.
 /// ```ts

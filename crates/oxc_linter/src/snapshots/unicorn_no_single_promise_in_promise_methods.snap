@@ -405,3 +405,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all(['one']).then(something);
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.

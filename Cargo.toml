@@ -1,18 +1,21 @@
 [workspace]
-resolver = "2"
-members = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
+resolver = "3"
+members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
 exclude = ["tasks/lint_rules", "tasks/e2e"]
 
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
 categories = ["compilers", "development-tools", "web-programming"]
-edition = "2021"
 homepage = "https://oxc.rs"
 keywords = ["JavaScript", "TypeScript", "linter", "minifier", "parser"]
 license = "MIT"
 repository = "https://github.com/oxc-project/oxc"
-rust-version = "1.81.0" # Support last 4 minor versions.
 description = "A collection of JavaScript tools written in Rust."
+
+edition = "2024"
+# MSRV Policy N-2 (12 weeks) starting from v1.87.0
+# Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
+rust-version = "1.85.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
@@ -20,10 +23,12 @@ absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents = "warn"
 unit-bindings = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
+tail_expr_drop_order = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_unsafe = "warn"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
-empty_docs = { level = "allow", priority = 1 } # From `Tsify`
 # restriction
 dbg_macro = "warn"
 todo = "warn"
@@ -41,7 +46,6 @@ empty_structs_with_brackets = "warn"
 exit = "warn"
 filetype_is_file = "warn"
 get_unwrap = "warn"
-impl_trait_in_params = "warn"
 rc_buffer = "warn"
 rc_mutex = "warn"
 rest_pat_in_fully_bound_structs = "warn"
@@ -65,12 +69,32 @@ too_many_lines = "allow"
 must_use_candidate = "allow"
 # Too annoying, we import by name anyway.
 wildcard_imports = "allow"
-# used_underscore_binding= "allow"
 doc_markdown = "allow"
+similar_names = "allow"
+fn_params_excessive_bools = "allow"
+complexity = { level = "warn", priority = -1 }
+too_many_arguments = "allow"
 # nursery
+nursery = { level = "warn", priority = -1 }
 # `const` functions do not make sense for our project because this is not a `const` library.
 # This rule also confuses newcomers and forces them to add `const` blindlessly without any reason.
 missing_const_for_fn = "allow"
+option_if_let_else = "allow"
+or_fun_call = "allow"
+cognitive_complexity = "allow"
+non_send_fields_in_send_ty = "allow"
+use_self = "allow"
+significant_drop_tightening = "allow"
+branches_sharing_code = "allow"
+fallible_impl_from = "allow"
+useless_let_if_seq = "allow"
+impl_trait_in_params = "allow"
+significant_drop_in_scrutinee = "warn"
+iter_on_single_items = "warn"
+unused_peekable = "warn"
+too_long_first_doc_paragraph = "warn"
+suspicious_operation_groupings = "warn"
+redundant_clone = "warn"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
@@ -79,29 +103,30 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.48.2", path = "crates/oxc" }
-oxc_allocator = { version = "0.48.2", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.48.2", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.48.2", path = "crates/oxc_ast_macros" }
-oxc_cfg = { version = "0.48.2", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.48.2", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.48.2", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.48.2", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.48.2", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.48.2", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.48.2", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.48.2", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.48.2", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.48.2", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.48.2", path = "crates/oxc_parser" }
-oxc_parser_napi = { version = "0.48.2", path = "napi/parser" }
-oxc_regular_expression = { version = "0.48.2", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.48.2", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.48.2", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.48.2", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.48.2", path = "napi/transform" }
-oxc_transformer = { version = "0.48.2", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.48.2", path = "crates/oxc_traverse" }
+oxc = { version = "0.61.2", path = "crates/oxc" }
+oxc_allocator = { version = "0.61.2", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.61.2", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.61.2", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.61.2", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.61.2", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.61.2", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.61.2", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.61.2", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.61.2", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.61.2", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.61.2", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.61.2", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.61.2", path = "crates/oxc_minifier" }
+oxc_napi = { version = "0.61.2", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.61.2", path = "crates/oxc_parser", features = ["regular_expression"] }
+oxc_parser_napi = { version = "0.61.2", path = "napi/parser" }
+oxc_regular_expression = { version = "0.61.2", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.61.2", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.61.2", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.61.2", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.61.2", path = "napi/transform" }
+oxc_transformer = { version = "0.61.2", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.61.2", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }
@@ -112,7 +137,7 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
 # Relaxed version so the user can decide which version to use.
 napi = "3.0.0-alpha"
-napi-build = "2.1.3"
+napi-build = "2"
 napi-derive = "3.0.0-alpha"
 
 # Relaxed version so the user can decide which version to use.
@@ -126,59 +151,62 @@ syn = { version = "2", default-features = false }
 unicode-id-start = "1"
 
 #
-dashmap = "6"
-oxc-browserslist = "1.1.2"
-oxc_index = "2"
-oxc_resolver = "4"
-oxc_sourcemap = "1"
+oxc-browserslist = "2.0.0"
+oxc_index = "3"
+oxc_resolver = "5"
+oxc_sourcemap = "3"
 
 #
 allocator-api2 = "0.2.21"
-assert-unchecked = "0.1.2"
 base64 = "0.22.1"
-bitflags = "2.6.0"
-bpaf = "0.9.15"
-bumpalo = "3.16.0"
-compact_str = "0.8.0"
-console = "0.15.8"
-console_error_panic_hook = "0.1.7"
-convert_case = "0.7.0"
+bitflags = "2.8.0"
+bpaf = "0.9.16"
+# `bumpalo` must be pinned to exactly this version.
+# `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
+# of `bumpalo` which may change in a future version.
+# This is a temporary situation - we'll replace `bumpalo` with our own allocator.
+bumpalo = "=3.17.0"
+compact_str = "0.9.0"
+console = "0.15.10"
+constcat = "0.6.0"
+convert_case = "0.8.0"
 cow-utils = "0.1.3"
-criterion2 = { version = "2.0.0", default-features = false }
+criterion2 = { version = "3.0.0", default-features = false }
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
-env_logger = { version = "0.11.5", default-features = false }
-fast-glob = "0.4.0"
+env_logger = { version = "0.11.7", default-features = false }
+fast-glob = "0.4.4"
 fixedbitset = "0.5.7"
 flate2 = "1.0.35"
 futures = "0.3.31"
 globset = "0.4.15"
-handlebars = "6.2.0"
+handlebars = "6.3.1"
 hashbrown = { version = "0.15.2", default-features = false }
 humansize = "2.1.3"
 ignore = "0.4.23"
-insta = "1.41.1"
+insta = "1.42.1"
 itertools = "0.14.0"
 itoa = "1.0.14"
-jemallocator = "0.5.4"
+javascript-globals = "1.0.0"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
+lazy-regex = "3.4.1"
 lazy_static = "1.5.0"
-log = "0.4.22"
-markdown = "1.0.0-alpha.21"
+log = "0.4.25"
+markdown = "1.0.0-alpha.22"
 memchr = "2.7.4"
-miette = { package = "oxc-miette", version = "1.0.2", features = ["fancy-no-syscall"] }
-mimalloc = "0.1.43"
+miette = { package = "oxc-miette", version = "2.2.1", features = ["fancy-no-syscall"] }
+mimalloc-safe = "0.1.49"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
-petgraph = "0.7.0"
-phf = "0.11.2"
+papaya = "0.2.0"
+petgraph = "0.7.1"
+phf = "0.11.3"
 pico-args = "0.5.0"
-prettyplease = "0.2.25"
+prettyplease = "0.2.29"
 project-root = "0.2.2"
 rayon = "1.10.0"
-regex = "1.11.1"
 ropey = "1.6.1"
 rust-lapper = "1.1.0"
 ryu-js = "1.0.1"
@@ -186,23 +214,20 @@ saphyr = "0.0.3"
 schemars = "0.8.21"
 self_cell = "1.1.0"
 seq-macro = "0.3.5"
-serde-wasm-bindgen = "0.6.5"
 sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
-similar = "2.6.0"
-similar-asserts = "1.6.0"
-string_wizard = "0.0.26"
-tempfile = "3.14.0"
-tokio = "1.42.0"
+similar = "2.7.0"
+similar-asserts = "1.6.1"
+smallvec = "1.14.0"
+tempfile = "3.16.0"
+tokio = { version = "1.43.0", default-features = false }
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.19"
-tsify = "0.4.5"
-ureq = { version = "3.0.0", default-features = false }
+ureq = { version = "3.0.5", default-features = false }
 walkdir = "2.5.0"
-wasm-bindgen = "0.2.99"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "lazy_static"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
@@ -218,7 +243,7 @@ oxc_ast_macros.opt-level = 1
 insta.opt-level = 3
 similar.opt-level = 3
 
-[profile.release.package.oxc_wasm]
+[profile.release.package.oxc_playground_napi]
 opt-level = 'z'
 
 [profile.release]

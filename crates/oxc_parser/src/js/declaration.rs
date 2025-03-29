@@ -1,14 +1,13 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
 use crate::{
-    diagnostics,
+    ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, Modifiers},
-    ParserImpl, StatementContext,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -34,12 +33,11 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
-        let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
-
+    pub(crate) fn parse_using_statement(&mut self) -> Result<Statement<'a>> {
+        let mut decl = self.parse_using_declaration(StatementContext::StatementList)?;
         self.asi()?;
-
-        Ok(Statement::VariableDeclaration(self.alloc(using_decl)))
+        decl.span = self.end_span(decl.span);
+        Ok(Statement::VariableDeclaration(self.alloc(decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
@@ -106,7 +104,7 @@ impl<'a> ParserImpl<'a> {
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
+                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
@@ -163,7 +161,11 @@ impl<'a> ParserImpl<'a> {
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationParent::Statement,
-                VariableDeclarationKind::Var,
+                if is_await {
+                    VariableDeclarationKind::AwaitUsing
+                } else {
+                    VariableDeclarationKind::Using
+                },
             )?;
 
             match declaration.id.kind {

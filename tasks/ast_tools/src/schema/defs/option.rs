@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{extensions::layout::Layout, Def, Derives, Schema, TypeDef, TypeId};
+use super::{Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
 
 /// Type definition for an `Option`.
 #[derive(Debug)]

@@ -1,8 +1,12 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression,
+    LogicalExpression, LogicalOperator, UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+
+use crate::{
+    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+};
 
 /// JavaScript Language Type
 ///
@@ -53,90 +57,83 @@ impl ValueType {
     }
 }
 
-impl<'a> From<&Expression<'a>> for ValueType {
-    /// Based on `get_known_value_type` in closure compiler
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
-    ///
-    /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
-    /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
-    /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects::expression_may_have_side_effects`].
-    fn from(expr: &Expression<'a>) -> Self {
-        match expr {
-            Expression::BigIntLiteral(_) => Self::BigInt,
-            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => Self::Boolean,
-            Expression::NullLiteral(_) => Self::Null,
-            Expression::NumericLiteral(_) => Self::Number,
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Self::String,
+/// Based on `get_known_value_type` in closure compiler
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
+///
+/// Evaluate the expression and attempt to determine which ValueType it could resolve to.
+/// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
+/// To detect those cases, use [`crate::side_effects::MayHaveSideEffects`].
+pub trait DetermineValueType {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType;
+}
+
+impl DetermineValueType for Expression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self {
+            Expression::BigIntLiteral(_) => ValueType::BigInt,
+            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
+                ValueType::Boolean
+            }
+            Expression::NullLiteral(_) => ValueType::Null,
+            Expression::NumericLiteral(_) => ValueType::Number,
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::RegExpLiteral(_)
             | Expression::FunctionExpression(_)
             | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_) => Self::Object,
+            | Expression::ClassExpression(_) => ValueType::Object,
             Expression::MetaProperty(meta_prop) => {
                 match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
-                    ("import", "meta") => Self::Object,
-                    _ => Self::Undetermined,
+                    ("import", "meta") => ValueType::Object,
+                    _ => ValueType::Undetermined,
                 }
             }
-            Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Self::Undefined,
-                "NaN" | "Infinity" => Self::Number,
-                _ => Self::Undetermined,
-            },
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::Void => Self::Undefined,
-                UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                    let argument_ty = Self::from(&unary_expr.argument);
-                    match argument_ty {
-                        Self::BigInt => Self::BigInt,
-                        // non-object values other than BigInt are converted to number by `ToNumber`
-                        Self::Number
-                        | Self::Boolean
-                        | Self::String
-                        | Self::Null
-                        | Self::Undefined => Self::Number,
-                        Self::Undetermined | Self::Object => Self::Undetermined,
+            Expression::Identifier(ident) => {
+                if is_global_reference.is_global_reference(ident) == Some(true) {
+                    match ident.name.as_str() {
+                        "undefined" => ValueType::Undefined,
+                        "NaN" | "Infinity" => ValueType::Number,
+                        _ => ValueType::Undetermined,
                     }
+                } else {
+                    ValueType::Undetermined
                 }
-                UnaryOperator::UnaryPlus => Self::Number,
-                UnaryOperator::LogicalNot | UnaryOperator::Delete => Self::Boolean,
-                UnaryOperator::Typeof => Self::String,
-            },
-            Expression::BinaryExpression(e) => Self::from(&**e),
-            Expression::SequenceExpression(e) => {
-                e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
-            Expression::AssignmentExpression(e) => Self::from(&**e),
-            Expression::ConditionalExpression(e) => Self::from(&**e),
-            Expression::LogicalExpression(e) => Self::from(&**e),
-            Expression::ParenthesizedExpression(e) => Self::from(&e.expression),
-            _ => Self::Undetermined,
+            Expression::UnaryExpression(e) => e.value_type(is_global_reference),
+            Expression::BinaryExpression(e) => e.value_type(is_global_reference),
+            Expression::SequenceExpression(e) => e
+                .expressions
+                .last()
+                .map_or(ValueType::Undetermined, |e| e.value_type(is_global_reference)),
+            Expression::AssignmentExpression(e) => e.value_type(is_global_reference),
+            Expression::ConditionalExpression(e) => e.value_type(is_global_reference),
+            Expression::LogicalExpression(e) => e.value_type(is_global_reference),
+            Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
+            _ => ValueType::Undetermined,
         }
     }
 }
 
-impl<'a> From<&BinaryExpression<'a>> for ValueType {
-    fn from(e: &BinaryExpression<'a>) -> Self {
-        match e.operator {
+impl DetermineValueType for BinaryExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
             BinaryOperator::Addition => {
-                let left = Self::from(&e.left);
-                let right = Self::from(&e.right);
-                if left == Self::Boolean
-                    && matches!(right, Self::Undefined | Self::Null | Self::Number)
-                {
-                    return Self::Number;
+                let left = self.left.to_primitive(is_global_reference);
+                let right = self.right.to_primitive(is_global_reference);
+                if left.is_string() == Some(true) || right.is_string() == Some(true) {
+                    return ValueType::String;
                 }
-                if left == Self::String || right == Self::String {
-                    return Self::String;
+                let left_to_numeric_type = left.to_numeric(is_global_reference);
+                let right_to_numeric_type = right.to_numeric(is_global_reference);
+                // we need to check both operands because the other operand might be undetermined and maybe a string
+                if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
+                    return ValueType::Number;
                 }
-                // There are some pretty weird cases for object types:
-                //   {} + [] === "0"
-                //   [] + {} === "[object Object]"
-                if left == Self::Object || right == Self::Object {
-                    return Self::Undetermined;
+                if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                    return ValueType::BigInt;
                 }
-                Self::Undetermined
+                ValueType::Undetermined
             }
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication
@@ -148,22 +145,19 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential => {
-                let left = Self::from(&e.left);
-                let right = Self::from(&e.right);
-                if left.is_bigint() || right.is_bigint() {
-                    Self::BigInt
-                } else if !(left.is_object() || left.is_undetermined())
-                    || !(right.is_object() || right.is_undetermined())
-                {
-                    // non-object values other than BigInt are converted to number by `ToNumber`
-                    // if either operand is a number, the result is always a number
-                    // because if the other operand is a bigint, an error is thrown
-                    Self::Number
+                let left_to_numeric_type = self.left.to_numeric(is_global_reference);
+                let right_to_numeric_type = self.right.to_numeric(is_global_reference);
+                // if either operand is a number, the result is always a number
+                // because if the other operand is a bigint, an error is thrown
+                if left_to_numeric_type.is_number() || right_to_numeric_type.is_number() {
+                    ValueType::Number
+                } else if left_to_numeric_type.is_bigint() || right_to_numeric_type.is_bigint() {
+                    ValueType::BigInt
                 } else {
-                    Self::Undetermined
+                    ValueType::Undetermined
                 }
             }
-            BinaryOperator::ShiftRightZeroFill => Self::Number,
+            BinaryOperator::ShiftRightZeroFill => ValueType::Number,
             BinaryOperator::Instanceof
             | BinaryOperator::In
             | BinaryOperator::Equality
@@ -171,24 +165,44 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::StrictEquality
             | BinaryOperator::StrictInequality
             | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan => Self::Boolean,
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterEqualThan => ValueType::Boolean,
         }
     }
 }
 
-impl<'a> From<&AssignmentExpression<'a>> for ValueType {
-    fn from(e: &AssignmentExpression<'a>) -> Self {
-        match e.operator {
-            AssignmentOperator::Assign => Self::from(&e.right),
-            AssignmentOperator::Addition => {
-                let right = Self::from(&e.right);
-                if right.is_string() {
-                    Self::String
-                } else {
-                    Self::Undetermined
+impl DetermineValueType for UnaryExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
+            UnaryOperator::Void => ValueType::Undefined,
+            UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
+                let argument_ty = self.argument.value_type(is_global_reference);
+                match argument_ty {
+                    ValueType::BigInt => ValueType::BigInt,
+                    // non-object values other than BigInt are converted to number by `ToNumber`
+                    ValueType::Number
+                    | ValueType::Boolean
+                    | ValueType::String
+                    | ValueType::Null
+                    | ValueType::Undefined => ValueType::Number,
+                    ValueType::Undetermined | ValueType::Object => ValueType::Undetermined,
                 }
+            }
+            UnaryOperator::UnaryPlus => ValueType::Number,
+            UnaryOperator::LogicalNot | UnaryOperator::Delete => ValueType::Boolean,
+            UnaryOperator::Typeof => ValueType::String,
+        }
+    }
+}
+
+impl DetermineValueType for AssignmentExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
+            AssignmentOperator::Assign => self.right.value_type(is_global_reference),
+            AssignmentOperator::Addition => {
+                let right = self.right.value_type(is_global_reference);
+                if right.is_string() { ValueType::String } else { ValueType::Undetermined }
             }
             AssignmentOperator::Subtraction
             | AssignmentOperator::Multiplication
@@ -200,47 +214,61 @@ impl<'a> From<&AssignmentExpression<'a>> for ValueType {
             | AssignmentOperator::BitwiseXOR
             | AssignmentOperator::BitwiseAnd
             | AssignmentOperator::Exponential => {
-                let right = Self::from(&e.right);
+                let right = self.right.value_type(is_global_reference);
                 if right.is_bigint() {
-                    Self::BigInt
+                    ValueType::BigInt
                 } else if !(right.is_object() || right.is_undetermined()) {
-                    Self::Number
+                    ValueType::Number
                 } else {
-                    Self::Undetermined
+                    ValueType::Undetermined
                 }
             }
-            AssignmentOperator::ShiftRightZeroFill => Self::Number,
+            AssignmentOperator::ShiftRightZeroFill => ValueType::Number,
             AssignmentOperator::LogicalAnd
             | AssignmentOperator::LogicalOr
-            | AssignmentOperator::LogicalNullish => Self::Undetermined,
+            | AssignmentOperator::LogicalNullish => ValueType::Undetermined,
         }
     }
 }
 
-impl<'a> From<&ConditionalExpression<'a>> for ValueType {
-    fn from(e: &ConditionalExpression<'a>) -> Self {
-        let left = Self::from(&e.consequent);
+impl DetermineValueType for ConditionalExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        let left = self.consequent.value_type(is_global_reference);
         if left.is_undetermined() {
-            return Self::Undetermined;
+            return ValueType::Undetermined;
         }
-        let right = Self::from(&e.alternate);
+        let right = self.alternate.value_type(is_global_reference);
         if left == right {
             return left;
         }
-        Self::Undetermined
+        ValueType::Undetermined
     }
 }
 
-impl<'a> From<&LogicalExpression<'a>> for ValueType {
-    fn from(e: &LogicalExpression<'a>) -> Self {
-        let left = Self::from(&e.left);
-        if !left.is_boolean() {
-            return Self::Undetermined;
+impl DetermineValueType for LogicalExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
+            LogicalOperator::And | LogicalOperator::Or => {
+                let left = self.left.value_type(is_global_reference);
+                if left.is_undetermined() {
+                    return ValueType::Undetermined;
+                }
+                let right = self.right.value_type(is_global_reference);
+                if left == right {
+                    return left;
+                }
+                ValueType::Undetermined
+            }
+            LogicalOperator::Coalesce => {
+                let left = self.left.value_type(is_global_reference);
+                match left {
+                    ValueType::Undefined | ValueType::Null => {
+                        self.right.value_type(is_global_reference)
+                    }
+                    ValueType::Undetermined => ValueType::Undetermined,
+                    _ => left,
+                }
+            }
         }
-        let right = Self::from(&e.right);
-        if left == right {
-            return left;
-        }
-        Self::Undetermined
     }
 }

@@ -1,8 +1,8 @@
 use std::hash::Hash;
 
 use petgraph::{
-    visit::{ControlFlow, DfsEvent, EdgeRef, IntoNeighbors, Time, VisitMap, Visitable},
     Direction, Graph,
+    visit::{ControlFlow, DfsEvent, EdgeRef, IntoNeighbors, Time, VisitMap, Visitable},
 };
 use rustc_hash::FxHashSet;
 
@@ -66,10 +66,10 @@ where
 /// Return if the expression is a break value, execute the provided statement
 /// if it is a prune value.
 macro_rules! try_control {
-    ($e:expr, $p:stmt) => {
+    ($e:expr_2021, $p:stmt) => {
         try_control!($e, $p, ());
     };
-    ($e:expr, $p:stmt, $q:stmt) => {
+    ($e:expr_2021, $p:stmt, $q:stmt) => {
         match $e {
             x => {
                 #[allow(clippy::redundant_else, clippy::allow_attributes)]

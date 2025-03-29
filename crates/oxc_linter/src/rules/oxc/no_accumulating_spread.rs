@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement,
         ForStatement, VariableDeclarationKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,10 +11,10 @@ use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{call_expr_method_callee_info, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
@@ -133,22 +133,22 @@ impl Rule for NoAccumulatingSpread {
             return;
         };
 
-        let symbols = ctx.semantic().symbols();
+        let symbols = ctx.scoping();
 
         // get the AST node + symbol id of the declaration of the identifier
         let reference = symbols.get_reference(ident.reference_id());
         let Some(referenced_symbol_id) = reference.symbol_id() else {
             return;
         };
-        let declaration_id = symbols.get_declaration(referenced_symbol_id);
-        let Some(declaration) = ctx.semantic().nodes().parent_node(declaration_id) else {
+        let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
+        let Some(declaration) = ctx.nodes().parent_node(declaration_id) else {
             return;
         };
 
         check_reduce_usage(declaration, referenced_symbol_id, spread.span, ctx);
         check_loop_usage(
             declaration,
-            ctx.semantic().nodes().get_node(declaration_id),
+            ctx.nodes().get_node(declaration_id),
             referenced_symbol_id,
             node.id(),
             spread.span,
@@ -171,7 +171,7 @@ fn check_reduce_usage<'a>(
     // Skip non-parameter or non-first-parameter declarations.
     let first_param_symbol_id =
         params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern.kind));
-    if !first_param_symbol_id.is_some_and(|id| id == referenced_symbol_id) {
+    if first_param_symbol_id.is_none_or(|id| id != referenced_symbol_id) {
         return;
     }
 

@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn no_alias_methods_diagnostic(x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
@@ -28,19 +28,36 @@ declare_oxc_lint!(
     /// These aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.
     /// This rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// expect(a).toBeCalled();
-    /// expect(a).toBeCalledTimes();
-    /// expect(a).toBeCalledWith();
-    /// expect(a).lastCalledWith();
-    /// expect(a).nthCalledWith();
-    /// expect(a).toReturn();
-    /// expect(a).toReturnTimes();
-    /// expect(a).toReturnWith();
-    /// expect(a).lastReturnedWith();
-    /// expect(a).nthReturnedWith();
-    /// expect(a).toThrowError();
+    /// expect(a).toBeCalled()
+    /// expect(a).toBeCalledTimes()
+    /// expect(a).toBeCalledWith()
+    /// expect(a).lastCalledWith()
+    /// expect(a).nthCalledWith()
+    /// expect(a).toReturn()
+    /// expect(a).toReturnTimes()
+    /// expect(a).toReturnWith()
+    /// expect(a).lastReturnedWith()
+    /// expect(a).nthReturnedWith()
+    /// expect(a).toThrowError()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect(a).toHaveBeenCalled()
+    /// expect(a).toHaveBeenCalledTimes()
+    /// expect(a).toHaveBeenCalledWith()
+    /// expect(a).toHaveBeenLastCalledWith()
+    /// expect(a).toHaveBeenNthCalledWith()
+    /// expect(a).toHaveReturned()
+    /// expect(a).toHaveReturnedTimes()
+    /// expect(a).toHaveReturnedWith()
+    /// expect(a).toHaveLastReturnedWith()
+    /// expect(a).toHaveNthReturnedWith()
+    /// expect(a).toThrow()
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-alias-methods.md),
@@ -52,6 +69,30 @@ declare_oxc_lint!(
     ///      "vitest/no-alias-methods": "error"
     ///   }
     /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with vitest:
+    /// ```javascript
+    /// expect(a).toBeCalled()
+    /// expect(a).toBeCalledTimes()
+    /// expect(a).not["toThrowError"]()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with vitest:
+    /// ```javascript
+    /// expect(a).toHaveBeenCalled()
+    /// expect(a).toHaveBeenCalledTimes()
+    /// expect(a).toHaveBeenCalledWith()
+    /// expect(a).toHaveBeenLastCalledWith()
+    /// expect(a).toHaveBeenNthCalledWith()
+    /// expect(a).toHaveReturned()
+    /// expect(a).toHaveReturnedTimes()
+    /// expect(a).toHaveReturnedWith()
+    /// expect(a).toHaveLastReturnedWith()
+    /// expect(a).toHaveNthReturnedWith()
+    /// expect(a).toThrow()
+    /// expect(a).rejects
+    /// expect(a)
     /// ```
     NoAliasMethods,
     jest,
@@ -71,35 +112,37 @@ impl Rule for NoAliasMethods {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        if let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) {
-            let parsed_expect_call = jest_fn_call;
-            let Some(matcher) = parsed_expect_call.matcher() else {
-                return;
-            };
-            let Some(alias) = matcher.name() else {
-                return;
-            };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+        return;
+    };
+    let Some(matcher) = jest_fn_call.matcher() else {
+        return;
+    };
+    let Some(alias) = matcher.name() else {
+        return;
+    };
 
-            if let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) {
-                let (name, canonical_name) = method_name.name_with_canonical();
+    let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) else {
+        return;
+    };
+    let (name, canonical_name) = method_name.name_with_canonical();
 
-                let mut span = matcher.span;
-                // expect(a).not['toThrowError']()
-                // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
-                if matcher.element.is_string_literal() {
-                    span.start += 1;
-                    span.end -= 1;
-                }
-
-                ctx.diagnostic_with_fix(
-                    no_alias_methods_diagnostic(name, canonical_name, matcher.span),
-                    // || Fix::new(canonical_name, Span::new(start, end)),
-                    |fixer| fixer.replace(span, canonical_name),
-                );
-            }
-        }
+    let mut span = matcher.span;
+    // expect(a).not['toThrowError']()
+    // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
+    if matcher.element.is_string_literal() {
+        span.start += 1;
+        span.end -= 1;
     }
+
+    ctx.diagnostic_with_fix(
+        no_alias_methods_diagnostic(name, canonical_name, matcher.span),
+        // || Fix::new(canonical_name, Span::new(start, end)),
+        |fixer| fixer.replace(span, canonical_name),
+    );
 }
 
 enum BadAliasMethodName {

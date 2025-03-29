@@ -27,9 +27,9 @@ jobs:
 
       - name: Restore dprint plugin cache
         id: cache-restore
-        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
-          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
 
       - run: just fmt
@@ -37,11 +37,3 @@ jobs:
       - uses: autofix-ci/action@2891949f3779a1cafafae1523058501de3d4e944 # v1.3.1
         with:
           fail-fast: false
-
-      - name: Save dprint plugin cache
-        if: ${{ github.ref_name == 'main' }}
-        id: cache-save
-        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
-        with:
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-          path: ~/.cache/dprint

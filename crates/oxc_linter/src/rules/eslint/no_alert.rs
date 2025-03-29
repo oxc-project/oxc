@@ -1,10 +1,10 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_alert_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`alert`, `confirm` and `prompt` functions are not allowed")
@@ -66,7 +66,7 @@ fn is_global_this_ref_or_global_window<'a>(
     expr: &Expression<'a>,
 ) -> bool {
     if let Expression::ThisExpression(_) = expr {
-        if ctx.scopes().get_flags(scope_id).is_top() {
+        if ctx.scoping().scope_flags(scope_id).is_top() {
             return true;
         }
     }
@@ -85,7 +85,7 @@ fn is_global_this_ref_or_global_window<'a>(
 }
 
 fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
-    ctx.scopes().find_binding(scope_id, name).is_some()
+    ctx.scoping().find_binding(scope_id, name).is_some()
 }
 
 impl Rule for NoAlert {

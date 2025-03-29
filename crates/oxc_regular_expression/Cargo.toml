@@ -1,6 +1,6 @@
 [package]
 name = "oxc_regular_expression"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -30,12 +30,9 @@ phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
-serde = { workspace = true, optional = true }
-
 [features]
 default = []
 serialize = [
-  "dep:serde",
   "oxc_allocator/serialize",
   "oxc_span/serialize",
   "oxc_estree/serialize",

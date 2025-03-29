@@ -4,11 +4,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array, break_parent, conditional_group,
+    Format, Prettier, array, break_parent, conditional_group,
     format::print::{array, call_expression, misc},
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, text, utils, Format, Prettier,
+    line, softline, text, utils,
 };
 
 pub fn print_call_arguments<'a>(
@@ -70,7 +70,7 @@ pub fn print_call_arguments<'a>(
             [
                 line!(),
                 array!(p, arguments_doc),
-                if p.should_print_all_comma() { text!(",") } else { text!("") }
+                if p.options.trailing_comma.should_print_all() { text!(",") } else { text!("") }
             ]
         ));
         parts.push(line!());
@@ -80,10 +80,10 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_first_arg(arguments) {
         p.args.expand_first_arg = true;
-        let mut first_doc = arguments[0].format(p);
+        let first_doc = arguments[0].format(p);
         p.args.expand_first_arg = false;
 
-        if utils::will_break(&mut first_doc) {
+        if utils::will_break(&first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
             let all_args_broken_out_doc = all_args_broken_out(p);
 
@@ -114,7 +114,7 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_last_arg(arguments) {
         let mut printed_arguments = get_printed_arguments(p, -1);
-        if printed_arguments.iter_mut().any(utils::will_break) {
+        if printed_arguments.iter().any(utils::will_break) {
             return all_args_broken_out(p);
         }
 
@@ -132,7 +132,7 @@ pub fn print_call_arguments<'a>(
 
         let mut last_doc = get_last_doc(p);
 
-        if utils::will_break(&mut last_doc) {
+        if utils::will_break(&last_doc) {
             let all_args_broken_out_doc = all_args_broken_out(p);
             return array!(
                 p,
@@ -182,7 +182,8 @@ pub fn print_call_arguments<'a>(
 
     let should_break =
         if matches!(expression, call_expression::CallExpressionLike::CallExpression(_)) {
-            !call_expression::is_commons_js_or_amd_call(expression.callee(), arguments)
+            // TODO: This check should be resolved by `call_expression` side
+            !call_expression::is_commons_js_or_amd_call(expression.callee_expr(), arguments)
         } else {
             true
         };
@@ -236,8 +237,8 @@ pub fn print_import_source_and_arguments<'a>(
     let mut indent_parts = Vec::new_in(p.allocator);
     indent_parts.push(softline!());
     indent_parts.push(expr.source.format(p));
-    if !expr.arguments.is_empty() {
-        for arg in &expr.arguments {
+    if !expr.options.is_empty() {
+        for arg in &expr.options {
             indent_parts.push(text!(","));
             indent_parts.push(line!());
             indent_parts.push(arg.format(p));
@@ -300,7 +301,7 @@ fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
         return !match node {
             Expression::CallExpression(call) => call.arguments.len() > 1,
             Expression::NewExpression(call) => call.arguments.len() > 1,
-            Expression::ImportExpression(call) => call.arguments.len() > 0,
+            Expression::ImportExpression(call) => call.options.len() > 0,
             _ => false,
         };
     }
@@ -349,7 +350,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
 
     if node.is_call_expression() {
         if let Expression::ImportExpression(expr) = node {
-            return expr.arguments.len() <= depth && expr.arguments.iter().all(is_child_simple);
+            return expr.options.len() <= depth && expr.options.iter().all(is_child_simple);
         } else if let Expression::CallExpression(expr) = node {
             if is_simple_call_argument(&expr.callee, depth) {
                 return expr.arguments.len() <= depth

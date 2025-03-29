@@ -1,27 +1,44 @@
 // Napi value need to be passed as value
 #![expect(clippy::needless_pass_by_value)]
 
+#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
 use std::mem;
 
-use napi::{bindgen_prelude::AsyncTask, Task};
+use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    ast::CommentKind,
     parser::{ParseOptions, Parser, ParserReturn},
+    semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, convert_utf8_to_utf16};
 
 mod convert;
-mod magic_string;
+mod raw_transfer;
+mod raw_transfer_types;
 mod types;
-pub use magic_string::MagicString;
-pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+pub use raw_transfer::{get_buffer_offset, parse_sync_raw, raw_transfer_supported};
+pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
 
-fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
-    match options.lang.as_deref() {
+mod generated {
+    // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AstType {
+    JavaScript,
+    TypeScript,
+}
+
+fn get_source_and_ast_type(filename: &str, options: &ParserOptions) -> (SourceType, AstType) {
+    let source_type = match options.lang.as_deref() {
         Some("js") => SourceType::mjs(),
         Some("jsx") => SourceType::jsx(),
         Some("ts") => SourceType::ts(),
@@ -36,7 +53,21 @@ fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
             }
             source_type
         }
-    }
+    };
+
+    let ast_type = match options.ast_type.as_deref() {
+        Some("js") => AstType::JavaScript,
+        Some("ts") => AstType::TypeScript,
+        _ => {
+            if source_type.is_javascript() {
+                AstType::JavaScript
+            } else {
+                AstType::TypeScript
+            }
+        }
+    };
+
+    (source_type, ast_type)
 }
 
 fn parse<'a>(
@@ -53,42 +84,33 @@ fn parse<'a>(
         .parse()
 }
 
-/// Parse without returning anything.
-///
-/// This is for benchmark purposes such as measuring napi communication overhead.
-#[napi]
-pub fn parse_without_return(filename: String, source_text: String, options: Option<ParserOptions>) {
-    let options = options.unwrap_or_default();
-    let allocator = Allocator::default();
-    let source_type = get_source_type(&filename, &options);
-    parse(&allocator, source_type, &source_text, &options);
-}
-
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let source_type = get_source_type(filename, options);
+    let (source_type, ast_type) = get_source_and_ast_type(filename, options);
     let ret = parse(&allocator, source_type, &source_text, options);
-    let program = serde_json::to_string(&ret.program).unwrap();
 
-    let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
+    let mut program = ret.program;
+    let mut module_record = ret.module_record;
+    let mut diagnostics = ret.errors;
 
-    let comments = ret
-        .program
-        .comments
-        .iter()
-        .map(|comment| Comment {
-            r#type: match comment.kind {
-                CommentKind::Line => String::from("Line"),
-                CommentKind::Block => String::from("Block"),
-            },
-            value: comment.content_span().source_text(&source_text).to_string(),
-            start: comment.span.start,
-            end: comment.span.end,
-        })
-        .collect::<Vec<Comment>>();
+    if options.show_semantic_errors == Some(true) {
+        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        diagnostics.extend(semantic_ret.errors);
+    }
 
-    let module = EcmaScriptModule::from(&ret.module_record);
-    ParseResult { source_text, program, module, comments, errors }
+    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
+
+    let comments =
+        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+
+    let program = match ast_type {
+        AstType::JavaScript => program.to_estree_js_json(),
+        AstType::TypeScript => program.to_estree_ts_json(),
+    };
+
+    let module = EcmaScriptModule::from(&module_record);
+
+    ParseResult { program, module, comments, errors }
 }
 
 /// Parse synchronously.

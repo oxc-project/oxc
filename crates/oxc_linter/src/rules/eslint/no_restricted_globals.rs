@@ -5,7 +5,7 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiagnostic {
     let warn_text = if suffix.is_empty() {
@@ -86,7 +86,7 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.is_reference_to_global_variable(ident) {
+            if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
@@ -99,53 +99,89 @@ fn test() {
     const CUSTOM_MESSAGE: &str = "Use bar instead.";
 
     let pass = vec![
-        ("foo", None),
-        ("foo", Some(serde_json::json!(["bar"]))),
-        ("var foo = 1;", Some(serde_json::json!(["foo"]))),
-        ("event", Some(serde_json::json!(["bar"]))),
-        ("import foo from 'bar';", Some(serde_json::json!(["foo"]))),
-        ("function foo() {}", Some(serde_json::json!(["foo"]))),
-        ("function fn() { var foo; }", Some(serde_json::json!(["foo"]))),
-        ("foo.bar", Some(serde_json::json!(["bar"]))),
-        ("foo", Some(serde_json::json!([{ "name": "bar", "message": "Use baz instead." }]))),
+        ("foo", None, None),
+        ("foo", Some(serde_json::json!(["bar"])), None),
+        ("var foo = 1;", Some(serde_json::json!(["foo"])), None),
+        (
+            "event",
+            Some(serde_json::json!(["bar"])),
+            Some(serde_json::json!({ "env": { "browser": true }})),
+        ),
+        ("import foo from 'bar';", Some(serde_json::json!(["foo"])), None),
+        ("function foo() {}", Some(serde_json::json!(["foo"])), None),
+        ("function fn() { var foo; }", Some(serde_json::json!(["foo"])), None),
+        ("foo.bar", Some(serde_json::json!(["bar"])), None),
+        ("foo", Some(serde_json::json!([{ "name": "bar", "message": "Use baz instead." }])), None),
     ];
 
     let fail = vec![
-        ("foo", Some(serde_json::json!(["foo"]))),
-        ("function fn() { foo; }", Some(serde_json::json!(["foo"]))),
-        ("function fn() { foo; }", Some(serde_json::json!(["foo"]))),
-        ("event", Some(serde_json::json!(["foo", "event"]))),
-        ("foo", Some(serde_json::json!(["foo"]))),
-        ("foo()", Some(serde_json::json!(["foo"]))),
-        ("foo.bar()", Some(serde_json::json!(["foo"]))),
-        ("foo", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("function fn() { foo; }", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("function fn() { foo; }", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("event", Some(serde_json::json!(["foo", { "name": "event" }]))),
-        ("foo", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("foo()", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("foo.bar()", Some(serde_json::json!([{ "name": "foo" }]))),
-        ("foo", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }]))),
+        ("foo", Some(serde_json::json!(["foo"])), None),
+        ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
+        ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
+        (
+            "event",
+            Some(serde_json::json!(["foo", "event"])),
+            Some(serde_json::json!({ "env": { "browser": true }})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!(["foo"])),
+            Some(serde_json::json!({ "globals": { "foo": false }})),
+        ),
+        ("foo()", Some(serde_json::json!(["foo"])), None),
+        ("foo.bar()", Some(serde_json::json!(["foo"])), None),
+        ("foo", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("function fn() { foo; }", Some(serde_json::json!([{ "name": "foo" }])), None),
+        (
+            "function fn() { foo; }",
+            Some(serde_json::json!([{ "name": "foo" }])),
+            Some(serde_json::json!({ "globals": { "foo": false }})),
+        ),
+        (
+            "event",
+            Some(serde_json::json!(["foo", { "name": "event" }])),
+            Some(serde_json::json!({ "env": { "browser": true }})),
+        ),
+        (
+            "foo",
+            Some(serde_json::json!([{ "name": "foo" }])),
+            Some(serde_json::json!({ "globals": { "foo": false }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("foo.bar()", Some(serde_json::json!([{ "name": "foo" }])), None),
+        ("foo", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])), None),
         (
             "function fn() { foo; }",
             Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            None,
         ),
         (
             "function fn() { foo; }",
             Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            Some(serde_json::json!({ "globals": { "foo": false }})),
         ),
         (
             "event",
             Some(
                 serde_json::json!(["foo", { "name": "event", "message": "Use local event parameter." }]),
             ),
+            Some(serde_json::json!({ "env": { "browser": true }})),
         ),
-        ("foo", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }]))),
-        ("foo()", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }]))),
-        ("foo.bar()", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }]))),
+        (
+            "foo",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            Some(serde_json::json!({ "globals": { "foo": false }})),
+        ),
+        ("foo()", Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])), None),
+        (
+            "foo.bar()",
+            Some(serde_json::json!([{ "name": "foo", "message": CUSTOM_MESSAGE }])),
+            None,
+        ),
         (
             "var foo = obj => hasOwnProperty(obj, 'name');",
             Some(serde_json::json!(["hasOwnProperty"])),
+            None,
         ),
     ];
 

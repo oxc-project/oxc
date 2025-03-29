@@ -1,21 +1,20 @@
 use std::borrow::Cow;
 
-use oxc_allocator::{Box, CloneIn};
-use oxc_ast::{ast::*, NONE};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{
         accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
         method_must_have_explicit_return_type, property_must_have_explicit_type,
     },
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    #[expect(clippy::unused_self)]
-    pub(crate) fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
+    pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
@@ -55,7 +54,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>) -> bool {
-        if !self.is_literal_key(key) && !Self::is_global_symbol(key) {
+        if !Self::is_literal_key(key) && !Self::is_global_symbol(key) {
             self.error(computed_property_name(key.span()));
             true
         } else {
@@ -63,9 +62,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    #[expect(clippy::unused_self)]
     pub(crate) fn transform_accessibility(
-        &self,
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
         if accessibility.is_none() || accessibility.is_some_and(|a| a == TSAccessibility::Public) {
@@ -82,7 +79,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut type_annotations = None;
         let mut value = None;
 
-        if property.accessibility.map_or(true, |a| !a.is_private()) {
+        if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
                 type_annotations = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
@@ -126,15 +123,15 @@ impl<'a> IsolatedDeclarations<'a> {
             property.definite,
             property.readonly,
             type_annotations,
-            self.transform_accessibility(property.accessibility),
+            Self::transform_accessibility(property.accessibility),
         )
     }
 
     fn transform_class_method_definition(
         &self,
         definition: &MethodDefinition<'a>,
-        params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ) -> ClassElement<'a> {
         let function = &definition.value;
 
@@ -163,7 +160,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#static,
             definition.r#override,
             definition.optional,
-            self.transform_accessibility(definition.accessibility),
+            Self::transform_accessibility(definition.accessibility),
         )
     }
 
@@ -197,7 +194,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_formal_parameter_to_class_property(
         &self,
         param: &FormalParameter<'a>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ) -> Option<ClassElement<'a>> {
         let Some(ident_name) = param.pattern.get_identifier_name() else {
             // A parameter property may not be declared using a binding pattern.(1187)
@@ -218,7 +215,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             param.readonly,
             type_annotation,
-            self.transform_accessibility(param.accessibility),
+            Self::transform_accessibility(param.accessibility),
         ))
     }
 
@@ -239,7 +236,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     method.key.clone_in(self.ast.allocator),
                     method.r#static,
                     method.r#override,
-                    self.transform_accessibility(method.accessibility),
+                    Self::transform_accessibility(method.accessibility),
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
@@ -264,10 +261,10 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         function: &Function<'a>,
         params: &FormalParameters<'a>,
-    ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
+    ) -> ArenaVec<'a, ClassElement<'a>> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() || param.readonly {
+            if param.has_modifier() {
                 let type_annotation =
                     if param.accessibility.is_some_and(TSAccessibility::is_private) {
                         None
@@ -299,13 +296,13 @@ impl<'a> IsolatedDeclarations<'a> {
     fn collect_getter_or_setter_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> FxHashMap<Cow<str>, Box<'a, TSTypeAnnotation<'a>>> {
+    ) -> FxHashMap<Cow<str>, ArenaBox<'a, TSTypeAnnotation<'a>>> {
         let mut method_annotations = FxHashMap::default();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
                     || method.accessibility.is_some_and(TSAccessibility::is_private))
-                    || (method.computed && !self.is_literal_key(&method.key))
+                    || (method.computed && !Self::is_literal_key(&method.key))
                 {
                     continue;
                 }
@@ -347,7 +344,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         decl: &Class<'a>,
         declare: Option<bool>,
-    ) -> Box<'a, Class<'a>> {
+    ) -> ArenaBox<'a, Class<'a>> {
         if let Some(super_class) = &decl.super_class {
             let is_not_allowed = match super_class {
                 Expression::Identifier(_) => false,
@@ -504,6 +501,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
+                    let type_annotation = match property.accessibility {
+                        Some(TSAccessibility::Private) => None,
+                        _ => property.type_annotation.clone_in(self.ast.allocator),
+                    };
+
                     // FIXME: missing many fields
                     let new_element = self.ast.class_element_accessor_property(
                         property.span,
@@ -514,7 +516,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.computed,
                         property.r#static,
                         property.definite,
-                        property.type_annotation.clone_in(self.ast.allocator),
+                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);
@@ -553,7 +555,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.id.clone_in(self.ast.allocator),
             decl.type_parameters.clone_in(self.ast.allocator),
             decl.super_class.clone_in(self.ast.allocator),
-            decl.super_type_parameters.clone_in(self.ast.allocator),
+            decl.super_type_arguments.clone_in(self.ast.allocator),
             decl.implements.clone_in(self.ast.allocator),
             body,
             decl.r#abstract,
@@ -564,7 +566,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn create_formal_parameters(
         &self,
         kind: BindingPatternKind<'a>,
-    ) -> Box<'a, FormalParameters<'a>> {
+    ) -> ArenaBox<'a, FormalParameters<'a>> {
         let pattern = self.ast.binding_pattern(kind, NONE, false);
         let parameter =
             self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);

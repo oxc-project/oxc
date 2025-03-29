@@ -1,22 +1,21 @@
 use oxc_ast::ast::*;
 
+use oxc_semantic::ScopeId;
 use oxc_span::GetSpan;
-use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::TraverseCtx;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
-        &mut self,
+        &self,
         if_stmt: &mut IfStatement<'a>,
-        traverse_ctx: &mut TraverseCtx<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
-        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
-        let ctx = Ctx(traverse_ctx);
+        self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
@@ -29,7 +28,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 let a = ctx.ast.move_expression(e);
                 let b = ctx.ast.move_expression(&mut expr_stmt.expression);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
                 &mut if_stmt.alternate
@@ -47,7 +46,8 @@ impl<'a> PeepholeOptimizations {
                 || if_stmt.alternate.as_ref().is_some_and(Self::is_statement_empty)
             {
                 // "if (a) {}" => "a;"
-                let expr = ctx.ast.move_expression(&mut if_stmt.test);
+                let mut expr = ctx.ast.move_expression(&mut if_stmt.test);
+                self.remove_unused_expression(&mut expr, state, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
@@ -60,7 +60,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 let a = ctx.ast.move_expression(e);
                 let b = ctx.ast.move_expression(&mut expr_stmt.expression);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
@@ -70,18 +70,19 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
                         if_stmt.consequent = ctx.ast.move_statement(stmt);
                         if_stmt.alternate = None;
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                     // "if (a) {} else return b;" => "if (!a) return b;"
                     _ => {
-                        if_stmt.test = Self::minimize_not(
+                        if_stmt.test = self.minimize_not(
                             if_stmt.test.span(),
                             ctx.ast.move_expression(&mut if_stmt.test),
                             ctx,
                         );
                         if_stmt.consequent = ctx.ast.move_statement(stmt);
                         if_stmt.alternate = None;
-                        self.mark_current_function_as_changed();
+                        self.try_minimize_if(if_stmt, state, ctx);
+                        state.changed = true;
                     }
                 }
             }
@@ -94,8 +95,8 @@ impl<'a> PeepholeOptimizations {
                         // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                         if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
                         std::mem::swap(&mut if_stmt.consequent, alternate);
-                        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
-                        self.mark_current_function_as_changed();
+                        self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
+                        state.changed = true;
                     }
                 }
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
@@ -106,7 +107,7 @@ impl<'a> PeepholeOptimizations {
                         // "if (a) if (b) return c;" => "if (a && b) return c;"
                         let a = ctx.ast.move_expression(&mut if_stmt.test);
                         let b = ctx.ast.move_expression(&mut if2_stmt.test);
-                        if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test = self.join_with_left_associative_op(
                             if_stmt.test.span(),
                             LogicalOperator::And,
                             a,
@@ -114,7 +115,7 @@ impl<'a> PeepholeOptimizations {
                             ctx,
                         );
                         if_stmt.consequent = ctx.ast.move_statement(&mut if2_stmt.consequent);
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
             }
@@ -124,14 +125,16 @@ impl<'a> PeepholeOptimizations {
 
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
+    #[expect(clippy::cast_possible_truncation)]
     fn wrap_to_avoid_ambiguous_else(
-        &mut self,
+        &self,
         if_stmt: &mut IfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                let scope_id = ScopeId::new(ctx.scoping.scoping().scopes_len() as u32);
                 if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
                     ctx.ast.block_statement_with_scope_id(
                         if_stmt.consequent.span(),
@@ -139,7 +142,7 @@ impl<'a> PeepholeOptimizations {
                         scope_id,
                     ),
                 ));
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
     }

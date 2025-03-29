@@ -1,20 +1,20 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXElementName, ObjectPropertyKind, TSType,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::get_declaration_of_variable,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::is_create_element_call,
-    AstNode,
 };
 
 fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {

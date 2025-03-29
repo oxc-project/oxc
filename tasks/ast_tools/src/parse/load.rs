@@ -2,55 +2,59 @@ use std::fs;
 
 use indexmap::map::Entry;
 use syn::{
-    braced,
+    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
+    Visibility, WhereClause, braced,
     parse::{Parse, ParseBuffer},
     parse_file,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
-    Visibility, WhereClause,
 };
 
-use crate::schema::FileId;
+use crate::{schema::FileId, utils::ident_name};
 
 use super::{
-    ident_name,
+    FxIndexMap,
     parse::convert_expr_to_string,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
-    FxIndexMap,
 };
 
-/// Load file and extract structs and enums with `#[ast]` attr.
+/// Load file and extract structs and enums with `#[ast]` or `#[ast_meta]` attributes.
 ///
 /// Only parses enough to get:
 /// * Name of type.
 /// * Inherits of enums wrapped in `inherit_variants!` macro.
 ///
-/// Inserts [`Skeleton`]s into `skeletons` and adds mappings from type name to type ID.
+/// Inserts [`Skeleton`]s into `skeletons` and `meta_skeletons`.
 ///
 /// This is the bare minimum to be able to "link up" types to each other in next pass.
-pub fn load_file(file_id: FileId, file_path: &str, skeletons: &mut FxIndexMap<String, Skeleton>) {
+pub fn load_file(
+    file_id: FileId,
+    file_path: &str,
+    skeletons: &mut FxIndexMap<String, Skeleton>,
+    meta_skeletons: &mut FxIndexMap<String, Skeleton>,
+) {
     let content = fs::read_to_string(file_path).unwrap();
 
     let file = parse_file(content.as_str()).unwrap();
 
     for item in file.items {
-        let (name, skeleton) = match item {
+        let (name, skeleton, is_meta) = match item {
             Item::Struct(item) => {
-                let Some(skeleton) = parse_struct(item, file_id) else { continue };
-                (skeleton.name.clone(), Skeleton::Struct(skeleton))
+                let Some((skeleton, is_meta)) = parse_struct(item, file_id) else { continue };
+                (skeleton.name.clone(), Skeleton::Struct(skeleton), is_meta)
             }
             Item::Enum(item) => {
-                let Some(skeleton) = parse_enum(item, file_id) else { continue };
-                (skeleton.name.clone(), Skeleton::Enum(skeleton))
+                let Some((skeleton, is_meta)) = parse_enum(item, file_id) else { continue };
+                (skeleton.name.clone(), Skeleton::Enum(skeleton), is_meta)
             }
             Item::Macro(item) => {
                 let Some(skeleton) = parse_macro(&item, file_id) else { continue };
-                (skeleton.name.clone(), Skeleton::Enum(skeleton))
+                (skeleton.name.clone(), Skeleton::Enum(skeleton), false)
             }
             _ => continue,
         };
 
-        match skeletons.entry(name) {
+        let use_skeletons = if is_meta { &mut *meta_skeletons } else { &mut *skeletons };
+        match use_skeletons.entry(name) {
             Entry::Occupied(entry) => panic!("2 types with same name: {}", entry.key()),
             Entry::Vacant(entry) => {
                 entry.insert(skeleton);
@@ -59,14 +63,14 @@ pub fn load_file(file_id: FileId, file_path: &str, skeletons: &mut FxIndexMap<St
     }
 }
 
-fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<StructSkeleton> {
-    let name = get_type_name(&item.attrs, &item.ident)?;
-    Some(StructSkeleton { name, file_id, item })
+fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<(StructSkeleton, /* is_meta */ bool)> {
+    let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
+    Some((StructSkeleton { name, is_foreign, file_id, item }, is_meta))
 }
 
-fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<EnumSkeleton> {
-    let name = get_type_name(&item.attrs, &item.ident)?;
-    Some(EnumSkeleton { name, file_id, item, inherits: vec![] })
+fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<(EnumSkeleton, /* is_meta */ bool)> {
+    let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
+    Some((EnumSkeleton { name, is_foreign, file_id, item, inherits: vec![] }, is_meta))
 }
 
 fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
@@ -92,8 +96,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let where_clause = input.parse::<Option<WhereClause>>()?;
             assert!(where_clause.is_none(), "Types with `where` clauses are not supported");
 
-            let name = get_type_name(&attrs, &ident);
-            let Some(name) = name else {
+            let Some((name, false, false)) = get_type_name(&attrs, &ident) else {
                 panic!("Enum in `inherit_variants!` macro must have `#[ast]` attr: {ident}");
             };
 
@@ -102,44 +105,56 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let mut variants = Punctuated::new();
             let mut inherits = vec![];
             while !content.is_empty() {
-                if let Ok(variant) = Variant::parse(&content) {
-                    variants.push_value(variant);
-                    let punct = content.parse()?;
-                    variants.push_punct(punct);
-                } else if content.parse::<Token![@]>().is_ok()
-                    && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
-                {
-                    let inherit_ident = content.parse::<Ident>().expect("Invalid `@inherits`");
-                    inherits.push(ident_name(&inherit_ident));
-                } else {
-                    panic!("Invalid `inherit_variants!` macro usage");
+                match Variant::parse(&content) {
+                    Ok(variant) => {
+                        variants.push_value(variant);
+                        let punct = content.parse()?;
+                        variants.push_punct(punct);
+                    }
+                    _ => {
+                        if content.parse::<Token![@]>().is_ok()
+                            && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
+                        {
+                            let inherit_ident =
+                                content.parse::<Ident>().expect("Invalid `@inherits`");
+                            inherits.push(ident_name(&inherit_ident));
+                        } else {
+                            panic!("Invalid `inherit_variants!` macro usage");
+                        }
+                    }
                 }
             }
 
             let item = ItemEnum { attrs, vis, enum_token, ident, generics, brace_token, variants };
-            Ok(EnumSkeleton { name, file_id, item, inherits })
+            Ok(EnumSkeleton { name, is_foreign: false, file_id, item, inherits })
         })
         .expect("Failed to parse contents of `inherit_variants!` macro");
 
     Some(skeleton)
 }
 
-/// Get name of type.
+/// Get name of type, and whether it has an `#[ast_meta]` attribute on it.
 ///
-/// Parse attributes and find `#[ast]` attr, or `#[ast(foreign = ForeignType)]`.
+/// Parse attributes and find `#[ast]`, `#[ast(foreign = ForeignType)]`, or `#[ast_meta]`.
 ///
-/// If no `#[ast]` attr is present, returns `None`.
+/// If no `#[ast]` or `#[ast_meta]` attr is present, returns `None`.
 ///
 /// Otherwise, returns foreign name if provided with `#[ast(foreign = ForeignType)]`,
 /// or otherwise name of the `ident`.
 ///
 /// # Panics
-/// Panics if cannot parse `#[ast]` attribute.
-fn get_type_name(attrs: &[Attribute], ident: &Ident) -> Option<String> {
+/// Panics if cannot parse attributes.
+fn get_type_name(
+    attrs: &[Attribute],
+    ident: &Ident,
+) -> Option<(/* type name */ String, /* is_foreign */ bool, /* is_meta */ bool)> {
     let mut has_ast_attr = false;
+    let mut has_meta_attr = false;
     let mut foreign_name = None;
     for attr in attrs {
-        if attr.path().is_ident("ast") {
+        let Some(attr_ident) = attr.path().get_ident() else { continue };
+
+        if attr_ident == "ast" {
             has_ast_attr = true;
             if let Some(this_foreign_name) = parse_ast_attr_foreign_name(attr, ident) {
                 assert!(
@@ -148,11 +163,28 @@ fn get_type_name(attrs: &[Attribute], ident: &Ident) -> Option<String> {
                 );
                 foreign_name = Some(this_foreign_name);
             }
+        } else if attr_ident == "ast_meta" {
+            assert!(
+                matches!(&attr.meta, Meta::Path(_)),
+                "Unable to parse `#[ast_meta]` attribute on type: `{ident}`"
+            );
+            assert!(!has_meta_attr, "Multiple `#[ast_meta]` attributes on type: `{ident}`");
+            has_meta_attr = true;
         }
     }
 
-    if has_ast_attr {
-        Some(foreign_name.unwrap_or_else(|| ident_name(ident)))
+    if has_meta_attr {
+        assert!(
+            !has_ast_attr,
+            "Type cannot be tagged with both `#[ast]` and `#[ast_meta]`: `{ident}`"
+        );
+        Some((ident_name(ident), false, true))
+    } else if has_ast_attr {
+        if let Some(foreign_name) = foreign_name {
+            Some((foreign_name, true, false))
+        } else {
+            Some((ident_name(ident), false, false))
+        }
     } else {
         None
     }

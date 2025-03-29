@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn approx_constant_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Approximate value of `{method_name}` found."))

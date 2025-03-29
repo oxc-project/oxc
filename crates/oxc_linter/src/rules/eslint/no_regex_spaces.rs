@@ -1,18 +1,18 @@
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
-    ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
     AstKind,
+    ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
+    ConstructorParser, Options,
     ast::{Character, Pattern},
     visit::{RegExpAstKind, Visit},
-    ConstructorParser, Options,
 };
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_regex_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Multiple consecutive spaces are hard to count.")

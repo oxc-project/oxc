@@ -1,6 +1,6 @@
 use std::{borrow::Cow, str::FromStr};
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
@@ -11,8 +11,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedJestFnCallNew, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
+        collect_possible_jest_call_node, parse_jest_fn_call,
     },
 };
 
@@ -171,6 +171,7 @@ declare_oxc_lint!(
     ///      "vitest/consistent-test-it": "error"
     ///   }
     /// }
+    /// ```
     ConsistentTestIt,
     jest,
     style,

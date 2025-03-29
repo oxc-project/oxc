@@ -7,10 +7,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
     rule::Rule,
-    ModuleRecord,
 };
 
 fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {

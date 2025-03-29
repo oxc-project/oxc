@@ -9,10 +9,10 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use super::{
+    BrowserslistQuery,
     babel::BabelTargets,
     engine::Engine,
-    es_features::{features, ESFeature},
-    BrowserslistQuery,
+    es_features::{ESFeature, features},
 };
 
 /// A map of engine names to minimum supported versions.

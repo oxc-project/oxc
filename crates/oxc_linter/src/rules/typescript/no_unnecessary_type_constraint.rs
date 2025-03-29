@@ -1,12 +1,12 @@
-use oxc_ast::{ast::TSType, AstKind};
+use oxc_ast::{AstKind, ast::TSType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_unnecessary_type_constraint_diagnostic(
@@ -32,20 +32,46 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with an extends keyword.
-    /// When no extends is provided, type parameters default a constraint to unknown. It is therefore redundant to extend from any or unknown.
+    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with an `extends`
+    /// keyword. When no `extends` is provided, type parameters default a constraint to `unknown`.
+    /// It is therefore redundant to `extend` from `any` or `unknown`.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// interface FooAny<T extends any> {}
     /// interface FooUnknown<T extends unknown> {}
+    ///
     /// type BarAny<T extends any> = {};
     /// type BarUnknown<T extends unknown> = {};
+    ///
+    /// const QuuxAny = <T extends any>() => {};
+    ///
+    /// function QuuzAny<T extends any>() {}
+    /// ```
+    ///
+    /// ```typescript
     /// class BazAny<T extends any> {
     ///   quxAny<U extends any>() {}
     /// }
-    /// const QuuxAny = <T extends any>() => {};
-    /// function QuuzAny<T extends any>() {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// interface Foo<T> {}
+    ///
+    /// type Bar<T> = {};
+    ///
+    /// const Quux = <T>() => {};
+    ///
+    /// function Quuz<T>() {}
+    /// ```
+    ///
+    /// ```typescript
+    /// class Baz<T> {
+    ///   qux<U>() {}
+    /// }
     /// ```
     NoUnnecessaryTypeConstraint,
     typescript,
@@ -54,22 +80,26 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryTypeConstraint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSTypeParameterDeclaration(decl) = node.kind() {
-            for param in &decl.params {
-                if let Some(ty) = &param.constraint {
-                    let (value, ty_span) = match ty {
-                        TSType::TSAnyKeyword(t) => ("any", t.span),
-                        TSType::TSUnknownKeyword(t) => ("unknown", t.span),
-                        _ => continue,
-                    };
-                    ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
-                        param.name.name.as_str(),
-                        value,
-                        param.name.span,
-                        ty_span,
-                    ));
-                }
-            }
+        let AstKind::TSTypeParameterDeclaration(decl) = node.kind() else {
+            return;
+        };
+
+        for param in &decl.params {
+            let Some(ty) = &param.constraint else {
+                continue;
+            };
+
+            let (value, ty_span) = match ty {
+                TSType::TSAnyKeyword(t) => ("any", t.span),
+                TSType::TSUnknownKeyword(t) => ("unknown", t.span),
+                _ => continue,
+            };
+            ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
+                param.name.name.as_str(),
+                value,
+                param.name.span,
+                ty_span,
+            ));
         }
     }
 

@@ -29,13 +29,9 @@ pub(crate) fn test(
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let ret = Transformer::new(&allocator, Path::new(""), options).build_with_symbols_and_scopes(
-        symbols,
-        scopes,
-        &mut program,
-    );
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let ret = Transformer::new(&allocator, Path::new(""), options)
+        .build_with_scoping(scoping, &mut program);
     if !ret.errors.is_empty() {
         return Err(ret.errors);
     }

@@ -111,11 +111,8 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in ctx
-            .semantic()
-            .jsdoc()
-            .iter_all()
-            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        for jsdoc in
+            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
         {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();

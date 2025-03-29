@@ -1,13 +1,13 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 
 use crate::{
-    array, comments::CommentFlags, group, hardline, if_break, indent, ir::Doc, line, softline,
-    text, Format, Prettier,
+    Format, Prettier, array, comments::CommentFlags, group, hardline, if_break, indent, ir::Doc,
+    line, softline, text,
 };
 
 pub fn should_hug_the_only_function_parameter(
-    p: &mut Prettier<'_>,
+    p: &Prettier<'_>,
     params: &FormalParameters<'_>,
 ) -> bool {
     if params.parameters_count() != 1 {
@@ -147,11 +147,7 @@ pub fn print_function_parameters<'a>(
         parts.push(text!(")"));
     }
 
-    if p.args.expand_first_arg {
-        array!(p, parts)
-    } else {
-        group!(p, parts)
-    }
+    if p.args.expand_first_arg { array!(p, parts) } else { group!(p, parts) }
 }
 
 pub fn should_group_function_parameters(func: &Function) -> bool {

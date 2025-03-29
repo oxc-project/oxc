@@ -8,6 +8,8 @@ on:
     types: [opened, synchronize]
     paths:
       - "crates/oxc_allocator/**"
+      - "crates/oxc_ast/src/utf8_to_utf16.rs"
+      - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
       - "crates/oxc_traverse/**"
@@ -17,6 +19,8 @@ on:
       - main
     paths:
       - "crates/oxc_allocator/**"
+      - "crates/oxc_ast/src/utf8_to_utf16.rs"
+      - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
       - "crates/oxc_traverse/**"
@@ -47,5 +51,7 @@ jobs:
 
       - name: Test with Miri
         run: |
+          cargo miri test -p oxc_ast --all-features
+          cargo miri test -p oxc_data_structures --all-features
           cargo miri test -p oxc_parser
           cargo miri test -p oxc_transformer

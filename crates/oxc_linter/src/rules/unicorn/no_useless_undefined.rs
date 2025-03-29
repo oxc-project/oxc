@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
     AstKind,
+    ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use useless `undefined`.")
@@ -184,7 +184,6 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
-                                    .semantic()
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
                                     .last()
                                 {

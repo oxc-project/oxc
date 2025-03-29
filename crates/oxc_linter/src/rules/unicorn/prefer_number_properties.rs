@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
     AstKind,
+    ast::{Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))

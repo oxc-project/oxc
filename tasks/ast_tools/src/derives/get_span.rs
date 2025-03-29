@@ -5,12 +5,12 @@ use quote::quote;
 use syn::Ident;
 
 use crate::{
+    Result,
     schema::{Def, EnumDef, Schema, StructDef},
     utils::create_safe_ident,
-    Result,
 };
 
-use super::{define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum};
+use super::{AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum, define_derive};
 
 /// Derive for `GetSpan` trait.
 pub struct DeriveGetSpan;
@@ -120,7 +120,6 @@ impl Derive for DeriveGetSpanMut {
 }
 
 /// Generate `GetSpan` / `GetSpanMut` trait implementation for a type.
-#[expect(clippy::too_many_arguments)]
 fn derive_type(
     type_def: StructOrEnum,
     trait_ident: &Ident,
@@ -149,7 +148,6 @@ fn derive_type(
 }
 
 /// Generate `GetSpan` / `GetSpanMut` trait implementation for a struct.
-#[expect(clippy::too_many_arguments)]
 fn derive_struct(
     struct_def: &StructDef,
     trait_ident: &Ident,

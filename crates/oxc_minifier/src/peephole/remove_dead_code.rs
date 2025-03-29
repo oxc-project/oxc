@@ -1,15 +1,13 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, IsLiteralValue, ValueType},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
 /// Remove Dead Code from the AST.
 ///
@@ -18,49 +16,52 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a, 'b> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
+    pub fn remove_dead_code_exit_statement(
+        &self,
+        stmt: &mut Statement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
-            Statement::IfStatement(s) => self.try_fold_if(s, ctx),
-            Statement::ForStatement(s) => self.try_fold_for(s, ctx),
-            Statement::ExpressionStatement(s) => Self::try_fold_iife(s, ctx),
+            Statement::IfStatement(s) => Self::try_fold_if(s, state, ctx),
+            Statement::ForStatement(s) => self.try_fold_for(s, state, ctx),
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
 
-        if let Statement::ExpressionStatement(s) = stmt {
-            if let Some(new_stmt) = Self::try_fold_expression_stmt(s, ctx) {
-                *stmt = new_stmt;
-                self.mark_current_function_as_changed();
-            }
-        }
+        self.try_fold_expression_stmt(stmt, state, ctx);
     }
 
     pub fn remove_dead_code_exit_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+            Expression::ConditionalExpression(e) => {
+                self.try_fold_conditional_expression(e, state, ctx)
+            }
             Expression::SequenceExpression(sequence_expression) => {
-                Self::try_fold_sequence_expression(sequence_expression, ctx)
+                self.try_fold_sequence_expression(sequence_expression, state, ctx)
             }
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
     pub fn remove_dead_code_exit_statements(
-        &mut self,
+        &self,
         stmts: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // Remove code after `return` and `throw` statements
@@ -112,12 +113,12 @@ impl<'a, 'b> PeepholeOptimizations {
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
             if !all_hoisted {
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
 
         if stmts.len() != len {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
@@ -158,40 +159,41 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_if(
-        &mut self,
         if_stmt: &mut IfStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
             Some(Statement::IfStatement(alternate)) => {
-                if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
+                if let Some(new_stmt) = Self::try_fold_if(alternate, state, ctx) {
                     if matches!(new_stmt, Statement::EmptyStatement(_)) {
                         if_stmt.alternate = None;
                     } else {
                         if_stmt.alternate = Some(new_stmt);
                     }
-                    self.mark_current_function_as_changed();
+                    state.changed = true;
                 }
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
             _ => {}
         }
 
-        if let Some(boolean) = ctx.get_side_free_boolean_value(&if_stmt.test) {
+        if let Some(boolean) = if_stmt.test.evaluate_value_to_boolean(&ctx) {
+            let test_has_side_effects = if_stmt.test.may_have_side_effects(&ctx);
             // Use "1" and "0" instead of "true" and "false" to be shorter.
-            // And also prevent swapping consequent and alternate when `!0` is encourtnered.
-            if let Expression::BooleanLiteral(b) = &if_stmt.test {
+            // And also prevent swapping consequent and alternate when `!0` is encountered.
+            if !test_has_side_effects {
                 if_stmt.test = ctx.ast.expression_numeric_literal(
-                    b.span,
-                    if b.value { 1.0 } else { 0.0 },
+                    if_stmt.test.span(),
+                    if boolean { 1.0 } else { 0.0 },
                     None,
                     NumberBase::Decimal,
                 );
@@ -204,13 +206,30 @@ impl<'a, 'b> PeepholeOptimizations {
             } else {
                 keep_var.visit_statement(&if_stmt.consequent);
             };
-            if let Some(var_stmt) = keep_var.get_variable_declaration_statement() {
+            let var_stmt = keep_var.get_variable_declaration_statement();
+            let has_var_stmt = var_stmt.is_some();
+            if let Some(var_stmt) = var_stmt {
                 if boolean {
                     if_stmt.alternate = Some(var_stmt);
                 } else {
                     if_stmt.consequent = var_stmt;
                 }
                 return None;
+            }
+            if test_has_side_effects {
+                if !has_var_stmt {
+                    if boolean {
+                        if_stmt.alternate = None;
+                    } else {
+                        if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
+                    }
+                }
+                return Some(ctx.ast.statement_if(
+                    if_stmt.span,
+                    ctx.ast.move_expression(&mut if_stmt.test),
+                    ctx.ast.move_statement(&mut if_stmt.consequent),
+                    if_stmt.alternate.as_mut().map(|alternate| ctx.ast.move_statement(alternate)),
+                ));
             }
             return Some(if boolean {
                 ctx.ast.move_statement(&mut if_stmt.consequent)
@@ -225,11 +244,31 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_for(
-        &mut self,
+        &self,
         for_stmt: &mut ForStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
+        if let Some(init) = &mut for_stmt.init {
+            if let Some(init) = init.as_expression_mut() {
+                if self.remove_unused_expression(init, state, ctx) {
+                    for_stmt.init = None;
+                    state.changed = true;
+                }
+            }
+        }
+        if let Some(update) = &mut for_stmt.update {
+            if self.remove_unused_expression(update, state, ctx) {
+                for_stmt.update = None;
+                state.changed = true;
+            }
+        }
+
+        let test_boolean =
+            for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(&ctx));
+        if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(&ctx)) {
+            return None;
+        }
         match test_boolean {
             Some(false) => match &mut for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(var_init)) => {
@@ -264,7 +303,7 @@ impl<'a, 'b> PeepholeOptimizations {
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
-                self.mark_current_function_as_changed();
+                state.changed = true;
                 None
             }
             None => None,
@@ -296,320 +335,203 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_expression_stmt(
-        stmt: &mut ExpressionStatement<'a>,
+        &self,
+        stmt: &mut Statement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
+    ) {
+        let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
         if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
             if *body.expression() {
-                return None;
+                return;
             }
         }
 
-        if stmt.expression.is_literal_value(false) {
-            return Some(ctx.ast.statement_empty(stmt.span));
-        }
-
-        match &mut stmt.expression {
-            Expression::MetaProperty(e) => Some(ctx.ast.statement_empty(e.span)),
-            Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
-            Expression::ObjectExpression(object_expr) => {
-                Self::try_fold_object_expression(object_expr, ctx)
-            }
-            Expression::TemplateLiteral(template_lit) => {
-                if !template_lit.expressions.is_empty() {
-                    return None;
-                }
-                let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
-                if expressions.len() == 0 {
-                    return Some(ctx.ast.statement_empty(stmt.span));
-                } else if expressions.len() == 1 {
-                    return Some(
-                        ctx.ast.statement_expression(template_lit.span, expressions.pop().unwrap()),
-                    );
-                }
-                Some(ctx.ast.statement_expression(
-                    template_lit.span,
-                    ctx.ast.expression_sequence(template_lit.span, expressions),
-                ))
-            }
-            Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
-                Some(ctx.ast.statement_empty(stmt.span))
-            }
-            Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(stmt.span)),
-            // `typeof x` -> ``
-            Expression::UnaryExpression(unary_expr)
-                if unary_expr.operator.is_typeof()
-                    && unary_expr.argument.is_identifier_reference() =>
-            {
-                Some(ctx.ast.statement_empty(stmt.span))
-            }
-            // `typeof x.y` -> `x.y`, `void x` -> `x`
-            // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
-            Expression::UnaryExpression(unary_expr)
-                if matches!(unary_expr.operator, UnaryOperator::Typeof | UnaryOperator::Void) =>
-            {
-                Some(ctx.ast.statement_expression(
-                    unary_expr.span,
-                    ctx.ast.move_expression(&mut unary_expr.argument),
-                ))
-            }
-            Expression::NewExpression(e) => {
-                let Expression::Identifier(ident) = &e.callee else { return None };
-                let len = e.arguments.len();
-                if match ident.name.as_str() {
-                    "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => match e.arguments[0].as_expression()? {
-                            Expression::NullLiteral(_) => true,
-                            Expression::ArrayExpression(e) => e.elements.is_empty(),
-                            e if ctx.is_expression_undefined(e) => true,
-                            _ => false,
-                        },
-                        _ => false,
-                    },
-                    "Date" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => {
-                            let arg = e.arguments[0].as_expression()?;
-                            let ty = ValueType::from(arg);
-                            matches!(
-                                ty,
-                                ValueType::Null
-                                    | ValueType::Undefined
-                                    | ValueType::Boolean
-                                    | ValueType::Number
-                                    | ValueType::String
-                            ) && !ctx.expression_may_have_side_effects(arg)
-                        }
-                        _ => false,
-                    },
-                    "Set" | "Map" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => match e.arguments[0].as_expression()? {
-                            Expression::NullLiteral(_) => true,
-                            e if ctx.is_expression_undefined(e) => true,
-                            _ => false,
-                        },
-                        _ => false,
-                    },
-                    _ => false,
-                } {
-                    return Some(ctx.ast.statement_empty(e.span));
-                }
-                None
-            }
-            _ => None,
+        if self.remove_unused_expression(&mut expr_stmt.expression, state, ctx) {
+            *stmt = ctx.ast.statement_empty(expr_stmt.span);
+            state.changed = true;
         }
     }
 
     fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
-        if !s.block.body.is_empty() {
-            return None;
+        if let Some(handler) = &mut s.handler {
+            if s.block.body.is_empty() {
+                let mut var = KeepVar::new(ctx.ast);
+                var.visit_block_statement(&handler.body);
+                handler.body.body.clear();
+                if let Some(var_decl) = var.get_variable_declaration_statement() {
+                    handler.body.body.push(var_decl);
+                }
+            }
         }
-        if let Some(finalizer) = &mut s.finalizer {
-            if finalizer.body.is_empty() {
-                Some(ctx.ast.statement_empty(s.span))
-            } else {
+
+        if let Some(finalizer) = &s.finalizer {
+            if finalizer.body.is_empty() && s.handler.is_some() {
+                s.finalizer = None;
+            }
+        }
+
+        if s.block.body.is_empty()
+            && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
+        {
+            if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
                 Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+            } else {
+                Some(ctx.ast.statement_empty(s.span))
             }
         } else {
-            if let Some(handler) = &s.handler {
-                if handler.body.body.iter().any(|s| matches!(s, Statement::VariableDeclaration(_)))
-                {
-                    return None;
-                }
-            }
-            Some(ctx.ast.statement_empty(s.span))
+            None
         }
-    }
-
-    // `([1,2,3, foo()])` -> `foo()`
-    fn try_fold_array_expression(
-        array_expr: &mut ArrayExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_spread_elements = ctx.ast.vec();
-
-        if array_expr.elements.len() == 0
-            || array_expr.elements.iter().all(|el| match el {
-                ArrayExpressionElement::SpreadElement(_) => true,
-                ArrayExpressionElement::Identifier(ident) => ctx.is_global_reference(ident),
-                _ => false,
-            })
-        {
-            return None;
-        }
-
-        for el in &mut array_expr.elements {
-            match el {
-                ArrayExpressionElement::SpreadElement(_) => {
-                    let spread_element = ctx.ast.move_array_expression_element(el);
-                    pending_spread_elements.push(spread_element);
-                }
-                ArrayExpressionElement::Elision(_) => {}
-                match_expression!(ArrayExpressionElement) => {
-                    let el = el.to_expression_mut();
-                    let el_expr = ctx.ast.move_expression(el);
-                    if !el_expr.is_literal_value(false)
-                        && !matches!(&el_expr, Expression::Identifier(ident) if !ctx.is_global_reference(ident))
-                    {
-                        if pending_spread_elements.len() > 0 {
-                            // flush pending spread elements
-                            transformed_elements.push(ctx.ast.expression_array(
-                                el_expr.span(),
-                                pending_spread_elements,
-                                None,
-                            ));
-                            pending_spread_elements = ctx.ast.vec();
-                        }
-                        transformed_elements.push(el_expr);
-                    }
-                }
-            }
-        }
-
-        if pending_spread_elements.len() > 0 {
-            transformed_elements.push(ctx.ast.expression_array(
-                array_expr.span,
-                pending_spread_elements,
-                None,
-            ));
-        }
-
-        if transformed_elements.is_empty() {
-            return Some(ctx.ast.statement_empty(array_expr.span));
-        } else if transformed_elements.len() == 1 {
-            return Some(
-                ctx.ast.statement_expression(array_expr.span, transformed_elements.pop().unwrap()),
-            );
-        }
-
-        Some(ctx.ast.statement_expression(
-            array_expr.span,
-            ctx.ast.expression_sequence(array_expr.span, transformed_elements),
-        ))
-    }
-
-    // `{a: 1, b: 2, c: foo()}` -> `foo()`
-    fn try_fold_object_expression(
-        _object_expr: &mut ObjectExpression<'a>,
-        _ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        None
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
+        &self,
         expr: &mut ConditionalExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-        let parent = ctx.ancestry.parent();
-        if parent.is_tagged_template_expression()
-            || matches!(parent, Ancestor::CallExpressionCallee(_))
+        expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
+            if expr.test.may_have_side_effects(&ctx) {
+                // "(a, true) ? b : c" => "a, b"
+                let exprs = ctx.ast.vec_from_array([
+                    {
+                        let mut test = ctx.ast.move_expression(&mut expr.test);
+                        self.remove_unused_expression(&mut test, state, ctx);
+                        test
+                    },
+                    ctx.ast.move_expression(if v {
+                        &mut expr.consequent
+                    } else {
+                        &mut expr.alternate
+                    }),
+                ]);
+                ctx.ast.expression_sequence(expr.span, exprs)
+            } else {
+                let result_expr = ctx.ast.move_expression(if v {
+                    &mut expr.consequent
+                } else {
+                    &mut expr.alternate
+                });
+
+                let should_keep_as_sequence_expr =
+                    Self::should_keep_indirect_access(&result_expr, ctx);
+                // "(1 ? a.b : 0)()" => "(0, a.b)()"
+                if should_keep_as_sequence_expr {
+                    ctx.ast.expression_sequence(
+                        expr.span,
+                        ctx.ast.vec_from_array([
+                            ctx.ast.expression_numeric_literal(
+                                expr.span,
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            result_expr,
+                        ]),
+                    )
+                } else {
+                    result_expr
+                }
+            }
+        })
+    }
+
+    fn try_fold_sequence_expression(
+        &self,
+        sequence_expr: &mut SequenceExpression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let should_keep_as_sequence_expr = sequence_expr
+            .expressions
+            .last()
+            .is_some_and(|last_expr| Self::should_keep_indirect_access(last_expr, ctx));
+        if should_keep_as_sequence_expr
+            && sequence_expr.expressions.len() == 2
+            && sequence_expr.expressions.first().unwrap().is_number_0()
         {
             return None;
         }
 
-        match ctx.get_boolean_value(&expr.test) {
-            Some(v) => {
-                if ctx.expression_may_have_side_effects(&expr.test) {
-                    let mut exprs = ctx.ast.vec_with_capacity(2);
-                    exprs.push(ctx.ast.move_expression(&mut expr.test));
-                    exprs.push(ctx.ast.move_expression(if v {
-                        &mut expr.consequent
-                    } else {
-                        &mut expr.alternate
-                    }));
-                    Some(ctx.ast.expression_sequence(expr.span, exprs))
-                } else {
-                    Some(ctx.ast.move_expression(if v {
-                        &mut expr.consequent
-                    } else {
-                        &mut expr.alternate
-                    }))
+        let old_len = sequence_expr.expressions.len();
+        let mut i = 0;
+        sequence_expr.expressions.retain_mut(|e| {
+            i += 1;
+            if should_keep_as_sequence_expr && i == old_len - 1 {
+                if self.remove_unused_expression(e, state, ctx) {
+                    *e = ctx.ast.expression_numeric_literal(
+                        e.span(),
+                        0.0,
+                        None,
+                        NumberBase::Decimal,
+                    );
+                    state.changed = true;
                 }
+                return true;
             }
-            None => None,
-        }
-    }
-
-    fn try_fold_sequence_expression(
-        sequence_expr: &mut SequenceExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        let should_keep_as_sequence_expr = matches!(
-            ctx.parent(),
-            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        );
-
-        if should_keep_as_sequence_expr && sequence_expr.expressions.len() == 2 {
-            return None;
+            if i == old_len {
+                return true;
+            }
+            !self.remove_unused_expression(e, state, ctx)
+        });
+        if sequence_expr.expressions.len() == 1 {
+            return Some(sequence_expr.expressions.pop().unwrap());
         }
 
-        let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
-            (false, 0),
-            |(mut should_fold, mut new_len), (i, expr)| {
-                if i == sequence_expr.expressions.len() - 1
-                    || ctx.expression_may_have_side_effects(expr)
-                {
-                    new_len += 1;
-                } else {
-                    should_fold = true;
-                }
-                (should_fold, new_len)
-            },
-        );
-
-        if new_len == 0 {
-            return Some(ctx.ast.expression_null_literal(sequence_expr.span));
+        if sequence_expr.expressions.len() != old_len {
+            state.changed = true;
         }
-
-        if should_fold {
-            let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
-            let len = sequence_expr.expressions.len();
-            for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
-                if i == len - 1 || ctx.expression_may_have_side_effects(expr) {
-                    new_exprs.push(ctx.ast.move_expression(expr));
-                }
-            }
-
-            if should_keep_as_sequence_expr && new_exprs.len() == 1 {
-                let number = ctx.ast.expression_numeric_literal(
-                    sequence_expr.span,
-                    1.0,
-                    None,
-                    NumberBase::Decimal,
-                );
-                new_exprs.insert(0, number);
-            }
-
-            if new_exprs.len() == 1 {
-                return Some(new_exprs.pop().unwrap());
-            }
-
-            return Some(ctx.ast.expression_sequence(sequence_expr.span, new_exprs));
-        }
-
         None
     }
 
-    fn try_fold_iife(e: &ExpressionStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
-        let Expression::CallExpression(e) = &e.expression else { return None };
-        if !e.arguments.is_empty() {
-            return None;
+    /// Whether the indirect access should be kept.
+    /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
+    /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+    ///
+    /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
+    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
+        match ctx.parent() {
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
+                match access_value {
+                    Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+                    match_member_expression!(Expression) => true,
+                    _ => false,
+                }
+            }
+            Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
+                UnaryOperator::Typeof => {
+                    // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
+                    if let Expression::Identifier(id) = access_value {
+                        ctx.is_global_reference(id)
+                    } else {
+                        false
+                    }
+                }
+                UnaryOperator::Delete => {
+                    match access_value {
+                        // Example case: `delete (0, foo)` (no error) -> `delete foo` (error)
+                        Expression::Identifier(_)
+                        // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
+                        | Expression::PrivateFieldExpression(_)
+                        // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
+                        | Expression::ComputedMemberExpression(_)
+                        | Expression::StaticMemberExpression(_) => true,
+                        // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
+                        Expression::ChainExpression(chain) => {
+                            matches!(&chain.expression, match_member_expression!(ChainElement))
+                        }
+                        _ => false,
+                    }
+                }
+                _ => false,
+            },
+            _ => false,
         }
-        let (params_empty, body_empty) = match &e.callee {
-            Expression::FunctionExpression(f) => (f.params.is_empty(), f.body.as_ref()?.is_empty()),
-            Expression::ArrowFunctionExpression(f) => (f.params.is_empty(), f.body.is_empty()),
-            _ => return None,
-        };
-        (params_empty && body_empty).then(|| ctx.ast.statement_empty(e.span))
     }
 }
 
@@ -645,12 +567,13 @@ mod test {
         test("{if(false)if(false)if(false)foo(); {bar()}}", "bar()");
 
         test("{'hi'}", "");
-        test("{x==3}", "x == 3");
-        test("{`hello ${foo}`}", "`hello ${foo}`");
+        test("{x==3}", "x");
+        test("{`hello ${foo}`}", "`${foo}`");
         test("{ (function(){x++}) }", "");
+        test("{ (function foo(){x++; foo()}) }", "");
         test("function f(){return;}", "function f(){}");
         test("function f(){return 3;}", "function f(){return 3}");
-        test("function f(){if(x)return; x=3; return; }", "function f(){if(x)return; x=3; }");
+        test("function f(){if(x)return; x=3; return; }", "function f(){ x ||= 3; }");
         test("{x=3;;;y=2;;;}", "x=3, y=2");
 
         // Cases to test for empty block.
@@ -724,83 +647,14 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_object_literal() {
-        test("({})", "");
-        test("({a:1})", "");
-        test("({a:foo()})", "foo()");
-        test("({'a':foo()})", "foo()");
-        // Object-spread may trigger getters.
-        test_same("({...a})");
-        test_same("({...foo()})");
-
-        test("({ [bar()]: foo() })", "bar(), foo()");
-        test_same("({ ...baz, [bar()]: foo() })");
-    }
-
-    #[test]
-    fn test_array_literal() {
-        test("([])", "");
-        test("([1])", "");
-        test("([a])", "[a]");
-        test("var a; ([a])", "var a;");
-        test("([foo()])", "foo()");
-        test_same("baz.map((v) => [v])");
-    }
-
-    #[test]
-    fn test_array_literal_containing_spread() {
-        test_same("([...c])");
-        test("([4, ...c, a])", "([...c], a)");
-        test("var a; ([4, ...c, a])", "var a; ([...c])");
-        test("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
-        test("([...a, b, ...c])", "([...a, b, ...c])");
-        test("var b; ([...a, b, ...c])", "var b; ([...a, ...c])");
-        test_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
-    }
-
-    #[test]
-    fn test_fold_unary_expression_statement() {
-        test("typeof x", "");
-        test("typeof x?.y", "x?.y");
-        test("typeof x.y", "x.y");
-        test("typeof x.y.z()", "x.y.z()");
-        test("void x", "x");
-        test("void x?.y", "x?.y");
-        test("void x.y", "x.y");
-        test("void x.y.z()", "x.y.z()");
-
-        // Removed in `MinimizeConditions`, to keep this pass idempotent for DCE.
-        test_same("!x");
-        test_same("!x?.y");
-        test_same("!x.y");
-        test_same("!x.y.z()");
-        test_same("-x.y.z()");
-
-        test_same("delete x");
-        test_same("delete x.y");
-        test_same("delete x.y.z()");
-        test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
-    }
-
-    #[test]
-    fn test_fold_sequence_expr() {
-        test("('foo', 'bar', 'baz')", "");
-        test("('foo', 'bar', baz())", "baz()");
-        test("('foo', bar(), baz())", "bar(), baz()");
-        test("(() => {}, bar(), baz())", "bar(), baz()");
-        test("(function k() {}, k(), baz())", "k(), baz()");
-        test_same("(0, o.f)();");
-        test("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
-        test_same("(0 instanceof 0, foo)");
-        test_same("(0 in 0, foo)");
-        test_same("React.useEffect(() => (isMountRef.current = !1, () => { isMountRef.current = !0; }), [])");
-    }
-
-    #[test]
     fn test_fold_try_statement() {
         test("try { throw 0 } catch (e) { foo() }", "try { throw 0 } catch { foo() }");
         test("try {} catch (e) { var foo }", "try {} catch { var foo }");
+        test("try {} catch (e) { var foo; bar() } finally {}", "try {} catch { var foo }");
+        test(
+            "try {} catch (e) { var foo; bar() } finally { baz() }",
+            "try {} catch { var foo } finally { baz() }",
+        );
         test("try {} catch (e) { foo() }", "");
         test("try {} catch (e) { foo() } finally {}", "");
         test("try {} finally { foo() }", "foo()");
@@ -810,6 +664,8 @@ mod test {
         test("try {} finally { let x = foo() }", "{ let x = foo() }");
         test("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
         test("try {} catch (e) { } finally {}", "");
+        test("try { foo() } catch (e) { bar() } finally {}", "try { foo() } catch { bar() }");
+        test_same("try { foo() } catch { bar() } finally { baz() }");
     }
 
     #[test]
@@ -825,85 +681,18 @@ mod test {
         test("true ? foo() : bar()", "foo()");
         test("false ? foo() : bar()", "bar()");
         test_same("foo() ? bar() : baz()");
-        test("foo && false ? foo() : bar()", "(foo && !1, bar());");
-    }
+        test("foo && false ? foo() : bar()", "(foo, bar());");
 
-    #[test]
-    fn test_fold_iife() {
-        test_same("var k = () => {}");
-        test_same("var k = function () {}");
-        // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
-        test("(() => {})()", "");
-        // test("(() => a())()", "a();");
-        // test("(() => { a() })()", "a();");
-        // test("(() => { return a() })()", "a();");
-        // test("(() => { let b = a; b() })()", "a();");
-        // test("(() => { let b = a; return b() })()", "a();");
-        test("(async () => {})()", "");
-        test_same("(async () => { a() })()");
-        // test("(async () => { let b = a; b() })()", "(async () => a())();");
-        // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
-        test("(function() {})()", "");
-        test("(function*() {})()", "");
-        test("(async function() {})()", "");
-        test_same("(function() { a() })()");
-        test_same("(function*() { a() })()");
-        test_same("(async function() { a() })()");
-        // test("(() => x)()", "x;");
-        // test("/* @__PURE__ */ (() => x)()", "");
-        // test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
+        test("var a; (true ? a : 0)()", "var a; a()");
+        test("var a; (true ? a.b : 0)()", "var a; (0, a.b)()");
+        test("var a; (false ? 0 : a)()", "var a; a()");
+        test("var a; (false ? 0 : a.b)()", "var a; (0, a.b)()");
     }
 
     #[test]
     fn test_remove_empty_static_block() {
         test("class Foo { static {}; foo }", "class Foo { foo }");
         test_same("class Foo { static { foo() } }");
-    }
-
-    #[test]
-    fn remove_expression_statement() {
-        test("void 0", "");
-        test("-1", "");
-        test("!1", "");
-        test("1", "");
-        test("import.meta", "");
-    }
-
-    #[test]
-    fn test_new_constructor_side_effect() {
-        test("new WeakSet()", "");
-        test("new WeakSet(null)", "");
-        test("new WeakSet(void 0)", "");
-        test("new WeakSet([])", "");
-        test_same("new WeakSet([x])");
-        test_same("new WeakSet(x)");
-        test("new WeakMap()", "");
-        test("new WeakMap(null)", "");
-        test("new WeakMap(void 0)", "");
-        test("new WeakMap([])", "");
-        test_same("new WeakMap([x])");
-        test_same("new WeakMap(x)");
-        test("new Date()", "");
-        test("new Date('')", "");
-        test("new Date(0)", "");
-        test("new Date(null)", "");
-        test("new Date(true)", "");
-        test("new Date(false)", "");
-        test("new Date(undefined)", "");
-        test_same("new Date(x)");
-        test("new Set()", "");
-        // test("new Set([a, b, c])", "");
-        test("new Set(null)", "");
-        test("new Set(undefined)", "");
-        test("new Set(void 0)", "");
-        test_same("new Set(x)");
-        test("new Map()", "");
-        test("new Map(null)", "");
-        test("new Map(undefined)", "");
-        test("new Map(void 0)", "");
-        // test_same("new Map([x])");
-        test_same("new Map(x)");
-        // test("new Map([[a, b], [c, d]])", "");
     }
 
     #[test]
@@ -924,5 +713,48 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+    }
+
+    #[test]
+    fn remove_unused_expressions_in_sequence() {
+        test("true, foo();", "foo();");
+        test("(0, foo)();", "foo();");
+        test("(0, foo)``;", "foo``;");
+        test("(0, foo)?.();", "foo?.();");
+        test_same("(0, eval)();"); // this can be compressed to `eval?.()`
+        test_same("(0, eval)``;"); // this can be compressed to `eval?.()`
+        test_same("(0, eval)?.();"); // this can be compressed to `eval?.()`
+        test("var eval; (0, eval)();", "var eval; eval();");
+        test_same("(0, foo.bar)();");
+        test_same("(0, foo.bar)``;");
+        test_same("(0, foo.bar)?.();");
+        test("(true, foo.bar)();", "(0, foo.bar)();");
+        test("(true, true, foo.bar)();", "(0, foo.bar)();");
+        test("var foo; (true, foo.bar)();", "var foo; (0, foo.bar)();");
+        test("var foo; (true, true, foo.bar)();", "var foo; (0, foo.bar)();");
+
+        test("typeof (0, foo);", "foo");
+        test_same("v = typeof (0, foo);");
+        test("var foo; typeof (0, foo);", "var foo;");
+        test("var foo; v = typeof (0, foo);", "var foo; v = typeof foo");
+        test("typeof 0", "");
+
+        test_same("delete (0, foo);");
+        test_same("delete (0, foo.#bar);");
+        test_same("delete (0, foo.bar);");
+        test_same("delete (0, foo[bar]);");
+        test_same("delete (0, foo?.bar);");
+    }
+
+    #[test]
+    fn remove_unused_expressions_in_for() {
+        test(
+            "var i; for (i = 0, 0; i < 10; i++) foo(i);",
+            "var i; for (i = 0; i < 10; i++) foo(i);",
+        );
+        test(
+            "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
+            "var i; for (i = 0; i < 10; i++) foo(i);",
+        );
     }
 }

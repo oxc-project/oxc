@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{
-        match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ObjectPropertyKind, PropertyKey,
-    },
     AstKind,
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
+        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
+        ObjectPropertyKind, PropertyKey, match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to an object.")
@@ -236,10 +236,10 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             lit.quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
         Expression::Identifier(ident) => {
-            let symbols = ctx.semantic().symbols();
+            let symbols = ctx.scoping();
             let reference_id = ident.reference_id();
             symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
-                let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
                 match &var_decl.init {

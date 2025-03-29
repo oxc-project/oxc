@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, ChainElement, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, ContentEq, GetSpan};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
@@ -87,8 +87,8 @@ impl Rule for NoExtendNative {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let symbols = ctx.symbols();
-        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+        let symbols = ctx.scoping();
+        for reference_id_list in ctx.scoping().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);

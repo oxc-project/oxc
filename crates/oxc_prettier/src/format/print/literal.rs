@@ -4,11 +4,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::String;
 use oxc_span::Span;
 
-use crate::{
-    dynamic_text,
-    ir::{Doc, JoinSeparator},
-    join, Prettier,
-};
+use crate::{Prettier, dynamic_text, ir::Doc};
 
 /// Print quoted string.
 /// Quotes are automatically chosen based on the content of the string and option.

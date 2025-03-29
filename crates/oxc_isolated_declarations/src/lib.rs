@@ -9,10 +9,11 @@ use std::{cell::RefCell, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SourceType, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN, SourceType};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -131,10 +132,7 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    fn transform_program(
-        &mut self,
-        program: &Program<'a>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+    fn transform_program(&mut self, program: &Program<'a>) -> ArenaVec<'a, Statement<'a>> {
         let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
         if has_import_or_export {
@@ -146,14 +144,14 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_program_without_module_declaration(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts =
-            self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
-                stmt.is_declaration() && !self.has_internal_annotation(stmt.span())
-            }));
+        let mut stmts = stmts
+            .iter()
+            .filter(|stmt| stmt.is_declaration() && !self.has_internal_annotation(stmt.span()))
+            .collect::<Vec<_>>();
 
         Self::remove_function_overloads_implementation(&mut stmts);
 
@@ -168,14 +166,17 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_statements_on_demand(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts = self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
-            (stmt.is_declaration() || stmt.is_module_declaration())
-                && !self.has_internal_annotation(stmt.span())
-        }));
+        let mut stmts = stmts
+            .iter()
+            .filter(|stmt| {
+                (stmt.is_declaration() || stmt.is_module_declaration())
+                    && !self.has_internal_annotation(stmt.span())
+            })
+            .collect::<Vec<_>>();
         Self::remove_function_overloads_implementation(&mut stmts);
 
         // https://github.com/microsoft/TypeScript/pull/58912
@@ -361,10 +362,12 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        let mut new_stm = self
-            .ast
-            .vec_with_capacity(stmts.len() + usize::from(extra_export_var_statement.is_some()));
-        stmts.iter().for_each(|stmt| {
+        let mut new_stmts = self.ast.vec_with_capacity(
+            stmts.len()
+                + usize::from(extra_export_var_statement.is_some())
+                + usize::from(need_empty_export_marker),
+        );
+        for stmt in stmts {
             if transformed_spans.contains(&stmt.span()) {
                 let new_stmt = transformed_stmts
                     .remove(&stmt.span())
@@ -374,19 +377,19 @@ impl<'a> IsolatedDeclarations<'a> {
                     Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
                 ) {
                     if let Some(export_external_var_statement) = extra_export_var_statement.take() {
-                        new_stm.push(export_external_var_statement);
+                        new_stmts.push(export_external_var_statement);
                     }
                 }
-                new_stm.push(new_stmt);
-                return;
+                new_stmts.push(new_stmt);
+                continue;
             }
             match stmt {
                 Statement::ImportDeclaration(decl) => {
                     // We must transform this in the end, because we need to know all references
                     if decl.specifiers.is_none() {
-                        new_stm.push(stmt.clone_in(self.ast.allocator));
+                        new_stmts.push(stmt.clone_in(self.ast.allocator));
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
-                        new_stm.push(Statement::ImportDeclaration(new_decl));
+                        new_stmts.push(Statement::ImportDeclaration(new_decl));
                     }
                 }
                 Statement::VariableDeclaration(decl) => {
@@ -397,7 +400,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_variable_declarator.remove(&declarator.span)
                             }),
                         );
-                        new_stm.push(Statement::VariableDeclaration(
+                        new_stmts.push(Statement::VariableDeclaration(
                             self.ast.alloc_variable_declaration(
                                 decl.span,
                                 decl.kind,
@@ -409,26 +412,25 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 _ => {}
             }
-        });
+        }
 
         if need_empty_export_marker {
             let specifiers = self.ast.vec();
             let kind = ImportOrExportKind::Value;
             let empty_export =
                 self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
-            new_stm.push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
+            new_stmts
+                .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
             // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>
-            self.strip_export_keyword(&mut new_stm);
+            self.strip_export_keyword(&mut new_stmts);
         }
 
-        new_stm
+        new_stmts
     }
 
-    fn remove_function_overloads_implementation(
-        stmts: &mut oxc_allocator::Vec<'a, &Statement<'a>>,
-    ) {
+    fn remove_function_overloads_implementation(stmts: &mut Vec<&Statement<'a>>) {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
@@ -494,7 +496,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn get_assignable_properties_for_namespaces(
-        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+        stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> FxHashMap<&'a str, FxHashSet<Atom<'a>>> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         for stmt in stmts {
@@ -559,7 +561,7 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn report_error_for_expando_function(&self, stmts: &ArenaVec<'a, Statement<'a>>) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 

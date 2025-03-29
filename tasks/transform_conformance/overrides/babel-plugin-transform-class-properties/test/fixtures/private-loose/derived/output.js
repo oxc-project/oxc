@@ -1,4 +1,4 @@
-var _prop = babelHelpers.classPrivateFieldLooseKey("prop");
+var _prop = /* @__PURE__ */ babelHelpers.classPrivateFieldLooseKey("prop");
 class Foo {
   constructor() {
     Object.defineProperty(this, _prop, {
@@ -7,7 +7,7 @@ class Foo {
     });
   }
 }
-var _prop2 = babelHelpers.classPrivateFieldLooseKey("prop");
+var _prop2 = /* @__PURE__ */ babelHelpers.classPrivateFieldLooseKey("prop");
 class Bar extends Foo {
   constructor(..._args) {
     super(..._args);

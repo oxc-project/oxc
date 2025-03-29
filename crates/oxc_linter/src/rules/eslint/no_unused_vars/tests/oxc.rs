@@ -3,7 +3,7 @@
 use serde_json::json;
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, FixKind, RuleMeta as _};
+use crate::{FixKind, RuleMeta as _, tester::Tester};
 
 // uncomment to only run a single test. useful for step-through debugging.
 #[test]
@@ -84,6 +84,7 @@ fn test_vars_simple() {
         ),
         ("const { foo: fooBar, baz } = obj; f(baz);", None),
         ("let _a = 1", Some(json!([{ "argsIgnorePattern": "^_" }]))),
+        ("for (using x of y) console.log(); x()", None),
     ];
 
     let fix = vec![

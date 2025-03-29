@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- ea3de06 mangler: Support `keep_names` option (#9898) (sapphi-red)
+- 9992559 mangler: Collect symbols that is used to set `name` property (#9897) (sapphi-red)
+
+## [0.61.0] - 2025-03-20
+
+### Performance
+
+- b272893 mangler, minifier: Initialize a Vec with a specific value using `Vec::from_iter_in` combined with `repeat_with` (#9908) (Dunqing)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+## [0.58.0] - 2025-03-13
+
+### Documentation
+
+- a6c9b09 napi/minifier: Improve documentation (#9736) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Refactor
+
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 29041fb data_structures: Move `InlineString` into `oxc_data_structures` crate (#9549) (overlookmotel)
+
+### Performance
+
+- bc14ee5 mangler: Use shorter `InlineString` (#9552) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- c31b53f mangler: Reduce scope of `unsafe` blocks (#9321) (overlookmotel)
+- f10a6da mangler: Move base54 into seperate mod (#9278) (Cameron)
+
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+
+### Refactor
+
+- 3f0b5b3 mangler: Use `iter::repeat_n` (#9272) (overlookmotel)
+
+## [0.49.0] - 2025-02-10
+
+### Bug Fixes
+
+- f11dff0 mangler, prettier, ast_tools: Remove methods which are unstable in our MSRV (#8929) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Features

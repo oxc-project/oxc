@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult},
     Error, GraphicalReportHandler,
+    reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
 
@@ -27,12 +27,17 @@ impl InternalFormatter for DefaultOutputFormatter {
         let time = Self::get_execution_time(&lint_command_info.start_time);
         let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
 
-        Some(format!(
-            "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
-            lint_command_info.number_of_files,
-            lint_command_info.number_of_rules,
-            lint_command_info.threads_count
-        ))
+        if let Some(number_of_rules) = lint_command_info.number_of_rules {
+            Some(format!(
+                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
+                lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
+            ))
+        } else {
+            Some(format!(
+                "Finished in {time} on {} file{s} using {} threads.\n",
+                lint_command_info.number_of_files, lint_command_info.threads_count
+            ))
+        }
     }
 
     #[cfg(not(test))]
@@ -51,11 +56,7 @@ impl InternalFormatter for DefaultOutputFormatter {
 impl DefaultOutputFormatter {
     fn get_execution_time(duration: &Duration) -> String {
         let ms = duration.as_millis();
-        if ms < 1000 {
-            format!("{ms}ms")
-        } else {
-            format!("{:.1}s", duration.as_secs_f64())
-        }
+        if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
     }
 }
 
@@ -115,8 +116,8 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
 #[cfg(test)]
 mod test_implementation {
     use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult, Info},
         Error, GraphicalReportHandler, GraphicalTheme,
+        reporter::{DiagnosticReporter, DiagnosticResult, Info},
     };
 
     use crate::output_formatter::default::get_diagnostic_result_output;
@@ -155,8 +156,8 @@ mod test {
     use std::time::Duration;
 
     use crate::output_formatter::{
-        default::{DefaultOutputFormatter, GraphicalReporter},
         InternalFormatter, LintCommandInfo,
+        default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
 
@@ -173,7 +174,7 @@ mod test {
         let formatter = DefaultOutputFormatter;
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
-            number_of_rules: 10,
+            number_of_rules: Some(10),
             threads_count: 12,
             start_time: Duration::new(1, 0),
         });
@@ -183,6 +184,20 @@ mod test {
             result.unwrap(),
             "Finished in 1.0s on 5 files with 10 rules using 12 threads.\n"
         );
+    }
+
+    #[test]
+    fn lint_command_info_unknown_rules() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+        });
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
     }
 
     #[test]

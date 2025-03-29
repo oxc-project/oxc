@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression, MethodDefinitionKind},
     AstKind,
+    ast::{BindingPatternKind, Expression, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -157,7 +157,7 @@ impl Rule for RequireReturns {
                                     // If `return somePromise` is found, treat this function as async
                                     match is_promise_resolve_with_value(argument, ctx) {
                                         Some(v) => e.2 = (true, v),
-                                        None => e.2 = (e.2 .0, true),
+                                        None => e.2 = (e.2.0, true),
                                     }
                                 });
                                 continue 'visit_node;
@@ -305,7 +305,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                     // })
                     // ```
                     // IMO: This is a fault of the original rule design...
-                    for resolve_ref in ctx.symbols().get_resolved_references(ident.symbol_id()) {
+                    for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
                         // Check if `resolve` is called with value
                         match ctx.nodes().parent_node(resolve_ref.node_id())?.kind() {
                             // `resolve(foo)`

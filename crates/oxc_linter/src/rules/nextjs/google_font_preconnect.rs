@@ -1,13 +1,13 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn google_font_preconnect_diagnostic(span: Span) -> OxcDiagnostic {
@@ -56,7 +56,7 @@ impl Rule for GoogleFontPreconnect {
         };
 
         let preconnect_missing =
-            has_jsx_prop_ignore_case(jsx_opening_element, "rel").map_or(true, |rel_prop| {
+            has_jsx_prop_ignore_case(jsx_opening_element, "rel").is_none_or(|rel_prop| {
                 let rel_prop_value = get_string_literal_prop_value(rel_prop);
                 rel_prop_value != Some("preconnect")
             });

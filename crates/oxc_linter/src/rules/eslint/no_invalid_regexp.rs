@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Argument, AstKind};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
@@ -7,7 +7,7 @@ use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 // Use the same prefix with `oxc_regular_expression` crate
 fn duplicated_flag_diagnostic(span: Span) -> OxcDiagnostic {

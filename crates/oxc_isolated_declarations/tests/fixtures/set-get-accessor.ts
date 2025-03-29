@@ -14,6 +14,10 @@ class Cls {
 
   private get c() {}
   private set c() {}
+
+  accessor d: string;
+  private accessor e: string;
+  private static accessor f: string;
 }
 
 // Incorrect

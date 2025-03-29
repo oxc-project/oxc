@@ -1,14 +1,14 @@
 use oxc_ast::{
+    AstKind,
     ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, PropertyKey},
-    visit::walk::walk_for_of_statement,
-    AstKind, Visit,
 };
+use oxc_ast_visit::{Visit, walk::walk_for_of_statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireAwait;

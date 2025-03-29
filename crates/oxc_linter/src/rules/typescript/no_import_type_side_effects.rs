@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
     AstKind,
+    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     fixer::Fix,
     rule::Rule,
-    AstNode,
 };
 
 fn no_import_type_side_effects_diagnostic(span: Span) -> OxcDiagnostic {

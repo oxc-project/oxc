@@ -2,47 +2,11 @@
 /* eslint-disable */
 
 export * from '@oxc-project/types';
-export declare class MagicString {
-  /** Get source text from utf8 offset. */
-  getSourceText(start: number, end: number): string
-  /** Get 0-based line and column number from utf8 offset. */
-  getLineColumnNumber(offset: number): LineColumn
-  /** Get UTF16 byte offset from UTF8 byte offset. */
-  getUtf16ByteOffset(offset: number): number
-  length(): number
-  toString(): string
-  hasChanged(): boolean
-  append(input: string): this
-  appendLeft(index: number, input: string): this
-  appendRight(index: number, input: string): this
-  indent(): this
-  prepend(input: string): this
-  prependLeft(index: number, input: string): this
-  prependRight(index: number, input: string): this
-  relocate(start: number, end: number, to: number): this
-  remove(start: number, end: number): this
-  generateMap(options?: Partial<GenerateDecodedMapOptions>): {
-    toString: () => string;
-    toUrl: () => string;
-    toMap: () => {
-      file?: string
-      mappings: string
-      names: Array<string>
-      sourceRoot?: string
-      sources: Array<string>
-      sourcesContent?: Array<string>
-      version: number
-      x_google_ignoreList?: Array<number>
-    }
-  }
-}
-
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
   get comments(): Array<Comment>
   get errors(): Array<OxcError>
-  get magicString(): MagicString
 }
 
 export interface Comment {
@@ -136,14 +100,13 @@ export declare const enum ExportLocalNameKind {
   None = 'None'
 }
 
-export interface GenerateDecodedMapOptions {
-  /** The filename of the file containing the original source. */
-  source?: string
-  /** Whether to include the original content in the map's `sourcesContent` array. */
-  includeContent: boolean
-  /** Whether the mapping should be high-resolution. */
-  hires: boolean | 'boundary'
-}
+/**
+ * Get offset within a `Uint8Array` which is aligned on 4 GiB.
+ *
+ * Does not check that the offset is within bounds of `buffer`.
+ * To ensure it always is, provide a `Uint8Array` of at least 4 GiB size.
+ */
+export declare function getBufferOffset(buffer: Uint8Array): number
 
 export interface ImportName {
   kind: ImportNameKind
@@ -161,20 +124,12 @@ export declare const enum ImportNameKind {
   Default = 'Default'
 }
 
-export interface LineColumn {
-  line: number
-  column: number
-}
-
-export interface OverwriteOptions {
-  contentOnly: boolean
-}
-
 export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
   helpMessage?: string
+  codeframe?: string
 }
 
 /**
@@ -189,48 +144,71 @@ export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx'
   /**
-   * Emit `ParenthesizedExpression` in AST.
+   * Return an AST which includes TypeScript-related properties, or excludes them.
+   *
+   * `'js'` is default for JS / JSX files.
+   * `'ts'` is default for TS / TSX files.
+   * The type of the file is determined from `lang` option, or extension of provided `filename`.
+   */
+  astType?: 'js' | 'ts'
+  /**
+   * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
-   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
-   * containing the expression inside parentheses.
+   * (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+   * have a single `expression` property containing the expression inside parentheses.
    *
-   * Default: true
+   * @default true
    */
   preserveParens?: boolean
+  /**
+   * Produce semantic errors with an additional AST pass.
+   * Semantic errors depend on symbols and scopes, where the parser does not construct.
+   * This adds a small performance overhead.
+   *
+   * @default false
+   */
+  showSemanticErrors?: boolean
 }
 
 /** Parse synchronously. */
 export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 
 /**
- * Parse without returning anything.
+ * Parses AST into provided `Uint8Array` buffer.
  *
- * This is for benchmark purposes such as measuring napi communication overhead.
+ * Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
+ * provided as `source_len`.
+ *
+ * This function will parse the source, and write the AST into the buffer, starting at the end.
+ *
+ * It also writes to the very end of the buffer the offset of `Program` within the buffer.
+ *
+ * Caller can deserialize data from the buffer on JS side.
+ *
+ * # SAFETY
+ *
+ * Caller must ensure:
+ * * Source text is written into start of the buffer.
+ * * Source text's UTF-8 byte length is `source_len`.
+ * * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+ *
+ * If source text is originally a JS string on JS side, and converted to a buffer with
+ * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+ *
+ * # Panics
+ *
+ * Panics if source text is too long, or AST takes more memory than is available in the buffer.
  */
-export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
+export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
+
+/** Returns `true` if raw transfer is supported on this platform. */
+export declare function rawTransferSupported(): boolean
 
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
   Advice = 'Advice'
-}
-
-export interface SourceMap {
-  file?: string
-  mappings: string
-  names: Array<string>
-  sourceRoot?: string
-  sources: Array<string>
-  sourcesContent?: Array<string>
-  version: number
-  x_google_ignoreList?: Array<number>
-}
-
-export interface SourceMapOptions {
-  includeContent?: boolean
-  source?: string
-  hires?: boolean
 }
 
 export interface Span {

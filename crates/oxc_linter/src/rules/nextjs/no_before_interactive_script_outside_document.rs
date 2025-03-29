@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_next_script_import_local_name, is_document_page, is_in_app_dir},
-    AstNode,
 };
 
 fn no_before_interactive_script_outside_document_diagnostic(span: Span) -> OxcDiagnostic {

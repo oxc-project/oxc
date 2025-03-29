@@ -1,5 +1,5 @@
 use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, SimpleAssignmentTarget};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
@@ -44,7 +44,7 @@ impl<'a> MaybeBoundIdentifier<'a> {
         ident: &IdentifierReference<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Self {
-        let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+        let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
         Self { name: ident.name, symbol_id }
     }
 

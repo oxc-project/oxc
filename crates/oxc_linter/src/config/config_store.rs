@@ -2,12 +2,12 @@ use std::{path::Path, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use super::{overrides::OxlintOverrides, LintConfig, LintPlugins};
-use crate::{rules::RULES, RuleWithSeverity};
+use super::{LintConfig, LintPlugins, overrides::OxlintOverrides};
+use crate::{RuleWithSeverity, rules::RULES};
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug)]
-pub(crate) struct ResolvedLinterState {
+pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
     pub rules: Arc<[RuleWithSeverity]>,
     pub config: Arc<LintConfig>,
@@ -19,7 +19,7 @@ impl Clone for ResolvedLinterState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Config {
     /// The basic linter state for this configuration.
     base: ResolvedLinterState,
@@ -29,7 +29,7 @@ struct Config {
 }
 
 /// Resolves a lint configuration for a given file, by applying overrides based on the file's path.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConfigStore {
     base: Config,
 }
@@ -53,6 +53,10 @@ impl ConfigStore {
 
     pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
         &self.base.base.rules
+    }
+
+    pub fn plugins(&self) -> LintPlugins {
+        self.base.base.config.plugins
     }
 
     pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
@@ -143,8 +147,8 @@ impl ConfigStore {
 mod test {
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
-        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
         AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity,
+        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     };
 
     macro_rules! from_json {

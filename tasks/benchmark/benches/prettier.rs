@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;

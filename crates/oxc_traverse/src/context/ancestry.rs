@@ -194,7 +194,8 @@ impl<'a> TraverseAncestry<'a> {
     #[expect(clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         debug_assert!(self.stack.len() >= 2);
-        *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty;
+        // SAFETY: Caller must uphold the safety invariants
+        unsafe { *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty };
     }
 }
 
@@ -203,4 +204,4 @@ impl<'a> TraverseAncestry<'a> {
 /// It is not `Clone` or `Copy`, so no way to obtain one except in this file.
 /// Only method which generates a `PopToken` is `push_stack`, and `pop_stack` consumes one,
 /// which guarantees you can't have more pops than pushes.
-pub(crate) struct PopToken(());
+pub struct PopToken(());

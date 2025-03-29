@@ -1,8 +1,8 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
+use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     /// `BindingElement`
@@ -22,7 +22,9 @@ impl<'a> ParserImpl<'a> {
         let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
         let type_annotation = self.parse_ts_type_annotation()?;
         if let Some(type_annotation) = &type_annotation {
-            Self::extend_binding_pattern_span_end(type_annotation.span, &mut kind);
+            Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut kind);
+        } else if optional {
+            Self::extend_binding_pattern_span_end(self.prev_token_end, &mut kind);
         }
         Ok(self.ast.binding_pattern(kind, type_annotation, optional))
     }
@@ -178,13 +180,13 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(super) fn extend_binding_pattern_span_end(span: Span, kind: &mut BindingPatternKind<'a>) {
+    pub(super) fn extend_binding_pattern_span_end(end: u32, kind: &mut BindingPatternKind<'a>) {
         let pat_span = match kind {
             BindingPatternKind::BindingIdentifier(pat) => &mut pat.span,
             BindingPatternKind::ObjectPattern(pat) => &mut pat.span,
             BindingPatternKind::ArrayPattern(pat) => &mut pat.span,
             BindingPatternKind::AssignmentPattern(pat) => &mut pat.span,
         };
-        pat_span.end = span.end;
+        pat_span.end = end;
     }
 }

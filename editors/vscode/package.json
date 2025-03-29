@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.15.10",
+  "version": "0.16.3",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -95,15 +95,21 @@
           "description": "Traces the communication between VS Code and the language server."
         },
         "oxc.configPath": {
-          "type": "string",
+          "type": ["string", "null"],
           "scope": "window",
-          "default": ".oxlintrc.json",
-          "description": "Path to ESlint configuration."
+          "default": null,
+          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
         },
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
           "description": "Path to Oxc language server binary."
+        },
+        "oxc.flags": {
+          "type": "object",
+          "scope": "window",
+          "default": {},
+          "description": "Oxc options that would normally be passed when executing on the command line."
         }
       }
     },
@@ -137,10 +143,10 @@
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
-    "server:build:debug": "cargo build -p oxc_language_server",
+    "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "lint": "npx oxlint --config=oxlint.json --tsconfig=tsconfig.json",
-    "test": "esbuild client/config.spec.ts --bundle --outfile=out/config.spec.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap && vscode-test",
+    "lint": "npx oxlint --tsconfig=tsconfig.json",
+    "test": "esbuild client/*.spec.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap && vscode-test",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -151,9 +157,9 @@
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "ovsx": "^0.10.0",
-    "oxlint": "^0.15.0",
+    "oxlint": "^0.16.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

@@ -9,10 +9,9 @@ use super::AllowWarnDeny;
 /// Filters come in 3 forms:
 /// 1. Filter by rule name and/or plugin: `no-const-assign`, `eslint/no-const-assign`
 /// 2. Filter an entire category: `correctness`
-/// 3. Some unknow filter. This is a fallback used when parsing a filter string,
+/// 3. Some unknown filter. This is a fallback used when parsing a filter string,
 ///    and is interpreted uniquely by the linter.
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LintFilter {
     severity: AllowWarnDeny,
     kind: LintFilterKind,
@@ -77,8 +76,7 @@ impl<'a> From<&'a LintFilter> for (AllowWarnDeny, &'a LintFilterKind) {
     }
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LintFilterKind {
     Generic(Cow<'static, str>),
     /// e.g. `no-const-assign` or `eslint/no-const-assign`

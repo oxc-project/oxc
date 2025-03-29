@@ -3,11 +3,11 @@ use serde::Deserialize;
 use tower_lsp::{
     jsonrpc::{self, Error},
     lsp_types::{
-        request::ApplyWorkspaceEdit, ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit,
+        ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit, request::ApplyWorkspaceEdit,
     },
 };
 
-use crate::{capabilities::Capabilities, Backend};
+use crate::{Backend, capabilities::Capabilities};
 
 pub const LSP_COMMANDS: [WorkspaceCommands; 1] = [WorkspaceCommands::FixAll(FixAllCommand)];
 
@@ -89,8 +89,8 @@ impl WorkspaceCommand for FixAllCommand {
         let url = url.unwrap();
 
         let mut edits = vec![];
-        if let Some(value) = backend.diagnostics_report_map.get(&url.to_string()) {
-            for report in value.iter() {
+        if let Some(value) = backend.diagnostics_report_map.pin_owned().get(&url.to_string()) {
+            for report in value {
                 if let Some(fixed) = &report.fixed_content {
                     edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() });
                 }

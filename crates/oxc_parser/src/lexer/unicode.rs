@@ -1,20 +1,30 @@
+use std::{borrow::Cow, fmt::Write};
+
+use cow_utils::CowUtils;
+
 use oxc_allocator::String;
 use oxc_syntax::identifier::{
-    is_identifier_part, is_identifier_start, is_identifier_start_unicode,
-    is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
+    CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
+    is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
 };
 
 use crate::diagnostics;
 
 use super::{Kind, Lexer, Span};
 
-enum SurrogatePair {
-    // valid \u Hex4Digits \u Hex4Digits
-    Astral(u32),
-    // valid \u Hex4Digits
-    CodePoint(u32),
-    // invalid \u Hex4Digits \u Hex4Digits
-    HighLow(u32, u32),
+/// A Unicode escape sequence.
+///
+/// `\u Hex4Digits`, `\u Hex4Digits \u Hex4Digits`, or `\u{ HexDigits }`.
+enum UnicodeEscape {
+    // `\u Hex4Digits` or `\u{ HexDigits }`, which forms a valid Unicode code point.
+    // Char cannot be in range 0xD800..=0xDFFF.
+    CodePoint(char),
+    // `\u Hex4Digits \u Hex4Digits`, which forms a valid Unicode astral code point.
+    // Char is in the range 0x10000..=0x10FFFF.
+    SurrogatePair(char),
+    // `\u Hex4Digits` or `\u{ HexDigits }`, which forms an invalid Unicode code point.
+    // Code unit is in the range 0xD800..=0xDFFF.
+    LoneSurrogate(u32),
 }
 
 impl<'a> Lexer<'a> {
@@ -65,8 +75,11 @@ impl<'a> Lexer<'a> {
         }
 
         let value = match self.peek_byte() {
-            Some(b'{') => self.unicode_code_point(),
-            _ => self.surrogate_pair(),
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
+            _ => self.unicode_code_unit(),
         };
 
         let Some(value) = value else {
@@ -77,19 +90,11 @@ impl<'a> Lexer<'a> {
 
         // For Identifiers, surrogate pair is an invalid grammar, e.g. `var \uD800\uDEA7`.
         let ch = match value {
-            SurrogatePair::Astral(..) | SurrogatePair::HighLow(..) => {
+            UnicodeEscape::CodePoint(ch) => ch,
+            UnicodeEscape::SurrogatePair(_) | UnicodeEscape::LoneSurrogate(_) => {
                 let range = Span::new(start, self.offset());
                 self.error(diagnostics::unicode_escape_sequence(range));
                 return;
-            }
-            SurrogatePair::CodePoint(code_point) => {
-                if let Ok(ch) = char::try_from(code_point) {
-                    ch
-                } else {
-                    let range = Span::new(start, self.offset());
-                    self.error(diagnostics::unicode_escape_sequence(range));
-                    return;
-                }
             }
         };
 
@@ -113,9 +118,12 @@ impl<'a> Lexer<'a> {
         text: &mut String<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
-        let value = match self.peek_char() {
-            Some('{') => self.unicode_code_point(),
-            _ => self.surrogate_pair(),
+        let value = match self.peek_byte() {
+            Some(b'{') => {
+                self.consume_char();
+                self.unicode_code_point()
+            }
+            _ => self.unicode_code_unit(),
         };
 
         let Some(value) = value else {
@@ -124,35 +132,49 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`
-        // values are interpreted as is if they fall out of range
+        // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
-            SurrogatePair::CodePoint(code_point) | SurrogatePair::Astral(code_point) => {
-                if let Ok(ch) = char::try_from(code_point) {
-                    text.push(ch);
-                } else {
-                    text.push_str("\\u");
-                    text.push_str(format!("{code_point:x}").as_str());
-                }
+            UnicodeEscape::CodePoint(ch) | UnicodeEscape::SurrogatePair(ch) => {
+                text.push(ch);
             }
-            SurrogatePair::HighLow(high, low) => {
-                text.push_str("\\u");
-                text.push_str(format!("{high:x}").as_str());
-                text.push_str("\\u");
-                text.push_str(format!("{low:x}").as_str());
+            UnicodeEscape::LoneSurrogate(code_point) => {
+                self.string_lone_surrogate(code_point, text);
             }
         }
     }
 
-    fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_ascii_byte_eq(b'{') {
-            return None;
+    /// Lone surrogate found in string.
+    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut String<'a>) {
+        debug_assert!(code_point <= 0xFFFF);
+
+        if !self.token.lone_surrogates {
+            self.token.lone_surrogates = true;
+
+            // We use `\u{FFFD}` (the lossy replacement character) as a marker indicating the start
+            // of a lone surrogate. e.g. `\u{FFFD}d800` (which will be output as `\ud800`).
+            // So we need to escape any actual lossy replacement characters in the string so far.
+            //
+            // This could be more efficient, avoiding allocating a temporary `String`.
+            // But strings containing both lone surrogates and lossy replacement characters
+            // should be vanishingly rare, so don't bother.
+            if let Cow::Owned(replaced) = text.cow_replace("\u{FFFD}", "\u{FFFD}fffd") {
+                *text = String::from_str_in(&replaced, self.allocator);
+            }
         }
+
+        // Encode lone surrogate as `\u{FFFD}XXXX` where XXXX is the code point as hex
+        write!(text, "\u{FFFD}{code_point:04x}").unwrap();
+    }
+
+    /// Decode unicode code point (`\u{ HexBytes }`).
+    ///
+    /// The opening `\u{` must already have been consumed before calling this method.
+    fn unicode_code_point(&mut self) -> Option<UnicodeEscape> {
         let value = self.code_point()?;
         if !self.next_ascii_byte_eq(b'}') {
             return None;
         }
-        Some(SurrogatePair::CodePoint(value))
+        Some(value)
     }
 
     fn hex_4_digits(&mut self) -> Option<u32> {
@@ -164,33 +186,33 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
+        let b = self.peek_byte()?;
+
         // Reduce instructions and remove 1 branch by comparing against `A-F` and `a-f` simultaneously
         // https://godbolt.org/z/9caMMzvP3
-        let value = if let Some(b) = self.peek_byte() {
-            if b.is_ascii_digit() {
-                b - b'0'
-            } else {
-                // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
-                // but leaves lowercase as they are
-                let lower_case = b | 32;
-                if matches!(lower_case, b'a'..=b'f') {
-                    lower_case + 10 - b'a'
-                } else {
-                    return None;
-                }
-            }
+        let value = if b.is_ascii_digit() {
+            b - b'0'
         } else {
-            return None;
+            // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
+            // but leaves lowercase as they are
+            let lower_case = b | 32;
+            if matches!(lower_case, b'a'..=b'f') {
+                lower_case + 10 - b'a'
+            } else {
+                return None;
+            }
         };
+
         // Because of `b | 32` above, compiler cannot deduce that next byte is definitely ASCII
         // so `next_byte_unchecked` is necessary to produce compact assembly, rather than `consume_char`.
         // SAFETY: This code is only reachable if there is a byte remaining, and it's ASCII.
         // Therefore it's safe to consume that byte, and will leave position on a UTF-8 char boundary.
         unsafe { self.source.next_byte_unchecked() };
+
         Some(u32::from(value))
     }
 
-    fn code_point(&mut self) -> Option<u32> {
+    fn code_point(&mut self) -> Option<UnicodeEscape> {
         let mut value = self.hex_digit()?;
         while let Some(next) = self.hex_digit() {
             value = (value << 4) | next;
@@ -198,35 +220,78 @@ impl<'a> Lexer<'a> {
                 return None;
             }
         }
-        Some(value)
+
+        match char::from_u32(value) {
+            Some(ch) => Some(UnicodeEscape::CodePoint(ch)),
+            None => Some(UnicodeEscape::LoneSurrogate(value)),
+        }
     }
 
-    /// Surrogate pairs
-    /// See background info:
+    /// Unicode code unit (`\uXXXX`).
+    ///
+    /// The opening `\u` must already have been consumed before calling this method.
+    ///
+    /// See background info on surrogate pairs:
     ///   * `https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae`
     ///   * `https://mathiasbynens.be/notes/javascript-identifiers-es6`
-    fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
-        let high = self.hex_4_digits()?;
-        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        let is_pair =
-            (0xD800..=0xDBFF).contains(&high) && self.peek_2_bytes() == Some([b'\\', b'u']);
-        if !is_pair {
-            return Some(SurrogatePair::CodePoint(high));
+    fn unicode_code_unit(&mut self) -> Option<UnicodeEscape> {
+        const MIN_HIGH: u32 = 0xD800;
+        const MAX_HIGH: u32 = 0xDBFF;
+        const MIN_LOW: u32 = 0xDC00;
+        const MAX_LOW: u32 = 0xDFFF;
+
+        // `https://tc39.es/ecma262/#sec-utf16decodesurrogatepair`
+        #[inline]
+        const fn pair_to_code_point(high: u32, low: u32) -> u32 {
+            (high - 0xD800) * 0x400 + low - 0xDC00 + 0x10000
         }
 
-        self.consume_2_chars();
+        const _: () = {
+            assert!(char::from_u32(pair_to_code_point(MIN_HIGH, MIN_LOW)).is_some());
+            assert!(char::from_u32(pair_to_code_point(MIN_HIGH, MAX_LOW)).is_some());
+            assert!(char::from_u32(pair_to_code_point(MAX_HIGH, MIN_LOW)).is_some());
+            assert!(char::from_u32(pair_to_code_point(MAX_HIGH, MAX_LOW)).is_some());
+        };
+
+        let high = self.hex_4_digits()?;
+        if let Some(ch) = char::from_u32(high) {
+            return Some(UnicodeEscape::CodePoint(ch));
+        }
+
+        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF,
+        // and is called a high surrogate or a lead surrogate.
+        // Note: `high` must be >= `MIN_HIGH`, otherwise `char::from_u32` would have returned `Some`,
+        // and already exited.
+        debug_assert!(high >= MIN_HIGH);
+        let is_pair = high <= MAX_HIGH && self.peek_2_bytes() == Some([b'\\', b'u']);
+        if !is_pair {
+            return Some(UnicodeEscape::LoneSurrogate(high));
+        }
+
+        let before_second = self.source.position();
+
+        // SAFETY: We checked above that next 2 chars are `\u`
+        unsafe {
+            self.source.next_byte_unchecked();
+            self.source.next_byte_unchecked();
+        }
 
         let low = self.hex_4_digits()?;
 
-        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF, and is called a low surrogate or a trail surrogate.
-        if !(0xDC00..=0xDFFF).contains(&low) {
-            return Some(SurrogatePair::HighLow(high, low));
+        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF,
+        // and is called a low surrogate or a trail surrogate.
+        // If this isn't a valid pair, rewind to before the 2nd, and return the first only.
+        // The 2nd could be the first part of a valid pair.
+        if !(MIN_LOW..=MAX_LOW).contains(&low) {
+            self.source.set_position(before_second);
+            return Some(UnicodeEscape::LoneSurrogate(high));
         }
 
-        // `https://tc39.es/ecma262/#sec-utf16decodesurrogatepair`
-        let astral_code_point = (high - 0xD800) * 0x400 + low - 0xDC00 + 0x10000;
-
-        Some(SurrogatePair::Astral(astral_code_point))
+        let code_point = pair_to_code_point(high, low);
+        // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
+        // which is a valid `char`
+        let ch = unsafe { char::from_u32_unchecked(code_point) };
+        Some(UnicodeEscape::SurrogatePair(ch))
     }
 
     // EscapeSequence ::

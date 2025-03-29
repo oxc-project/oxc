@@ -1,3 +1,4 @@
+mod comment;
 mod config;
 mod express;
 mod jest;
@@ -13,8 +14,8 @@ mod vitest;
 use std::{io, path::Path};
 
 pub use self::{
-    config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*,
-    unicorn::*, url::*, vitest::*,
+    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
+    react_perf::*, unicorn::*, url::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.
@@ -35,6 +36,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "no-interpolation-in-snapshots",
     "no-restricted-jest-methods",
     "no-restricted-matchers",
+    "no-standalone-expect",
     "no-test-prefixes",
     "no-test-return-statement",
     "prefer-comparison-matcher",

@@ -2,11 +2,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text,
-    format::Format,
-    group, hardline, indent,
-    ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap, Prettier,
+    Prettier, array, dynamic_text, format::Format, group, hardline, indent, ir::Doc, join, line,
+    softline, text, wrap,
 };
 
 impl<'a> Format<'a> for JSXIdentifier<'a> {
@@ -48,8 +45,8 @@ impl<'a> Format<'a> for JSXElementName<'a> {
 impl<'a> Format<'a> for JSXNamespacedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let namespace_doc = self.namespace.format(p);
-        let property_doc = self.property.format(p);
-        array!(p, [namespace_doc, text!(":"), property_doc])
+        let name_doc = self.name.format(p);
+        array!(p, [namespace_doc, text!(":"), name_doc])
     }
 }
 
@@ -126,6 +123,7 @@ impl<'a> Format<'a> for JSXExpression<'a> {
             JSXExpression::TSTypeAssertion(it) => it.format(p),
             JSXExpression::TSNonNullExpression(it) => it.format(p),
             JSXExpression::TSInstantiationExpression(it) => it.format(p),
+            JSXExpression::V8IntrinsicExpression(it) => it.format(p),
         }
     }
 }
@@ -171,7 +169,7 @@ impl<'a> Format<'a> for JSXOpeningElement<'a> {
         parts.push(text!("<"));
         parts.push(self.name.format(p));
 
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             parts.push(type_parameters.format(p));
         }
 

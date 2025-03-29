@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { minify as oxcMinify } from '@oxc-minify/binding';
-import { transform as oxcTransform } from '@oxc-transform/binding';
 import { createFsRequire } from 'fs-require';
 import { Volume } from 'memfs';
+import { minify as oxcMinify } from 'oxc-minify';
+import { transform as oxcTransform } from 'oxc-transform';
 
 const nodeModulesPath = new URL('../node_modules', import.meta.url).pathname;
 

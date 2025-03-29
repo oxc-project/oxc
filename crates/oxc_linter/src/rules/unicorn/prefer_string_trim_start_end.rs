@@ -1,9 +1,9 @@
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_string_trim_start_end_diagnostic(
     span: Span,

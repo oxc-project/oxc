@@ -29,7 +29,7 @@
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
 use oxc_allocator::Box as ArenaBox;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
@@ -66,7 +66,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
 
 impl<'a> NullishCoalescingOperator<'a, '_> {
     fn transform_logical_expression(
-        &mut self,
+        &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -86,11 +86,11 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 );
             }
             Expression::Identifier(ident) => {
-                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+                let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // Check binding is not mutated.
                     // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
-                    if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
+                    if ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
                         let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let ident_span = ident.span;
                         return Self::create_conditional_expression(
@@ -157,17 +157,16 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
-            let arrow_function = Expression::ArrowFunctionExpression(
-                ctx.ast.alloc_arrow_function_expression_with_scope_id(
-                    SPAN,
-                    true,
-                    false,
-                    NONE,
-                    params,
-                    NONE,
-                    body,
-                    current_scope_id,
-                ),
+            let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+                SPAN,
+                true,
+                false,
+                NONE,
+                params,
+                NONE,
+                body,
+                current_scope_id,
+                false,
             );
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
@@ -205,7 +204,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
         reference2: Expression<'a>,
         default: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);

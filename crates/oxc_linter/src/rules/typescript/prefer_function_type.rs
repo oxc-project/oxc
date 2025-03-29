@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
     AstKind, CommentKind,
+    ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     fixer::Fix,
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
@@ -162,11 +162,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                     }
 
                                     let has_comments =
-                                        ctx.semantic().has_comments_between(interface_decl.span);
+                                        ctx.has_comments_between(interface_decl.span);
 
                                     if has_comments {
                                         let comments = ctx
-                                            .semantic()
                                             .comments_range(node_start..node_end)
                                             .map(|comment| (*comment, comment.content_span()));
 

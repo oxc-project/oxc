@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:2:13]
- 1 │ function foo() { 
+ 1 │ function foo() {
  2 │             require('foo')
    ·             ──────────────
  3 │             }

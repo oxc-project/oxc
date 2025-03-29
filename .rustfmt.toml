@@ -1,3 +1,4 @@
+style_edition = "2024"
 # Make Rust more readable given most people have wide screens nowadays.
 # This is also the setting used by [rustc](https://github.com/rust-lang/rust/blob/master/rustfmt.toml)
 use_small_heuristics = "Max"
@@ -9,7 +10,6 @@ reorder_modules = true
 
 # All unstable features that we wish for
 # unstable_features = true
-# style_edition = "2024"
 # Provide a cleaner impl order
 # reorder_impl_items = true
 # Provide a cleaner import sort order

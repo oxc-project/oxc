@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.14] - 2025-03-11
+
+### Features
+
+- 3fce826 linter: Add support for `extends` property in oxlintrc (#9217) (camchenry)
+
+## [0.15.13] - 2025-03-04
+
+### Documentation
+
+- 24850e7 linter: Add example of how configure rule (#9469) (Cédric DIRAND)
+
+## [0.15.11] - 2025-02-16
+
+### Features
+
+- 5d508a4 linter: Support `env` and `globals` in `overrides` configuration (#8915) (Sysix)
+
 ## [0.15.8] - 2025-01-24
 
 ### Features

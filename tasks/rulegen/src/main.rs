@@ -6,15 +6,13 @@ use std::{
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    ast::{
-        Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-        TemplateLiteral,
-    },
-    Visit,
+use oxc_ast::ast::{
+    Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
+    ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+    PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
+    TemplateLiteral,
 };
+use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
@@ -51,7 +49,7 @@ const JSDOC_TEST_PATH: &str =
     "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/test/rules/assertions";
 
 const REACT_PERF_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/main/tests/lib/rules";
+    "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/master/tests/lib/rules";
 
 const NODE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
@@ -177,7 +175,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
-        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw).to_string())
+        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
         tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
     }
@@ -655,10 +653,10 @@ fn main() {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
+        RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Import => format!("{IMPORT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
-        RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
@@ -683,7 +681,7 @@ fn main() {
     let context = match body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
-            let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
+            let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
             let mut state = State::new(&body);
@@ -802,7 +800,7 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         return Err(format!("failed to find '{mod_def}' in {rules_path}").into());
     };
     let mod_end = &rules[mod_start..]
-        .find("}\n")
+        .find('}')
         .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
     let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
 

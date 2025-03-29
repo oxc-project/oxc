@@ -1,9 +1,9 @@
-use oxc_ast::{ast::FormalParameters, AstKind};
+use oxc_ast::{AstKind, ast::FormalParameters};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 fn no_promise_in_callback_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid using promises inside of callbacks.")

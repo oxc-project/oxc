@@ -4,6 +4,6 @@ import * as foo from './foo';
 console.log(foo);
 
 // import/no-default-export
-export default function foo() {}
+export default function () { }
 
 

@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, BinaryExpression, CallExpression, Expression, NullLiteral, SwitchStatement,
         VariableDeclarator,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,11 +12,11 @@ use oxc_syntax::operator::BinaryOperator;
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     ast_util::{is_method_call, iter_outer_expressions},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
@@ -249,11 +249,7 @@ fn try_fix_case<'a>(
         .iter()
         .filter_map(|case| case.test.as_ref())
         .any(|test| test.get_inner_expression().is_undefined());
-    if also_has_undefined {
-        fixer.noop()
-    } else {
-        fixer.replace(null.span, "undefined")
-    }
+    if also_has_undefined { fixer.noop() } else { fixer.replace(null.span, "undefined") }
 }
 
 #[test]

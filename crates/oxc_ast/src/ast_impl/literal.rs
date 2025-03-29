@@ -2,7 +2,8 @@
 
 use std::{borrow::Cow, fmt};
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_data_structures::inline_string::InlineString;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::ContentEq;
 
@@ -11,11 +12,7 @@ use crate::ast::*;
 impl BooleanLiteral {
     /// `"true"` or `"false"` depending on this boolean's value.
     pub fn as_str(&self) -> &'static str {
-        if self.value {
-            "true"
-        } else {
-            "false"
-        }
+        if self.value { "true" } else { "false" }
     }
 }
 
@@ -45,7 +42,7 @@ impl NumericLiteral<'_> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumericLiteral, so we just serde(skip) step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just skip step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();
@@ -54,11 +51,7 @@ impl NumericLiteral<'_> {
         let int32bit = pos_int % 2f64.powi(32);
 
         // step5
-        if int32bit >= 2f64.powi(31) {
-            (int32bit - 2f64.powi(32)) as i32
-        } else {
-            int32bit as i32
-        }
+        if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
     }
 
     /// Return raw source code for `NumericLiteral`.
@@ -122,6 +115,11 @@ impl BigIntLiteral<'_> {
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
+
+    /// Is this BigInt literal negative? (e.g. `-1n`).
+    pub fn is_negative(&self) -> bool {
+        self.raw.starts_with('-')
+    }
 }
 
 impl fmt::Display for BigIntLiteral<'_> {
@@ -177,11 +175,7 @@ impl<'a> RegExpPattern<'a> {
     /// Flatten this regular expression into a compiled [`Pattern`], returning
     /// [`None`] if the pattern is invalid or not parsed.
     pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
-        if let Self::Pattern(it) = self {
-            Some(it.as_ref())
-        } else {
-            None
-        }
+        if let Self::Pattern(it) = self { Some(it.as_ref()) } else { None }
     }
 }
 
@@ -219,8 +213,19 @@ impl ContentEq for RegExpFlags {
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         *self
+    }
+}
+
+impl<'a> Dummy<'a> for RegExpFlags {
+    /// Create a dummy [`RegExpFlags`].
+    ///
+    /// Does not allocate any data into arena.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn dummy(_: &'a Allocator) -> Self {
+        RegExpFlags::empty()
     }
 }
 
@@ -262,30 +267,47 @@ impl TryFrom<u8> for RegExpFlags {
 
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.contains(Self::G) {
-            write!(f, "g")?;
+        f.write_str(self.to_inline_string().as_str())
+    }
+}
+
+impl RegExpFlags {
+    /// Convert [`RegExpFlags`] to an [`InlineString`].
+    ///
+    /// This performs the same role as `RegExpFlags::to_string`, but does not allocate.
+    pub fn to_inline_string(&self) -> InlineString<8, usize> {
+        let mut str = InlineString::new();
+
+        // In alphabetical order.
+        // SAFETY: Capacity of the `InlineString` is 8, and we push a maximum of 8 bytes.
+        // All bytes pushed are ASCII.
+        unsafe {
+            if self.contains(Self::D) {
+                str.push_unchecked(b'd');
+            }
+            if self.contains(Self::G) {
+                str.push_unchecked(b'g');
+            }
+            if self.contains(Self::I) {
+                str.push_unchecked(b'i');
+            }
+            if self.contains(Self::M) {
+                str.push_unchecked(b'm');
+            }
+            if self.contains(Self::S) {
+                str.push_unchecked(b's');
+            }
+            if self.contains(Self::U) {
+                str.push_unchecked(b'u');
+            }
+            if self.contains(Self::V) {
+                str.push_unchecked(b'v');
+            }
+            if self.contains(Self::Y) {
+                str.push_unchecked(b'y');
+            }
         }
-        if self.contains(Self::I) {
-            write!(f, "i")?;
-        }
-        if self.contains(Self::M) {
-            write!(f, "m")?;
-        }
-        if self.contains(Self::S) {
-            write!(f, "s")?;
-        }
-        if self.contains(Self::U) {
-            write!(f, "u")?;
-        }
-        if self.contains(Self::Y) {
-            write!(f, "y")?;
-        }
-        if self.contains(Self::D) {
-            write!(f, "d")?;
-        }
-        if self.contains(Self::V) {
-            write!(f, "v")?;
-        }
-        Ok(())
+
+        str
     }
 }

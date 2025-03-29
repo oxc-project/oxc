@@ -5,6 +5,7 @@ authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
+include = ["/src", "build.rs"]
 keywords.workspace = true
 license.workspace = true
 publish = false
@@ -32,8 +33,15 @@ oxc_syntax = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
-[package.metadata.cargo-shear]
-ignored = ["napi"]
+[target.'cfg(all(not(target_os = "linux"), not(target_os = "freebsd"), not(target_arch = "arm"), not(target_family = "wasm")))'.dependencies]
+mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit"], optional = true }
+
+[target.'cfg(any(all(target_os = "linux", not(target_arch = "arm")), target_os = "freebsd"))'.dependencies]
+mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit", "local_dynamic_tls"], optional = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
+
+[features]
+default = []
+allocator = ["dep:mimalloc-safe"]

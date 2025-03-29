@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.15.10"
+version = "0.16.3"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -24,12 +24,6 @@ path = "src/main.rs"
 test = false
 doctest = false
 
-[target.'cfg(all(not(target_env = "msvc"), not(target_os = "windows")))'.dependencies]
-jemallocator = { workspace = true, optional = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true, optional = true }
-
 [dependencies]
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
@@ -46,10 +40,16 @@ serde_json = { workspace = true }
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
+[target.'cfg(all(not(target_os = "linux"), not(target_os = "freebsd"), not(target_family = "wasm")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
+
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+
 [dev-dependencies]
 insta = { workspace = true }
-regex = { workspace = true }
+lazy-regex = { workspace = true }
 
 [features]
 default = []
-allocator = ["dep:jemallocator", "dep:mimalloc"]
+allocator = ["dep:mimalloc-safe"]

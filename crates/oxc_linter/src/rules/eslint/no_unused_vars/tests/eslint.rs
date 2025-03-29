@@ -1,7 +1,7 @@
 //! Test cases from vanilla eslint
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, RuleMeta as _};
+use crate::{RuleMeta as _, tester::Tester};
 
 /// These are tests from ESLint that are not passing. If you make a change that
 /// causes this test to fail, that's a good thing!

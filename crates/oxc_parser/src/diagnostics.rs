@@ -91,6 +91,12 @@ pub fn unexpected_end(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn unexpected_jsx_end(span: Span, a: char, b: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Unexpected token. Did you mean `{{'{a}'}}` or `&{b};`?"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn unterminated_reg_exp(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unterminated regular expression").with_label(span)
 }
@@ -212,6 +218,14 @@ pub fn a_rest_parameter_cannot_be_optional(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Cannot assign to this expression").with_label(span)
+}
+
+#[cold]
+pub fn invalid_lhs_assignment(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The left-hand side of an assignment expression must be a variable or a property access.",
+    )
+    .with_label(span)
 }
 
 #[cold]
@@ -378,6 +392,12 @@ pub fn expect_catch_finally(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn v8_intrinsic_spread_elem(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("V8 runtime calls cannot have spread elements as arguments")
+        .with_label(span)
+}
+
+#[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1095", " A 'set' accessor cannot have a return type annotation.").with_label(span)
 }
@@ -471,6 +491,11 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
 }
 
+#[cold]
+pub fn private_in_private(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]
@@ -479,10 +504,17 @@ pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
         .with_label(modifier.span)
 }
 
+/// TS(1028)
+#[cold]
+pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1028", "Accessibility modifier already seen.")
+        .with_label(modifier.span)
+        .with_help("Remove the duplicate modifier.")
+}
+
 /// TS(1030)
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
-    // OxcDiagnostic::error(format!("TS1030: '{}' modifier already seen.", modifier.kind))
     ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")

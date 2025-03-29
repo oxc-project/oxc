@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn require_to_throw_message_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {

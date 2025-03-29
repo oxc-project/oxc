@@ -1,15 +1,15 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct SideEffectChecker {
+struct GlobalReferenceChecker {
     global_variable_names: Vec<String>,
 }
-impl MayHaveSideEffects for SideEffectChecker {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        self.global_variable_names.iter().any(|name| name == ident.name.as_str())
+impl IsGlobalReference for GlobalReferenceChecker {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
 
@@ -27,13 +27,13 @@ fn test_with_global_variables(
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let side_effect_checker = SideEffectChecker { global_variable_names };
+    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
     assert_eq!(
-        side_effect_checker.expression_may_have_side_effects(&stmt.expression),
+        stmt.expression.may_have_side_effects(&global_reference_checker),
         expected,
         "{source_text}"
     );
@@ -71,10 +71,10 @@ fn closure_compiler_tests() {
     test("[function a(){}]", false);
     test("(class { })", false);
     test("(class { method() { i++ } })", false);
-    test("(class { [computedName()]() {} })", false); // computedName is called when constructed
+    test("(class { [computedName()]() {} })", true);
     test("(class { [computedName]() {} })", false);
     test("(class Foo extends Bar { })", false);
-    test("(class extends foo() { })", false); // foo() is called when constructed
+    test("(class extends foo() { })", true);
     test("a", false);
     test("a.b", true);
     test("a.b.c", true);
@@ -84,10 +84,10 @@ fn closure_compiler_tests() {
     test("/abc/gi", false);
     test("('a')", false); // wrapped with parentheses to avoid treated as a directive
     test("0", false);
-    test("a + c", false);
+    test("a + c", true);
     test("'c' + a[0]", true);
     test("a[0][1]", true);
-    test("'a' + c", false);
+    test("'a' + c", true);
     test("'a' + a.name", true);
     test("1, 2, 3", false);
     test("a, b, 3", false);
@@ -96,8 +96,8 @@ fn closure_compiler_tests() {
     test("a ?? b", false);
     // test("'1' + navigator.userAgent", false);
     test("`template`", false);
-    test("`template${name}`", false);
-    test("`${name}template`", false);
+    test("`template${name}`", true);
+    test("`${name}template`", true);
     test("`${naming()}template`", true);
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
@@ -120,9 +120,9 @@ fn closure_compiler_tests() {
     test("undefined", false);
     test("void 0", false);
     test("void foo()", true);
-    test("-Infinity", false);
-    test("Infinity", false);
-    test("NaN", false);
+    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
     // test("({}||[]).foo = 2;", false);
     // test("(true ? {} : []).foo = 2;", false);
     // test("({},[]).foo = 2;", false);
@@ -143,7 +143,7 @@ fn closure_compiler_tests() {
     test("[...[i++]]", true);
     test("[...'string']", false);
     test("[...`templatelit`]", false);
-    test("[...`templatelit ${safe}`]", false);
+    test("[...`templatelit ${safe}`]", true);
     test("[...`templatelit ${unsafe()}`]", true);
     test("[...f()]", true);
     test("[...5]", true);
@@ -156,7 +156,7 @@ fn closure_compiler_tests() {
     test("Math.sin(...[i++])", true);
     // test("Math.sin(...'string')", false);
     // test("Math.sin(...`templatelit`)", false);
-    // test("Math.sin(...`templatelit ${safe}`)", false);
+    // test("Math.sin(...`templatelit ${safe}`)", true);
     test("Math.sin(...`templatelit ${unsafe()}`)", true);
     test("Math.sin(...f())", true);
     test("Math.sin(...5)", true);
@@ -169,7 +169,7 @@ fn closure_compiler_tests() {
     test("new Object(...[i++])", true);
     // test("new Object(...'string')", false);
     // test("new Object(...`templatelit`)", false);
-    // test("new Object(...`templatelit ${safe}`)", false);
+    // test("new Object(...`templatelit ${safe}`)", true);
     test("new Object(...`templatelit ${unsafe()}`)", true);
     test("new Object(...f())", true);
     test("new Object(...5)", true);
@@ -223,14 +223,14 @@ fn closure_compiler_tests() {
 
     // COMPUTED_PROP - CLASS
     test("(class C { [a]() {} })", false);
-    test("(class C { [a()]() {} })", false); // a is called when constructed
+    test("(class C { [a()]() {} })", true);
 
     // computed property getters and setters are modeled as COMPUTED_PROP with an
     // annotation to indicate getter or setter.
     test("(class C { get [a]() {} })", false);
-    test("(class C { get [a()]() {} })", false); // a is called when constructed
+    test("(class C { get [a()]() {} })", true);
     test("(class C { set [a](x) {} })", false);
-    test("(class C { set [a()](x) {} })", false); // a is called when constructed
+    test("(class C { set [a()](x) {} })", true);
 
     // GETTER_DEF
     test("({ get a() {} })", false);
@@ -343,22 +343,75 @@ fn test_simple_expressions() {
 }
 
 #[test]
+fn test_template_literal() {
+    test("``", false);
+    test("`a`", false);
+    test("`${1}`", false);
+    test("`${[]}`", false);
+    test("`${Symbol()}`", true);
+    test("`${{ toString() { console.log('sideeffect') } }}`", true);
+    test("`${{ valueOf() { console.log('sideeffect') } }}`", true);
+    test("`${{ [s]() { console.log('sideeffect') } }}`", true); // assuming s is Symbol.toPrimitive
+    test("`${a}`", true); // a maybe a symbol
+    test("`${a()}`", true);
+    test("`${a() === b}`", true);
+}
+
+#[test]
 fn test_unary_expressions() {
-    test("+'foo'", false);
-    test("+foo()", true);
-    test("-'foo'", false);
-    test("-foo()", true);
-    test("!'foo'", false);
-    test("!foo()", true);
-    test("~'foo'", false);
-    test("~foo()", true);
-    test("typeof 'foo'", false);
-    test_with_global_variables("typeof a", vec!["a".to_string()], false);
-    test("typeof foo()", true);
-    test("void 'foo'", false);
-    test("void foo()", true);
     test("delete 'foo'", true);
     test("delete foo()", true);
+
+    test("void 'foo'", false);
+    test("void foo()", true);
+    test("!'foo'", false);
+    test("!foo()", true);
+
+    test("typeof 'foo'", false);
+    test_with_global_variables("typeof a", vec!["a".to_string()], false);
+    test_with_global_variables("typeof (0, a)", vec!["a".to_string()], true);
+    test("typeof foo()", true);
+
+    test("+0", false);
+    test("+0n", true);
+    test("+null", false); // 0
+    test("+true", false); // 1
+    test("+'foo'", false); // NaN
+    test("+`foo`", false); // NaN
+    test("+/foo/", false); // NaN
+    test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
+    test("+[]", false); // 0
+    test("+[foo()]", true);
+    test("+foo()", true);
+    test("+foo", true); // foo can be Symbol or BigInt
+    test("+Symbol()", true);
+    test("+{}", false); // NaN
+    test("+{ valueOf() { return Symbol() } }", true);
+
+    test("-0", false);
+    test("-0n", false);
+    test("-null", false); // -0
+    test("-true", false); // -1
+    test("-'foo'", false); // -NaN
+    test("-`foo`", false); // NaN
+    test("-/foo/", false); // NaN
+    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
+    test("-[]", false); // -0
+    test("-[foo()]", true);
+    test("-foo()", true);
+    test("-foo", true); // foo can be Symbol
+    test("-Symbol()", true);
+    test("-{}", false); // NaN
+    test("-{ valueOf() { return Symbol() } }", true);
+
+    test("~0", false);
+    test("~'foo'", false);
+    test("~foo()", true);
+    test("~foo", true);
 }
 
 #[test]
@@ -386,20 +439,117 @@ fn test_other_expressions() {
 
 #[test]
 fn test_binary_expressions() {
+    test("a === b", false);
+    test("a() === b", true);
+    test("a !== b", false);
+    test("a() !== b", true);
+
     test("a == b", false);
     test("a() == b", true);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("'' == { toString() { console.log('sideeffect') } }", false);
+    test("'' == { valueOf() { console.log('sideeffect') } }", false);
+    test("'' == { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
+    test("a != b", false);
+    test("a() != b", true);
+
     test("a < b", false);
     test("a() < b", true);
-    test("a + b", false);
-    test("a() + b", true);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("'' < { toString() { console.log('sideeffect') } }", false);
+    test("'' < { valueOf() { console.log('sideeffect') } }", false);
+    test("'' < { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
+    test("a > b", false);
+    test("a() > b", true);
+    test("a >= b", false);
+    test("a() >= b", true);
+    test("a <= b", false);
+    test("a() <= b", true);
+
+    test("'' + ''", false);
+    test("'' + ``", false);
+    test("'' + `${foo()}`", true);
+    test("'' + null", false);
+    test("'' + 0", false);
+    test("'' + 0n", false);
+    test("'' + true", false);
+    test("'' + /a/", false);
+    test("'' + []", false);
+    test("'' + [foo()]", true);
+    test("'' + Symbol()", true);
+    test_with_global_variables("'' + Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("'' + NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("'' + undefined", vec!["undefined".to_string()], false);
+    test("'' + s", true); // assuming s is Symbol
+    test("Symbol() + ''", true);
+    test("'' + {}", false);
+    test("'' + { toString() { return Symbol() } }", true);
+    test("'' + { valueOf() { return Symbol() } }", true);
+    test("'' + { [s]() { return Symbol() } }", true); // assuming s is Symbol.toPrimitive
+    test("/a/ + 1", false); // /a/1
+    test("[] + 1", false); // 1
+    test("({} + 1)", false); // [object Object]1
+    test("0 + 1", false);
+    test("0 + null", false); // 0
+    test("0 + true", false); // 1
+    test("0 + a", true); // a can be BigInt
+    test("0n + 1n", false);
+    test("0n + a", true); // a can be Number
+    test("a + b", true);
+
+    test("0n - 1n", false);
+    test("0n - 0", true);
+    test("0n - a", true); // a can be Number
+    test("a - 0n", true); // a can be Number
+    test("0n - a()", true);
+    test("0 - 1", false);
+    test("0 - a", true); // a can be BigInt
+    test("0 - ''", false); // 0
+    test("0 - ``", false); // 0
+    test("0 - true", false); // -1
+    test("0 - /a/", false); // NaN
+    test("0 - []", false); // 0
+    test("0 - [foo()]", true);
+    test_with_global_variables("0 - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test_with_global_variables("0 - NaN", vec!["NaN".to_string()], false); // NaN
+    test_with_global_variables("0 - undefined", vec!["undefined".to_string()], false); // NaN
+    test_with_global_variables("null - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test("0 - {}", false); // NaN
+    test("'' - { toString() { return Symbol() } }", true);
+    test("'' - { valueOf() { return Symbol() } }", true);
+    test("'' - { [s]() { return Symbol() } }", true); // assuming s is Symbol.toPrimitive
+    test("a - b", true);
+    test("0 * 1", false);
+    test("0 * a", true);
+    test("0 / 1", false);
+    test("0 / a", true);
+    test("0 % 1", false);
+    test("0 % a", true);
+    test("0 << 1", false);
+    test("0 << a", true);
+    test("0 | 1", false);
+    test("0 | a", true);
+    test("0 >> 1", false);
+    test("0 >> a", true);
+    test("0 ^ 1", false);
+    test("0 ^ a", true);
+    test("0 & 1", false);
+    test("0 & a", true);
+    test("0 ** 1", false);
+    test("0 ** a", true);
+    test("1n ** (-1n)", true); // `**` throws an error when the right operand is negative
+    test("1n / 0n", true); // `/` throws an error when the right operand is zero
+    test("1n % 0n", true); // `%` throws an error when the right operand is zero
+    test("0n >>> 1n", true); // `>>>` throws an error even when both operands are bigint
+
+    test("[] instanceof 1", true); // throws an error
+    test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
+    test_with_global_variables("[] instanceof Object", vec!["Object".to_string()], false);
+    test_with_global_variables("a instanceof Object", vec!["Object".to_string()], true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
     test("a in b", true);
-    // b maybe not a function
-    // b[Symbol.hasInstance] may have a side effect
-    // a maybe a proxy that has a side effectful "getPrototypeOf" trap
-    test("a instanceof b", true);
 }
 
 #[test]
@@ -412,6 +562,11 @@ fn test_object_expression() {
     test("({[1]: 1})", false);
     test("({[1n]: 1})", false);
     test("({['1']: 1})", false);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("({[{ toString() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ valueOf() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ [s]() { console.log('sideeffect') } }]: 1})", false); // assuming s is Symbol.toPrimitive
+    test("({[foo]: 1})", false);
     test("({[foo()]: 1 })", true);
     test("({a: foo()})", true);
     test("({...a})", true);
@@ -419,6 +574,8 @@ fn test_object_expression() {
     test("({...[...a]})", true);
     test("({...'foo'})", false);
     test("({...`foo`})", false);
+    test("({...`foo${1}`})", false);
+    test("({...`foo${foo}`})", true);
     test("({...`foo${foo()}`})", true);
     test("({...foo()})", true);
 }
@@ -434,6 +591,8 @@ fn test_array_expression() {
     test("[...[...a]]", true);
     test("[...'foo']", false);
     test("[...`foo`]", false);
+    test("[...`foo${1}`]", false);
+    test("[...`foo${foo}`]", true);
     test("[...`foo${foo()}`]", true);
     test("[...foo()]", true);
 }
@@ -441,16 +600,24 @@ fn test_array_expression() {
 #[test]
 fn test_class_expression() {
     test("(class {})", false);
-    test("(class extends a {})", false);
-    test("(class extends foo() {})", false); // foo() is called when constructed
+    test("(@foo class {})", true);
+    test("(class extends a {})", false); // this may have a side effect, but ignored by the assumption
+    test("(class extends foo() {})", true);
     test("(class { static {} })", false);
     test("(class { static { foo(); } })", true);
+    test("(class { a() {} })", false);
+    test("(class { [1]() {} })", false);
+    test("(class { [1n]() {} })", false);
+    test("(class { #a() {} })", false);
+    test("(class { [foo()]() {} })", true);
+    test("(class { @foo a() {} })", true);
     test("(class { a; })", false);
     test("(class { 1; })", false);
     test("(class { [1]; })", false);
     test("(class { [1n]; })", false);
     test("(class { #a; })", false);
-    test("(class { [foo()] = 1 })", false); // foo() is called when constructed
+    test("(class { @foo a; })", true);
+    test("(class { [foo()] = 1 })", true);
     test("(class { a = foo() })", false); // foo() is called when constructed
     test("(class { static a; })", false);
     test("(class { static 1; })", false);
@@ -459,38 +626,104 @@ fn test_class_expression() {
     test("(class { static #a; })", false);
     test("(class { static [foo()] = 1 })", true);
     test("(class { static a = foo() })", true);
-    test("(class { accessor [foo()]; })", false);
+    test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
 }
 
 #[test]
-fn test_side_effectful_expressions() {
-    test("a.b", true);
+fn test_property_access() {
+    test("a.length", true);
+    test("a?.length", true);
+    test("'a'.length", false);
+    test("'a'?.length", false);
+    test("[].length", false);
+    test("[]['length']", false);
+    test("[][`length`]", false);
+    test("(foo() + '').length", true);
+
     test("a[0]", true);
-    test("a?.b", true);
+    test("''[-1]", true); // String.prototype[-1] may be overridden
+    test("''[0.3]", true); // String.prototype[0.3] may be overridden
+    test("''[0]", true); // String.prototype[0] may be overridden
+    test("'a'[0]", false);
+    test("'a'[0n]", false);
+    test("'a'[1]", true); // String.prototype[1] may be overridden
+    test("'あ'[0]", false);
+    test("'あ'[1]", true); // the length of "あ" is 1
+    test("'😀'[0]", false);
+    test("'😀'[1]", false);
+    test("'😀'[2]", true); // the length of "😀" is 2
+
+    test("[][-1]", true); // Array.prototype[-1] may be overridden
+    test("[][0.3]", true); // Array.prototype[0.3] may be overridden
+    test("[][0]", true); // Array.prototype[0] may be overridden
+    test("[1][0]", false);
+    test("[1][0n]", false);
+    test("[1][1]", true); // Array.prototype[1] may be overridden
+    test("[,][0]", false);
+    test("[...[], 1][0]", false);
+    test("[...[1]][0]", false);
+    test("[...'a'][0]", false);
+    test("[...'a'][1]", true);
+    test("[...'😀'][0]", false);
+    test("[...'😀'][1]", true);
+    test("[...a, 1][0]", true); // "...a" may have a sideeffect
 }
 
 #[test]
-fn tests() {
-    // This actually have a side effect, but this treated as side-effect free.
-    test("'' + { toString() { console.log('sideeffect') } }", false);
-    test("'' + { valueOf() { console.log('sideeffect') } }", false);
-    test("'' + { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
+fn test_call_like_expressions() {
+    test("foo()", true);
+    test("/* #__PURE__ */ foo()", false);
+    test("/* #__PURE__ */ foo(1)", false);
+    test("/* #__PURE__ */ foo(bar())", true);
+    test("/* #__PURE__ */ foo(...[])", false);
+    test("/* #__PURE__ */ foo(...[1])", false);
+    test("/* #__PURE__ */ foo(...[bar()])", true);
+    test("/* #__PURE__ */ foo(...bar)", true);
+    test("/* #__PURE__ */ foo(...`foo`)", false);
+    test("/* #__PURE__ */ foo(...`${1}`)", false);
+    test("/* #__PURE__ */ foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ foo(...`${bar()}`)", true);
+    test("/* #__PURE__ */ (() => { foo() })()", false);
+    test("foo?.()", true);
+    test("/* #__PURE__ */ foo?.()", false);
 
-    // FIXME: actually these have a side effect, but it's ignored now
-    test("+s", false); // assuming s is a Symbol
-    test("+b", false); // assuming b is a BitInt
-    test("+{ valueOf() { return Symbol() } }", false);
-    test("~s", false); // assuming s is a Symbol
+    test("new Foo()", true);
+    test("/* #__PURE__ */ new Foo()", false);
+    test("/* #__PURE__ */ new Foo(1)", false);
+    test("/* #__PURE__ */ new Foo(bar())", true);
+    test("/* #__PURE__ */ new Foo(...[])", false);
+    test("/* #__PURE__ */ new Foo(...[1])", false);
+    test("/* #__PURE__ */ new Foo(...[bar()])", true);
+    test("/* #__PURE__ */ new Foo(...bar)", true);
+    test("/* #__PURE__ */ new Foo(...`foo`)", false);
+    test("/* #__PURE__ */ new Foo(...`${1}`)", false);
+    test("/* #__PURE__ */ new Foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
+    test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
+}
 
-    // FIXME: actually these have a side effect, but it's ignored now
-    // same for -, *, /, %, **, <<, >>
-    test("'' + s", false); // assuming s is Symbol
-    test("0 + b", false); // assuming b is a BitInt
-
-    // FIXME: actually these throws an error, but it's ignored now
-    test("1n ** (-1n)", false);
-    test("1n / 0n", false);
-    test("1n % 0n", false);
-    test("0n >>> 1n", false); // >>> throws an error even when both operands are bigint
+#[test]
+fn test_object_with_to_primitive_related_properties_overridden() {
+    test("+{}", false);
+    test("+{ foo: 0 }", false);
+    test("+{ toString() { return Symbol() } }", true);
+    test("+{ valueOf() { return Symbol() } }", true);
+    test("+{ 'toString'() { return Symbol() } }", true);
+    test("+{ 'valueOf'() { return Symbol() } }", true);
+    test("+{ ['toString']() { return Symbol() } }", true);
+    test("+{ ['valueOf']() { return Symbol() } }", true);
+    test("+{ [`toString`]() { return Symbol() } }", true);
+    test("+{ [`valueOf`]() { return Symbol() } }", true);
+    test("+{ [Symbol.toPrimitive]() { return Symbol() } }", true);
+    test("+{ ...foo }", true); // foo can include toString / valueOf / Symbol.toPrimitive
+    test("+{ ...[] }", false);
+    test("+{ ...'foo' }", false);
+    test("+{ ...`foo` }", false);
+    test("+{ ...`foo${1}` }", false);
+    test("+{ ...`foo${foo}` }", true);
+    test("+{ ...`foo${foo()}` }", true);
+    test("+{ ...{ toString() { return Symbol() } } }", true);
+    test("+{ ...{ valueOf() { return Symbol() } } }", true);
+    test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);
 }

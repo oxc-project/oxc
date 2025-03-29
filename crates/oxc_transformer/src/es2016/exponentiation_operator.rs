@@ -33,7 +33,7 @@
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
@@ -125,11 +125,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     //
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `IdentifierReference` on left
     #[inline]
-    fn convert_identifier_assignment(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn convert_identifier_assignment(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let AssignmentTarget::AssignmentTargetIdentifier(ident) = &mut assign_expr.left else {
             unreachable!()
@@ -142,8 +138,8 @@ impl<'a> ExponentiationOperator<'a, '_> {
 
     /// Get left side of `Math.pow(pow_left, ...)` for identifier
     fn get_pow_left_identifier(
-        &mut self,
-        ident: &mut IdentifierReference<'a>,
+        &self,
+        ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (
         // Left side of `Math.pow(pow_left, ...)`
@@ -154,7 +150,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
+        let reference = ctx.scoping.scoping_mut().get_reference_mut(ident.reference_id());
 
         // `left **= right` is being transformed to `left = Math.pow(left, right)`,
         // so `left` in `left =` is no longer being read from
@@ -196,7 +192,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `StaticMemberExpression` on left
     #[inline]
     fn convert_static_member_expression_assignment(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -215,7 +211,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     /// Get left side of `Math.pow(pow_left, ...)` for static member expression
     /// and replacement for left side of assignment.
     fn get_pow_left_static_member(
-        &mut self,
+        &self,
         member_expr: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (
@@ -295,7 +291,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `ComputedMemberExpression` on left
     #[inline]
     fn convert_computed_member_expression_assignment(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -311,7 +307,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
 
     /// Get left side of `Math.pow(pow_left, ...)` for computed member expression
     fn get_pow_left_computed_member(
-        &mut self,
+        &self,
         member_expr: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (
@@ -376,7 +372,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `PrivateFieldExpression` on left
     #[inline]
     fn convert_private_field_assignment(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -393,7 +389,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     /// Get left side of `Math.pow(pow_left, ...)` for static member expression
     /// and replacement for left side of assignment.
     fn get_pow_left_private_field(
-        &mut self,
+        &self,
         field_expr: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (
@@ -419,7 +415,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         // obj.#prop = Math.pow(obj.#prop, right)
         //                          ^^^^^
         // ```
-        let field = field_expr.field.clone_in(ctx.ast.allocator);
+        let field = field_expr.field.clone();
 
         // Complete 2nd member expression
         // ```
@@ -472,7 +468,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     /// ^^^^^^^^^^^^^^^^^^^^^^^^^^ added to `temp_var_inits`
     /// ```
     fn get_second_member_expression_object(
-        &mut self,
+        &self,
         obj: &mut Expression<'a>,
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -483,7 +479,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         match obj {
             Expression::Super(super_) => return ctx.ast.expression_super(super_.span),
             Expression::Identifier(ident) => {
-                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+                let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
                     // No need for a temp var.
@@ -522,7 +518,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     fn revise_expression(
         expr: &mut Expression<'a>,
         mut temp_var_inits: ArenaVec<'a, Expression<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if !temp_var_inits.is_empty() {
             temp_var_inits.reserve_exact(1);
@@ -537,7 +533,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let math_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Math");
+        let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Math");
         let object =
             ctx.create_ident_expr(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, "pow");
@@ -552,7 +548,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     /// Add initialization expression `_name = expr` to `temp_var_inits`.
     /// Return `BoundIdentifier` for the temp var.
     fn create_temp_var(
-        &mut self,
+        &self,
         expr: Expression<'a>,
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,

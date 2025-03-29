@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression, Expression,
         FormalParameters, JSXAttributeItem, JSXElementName,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,7 +11,7 @@ use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+    AstNode, ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule,
 };
 
 fn only_used_in_recursion_diagnostic(span: Span, param_name: &str) -> OxcDiagnostic {
@@ -335,11 +335,7 @@ fn is_property_only_used_in_recursion_jsx(
         };
 
         let Some(attr) = ctx.nodes().ancestors(may_jsx_expr_container.id()).find_map(|node| {
-            if let AstKind::JSXAttributeItem(attr) = node.kind() {
-                Some(attr)
-            } else {
-                None
-            }
+            if let AstKind::JSXAttributeItem(attr) = node.kind() { Some(attr) } else { None }
         }) else {
             return false;
         };
@@ -384,7 +380,7 @@ fn is_recursive_call(
     ctx: &LintContext,
 ) -> bool {
     if let Expression::Identifier(identifier) = &call_expr.callee {
-        if let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
+        if let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
         {
             return symbol_id == function_symbol_id;
         }
@@ -416,7 +412,7 @@ fn get_jsx_element_symbol_id<'a>(
         | JSXElementName::ThisExpression(_) => None,
     }?;
 
-    ctx.symbols().get_reference(node.reference_id()).symbol_id()
+    ctx.scoping().get_reference(node.reference_id()).symbol_id()
 }
 
 enum Direction {

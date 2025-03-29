@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::CompilerAssumptions;
 
@@ -8,8 +8,8 @@ mod env;
 mod plugins;
 mod presets;
 pub use env::{BabelEnvOptions, BabelModule, BabelTargets};
-pub(crate) use plugins::BabelPlugins;
-pub(crate) use presets::BabelPresets;
+pub use plugins::BabelPlugins;
+pub use presets::BabelPresets;
 
 /// Babel options
 ///
@@ -63,7 +63,7 @@ pub struct BabelOptions {
 struct PluginPresetEntries(Vec<PluginPresetEntry>);
 
 /// <https://babeljs.io/docs/options#pluginpreset-entries>
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 enum PluginPresetEntry {
     String(String),

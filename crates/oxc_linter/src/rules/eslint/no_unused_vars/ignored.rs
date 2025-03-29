@@ -1,14 +1,14 @@
+use lazy_regex::Regex;
 use oxc_ast::{
+    AstKind,
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
         AssignmentTargetProperty, BindingPattern, BindingPatternKind, ClassElement,
         ObjectAssignmentTarget,
     },
-    AstKind,
 };
-use regex::Regex;
 
-use super::{options::IgnorePattern, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, options::IgnorePattern};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) enum FoundStatus {
@@ -34,11 +34,7 @@ impl FoundStatus {
 
     #[inline]
     pub const fn found(is_found: bool) -> Self {
-        if is_found {
-            Self::NotIgnored
-        } else {
-            Self::NotFound
-        }
+        if is_found { Self::NotIgnored } else { Self::NotFound }
     }
 
     /// Mark a target as ignored if it's found.
@@ -61,7 +57,6 @@ impl NoUnusedVars {
         let declared_binding = symbol.name();
         match symbol.declaration().kind() {
             AstKind::BindingRestElement(_)
-            | AstKind::Function(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_)
             | AstKind::ImportSpecifier(_)
@@ -73,9 +68,13 @@ impl NoUnusedVars {
             | AstKind::TSModuleDeclaration(_)
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
+            AstKind::Function(func) => {
+                func.r#type.is_typescript_syntax() || self.is_ignored_var(declared_binding)
+            }
             AstKind::Class(class) => {
-                if self.ignore_class_with_static_init_block
-                    && class.body.body.iter().any(ClassElement::is_static_block)
+                if class.declare
+                    || self.ignore_class_with_static_init_block
+                        && class.body.body.iter().any(ClassElement::is_static_block)
                 {
                     return true;
                 }

@@ -4,6 +4,185 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- eaea5fd parser: Handle invalid surrogate pair as lossy (#9964) (hi-ogawa)
+- e696fda parser: Fix broken `regular_expression` feature (#9963) (Boshen)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+- a9a47a6 parser: Add regex cargo feature to oxc_parser (#9879) (Toshit)
+- d4a83ba parser: Report duplicate modifier `Accessibility modifier already seen.` (#9890) (Boshen)
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+### Bug Fixes
+
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 8abb4f6 parser: Correctly set `export_kind` for `ExportNamedDeclaration` (#9827) (camc314)
+- f707d1f parser: Set kind of var_declarator correctly for using decl (#9753) (camc314)
+
+### Performance
+
+- 6fc26db lexer: Mark error case as cold branch when parsing `JSXText` (#9831) (overlookmotel)
+
+### Refactor
+
+- 3945385 parser: Simplify parsing extends clause (#9773) (Dunqing)
+
+## [0.58.0] - 2025-03-13
+
+- 842edd8 ast: [**BREAKING**] Add `raw` property to `JSXText` node (#9641) (Yuji Sugiura)
+
+### Features
+
+
+### Performance
+
+- a83cebd parser: Do not call `ParserImpl::end_span` twice for `StringLiteral`s (#9737) (overlookmotel)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+### Features
+
+- 638007b parser: Apply `preserveParens` to `TSParenthesizedType` (#9653) (Boshen)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+- cfdcfdb parser: Fix end span for optional binding pattern without type annotation (#9652) (Boshen)
+- 26da65d parser: Parse asi after class accessor property (#9623) (Boshen)
+- 87462fd parser: Fix end span for `using` declaration (#9622) (Boshen)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Bug Fixes
+
+- a88eb56 parser: Parsing errors occur when type parameters are followed by `as` or `satisfies` (#9553) (Dunqing)
+- 2c6e3f1 parser: Fix false positive parsing optional member expr (#9534) (camc314)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- 9c6ae9f parser: `@__NO_SIDE_EFFECTS` only affects const variable decl (#9517) (Boshen)
+- b7d5513 parser: Parse `@__NO_SIDE_EFFECTS__` between `export default` and `async function` (#9514) (Boshen)
+- 01de74c parser: Correctly fail parsing when parsing `foo.bar?.` (#9499) (camc314)
+- 58defe3 parser: Mark expression as pure in chain expression (#9479) (sapphi-red)
+- 2a03689 parser: Mark expressions on the left side of logical and conditional expressions as pure (#9414) (sapphi-red)
+
+### Performance
+
+
+## [0.53.0] - 2025-02-26
+
+### Performance
+
+- 61939ca ast/estree: Faster UTF-8 to UTF-16 span conversion (#9349) (overlookmotel)
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+- b09249c ast/estree: Rename serializers and serialization methods (#9284) (overlookmotel)
+- 4e9e8cf lexer: Reduce scope of `unsafe` blocks (#9320) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+- bde4126 parser: Parse `a ? b ? (c = 0) : d => 1 : (e = 2) : f => 3` (#9229) (Boshen)
+
+### Documentation
+
+- 3414824 oxc: Enable `clippy::too_long_first_doc_paragraph` (#9237) (Boshen)
+
+### Refactor
+
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- d615b34 parser: Add `ArrowFunctionHead` struct (#9222) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- bc64c9d lexer: Fix decoding lone `\r` in template literals (#9066) (overlookmotel)
+- b8278d8 parser: Parse `let _: null` as `TSNullKeyword` (#9133) (Boshen)
+
+## [0.50.0] - 2025-02-12
+
+- d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)
+
+### Bug Fixes
+
+- 662ab90 parser: Correct AST for `#field in x << y` (#9039) (Boshen)
+- 567bc2c parser: Fix `SequenceExpression` span (#9035) (hi-ogawa)
+
+### Refactor
+
+
+## [0.49.0] - 2025-02-10
+
+- bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)
+
+### Refactor
+
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
+### Testing
+
+- cebb350 minfier: Clean up some esbuild tests (Boshen)
+
 ## [0.48.1] - 2025-01-26
 
 ### Features

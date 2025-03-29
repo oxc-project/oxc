@@ -1,19 +1,19 @@
 use std::{borrow::Cow, fmt};
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
+    Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
     ser::SerializeMap,
-    Deserialize, Serialize,
 };
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    rules::{RuleEnum, RULES},
-    utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
     AllowWarnDeny, RuleWithSeverity,
+    rules::{RULES, RuleEnum},
+    utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
 type RuleSet = FxHashSet<RuleWithSeverity>;
@@ -23,8 +23,7 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 // Note: when update document comment, also update `DummyRuleMap`'s description in this file.
-#[derive(Debug, Clone, Default)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct OxlintRules {
     /// List of all configured rules
     pub(crate) rules: Vec<ESLintRule>,
@@ -41,11 +40,12 @@ impl OxlintRules {
     }
 }
 
-/// A fully qualified rule name, e.g. `eslint/no-console` or `react/rule-of-hooks`.
+/// A fully qualified rule name.
+///
+/// e.g. `eslint/no-console` or `react/rule-of-hooks`.
 /// Includes the plugin name, the rule name, and the configuration for the rule (if any).
 /// This does not imply the rule is known to the linter as that, only that it is configured.
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ESLintRule {
     /// Name of the plugin: `eslint`, `react`, etc.
     pub plugin_name: String,
@@ -112,11 +112,7 @@ impl OxlintRules {
                     let rules = rules_for_override
                         .iter()
                         .filter_map(|r| {
-                            if r.name() == *name {
-                                Some((r.plugin_name(), r))
-                            } else {
-                                None
-                            }
+                            if r.name() == *name { Some((r.plugin_name(), r)) } else { None }
                         })
                         .collect::<FxHashMap<_, _>>();
 
@@ -185,7 +181,7 @@ impl JsonSchema for OxlintRules {
         Cow::Borrowed("OxlintRules")
     }
 
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
         #[expect(unused)]
         #[derive(Debug, Clone, JsonSchema)]
         #[serde(untagged)]
@@ -201,15 +197,12 @@ impl JsonSchema for OxlintRules {
         )]
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
 
-        gen.subschema_for::<DummyRuleMap>()
+        r#gen.subschema_for::<DummyRuleMap>()
     }
 }
 
 impl Serialize for OxlintRules {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         let mut rules = s.serialize_map(Some(self.rules.len()))?;
 
         for rule in &self.rules {
@@ -282,6 +275,8 @@ fn parse_rule_key(name: &str) -> (String, String) {
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
+        // import-x has the same rules but better performance
+        "import-x" => ("import", rule_name),
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/next/google-font-display"
@@ -356,11 +351,11 @@ impl ESLintRule {
 #[expect(clippy::default_trait_access)]
 mod test {
     use serde::Deserialize;
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
 
     use crate::{
-        rules::{RuleEnum, RULES},
         AllowWarnDeny, RuleWithSeverity,
+        rules::{RULES, RuleEnum},
     };
 
     use super::{OxlintRules, RuleSet};

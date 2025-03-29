@@ -6,7 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}) {
    ·                                       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -24,7 +24,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar, {baz}) {
    ·                                           ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -33,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar, {baz}) {
    ·                                           ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}) {
    ·                                       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo: bar = 5} = {}) {
    ·                                            ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}) {
    ·                                       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}) {
    ·                                       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -78,7 +78,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}) {
    ·                                       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -87,7 +87,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({ foo, bar: { baz }}) {
    ·                                        ───  ─────────────
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -96,7 +96,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
    ·                                       ───    ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -105,7 +105,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
    ·                                       ───    ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
    ·                                       ───    ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar) {
    ·                                      ───  ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -132,7 +132,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar) {
    ·                                           ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -141,7 +141,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar, baz) {
    ·                                      ───       ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -150,7 +150,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                        */
  6 │                       function quux (foo, bar, baz) {
    ·                                                ───
- 7 │             
+ 7 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -159,7 +159,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo, bar, baz) {
    ·                                      ───  ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -186,7 +186,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -195,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -204,7 +204,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -213,7 +213,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -258,7 +258,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -267,7 +267,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                        */
  8 │                       function assign (employees, name) {
    ·                                                   ────
- 9 │             
+ 9 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -276,7 +276,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                        */
  6 │                       function quux (baz, {foo: bar}) {
    ·                                                 ───
- 7 │             
+ 7 │ 
    ╰────
   help: Add `@param` tag with name.
 
@@ -285,7 +285,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                        */
  5 │                       function quux (foo) {
    ·                                      ───
- 6 │             
+ 6 │ 
    ╰────
   help: Add `@param` tag with name.
 

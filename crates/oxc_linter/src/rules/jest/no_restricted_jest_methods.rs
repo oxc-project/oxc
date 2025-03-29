@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
 fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {

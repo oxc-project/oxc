@@ -6,20 +6,13 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
-    output::{output_path, Output},
+    AST_CRATE_PATH, Codegen, Generator, Result,
+    output::{Output, output_path},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
     utils::{create_safe_ident, is_reserved_name},
-    Codegen, Generator, AST_CRATE_PATH,
 };
 
-use super::define_generator;
-
-/// Types to omit builder method for.
-const BLACK_LIST: [&str; 1] = ["Span"];
-
-/// Semantic ID types.
-/// We generate builder methods both with and without these fields for types which include any of them.
-const SEMANTIC_ID_TYPES: [&str; 3] = ["ScopeId", "SymbolId", "ReferenceId"];
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for `AstBuilder`.
 pub struct AstBuilderGenerator;
@@ -27,19 +20,47 @@ pub struct AstBuilderGenerator;
 define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
+    /// Register that accept `#[builder]` attr on structs, enums, or struct fields.
+    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
+        &[("builder", attr_positions!(Struct | Enum | StructField))]
+    }
+
+    /// Parse `#[builder(default)]` on struct, enum, or struct field,
+    /// and `#[builder(skip)]` on struct or enum.
+    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        // No need to check attr name is `builder`, because that's the only attribute that
+        // this generator handles.
+        match part {
+            AttrPart::Tag("default") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.is_default = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.is_default = true,
+                AttrLocation::StructField(struct_def, field_index) => {
+                    struct_def.fields[field_index].builder.is_default = true;
+                }
+                _ => return Err(()),
+            },
+            AttrPart::Tag("skip") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.skip = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.skip = true,
+                _ => return Err(()),
+            },
+            _ => return Err(()),
+        }
+
+        Ok(())
+    }
+
     /// Generate `AstBuilder`.
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
         let fns = schema
             .types
             .iter()
-            .filter(|&type_def| {
-                let has_visitor = match type_def {
-                    TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
-                    TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
-                    _ => false,
-                };
-                let is_blacklisted = BLACK_LIST.contains(&type_def.name());
-                has_visitor && !is_blacklisted
+            .filter(|&type_def| match type_def {
+                TypeDef::Struct(struct_def) => {
+                    !struct_def.builder.skip && struct_def.visit.has_visitor()
+                }
+                TypeDef::Enum(enum_def) => !enum_def.builder.skip && enum_def.visit.has_visitor(),
+                _ => false,
             })
             .map(|type_def| generate_builder_methods(type_def, schema))
             .collect::<TokenStream>();
@@ -48,11 +69,7 @@ impl Generator for AstBuilderGenerator {
             //! AST node factories
 
             //!@@line_break
-            #![expect(
-                clippy::default_trait_access,
-                clippy::too_many_arguments,
-                clippy::fn_params_excessive_bools,
-            )]
+            #![expect(clippy::default_trait_access)]
 
             ///@@line_break
             use std::cell::Cell;
@@ -116,7 +133,7 @@ fn generate_builder_methods(type_def: &TypeDef, schema: &Schema) -> TokenStream 
 fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     let (mut params, generic_params, where_clause, has_default_fields) =
         get_struct_params(struct_def, schema);
-    let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true);
+    let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
     let (fn_name_postfix, doc_postfix) = if has_default_fields {
         let default_params = params.iter().filter(|param| param.is_default);
@@ -124,12 +141,8 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
             "_with_{}",
             default_params.clone().map(|param| param.field.name()).join("_and_")
         );
-        let doc_postfix = format!(
-            " with `{}`",
-            default_params
-                .map(|param| { param.field.type_def(schema).innermost_type(schema).name() })
-                .join("` and `")
-        );
+        let doc_postfix =
+            format!(" with `{}`", default_params.map(|param| param.field.name()).join("` and `"));
         (fn_name_postfix, doc_postfix)
     } else {
         (String::new(), String::new())
@@ -153,7 +166,7 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
     }
 
     // Generate builder functions excluding default fields
-    let (fn_params, fields) = get_struct_fn_params_and_fields(&params, false);
+    let (fn_params, fields) = get_struct_fn_params_and_fields(&params, false, schema);
     params.retain(|param| !param.is_default);
     let mut output2 = generate_builder_methods_for_struct_impl(
         struct_def,
@@ -175,7 +188,6 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
 /// Build a pair of builder methods for a struct.
 ///
 /// This is a separate function as may need to be called twice, with and without semantic ID fields.
-#[expect(clippy::too_many_arguments)]
 fn generate_builder_methods_for_struct_impl(
     struct_def: &StructDef,
     params: &[Param],
@@ -203,11 +215,15 @@ fn generate_builder_methods_for_struct_impl(
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(" If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead.");
+    let fn_doc2 = format!(
+        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
+    );
     let alloc_doc1 = format!(
         " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
     );
-    let alloc_doc2 = format!(" Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
+    let alloc_doc2 = format!(
+        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
+    );
     let params_docs = generate_doc_comment_for_params(params);
 
     quote! {
@@ -267,7 +283,16 @@ fn get_struct_params<'s>(
             let type_def = field.type_def(schema);
             let ty = type_def.ty(schema);
 
-            let is_default = SEMANTIC_ID_TYPES.contains(&type_def.innermost_type(schema).name());
+            // A field is default if the field is marked `#[builder(default)]`,
+            // or its innermost type is marked `#[builder(default)]`
+            let is_default = field.builder.is_default || {
+                let innermost_type = type_def.innermost_type(schema);
+                match innermost_type {
+                    TypeDef::Struct(inner_struct) => inner_struct.builder.is_default,
+                    TypeDef::Enum(inner_enum) => inner_enum.builder.is_default,
+                    _ => false,
+                }
+            };
             if is_default {
                 has_default_fields = true;
             };
@@ -342,6 +367,7 @@ fn get_struct_params<'s>(
 fn get_struct_fn_params_and_fields(
     params: &[Param],
     include_default_fields: bool,
+    schema: &Schema,
 ) -> (/* function params */ TokenStream, /* fields */ TokenStream) {
     let mut fields = vec![];
     let fn_params = params.iter().filter_map(|param| {
@@ -349,7 +375,12 @@ fn get_struct_fn_params_and_fields(
 
         if param.is_default {
             if include_default_fields {
-                fields.push(quote!( #param_ident: Cell::new(Some(#param_ident)) ));
+                // Builder functions which take default fields receive the innermost type as param.
+                // So wrap the param's value in `Cell::new(...)`, or `Some(...)` if necessary.
+                let field_type = param.field.type_def(schema);
+                let value = wrap_default_field_value(quote!( #param_ident ), field_type, schema);
+
+                fields.push(quote!( #param_ident: #value ));
                 return Some(&param.fn_param);
             }
 
@@ -385,7 +416,6 @@ fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> Tok
 }
 
 /// Generate builder method for an enum variant.
-#[expect(clippy::similar_names)]
 fn generate_builder_method_for_enum_variant(
     enum_def: &EnumDef,
     variant: &VariantDef,
@@ -397,38 +427,95 @@ fn generate_builder_method_for_enum_variant(
         variant_type = box_def.inner_type(schema);
         is_boxed = true;
     }
-    let TypeDef::Struct(variant_type) = variant_type else { panic!("Unsupported!") };
+    let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(variant_type, schema);
-    if has_default_fields {
-        params.retain(|param| !param.is_default);
+        get_struct_params(struct_def, schema);
+
+    let fn_name = enum_variant_builder_name(enum_def, variant);
+    let variant_ident = variant.ident();
+
+    let output = has_default_fields.then(|| {
+        let default_params = params.iter().filter(|param| param.is_default);
+        let fn_name_postfix = format!(
+            "_with_{}",
+            default_params.clone().map(|param| param.field.name()).join("_and_")
+        );
+        let doc_postfix =
+            format!(" with `{}`", default_params.map(|param| param.field.name()).join("` and `"));
+        generate_builder_method_for_enum_variant_impl(
+            enum_def,
+            struct_def,
+            &variant_ident,
+            &params,
+            &fn_name,
+            &generic_params,
+            &where_clause,
+            &fn_name_postfix,
+            &doc_postfix,
+            schema,
+            is_boxed,
+        )
+    });
+
+    params.retain(|param| !param.is_default);
+    let mut output2 = generate_builder_method_for_enum_variant_impl(
+        enum_def,
+        struct_def,
+        &variant_ident,
+        &params,
+        &fn_name,
+        &generic_params,
+        &where_clause,
+        "",
+        "",
+        schema,
+        is_boxed,
+    );
+
+    if let Some(output) = output {
+        output2.extend(output);
     }
 
+    output2
+}
+
+fn generate_builder_method_for_enum_variant_impl(
+    enum_def: &EnumDef,
+    struct_def: &StructDef,
+    variant_ident: &Ident,
+    params: &[Param],
+    fn_name: &str,
+    generic_params: &TokenStream,
+    where_clause: &TokenStream,
+    fn_name_postfix: &str,
+    doc_postfix: &str,
+    schema: &Schema,
+    is_boxed: bool,
+) -> TokenStream {
+    let fn_name = format_ident!("{}{}", fn_name, fn_name_postfix);
     let fn_params = params.iter().map(|param| &param.fn_param);
     let args = params.iter().map(|param| &param.ident);
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
-    let fn_name = enum_variant_builder_name(enum_def, variant);
-    let variant_ident = variant.ident();
-    let inner_builder_name = struct_builder_name(&variant_type.snake_name(), is_boxed);
+    let inner_builder_name = format!("{}{fn_name_postfix}", struct_def.snake_name());
+    let inner_builder_name = struct_builder_name(&inner_builder_name, is_boxed);
 
     // Generate doc comments
     let enum_name = enum_def.name();
     let article_enum = article_for(enum_name);
-    let variant_name = variant.ident();
-    let fn_doc1 = format!(" Build {article_enum} [`{enum_name}::{variant_name}`].");
+    let fn_doc1 = format!(" Build {article_enum} [`{enum_name}::{variant_ident}`]{doc_postfix}.");
     let mut fn_docs = quote!( #[doc = #fn_doc1] );
     if is_boxed {
-        let variant_type_name = variant_type.name();
+        let variant_type_name = struct_def.name();
         let article_variant = article_for(variant_type_name);
         let fn_doc2 = format!(
             " This node contains {article_variant} [`{variant_type_name}`] that will be stored in the memory arena."
         );
         fn_docs.extend(quote!( #[doc = ""] #[doc = #fn_doc2] ));
     }
-    let params_docs = generate_doc_comment_for_params(&params);
+    let params_docs = generate_doc_comment_for_params(params);
 
     quote! {
         ///@@line_break
@@ -456,7 +543,7 @@ fn struct_builder_name(snake_name: &str, does_alloc: bool) -> Ident {
 }
 
 /// Get name of enum variant builder method.
-fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident {
+fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> String {
     let enum_name = enum_def.snake_name();
 
     let variant_name = variant.snake_name();
@@ -473,7 +560,29 @@ fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident 
         &variant_name
     };
 
-    format_ident!("{enum_name}_{variant_name}")
+    format!("{enum_name}_{variant_name}")
+}
+
+/// Wrap the value of a default field in `Cell::new(...)` or `Some(...)` if necessary.
+///
+/// Wrap recursively, moving inwards towards the innermost type.
+fn wrap_default_field_value(
+    value: TokenStream,
+    type_def: &TypeDef,
+    schema: &Schema,
+) -> TokenStream {
+    match type_def {
+        TypeDef::Cell(cell_def) => {
+            let inner_value = wrap_default_field_value(value, cell_def.inner_type(schema), schema);
+            quote!( Cell::new(#inner_value) )
+        }
+        TypeDef::Option(option_def) => {
+            let inner_value =
+                wrap_default_field_value(value, option_def.inner_type(schema), schema);
+            quote!( Some(#inner_value) )
+        }
+        _ => value,
+    }
 }
 
 /// Generate doc comment for function params.

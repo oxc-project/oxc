@@ -1,20 +1,19 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-        FunctionType, MethodDefinitionKind, PropertyKey, PropertyKind,
+        FunctionType, PropertyKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
-use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::get_function_name_with_kind, context::LintContext, rule::Rule};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -233,127 +232,6 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 
-fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
-    if matches!(key, PropertyKey::NullLiteral(_)) {
-        return Some("null".into());
-    }
-
-    match key {
-        PropertyKey::RegExpLiteral(regex) => {
-            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
-        }
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
-        PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.len() == 0 && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
-                    return Some(Cow::Borrowed(cooked.as_str()));
-                }
-            }
-
-            None
-        }
-        _ => None,
-    }
-}
-
-fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
-    let (key, computed) = match parent_node.kind() {
-        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(method_definition) => {
-            (&method_definition.key, method_definition.computed)
-        }
-        AstKind::ObjectProperty(property) => (&property.key, property.computed),
-        _ => return None,
-    };
-
-    if key.is_identifier() && !computed {
-        return key.name();
-    }
-
-    get_property_key_name(key)
-}
-
-/// Gets the name and kind of the given function node.
-/// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
-fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a>) -> Cow<'a, str> {
-    let mut tokens: Vec<Cow<'a, str>> = vec![];
-
-    match parent_node.kind() {
-        AstKind::MethodDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
-                tokens.push(Cow::Borrowed("private"));
-            } else if let Some(accessibility) = definition.accessibility {
-                tokens.push(Cow::Borrowed(accessibility.as_str()));
-            }
-
-            if definition.r#static {
-                tokens.push(Cow::Borrowed("static"));
-            }
-        }
-        AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
-                tokens.push(Cow::Borrowed("private"));
-            } else if let Some(accessibility) = definition.accessibility {
-                tokens.push(Cow::Borrowed(accessibility.as_str()));
-            }
-
-            if definition.r#static {
-                tokens.push(Cow::Borrowed("static"));
-            }
-        }
-        _ => {}
-    }
-
-    if func.r#async {
-        tokens.push(Cow::Borrowed("async"));
-    }
-
-    if func.generator {
-        tokens.push(Cow::Borrowed("generator"));
-    }
-
-    match parent_node.kind() {
-        AstKind::MethodDefinition(method_definition) => match method_definition.kind {
-            MethodDefinitionKind::Constructor => tokens.push(Cow::Borrowed("constructor")),
-            MethodDefinitionKind::Get => tokens.push(Cow::Borrowed("getter")),
-            MethodDefinitionKind::Set => tokens.push(Cow::Borrowed("setter")),
-            MethodDefinitionKind::Method => tokens.push(Cow::Borrowed("method")),
-        },
-        AstKind::PropertyDefinition(_) => tokens.push(Cow::Borrowed("method")),
-        _ => tokens.push(Cow::Borrowed("function")),
-    }
-
-    match parent_node.kind() {
-        AstKind::MethodDefinition(method_definition)
-            if !method_definition.computed && method_definition.key.is_private_identifier() =>
-        {
-            if let Some(name) = method_definition.key.name() {
-                tokens.push(name);
-            }
-        }
-        AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
-                if let Some(name) = definition.key.name() {
-                    tokens.push(name);
-                }
-            } else if let Some(static_name) = get_static_property_name(parent_node) {
-                tokens.push(static_name);
-            } else if let Some(name) = func.name() {
-                tokens.push(Cow::Borrowed(name.as_str()));
-            }
-        }
-        _ => {
-            if let Some(static_name) = get_static_property_name(parent_node) {
-                tokens.push(static_name);
-            } else if let Some(name) = func.name() {
-                tokens.push(Cow::Borrowed(name.as_str()));
-            }
-        }
-    }
-
-    Cow::Owned(tokens.join(" "))
-}
-
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(default_value) = value.get(0) else {
@@ -371,7 +249,7 @@ impl Rule for FuncNames {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut invalid_funcs: Vec<(&Function, &AstNode)> = vec![];
+        let mut invalid_funcs: Vec<(&Function, &AstNode, &AstNode)> = vec![];
 
         for node in ctx.nodes() {
             match node.kind() {
@@ -384,7 +262,7 @@ impl Rule for FuncNames {
                         if func.generator { &self.generators_config } else { &self.default_config };
 
                     if config.is_invalid_function(func, parent_node) {
-                        invalid_funcs.push((func, parent_node));
+                        invalid_funcs.push((func, node, parent_node));
                     }
                 }
 
@@ -395,7 +273,7 @@ impl Rule for FuncNames {
                         // check at first if the callee calls an invalid function
                         if !invalid_funcs
                             .iter()
-                            .filter_map(|(func, _)| func.name())
+                            .filter_map(|(func, _, _)| func.name())
                             .any(|func_name| func_name == identifier.name)
                         {
                             continue;
@@ -418,7 +296,7 @@ impl Rule for FuncNames {
 
                         // we found a recursive function, remove it from the invalid list
                         if let Some(span) = ast_span {
-                            invalid_funcs.retain(|(func, _)| func.span != span);
+                            invalid_funcs.retain(|(func, _, _)| func.span != span);
                         }
                     }
                 }
@@ -426,8 +304,8 @@ impl Rule for FuncNames {
             }
         }
 
-        for (func, parent_node) in &invalid_funcs {
-            let func_name_complete = get_function_name_with_kind(func, parent_node);
+        for (func, node, parent_node) in invalid_funcs {
+            let func_name_complete = get_function_name_with_kind(node, parent_node);
 
             let report_span = Span::new(func.span.start, func.params.span.start);
             let replace_span = Span::new(
@@ -450,7 +328,7 @@ impl Rule for FuncNames {
                             |name| {
                                 // if this name shadows a variable in the outer scope **and** that name is referenced
                                 // inside the function body, it is unsafe to add a name to this function
-                                if ctx.scopes().find_binding(func.scope_id(), &name).is_some_and(
+                                if ctx.scoping().find_binding(func.scope_id(), &name).is_some_and(
                                     |shadowed_var| {
                                         ctx.semantic().symbol_references(shadowed_var).any(
                                             |reference| {
@@ -492,20 +370,12 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
             }
             AstKind::ObjectProperty(prop) => {
                 return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) {
-                        Some(name)
-                    } else {
-                        None
-                    }
+                    if is_valid_identifier_name(&name) { Some(name) } else { None }
                 });
             }
             AstKind::PropertyDefinition(prop) => {
                 return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) {
-                        Some(name)
-                    } else {
-                        None
-                    }
+                    if is_valid_identifier_name(&name) { Some(name) } else { None }
                 });
             }
             _ => return None,
@@ -514,20 +384,11 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
     None
 }
 
-const INVALID_NAMES: phf::set::Set<&'static str> = phf_set! {
-    "arguments",
-    "async",
-    "await",
-    "constructor",
-    "default",
-    "eval",
-    "null",
-    "undefined",
-    "yield",
-};
+const INVALID_NAMES: [&str; 9] =
+    ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
 
 fn is_valid_identifier_name(name: &str) -> bool {
-    !INVALID_NAMES.contains(name) && is_identifier_name(name)
+    !INVALID_NAMES.contains(&name) && is_identifier_name(name)
 }
 
 #[test]
@@ -676,7 +537,7 @@ fn test() {
         ("class C { public foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
         ("class C { [foo] = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
         ("class C { #foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
-        ("class C { foo = bar(function() {}) }", as_needed.clone()), // { "ecmaVersion": 2022 },
+        ("class C { foo = bar(function() {}) }", as_needed), // { "ecmaVersion": 2022 },
         ("class C { foo = function bar() {} }", never.clone()), // { "ecmaVersion": 2022 }
     ];
 
@@ -751,7 +612,7 @@ fn test() {
             "Foo.prototype.bar = function () {}",
             never.clone(),
         ),
-        ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+        ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never),
         (
             "const restoreGracefully = function <T>(entries: T[]) { }",
             "const restoreGracefully = function  restoreGracefully<T>(entries: T[]) { }",
@@ -794,7 +655,7 @@ fn test() {
              Component.prototype.setState = function (update, callback) {
 	             return setState.call(this, update, callback);
             };",
-            always.clone(),
+            always,
         ),
     ];
 

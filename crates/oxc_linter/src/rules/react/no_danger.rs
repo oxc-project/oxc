@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
+    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::{has_jsx_prop, is_create_element_call},
-    AstNode,
 };
 
 fn no_danger_diagnostic(span: Span) -> OxcDiagnostic {

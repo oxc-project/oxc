@@ -14,7 +14,6 @@ on:
   push:
     branches:
       - main
-      - "renovate/**"
     paths-ignore:
       - "**/*.md"
       - "**/*.yml"
@@ -57,16 +56,17 @@ jobs:
       # Unsung heros of the internet, who led me here to speed up window's slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: samypr100/setup-dev-drive@c13db539c98b4353ff2bc78fb8f775b94336025b # v3
+      - uses: samypr100/setup-dev-drive@b9079d2711b01ed39de859c79c96484bfd80e078 # v3.4.1
         with:
           workspace-copy: true
           drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
 
       - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
           # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
@@ -79,77 +79,87 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
 
-      - name: Run
+      - run: cargo test --all-features # cargo ck # no need to `cargo ck` because it's already checked in linux
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
-        run: |
-          # cargo ck # no need to check because it's already checked in linux
-          cargo test --all-features
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
-    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
-      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
-      # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_ast -p oxc_cfg -p oxc_regular_expression -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
-      - run: rustup target add wasm32-wasip1-threads
-      - uses: bytecodealliance/actions/wasmtime/setup@d742827944dcb656569399571a8a45261b5089f6 # v1.1.0
-      - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
-      - run: git diff --exit-code # Must commit everything
+      - uses: ./.github/actions/pnpm
+        if: steps.filter.outputs.src == 'true'
+      - name: Build
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
+          git diff --exit-code # Must commit everything
+      - name: Test wasi in browser
+        if: steps.filter.outputs.src == 'true'
+        working-directory: napi/parser
+        run: |
+          rm -rf *.wasm
+          pnpm exec playwright install chromium
+          pnpm run build-wasi
+          pnpm run build-npm-dir
+          pnpm run test-browser
+          pnpm build-browser-bundle --npmDir npm-dir
 
-  test-wasm32-unknown-unknown:
-    name: Check wasm32-unknown-unknown
+  test-napi:
+    name: Test NAPI
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
         with:
-          cache-key: wasm
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
-          tools: wasm-pack,just
-      - name: Check
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo check -p oxc_wasm --target wasm32-unknown-unknown
       - uses: ./.github/actions/pnpm
-
-      - run: just build-wasm debug
-      - working-directory: npm/oxc-wasm
-        run: pnpm run check
-
-      - working-directory: wasm/parser
-        run: pnpm run build
-      - working-directory: npm/parser-wasm
-        run: pnpm run check
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build
+          pnpm run test
+          pnpm --filter e2e run test
+          git diff --exit-code # Must commit everything
 
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@685eb3d55be2f85191e8c84acb9f44d7756f84ab # v1.29.4
+      - uses: crate-ci/typos@718c4ff697435edabd4f1c52c3775521adbb33a3 # v1.31.0
         with:
           files: .
 
@@ -193,7 +203,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           filters: |
@@ -204,9 +214,7 @@ jobs:
               - '!editors/**'
               - '!napi/**'
               - '!npm/**'
-              - '!wasm/**'
               - '!crates/oxc_linter/**'
-              - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
               - '!tasks/**'
               - 'tasks/conformance/**'
@@ -237,7 +245,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           filters: |
@@ -265,10 +273,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
-          filters: ".github/.generated_ast_watch_list.yml"
+          filters: ".github/generated/ast_changes_watch_list.yml"
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
@@ -279,10 +287,9 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Restore dprint plugin cache
-        id: cache-restore
-        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
-          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
 
       - name: Check AST Changes
@@ -291,35 +298,3 @@ jobs:
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
           (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)
-
-      - name: Save dprint plugin cache
-        if: ${{ github.ref_name == 'main' }}
-        id: cache-save
-        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
-        with:
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-          path: ~/.cache/dprint
-
-  napi:
-    name: Test NAPI
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
-        id: filter
-        with:
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        if: steps.filter.outputs.src == 'true'
-        with:
-          cache-key: warm
-      - uses: ./.github/actions/pnpm
-        if: steps.filter.outputs.src == 'true'
-      - if: steps.filter.outputs.src == 'true'
-        run: |
-          pnpm run build-dev
-          pnpm run test
-          pnpm --filter e2e run test
-          git diff --exit-code # Must commit everything

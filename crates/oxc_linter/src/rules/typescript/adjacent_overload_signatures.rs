@@ -1,18 +1,18 @@
 use oxc_ast::{
-    ast::{
-        match_expression, ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType,
-        ModuleDeclaration, PropertyKey, Statement, TSSignature,
-    },
     AstKind,
+    ast::{
+        ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType, ModuleDeclaration,
+        PropertyKey, Statement, TSSignature, match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn adjacent_overload_signatures_diagnostic(

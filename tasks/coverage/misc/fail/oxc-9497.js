@@ -1,0 +1,2 @@
+let repro = {};
+repro.f?.

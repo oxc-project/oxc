@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
@@ -192,7 +192,7 @@ impl Rule for NoCommonjs {
 
                 // exports.
                 if member_expr.object().is_specific_id("exports") {
-                    if node.scope_id() != ctx.scopes().root_scope_id() {
+                    if node.scope_id() != ctx.scoping().root_scope_id() {
                         return;
                     }
 
@@ -204,7 +204,8 @@ impl Rule for NoCommonjs {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                if self.allow_conditional_require && node.scope_id() != ctx.scopes().root_scope_id()
+                if self.allow_conditional_require
+                    && node.scope_id() != ctx.scoping().root_scope_id()
                 {
                     return;
                 }
@@ -213,7 +214,7 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
+                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
                     return;
                 }
 

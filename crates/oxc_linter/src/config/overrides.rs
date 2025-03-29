@@ -1,12 +1,16 @@
-use std::{borrow::Cow, ops::Deref, path::Path};
+use std::{
+    borrow::Cow,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
 
 use nonmax::NonMaxU32;
-use schemars::{gen, schema::Schema, JsonSchema};
-use serde::{de, ser, Deserialize, Serialize};
+use schemars::{JsonSchema, r#gen, schema::Schema};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 use oxc_index::{Idx, IndexVec};
 
-use crate::{config::OxlintRules, LintPlugins, OxlintEnv, OxlintGlobals};
+use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct OverrideId(NonMaxU32);
@@ -36,6 +40,21 @@ impl Deref for OxlintOverrides {
     }
 }
 
+impl DerefMut for OxlintOverrides {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl IntoIterator for OxlintOverrides {
+    type Item = OxlintOverride;
+    type IntoIter = <IndexVec<OverrideId, OxlintOverride> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl OxlintOverrides {
     #[inline]
     pub fn empty() -> Self {
@@ -59,8 +78,8 @@ impl JsonSchema for OxlintOverrides {
         Cow::Borrowed("OxlintOverrides")
     }
 
-    fn json_schema(gen: &mut gen::SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<OxlintOverride>>()
+    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<OxlintOverride>>()
     }
 }
 
@@ -126,20 +145,14 @@ impl GlobSet {
     }
 }
 
-impl ser::Serialize for GlobSet {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
+impl Serialize for GlobSet {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.raw.serialize(serializer)
     }
 }
 
-impl<'de> de::Deserialize<'de> for GlobSet {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
+impl<'de> Deserialize<'de> for GlobSet {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let globs = Vec::<String>::deserialize(deserializer)?;
         Self::new(globs).map_err(de::Error::custom)
     }
@@ -154,8 +167,8 @@ impl JsonSchema for GlobSet {
         Cow::Borrowed("GlobSet")
     }
 
-    fn json_schema(gen: &mut gen::SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<String>>()
+    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<String>>()
     }
 }
 

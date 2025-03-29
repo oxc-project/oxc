@@ -5,22 +5,24 @@
 //! Calculate each separately, and generate assertions for each.
 
 use std::{
+    borrow::Cow,
     cmp::{max, min},
     num,
 };
 
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 use syn::Ident;
 
 use crate::{
-    output::{output_path, Output},
+    Codegen, Generator,
+    output::{Output, output_path},
     schema::{
-        extensions::layout::{Layout, Niche, Offset, PlatformLayout},
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
+        extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
-    utils::number_lit,
-    Codegen, Generator, AST_CRATE_PATH,
+    utils::{format_cow, number_lit},
 };
 
 use super::define_generator;
@@ -32,44 +34,15 @@ define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
     /// Calculate layouts of all types.
-    fn prepare(&self, schema: &mut Schema) {
+    fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         for type_id in schema.types.indices() {
             calculate_layout(type_id, schema);
         }
     }
 
     /// Generate assertions that calculated layouts are correct.
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        let (assertions_64, assertions_32): (TokenStream, TokenStream) =
-            schema.types.iter().map(generate_layout_assertions).unzip();
-
-        let output = quote! {
-            use std::mem::{align_of, offset_of, size_of};
-
-            ///@@line_break
-            use nonmax::NonMaxU32;
-
-            ///@@line_break
-            use oxc_regular_expression::ast::*;
-            use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
-
-            ///@@line_break
-            use crate::ast::*;
-
-            ///@@line_break
-            #[cfg(target_pointer_width = "64")]
-            const _: () = { #assertions_64 };
-
-            ///@@line_break
-            #[cfg(target_pointer_width = "32")]
-            const _: () = { #assertions_32 };
-
-            ///@@line_break
-            #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
-            const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
-        };
-
-        Output::Rust { path: output_path(AST_CRATE_PATH, "assert_layouts.rs"), tokens: output }
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        generate_assertions(schema)
     }
 }
 
@@ -162,12 +135,16 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             layout.align = max(layout.align, field_layout.align);
 
             // Update niche.
-            // Take the largest niche. Preference for earlier niche if 2 fields have niches of same size.
+            // Take the largest niche. Preference for (in order):
+            // * Largest single range of niche values.
+            // * Largest number of niche values at start of range.
+            // * Earlier field.
             if let Some(field_niche) = &field_layout.niche {
-                // TODO: Use `Option::is_none_or` once our MSRV reaches 1.82.0
-                if layout.niche.is_none()
-                    || field_niche.count > layout.niche.as_ref().unwrap().count
-                {
+                if layout.niche.as_ref().is_none_or(|niche| {
+                    field_niche.count_max() > niche.count_max()
+                        || (field_niche.count_max() == niche.count_max()
+                            && field_niche.count_start > niche.count_start)
+                }) {
                     let mut niche = field_niche.clone();
                     niche.offset += offset;
                     layout.niche = Some(niche);
@@ -261,9 +238,7 @@ fn calculate_layout_for_enum(type_id: TypeId, schema: &mut Schema) -> Layout {
     let niches_end = Discriminant::MAX - max_discriminant;
 
     if niches_start != 0 || niches_end != 0 {
-        let is_range_start = niches_start >= niches_end;
-        let count = u32::from(if is_range_start { niches_start } else { niches_end });
-        let niche = Niche::new(0, 1, is_range_start, count);
+        let niche = Niche::new(0, 1, u32::from(niches_start), u32::from(niches_end));
         layout_64.niche = Some(niche.clone());
         layout_32.niche = Some(niche);
     }
@@ -287,14 +262,18 @@ fn calculate_layout_for_option(type_id: TypeId, schema: &mut Schema) -> Layout {
     #[expect(clippy::items_after_statements)]
     fn consume_niche(layout: &mut PlatformLayout) {
         if let Some(niche) = &mut layout.niche {
-            if niche.count == 1 {
-                layout.niche = None;
+            if niche.count_start == 0 {
+                niche.count_end -= 1;
             } else {
-                niche.count -= 1;
+                niche.count_start -= 1;
+            }
+
+            if niche.count_start == 0 && niche.count_end == 0 {
+                layout.niche = None;
             }
         } else {
             layout.size += layout.align;
-            layout.niche = Some(Niche::new(0, 1, false, 254));
+            layout.niche = Some(Niche::new(0, 1, 0, 254));
         }
     }
 
@@ -310,8 +289,8 @@ fn calculate_layout_for_option(type_id: TypeId, schema: &mut Schema) -> Layout {
 /// `Box`es are pointer-sized, with a single niche (like `NonNull`).
 fn calculate_layout_for_box() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
     }
 }
 
@@ -322,8 +301,8 @@ fn calculate_layout_for_box() -> Layout {
 /// They have a single niche on the first field - the pointer which is `NonNull`.
 fn calculate_layout_for_vec() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
     }
 }
 
@@ -346,8 +325,8 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
 fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
     let str_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
     };
     // `usize` and `isize` are pointer-sized, but with no niche
     let usize_layout = Layout {
@@ -356,13 +335,13 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     };
     // `NonZeroUsize` and `NonZeroIsize` are pointer-sized, with a single niche
     let non_zero_usize_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
     };
 
     #[expect(clippy::match_same_arms)]
     match primitive_def.name() {
-        "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, false, 254)),
+        "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, 0, 254)),
         "u8" => Layout::from_type::<u8>(),
         "u16" => Layout::from_type::<u16>(),
         "u32" => Layout::from_type::<u32>(),
@@ -370,7 +349,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "u128" => {
             panic!("Cannot calculate alignment for `u128`. It differs depending on Rust version.")
         }
-        "usize" => usize_layout.clone(),
+        "usize" => usize_layout,
         "i8" => Layout::from_type::<i8>(),
         "i16" => Layout::from_type::<i16>(),
         "i32" => Layout::from_type::<i32>(),
@@ -378,25 +357,29 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "i128" => {
             panic!("Cannot calculate alignment for `i128`. It differs depending on Rust version.")
         }
-        "isize" => usize_layout.clone(),
+        "isize" => usize_layout,
         "f32" => Layout::from_type::<f32>(),
         "f64" => Layout::from_type::<f64>(),
-        "&str" => str_layout.clone(),
+        "&str" => str_layout,
         "Atom" => str_layout,
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
         "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
         "NonZeroU128" => {
-            panic!("Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version.")
+            panic!(
+                "Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version."
+            )
         }
-        "NonZeroUsize" => non_zero_usize_layout.clone(),
+        "NonZeroUsize" => non_zero_usize_layout,
         "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
         "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
         "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
         "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
         "NonZeroI128" => {
-            panic!("Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version.")
+            panic!(
+                "Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version."
+            )
         }
         "NonZeroIsize" => non_zero_usize_layout,
         "PointerAlign" => Layout {
@@ -407,36 +390,67 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     }
 }
 
-/// Generate layout assertions for a type
-fn generate_layout_assertions(
+/// Generate layout assertions for all types.
+fn generate_assertions(schema: &Schema) -> Vec<Output> {
+    let mut assertions = FxHashMap::default();
+
+    for type_def in &schema.types {
+        generate_layout_assertions(type_def, &mut assertions, schema);
+    }
+
+    assertions
+        .into_iter()
+        .map(|(krate, (assertions_64, assertions_32))| {
+            let output = template(krate, &assertions_64, &assertions_32);
+
+            let crate_path = if krate.starts_with("napi/") {
+                Cow::Borrowed(krate)
+            } else {
+                format_cow!("crates/{krate}")
+            };
+            Output::Rust { path: output_path(&crate_path, "assert_layouts.rs"), tokens: output }
+        })
+        .collect()
+}
+
+/// Generate layout assertions for a type.
+fn generate_layout_assertions<'s>(
     type_def: &TypeDef,
-) -> (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream) {
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
     match type_def {
-        TypeDef::Struct(struct_def) => generate_layout_assertions_for_struct(struct_def),
-        TypeDef::Enum(enum_def) => generate_layout_assertions_for_enum(enum_def),
-        _ => (quote!(), quote!()),
+        TypeDef::Struct(struct_def) => {
+            generate_layout_assertions_for_struct(struct_def, assertions, schema);
+        }
+        TypeDef::Enum(enum_def) => {
+            generate_layout_assertions_for_enum(enum_def, assertions, schema);
+        }
+        _ => {}
     }
 }
 
 /// Generate layout assertions for a struct.
 /// This includes size and alignment assertions, plus assertions about offset of fields.
-fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream, TokenStream) {
-    fn gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
-        let layout =
-            if is_64 { &struct_def.layout.layout_64 } else { &struct_def.layout.layout_32 };
+fn generate_layout_assertions_for_struct<'s>(
+    struct_def: &StructDef,
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
+    fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
+        let layout = struct_def.platform_layout(is_64);
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
         let offset_asserts = struct_def.fields.iter().filter_map(|field| {
-            if field.visibility != Visibility::Public {
-                // Cannot create assertions for fields which are not public, as assertions
-                // are generated in `oxc_ast` crate, and those types are in other crates
+            if struct_def.is_foreign || field.visibility == Visibility::Private {
+                // Cannot create assertions for private fields (cant access them)
+                // or foreign types (we don't know what fields they have)
                 return None;
             }
 
             let field_ident = field.ident();
-            let offset =
-                number_lit(if is_64 { field.offset.offset_64 } else { field.offset.offset_32 });
+            let offset = number_lit(field.platform_offset(is_64));
             Some(quote! {
                 assert!(offset_of!(#struct_ident, #field_ident) == #offset);
             })
@@ -448,18 +462,27 @@ fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream
         }
     }
 
+    let (assertions_64, assertions_32) =
+        assertions.entry(struct_def.file(schema).krate()).or_default();
+
     let ident = struct_def.ident();
-    (gen(struct_def, true, &ident), gen(struct_def, false, &ident))
+    assertions_64.extend(r#gen(struct_def, true, &ident));
+    assertions_32.extend(r#gen(struct_def, false, &ident));
 }
 
 /// Generate layout assertions for an enum.
 /// This is just size and alignment assertions.
-fn generate_layout_assertions_for_enum(enum_def: &EnumDef) -> (TokenStream, TokenStream) {
+fn generate_layout_assertions_for_enum<'s>(
+    enum_def: &EnumDef,
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
+    let (assertions_64, assertions_32) =
+        assertions.entry(enum_def.file(schema).krate()).or_default();
+
     let ident = enum_def.ident();
-    (
-        generate_size_align_assertions(&enum_def.layout.layout_64, &ident),
-        generate_size_align_assertions(&enum_def.layout.layout_32, &ident),
-    )
+    assertions_64.extend(generate_size_align_assertions(enum_def.layout_64(), &ident));
+    assertions_32.extend(generate_size_align_assertions(enum_def.layout_32(), &ident));
 }
 
 /// Generate size and alignment assertions for a type.
@@ -470,5 +493,55 @@ fn generate_size_align_assertions(layout: &PlatformLayout, ident: &Ident) -> Tok
         ///@@line_break
         assert!(size_of::<#ident>() == #size);
         assert!(align_of::<#ident>() == #align);
+    }
+}
+
+/// Generate output for a crate.
+fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStream) -> TokenStream {
+    #[expect(clippy::match_same_arms)]
+    let imports = match krate {
+        "oxc_ast" => quote! {
+            use crate::ast::*;
+        },
+        "oxc_regular_expression" => quote! {
+            use crate::ast::*;
+        },
+        "oxc_span" => quote! {
+            use crate::*;
+        },
+        "oxc_syntax" => quote! {
+            use nonmax::NonMaxU32;
+
+            ///@@line_break
+            use crate::{module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
+        },
+        "napi/parser" => quote! {
+            use crate::raw_transfer_types::*;
+        },
+        _ => quote! {
+            use crate::*;
+        },
+    };
+
+    quote! {
+        #![allow(unused_imports)]
+
+        ///@@line_break
+        use std::mem::{align_of, offset_of, size_of};
+
+        ///@@line_break
+        #imports
+
+        ///@@line_break
+        #[cfg(target_pointer_width = "64")]
+        const _: () = { #assertions_64 };
+
+        ///@@line_break
+        #[cfg(target_pointer_width = "32")]
+        const _: () = { #assertions_32 };
+
+        ///@@line_break
+        #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
+        const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
     }
 }

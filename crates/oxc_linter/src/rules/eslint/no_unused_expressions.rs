@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{ChainElement, Expression, UnaryOperator},
     AstKind,
+    ast::{ChainElement, Expression, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow unused expressions")
@@ -145,6 +145,7 @@ impl NoUnusedExpressions {
             | Expression::ImportExpression(_)
             | Expression::Super(_)
             | Expression::CallExpression(_)
+            | Expression::V8IntrinsicExpression(_)
             | Expression::UpdateExpression(_)
             | Expression::YieldExpression(_) => false,
             Expression::ConditionalExpression(conditional_expression) => {
@@ -291,7 +292,7 @@ fn test() {
             "
 			      namespace Foo {
 			        'use strict';
-			
+
 			        export class Foo {}
 			        export class Bar {}
 			      }
@@ -302,7 +303,7 @@ fn test() {
             "
 			      function foo() {
 			        'use strict';
-			
+
 			        return null;
 			      }
 			    ",
@@ -382,7 +383,7 @@ fn test() {
         ("<></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("class C { static { 'use strict'; } }", None),                  // { "ecmaVersion": 2022 },
         (
-            "class C { static { 
+            "class C { static {
 			'foo'
 			'bar'
 			 } }",
@@ -478,7 +479,7 @@ fn test() {
 			namespace Foo {
 			  export class Foo {}
 			  export class Bar {}
-			
+
 			  'use strict';
 			}
 			      ",
@@ -488,7 +489,7 @@ fn test() {
             "
 			function foo() {
 			  const foo = true;
-			
+
 			  'use strict';
 			}
 			      ",
@@ -518,13 +519,13 @@ fn test() {
 			      ",
             None,
         ),
-        (
-            "
-			declare const foo: number | undefined;
-			<any>foo;
-			      ",
-            None,
-        ),
+        // (
+        // "
+        // declare const foo: number | undefined;
+        // <any>foo;
+        // ",
+        // None,
+        // ),
         (
             "
 			declare const foo: number | undefined;

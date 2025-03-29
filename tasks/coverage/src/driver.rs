@@ -3,8 +3,9 @@ use std::{ops::ControlFlow, path::PathBuf};
 use rustc_hash::FxHashSet;
 
 use oxc::{
+    CompilerInterface,
     allocator::Allocator,
-    ast::{ast::Program, AstKind, Comment},
+    ast::{AstKind, Comment, ast::Program},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
@@ -13,7 +14,6 @@ use oxc::{
     semantic::{Semantic, SemanticBuilderReturn},
     span::{ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
-    CompilerInterface,
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
@@ -54,7 +54,7 @@ impl CompilerInterface for Driver {
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::all_true)
+        self.compress.then(CompressOptions::smallest)
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
@@ -76,7 +76,7 @@ impl CompilerInterface for Driver {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
-        program.test_to_json().unwrap();
+        program.to_estree_ts_json();
         ControlFlow::Continue(())
     }
 
@@ -103,11 +103,9 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = check_semantic_after_transform(
-                &transformer_return.symbols,
-                &transformer_return.scopes,
-                program,
-            ) {
+            if let Some(errors) =
+                check_semantic_after_transform(&transformer_return.scoping, program)
+            {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }
@@ -167,7 +165,7 @@ impl Driver {
                 continue;
             };
             let printed1 = pattern.to_string();
-            let flags = literal.regex.flags.to_string();
+            let flags = literal.regex.flags.to_inline_string();
             match LiteralParser::new(&allocator, &printed1, Some(&flags), Options::default())
                 .parse()
             {

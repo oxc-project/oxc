@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn uppercase_prefix(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")

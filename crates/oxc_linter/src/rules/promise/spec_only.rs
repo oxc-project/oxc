@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
 
 fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))

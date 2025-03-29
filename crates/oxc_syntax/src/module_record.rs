@@ -3,6 +3,8 @@
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, Vec};
+use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 use oxc_span::{Atom, Span};
 
 /// ESM Module Record
@@ -82,9 +84,13 @@ impl<'a> ModuleRecord<'a> {
 }
 
 /// Name and Span
+#[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_type, no_ts_def)]
 pub struct NameSpan<'a> {
     /// Name
+    #[estree(rename = "value")]
     pub name: Atom<'a>,
 
     /// Span
@@ -113,9 +119,13 @@ impl<'a> NameSpan<'a> {
 ///
 /// import * as ns from "mod";
 /// ```
+#[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_type, no_ts_def)]
 pub struct ImportEntry<'a> {
     /// Span of the import statement.
+    #[estree(skip)]
     pub statement_span: Span,
 
     /// String value of the ModuleSpecifier of the ImportDeclaration.
@@ -126,6 +136,7 @@ pub struct ImportEntry<'a> {
     /// import { foo } from "mod";
     /// //                   ^^^
     /// ```
+    #[estree(skip)]
     pub module_request: NameSpan<'a>,
 
     /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
@@ -172,14 +183,20 @@ pub struct ImportEntry<'a> {
 }
 
 /// `ImportName` For `ImportEntry`
+#[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_ts_def)]
 pub enum ImportImportName<'a> {
     /// `import { x } from "mod"`
-    Name(NameSpan<'a>),
+    #[estree(via = ImportOrExportNameName)]
+    Name(NameSpan<'a>) = 0,
     /// `import * as ns from "mod"`
-    NamespaceObject,
+    #[estree(via = ImportImportNameNamespaceObject)]
+    NamespaceObject = 1,
     /// `import defaultExport from "mod"`
-    Default(Span),
+    #[estree(via = ImportOrExportNameDefault)]
+    Default(Span) = 2,
 }
 
 impl ImportImportName<'_> {
@@ -213,9 +230,13 @@ impl ImportImportName<'_> {
 /// //              ^^^ export_name
 ///
 /// ```
+#[ast]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_type, no_ts_def)]
 pub struct ExportEntry<'a> {
     /// Span of the import statement.
+    #[estree(skip)]
     pub statement_span: Span,
 
     /// Span for the entire export entry
@@ -249,21 +270,29 @@ pub struct ExportEntry<'a> {
     /// export { type foo }
     /// export type { foo } from 'mod'
     /// ```
+    #[estree(skip)]
     pub is_type: bool,
 }
 
 /// `ImportName` for `ExportEntry`
+#[ast]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_ts_def)]
 pub enum ExportImportName<'a> {
     /// Name
-    Name(NameSpan<'a>),
+    #[estree(via = ImportOrExportNameName)]
+    Name(NameSpan<'a>) = 0,
     /// all is used for export * as ns from "mod" declarations.
-    All,
+    #[estree(via = ExportImportNameAll)]
+    All = 1,
     /// all-but-default is used for export * from "mod" declarations.
-    AllButDefault,
+    #[estree(via = ExportImportNameAllButDefault)]
+    AllButDefault = 2,
     /// the ExportDeclaration does not have a ModuleSpecifier
     #[default]
-    Null,
+    #[estree(via = ExportNameNull)]
+    Null = 3,
 }
 
 /// Export Import Name
@@ -280,15 +309,21 @@ impl ExportImportName<'_> {
 }
 
 /// `ExportName` for `ExportEntry`
+#[ast]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_ts_def)]
 pub enum ExportExportName<'a> {
     /// Name
-    Name(NameSpan<'a>),
+    #[estree(via = ImportOrExportNameName)]
+    Name(NameSpan<'a>) = 0,
     /// Default
-    Default(Span),
+    #[estree(via = ImportOrExportNameDefault)]
+    Default(Span) = 1,
     /// Null
+    #[estree(via = ExportNameNull)]
     #[default]
-    Null,
+    Null = 2,
 }
 
 impl ExportExportName<'_> {
@@ -324,15 +359,21 @@ impl ExportExportName<'_> {
 }
 
 /// `LocalName` for `ExportEntry`
+#[ast]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_ts_def)]
 pub enum ExportLocalName<'a> {
     /// Name
-    Name(NameSpan<'a>),
+    #[estree(via = ImportOrExportNameName)]
+    Name(NameSpan<'a>) = 0,
     /// `export default name_span`
-    Default(NameSpan<'a>),
+    #[estree(via = ExportLocalNameDefault)]
+    Default(NameSpan<'a>) = 1,
     /// Null
     #[default]
-    Null,
+    #[estree(via = ExportNameNull)]
+    Null = 2,
 }
 
 impl<'a> ExportLocalName<'a> {
@@ -379,12 +420,99 @@ pub struct RequestedModule {
 }
 
 /// Dynamic import expression.
+#[ast]
 #[derive(Debug, Clone, Copy)]
+#[generate_derive(ESTree)]
+#[estree(no_type, no_ts_def)]
 pub struct DynamicImport {
     /// Span of the import expression.
     pub span: Span,
     /// Span the ModuleSpecifier, which is an expression.
+    #[estree(no_flatten)]
     pub module_request: Span,
+}
+
+#[expect(missing_docs)]
+pub trait VisitMutModuleRecord {
+    fn visit_module_record(&mut self, module_record: &mut ModuleRecord) {
+        module_record.requested_modules.values_mut().for_each(|e| {
+            e.iter_mut().for_each(|e| self.visit_requested_module(e));
+        });
+        module_record.import_entries.iter_mut().for_each(|e| self.visit_import_entry(e));
+        module_record.local_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.indirect_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.star_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.dynamic_imports.iter_mut().for_each(|e| self.visit_dynamic_import(e));
+        module_record.import_metas.iter_mut().for_each(|e| self.visit_span(e));
+    }
+
+    fn visit_requested_module(&mut self, requested_module: &mut RequestedModule) {
+        self.visit_span(&mut requested_module.span);
+        self.visit_span(&mut requested_module.statement_span);
+    }
+
+    fn visit_import_entry(&mut self, import_entry: &mut ImportEntry) {
+        self.visit_span(&mut import_entry.statement_span);
+        self.visit_name_span(&mut import_entry.module_request);
+        self.visit_name_span(&mut import_entry.local_name);
+        self.visit_import_import_name(&mut import_entry.import_name);
+    }
+
+    fn visit_import_import_name(&mut self, import_import_name: &mut ImportImportName) {
+        match import_import_name {
+            ImportImportName::Name(name_span) => self.visit_name_span(name_span),
+            ImportImportName::NamespaceObject => {}
+            ImportImportName::Default(span) => self.visit_span(span),
+        }
+    }
+
+    fn visit_export_entry(&mut self, export_entry: &mut ExportEntry) {
+        self.visit_span(&mut export_entry.statement_span);
+        self.visit_span(&mut export_entry.span);
+        if let Some(module_request) = &mut export_entry.module_request {
+            self.visit_name_span(module_request);
+        }
+        self.visit_export_import_name(&mut export_entry.import_name);
+        self.visit_export_export_name(&mut export_entry.export_name);
+        self.visit_export_local_name(&mut export_entry.local_name);
+    }
+
+    fn visit_export_import_name(&mut self, export_import_name: &mut ExportImportName) {
+        match export_import_name {
+            ExportImportName::Name(name_span) => self.visit_name_span(name_span),
+            ExportImportName::All | ExportImportName::AllButDefault | ExportImportName::Null => {}
+        }
+    }
+
+    fn visit_export_export_name(&mut self, export_export_name: &mut ExportExportName) {
+        match export_export_name {
+            ExportExportName::Name(name_span) => self.visit_name_span(name_span),
+            ExportExportName::Default(span) => self.visit_span(span),
+            ExportExportName::Null => {}
+        }
+    }
+
+    fn visit_export_local_name(&mut self, export_local_name: &mut ExportLocalName) {
+        match export_local_name {
+            ExportLocalName::Name(name_span) | ExportLocalName::Default(name_span) => {
+                self.visit_name_span(name_span);
+            }
+            ExportLocalName::Null => {}
+        }
+    }
+
+    fn visit_dynamic_import(&mut self, dynamic_import: &mut DynamicImport) {
+        self.visit_span(&mut dynamic_import.module_request);
+        self.visit_span(&mut dynamic_import.span);
+    }
+
+    fn visit_name_span(&mut self, name_span: &mut NameSpan) {
+        self.visit_span(&mut name_span.span);
+    }
+
+    #[expect(unused_variables)]
+    #[inline(always)]
+    fn visit_span(&mut self, span: &mut Span) {}
 }
 
 #[cfg(test)]

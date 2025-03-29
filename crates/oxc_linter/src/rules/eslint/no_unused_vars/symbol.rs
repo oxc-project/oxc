@@ -1,15 +1,14 @@
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference,
         ImportDeclarationSpecifier, VariableDeclarator,
     },
-    AstKind,
 };
 use oxc_semantic::{
-    AstNode, AstNodes, NodeId, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
-    SymbolTable,
+    AstNode, AstNodes, NodeId, Reference, ScopeId, Scoping, Semantic, SymbolFlags, SymbolId,
 };
 use oxc_span::{GetSpan, Span};
 
@@ -37,7 +36,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         module_record: &'s ModuleRecord,
         symbol_id: SymbolId,
     ) -> Self {
-        let flags = semantic.symbols().get_flags(symbol_id);
+        let flags = semantic.scoping().symbol_flags(symbol_id);
         Self { semantic, module_record, id: symbol_id, flags, span: OnceCell::new() }
     }
 
@@ -48,7 +47,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn name(&self) -> &str {
-        self.symbols().get_name(self.id)
+        self.scoping().symbol_name(self.id)
     }
 
     #[inline]
@@ -58,7 +57,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn scope_id(&self) -> ScopeId {
-        self.symbols().get_scope_id(self.id)
+        self.scoping().symbol_scope_id(self.id)
     }
 
     #[inline]
@@ -70,22 +69,22 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// check if a references is "used" under the criteria of this rule.
     #[inline]
     pub fn has_references(&self) -> bool {
-        !self.symbols().get_resolved_reference_ids(self.id).is_empty()
+        !self.scoping().get_resolved_reference_ids(self.id).is_empty()
     }
 
     #[inline]
-    pub fn references(&self) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
-        self.symbols().get_resolved_references(self.id)
+    pub fn references(&self) -> impl DoubleEndedIterator<Item = &Reference> + '_ + use<'_> {
+        self.scoping().get_resolved_references(self.id)
     }
 
     /// Is this [`Symbol`] declared in the root scope?
     pub fn is_root(&self) -> bool {
-        self.symbols().get_scope_id(self.id) == self.scopes().root_scope_id()
+        self.scoping().symbol_scope_id(self.id) == self.scoping().root_scope_id()
     }
 
     #[inline]
     fn declaration_id(&self) -> NodeId {
-        self.symbols().get_declaration(self.id)
+        self.scoping().symbol_declaration(self.id)
     }
 
     #[inline]
@@ -94,13 +93,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree {
-        self.semantic.scopes()
-    }
-
-    #[inline]
-    pub fn symbols(&self) -> &SymbolTable {
-        self.semantic.symbols()
+    pub fn scoping(&self) -> &Scoping {
+        self.semantic.scoping()
     }
 
     #[inline]
@@ -159,13 +153,13 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 _ => break,
             }
         }
-        self.symbols().get_span(self.id)
+        self.scoping().symbol_span(self.id)
     }
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
     fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
         if binding.kind.is_destructuring_pattern() {
-            return self.symbols().get_span(self.id);
+            return self.scoping().symbol_span(self.id);
         }
         let own = binding.kind.span();
         binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
@@ -185,7 +179,7 @@ impl<'a> Symbol<'_, 'a> {
 
     #[inline]
     fn is_in_ts_namespace(&self) -> bool {
-        self.scopes().get_flags(self.scope_id()).is_ts_module_block()
+        self.scoping().scope_flags(self.scope_id()).is_ts_module_block()
     }
 
     /// We need to do this due to limitations of [`Semantic`].
@@ -245,7 +239,7 @@ impl GetSpan for Symbol<'_, '_> {
 impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
         // cheap: no resolved reference means its a global reference
-        let reference = self.symbols().get_reference(other.reference_id());
+        let reference = self.scoping().get_reference(other.reference_id());
         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
     }
 }

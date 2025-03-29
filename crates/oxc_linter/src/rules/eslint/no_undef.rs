@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
@@ -45,9 +45,9 @@ impl Rule for NoUndef {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let symbol_table = ctx.symbols();
+        let symbol_table = ctx.scoping();
 
-        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+        for reference_id_list in ctx.scoping().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
 

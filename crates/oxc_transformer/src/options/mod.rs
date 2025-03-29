@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
+    ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
@@ -13,9 +14,9 @@ use crate::{
     es2021::ES2021Options,
     es2022::ES2022Options,
     jsx::JsxOptions,
+    proposals::ProposalOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
-    ReactRefreshOptions,
 };
 
 pub mod babel;
@@ -65,6 +66,9 @@ pub struct TransformOptions {
     /// ECMAScript Env Options
     pub env: EnvOptions,
 
+    /// Proposals
+    pub proposals: ProposalOptions,
+
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -85,6 +89,7 @@ impl TransformOptions {
                 ..JsxOptions::default()
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
+            proposals: ProposalOptions::default(),
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -150,7 +155,13 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .or_else(|| options.plugins.typescript.clone())
             .unwrap_or_default();
 
-        let decorator = DecoratorOptions { legacy: options.plugins.legacy_decorator };
+        let decorator = DecoratorOptions {
+            legacy: options.plugins.legacy_decorator.is_some(),
+            emit_decorator_metadata: options
+                .plugins
+                .legacy_decorator
+                .is_some_and(|o| o.emit_decorator_metadata),
+        };
 
         let jsx = if let Some(options) = &options.presets.jsx {
             options.clone()
@@ -264,6 +275,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 es2020,
                 es2021,
                 es2022,
+            },
+            proposals: ProposalOptions {
+                explicit_resource_management: options.plugins.explicit_resource_management,
             },
             helper_loader,
         })

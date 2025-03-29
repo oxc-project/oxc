@@ -5,7 +5,8 @@ use std::cell::Cell;
 
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, visit::Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_data_structures::stack::Stack;
 use oxc_span::Atom;
 use oxc_syntax::{
@@ -23,7 +24,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// or a `_super` function. Change parent scope of first-level scopes in initializer to reflect this.
     pub(super) fn transform_instance_initializer(
         &mut self,
-        value: &mut Expression<'a>,
+        value: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(constructor_scope_id) = self.instance_inits_constructor_scope_id {
@@ -103,7 +104,7 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
 impl<'a> InstanceInitializerVisitor<'a, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
-        self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 
     /// Check if symbol referenced by `ident` is shadowed by a binding in constructor's scope.
@@ -113,7 +114,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // with same `ScopeId` every time here, but `ScopeTree` doesn't allow that, and we also
         // take a `&mut ScopeTree` in `reparent_scope`, so borrow-checker doesn't allow that.
         let Some(constructor_symbol_id) =
-            self.ctx.scopes().get_binding(self.constructor_scope_id, &ident.name)
+            self.ctx.scoping().get_binding(self.constructor_scope_id, &ident.name)
         else {
             return;
         };
@@ -124,8 +125,8 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // Even though there's a binding `n` in constructor, it doesn't shadow the use of `n` in init.
         // This is an improvement over Babel.
         let reference_id = ident.reference_id();
-        if let Some(ident_symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
-            let scope_id = self.ctx.symbols().get_scope_id(ident_symbol_id);
+        if let Some(ident_symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
+            let scope_id = self.ctx.scoping().symbol_scope_id(ident_symbol_id);
             if self.scope_ids_stack.contains(&scope_id) {
                 return;
             }
@@ -153,10 +154,7 @@ struct FastInstanceInitializerVisitor<'a, 'v> {
 }
 
 impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
-    fn new(
-        class_properties: &'v mut ClassProperties<'a, '_>,
-        ctx: &'v mut TraverseCtx<'a>,
-    ) -> Self {
+    fn new(class_properties: &'v ClassProperties<'a, '_>, ctx: &'v mut TraverseCtx<'a>) -> Self {
         Self { parent_scope_id: class_properties.instance_inits_scope_id, ctx }
     }
 }
@@ -214,6 +212,6 @@ impl FastInstanceInitializerVisitor<'_, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get().unwrap();
-        self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 }

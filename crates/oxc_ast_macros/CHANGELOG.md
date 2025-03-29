@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- 3e7b21c ast_tools: Add `#[builder(default)]` attribute for structs and enums (#9203) (overlookmotel)
+
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- f74d462 ast_tools: Introduce meta types (#9117) (overlookmotel)
+
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Features
+
+- 8f0b865 ast_tools: Generate mapping of trait name to crate in `oxc_ast_macros` (#8870) (overlookmotel)
+- e693ff3 ast_tools: Generate list of helper attributes in `oxc_ast_macros` crate (#8852) (overlookmotel)
+
+### Documentation
+
+- 4cabc16 ast_macros: Update docs (#8853) (overlookmotel)
+
+### Refactor
+
+- 893339d ast: Record plural names in `#[plural]` attr (#8889) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+
 ## [0.47.0] - 2025-01-18
 
 - 7066d1c ast, span, syntax, regular_expression: [**BREAKING**] Remove `ContentHash` (#8512) (overlookmotel)

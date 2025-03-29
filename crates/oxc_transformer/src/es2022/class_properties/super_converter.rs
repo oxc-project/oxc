@@ -4,11 +4,11 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{ast_operations::get_var_name_from_node, TraverseCtx};
+use oxc_traverse::{TraverseCtx, ast_operations::get_var_name_from_node};
 
-use crate::{utils::ast_builder::create_prototype_member, Helper};
+use crate::{Helper, utils::ast_builder::create_prototype_member};
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{ClassProperties, utils::create_assignment};
 
 #[derive(Debug)]
 pub(super) enum ClassPropertiesSuperConverterMode {
@@ -55,7 +55,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
 
     fn transform_static_member_expression_impl(
         &mut self,
-        member: &mut StaticMemberExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -141,7 +141,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// [A, B, C] -> [[A, B, C]]
     fn transform_super_call_expression_arguments(
         arguments: &mut ArenaVec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let elements = arguments.drain(..).map(ArrayExpressionElement::from);
         let elements = ctx.ast.vec_from_iter(elements);

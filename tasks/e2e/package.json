@@ -6,12 +6,13 @@
     "test": "vitest run ./test"
   },
   "devDependencies": {
-    "@oxc-minify/binding": "workspace:^",
-    "@oxc-transform/binding": "workspace:^",
     "antd": "^5.23.1",
     "fs-require": "^1.6.0",
     "memfs": "^4.17.0",
+    "oxc-minify": "workspace:^",
+    "oxc-transform": "workspace:^",
     "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "terser": "^5.37.0",
     "vue": "^3.5.13"
   }

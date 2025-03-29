@@ -1,8 +1,8 @@
 use pico_args::Arguments;
 
 use oxc_prettier_conformance::{
-    options::{TestLanguage, TestRunnerOptions},
     TestRunner,
+    options::{TestLanguage, TestRunnerOptions},
 };
 
 /// This CLI runs in 2 modes:
@@ -13,5 +13,5 @@ fn main() {
     let filter = args.opt_value_from_str("--filter").unwrap();
 
     TestRunner::new(TestRunnerOptions { filter: filter.clone(), language: TestLanguage::Js }).run();
-    TestRunner::new(TestRunnerOptions { filter: filter.clone(), language: TestLanguage::Ts }).run();
+    TestRunner::new(TestRunnerOptions { filter, language: TestLanguage::Ts }).run();
 }

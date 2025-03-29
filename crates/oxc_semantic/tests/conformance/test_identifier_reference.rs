@@ -1,4 +1,4 @@
-use oxc_ast::{ast::IdentifierReference, AstKind};
+use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{NodeId, Reference};
 use oxc_span::GetSpan;
@@ -67,7 +67,7 @@ impl ConformanceTest for IdentifierReferenceTest {
             return missing_reference_id(id);
         };
 
-        let reference = semantic.symbols().get_reference(reference_id);
+        let reference = semantic.scoping().get_reference(reference_id);
         if reference.node_id() != node.id() {
             return node_id_mismatch(node.id(), id, reference_id, reference);
         }

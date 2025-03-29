@@ -1,14 +1,14 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
     utils::{is_empty_array_expression, is_empty_object_expression},
-    AstNode,
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {

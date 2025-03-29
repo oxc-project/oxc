@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_syntax::identifier::is_identifier_name;
 
-use crate::{array, dynamic_text, format::print::literal, ir::Doc, text, Format, Prettier};
+use crate::{Format, Prettier, array, dynamic_text, format::print::literal, ir::Doc, text};
 
 pub enum PropertyKeyLike<'a, 'b> {
     ImportAttributeKey(&'b ImportAttributeKey<'a>),

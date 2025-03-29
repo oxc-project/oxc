@@ -1,15 +1,21 @@
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Comment, CommentKind};
+use oxc_ast::{Comment, CommentKind, ast::Argument};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
 
-pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
+        self.comments.reserve(comments.len());
         for comment in comments {
+            // Omit pure comments because they are handled separately.
+            if comment.is_pure() || comment.is_no_side_effects() {
+                continue;
+            }
             self.comments.entry(comment.attached_to).or_default().push(*comment);
         }
     }
@@ -18,44 +24,24 @@ impl Codegen<'_> {
         self.comments.contains_key(&start)
     }
 
-    pub(crate) fn has_annotation_comment(&self, start: u32) -> bool {
-        if !self.options.print_annotation_comments() {
-            return false;
-        }
-        self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| self.is_annotation_comment(comment))
-        })
-    }
+    pub(crate) fn contains_comment_in_call_like_expression(
+        &self,
+        span: Span,
+        arguments: &[Argument<'_>],
+    ) -> (bool, bool) {
+        let has_comment_before_right_paren =
+            self.print_comments && span.end > 0 && self.has_comment(span.end - 1);
 
-    pub(crate) fn has_non_annotation_comment(&self, start: u32) -> bool {
-        if self.options.print_annotation_comments() {
-            self.comments.get(&start).is_some_and(|comments| {
-                comments.iter().any(|comment| !self.is_annotation_comment(comment))
-            })
-        } else {
-            self.has_comment(start)
-        }
-    }
+        let has_comment = has_comment_before_right_paren
+            || self.print_comments
+                && arguments.iter().any(|item| self.has_comment(item.span().start));
 
-    /// `#__PURE__` Notation Specification
-    ///
-    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/c14f7e197cb225c9eee877143536665ce3150712/pure-notation-spec.md>
-    fn is_annotation_comment(&self, comment: &Comment) -> bool {
-        let s = comment.content_span().source_text(self.source_text).trim_start();
-        if let Some(s) = s.strip_prefix(['@', '#']) {
-            s.starts_with("__PURE__") || s.starts_with("__NO_SIDE_EFFECTS__")
-        } else {
-            false
-        }
+        (has_comment, has_comment_before_right_paren)
     }
 
     /// Whether to keep leading comments.
-    fn is_leading_comments(&self, comment: &Comment) -> bool {
-        comment.preceded_by_newline
-            && (comment.is_jsdoc(self.source_text)
-                || (comment.is_line() && self.is_annotation_comment(comment)))
-            && !comment.content_span().source_text(self.source_text).chars().all(|c| c == '*')
-        // webpack comment `/*****/`
+    fn should_keep_leading_comment(comment: &Comment) -> bool {
+        comment.preceded_by_newline && comment.is_annotation()
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
@@ -65,26 +51,18 @@ impl Codegen<'_> {
         let Some(comments) = self.comments.remove(&start) else {
             return;
         };
-        let (comments, unused_comments): (Vec<_>, Vec<_>) =
-            comments.into_iter().partition(|comment| self.is_leading_comments(comment));
-        self.print_comments(start, &comments, unused_comments);
+        let comments =
+            comments.into_iter().filter(Self::should_keep_leading_comment).collect::<Vec<_>>();
+        self.print_comments(&comments);
     }
 
-    pub(crate) fn get_statement_comments(
-        &mut self,
-        start: u32,
-    ) -> Option<(Vec<Comment>, Vec<Comment>)> {
+    pub(crate) fn get_statement_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
         let comments = self.comments.remove(&start)?;
 
         let mut leading_comments = vec![];
-        let mut unused_comments = vec![];
 
         for comment in comments {
-            if self.is_leading_comments(&comment) {
-                leading_comments.push(comment);
-                continue;
-            }
-            if comment.is_legal(self.source_text) {
+            if comment.is_legal() {
                 match &self.options.legal_comments {
                     LegalComment::None if self.options.comments => {
                         leading_comments.push(comment);
@@ -101,57 +79,27 @@ impl Codegen<'_> {
                     LegalComment::None => {}
                 }
             }
-            unused_comments.push(comment);
+            if Self::should_keep_leading_comment(&comment) {
+                leading_comments.push(comment);
+                continue;
+            }
         }
 
-        Some((leading_comments, unused_comments))
+        Some(leading_comments)
     }
 
     /// A statement comment also includes legal comments
     #[inline]
     pub(crate) fn print_statement_comments(&mut self, start: u32) {
-        if !self.print_comments {
-            return;
-        }
-        if let Some((comments, unused)) = self.get_statement_comments(start) {
-            self.print_comments(start, &comments, unused);
-        }
-    }
-
-    pub(crate) fn print_annotation_comments(&mut self, node_start: u32) {
-        if !self.options.print_annotation_comments() {
-            return;
-        }
-
-        // If there is has annotation comments awaiting move to here, print them.
-        let start = self.start_of_annotation_comment.take().unwrap_or(node_start);
-
-        let Some(comments) = self.comments.remove(&start) else { return };
-
-        for comment in comments {
-            if !self.is_annotation_comment(&comment) {
-                continue;
+        if self.print_comments {
+            if let Some(comments) = self.get_statement_comments(start) {
+                self.print_comments(&comments);
             }
-            if comment.is_line() {
-                self.print_str("/*");
-                self.print_str(comment.content_span().source_text(self.source_text));
-                self.print_str("*/");
-            } else {
-                self.print_str(comment.span.source_text(self.source_text));
-            }
-            self.print_hard_space();
         }
     }
 
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         let Some(comments) = self.comments.remove(&start) else { return false };
-
-        let (annotation_comments, comments): (Vec<_>, Vec<_>) =
-            comments.into_iter().partition(|comment| self.is_annotation_comment(comment));
-
-        if !annotation_comments.is_empty() {
-            self.comments.insert(start, annotation_comments);
-        }
 
         for comment in &comments {
             self.print_hard_newline();
@@ -167,12 +115,7 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn print_comments(
-        &mut self,
-        start: u32,
-        comments: &[Comment],
-        unused_comments: Vec<Comment>,
-    ) {
+    pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
         for (i, comment) in comments.iter().enumerate() {
             if i == 0 {
                 if comment.preceded_by_newline {
@@ -195,7 +138,7 @@ impl Codegen<'_> {
                 if comment.preceded_by_newline {
                     self.print_hard_newline();
                     self.print_indent();
-                } else if comment.is_legal(self.source_text) {
+                } else if comment.is_legal() {
                     self.print_hard_newline();
                 }
             }
@@ -207,10 +150,6 @@ impl Codegen<'_> {
                     self.print_next_indent_as_space = true;
                 }
             }
-        }
-
-        if !unused_comments.is_empty() {
-            self.comments.insert(start, unused_comments);
         }
     }
 

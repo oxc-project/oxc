@@ -2,7 +2,8 @@
 use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_regular_expression::{ConstructorParser as RegExpParser, Options as RegExpParserOptions};
 use oxc_span::SourceType;

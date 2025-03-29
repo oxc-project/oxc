@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Argument, AstKind};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn no_interpolation_in_snapshots_diagnostic(span: Span) -> OxcDiagnostic {

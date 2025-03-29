@@ -22,13 +22,13 @@ impl<T: Case> MiscSuite<T> {
 
     fn huge_binary_expression() -> T {
         let code = String::from("a") + &"+ a".repeat(1000);
-        T::new(PathBuf::from("huge_binary_expression.js"), code.to_string())
+        T::new(PathBuf::from("huge_binary_expression.js"), code)
     }
 
     fn huge_nested_statements() -> T {
         let take = 1000;
         let code = "if (true) {".repeat(take) + &"}".repeat(take);
-        T::new(PathBuf::from("huge_nested_statements.js"), code.to_string())
+        T::new(PathBuf::from("huge_nested_statements.js"), code)
     }
 }
 

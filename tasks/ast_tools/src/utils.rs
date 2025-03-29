@@ -1,7 +1,14 @@
-use phf::{phf_set, Set as PhfSet};
+use std::borrow::Cow;
+
+use indexmap::{IndexMap, IndexSet};
+use phf::{Set as PhfSet, phf_set};
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
+use rustc_hash::FxBuildHasher;
 use syn::{Ident, LitInt};
+
+pub type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
+pub type FxIndexSet<K> = IndexSet<K, FxBuildHasher>;
 
 /// Reserved word in Rust.
 /// From <https://doc.rust-lang.org/reference/keywords.html>.
@@ -30,11 +37,7 @@ pub fn is_reserved_name(name: &str) -> bool {
 ///
 /// [`Ident`]: struct@Ident
 pub fn create_ident(name: &str) -> Ident {
-    if is_reserved_name(name) {
-        format_ident!("r#{name}")
-    } else {
-        create_safe_ident(name)
-    }
+    if is_reserved_name(name) { format_ident!("r#{name}") } else { create_safe_ident(name) }
 }
 
 /// Create an [`Ident`] from a string, without checking it's not a reserved word.
@@ -60,6 +63,14 @@ pub fn create_ident_tokens(name: &str) -> TokenStream {
     }
 }
 
+/// Convert [`Ident`] to `String`, removing `r#` from start.
+///
+/// [`Ident`]: struct@Ident
+pub fn ident_name(ident: &Ident) -> String {
+    let name = ident.to_string();
+    if let Some(unprefixed) = name.strip_prefix("r#") { unprefixed.to_string() } else { name }
+}
+
 /// Convert integer to [`LitInt`].
 ///
 /// This prints without a `usize` postfix. i.e. `123` not `123usize`.
@@ -81,3 +92,31 @@ pub fn pluralize(name: &str) -> String {
         }
     }
 }
+
+/// Upper case first character of a string.
+pub fn upper_case_first(s: &str) -> Cow<'_, str> {
+    let mut chars = s.chars();
+    let first_char = chars.next().unwrap();
+    if first_char.is_uppercase() {
+        Cow::Borrowed(s)
+    } else {
+        Cow::Owned(first_char.to_uppercase().chain(chars).collect::<String>())
+    }
+}
+
+/// Macro to `format!` arguments, and wrap the formatted string in a `Cow::Owned`.
+macro_rules! format_cow {
+    ($($tokens:tt)+) => {
+        std::borrow::Cow::Owned(format!($($tokens)+))
+    }
+}
+pub(crate) use format_cow;
+
+/// Macro to `write!` and unwrap result.
+macro_rules! write_it {
+    ($($tokens:tt)+) => {{
+        use std::fmt::Write;
+        write!($($tokens)+).unwrap();
+    }}
+}
+pub(crate) use write_it;

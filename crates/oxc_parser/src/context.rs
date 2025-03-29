@@ -109,11 +109,7 @@ impl Context {
 
     #[inline]
     fn union_if(self, other: Self, include: bool) -> Self {
-        if include {
-            self.union(other)
-        } else {
-            self
-        }
+        if include { self.union(other) } else { self }
     }
 
     #[inline]
@@ -148,11 +144,7 @@ impl Context {
 
     #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
-        if set {
-            self | flag
-        } else {
-            self - flag
-        }
+        if set { self | flag } else { self - flag }
     }
 }
 

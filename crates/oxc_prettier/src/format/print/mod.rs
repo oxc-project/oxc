@@ -6,6 +6,7 @@ pub mod block;
 pub mod call_arguments;
 pub mod call_expression;
 pub mod class;
+pub mod expression_statement;
 pub mod function;
 pub mod function_parameters;
 pub mod literal;

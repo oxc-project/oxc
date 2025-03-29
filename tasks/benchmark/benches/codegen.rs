@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -28,13 +28,12 @@ fn bench_codegen(criterion: &mut Criterion) {
         group.finish();
 
         // Codegen sourcemap
-        let (symbols, scopes) =
-            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
         let transform_options = TransformOptions::enable_all();
         let transformer_ret =
             Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
-                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                .build_with_scoping(scoping, &mut program);
         assert!(transformer_ret.errors.is_empty());
 
         let mut group = criterion.benchmark_group("codegen_sourcemap");

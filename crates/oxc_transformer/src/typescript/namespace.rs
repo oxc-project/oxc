@@ -1,5 +1,5 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Reference;
 use oxc_span::SPAN;
@@ -13,8 +13,8 @@ use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 use super::{
-    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
@@ -60,7 +60,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
                     continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
-                    if export_decl.declaration.as_ref().map_or(true, |decl| {
+                    if export_decl.declaration.as_ref().is_none_or(|decl| {
                         decl.declare() || !matches!(decl, Declaration::TSModuleDeclaration(_))
                     }) {
                         new_stmts.push(Statement::ExportNamedDeclaration(export_decl));
@@ -221,14 +221,14 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 Statement::TSImportEqualsDeclaration(decl)
                     if !self.only_remove_type_imports
                         && ctx
-                            .symbols()
+                            .scoping()
                             .get_resolved_references(decl.id.symbol_id())
                             .all(Reference::is_type) =>
                 {
                     continue;
                 }
                 Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
-                    continue
+                    continue;
                 }
                 _ => {}
             }
@@ -238,7 +238,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         if new_stmts.is_empty() {
             // Delete the scope binding that `ctx.generate_uid` created above,
             // as no binding is actually being created
-            ctx.scopes_mut().remove_binding(scope_id, uid_binding.name.as_str());
+            ctx.scoping_mut().remove_binding(scope_id, uid_binding.name.as_str());
 
             return;
         }
@@ -271,7 +271,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
@@ -309,7 +309,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     func_body,
                     scope_id,
                 ));
-            *ctx.scopes_mut().get_flags_mut(scope_id) =
+            *ctx.scoping_mut().scope_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
             ctx.ast.expression_parenthesized(SPAN, function_expr)
         };
@@ -458,18 +458,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     /// Check the namespace binding identifier if it is a redeclaration
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
-        // Only `enum`, `class`, `function` and `namespace` can be re-declared in same scope
-        ctx.symbols()
-            .get_flags(symbol_id)
-            .intersects(SymbolFlags::RegularEnum | SymbolFlags::Class | SymbolFlags::Function)
-            || {
-                // ```
-                // namespace Foo {}
-                // namespace Foo {} // is redeclaration
-                // ```
-                let redeclarations = ctx.symbols().get_redeclarations(symbol_id);
-                !redeclarations.is_empty() && redeclarations.contains(&id.span)
-            }
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        redeclarations.first().map_or_else(|| false, |rd| rd.span != id.span)
     }
 }
 

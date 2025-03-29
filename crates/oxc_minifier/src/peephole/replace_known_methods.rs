@@ -4,8 +4,10 @@ use std::borrow::Cow;
 use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
-    StringCharAt, StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
+    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
+    StringSubstring, ToBigInt, ToInt32, ToIntegerIndex,
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
+    side_effects::MayHaveSideEffects,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -13,7 +15,7 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 
@@ -21,16 +23,22 @@ impl<'a> PeepholeOptimizations {
     /// Minimize With Known Methods
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
     pub fn replace_known_methods_exit_expression(
-        &mut self,
+        &self,
         node: &mut Expression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_fold_concat_chain(node, ctx);
-        self.try_fold_known_global_methods(node, ctx);
-        self.try_fold_known_property_access(node, ctx);
+        self.try_fold_concat_chain(node, state, ctx);
+        self.try_fold_known_global_methods(node, state, ctx);
+        self.try_fold_known_property_access(node, state, ctx);
     }
 
-    fn try_fold_known_global_methods(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    fn try_fold_known_global_methods(
+        &self,
+        node: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let Expression::CallExpression(ce) = node else { return };
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
@@ -73,7 +81,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            self.mark_current_function_as_changed();
+            state.changed = true;
             *node = replacement;
         }
     }
@@ -140,11 +148,11 @@ impl<'a> PeepholeOptimizations {
         let Expression::StringLiteral(s) = object else { return None };
         let start_idx = args.first().and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         let end_idx = args.get(1).and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         #[expect(clippy::cast_precision_loss)]
         if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
@@ -174,21 +182,18 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index: Option<f64> = match args.first() {
-            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
-            Some(Argument::UnaryExpression(unary_expr))
-                if unary_expr.operator == UnaryOperator::UnaryNegation =>
-            {
-                let Expression::NumericLiteral(numeric_lit) = &unary_expr.argument else {
-                    return None;
-                };
-                Some(-(numeric_lit.value))
+        let char_at_index = match args.first() {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
             }
             None => None,
-            _ => return None,
         };
-        let result =
-            &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
+        let result = match s.value.as_str().char_at(char_at_index) {
+            StringCharAtResult::Value(c) => &c.to_string(),
+            StringCharAtResult::InvalidChar(_) => return None,
+            StringCharAtResult::OutOfRange => "",
+        };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
@@ -201,17 +206,13 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         let Expression::StringLiteral(s) = object else { return None };
         let char_at_index = match args.first() {
-            None => Some(0.0),
-            Some(Argument::SpreadElement(_)) => None,
-            Some(e) => ctx.get_side_free_number_value(e.to_expression()),
-        }?;
-        let value = if (0.0..65536.0).contains(&char_at_index) {
-            s.value.as_str().char_code_at(Some(char_at_index))? as f64
-        } else if char_at_index.is_nan() || char_at_index.is_infinite() {
-            return None;
-        } else {
-            f64::NAN
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
         };
+        let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
         Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
     }
 
@@ -230,14 +231,14 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(search_value.to_expression())?
+                search_value.to_expression().evaluate_value(&ctx)?.into_string()?
             }
         };
         let replace_value = args.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(replace_value.to_expression())?
+                replace_value.to_expression().get_side_free_string_value(&ctx)?
             }
         };
         if replace_value.contains('$') {
@@ -265,7 +266,7 @@ impl<'a> PeepholeOptimizations {
         let mut s = String::with_capacity(args.len());
         for arg in args {
             let expr = arg.as_expression()?;
-            let v = ctx.get_side_free_number_value(expr)?;
+            let v = expr.get_side_free_number_value(&ctx)?;
             let v = v.to_int_32() as u16 as u32;
             let c = char::try_from(v).ok()?;
             s.push(c);
@@ -333,7 +334,7 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string().map(|s| ctx.ast.expression_string_literal(span, s, None))
+                object.to_js_string(&ctx).map(|s| ctx.ast.expression_string_literal(span, s, None))
             }
             _ => None,
         }
@@ -385,7 +386,7 @@ impl<'a> PeepholeOptimizations {
         let first_arg = first_arg.to_expression_mut(); // checked above
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
-            if ValueType::from(&*expr).is_number() {
+            if expr.value_type(&ctx).is_number() {
                 ctx.ast.move_expression(expr)
             } else {
                 ctx.ast.expression_unary(
@@ -398,7 +399,8 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             span,
-            wrap_with_unary_plus_if_needed(first_arg),
+            // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
+            ctx.ast.move_expression(first_arg),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -420,7 +422,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
             return Some(ctx.ast.expression_numeric_literal(
                 span,
@@ -459,7 +461,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         let result = match name {
             "abs" => arg_val.abs(),
             "ceil" => arg_val.ceil(),
@@ -469,7 +471,7 @@ impl<'a> PeepholeOptimizations {
                 // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
                 // So we need to handle it manually.
                 let frac_part = arg_val.fract();
-                let epsilon = 2f64.powf(-52f64);
+                let epsilon = 2f64.powi(-52);
                 if (frac_part.abs() - 0.5).abs() < epsilon {
                     // We should ceil it.
                     arg_val.ceil()
@@ -504,7 +506,7 @@ impl<'a> PeepholeOptimizations {
         }
         let numbers = arguments
             .iter()
-            .map(|arg| arg.as_expression().map(|e| ctx.get_side_free_number_value(e))?)
+            .map(|arg| arg.as_expression().map(|e| e.get_side_free_number_value(&ctx))?)
             .collect::<Option<Vec<_>>>()?;
         let result = if numbers.iter().any(|n| n.is_nan()) {
             f64::NAN
@@ -534,7 +536,12 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    fn try_fold_concat_chain(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    fn try_fold_concat_chain(
+        &self,
+        node: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
@@ -610,7 +617,7 @@ impl<'a> PeepholeOptimizations {
             ),
             false,
         );
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
@@ -742,16 +749,12 @@ impl<'a> PeepholeOptimizations {
                     let cooked = s.clone().into_in(ctx.ast.allocator);
                     ctx.ast.template_element(
                         SPAN,
-                        false,
                         TemplateElementValue {
-                            raw: s
-                                .cow_replace("\\", "\\\\")
-                                .cow_replace("`", "\\`")
-                                .cow_replace("${", "\\${")
-                                .cow_replace("\r\n", "\\r\n")
+                            raw: Self::escape_string_for_template_literal(&s)
                                 .into_in(ctx.ast.allocator),
                             cooked: Some(cooked),
                         },
+                        false,
                     )
                 }));
                 if let Some(last_quasi) = quasis.last_mut() {
@@ -765,14 +768,67 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_known_property_access(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        let (name, object, span) = match &node {
+    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+        if s.contains(['\\', '`', '$', '\r']) {
+            Cow::Owned(
+                s.cow_replace("\\", "\\\\")
+                    .cow_replace("`", "\\`")
+                    .cow_replace("${", "\\${")
+                    .cow_replace("\r\n", "\\r\n")
+                    .into_owned(),
+            )
+        } else {
+            Cow::Borrowed(s)
+        }
+    }
+
+    fn try_fold_known_property_access(
+        &self,
+        node: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object, member.span)
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => (s.value.as_str(), &member.object, member.span),
+                    Expression::NumericLiteral(n) => {
+                        if let Some(integer_index) = n.value.to_integer_index() {
+                            let span = member.span;
+                            if let Some(replacement) = Self::try_fold_integer_index_access(
+                                &mut member.object,
+                                integer_index,
+                                span,
+                                ctx,
+                            ) {
+                                state.changed = true;
+                                *node = replacement;
+                            }
+                        }
+                        return;
+                    }
+                    Expression::BigIntLiteral(b) => {
+                        if !b.is_negative() {
+                            if let Some(integer_index) =
+                                b.to_big_int(&ctx).and_then(ToIntegerIndex::to_integer_index)
+                            {
+                                let span = member.span;
+                                if let Some(replacement) = Self::try_fold_integer_index_access(
+                                    &mut member.object,
+                                    integer_index,
+                                    span,
+                                    ctx,
+                                ) {
+                                    state.changed = true;
+                                    *node = replacement;
+                                }
+                            }
+                        }
+                        return;
+                    }
                     _ => return,
                 }
             }
@@ -789,7 +845,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            self.mark_current_function_as_changed();
+            state.changed = true;
             *node = replacement;
         }
     }
@@ -826,7 +882,7 @@ impl<'a> PeepholeOptimizations {
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, 2.0f64.powf(53.0) - 1.0)
+                    num(span, 2.0f64.powi(53) - 1.0)
                 } else {
                     // 2**53 - 1
                     pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
@@ -834,7 +890,7 @@ impl<'a> PeepholeOptimizations {
             }
             "MIN_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, -(2.0f64.powf(53.0) - 1.0))
+                    num(span, -(2.0f64.powi(53) - 1.0))
                 } else {
                     // -(2**53 - 1)
                     ctx.ast.expression_unary(
@@ -879,6 +935,50 @@ impl<'a> PeepholeOptimizations {
             None,
         ))
     }
+
+    /// Compress `"abc"[0]` to `"a"` and `[0,1,2][1]` to `1`
+    fn try_fold_integer_index_access(
+        object: &mut Expression<'a>,
+        property: u32,
+        span: Span,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if object.may_have_side_effects(&ctx) {
+            return None;
+        }
+
+        match object {
+            Expression::StringLiteral(s) => {
+                if let StringCharAtResult::Value(c) =
+                    s.value.as_str().char_at(Some(property.into()))
+                {
+                    s.span = span;
+                    s.value = ctx.ast.atom(&c.to_string());
+                    s.raw = None;
+                    Some(ctx.ast.move_expression(object))
+                } else {
+                    None
+                }
+            }
+            Expression::ArrayExpression(array_expr) => {
+                let length_until_spread =
+                    array_expr.elements.iter().take_while(|el| !el.is_spread()).count();
+                if (property as usize) < length_until_spread {
+                    match &array_expr.elements[property as usize] {
+                        ArrayExpressionElement::SpreadElement(_) => unreachable!(),
+                        ArrayExpressionElement::Elision(_) => Some(ctx.ast.void_0(span)),
+                        match_expression!(ArrayExpressionElement) => {
+                            let element = array_expr.elements.swap_remove(property as usize);
+                            Some(element.into_expression())
+                        }
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
 }
 
 /// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
@@ -887,8 +987,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     fn test_es2015(code: &str, expected: &str) {
@@ -1060,6 +1160,7 @@ mod test {
         test("x = 'ab'.replaceAll('','x')", "x = 'xaxbx'");
 
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
+        test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
 
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props
@@ -1121,12 +1222,13 @@ mod test {
         test("x = 'abcde'.charAt(5)", "x = ''");
         test("x = 'abcde'.charAt(-1)", "x = ''");
         test("x = 'abcde'.charAt()", "x = 'a'");
+        test_same("x = 'abcde'.charAt(...foo)");
         test_same("x = 'abcde'.charAt(0, ++z)");
         test_same("x = 'abcde'.charAt(y)");
-        test_same("x = 'abcde'.charAt(null)"); // or x = 'a'
-        test_same("x = 'abcde'.charAt(!0)"); // or x = 'b'
-                                             // test("x = '\\ud834\udd1e'.charAt(0)", "x = '\\ud834'");
-                                             // test("x = '\\ud834\udd1e'.charAt(1)", "x = '\\udd1e'");
+        test("x = 'abcde'.charAt(null)", "x = 'a'");
+        test("x = 'abcde'.charAt(!0)", "x = 'b'");
+        test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
+        test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
 
         // Template strings
         test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -1141,15 +1243,16 @@ mod test {
         test("x = 'abcde'.charCodeAt(2)", "x = 99");
         test("x = 'abcde'.charCodeAt(3)", "x = 100");
         test("x = 'abcde'.charCodeAt(4)", "x = 101");
-        test_same("x = 'abcde'.charCodeAt(5)");
+        test("x = 'abcde'.charCodeAt(5)", "x = NaN");
         test("x = 'abcde'.charCodeAt(-1)", "x = NaN");
+        test_same("x = 'abcde'.charCodeAt(...foo)");
         test_same("x = 'abcde'.charCodeAt(y)");
         test("x = 'abcde'.charCodeAt()", "x = 97");
         test("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
         test("x = 'abcde'.charCodeAt(null)", "x = 97");
         test("x = 'abcde'.charCodeAt(true)", "x = 98");
-        // test("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
-        // test("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
+        test("x = '\\ud834\\udd1e'.charCodeAt(0)", "x = 55348");
+        test("x = '\\ud834\\udd1e'.charCodeAt(1)", "x = 56606");
         test("x = `abcdef`.charCodeAt(0)", "x = 97");
         test_same("x = `abcdef ${abc}`.charCodeAt(0)");
     }
@@ -1317,10 +1420,9 @@ mod test {
         test_value("Math.abs(NaN)", "NaN");
         test_value("Math.abs(-0)", "0");
         test_value("Math.abs(-Infinity)", "Infinity");
-        // TODO
-        // test_value("Math.abs([])", "0");
-        // test_value("Math.abs([2])", "2");
-        // test_value("Math.abs([1,2])", "NaN");
+        test_value("Math.abs([])", "0");
+        test_value("Math.abs([2])", "2");
+        test_value("Math.abs([1,2])", "NaN");
         test_value("Math.abs({})", "NaN");
         test_value("Math.abs('string');", "NaN");
     }
@@ -1762,8 +1864,11 @@ mod test {
         test("x = ''.concat('a', b)", "x = `a${b}`");
         test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
         test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-        test("x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)", "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`");
-        test("x = ''.concat(a, 1)", "x = `${a}${1}`"); // inlining 1 is not implemented yet
+        test(
+            "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
+            "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
+        );
+        test("x = ''.concat(a, 1)", "x = `${a}1`");
 
         test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
         test("x = '`'.concat(a)", "x = `\\`${a}`");
@@ -1785,7 +1890,7 @@ mod test {
         test("x = (-Infinity).toString(2)", "x = '-Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
-                                         // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
         test_same("null.toString()"); // type error
 
         test("x = 100 .toString(0)", "x = 100 .toString(0)");
@@ -1813,19 +1918,19 @@ mod test {
 
     #[test]
     fn test_fold_pow() {
-        test("Math.pow(2, 3)", "2 ** 3");
-        test("Math.pow(a, 3)", "a ** 3");
-        test("Math.pow(2, b)", "2 ** b");
-        test("Math.pow(a, b)", "a ** +b");
-        test("Math.pow(2n, 3n)", "2n ** +3n"); // errors both before and after
-        test("Math.pow(a + b, c)", "(a + b) ** +c");
-        test_same("Math.pow()");
-        test_same("Math.pow(1)");
-        test_same("Math.pow(...a, 1)");
-        test_same("Math.pow(1, ...a)");
-        test_same("Math.pow(1, 2, 3)");
-        test_es2015("Math.pow(2, 3)", "Math.pow(2, 3)");
-        test_same("Unknown.pow(1, 2)");
+        test("v = Math.pow(2, 3)", "v = 2 ** 3");
+        test("v = Math.pow(a, 3)", "v = a ** 3");
+        test("v = Math.pow(2, b)", "v = 2 ** b");
+        test("v = Math.pow(a, b)", "v = a ** +b");
+        test("v = Math.pow(2n, 3n)", "v = 2n ** +3n"); // errors both before and after
+        test("v = Math.pow(a + b, c)", "v = (a + b) ** +c");
+        test_same("v = Math.pow()");
+        test_same("v = Math.pow(1)");
+        test_same("v = Math.pow(...a, 1)");
+        test_same("v = Math.pow(1, ...a)");
+        test_same("v = Math.pow(1, 2, 3)");
+        test_es2015("v = Math.pow(2, 3)", "v = Math.pow(2, 3)");
+        test_same("v = Unknown.pow(1, 2)");
     }
 
     #[test]
@@ -1870,5 +1975,34 @@ mod test {
         test_es2015("v = Number.MAX_SAFE_INTEGER", "v = 9007199254740991");
         test_es2015("v = Number.MIN_SAFE_INTEGER", "v = -9007199254740991");
         test_es2015("v = Number.EPSILON", "v = Number.EPSILON");
+    }
+
+    #[test]
+    fn test_fold_integer_index_access() {
+        test_same("v = ''[0]");
+        test_same("v = 'a'[-1]");
+        test_same("v = 'a'[0.3]");
+        test("v = 'a'[0]", "v = 'a'");
+        test_same("v = 'a'[1]");
+        test("v = 'あ'[0]", "v = 'あ'");
+        test_same("v = 'あ'[1]");
+        test_same("v = '😀'[0]"); // surrogate pairs cannot be represented by rust string
+        test_same("v = '😀'[1]"); // surrogate pairs cannot be represented by rust string
+        test_same("v = '😀'[2]");
+        test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
+
+        test_same("v = [][0]");
+        test_same("v = [1][-1]");
+        test_same("v = [1][0.3]");
+        test("v = [1][0]", "v = 1");
+        test_same("v = [1][1]");
+        test("v = [,][0]", "v = void 0");
+        // test("v = [...'a'][0]", "v = 'a'");
+        // test_same("v = [...'a'][1]");
+        // test("v = [...'😀'][0]", "v = '😀'");
+        // test_same("v = [...'😀'][1]");
+        test_same("v = [...a, 1][1]");
+        test_same("v = [1, ...a][0]");
+        test("v = [1, ...[1,2]][0]", "v = 1");
     }
 }

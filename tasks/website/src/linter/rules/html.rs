@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Debug, Default)]
-pub(crate) struct HtmlWriter {
+pub struct HtmlWriter {
     inner: RefCell<String>,
 }
 
@@ -100,7 +100,7 @@ impl HtmlWriter {
 
 /// Implements a tag factory on [`HtmlWriter`] with optional documentation.
 macro_rules! make_tag {
-    ($name:ident, $($docs:expr),+) => {
+    ($name:ident, $($docs:expr_2021),+) => {
         impl HtmlWriter {
             // create a #[doc = $doc] for each item in $docs
             $(

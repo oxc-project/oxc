@@ -31,6 +31,13 @@ pub trait CloneIn<'new_alloc>: Sized {
     /// Clone `self` into the given `allocator`. `allocator` may be the same one
     /// that `self` is already in.
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned;
+
+    /// Almost identical as `clone_in`, but for some special type, it will also clone the semantic ids.
+    /// Please use this method only if you make sure semantic info is synced with the ast node.
+    #[inline]
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        self.clone_in(allocator)
+    }
 }
 
 impl<'alloc, T, C> CloneIn<'alloc> for Option<T>
@@ -41,6 +48,10 @@ where
 
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         self.as_ref().map(|it| it.clone_in(allocator))
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        self.as_ref().map(|it| it.clone_in_with_semantic_ids(allocator))
     }
 }
 
@@ -53,16 +64,27 @@ where
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Box::new_in(self.as_ref().clone_in(allocator), allocator)
     }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Box::new_in(self.as_ref().clone_in_with_semantic_ids(allocator), allocator)
+    }
 }
 
 impl<'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
+    // TODO: This lifetime bound possibly shouldn't be required.
+    // https://github.com/oxc-project/oxc/pull/9656#issuecomment-2719762898
+    C: 'new_alloc,
 {
     type Cloned = Vec<'new_alloc, C>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Vec::from_iter_in(self.iter().map(|it| it.clone_in(allocator)), allocator)
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Vec::from_iter_in(self.iter().map(|it| it.clone_in_with_semantic_ids(allocator)), allocator)
     }
 }
 

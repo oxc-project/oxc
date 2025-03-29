@@ -1,7 +1,7 @@
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{es2018::ObjectRestSpreadOptions, TransformCtx};
+use crate::{TransformCtx, es2018::ObjectRestSpreadOptions};
 
 mod comments;
 mod diagnostics;
@@ -11,7 +11,7 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 mod refresh;
-pub(crate) use comments::update_options_with_comments;
+pub use comments::update_options_with_comments;
 use display_name::ReactDisplayName;
 use jsx_impl::JsxImpl;
 use jsx_self::JsxSelf;

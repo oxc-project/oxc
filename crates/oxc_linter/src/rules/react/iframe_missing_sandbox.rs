@@ -1,22 +1,22 @@
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
         ObjectPropertyKind, StringLiteral,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
     utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
-    AstNode,
 };
 
 fn missing_sandbox_prop(span: Span) -> OxcDiagnostic {

@@ -1,14 +1,16 @@
 use oxc_ast::{
-    ast::{
-        Argument, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, Statement,
-    },
     AstKind,
+    ast::{
+        Argument, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression,
+        MemberExpression, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
@@ -16,7 +18,6 @@ use crate::{
         get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
         is_prototype_property,
     },
-    AstNode,
 };
 
 fn prefer_array_flat_diagnostic(span: Span) -> OxcDiagnostic {
@@ -107,7 +108,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
     let target_fix_span = call_expr
         .callee
         .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+        .and_then(MemberExpression::static_property_info)
         .map(|v| Span::new(v.0.start, call_expr.span.end));
 
     if let Some(span) = target_fix_span {
@@ -182,7 +183,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                     let target_fix_span = call_expr
                         .callee
                         .as_member_expression()
-                        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+                        .and_then(MemberExpression::static_property_info)
                         .map(|v| Span::new(v.0.start, call_expr.span.end));
 
                     debug_assert!(target_fix_span.is_some());
@@ -229,7 +230,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             let target_fix_span = call_expr
                 .callee
                 .as_member_expression()
-                .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+                .and_then(MemberExpression::static_property_info)
                 .map(|v| Span::new(v.0.start, call_expr.span.end));
 
             debug_assert!(target_fix_span.is_some());

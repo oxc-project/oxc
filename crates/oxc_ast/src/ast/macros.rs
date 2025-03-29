@@ -18,7 +18,7 @@
 ///
 /// # Expansion
 ///
-/// ```
+/// ```ignore
 /// inherit_variants! {
 ///     #[ast]
 ///     enum Statement<'a> {
@@ -34,7 +34,7 @@
 ///
 /// expands to:
 ///
-/// ```
+/// ```ignore
 /// #[ast]
 /// enum Statement<'a> {
 ///     pub enum Statement<'a> {
@@ -171,6 +171,8 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
                 /// Inherited from [`Expression`]
                 TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+                /// Inherited from [`Expression`]
+                V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -228,6 +230,7 @@ macro_rules! inherit_variants {
                 TSTypeAssertion,
                 TSNonNullExpression,
                 TSInstantiationExpression,
+                V8IntrinsicExpression,
                 ComputedMemberExpression,
                 StaticMemberExpression,
                 PrivateFieldExpression,
@@ -318,7 +321,6 @@ macro_rules! inherit_variants {
                 TSSatisfiesExpression,
                 TSNonNullExpression,
                 TSTypeAssertion,
-                TSInstantiationExpression,
                 ArrayAssignmentTarget,
                 ObjectAssignmentTarget,
             ]
@@ -350,8 +352,6 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
                 /// Inherited from [`SimpleAssignmentTarget`]
                 TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
-                /// Inherited from [`SimpleAssignmentTarget`]
-                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -378,7 +378,6 @@ macro_rules! inherit_variants {
                 TSSatisfiesExpression,
                 TSNonNullExpression,
                 TSTypeAssertion,
-                TSInstantiationExpression
             ]
         );
     };
@@ -605,8 +604,6 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
                 /// Inherited from [`TSType`]
-                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
-                /// Inherited from [`TSType`]
                 TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
                 /// Inherited from [`TSType`]
                 TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
@@ -672,7 +669,6 @@ macro_rules! inherit_variants {
                 TSLiteralType,
                 TSMappedType,
                 TSNamedTupleMember,
-                TSQualifiedName,
                 TSTemplateLiteralType,
                 TSTupleType,
                 TSTypeLiteral,
@@ -747,7 +743,7 @@ pub(crate) use inherit_variants;
 ///
 /// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
 ///
-/// ```
+/// ```ignore
 /// shared_enum_variants!(
 ///     Statement, Declaration,
 ///     is_declaration,
@@ -760,7 +756,7 @@ pub(crate) use inherit_variants;
 ///
 /// expands to:
 ///
-/// ```
+/// ```ignore
 /// const _: () = {
 ///     assert!(discriminant!(Statement::VariableDeclaration) == discriminant!(Declaration::VariableDeclaration));
 ///     assert!(discriminant!(Statement::FunctionDeclaration) == discriminant!(Declaration::FunctionDeclaration));

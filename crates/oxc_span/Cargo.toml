@@ -1,6 +1,6 @@
 [package]
 name = "oxc_span"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,7 +17,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
@@ -28,7 +28,7 @@ compact_str = { workspace = true }
 miette = { workspace = true }
 
 schemars = { workspace = true, optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, optional = true }
 
 [features]
 default = []

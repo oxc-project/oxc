@@ -1,10 +1,10 @@
-use oxc_ast::ast::{Declaration, VariableDeclarationKind};
 use oxc_ast::AstKind;
+use oxc_ast::ast::{Declaration, VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Block is unnecessary.").with_label(span)
@@ -63,7 +63,7 @@ impl Rule for NoLoneBlocks {
 
         if stmt.body.is_empty() {
             let is_comment_in_stmt =
-                ctx.semantic().comments_range(stmt.span.start..stmt.span.end).last().is_some();
+                ctx.comments_range(stmt.span.start..stmt.span.end).last().is_some();
 
             if !is_comment_in_stmt
                 && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_))

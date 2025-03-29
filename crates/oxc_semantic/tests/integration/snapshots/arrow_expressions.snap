@@ -43,9 +43,9 @@ return" shape = box]
     5 [ label = "bb5
 ExpressionStatement
 return" shape = box]
-    1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
-    3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 3 [ label="NewFunction"]
-    5 -> 4 [ label="Error(Implicit)", style=dashed, color=red]
+    5 -> 4 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 5 [ label="NewFunction"]
 }

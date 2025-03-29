@@ -4,7 +4,7 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN, Span};
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -83,7 +83,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                                 || self.type_identifier_names.contains(&specifier.exported.name())
                                 || matches!(
                                     &specifier.local, ModuleExportName::IdentifierReference(ident)
-                                    if ctx.symbols().get_reference(ident.reference_id()).is_type()
+                                    if ctx.scoping().get_reference(ident.reference_id()).is_type()
                                 ))
                         });
                         // Keep the export declaration if there are still specifiers after removing type exports
@@ -198,7 +198,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -218,7 +218,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         class.type_parameters = None;
-        class.super_type_parameters = None;
+        class.super_type_arguments = None;
         class.implements = None;
         class.r#abstract = false;
     }
@@ -315,7 +315,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         elem: &mut JSXOpeningElement<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        elem.type_parameters = None;
+        elem.type_arguments = None;
     }
 
     fn enter_method_definition(
@@ -327,7 +327,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.accessibility.is_some() || param.readonly || param.r#override {
+                if param.has_modifier() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,
@@ -377,7 +377,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_property_definition(
@@ -422,11 +422,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // Remove declare declaration
         stmts.retain(
             |stmt| {
-                if let Some(decl) = stmt.as_declaration() {
-                    !decl.declare()
-                } else {
-                    true
-                }
+                if let Some(decl) = stmt.as_declaration() { !decl.declare() } else { true }
             },
         );
     }
@@ -542,7 +538,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         expr: &mut TaggedTemplateExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_jsx_element(&mut self, _elem: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -579,8 +575,7 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        let block = ctx.ast.alloc_block_statement_with_scope_id(span, ctx.ast.vec1(stmt), scope_id);
-        Statement::BlockStatement(block)
+        ctx.ast.statement_block_with_scope_id(span, ctx.ast.vec1(stmt), scope_id)
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -598,25 +593,23 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            let block =
-                ctx.ast.alloc_block_statement_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
-            *stmt = Statement::BlockStatement(block);
+            *stmt = ctx.ast.statement_block_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
         }
     }
 
     pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
+        if let Some(symbol_id) = ctx.scoping().get_root_binding(name) {
             // `import T from 'mod'; const T = 1;` The T has a value redeclaration
             // `import T from 'mod'; type T = number;` The T has a type redeclaration
             // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
             // That means the import is shadowed, and we can safely remove the import.
             let has_value_redeclaration =
-                (ctx.symbols().get_flags(symbol_id) - SymbolFlags::Import).is_value();
+                (ctx.scoping().symbol_flags(symbol_id) - SymbolFlags::Import).is_value();
             if has_value_redeclaration {
                 return false;
             }
             if ctx
-                .symbols()
+                .scoping()
                 .get_resolved_references(symbol_id)
                 .any(|reference| !reference.is_type())
             {

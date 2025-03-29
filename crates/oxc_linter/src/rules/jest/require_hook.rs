@@ -1,7 +1,7 @@
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
-    ast::{Argument, Expression, Statement, VariableDeclarationKind},
     AstKind,
+    ast::{Argument, Expression, Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,8 +12,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_node_name, is_type_of_jest_fn_call, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
+        parse_jest_fn_call,
     },
 };
 

@@ -2,8 +2,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     // Copied from Biome
     // https://github.com/biomejs/biome/blob/cd1c8ec4249e8df8d221393586d664537c9fddb2/crates/biome_formatter_test/src/diff_report.rs#L105
     // ----------------------------------------------------------------------------------------------------------------------------------
-    // v8-specific syntaxes
-    "js/v8_intrinsic",
     // Babel plugins (mostly experimental syntaxes)
     "js/babel-plugins/",
     // Bogus nodes
@@ -105,7 +103,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/throw_expressions",
     "js/tuple",
     "js/arrows-bind",
-    "js/v8_intrinsic",
     // prettier-ignore
     "js/ignore",
     // range formatting

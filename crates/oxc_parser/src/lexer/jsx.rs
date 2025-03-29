@@ -1,17 +1,20 @@
-use memchr::{memchr, memchr2};
+use memchr::memchr;
 
+use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
 use crate::diagnostics;
 
 use super::{
-    cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
-    Kind, Lexer, Token,
+    Kind, Lexer, Token, cold_branch,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
+
+static JSX_CHILD_END_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| b == b'{' || b == b'}' || b == b'>' || b == b'<');
 
 /// `JSXDoubleStringCharacters` ::
 ///   `JSXDoubleStringCharacter` `JSXDoubleStringCharactersopt`
@@ -28,19 +31,19 @@ impl Lexer<'_> {
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
     /// * Next char in `lexer.source` must be ASCII.
-    #[expect(clippy::unnecessary_safety_comment)]
     pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
-        // Skip opening quote
         debug_assert!(delimiter.is_ascii());
+
+        // Skip opening quote
         // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
-        let after_opening_quote = self.source.position().add(1);
+        let after_opening_quote = unsafe { self.source.position().add(1) };
         let remaining = self.source.str_from_pos_to_end(after_opening_quote);
 
         let len = memchr(delimiter, remaining.as_bytes());
         if let Some(len) = len {
             // SAFETY: `after_opening_quote` + `len` is position of delimiter.
             // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
-            let after_closing_quote = after_opening_quote.add(len + 1);
+            let after_closing_quote = unsafe { after_opening_quote.add(len + 1) };
             self.source.set_position(after_closing_quote);
             Kind::Str
         } else {
@@ -73,20 +76,27 @@ impl Lexer<'_> {
                 Kind::LCurly
             }
             Some(_) => {
-                // The tokens `{`, `<`, `>` and `}` cannot appear in JSX text.
-                // The TypeScript compiler raises the error "Unexpected token. Did you mean `{'>'}` or `&gt;`?".
-                // Where as the Babel compiler does not raise any errors.
-                // The following check omits `>` and `}` so that more Babel tests can be passed.
-                let len = memchr2(b'{', b'<', self.remaining().as_bytes());
-                if let Some(len) = len {
-                    // SAFETY: `memchr2` guarantees `len` will be offset from current position
-                    // of a `{` or `<` byte. So must be a valid UTF-8 boundary, and within bounds of source.
-                    let end = unsafe { self.source.position().add(len) };
-                    self.source.set_position(end);
+                let next_byte = byte_search! {
+                    lexer: self,
+                    table: JSX_CHILD_END_TABLE,
+                    handle_eof: {
+                        return Kind::Undetermined;
+                    },
+                };
+
+                if matches!(next_byte, b'<' | b'{') {
+                    Kind::JSXText
                 } else {
-                    self.source.advance_to_end();
+                    cold_branch(|| {
+                        let start = self.offset();
+                        self.error(diagnostics::unexpected_jsx_end(
+                            Span::new(start, start),
+                            next_byte as char,
+                            if next_byte == b'}' { "rbrace" } else { "gt" },
+                        ));
+                        Kind::Undetermined
+                    })
                 }
-                Kind::JSXText
             }
             None => Kind::Eof,
         }

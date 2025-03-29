@@ -79,217 +79,200 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace Foo.Bar {
-   ·             ─────────
- 3 │               namespace Baz.Bas {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace Foo.Bar {
+   · ─────────
+ 2 │                namespace Baz.Bas {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:9]
- 2 │             namespace Foo.Bar {
- 3 │               namespace Baz.Bas {
-   ·               ─────────
- 4 │                 interface X {}
+   ╭─[no_namespace.tsx:2:10]
+ 1 │ namespace Foo.Bar {
+ 2 │                namespace Baz.Bas {
+   ·                ─────────
+ 3 │                  interface X {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:9]
- 2 │             namespace A {
- 3 │               namespace B {
-   ·               ─────────
- 4 │                 declare namespace C {}
+   ╭─[no_namespace.tsx:2:10]
+ 1 │ namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:9]
- 2 │             namespace A {
- 3 │               namespace B {
-   ·               ─────────
- 4 │                 export declare namespace C {}
+   ╭─[no_namespace.tsx:2:10]
+ 1 │ namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               declare namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               declare namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:7]
- 1 │ 
- 2 │             namespace A {
-   ·             ─────────
- 3 │               export namespace B {
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:16]
- 2 │             namespace A {
- 3 │               export namespace B {
-   ·                      ─────────
- 4 │                 export declare namespace C {}
+   ╭─[no_namespace.tsx:2:17]
+ 1 │ namespace A {
+ 2 │                export namespace B {
+   ·                       ─────────
+ 3 │                  export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:9]
- 2 │             export namespace A {
- 3 │               namespace B {
-   ·               ─────────
- 4 │                 declare namespace C {}
+   ╭─[no_namespace.tsx:2:10]
+ 1 │ export namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:9]
- 2 │             export namespace A {
- 3 │               namespace B {
-   ·               ─────────
- 4 │                 export declare namespace C {}
+   ╭─[no_namespace.tsx:2:10]
+ 1 │ export namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               declare namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               export declare namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               declare namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                declare namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:2:14]
- 1 │ 
- 2 │             export namespace A {
-   ·                    ─────────
- 3 │               export namespace B {
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export namespace B {
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
 
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
-   ╭─[no_namespace.tsx:3:16]
- 2 │             export namespace A {
- 3 │               export namespace B {
-   ·                      ─────────
- 4 │                 export declare namespace C {}
+   ╭─[no_namespace.tsx:2:17]
+ 1 │ export namespace A {
+ 2 │                export namespace B {
+   ·                       ─────────
+ 3 │                  export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`

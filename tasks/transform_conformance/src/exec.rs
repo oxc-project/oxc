@@ -1,6 +1,6 @@
 use std::{path::Path, process::Command};
 
-use crate::{conformance_root, TestRunner};
+use crate::{TestRunner, conformance_root};
 
 impl TestRunner {
     pub(crate) fn run_vitest(&self, dir: &str, dest: &Path) {

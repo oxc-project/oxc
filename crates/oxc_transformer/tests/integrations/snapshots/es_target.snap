@@ -19,7 +19,7 @@ Math.pow(a, b);
 ########## 3 es2016
 async function foo() {}
 ----------
-import _asyncToGenerator from '@babel/runtime/helpers/asyncToGenerator';
+import _asyncToGenerator from '@oxc-project/runtime/helpers/asyncToGenerator';
 function foo() {
 	return _foo.apply(this, arguments);
 }
@@ -31,7 +31,7 @@ function _foo() {
 ########## 4 es2017
 ({ ...x })
 ----------
-import _objectSpread from '@babel/runtime/helpers/objectSpread2';
+import _objectSpread from '@oxc-project/runtime/helpers/objectSpread2';
 _objectSpread({}, x);
 
 ########## 5 es2018
@@ -84,8 +84,8 @@ class foo {}
 ########## 11 es2021
 class Foo { #a; }
 ----------
-import _classPrivateFieldInitSpec from '@babel/runtime/helpers/classPrivateFieldInitSpec';
-var _a = new WeakMap();
+import _classPrivateFieldInitSpec from '@oxc-project/runtime/helpers/classPrivateFieldInitSpec';
+var _a = /* @__PURE__ */ new WeakMap();
 class Foo {
 	constructor() {
 		_classPrivateFieldInitSpec(this, _a, void 0);

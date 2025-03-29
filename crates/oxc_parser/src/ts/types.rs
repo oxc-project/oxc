@@ -1,14 +1,13 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
-    Context, ParserImpl,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -338,7 +337,9 @@ impl<'a> ParserImpl<'a> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object => {
+            | Kind::Object
+            // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
+            | Kind::Null => {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     Ok(ty)
                 } else {
@@ -361,7 +362,7 @@ impl<'a> ParserImpl<'a> {
             // return parseJSDocFunctionType();
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
-            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False | Kind::Null => {
+            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False => {
                 self.parse_literal_type_node(/* negative */ false)
             }
             kind if kind.is_number() => {
@@ -437,10 +438,6 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_never_keyword(self.end_span(span))
             }
-            Kind::Null => {
-                self.bump_any();
-                self.ast.ts_type_null_keyword(self.end_span(span))
-            }
             Kind::Number => {
                 self.bump_any();
                 self.ast.ts_type_number_keyword(self.end_span(span))
@@ -465,9 +462,9 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_unknown_keyword(self.end_span(span))
             }
-            Kind::Void => {
+            Kind::Null => {
                 self.bump_any();
-                self.ast.ts_type_void_keyword(self.end_span(span))
+                self.ast.ts_type_null_keyword(self.end_span(span))
             }
             _ => return Err(self.unexpected()),
         };
@@ -650,7 +647,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_this_type_predicate(&mut self, this_ty: TSThisType) -> Result<TSType<'a>> {
         let span = this_ty.span;
         self.bump_any(); // bump `is`
-                         // TODO: this should go through the ast builder.
+        // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;
@@ -939,7 +936,11 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `(`
         let ty = self.parse_ts_type()?;
         self.expect(Kind::RParen)?;
-        Ok(self.ast.ts_type_parenthesized_type(self.end_span(span), ty))
+        Ok(if self.options.preserve_parens {
+            self.ast.ts_type_parenthesized_type(self.end_span(span), ty)
+        } else {
+            ty
+        })
     }
 
     fn parse_literal_type_node(&mut self, negative: bool) -> Result<TSType<'a>> {
@@ -963,10 +964,8 @@ impl<'a> ParserImpl<'a> {
         } else {
             match expression {
                 Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
-                Expression::NullLiteral(literal) => TSLiteral::NullLiteral(literal),
                 Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
                 Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-                Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
                 Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
                 _ => return Err(self.unexpected()),
@@ -981,55 +980,20 @@ impl<'a> ParserImpl<'a> {
         let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
-        let parameter = self.parse_ts_type()?;
-        let attributes =
-            if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
+        let argument = self.parse_ts_type()?;
+        let options =
+            if self.eat(Kind::Comma) { Some(self.parse_object_expression()?) } else { None };
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
-        let type_parameters = self.parse_type_arguments_of_type_reference()?;
+        let type_arguments = self.parse_type_arguments_of_type_reference()?;
         Ok(self.ast.ts_type_import_type(
             self.end_span(span),
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
-    }
-
-    fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
-        let span = self.start_span();
-        self.expect(Kind::LCurly)?;
-        let attributes_keyword = match self.cur_kind() {
-            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
-            Kind::With => self.parse_identifier_name()?,
-            _ => {
-                return Err(self.unexpected());
-            }
-        };
-        self.expect(Kind::Colon)?;
-        self.expect(Kind::LCurly)?;
-        let elements = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_import_attribute,
-        )?;
-        self.expect(Kind::RCurly)?;
-        self.expect(Kind::RCurly)?;
-        Ok(self.ast.ts_import_attributes(self.end_span(span), attributes_keyword, elements))
-    }
-
-    fn parse_ts_import_attribute(&mut self) -> Result<TSImportAttribute<'a>> {
-        let span = self.start_span();
-        let name = match self.cur_kind() {
-            Kind::Str => TSImportAttributeName::StringLiteral(self.parse_literal_string()?),
-            _ => TSImportAttributeName::Identifier(self.parse_identifier_name()?),
-        };
-
-        self.expect(Kind::Colon)?;
-        let value = self.parse_expr()?;
-        Ok(self.ast.ts_import_attribute(self.end_span(span), name, value))
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {
@@ -1329,8 +1293,13 @@ impl<'a> ParserImpl<'a> {
 
             if let Ok(kind) = ModifierKind::try_from(self.cur_kind()) {
                 let modifier = Modifier { kind, span: self.cur_token().span() };
-                flags.set(kind.into(), true);
-                modifiers.push(modifier);
+                let new_flag = ModifierFlags::from(kind);
+                if flags.contains(new_flag) {
+                    self.error(diagnostics::accessibility_modifier_already_seen(&modifier));
+                } else {
+                    flags.insert(new_flag);
+                    modifiers.push(modifier);
+                }
             } else {
                 break;
             }
@@ -1371,7 +1340,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn is_binary_operator(&mut self) -> bool {
+    fn is_binary_operator(&self) -> bool {
         if self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }
@@ -1387,7 +1356,7 @@ impl<'a> ParserImpl<'a> {
             kind if kind.is_update_operator() => true,
             Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
             kind if kind.is_binary_operator() => true,
-            kind => kind.is_identifier(),
+            kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
 
@@ -1408,7 +1377,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => {
                 matches!(self.peek_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
             }
-            kind => kind.is_identifier(),
+            _ => false,
         }
     }
 }

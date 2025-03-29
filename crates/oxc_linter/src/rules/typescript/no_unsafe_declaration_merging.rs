@@ -1,13 +1,13 @@
-use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ast::{AstKind, ast::BindingIdentifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
@@ -44,8 +44,7 @@ impl Rule for NoUnsafeDeclarationMerging {
         match node.kind() {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
-                    for symbol_id in ctx.semantic().scopes().get_bindings(node.scope_id()).values()
-                    {
+                    for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
                         if let AstKind::TSInterfaceDeclaration(scope_interface) =
                             get_symbol_kind(*symbol_id, ctx)
                         {
@@ -55,7 +54,7 @@ impl Rule for NoUnsafeDeclarationMerging {
                 }
             }
             AstKind::TSInterfaceDeclaration(decl) => {
-                for symbol_id in ctx.semantic().scopes().get_bindings(node.scope_id()).values() {
+                for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
                     if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx) {
                         if let Some(scope_class_ident) = scope_class.id.as_ref() {
                             check_and_diagnostic(&decl.id, scope_class_ident, ctx);
@@ -83,7 +82,7 @@ fn check_and_diagnostic(
 }
 
 fn get_symbol_kind<'a>(symbol_id: SymbolId, ctx: &LintContext<'a>) -> AstKind<'a> {
-    ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id)).kind()
+    ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind()
 }
 
 #[test]

@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, MemberExpression},
     AstKind,
+    ast::{AssignmentTarget, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_exports_assign(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected assignment to 'exports'.")
@@ -19,7 +19,7 @@ fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
     let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
         return false;
     };
-    id.is_global_reference_name("exports", ctx.symbols())
+    id.is_global_reference_name("exports", ctx.scoping())
 }
 
 fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
@@ -32,7 +32,7 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
     };
 
     mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name("module", ctx.symbols())
+        && obj_id.is_global_reference_name("module", ctx.scoping())
 }
 
 #[derive(Debug, Default, Clone)]

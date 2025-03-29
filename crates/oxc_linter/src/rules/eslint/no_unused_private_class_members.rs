@@ -91,17 +91,15 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedPrivateClassMembers {
     fn run_once(&self, ctx: &LintContext) {
-        ctx.semantic().classes().iter_enumerated().for_each(|(class_id, _)| {
-            for (element_id, element) in
-                ctx.semantic().classes().elements[class_id].iter_enumerated()
-            {
+        ctx.classes().iter_enumerated().for_each(|(class_id, _)| {
+            for (element_id, element) in ctx.classes().elements[class_id].iter_enumerated() {
                 if !element.kind.intersects(ElementKind::Property | ElementKind::Method) {
                     continue;
                 }
                 if element.is_private
-                    && !ctx.semantic().classes().iter_private_identifiers(class_id).any(|ident| {
+                    && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
                         // If the element is a property, it must be read.
-                        (!element.kind.is_property() || is_read(ident.id, ctx.semantic().nodes()))
+                        (!element.kind.is_property() || is_read(ident.id, ctx.nodes()))
                             && ident.element_ids.contains(&element_id)
                     })
                 {

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_func(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The Function constructor is eval.").with_label(span)
@@ -93,7 +93,7 @@ impl Rule for NoNewFunc {
         };
 
         if let Some((id, span)) = id_and_span {
-            if id.is_global_reference_name("Function", ctx.symbols()) {
+            if id.is_global_reference_name("Function", ctx.scoping()) {
                 ctx.diagnostic(no_new_func(span));
             }
         }

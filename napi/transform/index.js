@@ -60,7 +60,13 @@ const isMuslFromChildProcess = () => {
 }
 
 function requireNative() {
-  if (process.platform === 'android') {
+  if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
+    try {
+      nativeBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH);
+    } catch (err) {
+      loadErrors.push(err);
+    }
+  } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
         return require('./transform.android-arm64.node')
@@ -366,5 +372,6 @@ if (!nativeBinding) {
 
 module.exports.HelperMode = nativeBinding.HelperMode
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
+module.exports.moduleRunnerTransform = nativeBinding.moduleRunnerTransform
 module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform

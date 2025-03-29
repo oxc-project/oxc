@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
     AstKind,
+    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_misused_new_interface_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Interfaces cannot be constructed, only classes.")
@@ -26,7 +26,8 @@ pub struct NoMisusedNew;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce valid definition of `new` and `constructor`
+    /// Enforces valid definition of new and constructor. This rule prevents classes from defining
+    /// a method named `new` and interfaces from defining a method named `constructor`.
     ///
     /// ### Why is this bad?
     ///
@@ -38,15 +39,32 @@ declare_oxc_lint!(
     /// Developers new to JavaScript classes and/or TypeScript interfaces may
     /// sometimes confuse when to use constructor or new.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// declare class C {
     ///   new(): C;
     /// }
+    /// ```
     ///
+    /// ```typescript
     /// interface I {
     ///   new (): I;
     ///   constructor(): void;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// declare class C {
+    ///   constructor();
+    /// }
+    /// ```
+    ///
+    /// ```typescript
+    /// interface I {
+    ///   new (): C;
     /// }
     /// ```
     NoMisusedNew,
@@ -61,18 +79,21 @@ impl Rule for NoMisusedNew {
                 let decl_name = &interface_decl.id.name;
 
                 for signature in &interface_decl.body.body {
-                    if let TSSignature::TSConstructSignatureDeclaration(sig) = signature {
-                        if let Some(return_type) = &sig.return_type {
-                            if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation
-                            {
-                                if let TSTypeName::IdentifierReference(id) = &type_ref.type_name {
-                                    if id.name == decl_name {
-                                        ctx.diagnostic(no_misused_new_interface_diagnostic(
-                                            Span::new(sig.span.start, sig.span.start + 3),
-                                        ));
-                                    }
-                                }
-                            }
+                    let TSSignature::TSConstructSignatureDeclaration(sig) = signature else {
+                        continue;
+                    };
+                    let Some(return_type) = &sig.return_type else {
+                        continue;
+                    };
+                    let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
+                        continue;
+                    };
+                    if let TSTypeName::IdentifierReference(id) = &type_ref.type_name {
+                        if id.name == decl_name {
+                            ctx.diagnostic(no_misused_new_interface_diagnostic(Span::new(
+                                sig.span.start,
+                                sig.span.start + 3,
+                            )));
                         }
                     }
                 }
@@ -85,27 +106,25 @@ impl Rule for NoMisusedNew {
                 }
             }
             AstKind::Class(cls) => {
-                if let Some(cls_id) = &cls.id {
-                    let cls_name = &cls_id.name;
+                let Some(cls_id) = &cls.id else {
+                    return;
+                };
+                let cls_name = &cls_id.name;
 
-                    for element in &cls.body.body {
-                        if let ClassElement::MethodDefinition(method) = element {
-                            if method.key.is_specific_id("new") && method.value.body.is_none() {
-                                if let Some(return_type) = &method.value.return_type {
-                                    if let TSType::TSTypeReference(type_ref) =
-                                        &return_type.type_annotation
-                                    {
-                                        if let TSTypeName::IdentifierReference(current_id) =
-                                            &type_ref.type_name
-                                        {
-                                            if current_id.name == cls_name {
-                                                ctx.diagnostic(no_misused_new_class_diagnostic(
-                                                    method.key.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
+                for element in &cls.body.body {
+                    let ClassElement::MethodDefinition(method) = element else {
+                        continue;
+                    };
+                    if method.key.is_specific_id("new") && method.value.body.is_none() {
+                        let Some(return_type) = &method.value.return_type else {
+                            continue;
+                        };
+                        let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
+                            continue;
+                        };
+                        if let TSTypeName::IdentifierReference(current_id) = &type_ref.type_name {
+                            if current_id.name == cls_name {
+                                ctx.diagnostic(no_misused_new_class_diagnostic(method.key.span()));
                             }
                         }
                     }

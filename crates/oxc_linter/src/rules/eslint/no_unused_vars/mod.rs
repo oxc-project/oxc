@@ -206,7 +206,7 @@ impl Rule for NoUnusedVars {
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol = Symbol::new(ctx.semantic().as_ref(), ctx.module_record(), symbol_id);
+        let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
         if Self::should_skip_symbol(&symbol) {
             return;
         }
@@ -279,14 +279,14 @@ impl NoUnusedVars {
                 if self.is_allowed_variable_declaration(symbol, decl) {
                     return;
                 };
-                let report =
-                    if let Some(last_write) = symbol.references().rev().find(|r| r.is_write()) {
+                let report = match symbol.references().rev().find(|r| r.is_write()) {
+                    Some(last_write) => {
                         // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
-                    } else {
-                        diagnostic::declared(symbol, &self.vars_ignore_pattern)
-                    };
+                    }
+                    _ => diagnostic::declared(symbol, &self.vars_ignore_pattern),
+                };
 
                 ctx.diagnostic_with_suggestion(report, |fixer| {
                     // NOTE: suggestions produced by this fixer are all flagged
@@ -374,16 +374,16 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
-        self.scopes()
-            .ancestors(self.scope_id())
+        self.scoping()
+            .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
-                let flags = self.scopes().get_flags(scope_id);
+                let flags = self.scoping().scope_flags(scope_id);
                 flags.contains(ScopeFlags::TsModuleBlock)
             })
             .any(|ambient_module_scope_id| {
                 let AstKind::TSModuleDeclaration(module) = self
                     .nodes()
-                    .get_node(self.scopes().get_node_id(ambient_module_scope_id))
+                    .get_node(self.scoping().get_node_id(ambient_module_scope_id))
                     .kind()
                 else {
                     return false;

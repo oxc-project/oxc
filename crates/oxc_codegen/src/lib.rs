@@ -5,10 +5,9 @@
 #![warn(missing_docs)]
 
 mod binary_expr_visitor;
-mod code_buffer;
 mod comment;
 mod context;
-mod gen;
+mod r#gen;
 mod operator;
 mod options;
 mod sourcemap_builder;
@@ -16,24 +15,25 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
+    Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
+    Statement, StringLiteral,
 };
-use oxc_data_structures::stack::Stack;
-use oxc_semantic::SymbolTable;
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_semantic::Scoping;
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
+    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, code_buffer::CodeBuffer, comment::CommentsMap,
-    operator::Operator, sourcemap_builder::SourcemapBuilder,
+    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
-    gen::{Gen, GenExpr},
+    r#gen::{Gen, GenExpr},
     options::{CodegenOptions, LegalComment},
 };
 
@@ -79,7 +79,7 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: &'a str,
 
-    symbol_table: Option<SymbolTable>,
+    scoping: Option<Scoping>,
 
     /// Output Code
     code: CodeBuffer,
@@ -107,7 +107,7 @@ pub struct Codegen<'a> {
     indent: u32,
 
     /// Fast path for [CodegenOptions::single_quote]
-    quote: u8,
+    quote: Quote,
     /// Fast path for if print comments
     print_comments: bool,
 
@@ -115,19 +115,6 @@ pub struct Codegen<'a> {
     comments: CommentsMap,
 
     legal_comments: Vec<Comment>,
-    /// Start of comment that needs to be moved to the before VariableDeclarator
-    ///
-    /// For example:
-    /// ```js
-    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
-    ///  }, b = 10000;
-    /// ```
-    /// Should be generated as:
-    /// ```js
-    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
-    ///  }, b = 10000;
-    /// ```
-    start_of_annotation_comment: Option<u32>,
 
     sourcemap_builder: Option<SourcemapBuilder>,
 }
@@ -162,7 +149,7 @@ impl<'a> Codegen<'a> {
         Self {
             options,
             source_text: "",
-            symbol_table: None,
+            scoping: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -176,10 +163,9 @@ impl<'a> Codegen<'a> {
             start_of_default_export: 0,
             is_jsx: false,
             indent: 0,
-            quote: b'"',
+            quote: Quote::Double,
             print_comments,
             comments: CommentsMap::default(),
-            start_of_annotation_comment: None,
             legal_comments: vec![],
             sourcemap_builder: None,
         }
@@ -188,7 +174,7 @@ impl<'a> Codegen<'a> {
     /// Pass options to the code generator.
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
-        self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
         self.print_comments = options.print_comments();
         self.options = options;
         self
@@ -198,8 +184,8 @@ impl<'a> Codegen<'a> {
     ///
     /// Can be used for easy renaming of variables (based on semantic analysis).
     #[must_use]
-    pub fn with_symbol_table(mut self, symbol_table: Option<SymbolTable>) -> Self {
-        self.symbol_table = symbol_table;
+    pub fn with_scoping(mut self, scoping: Option<Scoping>) -> Self {
+        self.scoping = scoping;
         self
     }
 
@@ -208,7 +194,7 @@ impl<'a> Codegen<'a> {
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
-        self.quote = if self.options.single_quote { b'\'' } else { b'"' };
+        self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
         if self.print_comments {
@@ -254,6 +240,12 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.print_str(s);
+    }
+
+    /// Push `char` into the buffer.
+    #[inline]
+    pub fn print_char(&mut self, ch: char) {
+        self.code.print_char(ch);
     }
 
     /// Print a single [`Expression`], adding it to the code generator's
@@ -491,13 +483,12 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_list_with_comments<T: Gen + GetSpan>(&mut self, items: &[T], ctx: Context) {
+    fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
             }
-            if self.print_comments && self.has_non_annotation_comment(item.span().start) {
-                self.print_expr_comments(item.span().start);
+            if self.print_expr_comments(item.span().start) {
                 self.print_indent();
             } else {
                 self.print_soft_newline();
@@ -518,9 +509,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(symbol_table) = &self.symbol_table {
+        if let Some(scoping) = &self.scoping {
             if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = symbol_table.get_reference_name(reference_id) {
+                if let Some(name) = scoping.get_reference_name(reference_id) {
                     // SAFETY: Hack the lifetime to be part of the allocator.
                     return unsafe { std::mem::transmute_copy(&name) };
                 }
@@ -530,9 +521,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(symbol_table) = &self.symbol_table {
+        if let Some(scoping) = &self.scoping {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = symbol_table.get_name(symbol_id);
+                let name = scoping.symbol_name(symbol_id);
                 // SAFETY: Hack the lifetime to be part of the allocator.
                 return unsafe { std::mem::transmute_copy(&name) };
             }
@@ -591,15 +582,18 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {
+    fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
+        self.add_source_mapping(s.span);
+
         let quote = if self.options.minify {
-            let mut single_cost: i32 = 0;
-            let mut double_cost: i32 = 0;
-            let mut backtick_cost: i32 = 0;
-            let mut bytes = s.as_bytes().iter().peekable();
+            // String length is max `u32::MAX`, so use `i64` to make overflow impossible
+            let mut single_cost: i64 = 0;
+            let mut double_cost: i64 = 0;
+            let mut backtick_cost: i64 = 0;
+            let mut bytes = s.value.as_bytes().iter().peekable();
             while let Some(b) = bytes.next() {
                 match b {
-                    b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
+                    b'\n' => backtick_cost -= 1,
                     b'\'' => single_cost += 1,
                     b'"' => double_cost += 1,
                     b'`' => backtick_cost += 1,
@@ -611,27 +605,27 @@ impl<'a> Codegen<'a> {
                     _ => {}
                 }
             }
-            let mut quote = b'"';
+            let mut quote = Quote::Double;
             if allow_backtick && double_cost >= backtick_cost {
-                quote = b'`';
+                quote = Quote::Backtick;
                 if backtick_cost > single_cost {
-                    quote = b'\'';
+                    quote = Quote::Single;
                 }
             } else if double_cost > single_cost {
-                quote = b'\'';
+                quote = Quote::Single;
             }
             quote
         } else {
             self.quote
         };
 
-        self.print_ascii_byte(quote);
+        quote.print(self);
         self.print_unquoted_utf16(s, quote);
-        self.print_ascii_byte(quote);
+        quote.print(self);
     }
 
-    fn print_unquoted_utf16(&mut self, s: &str, quote: u8) {
-        let mut chars = s.chars().peekable();
+    fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
+        let mut chars = s.value.chars().peekable();
 
         while let Some(c) = chars.next() {
             match c {
@@ -647,7 +641,7 @@ impl<'a> Codegen<'a> {
                 '\u{b}' => self.print_str("\\v"), // \v
                 '\u{c}' => self.print_str("\\f"), // \f
                 '\n' => {
-                    if quote == b'`' {
+                    if quote == Quote::Backtick {
                         self.print_ascii_byte(b'\n');
                     } else {
                         self.print_str("\\n");
@@ -663,28 +657,48 @@ impl<'a> Codegen<'a> {
                 PS => self.print_str("\\u2029"),
                 '\u{a0}' => self.print_str("\\xA0"),
                 '\'' => {
-                    if quote == b'\'' {
+                    if quote == Quote::Single {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'\'');
                 }
                 '\"' => {
-                    if quote == b'"' {
+                    if quote == Quote::Double {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'"');
                 }
                 '`' => {
-                    if quote == b'`' {
+                    if quote == Quote::Backtick {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'`');
                 }
                 '$' => {
-                    if chars.peek() == Some(&'{') {
+                    if quote == Quote::Backtick && chars.peek() == Some(&'{') {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'$');
+                }
+                '\u{FFFD}' if s.lone_surrogates => {
+                    // If `lone_surrogates` is set, string contains lone surrogates which are escaped
+                    // using the lossy replacement character (U+FFFD) as an escape marker.
+                    // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
+                    let hex1 = chars.next().unwrap();
+                    let hex2 = chars.next().unwrap();
+                    let hex3 = chars.next().unwrap();
+                    let hex4 = chars.next().unwrap();
+                    if [hex1, hex2, hex3, hex4] == ['f', 'f', 'f', 'd'] {
+                        // Actual lossy replacement character
+                        self.print_char('\u{FFFD}');
+                    } else {
+                        // Lossy replacement character representing a lone surrogate
+                        self.print_str("\\u");
+                        self.print_char(hex1);
+                        self.print_char(hex2);
+                        self.print_char(hex3);
+                        self.print_char(hex4);
+                    }
                 }
                 _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
             }
@@ -770,5 +784,22 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
+    }
+}
+
+/// Quote character.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum Quote {
+    Single = b'\'',
+    Double = b'"',
+    Backtick = b'`',
+}
+
+impl Quote {
+    #[inline]
+    fn print(self, codegen: &mut Codegen<'_>) {
+        // SAFETY: All variants of `Quote` are ASCII bytes
+        unsafe { codegen.code.print_byte_unchecked(self as u8) };
     }
 }

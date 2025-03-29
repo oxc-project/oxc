@@ -2,24 +2,35 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text, format::print::call_arguments, group, indent, ir::Doc, line, softline,
-    text, Format, Prettier,
+    Format, Prettier, array, dynamic_text, format::print::call_arguments, group, indent, ir::Doc,
+    line, softline, text,
 };
 
 pub enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
     NewExpression(&'b NewExpression<'a>),
+    V8Intrinsic(&'b V8IntrinsicExpression<'a>),
 }
 
 impl<'a> CallExpressionLike<'a, '_> {
-    fn is_new(&self) -> bool {
+    pub fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
 
-    pub fn callee(&self) -> &Expression<'a> {
+    // NOTE: This only exists for `is_commons_js_or_amd_call()` check in `call_arguments.rs`
+    // and it should be performed before calling `print_call_arguments()`.
+    pub fn callee_expr(&self) -> &Expression<'a> {
         match self {
             CallExpressionLike::CallExpression(call) => &call.callee,
-            CallExpressionLike::NewExpression(new) => &new.callee,
+            _ => unreachable!(),
+        }
+    }
+
+    fn callee_doc(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            CallExpressionLike::CallExpression(call) => call.callee.format(p),
+            CallExpressionLike::NewExpression(new) => new.callee.format(p),
+            CallExpressionLike::V8Intrinsic(v8i) => array!(p, [text!("%"), v8i.name.format(p)]),
         }
     }
 
@@ -27,6 +38,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         match self {
             CallExpressionLike::CallExpression(call) => call.optional,
             CallExpressionLike::NewExpression(new) => false,
+            CallExpressionLike::V8Intrinsic(_) => false,
         }
     }
 
@@ -34,13 +46,15 @@ impl<'a> CallExpressionLike<'a, '_> {
         match self {
             CallExpressionLike::CallExpression(call) => &call.arguments,
             CallExpressionLike::NewExpression(new) => &new.arguments,
+            CallExpressionLike::V8Intrinsic(expr) => &expr.arguments,
         }
     }
 
     fn type_parameters(&self) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
-            CallExpressionLike::CallExpression(call) => call.type_parameters.as_ref(),
-            CallExpressionLike::NewExpression(new) => new.type_parameters.as_ref(),
+            CallExpressionLike::CallExpression(call) => call.type_arguments.as_ref(),
+            CallExpressionLike::NewExpression(new) => new.type_arguments.as_ref(),
+            CallExpressionLike::V8Intrinsic(_) => None,
         }
     }
 }
@@ -93,7 +107,7 @@ pub fn print_call_expression<'a>(
     if expr.is_new() {
         parts.push(text!("new "));
     };
-    parts.push(expr.callee().format(p));
+    parts.push(expr.callee_doc(p));
     if expr.optional() {
         parts.push(text!("?."));
     }
@@ -102,7 +116,7 @@ pub fn print_call_expression<'a>(
     }
     parts.push(call_arguments::print_call_arguments(p, expr));
 
-    if expr.callee().is_call_expression() {
+    if !expr.is_new() {
         return group!(p, parts);
     }
 

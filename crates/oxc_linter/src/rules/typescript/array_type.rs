@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -250,7 +250,7 @@ fn check_and_report_error_reference(
         {
             check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
         } else if ident_ref_type_name.name.as_str() == "Promise" {
-            if let Some(type_params) = &ts_type_reference.type_parameters {
+            if let Some(type_params) = &ts_type_reference.type_arguments {
                 if type_params.params.len() == 1 {
                     if let Some(type_param) = type_params.params.first() {
                         if let TSType::TSArrayType(array_type) = &type_param {
@@ -314,7 +314,7 @@ fn check_and_report_error_array(
     }
     let readonly_prefix: &'static str = if is_readonly_array_type { "readonly " } else { "" };
     let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
-    let type_params = &ts_type_reference.type_parameters;
+    let type_params = &ts_type_reference.type_arguments;
 
     if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
         let diagnostic = match config {
@@ -396,21 +396,20 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSNullKeyword(_)
         | TSType::TSArrayType(_)
         | TSType::TSUndefinedKeyword(_)
-        | TSType::TSQualifiedName(_)
         | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
             let type_name = TSTypeName::get_identifier_reference(&node.type_name);
             if type_name.name.as_str() == "Array" {
-                if node.type_parameters.is_none() {
+                if node.type_arguments.is_none() {
                     return true;
                 }
-                if node.type_parameters.as_ref().unwrap().params.len() == 1 {
+                if node.type_arguments.as_ref().unwrap().params.len() == 1 {
                     return is_simple_type(
-                        node.type_parameters.as_ref().unwrap().params.first().unwrap(),
+                        node.type_arguments.as_ref().unwrap().params.first().unwrap(),
                     );
                 }
             } else {
-                if node.type_parameters.is_some() {
+                if node.type_arguments.is_some() {
                     return false;
                 }
                 if let TSTypeName::IdentifierReference(_) = &node.type_name {
@@ -463,7 +462,6 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSLiteralType(t) => Some(t.span),
         TSType::TSMappedType(t) => Some(t.span),
         TSType::TSNamedTupleMember(t) => Some(t.span),
-        TSType::TSQualifiedName(t) => Some(t.span),
         TSType::TSTemplateLiteralType(t) => Some(t.span),
         TSType::TSTupleType(t) => Some(t.span),
         TSType::TSTypeLiteral(t) => Some(t.span),
@@ -1013,10 +1011,10 @@ fn test() {
             "let x: Array<undefined> = [undefined] as undefined[];",
             Some(serde_json::json!([{"default":"array-simple"}])),
         ),
-        (
-            "let y: string[] = <Array<string>>['2'];",
-            Some(serde_json::json!([{"default":"array-simple"}])),
-        ),
+        // (
+        // "let y: string[] = <Array<string>>['2'];",
+        // Some(serde_json::json!([{"default":"array-simple"}])),
+        // ),
         ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array-simple"}]))),
         (
             "let ya = [[1, '2']] as [number, string][];",
@@ -1064,7 +1062,7 @@ fn test() {
             "let x: Array<undefined> = [undefined] as undefined[];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
-        ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
+        // ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
         ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array"}]))),
         ("type Arr<T> = Array<T>;", Some(serde_json::json!([{"default":"array"}]))),
         // ("
@@ -1708,5 +1706,8 @@ fn test() {
         ),
     ];
 
-    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

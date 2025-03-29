@@ -2,12 +2,18 @@ use oxc_syntax::es_target::ESTarget;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
-    /// Enable features that are targeted above.
+    /// Set desired EcmaScript standard version for output.
     ///
     /// e.g.
     ///
     /// * catch optional binding when >= es2019
+    /// * `??` operator >=  es2020
+    ///
+    /// Default `ESTarget::ESNext`
     pub target: ESTarget,
+
+    /// Keep function / class names.
+    pub keep_names: CompressOptionsKeepNames,
 
     /// Remove `debugger;` statements.
     ///
@@ -23,16 +29,61 @@ pub struct CompressOptions {
 #[expect(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { drop_console: false, ..Self::all_true() }
+        Self { drop_console: false, ..Self::smallest() }
     }
 }
 
 impl CompressOptions {
-    pub fn all_true() -> Self {
-        Self { target: ESTarget::ESNext, drop_debugger: true, drop_console: true }
+    pub fn smallest() -> Self {
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::all_false(),
+            drop_debugger: true,
+            drop_console: true,
+        }
     }
 
+    pub fn safest() -> Self {
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::all_true(),
+            drop_debugger: false,
+            drop_console: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CompressOptionsKeepNames {
+    /// Keep function names so that `Function.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// Default `false`
+    pub function: bool,
+
+    /// Keep class names so that `Class.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// Default `false`
+    pub class: bool,
+}
+
+impl CompressOptionsKeepNames {
     pub fn all_false() -> Self {
-        Self { target: ESTarget::ESNext, drop_debugger: false, drop_console: false }
+        Self { function: false, class: false }
+    }
+
+    pub fn all_true() -> Self {
+        Self { function: true, class: true }
+    }
+
+    pub fn function_only() -> Self {
+        Self { function: true, class: false }
+    }
+
+    pub fn class_only() -> Self {
+        Self { function: false, class: true }
     }
 }

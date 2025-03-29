@@ -1,17 +1,17 @@
 use std::fmt;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeItem,
         JSXAttributeValue,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{context::ContextHost, rule::Rule, AstNode, LintContext};
+use crate::{AstNode, LintContext, context::ContextHost, rule::Rule};
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -37,7 +37,7 @@ fn react_perf_reference_diagnostic(
     diagnostic.and_label(attr_span.label("And used here"))
 }
 
-pub(crate) trait ReactPerfRule: Sized + Default + fmt::Debug {
+pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     const MESSAGE: &'static str;
 
     /// Check if an [`Expression`] violates a react perf rule. If it does,
@@ -63,7 +63,7 @@ where
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
-        if node.scope_id() == ctx.scopes().root_scope_id() {
+        if node.scope_id() == ctx.scoping().root_scope_id() {
             return;
         }
 
@@ -94,17 +94,17 @@ where
         let Expression::Identifier(ident) = expr else {
             return;
         };
-        let Some(symbol_id) = ctx.symbols().get_reference(ident.reference_id()).symbol_id() else {
+        let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
             return;
         };
         // Symbols declared at the root scope won't (or, at least, shouldn't) be
         // re-assigned inside component render functions, so we can safely
         // ignore them.
-        if ctx.symbols().get_scope_id(symbol_id) == ctx.scopes().root_scope_id() {
+        if ctx.scoping().symbol_scope_id(symbol_id) == ctx.scoping().root_scope_id() {
             return;
         }
 
-        let declaration_node = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let declaration_node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
         if let Some((decl_span, init_span)) =
             self.check_for_violation_on_ast_kind(&declaration_node.kind(), symbol_id)
         {

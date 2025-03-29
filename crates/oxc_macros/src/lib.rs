@@ -55,7 +55,7 @@ mod declare_oxc_lint;
 /// #[derive(Debug, Default, Clone)]
 /// pub struct NoDebugger;
 ///
-/// declare_oxc_lint! {
+/// declare_oxc_lint!(
 ///     /// ### What it does
 ///     ///
 ///     /// Checks for usage of the `debugger` statement
@@ -64,7 +64,6 @@ mod declare_oxc_lint;
 ///     ///
 ///     /// `debugger` statements do not affect functionality when a debugger isn't attached.
 ///     /// They're most commonly an accidental debugging leftover.
-///     ///
 ///     ///
 ///     /// ### Examples
 ///     ///
@@ -81,9 +80,10 @@ mod declare_oxc_lint;
 ///     /// var debug = require('foo');
 ///     /// ```
 ///     NoDebugger,
+///     eslint,
 ///     correctness,
 ///     fix
-/// }
+/// );
 /// ```
 #[proc_macro]
 pub fn declare_oxc_lint(input: TokenStream) -> TokenStream {
@@ -100,9 +100,10 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
     declare_oxc_lint::declare_oxc_lint(metadata)
 }
 
-/// Declare all lint rules in a single macro. This create the `RuleEnum` struct,
-/// which is effectively a compile-time v-table for all lint rules. This
-/// bypasses object-safety requirements and allows for compile-time dispatch
+/// Declare all lint rules in a single macro.
+///
+/// This create the `RuleEnum` struct, which is effectively a compile-time v-table for all lint rules.
+/// This bypasses object-safety requirements and allows for compile-time dispatch
 /// over a heterogeneous set of known lint rules.
 #[proc_macro]
 pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {

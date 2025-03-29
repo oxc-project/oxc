@@ -1,17 +1,15 @@
-commit: acbc09a8
+commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2277/2292 (99.35%)
-Positive Passed: 2256/2292 (98.43%)
-Negative Passed: 1542/1662 (92.78%)
+AST Parsed     : 2303/2322 (99.18%)
+Positive Passed: 2282/2322 (98.28%)
+Negative Passed: 1551/1673 (92.71%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-var-sloppy/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
@@ -39,6 +37,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/satisfies-const-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -72,7 +71,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type-named/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts
@@ -84,7 +85,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts
@@ -94,7 +97,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts
@@ -141,14 +143,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:31]
+ 1 │ async( x = class { #x = await });
+   ·                               ─
+   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:33]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:31]
  1 │ async( x = class { #x = await }) => {}
-   ·                                 ▲
+   ·                               ─
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
   × 'arguments' is not allowed in class field initializer
@@ -158,14 +166,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·      ─────────
  4 │   }
    ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js:1:26]
+ 1 │ async( x = class { [await] = x })
+   ·                          ─
+   ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:30]
+ 1 │ async( x = class { x = await });
+   ·                              ─
+   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:32]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:30]
  1 │ async( x = class { x = await }) => {}
-   ·                                ▲
+   ·                              ─
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
   × Unexpected new.target expression
@@ -270,21 +291,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:3:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:2:15]
+ 1 │ // Same as `generic`. Verify that JSX doesn't change things.
  2 │ <T>(a: T): T => a;
+   ·               ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
@@ -615,6 +640,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (class extends f<<T>(v: T) => void> {});
    ·                 ─┬
    ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
+
+  × Expected `{` but found `<<`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts:1:22]
+ 1 │ interface I extends f<<T>(v: T) => void> {};
+   ·                      ─┬
+   ·                       ╰── `{` expected
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
 
@@ -1213,6 +1246,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js:2:10]
+ 1 │ try {
+ 2 │ } catch (foo) {
+   ·          ─┬─
+   ·           ╰── `foo` has already been declared here
+ 3 │   function foo() {}
+   ·            ─┬─
+   ·             ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-let/input.js:2:10]
  1 │ try {
  2 │ } catch (foo) {
@@ -1340,6 +1385,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ─┬─               ─┬─
    ·             │                 ╰── It can not be redeclared here
    ·             ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-var-sloppy/input.js:2:12]
+ 1 │ {
+ 2 │   function foo() {}
+   ·            ─┬─
+   ·             ╰── `foo` has already been declared here
+ 3 │   var foo = 1;
+   ·       ───┬───
+   ·          ╰── It can not be redeclared here
+ 4 │ }
    ╰────
 
   × Identifier `f` has already been declared
@@ -5474,26 +5531,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:41]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:22]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                                         ▲
+   ·                      ─
    ╰────
-  help: Try insert a semicolon here
-
-  × Invalid assignment in object literal
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:25]
- 1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                         ─────────────
-   ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-
-  × Invalid assignment in object literal
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:10]
- 1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·          ─────────────
-   ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Line terminator not permitted before arrow
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/newline-before-arrow/input.js:2:1]
@@ -8209,12 +8251,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:34]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:26]
  1 │ async( x = class { [await] = x }) => {}
-   ·                                  ▲
+   ·                          ─
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected new.target expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target-invalid/input.js:1:9]
@@ -8407,11 +8448,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean `export { "吾道一以貫之。" as "忠恕。" } from 'some-module'`?
 
-  × Unexpected token
+  × Unexpected right-hand side of private-in expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-1/input.js:5:11]
  4 │   method() {
  5 │     #a in #b in c
-   ·           ──
+   ·           ───────
  6 │   }
    ╰────
 
@@ -11321,6 +11362,54 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
+ 1 │ class C {
+ 2 │   method();
+   ·   ──────
+ 3 │   #method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
+ 2 │   method();
+ 3 │   #method();
+   ·   ───────
+ 4 │   declare method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
+ 3 │   #method();
+ 4 │   declare method();
+   ·           ──────
+ 5 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:2:3]
+ 1 │ class C {
+ 2 │   method();
+   ·   ──────
+ 3 │   #method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:3:3]
+ 2 │   method();
+ 3 │   #method();
+   ·   ───────
+ 4 │   declare method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:4:11]
+ 3 │   #method();
+ 4 │   declare method();
+   ·           ──────
+ 5 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-type-named/input.js:2:13]
  1 │ var Foo;
@@ -11328,14 +11417,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ─
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 
   × Unexpected token
@@ -11456,13 +11547,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                    ─────
    ╰────
 
-  × Expected `:` but found `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts:1:28]
- 1 │ 0 ? v => (sum = v) : v => 0;
-   ·                            ┬
-   ·                            ╰── `:` expected
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-arrow-function-after-binary-operator/input.ts:1:20]
  1 │ 4 + async<number>() => 2 
@@ -11476,11 +11560,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:4:3]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:15]
+ 1 │ // Generics without trailing comma are disallowed in JSX
+ 2 │ <T>(a: T): T => a;
+   ·               ▲
  3 │ 
- 4 │ <T,>(a: T): T => a;
-   ·   ─
    ╰────
 
   × Keywords cannot contain escape characters
@@ -11494,6 +11579,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (a = b) += 1;
    ·  ─────
    ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation/input.ts:15:5]
+ 14 │ 
+ 15 │     cls.myFunc<ConcreteClass> = (instance) => {
+    ·     ─────────────────────────
+ 16 │         console.log(instance.myField);
+    ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation-babel-7/input.ts:15:5]
+ 14 │ 
+ 15 │     cls.myFunc<ConcreteClass> = (instance) => {
+    ·     ─────────────────────────
+ 16 │         console.log(instance.myField);
+    ╰────
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/parenthesized-object-assign/input.ts:1:1]
@@ -12119,6 +12220,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-babel-7/input.ts:1:8]
+ 1 │ export import type A = B.C;
+   ·        ────────────────────
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals/input.ts:1:1]
  1 │ import type A = B.C;
    · ────────────────────
@@ -12127,6 +12234,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × TS(1392): An import alias cannot use 'import type'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals/input.ts:2:1]
+ 1 │ import type A = B.C;
+ 2 │ import type B = C;
+   · ──────────────────
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-babel-7/input.ts:1:1]
+ 1 │ import type A = B.C;
+   · ────────────────────
+ 2 │ import type B = C;
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-babel-7/input.ts:2:1]
  1 │ import type A = B.C;
  2 │ import type B = C;
    · ──────────────────
@@ -12201,6 +12322,41 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ Foo {}
    ╰────
   help: Try insert a semicolon here
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:27]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                           ─────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:49]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                 ────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:59]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                           ────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:79]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                                               ─────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:86]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                                                      ───────────
+   ╰────
 
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/new-line/input.ts:1:1]
@@ -12677,6 +12833,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   );
    ╰────
 
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:8]
+ 1 │ <T>() => {}</T>;
+   ·        ▲
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare-new-line/input.ts:1:8]
  1 │ declare type
@@ -12896,57 +13058,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1273): 'public' modifier cannot be used on a type parameter.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:98:10]
- 97 │ 
- 98 │ type T20<public T> = T;  // Error
-    ·          ──────
- 99 │ type T21<in out in T> = T;  // Error
-    ╰────
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:11]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·           ▲
+ 3 │ 
+   ╰────
 
-  × TS(1030): in' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:99:17]
-  98 │ type T20<public T> = T;  // Error
-  99 │ type T21<in out in T> = T;  // Error
-     ·                 ──
- 100 │ type T22<in out out T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1030): out' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:100:17]
-  99 │ type T21<in out in T> = T;  // Error
- 100 │ type T22<in out out T> = T;  // Error
-     ·                 ───
- 101 │ type T23<out in T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1273): 'public' modifier cannot be used on a type parameter.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:98:10]
- 97 │ 
- 98 │ type T20<public T> = T;  // Error
-    ·          ──────
- 99 │ type T21<in out in T> = T;  // Error
-    ╰────
-
-  × TS(1030): in' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:99:17]
-  98 │ type T20<public T> = T;  // Error
-  99 │ type T21<in out in T> = T;  // Error
-     ·                 ──
- 100 │ type T22<in out out T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1030): out' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:100:17]
-  99 │ type T21<in out in T> = T;  // Error
- 100 │ type T22<in out out T> = T;  // Error
-     ·                 ───
- 101 │ type T23<out in T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:2:11]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·           ▲
+ 3 │ 
+   ╰────
 
   × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]

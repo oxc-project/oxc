@@ -2,20 +2,20 @@
 
 use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, ToTokens};
-use syn::{parse_str, Expr, Ident};
+use quote::{ToTokens, format_ident, quote};
+use syn::{Expr, Ident, parse_str};
 
 use crate::{
-    output::{output_path, Output},
+    AST_VISIT_CRATE_PATH, Codegen, Generator, Result,
+    output::{Output, output_path},
     schema::{
-        extensions::visit::{Scope, VisitorNames},
         Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, VecDef,
+        extensions::visit::{Scope, VisitorNames},
     },
     utils::{create_ident, create_ident_tokens, create_safe_ident},
-    Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;
@@ -45,7 +45,7 @@ impl Generator for VisitGenerator {
 
     /// Create names for `visit_*` methods and `walk_*` functions for all `Vec`s
     /// whose inner type has a visitor.
-    fn prepare(&self, schema: &mut Schema) {
+    fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         for type_id in schema.types.indices() {
             let Some(vec_def) = schema.types[type_id].as_vec() else { continue };
 
@@ -75,10 +75,12 @@ impl Generator for VisitGenerator {
     fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
         let (visit_output, visit_mut_output) = generate_outputs(schema);
 
-        let visit_output =
-            Output::Rust { path: output_path(AST_CRATE_PATH, "visit.rs"), tokens: visit_output };
+        let visit_output = Output::Rust {
+            path: output_path(AST_VISIT_CRATE_PATH, "visit.rs"),
+            tokens: visit_output,
+        };
         let visit_mut_output = Output::Rust {
-            path: output_path(AST_CRATE_PATH, "visit_mut.rs"),
+            path: output_path(AST_VISIT_CRATE_PATH, "visit_mut.rs"),
             tokens: visit_mut_output,
         };
 
@@ -241,8 +243,8 @@ fn generate_output(
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break
-        use crate::ast::*;
-        use crate::ast_kind::#ast_kind_or_type_ident;
+        use oxc_ast::ast::*;
+        use oxc_ast::ast_kind::#ast_kind_or_type_ident;
 
         ///@@line_break
         use #walk_mod_ident::*;

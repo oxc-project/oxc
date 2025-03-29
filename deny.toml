@@ -128,7 +128,6 @@ workspace-default-features = "allow"
 external-default-features = "allow"
 # List of crates that are allowed. Use with care!
 allow = [
-
   # { name = "ansi_term", version = "=0.11.0" },
 ]
 # List of crates to deny

@@ -8,7 +8,7 @@ fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
 }
 
-use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferAwaitToThen(PreferAwaitToThenConfig);

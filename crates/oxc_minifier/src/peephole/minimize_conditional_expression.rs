@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                 // "a ? a : b" => "a || b"
                 if let Expression::Identifier(id2) = &expr.consequent {
                     if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
+                        return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::Or,
                             ctx.ast.move_expression(&mut expr.test),
@@ -74,7 +74,7 @@ impl<'a> PeepholeOptimizations {
                 // "a ? b : a" => "a && b"
                 if let Expression::Identifier(id2) = &expr.alternate {
                     if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
+                        return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::And,
                             ctx.ast.move_expression(&mut expr.test),
@@ -110,13 +110,13 @@ impl<'a> PeepholeOptimizations {
             match (left.value, right.value) {
                 (true, false) => {
                     let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
                 (false, true) => {
                     let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
                 _ => {}
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut expr.test),
@@ -146,7 +146,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut expr.test),
@@ -167,7 +167,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
+                        self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::Or,
                             ctx.ast.move_expression(&mut expr.test),
@@ -188,7 +188,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
+                        self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::And,
                             ctx.ast.move_expression(&mut expr.test),
@@ -203,12 +203,10 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b || c : c" => "(a && b) || c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
-            if logical_expr.operator == LogicalOperator::Or
-                && ctx.expr_eq(&logical_expr.right, &expr.alternate)
-            {
+            if logical_expr.operator.is_or() && ctx.expr_eq(&logical_expr.right, &expr.alternate) {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut expr.test),
@@ -228,7 +226,7 @@ impl<'a> PeepholeOptimizations {
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut expr.test),
@@ -249,8 +247,8 @@ impl<'a> PeepholeOptimizations {
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
-                && !(ctx.expression_may_have_side_effects(&expr.test)
-                    || ctx.expression_may_have_side_effects(&consequent.callee))
+                && !expr.test.may_have_side_effects(&ctx)
+                && !consequent.callee.may_have_side_effects(&ctx)
                 && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
@@ -391,11 +389,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
-            // TODO:
             // "/* @__PURE__ */ a() ? b : b" => "b"
-            // if ctx.ExprCanBeRemovedIfUnused(test) {
-            // return yes
-            // }
+            if !expr.test.may_have_side_effects(&ctx) {
+                return Some(ctx.ast.move_expression(&mut expr.consequent));
+            }
 
             // "a ? b : b" => "a, b"
             let expressions = ctx.ast.vec_from_array([
@@ -426,9 +423,11 @@ impl<'a> PeepholeOptimizations {
         if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
             return None;
         }
-        if consequent.right.is_anonymous_function_definition() {
-            return None;
-        }
+        // NOTE: if the right hand side is an anonymous function, applying this compression will
+        // set the `name` property of that function.
+        // Since codes relying on the fact that function's name is undefined should be rare,
+        // we do this compression even if `keep_names` is enabled.
+
         if consequent.operator != AssignmentOperator::Assign
             || consequent.operator != alternate.operator
             || consequent.left.content_ne(&alternate.left)
@@ -453,7 +452,7 @@ impl<'a> PeepholeOptimizations {
     /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
-    fn inject_optional_chaining_if_matched(
+    pub fn inject_optional_chaining_if_matched(
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
@@ -589,8 +588,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     fn test_es2019(source_text: &str, expected: &str) {
@@ -608,13 +607,13 @@ mod test {
         test("(x ? true : y) && y()", "(x || y) && y();");
         test("(x ? y : false) && y()", "(x && y) && y()");
         test("var x; (x && true) && y()", "var x; x && y()");
-        test("var x; (x && false) && y()", "var x; x && !1");
+        test("var x; (x && false) && y()", "var x");
         test("(x && true) && y()", "x && y()");
-        test("(x && false) && y()", "x && !1");
+        test("(x && false) && y()", "x");
         test("var x; (x || true) && y()", "var x; y()");
         test("var x; (x || false) && y()", "var x; x && y()");
 
-        test("(x || true) && y()", "x || !0, y()");
+        test("(x || true) && y()", "x, y()");
         test("(x || false) && y()", "x && y()");
 
         test("let x = foo ? true : false", "let x = !!foo");
@@ -637,10 +636,10 @@ mod test {
     fn minimize_conditional_exprs() {
         test("(a, b) ? c : d", "a, b ? c : d");
         test("!a ? b : c", "a ? c : b");
-        // test("/* @__PURE__ */ a() ? b : b", "b");
+        test("/* @__PURE__ */ a() ? b : b", "b");
         test("a ? b : b", "a, b");
         test("a ? true : false", "a");
-        test("a ? false : true", "!a");
+        test("a ? false : true", "a");
         test("a ? a : b", "a || b");
         test("a ? b : a", "a && b");
         test("a ? b ? c : d : d", "a && b ? c : d");
@@ -659,23 +658,26 @@ mod test {
         test("a() != null ? a() : b", "a() == null ? b : a()");
         test("var a; a != null ? a : b", "var a; a ?? b");
         test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
-        test("a != null ? a : b", "a == null ? b : a"); // accessing global `a` may have a getter with side effects
-        test_es2019("var a; a != null ? a : b", "var a; a == null ? b : a");
-        test("var a; a != null ? a.b.c[d](e) : undefined", "var a; a?.b.c[d](e)");
-        test("var a; (a = _a) != null ? a.b.c[d](e) : undefined", "var a; (a = _a)?.b.c[d](e)");
-        test("a != null ? a.b.c[d](e) : undefined", "a != null && a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
+        test("v = a != null ? a : b", "v = a == null ? b : a"); // accessing global `a` may have a getter with side effects
+        test_es2019("var a; v = a != null ? a : b", "var a; v = a == null ? b : a");
+        test("var a; v = a != null ? a.b.c[d](e) : undefined", "var a; v = a?.b.c[d](e)");
         test(
-            "var a, undefined = 1; a != null ? a.b.c[d](e) : undefined",
-            "var a, undefined = 1; a == null ? undefined : a.b.c[d](e)",
+            "var a; v = (a = _a) != null ? a.b.c[d](e) : undefined",
+            "var a; v = (a = _a)?.b.c[d](e)",
+        );
+        test("v = a != null ? a.b.c[d](e) : undefined", "v = a == null ? void 0 : a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
+        test(
+            "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
+            "var a, undefined = 1; v = a == null ? undefined : a.b.c[d](e)",
         );
         test_es2019(
-            "var a; a != null ? a.b.c[d](e) : undefined",
-            "var a; a != null && a.b.c[d](e)",
+            "var a; v = a != null ? a.b.c[d](e) : undefined",
+            "var a; v = a == null ? void 0 : a.b.c[d](e)",
         );
-        test("cmp !== 0 ? cmp : (bar, cmp);", "cmp === 0 && bar, cmp;");
-        test("cmp === 0 ? cmp : (bar, cmp);", "cmp === 0 || bar, cmp;");
-        test("cmp !== 0 ? (bar, cmp) : cmp;", "cmp === 0 || bar, cmp;");
-        test("cmp === 0 ? (bar, cmp) : cmp;", "cmp === 0 && bar, cmp;");
+        test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");
+        test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");
+        test("v = cmp !== 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 || bar, cmp);");
+        test("v = cmp === 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 && bar, cmp);");
     }
 
     #[test]

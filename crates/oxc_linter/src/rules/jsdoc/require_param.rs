@@ -1,20 +1,22 @@
-use std::sync::Mutex;
+use std::sync::{
+    OnceLock, {RwLock, RwLockWriteGuard},
+};
 
-use lazy_static::lazy_static;
-use oxc_ast::{ast::MethodDefinitionKind, AstKind};
+use lazy_regex::Regex;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Deserialize;
+
+use oxc_ast::{AstKind, ast::MethodDefinitionKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
-use regex::Regex;
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_params, default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
-        should_ignore_as_internal, should_ignore_as_private, ParamKind,
+        ParamKind, collect_params, default_true, get_function_nearest_jsdoc_node,
+        should_ignore_as_avoid, should_ignore_as_internal, should_ignore_as_private,
     },
 };
 
@@ -91,9 +93,9 @@ fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
 }
 
-// For perf, cache regex is needed
-lazy_static! {
-    static ref REGEX_CACHE: Mutex<FxHashMap<String, Regex>> = Mutex::new(FxHashMap::default());
+fn regex_cache() -> RwLockWriteGuard<'static, FxHashMap<String, Regex>> {
+    static REGEX_CACHE: OnceLock<RwLock<FxHashMap<String, Regex>>> = OnceLock::new();
+    REGEX_CACHE.get_or_init(|| RwLock::new(FxHashMap::default())).write().unwrap()
 }
 
 impl Rule for RequireParam {
@@ -165,9 +167,9 @@ impl Rule for RequireParam {
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
-        let mut regex_cache = REGEX_CACHE.lock().unwrap();
+        let mut cache = regex_cache();
         let check_types_regex =
-            regex_cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
+            cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
                 Regex::new(config.check_types_pattern.as_str())
                     .expect("`config.checkTypesPattern` should be a valid regex pattern")
             });
@@ -313,7 +315,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -322,7 +324,7 @@ fn test() {
 			           * @param root0.foo
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -333,7 +335,7 @@ fn test() {
 			           * @param root1.bar
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -344,7 +346,7 @@ fn test() {
 			           * @param arg1.bar
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "unnamedRootBase": [            "arg",          ],        },      ])), None),
 ("
@@ -357,7 +359,7 @@ fn test() {
 			           * @param config1.baz
 			           */
 			          function quux ({foo}, {bar}, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "unnamedRootBase": [            "arg", "config",          ],        },      ])), None),
 ("
@@ -365,7 +367,7 @@ fn test() {
 			           * @inheritdoc
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -373,7 +375,7 @@ fn test() {
 			           * @arg foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "tagNamePreference": {            "param": "arg",          },        },      } }))),
 ("
@@ -382,7 +384,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -390,7 +392,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -398,7 +400,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "overrideReplacesDocs": true,        },      } }))),
 ("
@@ -406,7 +408,7 @@ fn test() {
 			           * @ignore
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignoreReplacesDocs": true,        },      } }))),
 ("
@@ -414,7 +416,7 @@ fn test() {
 			           * @implements
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "implementsReplacesDocs": true,        },      } }))),
 ("
@@ -423,7 +425,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -431,7 +433,7 @@ fn test() {
 			           * @augments
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "augmentsExtendsReplacesDocs": true,        },      } }))),
 ("
@@ -440,7 +442,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -448,7 +450,7 @@ fn test() {
 			           * @extends
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "augmentsExtendsReplacesDocs": true,        },      } }))),
 ("
@@ -457,7 +459,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -465,7 +467,7 @@ fn test() {
 			           * @internal
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignoreInternal": true,        },      } }))),
 ("
@@ -473,7 +475,7 @@ fn test() {
 			           * @private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignorePrivate": true,        },      } }))),
 ("
@@ -481,7 +483,7 @@ fn test() {
 			           * @access private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignorePrivate": true,        },      } }))),
 ("
@@ -494,7 +496,7 @@ fn test() {
 			           * @type {MyCallback}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "exemptedBy": [            "type",          ],        },      ])), None),
 ("
@@ -519,7 +521,7 @@ fn test() {
 			      ", None, None),
 ("
 			    export abstract class StephanPlugin<O, D> {
-			
+
 			        /**
 			         * Called right after Stephan loads the plugin file.
 			         *
@@ -542,13 +544,13 @@ fn test() {
 			            options: O;
 			            client: unknown;
 			        }, defaultOptions: D) {
-			
+
 			        }
 			    }
 			      ", None, None), // {        "parser": typescriptEslintParser      },
 ("
 			        export abstract class StephanPlugin<O, D> {
-			
+
 			        /**
 			         * Called right after Stephan loads the plugin file.
 			         *
@@ -572,7 +574,7 @@ fn test() {
 			            options: O;
 			            client: { name: string };
 			        }, defaultOptions: D) {
-			
+
 			        }
 			    }
 			      ", None, None), // {        "parser": typescriptEslintParser      },
@@ -630,7 +632,7 @@ fn test() {
 			           * @param cfg
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "checkDestructured": false,        },      ])), None),
 ("
@@ -639,7 +641,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "checkDestructuredRoots": false,        },      ])), None),
 (r#"
@@ -648,7 +650,7 @@ fn test() {
 			           * @param root.foo
 			           */
 			          function quux ({"foo": bar}) {
-			
+
 			          }
 			      "#, None, None),
 (r#"
@@ -657,7 +659,7 @@ fn test() {
 			           * @param root."foo"
 			           */
 			          function quux ({foo: bar}) {
-			
+
 			          }
 			      "#, None, None),
 ("
@@ -754,7 +756,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -766,7 +768,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -778,7 +780,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ",
             Some(
@@ -792,7 +794,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ",
             Some(
@@ -806,7 +808,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "enableFixer": false,        },      ])),
@@ -818,7 +820,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo: bar = 5} = {}) {
-			
+
 			          }
 			      ",
             None,
@@ -830,7 +832,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -842,7 +844,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "autoIncrementBase": 1,        },      ])),
@@ -854,7 +856,7 @@ fn test() {
 			           * @param options
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -866,7 +868,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({ foo, bar: { baz }}) {
-			
+
 			          }
 			      ",
             None,
@@ -878,7 +880,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -892,7 +894,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -906,7 +908,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -920,7 +922,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo, bar) {
-			
+
 			          }
 			      ",
             None,
@@ -932,7 +934,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar) {
-			
+
 			          }
 			      ",
             None,
@@ -944,7 +946,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -957,7 +959,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -969,7 +971,7 @@ fn test() {
 			           * @param baz
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -981,7 +983,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -995,7 +997,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1009,7 +1011,7 @@ fn test() {
 			           * @ignore
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1023,7 +1025,7 @@ fn test() {
 			           * @implements
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1037,7 +1039,7 @@ fn test() {
 			           * @augments
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1049,7 +1051,7 @@ fn test() {
 			           * @extends
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1107,7 +1109,7 @@ fn test() {
 			           * @inheritdoc
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "exemptedBy": [],        },      ])),
@@ -1122,7 +1124,7 @@ fn test() {
 			           * @param {string} employees[].department - The employee's department.
 			           */
 			          function assign (employees, name) {
-			
+
 			          };
 			      ",
             None,
@@ -1135,7 +1137,7 @@ fn test() {
 			           * @param options
 			           */
 			          function quux (baz, {foo: bar}) {
-			
+
 			          }
 			      ",
             None,
@@ -1147,7 +1149,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "enableFixer": false,        },      ])),

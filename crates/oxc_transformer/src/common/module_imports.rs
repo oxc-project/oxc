@@ -34,9 +34,9 @@
 
 use std::cell::RefCell;
 
-use indexmap::{map::Entry as IndexMapEntry, IndexMap};
+use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
@@ -163,11 +163,7 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    fn insert_import_statements(
-        &self,
-        transform_ctx: &TransformCtx<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn insert_import_statements(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
         let mut imports = self.imports.borrow_mut();
         let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
         transform_ctx.top_level_statements.insert_statements(stmts);
@@ -183,7 +179,7 @@ impl<'a> ModuleImportsStore<'a> {
             return;
         }
 
-        let require_symbol_id = ctx.scopes().get_root_binding("require");
+        let require_symbol_id = ctx.scoping().get_root_binding("require");
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));

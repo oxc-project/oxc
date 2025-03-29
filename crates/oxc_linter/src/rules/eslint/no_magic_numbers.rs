@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
     AstKind,
+    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +8,7 @@ use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 enum NoMagicNumberReportReason {
     MustUseConst,
@@ -296,7 +296,7 @@ impl Rule for NoMagicNumbers {
             return;
         }
 
-        let nodes = ctx.semantic().nodes();
+        let nodes = ctx.nodes();
         let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
 
         if self.is_skipable(&config, nodes) {
@@ -572,7 +572,7 @@ fn test() {
         ("const func = (param = 123) => {}", ignore_default_values.clone()), // { "ecmaVersion": 6 },
         ("const func = ({ param = 123 }) => {}", ignore_default_values.clone()), // { "ecmaVersion": 6 },
         ("const [one = 1, two = 2] = []", ignore_default_values.clone()), // { "ecmaVersion": 6 },
-        ("var one, two; [one = 1, two = 2] = []", ignore_default_values.clone()), // { "ecmaVersion": 6 },
+        ("var one, two; [one = 1, two = 2] = []", ignore_default_values), // { "ecmaVersion": 6 },
         ("var x = parseInt?.(y, 10);", None), // { "ecmaVersion": 2020 },
         ("var x = Number?.parseInt(y, 10);", None), // { "ecmaVersion": 2020 },
         ("var x = (Number?.parseInt)(y, 10);", None), // { "ecmaVersion": 2020 },
@@ -588,7 +588,7 @@ fn test() {
         ("type Foo = 1;", ignore_numeric_literal_types.clone()),
         ("type Foo = -1;", ignore_numeric_literal_types.clone()),
         ("type Foo = 1 | 2 | 3;", ignore_numeric_literal_types.clone()),
-        ("type Foo = 1 | -1;", ignore_numeric_literal_types.clone()),
+        ("type Foo = 1 | -1;", ignore_numeric_literal_types),
         (
             "
 			        enum foo {
@@ -624,7 +624,7 @@ fn test() {
         ("type Foo = Bar[1 & number];", ignore_typed_index_arrays.clone()),
         ("type Foo = Bar[((1 & -2) | 3) | 4];", ignore_typed_index_arrays.clone()),
         ("type Foo = Parameters<Bar>[2];", ignore_typed_index_arrays.clone()),
-        ("type Foo = Bar['baz'];", ignore_typed_index_arrays.clone()),
+        ("type Foo = Bar['baz'];", ignore_typed_index_arrays),
         ("type Foo = Bar['baz'];", Some(serde_json::json!([{ "ignoreTypeIndexes": false }]))),
         (
             "
@@ -709,8 +709,8 @@ fn test() {
     let fail = vec![
         ("var foo = 42", enforce_const.clone()), // { "ecmaVersion": 6 },
         ("var foo = 0 + 1;", None),
-        ("var foo = 42n", enforce_const.clone()), // {                "ecmaVersion": 2020            },
-        ("var foo = 0n + 1n;", None), // {                "ecmaVersion": 2020            },
+        ("var foo = 42n", enforce_const), // {                "ecmaVersion": 2020            },
+        ("var foo = 0n + 1n;", None),     // {                "ecmaVersion": 2020            },
         ("a = a + 5;", None),
         ("a += 5;", None),
         ("var foo = 0 + 1 + -2 + 2;", None),
@@ -766,7 +766,7 @@ fn test() {
         // ("foo[+1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         // ("foo[- -1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("100 .toString()", ignore_array_indexes.clone()),
-        ("200[100]", ignore_array_indexes.clone()),
+        ("200[100]", ignore_array_indexes),
         ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
         ("var min, max, mean; min = 1; max = 10; mean = 4;", Some(serde_json::json!([{}]))),
         ("f(100n)", Some(serde_json::json!([{ "ignore": [100] }]))), // { "ecmaVersion": 2020 },
@@ -815,7 +815,7 @@ fn test() {
         ), // { "ecmaVersion": 2022 },
         ("class C { foo = 2 + 3; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 },
         ("class C { 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 },
-        ("class C { [2]; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 }
+        ("class C { [2]; }", ignore_class_field_initial_values),       // { "ecmaVersion": 2022 }
         ("type Foo = 1;", Some(serde_json::json!([{ "ignoreNumericLiteralTypes": false }]))),
         ("type Foo = -1;", Some(serde_json::json!([{ "ignoreNumericLiteralTypes": false }]))),
         (

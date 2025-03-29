@@ -4,6 +4,104 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+- 12e89e0 syntax: Reduce scope of `unsafe` blocks (#9322) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+- 3e7b21c ast_tools: Add `#[builder(default)]` attribute for structs and enums (#9203) (overlookmotel)
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+
+### Refactor
+
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+- 5640611 syntax: Shorten `Serialize` impls (#9248) (overlookmotel)
+
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- b5eb6e5 minifier: Improve `remove_unused_expression` (#9071) (Boshen)
+
+### Bug Fixes
+
+- 15f23f1 napi/parser: Utf16 span for module record (#9093) (hi-ogawa)
+
+### Styling
+
+- 23f53c0 syntax: Name trait method param without underscore (#9119) (overlookmotel)
+
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+
+### Refactor
+
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- 6628e1d ast: Move `#[estree(skip)]` to types (#8877) (overlookmotel)
+- 3407d47 ast: Move `#[clone_in(default)]` to types (#8876) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- 768ad4f syntax: Add `#[ast]` attr to semantic ID types (#8867) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Bug Fixes

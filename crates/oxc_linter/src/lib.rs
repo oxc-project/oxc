@@ -1,4 +1,5 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
+#![allow(clippy::literal_string_with_formatting_args)]
 
 #[cfg(test)]
 mod tester;
@@ -10,7 +11,6 @@ mod disable_directives;
 mod fixer;
 mod frameworks;
 mod globals;
-mod javascript_globals;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -22,9 +22,14 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_semantic::{AstNode, Semantic};
+use rustc_hash::FxHashMap;
 
 pub use crate::{
     config::{
@@ -33,6 +38,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
+    loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
@@ -62,26 +68,35 @@ pub struct Linter {
     options: LintOptions,
     // config: Arc<LintConfig>,
     config: ConfigStore,
+    // TODO(refactor): remove duplication with `config` field when nested config is
+    // standardized, as we do not need to pass both at that point
+    nested_configs: FxHashMap<PathBuf, ConfigStore>,
 }
 
 impl Linter {
     pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+        Self { options, config, nested_configs: FxHashMap::default() }
+    }
+
+    // TODO(refactor); remove this when nested config is standardized
+    pub fn new_with_nested_configs(
+        options: LintOptions,
+        config: ConfigStore,
+        nested_configs: FxHashMap<PathBuf, ConfigStore>,
+    ) -> Self {
+        Self { options, config, nested_configs }
     }
 
     /// Set the kind of auto fixes to apply.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_linter::{Linter, FixKind};
-    ///
-    /// // turn off all auto fixes. This is default behavior.
-    /// Linter::default().with_fix(FixKind::None);
-    /// ```
     #[must_use]
     pub fn with_fix(mut self, kind: FixKind) -> Self {
         self.options.fix = kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
+        self.options.report_unused_directive = report_config;
         self
     }
 
@@ -89,8 +104,11 @@ impl Linter {
         &self.options
     }
 
-    pub fn number_of_rules(&self) -> usize {
-        self.config.number_of_rules()
+    /// Returns the number of rules that will are being used, unless there
+    /// nested configurations in use, in which case it returns `None` since the
+    /// number of rules depends on which file is being linted.
+    pub fn number_of_rules(&self) -> Option<usize> {
+        self.nested_configs.is_empty().then_some(self.config.number_of_rules())
     }
 
     pub fn run<'a>(
@@ -99,8 +117,15 @@ impl Linter {
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
-        // Get config + rules for this file. Takes base rules and applies glob-based overrides.
-        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        // TODO(refactor): remove branch when nested config is standardized
+        let ResolvedLinterState { rules, config } = if self.nested_configs.is_empty() {
+            // Get config + rules for this file. Takes base rules and applies glob-based overrides.
+            self.config.resolve(path)
+        } else if let Some(nearest_config) = self.get_nearest_config(path) {
+            nearest_config.resolve(path)
+        } else {
+            self.config.resolve(path)
+        };
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
 
@@ -140,7 +165,7 @@ impl Linter {
                 rule.run_once(ctx);
             }
 
-            for symbol in semantic.symbols().symbol_ids() {
+            for symbol in semantic.scoping().symbol_ids() {
                 for (rule, ctx) in &rules {
                     rule.run_on_symbol(symbol, ctx);
                 }
@@ -163,7 +188,7 @@ impl Linter {
             for (rule, ref ctx) in rules {
                 rule.run_once(ctx);
 
-                for symbol in semantic.symbols().symbol_ids() {
+                for symbol in semantic.scoping().symbol_ids() {
                     rule.run_on_symbol(symbol, ctx);
                 }
 
@@ -179,7 +204,29 @@ impl Linter {
             }
         }
 
+        if let Some(severity) = self.options.report_unused_directive {
+            if severity.is_warn_deny() {
+                ctx_host.report_unused_directives(severity.into());
+            }
+        }
+
         ctx_host.take_diagnostics()
+    }
+
+    /// Get the nearest config for the given path, in the following priority order:
+    /// 1. config file in the same directory as the path
+    /// 2. config file in the closest parent directory
+    fn get_nearest_config(&self, path: &Path) -> Option<&ConfigStore> {
+        // TODO(perf): should we cache the computed nearest config for every directory,
+        // so we don't have to recompute it for every file?
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if let Some(config_store) = self.nested_configs.get(dir) {
+                return Some(config_store);
+            }
+            current = dir.parent();
+        }
+        None
     }
 }
 

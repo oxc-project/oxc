@@ -1,11 +1,11 @@
 [package]
 name = "oxc_napi"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = ["/src"]
+include = ["/src", "build.rs"]
 keywords.workspace = true
 license.workspace = true
 publish = true
@@ -18,11 +18,16 @@ workspace = true
 
 [lib]
 doctest = false
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
+oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_diagnostics = { workspace = true }
+oxc_syntax = { workspace = true }
+
 napi = { workspace = true }
 napi-derive = { workspace = true }
-oxc_diagnostics = { workspace = true }
 
-[package.metadata.cargo-shear]
-ignored = ["napi"]
+[build-dependencies]
+napi-build = { workspace = true }

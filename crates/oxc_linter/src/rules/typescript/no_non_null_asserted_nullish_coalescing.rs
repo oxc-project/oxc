@@ -1,13 +1,13 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -18,12 +18,40 @@ declare_oxc_lint!(
     /// Disallow non-null assertions in the left operand of a nullish coalescing operator.
     ///
     /// ### Why is this bad?
-    /// The ?? nullish coalescing runtime operator allows providing a default value when dealing with null or undefined. Using a ! non-null assertion type operator in the left operand of a nullish coalescing operator is redundant, and likely a sign of programmer error or confusion over the two operators.
     ///
-    /// ### Example
+    /// The ?? nullish coalescing runtime operator allows providing a default value when dealing
+    /// with null or undefined. Using a ! non-null assertion type operator in the left operand of
+    /// a nullish coalescing operator is redundant, and likely a sign of programmer error or
+    /// confusion over the two operators.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// foo! ?? bar;
+    /// foo.bazz! ?? bar;
+    /// foo!.bazz! ?? bar;
+    /// foo()! ?? bar;
     ///
+    /// let x!: string;
+    /// x! ?? '';
+    ///
+    /// let x: string;
+    /// x = foo();
+    /// x! ?? '';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// foo ?? bar;
+    /// foo ?? bar!;
+    /// foo!.bazz ?? bar;
+    /// foo!.bazz ?? bar!;
+    /// foo() ?? bar;
+    /// ```
+    ///
+    /// ```ts
+    /// // This is considered correct code because there's no way for the user to satisfy it.
     /// let x: string;
     /// x! ?? '';
     /// ```
@@ -43,7 +71,7 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
         if let Expression::Identifier(ident) = &ts_non_null_expr.expression {
-            if let Some(symbol_id) = ctx.scopes().get_binding(node.scope_id(), &ident.name) {
+            if let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), &ident.name) {
                 if !has_assignment_before_node(symbol_id, ctx, expr.span.end) {
                     return;
                 }
@@ -62,7 +90,7 @@ fn has_assignment_before_node(
     ctx: &LintContext,
     parent_span_end: u32,
 ) -> bool {
-    let symbol_table = ctx.semantic().symbols();
+    let symbol_table = ctx.scoping();
 
     for reference in symbol_table.get_resolved_references(symbol_id) {
         if reference.is_write() && ctx.semantic().reference_span(reference).end < parent_span_end {
@@ -70,7 +98,7 @@ fn has_assignment_before_node(
         }
     }
 
-    let declaration_id = symbol_table.get_declaration(symbol_id);
+    let declaration_id = symbol_table.symbol_declaration(symbol_id);
     let AstKind::VariableDeclarator(decl) = ctx.nodes().kind(declaration_id) else {
         return false;
     };

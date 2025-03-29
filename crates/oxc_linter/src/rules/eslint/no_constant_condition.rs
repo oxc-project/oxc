@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::IsConstant, context::LintContext, rule::Rule};
 
 fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")

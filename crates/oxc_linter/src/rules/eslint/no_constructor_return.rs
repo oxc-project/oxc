@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{MethodDefinition, MethodDefinitionKind},
     AstKind,
+    ast::{MethodDefinition, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected return statement in constructor.").with_label(span)

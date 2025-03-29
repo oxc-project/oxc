@@ -2,8 +2,9 @@ use core::f64;
 use std::borrow::Cow;
 
 use num_bigint::BigInt;
+use num_traits::Zero;
 
-use crate::{ToJsString, ToNumber};
+use crate::{ToBoolean, ToJsString, ToNumber, is_global_reference::IsGlobalReference};
 
 #[derive(Debug, PartialEq)]
 pub enum ConstantValue<'a> {
@@ -50,6 +51,13 @@ impl<'a> ConstantValue<'a> {
         }
     }
 
+    pub fn into_bigint(self) -> Option<BigInt> {
+        match self {
+            Self::BigInt(s) => Some(s),
+            _ => None,
+        }
+    }
+
     pub fn into_boolean(self) -> Option<bool> {
         match self {
             Self::Boolean(s) => Some(s),
@@ -59,7 +67,7 @@ impl<'a> ConstantValue<'a> {
 }
 
 impl<'a> ToJsString<'a> for ConstantValue<'a> {
-    fn to_js_string(&self) -> Option<Cow<'a, str>> {
+    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
         match self {
             Self::Number(n) => {
                 use oxc_syntax::number::ToJsString;
@@ -76,7 +84,7 @@ impl<'a> ToJsString<'a> for ConstantValue<'a> {
 }
 
 impl<'a> ToNumber<'a> for ConstantValue<'a> {
-    fn to_number(&self) -> Option<f64> {
+    fn to_number(&self, _is_global_reference: &impl IsGlobalReference) -> Option<f64> {
         use crate::StringToNumber;
         match self {
             Self::Number(n) => Some(*n),
@@ -85,6 +93,18 @@ impl<'a> ToNumber<'a> for ConstantValue<'a> {
             Self::Boolean(true) => Some(1.0),
             Self::Boolean(false) | Self::Null => Some(0.0),
             Self::Undefined => Some(f64::NAN),
+        }
+    }
+}
+
+impl<'a> ToBoolean<'a> for ConstantValue<'a> {
+    fn to_boolean(&self, _is_global_reference: &impl IsGlobalReference) -> Option<bool> {
+        match self {
+            Self::Number(n) => Some(!n.is_nan() && *n != 0.0),
+            Self::BigInt(n) => Some(*n != BigInt::zero()),
+            Self::String(s) => Some(!s.as_ref().is_empty()),
+            Self::Boolean(b) => Some(*b),
+            Self::Null | Self::Undefined => Some(false),
         }
     }
 }

@@ -1,20 +1,20 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    ast::{
-        match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXExpression, StringLiteral,
-    },
     AstKind,
+    ast::{
+        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression,
+        StringLiteral, match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {

@@ -1,8 +1,8 @@
-use oxc_allocator::{Box, CloneIn, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::{Atom, GetSpan, SPAN};
 
-use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
+use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_export_named_declaration(
@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub(crate) fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
+    pub(crate) fn create_unique_name(&self, name: &str) -> Atom<'a> {
         let mut binding = self.ast.atom(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
@@ -32,7 +32,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_export_default_declaration(
-        &mut self,
+        &self,
         decl: &ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         let declaration = match &decl.declaration {
@@ -61,15 +61,15 @@ impl<'a> IsolatedDeclarations<'a> {
                 ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
             let declaration = self.ast.module_declaration_export_default_declaration(
                 decl.span,
-                declaration,
                 exported,
+                declaration,
             );
             (var_decl, Statement::from(declaration))
         })
     }
 
     fn transform_export_expression(
-        &mut self,
+        &self,
         expr: &Expression<'a>,
     ) -> Option<(Option<Statement<'a>>, Expression<'a>)> {
         if matches!(expr, Expression::Identifier(_)) {
@@ -102,7 +102,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_ts_export_assignment(
-        &mut self,
+        &self,
         decl: &TSExportAssignment<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         self.transform_export_expression(&decl.expression).map(|(var_decl, expr)| {
@@ -116,7 +116,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_import_declaration(
         &self,
         decl: &ImportDeclaration<'a>,
-    ) -> Option<Box<'a, ImportDeclaration<'a>>> {
+    ) -> Option<ArenaBox<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
         let mut new_specifiers = self.ast.vec_with_capacity(specifiers.len());
@@ -163,7 +163,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// const a = 1;
     /// function b() {}
     /// ```
-    pub(crate) fn strip_export_keyword(&self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt {
                 if let Some(declaration) = &mut decl.declaration {

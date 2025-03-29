@@ -1,27 +1,34 @@
+use std::borrow::Cow;
+
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::{FxHashMap, FxHashSet};
-use syn::{parse_str, Path};
+use syn::{Path, parse_str};
 
 use crate::{
-    output::{output_path, Output},
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
-    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
     Codegen, Result, Runner,
+    output::{Output, output_path},
+    parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
+    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
+    utils::format_cow,
 };
 
 mod clone_in;
 mod content_eq;
+mod dummy;
 pub mod estree;
 mod get_address;
 mod get_span;
+mod take_in;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
+pub use dummy::DeriveDummy;
 pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use take_in::DeriveTakeIn;
 
 /// Trait to define a derive.
 pub trait Derive: Runner {
@@ -129,7 +136,7 @@ pub trait Derive: Runner {
     ///
     /// Runs before any `generate` or `derive` method runs.
     #[expect(unused_variables)]
-    fn prepare(&self, schema: &mut Schema) {}
+    fn prepare(&self, schema: &mut Schema, codegen: &Codegen) {}
 
     /// Generate trait implementation for a type.
     fn derive(&self, type_def: StructOrEnum<'_>, schema: &Schema) -> TokenStream;
@@ -184,8 +191,14 @@ pub trait Derive: Runner {
                     .collect::<Vec<_>>();
                 import_paths.sort_unstable();
 
+                let crate_path = if krate.starts_with("napi/") {
+                    Cow::Borrowed(krate)
+                } else {
+                    format_cow!("crates/{krate}")
+                };
+
                 Output::Rust {
-                    path: output_path(&format!("crates/{krate}"), &filename),
+                    path: output_path(&crate_path, &filename),
                     tokens: self.template(&import_paths, content.output),
                 }
             })

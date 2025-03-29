@@ -1,13 +1,15 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
-    ast::{BindingIdentifier, *},
     AstKind,
+    ast::{BindingIdentifier, *},
 };
-use oxc_ecmascript::ToBoolean;
+use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
-use crate::LintContext;
+use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -30,7 +32,7 @@ pub fn is_static_boolean<'a>(expr: &Expression<'a>, semantic: &Semantic<'a>) -> 
 fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
     match expr {
         expr if expr.is_literal() => {
-            let boolean_value = expr.to_boolean();
+            let boolean_value = expr.to_boolean(&WithoutGlobalReferenceInformation {});
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }
@@ -149,7 +151,7 @@ impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
                     .arguments
                     .iter()
                     .next()
-                    .map_or(true, |first| first.is_constant(true, semantic))
+                    .is_none_or(|first| first.is_constant(true, semantic))
             {
                 return semantic.is_reference_to_global_variable(ident);
             }
@@ -281,24 +283,24 @@ pub fn get_declaration_of_variable<'a, 'b>(
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, semantic)?;
-    let symbol_table = semantic.symbols();
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    let symbol_table = semantic.scoping();
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_declaration_from_reference_id<'a, 'b>(
     reference_id: ReferenceId,
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let symbol_table = semantic.symbols();
+    let symbol_table = semantic.scoping();
     let symbol_id = symbol_table.get_reference(reference_id).symbol_id()?;
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
     semantic: &Semantic<'_>,
 ) -> Option<SymbolId> {
-    semantic.symbols().get_reference(ident.reference_id()).symbol_id()
+    semantic.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(
@@ -341,18 +343,12 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let callee_without_parentheses = call_expr.callee.without_parentheses();
-    let member_expr = match callee_without_parentheses {
-        match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression.member_expression() {
-            Some(e) => e,
-            None => return false,
-        },
-        _ => return false,
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
     };
 
     if let Some(objects) = objects {
-        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
+        let Expression::Identifier(ident) = member_expr.object().get_inner_expression() else {
             return false;
         };
         if !objects.contains(&ident.name.as_str()) {
@@ -419,7 +415,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &Semantic) -> boo
     if call_expr.arguments.len() != 1 {
         return false;
     }
-    call_expr.callee.is_global_reference_name("require", ctx.symbols())
+    call_expr.callee.is_global_reference_name("require", ctx.scoping())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {
@@ -543,7 +539,7 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr.left.get_expression().map_or(true, |expr| could_be_error(ctx, expr))
+                return expr.left.get_expression().is_none_or(|expr| could_be_error(ctx, expr))
                     || could_be_error(ctx, &expr.right);
             }
 
@@ -563,11 +559,11 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
             could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
         }
         Expression::Identifier(ident) => {
-            let reference = ctx.symbols().get_reference(ident.reference_id());
+            let reference = ctx.scoping().get_reference(ident.reference_id());
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
-            let decl = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+            let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
@@ -591,4 +587,308 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
         }
         _ => false,
     }
+}
+
+pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+    let parent = outermost_paren_parent(node, semantic);
+    parent.is_some_and(|node | matches!(node.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node.kind().span())))
+}
+
+fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
+    let Some(jsdocs) = get_function_nearest_jsdoc_node(node, semantic)
+        .and_then(|node| semantic.jsdoc().get_all_by_node(node))
+    else {
+        return false;
+    };
+
+    for jsdoc in jsdocs {
+        for tag in jsdoc.tags() {
+            if tag.kind.parsed() == "this" {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+const METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
+    "every",
+    "filter",
+    "find",
+    "findIndex",
+    "findLast",
+    "findLastIndex",
+    "flatMap",
+    "forEach",
+    "map",
+    "some",
+];
+
+pub fn is_default_this_binding<'a>(
+    semantic: &Semantic<'a>,
+    node: &AstNode<'a>,
+    cap_is_constructor: bool,
+) -> bool {
+    let is_anonymous = match node.kind() {
+        AstKind::Function(func) if cap_is_constructor => {
+            let is_constructor = func.id.as_ref().is_some_and(|id| {
+                id.name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+            });
+
+            if is_constructor || has_jsdoc_this_tag(semantic, node) {
+                return false;
+            }
+
+            func.id.is_some()
+        }
+        AstKind::StaticBlock(_) => {
+            return false;
+        }
+        _ => true,
+    };
+
+    let is_anonymous_and_cap_is_constructor = is_anonymous && cap_is_constructor;
+
+    let mut current_node = node;
+    loop {
+        let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
+        match parent.kind() {
+            AstKind::ChainExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::ParenthesizedExpression(_) => {
+                current_node = parent;
+            }
+            AstKind::ReturnStatement(_) => {
+                let upper_func = semantic.nodes().ancestors(parent.id()).skip(1).find(|node| {
+                    matches!(
+                        node.kind(),
+                        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                    )
+                });
+                if upper_func.is_none_or(|node| !is_callee(node, semantic)) {
+                    return true;
+                }
+                current_node = parent;
+            }
+            AstKind::ArrowFunctionExpression(expr) => {
+                if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
+                    return true;
+                }
+                current_node = parent;
+            }
+            AstKind::ObjectProperty(obj) => {
+                return obj.value.span() != current_node.span();
+            }
+            AstKind::MethodDefinition(method) => {
+                return method.value.span != current_node.span();
+            }
+            AstKind::PropertyDefinition(def) => {
+                if let Some(expr) = &def.value {
+                    return expr.span() != current_node.span();
+                }
+                return true;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if expr.left.is_member_expression() {
+                    return false;
+                }
+
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && expr.left.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::AssignmentPattern(pattern) => {
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && pattern.left.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::VariableDeclarator(var) => {
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && var.init.as_ref().is_some_and(|init| init.span() == current_node.span())
+                    && var.id.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::MemberExpression(mem_expr) => {
+                if mem_expr.object().span() == current_node.span()
+                    && matches!(mem_expr.static_property_name(), Some("apply" | "bind" | "call"))
+                {
+                    let node = outermost_paren_parent(parent, semantic).unwrap();
+                    if let AstKind::CallExpression(call_expr) = node.kind() {
+                        if let Some(arg) =
+                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                        {
+                            return arg.is_null_or_undefined();
+                        }
+                    }
+                }
+                return true;
+            }
+            AstKind::CallExpression(call_expr) => {
+                if call_expr.callee.is_specific_member_access("Reflect", "apply") {
+                    return call_expr.arguments.len() != 3
+                        || call_expr.arguments[0].span() != current_node.span()
+                        || call_expr.arguments[1]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                if call_expr.callee.is_specific_member_access("Array", "from") {
+                    return call_expr.arguments.len() != 3
+                        || call_expr.arguments[1].span() != current_node.span()
+                        || call_expr.arguments[2]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
+                    mem_expr
+                        .static_property_name()
+                        .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
+                }) {
+                    return call_expr.arguments.len() != 2
+                        || call_expr.arguments[0].span() != current_node.span()
+                        || call_expr.arguments[1]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                return true;
+            }
+            _ => return true,
+        }
+    }
+}
+
+pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+    let (key, computed) = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
+        AstKind::MethodDefinition(method_definition) => {
+            (&method_definition.key, method_definition.computed)
+        }
+        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+        _ => return None,
+    };
+
+    if key.is_identifier() && !computed {
+        return key.name();
+    }
+
+    if matches!(key, PropertyKey::NullLiteral(_)) {
+        return Some("null".into());
+    }
+
+    match key {
+        PropertyKey::RegExpLiteral(regex) => {
+            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
+        }
+        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
+        PropertyKey::TemplateLiteral(template) => {
+            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+                if let Some(cooked) = &template.quasis[0].value.cooked {
+                    return Some(Cow::Borrowed(cooked.as_str()));
+                }
+            }
+
+            None
+        }
+        _ => None,
+    }
+}
+
+/// Gets the name and kind of the given function node.
+/// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
+pub fn get_function_name_with_kind<'a>(
+    node: &AstNode<'a>,
+    parent_node: &AstNode<'a>,
+) -> Cow<'a, str> {
+    let (name, is_async, is_generator) = match node.kind() {
+        AstKind::Function(func) => (func.name(), func.r#async, func.generator),
+        AstKind::ArrowFunctionExpression(arrow_func) => (None, arrow_func.r#async, false),
+        _ => (None, false, false),
+    };
+
+    let mut tokens: Vec<Cow<'a, str>> = vec![];
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
+            }
+
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
+            }
+        }
+        AstKind::PropertyDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
+            }
+
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
+            }
+        }
+        _ => {}
+    }
+
+    if is_async {
+        tokens.push(Cow::Borrowed("async"));
+    }
+
+    if is_generator {
+        tokens.push(Cow::Borrowed("generator"));
+    }
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(method_definition) => match method_definition.kind {
+            MethodDefinitionKind::Constructor => tokens.push(Cow::Borrowed("constructor")),
+            MethodDefinitionKind::Get => tokens.push(Cow::Borrowed("getter")),
+            MethodDefinitionKind::Set => tokens.push(Cow::Borrowed("setter")),
+            MethodDefinitionKind::Method => tokens.push(Cow::Borrowed("method")),
+        },
+        AstKind::PropertyDefinition(_) => tokens.push(Cow::Borrowed("method")),
+        _ => tokens.push(Cow::Borrowed("function")),
+    }
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(method_definition)
+            if !method_definition.computed && method_definition.key.is_private_identifier() =>
+        {
+            if let Some(name) = method_definition.key.name() {
+                tokens.push(name);
+            }
+        }
+        AstKind::PropertyDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                if let Some(name) = definition.key.name() {
+                    tokens.push(name);
+                }
+            } else if let Some(static_name) = get_static_property_name(parent_node) {
+                tokens.push(static_name);
+            } else if let Some(name) = name {
+                tokens.push(Cow::Borrowed(name.as_str()));
+            }
+        }
+        _ => {
+            if let Some(static_name) = get_static_property_name(parent_node) {
+                tokens.push(static_name);
+            } else if let Some(name) = name {
+                tokens.push(Cow::Borrowed(name.as_str()));
+            }
+        }
+    }
+
+    Cow::Owned(tokens.join(" "))
 }

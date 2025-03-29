@@ -31,15 +31,17 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_allocator::{GetAddress, Vec as ArenaVec};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{BoundNames, ToJsString};
+use oxc_ecmascript::{
+    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
+};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, TransformCtx};
+use crate::{TransformCtx, common::helper_loader::Helper};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -377,7 +379,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 
     fn walk_and_replace_nested_object_target(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -513,21 +515,19 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     ) {
         let had_props = !props.is_empty();
         let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)), None);
-        let new_expr = if let Some(call_expr) = expr.take() {
-            let callee = transform_ctx.helper_load(Helper::ObjectSpread2, ctx);
+        let arguments = if let Some(call_expr) = expr.take() {
             let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
-            let mut arguments = ctx.ast.vec1(Argument::from(arg));
+            let arg = Argument::from(arg);
             if had_props {
                 let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
-                arguments.push(Argument::from(empty_object));
-                arguments.push(Argument::from(obj));
+                ctx.ast.vec_from_array([arg, Argument::from(empty_object), Argument::from(obj)])
+            } else {
+                ctx.ast.vec1(arg)
             }
-            ctx.ast.call_expression(SPAN, callee, NONE, arguments, false)
         } else {
-            let callee = transform_ctx.helper_load(Helper::ObjectSpread2, ctx);
-            let arguments = ctx.ast.vec1(Argument::from(obj));
-            ctx.ast.call_expression(SPAN, callee, NONE, arguments, false)
+            ctx.ast.vec1(Argument::from(obj))
         };
+        let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
         expr.replace(new_expr);
     }
 }
@@ -578,8 +578,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let scope_id = clause.body.scope_id();
             // Remove `SymbolFlags::CatchVariable`.
             param.pattern.bound_names(&mut |ident| {
-                ctx.symbols_mut()
-                    .get_flags_mut(ident.symbol_id())
+                ctx.scoping_mut()
+                    .symbol_flags_mut(ident.symbol_id())
                     .remove(SymbolFlags::CatchVariable);
             });
             Self::replace_rest_element(
@@ -616,8 +616,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 );
                 // Move the bindings from the for init scope to scope of the loop body.
                 for ident in bound_names {
-                    ctx.symbols_mut().set_scope_id(ident.symbol_id(), new_scope_id);
-                    ctx.scopes_mut().move_binding(scope_id, new_scope_id, ident.name.into());
+                    ctx.scoping_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
+                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, ident.name.into());
                 }
             }
         }
@@ -671,9 +671,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let span = stmt.span();
             (span, ctx.ast.vec1(ctx.ast.move_statement(stmt)))
         };
-        *stmt = Statement::BlockStatement(
-            ctx.ast.alloc_block_statement_with_scope_id(span, stmts, scope_id),
-        );
+        *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
     }
 
@@ -763,7 +761,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
             ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, Some(init), false));
         let decl = ctx.ast.variable_declaration(SPAN, kind, declarations, false);
         decl.bound_names(&mut |ident| {
-            *ctx.symbols_mut().get_flags_mut(ident.symbol_id()) = SymbolFlags::BlockScopedVariable;
+            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
+                SymbolFlags::BlockScopedVariable;
         });
         decl
     }
@@ -809,11 +808,11 @@ impl<'a> ObjectRestSpread<'a, '_> {
         // TODO: improve this by getting the value only once.
         let mut scope_id = ctx.current_scope_id();
         let mut symbol_flags = kind_to_symbol_flags(decl.kind);
-        let symbols = ctx.symbols();
+        let symbols = ctx.scoping();
         decl.id.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
-            scope_id = symbols.get_scope_id(symbol_id);
-            symbol_flags.insert(symbols.get_flags(symbol_id));
+            scope_id = symbols.symbol_scope_id(symbol_id);
+            symbol_flags.insert(symbols.symbol_flags(symbol_id));
         });
 
         let state = State::new(decl.kind, symbol_flags, scope_id);
@@ -980,7 +979,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
             }
             // `let { [`a`], ... rest }`
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
-                let expr = Expression::TemplateLiteral(lit.clone_in(ctx.ast.allocator));
+                let quasis = ctx.ast.vec1(lit.quasis[0].clone());
+                let expressions = ctx.ast.vec();
+                let expr = ctx.ast.expression_template_literal(lit.span, quasis, expressions);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -992,7 +993,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 // `let { [1], ... rest }`
                 if expr.is_literal() {
                     let span = expr.span();
-                    let s = expr.to_js_string().unwrap();
+                    let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                     let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }
@@ -1097,7 +1098,7 @@ impl<'a> SpreadPair<'a> {
             let key_expression = ctx.ast.expression_array(SPAN, self.keys, None);
 
             let key_expression = if self.all_primitives
-                && ctx.scoping.current_scope_id() != ctx.scopes().root_scope_id()
+                && ctx.scoping.current_scope_id() != ctx.scoping().root_scope_id()
             {
                 // Move the key_expression to the root scope.
                 let bound_identifier = ctx.generate_uid_in_root_scope(

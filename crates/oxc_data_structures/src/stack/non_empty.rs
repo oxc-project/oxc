@@ -1,5 +1,3 @@
-#![expect(clippy::unnecessary_safety_comment)]
-
 use std::{
     mem::size_of,
     ops::{Deref, DerefMut},
@@ -174,7 +172,7 @@ impl<T> NonEmptyStack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
@@ -182,11 +180,13 @@ impl<T> NonEmptyStack<T> {
     pub unsafe fn with_capacity_unchecked(capacity: usize, initial_value: T) -> Self {
         debug_assert!(capacity > 0);
         debug_assert!(capacity <= Self::MAX_CAPACITY);
+
         // Cannot overflow if `capacity <= MAX_CAPACITY`
         let capacity_bytes = capacity * size_of::<T>();
+
         // SAFETY: Safety invariants which caller must satisfy guarantee that `capacity_bytes`
         // satisfies requirements
-        Self::new_with_capacity_bytes_unchecked(capacity_bytes, initial_value)
+        unsafe { Self::new_with_capacity_bytes_unchecked(capacity_bytes, initial_value) }
     }
 
     /// Create new [`NonEmptyStack`] with provided capacity in bytes, and initial value `initial_value`,
@@ -202,15 +202,15 @@ impl<T> NonEmptyStack<T> {
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize, initial_value: T) -> Self {
         // ZSTs are not supported for simplicity
-        assert!(size_of::<T>() > 0, "Zero sized types are not supported");
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
 
         // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
-        let (start, end) = Self::allocate(capacity_bytes);
+        let (start, end) = unsafe { Self::allocate(capacity_bytes) };
 
         // Write initial value to start of allocation.
         // SAFETY: Allocation was created with alignment of `T`, and with capacity for at least 1 entry,
         // so `start` is valid for writing a `T`.
-        start.as_ptr().write(initial_value);
+        unsafe { start.as_ptr().write(initial_value) };
 
         // `cursor` is positioned at start i.e. pointing at initial value
         Self { cursor: start, start, end }
@@ -289,12 +289,12 @@ impl<T> NonEmptyStack<T> {
     unsafe fn push_slow(&mut self, value: T) {
         // Grow allocation.
         // SAFETY: Stack is always allocated.
-        self.grow();
+        unsafe { self.grow() };
 
         // Write value.
         // SAFETY: We just allocated additional capacity, so `self.cursor` is in bounds.
         // `self.cursor` is aligned for `T`.
-        unsafe { self.cursor.as_ptr().write(value) }
+        unsafe { self.cursor.as_ptr().write(value) };
     }
 
     /// Pop value from stack.
@@ -326,19 +326,22 @@ impl<T> NonEmptyStack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must have at least 2 entries, so that after pop, it still has at least 1.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
         debug_assert!(self.cursor > self.start);
         debug_assert!(self.cursor < self.end);
+
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and points to a valid initialized `T`
-        let value = self.cursor.read();
+        let value = unsafe { self.cursor.read() };
+
         // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
         // cannot be out of bounds
-        self.cursor = self.cursor.sub(1);
+        unsafe { self.cursor = self.cursor.sub(1) };
+
         value
     }
 
@@ -417,7 +420,7 @@ mod tests {
     use super::*;
 
     macro_rules! assert_len_cap_last {
-        ($stack:ident, $len:expr, $capacity:expr, $last:expr) => {
+        ($stack:ident, $len:expr_2021, $capacity:expr_2021, $last:expr_2021) => {
             assert_eq!($stack.len(), $len);
             assert_eq!($stack.capacity(), $capacity);
             assert_eq!($stack.last(), $last);

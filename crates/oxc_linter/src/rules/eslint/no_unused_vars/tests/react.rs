@@ -1,7 +1,7 @@
 //! Test cases from eslint-plugin-react (jsx/no-uses-vars)
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, RuleMeta as _};
+use crate::{RuleMeta as _, tester::Tester};
 
 /// !!!! STOP !!!!
 /// Are you fixing a bug in this rule and want to add a test case? Please put

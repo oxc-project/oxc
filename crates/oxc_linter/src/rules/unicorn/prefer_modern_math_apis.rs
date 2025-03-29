@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, BinaryExpression, Expression},
     AstKind,
+    ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +8,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression, AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression,
 };
 
 fn prefer_math_abs(span: Span) -> OxcDiagnostic {

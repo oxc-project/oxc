@@ -1,13 +1,13 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
-    ast::{Expression, FunctionBody, Statement},
     AstKind,
+    ast::{Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 fn no_return_in_finally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't return in a finally callback")

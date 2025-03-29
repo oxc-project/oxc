@@ -1,25 +1,25 @@
 use oxc_ast::{
-    ast::{
-        match_member_expression, ChainElement, Expression, MemberExpression, MethodDefinitionKind,
-        ObjectProperty, PropertyKind,
-    },
     AstKind,
+    ast::{
+        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
+        PropertyKind, match_member_expression,
+    },
 };
 use oxc_cfg::{
-    graph::{
-        visit::{set_depth_first_search, Control, DfsEvent},
-        Direction,
-    },
     EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
+    graph::{
+        Direction,
+        visit::{Control, DfsEvent, set_depth_first_search},
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
@@ -271,10 +271,10 @@ impl GetterReturn {
                             });
 
                         let does_return = return_instruction.is_some_and(|ret| {
-                            !matches! { ret.kind,
+                            !matches!( ret.kind,
                             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
                                 if !self.allow_implicit
-                            }
+                            )
                         });
 
                         // Return true as the second argument to signify we should

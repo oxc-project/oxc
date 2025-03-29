@@ -6,8 +6,9 @@ use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 use crate::output_formatter::OutputFormat;
 
 use super::{
-    ignore::{ignore_options, IgnoreOptions},
-    misc_options, validate_paths, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    ignore::{IgnoreOptions, ignore_options},
+    misc_options, validate_paths,
 };
 
 #[derive(Debug, Clone, Bpaf)]
@@ -40,6 +41,13 @@ pub struct LintCommand {
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
+
+    /// Disables the automatic loading of nested configuration files.
+    #[bpaf(switch, hide_usage)]
+    pub disable_nested_config: bool,
+
+    #[bpaf(external)]
+    pub inline_config_options: InlineConfigOptions,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
@@ -185,7 +193,8 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json, unix, checkstyle, github, stylish)
+    /// Use a specific output format. Possible values:
+    /// `checkstyle`, `default`, `github`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }
@@ -344,6 +353,36 @@ impl EnablePlugins {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Bpaf)]
+pub enum ReportUnusedDirectives {
+    WithoutSeverity(
+        /// Report directive comments like `// eslint-disable-line` when no errors would have been reported on that line anyway.
+        // More information at <https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives>
+        #[bpaf(long("report-unused-disable-directives"), switch, hide_usage)]
+        bool,
+    ),
+    WithSeverity(
+        /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
+        /// Only one of these two options can be used at a time.
+        #[bpaf(
+            long("report-unused-disable-directives-severity"), 
+            argument::<String>("SEVERITY"),
+            guard(|s| AllowWarnDeny::try_from(s.as_str()).is_ok(), "Invalid severity value"),
+            map(|s| AllowWarnDeny::try_from(s.as_str()).unwrap()), // guard ensures try_from will be Ok
+            optional,
+            hide_usage
+        )]
+        Option<AllowWarnDeny>,
+    ),
+}
+
+/// Inline Configuration Comments
+#[derive(Debug, Clone, Bpaf)]
+pub struct InlineConfigOptions {
+    #[bpaf(external)]
+    pub report_unused_directives: ReportUnusedDirectives,
+}
+
 #[cfg(test)]
 mod plugins {
     use oxc_linter::LintPlugins;
@@ -388,7 +427,7 @@ mod plugins {
 
 #[cfg(test)]
 mod warning_options {
-    use super::{lint_command, WarningOptions};
+    use super::{WarningOptions, lint_command};
 
     fn get_warning_options(arg: &str) -> WarningOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -421,7 +460,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{lint_command, LintCommand, OutputFormat};
+    use super::{LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -438,7 +477,6 @@ mod lint_options {
     }
 
     #[test]
-    #[expect(clippy::similar_names)]
     fn multiple_paths() {
         let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
         let file_foo = temp_dir.path().join("foo.js");
@@ -512,5 +550,61 @@ mod lint_options {
     fn list_rules() {
         let options = get_lint_options("--rules");
         assert!(options.list_rules);
+    }
+
+    #[test]
+    fn disable_nested_config() {
+        let options = get_lint_options("--disable-nested-config");
+        assert!(options.disable_nested_config);
+        let options = get_lint_options(".");
+        assert!(!options.disable_nested_config);
+    }
+}
+
+#[cfg(test)]
+mod inline_config_options {
+    use oxc_linter::AllowWarnDeny;
+
+    use super::{LintCommand, ReportUnusedDirectives, lint_command};
+
+    fn get_lint_options(arg: &str) -> LintCommand {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        lint_command().run_inner(args.as_slice()).unwrap()
+    }
+
+    #[test]
+    fn default() {
+        let options = get_lint_options(".");
+        assert_eq!(
+            options.inline_config_options.report_unused_directives,
+            ReportUnusedDirectives::WithoutSeverity(false)
+        );
+    }
+
+    #[test]
+    fn without_severity() {
+        let options = get_lint_options("--report-unused-disable-directives");
+        assert_eq!(
+            options.inline_config_options.report_unused_directives,
+            ReportUnusedDirectives::WithoutSeverity(true)
+        );
+    }
+
+    #[test]
+    fn with_severity_warn() {
+        let options = get_lint_options("--report-unused-disable-directives-severity=warn");
+        assert_eq!(
+            options.inline_config_options.report_unused_directives,
+            ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Warn))
+        );
+    }
+
+    #[test]
+    fn with_severity_error() {
+        let options = get_lint_options("--report-unused-disable-directives-severity error");
+        assert_eq!(
+            options.inline_config_options.report_unused_directives,
+            ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Deny))
+        );
     }
 }

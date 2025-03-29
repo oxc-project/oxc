@@ -1,7 +1,7 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
-    ast::{match_member_expression, AssignmentTarget, Expression, SimpleAssignmentTarget},
     AstKind,
+    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,10 +9,10 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{is_same_expression, is_same_member_expression},
-    AstNode,
 };
 
 fn misrefactored_assign_op_diagnostic(span: Span, suggestion: &str) -> OxcDiagnostic {
@@ -131,9 +131,6 @@ fn assignment_target_eq_expr<'a>(
                 is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
-                is_same_expression(&ts_expr.expression, right_expr, ctx)
-            }
-            SimpleAssignmentTarget::TSInstantiationExpression(ts_expr) => {
                 is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
         };

@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BinaryExpression, Expression},
     AstKind,
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn bad_comparison_sequence_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_label(span)

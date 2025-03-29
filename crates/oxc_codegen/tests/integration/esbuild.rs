@@ -238,16 +238,12 @@ fn test_call() {
     test("eval?.(x, y)", "eval?.(x, y);\n");
     test("(1, eval)(x)", "(1, eval)(x);\n");
     test("(1, eval)?.(x)", "(1, eval)?.(x);\n");
-    // testMangle(t, "(1 ? eval : 2)(x)", "(0, eval)(x);\n");
-    // testMangle(t, "(1 ? eval : 2)?.(x)", "eval?.(x);\n");
 
     test_minify("eval?.(x)", "eval?.(x);");
     test_minify("eval(x,y)", "eval(x,y);");
     test_minify("eval?.(x,y)", "eval?.(x,y);");
     test_minify("(1, eval)(x)", "(1,eval)(x);");
     test_minify("(1, eval)?.(x)", "(1,eval)?.(x);");
-    // testMangleMinify(t, "(1 ? eval : 2)(x)", "(0,eval)(x);");
-    // testMangleMinify(t, "(1 ? eval : 2)?.(x)", "eval?.(x);");
 
     // Webpack-specific comments
     test(
@@ -364,18 +360,18 @@ fn test_string() {
     test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
     test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
     test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
-    // test( "let x = '\U000123AB'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\u{123AB}'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\uD808\\uDFAB'", "let x = \"\U000123AB\";\n");
-    // test( "let x = '\\uD808'", "let x = \"\\uD808\";\n");
-    // test( "let x = '\\uD808X'", "let x = \"\\uD808X\";\n");
-    // test( "let x = '\\uDFAB'", "let x = \"\\uDFAB\";\n");
-    // test( "let x = '\\uDFABX'", "let x = \"\\uDFABX\";\n");
+    test("let x = '\\U000123AB'", "let x = \"U000123AB\";\n");
+    test("let x = '\\u{123AB}'", "let x = \"\u{123ab}\";\n");
+    test("let x = '\\uD808\\uDFAB'", "let x = \"\u{123ab}\";\n");
+    test("let x = '\\uD808'", "let x = \"\\ud808\";\n"); // lone surrogate
+    test("let x = '\\uD808X'", "let x = \"\\ud808X\";\n");
+    test("let x = '\\uDFAB'", "let x = \"\\udfab\";\n");
+    test("let x = '\\uDFABX'", "let x = \"\\udfabX\";\n");
 
-    // test( "let x = '\\x80'", "let x = \"\U00000080\";\n");
-    // test( "let x = '\\xFF'", "let x = \"\U000000FF\";\n");
-    // test( "let x = '\\xF0\\x9F\\x8D\\x95'", "let x = \"\U000000F0\U0000009F\U0000008D\U00000095\";\n");
-    // test( "let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = \"\U00010402\\uDC03\\uD804\";\n");
+    test("let x = '\\x80'", "let x = \"\u{80}\";\n");
+    test("let x = '\\xFF'", "let x = \"ÿ\";\n");
+    test("let x = '\\xF0\\x9F\\x8D\\x95'", "let x = \"ð\u{9f}\u{8d}\u{95}\";\n");
+    test("let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = \"𐐂\\udc03\\ud804\";\n"); // surrogates
 }
 
 #[test]
@@ -417,19 +413,19 @@ fn test_template() {
     test("new (tag`x`)", "new tag`x`();\n");
     test("new tag()`x`", "new tag()`x`;\n");
     test("(new tag)`x`", "new tag()`x`;\n");
-    // test_minify("new tag`x`", "new tag`x`;");
-    // test_minify("new (tag`x`)", "new tag`x`;");
-    // test_minify("new tag()`x`", "new tag()`x`;");
-    // test_minify("(new tag)`x`", "new tag()`x`;");
+    test_minify("new tag`x`", "new tag`x`;");
+    test_minify("new (tag`x`)", "new tag`x`;");
+    test_minify("new tag()`x`", "new tag()`x`;");
+    test_minify("(new tag)`x`", "new tag()`x`;");
 
     test("new tag`${x}`", "new tag`${x}`();\n");
     test("new (tag`${x}`)", "new tag`${x}`();\n");
     test("new tag()`${x}`", "new tag()`${x}`;\n");
     test("(new tag)`${x}`", "new tag()`${x}`;\n");
-    // test_minify("new tag`${x}`", "new tag`${x}`;");
-    // test_minify("new (tag`${x}`)", "new tag`${x}`;");
-    // test_minify("new tag()`${x}`", "new tag()`${x}`;");
-    // test_minify("(new tag)`${x}`", "new tag()`${x}`;");
+    test_minify("new tag`${x}`", "new tag`${x}`;");
+    test_minify("new (tag`${x}`)", "new tag`${x}`;");
+    test_minify("new tag()`${x}`", "new tag()`${x}`;");
+    test_minify("(new tag)`${x}`", "new tag()`${x}`;");
 }
 
 #[test]
@@ -556,7 +552,7 @@ fn test_pure_comment() {
 
     test("new (function() {})", "new function() {}();\n");
     test("new (function() {})()", "new function() {}();\n");
-    test("/*@__PURE__*/new (function() {})()", "/*@__PURE__*/ new function() {}();\n");
+    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new function() {}();\n");
 
     test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
     test(
@@ -565,7 +561,7 @@ fn test_pure_comment() {
     );
     test(
         "export default /*@__PURE__*/(function() { foo() })()",
-        "export default /*@__PURE__*/ (function() {\n\tfoo();\n})();\n",
+        "export default /* @__PURE__ */ (function() {\n\tfoo();\n})();\n",
     );
 }
 
@@ -656,11 +652,10 @@ fn test_private_identifiers() {
         "class Foo { #foo; foo() { return #foo in this } }",
         "class Foo {\n\t#foo;\n\tfoo() {\n\t\treturn #foo in this;\n\t}\n}\n",
     );
-    // FIXME
-    // test_minify(
-    // "class Foo { #foo; foo() { return #foo in this } }",
-    // "class Foo{#foo;foo(){return#foo in this}}",
-    // );
+    test_minify(
+        "class Foo { #foo; foo() { return #foo in this } }",
+        "class Foo{#foo;foo(){return#foo in this}}",
+    );
 }
 
 #[test]
@@ -826,14 +821,6 @@ fn test_whitespace() {
     test_minify("({})", "({});");
 }
 
-// #[test]#[ignore] fn TestMangle(t *testing.T) {
-// testMangle(t, "let x = '\\n'", "let x = `\n`;\n");
-// testMangle(t, "let x = `\n`", "let x = `\n`;\n");
-// testMangle(t, "let x = '\\n${}'", "let x = \"\\n${}\";\n");
-// testMangle(t, "let x = `\n\\${}`", "let x = \"\\n${}\";\n");
-// testMangle(t, "let x = `\n\\${}${y}\\${}`", "let x = `\n\\${}${y}\\${}`;\n");
-// }
-
 #[test]
 #[ignore]
 fn minify() {
@@ -850,8 +837,6 @@ fn minify() {
     test("false ** 2", "false ** 2;\n");
     test_minify("true ** 2", "true**2;");
     test_minify("false ** 2", "false**2;");
-    // testMangle(t, "true ** 2", "(!0) ** 2;\n");
-    // testMangle(t, "false ** 2", "(!1) ** 2;\n");
 
     test_minify("import a from 'path'", "import a from\"path\";");
     test_minify("import * as ns from 'path'", "import*as ns from\"path\";");
@@ -867,10 +852,6 @@ fn minify() {
 
     // Print some strings using template literals when minifying
     test("x = '\\n'", "x = \"\\n\";\n");
-    // testMangle(t, "x = '\\n'", "x = `\n`;\n");
-    // testMangle(t, "x = {'\\n': 0}", "x = { \"\\n\": 0 };\n");
-    // testMangle(t, "x = class{'\\n' = 0}", "x = class {\n  \"\\n\" = 0;\n};\n");
-    // testMangle(t, "class Foo{'\\n' = 0}", "class Foo {\n  \"\\n\" = 0;\n}\n");
 
     // Special identifiers must not be minified
     test_minify("exports", "exports;");
@@ -880,28 +861,6 @@ fn minify() {
     // Comment statements must not affect their surroundings when minified
     test_minify("//!single\nthrow 1 + 2", "//!single\nthrow 1+2;");
     test_minify("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
-}
-
-#[test]
-#[ignore]
-fn test_es5() {
-    // testTargetMangle(t, 5, "foo('a\\n\\n\\nb')", "foo(\"a\\n\\n\\nb\");;\n");
-    // testTargetMangle(t, 2015, "foo('a\\n\\n\\nb')", "foo(`a\n\n\nb`);\n");
-
-    // testTarget(t, 5, "foo({a, b})", "foo({ a: a, b: b });\n");
-    // testTarget(t, 2015, "foo({a, b})", "foo({ a, b });\n");
-
-    // testTarget(t, 5, "x => x", "(function(x) {\n  return x;\n});\n");
-    // testTarget(t, 2015, "x => x", "(x) => x;\n");
-
-    // testTarget(t, 5, "() => {}", "(function() {\n});\n");
-    // testTarget(t, 2015, "() => {}", "() => {\n};\n");
-
-    // testTargetMinify(t, 5, "x => x", "(function(x){return x});");
-    // testTargetMinify(t, 2015, "x => x", "x=>x;");
-
-    // testTargetMinify(t, 5, "() => {}", "(function(){});");
-    // testTargetMinify(t, 2015, "() => {}", "()=>{};");
 }
 
 #[test]
@@ -1127,37 +1086,10 @@ fn test_infinity() {
     test_minify("x = y * Infinity", "x=y*Infinity;");
     test_minify("x = y / Infinity", "x=y/Infinity;");
     test_minify("throw Infinity", "throw Infinity;");
-
-    // testMangle(t, "x = Infinity", "x = 1 / 0;\n");
-    // testMangle(t, "x = -Infinity", "x = -1 / 0;\n");
-    // testMangle(t, "x = (Infinity).toString", "x = (1 / 0).toString;\n");
-    // testMangle(t, "x = (-Infinity).toString", "x = (-1 / 0).toString;\n");
-    // testMangle(t, "x = Infinity ** 2", "x = (1 / 0) ** 2;\n");
-    // testMangle(t, "x = (-Infinity) ** 2", "x = (-1 / 0) ** 2;\n");
-    // testMangle(t, "x = Infinity * y", "x = 1 / 0 * y;\n");
-    // testMangle(t, "x = Infinity / y", "x = 1 / 0 / y;\n");
-    // testMangle(t, "x = y * Infinity", "x = y * (1 / 0);\n");
-    // testMangle(t, "x = y / Infinity", "x = y / (1 / 0);\n");
-    // testMangle(t, "throw Infinity", "throw 1 / 0;\n");
-
-    // testMangleMinify(t, "x = Infinity", "x=1/0;");
-    // testMangleMinify(t, "x = -Infinity", "x=-1/0;");
-    // testMangleMinify(t, "x = (Infinity).toString", "x=(1/0).toString;");
-    // testMangleMinify(t, "x = (-Infinity).toString", "x=(-1/0).toString;");
-    // testMangleMinify(t, "x = Infinity ** 2", "x=(1/0)**2;");
-    // testMangleMinify(t, "x = (-Infinity) ** 2", "x=(-1/0)**2;");
-    // testMangleMinify(t, "x = Infinity * y", "x=1/0*y;");
-    // testMangleMinify(t, "x = Infinity / y", "x=1/0/y;");
-    // testMangleMinify(t, "x = y * Infinity", "x=y*(1/0);");
-    // testMangleMinify(t, "x = y / Infinity", "x=y/(1/0);");
-    // testMangleMinify(t, "throw Infinity", "throw 1/0;");
 }
 
 #[test]
 fn test_binary_operator_visitor() {
-    // Make sure the inner "/*b*/" comment doesn't disappear due to weird binary visitor stuff
-    // testMangle(t, "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)", "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n");
-
     // Make sure deeply-nested ASTs don't cause a stack overflow
     let x = format!("x = f(){};\n", " + f()".repeat(10_000));
     test(&x, &x);

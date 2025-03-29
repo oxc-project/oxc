@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{
-        match_member_expression, AssignmentTarget, BindingPatternKind, Expression,
-        ForStatementInit, SimpleAssignmentTarget, VariableDeclarationKind,
-    },
     AstKind,
+    ast::{
+        AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
+        VariableDeclarationKind, match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_for_of_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

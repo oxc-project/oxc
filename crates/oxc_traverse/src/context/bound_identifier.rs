@@ -1,11 +1,11 @@
 use oxc_ast::{
+    NONE,
     ast::{
         AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
         IdentifierReference, SimpleAssignmentTarget,
     },
-    NONE,
 };
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;

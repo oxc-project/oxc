@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, Statement},
     AstKind,
+    ast::{Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unreadable_iife_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("IIFE with parenthesized arrow function body is considered unreadable.")

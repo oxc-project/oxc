@@ -1,14 +1,14 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, Statement},
     AstKind,
+    ast::{Argument, CallExpression, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_prototype_property,
-    AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::is_prototype_property,
 };
 
 fn no_array_reduce_diagnostic(span: Span) -> OxcDiagnostic {

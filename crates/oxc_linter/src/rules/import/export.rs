@@ -6,7 +6,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule, ModuleRecord};
+use crate::{ModuleRecord, context::LintContext, rule::Rule};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
@@ -84,11 +84,7 @@ impl Rule for Export {
             let mut spans = all_export_names
                 .iter()
                 .filter_map(|(star_export_entry_span, export_names)| {
-                    if export_names.contains(name) {
-                        Some(*star_export_entry_span)
-                    } else {
-                        None
-                    }
+                    if export_names.contains(name) { Some(*star_export_entry_span) } else { None }
                 })
                 .collect::<Vec<_>>();
 

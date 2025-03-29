@@ -2,11 +2,11 @@ use std::{borrow::Cow, error::Error, ops::Deref};
 
 use itertools::Itertools;
 use oxc_ast::{
+    AstKind,
     ast::{
         ImportDeclaration, ImportDeclarationSpecifier, ImportDefaultSpecifier,
         ImportNamespaceSpecifier, ImportSpecifier, Statement,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,10 +14,10 @@ use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {

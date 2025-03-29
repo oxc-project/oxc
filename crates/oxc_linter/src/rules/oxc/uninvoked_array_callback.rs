@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, MemberExpression},
     AstKind,
+    ast::{Argument, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn uninvoked_array_callback_diagnostic(cb_span: Span, arr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Uninvoked array callback")

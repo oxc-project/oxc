@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
@@ -70,36 +70,26 @@ impl Rule for MediaHasCaption {
 
         if let Some(arr) = value.as_array() {
             for v in arr {
-                if let serde_json::Value::Object(rule_config) = v {
-                    if let Some(audio) = rule_config.get("audio").and_then(Value::as_array) {
-                        config.audio.extend(
-                            audio
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    if let Some(video) = rule_config.get("video").and_then(Value::as_array) {
-                        config.video.extend(
-                            video
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    if let Some(track) = rule_config.get("track").and_then(Value::as_array) {
-                        config.track.extend(
-                            track
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    break;
+                let serde_json::Value::Object(rule_config) = v else {
+                    continue;
+                };
+
+                if let Some(audio) = rule_config.get("audio").and_then(Value::as_array) {
+                    config.audio.extend(
+                        audio.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
                 }
+                if let Some(video) = rule_config.get("video").and_then(Value::as_array) {
+                    config.video.extend(
+                        video.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
+                }
+                if let Some(track) = rule_config.get("track").and_then(Value::as_array) {
+                    config.track.extend(
+                        track.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
+                }
+                break;
             }
         }
 
@@ -122,23 +112,22 @@ impl Rule for MediaHasCaption {
         }
 
         let muted = jsx_el.attributes.iter().any(|attr_item| {
-            if let JSXAttributeItem::Attribute(attr) = attr_item {
-                if let JSXAttributeName::Identifier(iden) = &attr.name {
-                    if iden.name == "muted" {
-                        return match &attr.value {
-                            Some(JSXAttributeValue::ExpressionContainer(exp)) => {
-                                match &exp.expression {
-                                    JSXExpression::BooleanLiteral(boolean) => boolean.value,
-                                    _ => false,
-                                }
-                            }
-                            Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
-                            None => true, // e.g. <video muted></video>
-                            _ => false,
-                        };
-                    }
-                }
+            let JSXAttributeItem::Attribute(attr) = attr_item else { return false };
+
+            let JSXAttributeName::Identifier(iden) = &attr.name else { return false };
+
+            if iden.name == "muted" {
+                return match &attr.value {
+                    Some(JSXAttributeValue::ExpressionContainer(exp)) => match &exp.expression {
+                        JSXExpression::BooleanLiteral(boolean) => boolean.value,
+                        _ => false,
+                    },
+                    Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
+                    None => true, // e.g. <video muted></video>
+                    _ => false,
+                };
             }
+
             false
         });
 
@@ -161,13 +150,13 @@ impl Rule for MediaHasCaption {
 
                     self.0.track.contains(&child_name)
                         && child_el.opening_element.attributes.iter().any(|attr| {
-                            if let JSXAttributeItem::Attribute(attr) = attr {
-                                if let JSXAttributeName::Identifier(iden) = &attr.name {
-                                    if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
-                                        return iden.name == "kind"
-                                            && s.value.eq_ignore_ascii_case("captions");
-                                    }
-                                }
+                            let JSXAttributeItem::Attribute(attr) = attr else { return false };
+                            let JSXAttributeName::Identifier(iden) = &attr.name else {
+                                return false;
+                            };
+                            if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
+                                return iden.name == "kind"
+                                    && s.value.eq_ignore_ascii_case("captions");
                             }
                             false
                         })
@@ -210,64 +199,64 @@ fn test() {
     }
 
     let pass = vec![
-        (r"<div />;", None, None, None),
-        (r"<MyDiv />;", None, None, None),
-        (r"<audio><track kind='captions' /></audio>", None, None, None),
-        (r"<audio><track kind='Captions' /></audio>", None, None, None),
-        (r"<audio><track kind='Captions' /><track kind='subtitles' /></audio>", None, None, None),
-        (r"<video><track kind='captions' /></video>", None, None, None),
-        (r"<video><track kind='Captions' /></video>", None, None, None),
-        (r"<video><track kind='Captions' /><track kind='subtitles' /></video>", None, None, None),
-        (r"<audio muted={true}></audio>", None, None, None),
-        (r"<video muted={true}></video>", None, None, None),
-        (r"<video muted></video>", None, None, None),
-        (r"<Audio><track kind='captions' /></Audio>", Some(config()), None, None),
-        (r"<audio><Track kind='captions' /></audio>", Some(config()), None, None),
-        (r"<Video><track kind='captions' /></Video>", Some(config()), None, None),
-        (r"<video><Track kind='captions' /></video>", Some(config()), None, None),
-        (r"<Audio><Track kind='captions' /></Audio>", Some(config()), None, None),
-        (r"<Video><Track kind='captions' /></Video>", Some(config()), None, None),
-        (r"<Video muted></Video>", Some(config()), None, None),
-        (r"<Video muted={true}></Video>", Some(config()), None, None),
-        (r"<Audio muted></Audio>", Some(config()), None, None),
-        (r"<Audio muted={true}></Audio>", Some(config()), None, None),
-        (r"<Audio><track kind='captions' /></Audio>", None, Some(settings()), None),
-        (r"<audio><Track kind='captions' /></audio>", None, Some(settings()), None),
-        (r"<Video><track kind='captions' /></Video>", None, Some(settings()), None),
-        (r"<video><Track kind='captions' /></video>", None, Some(settings()), None),
-        (r"<Audio><Track kind='captions' /></Audio>", None, Some(settings()), None),
-        (r"<Video><Track kind='captions' /></Video>", None, Some(settings()), None),
-        (r"<Video muted></Video>", None, Some(settings()), None),
-        (r"<Video muted={true}></Video>", None, Some(settings()), None),
-        (r"<Audio muted></Audio>", None, Some(settings()), None),
-        (r"<Audio muted={true}></Audio>", None, Some(settings()), None),
-        (r"<Box as='audio' muted={true}></Box>", None, Some(settings()), None),
+        (r"<div />;", None, None),
+        (r"<MyDiv />;", None, None),
+        (r"<audio><track kind='captions' /></audio>", None, None),
+        (r"<audio><track kind='Captions' /></audio>", None, None),
+        (r"<audio><track kind='Captions' /><track kind='subtitles' /></audio>", None, None),
+        (r"<video><track kind='captions' /></video>", None, None),
+        (r"<video><track kind='Captions' /></video>", None, None),
+        (r"<video><track kind='Captions' /><track kind='subtitles' /></video>", None, None),
+        (r"<audio muted={true}></audio>", None, None),
+        (r"<video muted={true}></video>", None, None),
+        (r"<video muted></video>", None, None),
+        (r"<Audio><track kind='captions' /></Audio>", Some(config()), None),
+        (r"<audio><Track kind='captions' /></audio>", Some(config()), None),
+        (r"<Video><track kind='captions' /></Video>", Some(config()), None),
+        (r"<video><Track kind='captions' /></video>", Some(config()), None),
+        (r"<Audio><Track kind='captions' /></Audio>", Some(config()), None),
+        (r"<Video><Track kind='captions' /></Video>", Some(config()), None),
+        (r"<Video muted></Video>", Some(config()), None),
+        (r"<Video muted={true}></Video>", Some(config()), None),
+        (r"<Audio muted></Audio>", Some(config()), None),
+        (r"<Audio muted={true}></Audio>", Some(config()), None),
+        (r"<Audio><track kind='captions' /></Audio>", None, Some(settings())),
+        (r"<audio><Track kind='captions' /></audio>", None, Some(settings())),
+        (r"<Video><track kind='captions' /></Video>", None, Some(settings())),
+        (r"<video><Track kind='captions' /></video>", None, Some(settings())),
+        (r"<Audio><Track kind='captions' /></Audio>", None, Some(settings())),
+        (r"<Video><Track kind='captions' /></Video>", None, Some(settings())),
+        (r"<Video muted></Video>", None, Some(settings())),
+        (r"<Video muted={true}></Video>", None, Some(settings())),
+        (r"<Audio muted></Audio>", None, Some(settings())),
+        (r"<Audio muted={true}></Audio>", None, Some(settings())),
+        (r"<Box as='audio' muted={true}></Box>", None, Some(settings())),
     ];
 
     let fail = vec![
-        (r"<audio><track /></audio>", None, None, None),
-        (r"<audio><track kind='subtitles' /></audio>", None, None, None),
-        (r"<audio />", None, None, None),
-        (r"<video><track /></video>", None, None, None),
-        (r"<video><track kind='subtitles' /></video>", None, None, None),
-        (r"<Audio muted={false}></Audio>", Some(config()), None, None),
-        (r"<Video muted={false}></Video>", Some(config()), None, None),
-        (r"<Audio muted={false}></Audio>", None, Some(settings()), None),
-        (r"<Video muted={false}></Video>", None, Some(settings()), None),
-        (r"<video />", None, None, None),
-        (r"<audio>Foo</audio>", None, None, None),
-        (r"<video>Foo</video>", None, None, None),
-        (r"<Audio />", Some(config()), None, None),
-        (r"<Video />", Some(config()), None, None),
-        (r"<Audio />", None, Some(settings()), None),
-        (r"<Video />", None, Some(settings()), None),
-        (r"<audio><Track /></audio>", Some(config()), None, None),
-        (r"<video><Track /></video>", Some(config()), None, None),
-        (r"<Audio><Track kind='subtitles' /></Audio>", Some(config()), None, None),
-        (r"<Video><Track kind='subtitles' /></Video>", Some(config()), None, None),
-        (r"<Audio><Track kind='subtitles' /></Audio>", None, Some(settings()), None),
-        (r"<Video><Track kind='subtitles' /></Video>", None, Some(settings()), None),
-        (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings()), None),
+        (r"<audio><track /></audio>", None, None),
+        (r"<audio><track kind='subtitles' /></audio>", None, None),
+        (r"<audio />", None, None),
+        (r"<video><track /></video>", None, None),
+        (r"<video><track kind='subtitles' /></video>", None, None),
+        (r"<Audio muted={false}></Audio>", Some(config()), None),
+        (r"<Video muted={false}></Video>", Some(config()), None),
+        (r"<Audio muted={false}></Audio>", None, Some(settings())),
+        (r"<Video muted={false}></Video>", None, Some(settings())),
+        (r"<video />", None, None),
+        (r"<audio>Foo</audio>", None, None),
+        (r"<video>Foo</video>", None, None),
+        (r"<Audio />", Some(config()), None),
+        (r"<Video />", Some(config()), None),
+        (r"<Audio />", None, Some(settings())),
+        (r"<Video />", None, Some(settings())),
+        (r"<audio><Track /></audio>", Some(config()), None),
+        (r"<video><Track /></video>", Some(config()), None),
+        (r"<Audio><Track kind='subtitles' /></Audio>", Some(config()), None),
+        (r"<Video><Track kind='subtitles' /></Video>", Some(config()), None),
+        (r"<Audio><Track kind='subtitles' /></Audio>", None, Some(settings())),
+        (r"<Video><Track kind='subtitles' /></Video>", None, Some(settings())),
+        (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings())),
     ];
 
     Tester::new(MediaHasCaption::NAME, MediaHasCaption::PLUGIN, pass, fail).test_and_snapshot();

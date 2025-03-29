@@ -1,12 +1,12 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{NodeId, Semantic};
 
-use super::{options::ArgsOption, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, options::ArgsOption};
 use crate::{
-    rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
     ModuleRecord,
+    rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
 };
 
 impl Symbol<'_, '_> {
@@ -63,9 +63,9 @@ impl Symbol<'_, '_> {
     }
 
     pub fn is_in_declared_module(&self) -> bool {
-        let scopes = self.scopes();
+        let scopes = self.scoping();
         let nodes = self.nodes();
-        scopes.ancestors(self.scope_id())
+        scopes.scope_ancestors(self.scope_id())
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
             .any(|node| matches!(node.kind(), AstKind::TSModuleDeclaration(namespace) if is_ambient_namespace(namespace)))

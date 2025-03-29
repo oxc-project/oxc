@@ -1,25 +1,29 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{JSXChild, JSXElement},
     AstKind,
+    ast::{JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
         get_element_type, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader,
     },
-    AstNode,
 };
 
-fn anchor_has_ambiguous_text(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected ambagious anchor link text.").with_label(span)
+fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Ambiguous text within anchor, screen reader users rely on link text for context.",
+    )
+    .with_label(span)
+    .with_help(format!("Avoid using ambiguous text like \"{text}\", replace it with more descriptive text that provides context."))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -122,8 +126,10 @@ impl Rule for AnchorAmbiguousText {
             return;
         }
 
-        if self.words.contains(&normalize_str(&text)) {
-            ctx.diagnostic(anchor_has_ambiguous_text(jsx_el.span));
+        let text = normalize_str(&text);
+
+        if self.words.contains(&text) {
+            ctx.diagnostic(anchor_has_ambiguous_text(jsx_el.span, &text));
         }
     }
 }

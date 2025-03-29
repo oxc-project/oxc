@@ -1,19 +1,19 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
         JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn next_script_for_ga_diagnostic(span: Span) -> OxcDiagnostic {
@@ -109,11 +109,7 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
     if let Some(html_prop) = object_expr.properties.iter().find_map(|prop| {
         if let ObjectPropertyKind::ObjectProperty(html_prop) = prop {
             if let PropertyKey::StaticIdentifier(html_prop_ident) = &html_prop.key {
-                if html_prop_ident.name == "__html" {
-                    Some(html_prop)
-                } else {
-                    None
-                }
+                if html_prop_ident.name == "__html" { Some(html_prop) } else { None }
             } else {
                 None
             }

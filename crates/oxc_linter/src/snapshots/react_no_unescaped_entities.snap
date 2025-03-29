@@ -1,19 +1,19 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-react(no-unescaped-entities): `>` can be escaped with &gt;
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[no_unescaped_entities.tsx:3:24]
  2 │             render: function() {
  3 │               return <>> babel-eslint</>;
-   ·                        ─
+   ·                        ▲
  4 │             }
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `>` can be escaped with &gt;
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[no_unescaped_entities.tsx:5:47]
  4 │               so is second
  5 │               and here are some bad entities: ></>
-   ·                                               ─
+   ·                                               ▲
  6 │             }
    ╰────
 
@@ -25,11 +25,11 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `}` can be escaped with &#125;
+  × Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
    ╭─[no_unescaped_entities.tsx:4:60]
  3 │             render: function() {
  4 │               return <>{"Unbalanced braces - babel-eslint"}}</>;
-   ·                                                            ─
+   ·                                                            ▲
  5 │             }
    ╰────
 

@@ -4,6 +4,112 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+### Features
+
+- 65643bc allocator: Remove drop operations from Vec2 (#9679) (Dunqing)
+- 5cc614a allocator: Replace allocator_ap2's Vec with Vec2 (#9656) (Dunqing)
+- caa477c allocator/vec: Remove `ManuallyDrop` wrapper (#9742) (Dunqing)
+
+### Performance
+
+- 17a9320 allocator/vec2: Optimize reserving memory (#9792) (Dunqing)
+
+### Refactor
+
+- d13817e allocator: Improve safety of `String::from_utf8_unchecked` (#9772) (overlookmotel)
+- a1a8b93 allocator/vec: Add comment about lifetime bound on `CloneIn` for `Vec` (#9771) (overlookmotel)
+
+## [0.58.0] - 2025-03-13
+
+- f2b0cc1 allocator: [**BREAKING**] Remove `Vec::into_boxed_slice` method (#9735) (Dunqing)
+
+### Features
+
+- 65d9662 allocator: Add `Vec2::retain_mut` method (#9655) (Dunqing)
+- 3943563 allocator: Connect `Vec2` module and make it compile (#9647) (Dunqing)
+- 3d4400c allocator: Add `Vec2` (#9646) (Dunqing)
+
+### Performance
+
+- 89b6e4c allocator: Remove overflow checks from `String::from_strs_array_in` (#9650) (overlookmotel)
+
+### Documentation
+
+- daf7a1e allocator/vec: Fix link in doc comment for `Vec2` (#9729) (overlookmotel)
+
+### Refactor
+
+- 5c5e010 allocator/vec: Disable lint warnings in `vec2` files (#9730) (overlookmotel)
+- 6c86961 allocator/vec: Comment out feature-gated methods (#9728) (overlookmotel)
+
+### Testing
+
+- ed6fcf2 allocator: Fix tests (#9727) (overlookmotel)
+
+## [0.57.0] - 2025-03-11
+
+### Documentation
+
+- 31a2618 allocator: Add safety constraint for `String::from_raw_parts_in` (#9640) (overlookmotel)
+
+### Refactor
+
+- 44101bd allocator: Refactor and improve safty comments of `String::from_strs_array_in` (#9639) (overlookmotel)
+
+## [0.56.1] - 2025-03-07
+
+### Features
+
+- 8b51a75 allocator: Add `String::from_strs_array_in` (#9329) (Dunqing)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- d94fc15 allocator: Reduce scope of `unsafe` blocks (#9319) (overlookmotel)
+- b09249c ast/estree: Rename serializers and serialization methods (#9284) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+
+### Documentation
+
+- 3414824 oxc: Enable `clippy::too_long_first_doc_paragraph` (#9237) (Boshen)
+
+### Refactor
+
+- e32d6e2 allocator, linter: Shorten `serde` impls (#9254) (overlookmotel)
+
+## [0.49.0] - 2025-02-10
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.0] - 2025-01-24
 
 ### Features

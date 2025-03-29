@@ -4,6 +4,143 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 6565fc4 napi: Feature gate allocator (#9921) (Boshen)
+- 2cedfe4 napi: Add codeframe to napi error (#9893) (Boshen)
+
+### Refactor
+
+- 961b95d napi: Move common code to `oxc_napi` (#9875) (Boshen)
+
+### Testing
+
+- e637e2e napi/parser: Tweak vitest config (#9878) (Hiroshi Ogawa)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 6565fc4 napi: Feature gate allocator (#9921) (Boshen)
+- 2cedfe4 napi: Add codeframe to napi error (#9893) (Boshen)
+
+### Refactor
+
+- 961b95d napi: Move common code to `oxc_napi` (#9875) (Boshen)
+
+### Testing
+
+- e637e2e napi/parser: Tweak vitest config (#9878) (Hiroshi Ogawa)
+
+## [0.60.0] - 2025-03-18
+
+### Features
+
+- aa3dff8 napi: Add mimalloc to parser and transformr (#9859) (Boshen)
+
+### Refactor
+
+- 7106e5d napi: Disable unused browser fs (#9848) (hi-ogawa)
+
+## [0.60.0] - 2025-03-18
+
+### Features
+
+- aa3dff8 napi: Add mimalloc to parser and transformr (#9859) (Boshen)
+
+### Refactor
+
+- 7106e5d napi: Disable unused browser fs (#9848) (hi-ogawa)
+
+## [0.58.1] - 2025-03-13
+
+### Features
+
+- a8331f7 transformer: Turn off explicit resource management by default (#9749) (Boshen)
+
+## [0.58.1] - 2025-03-13
+
+### Features
+
+- a8331f7 transformer: Turn off explicit resource management by default (#9749) (Boshen)
+
+## [0.58.0] - 2025-03-13
+
+### Features
+
+- 3429898 transformer/module_runner_transform: Remove duplicate `deps` and `dynamicDeps` (#9709) (Dunqing)
+
+## [0.58.0] - 2025-03-13
+
+### Features
+
+- 3429898 transformer/module_runner_transform: Remove duplicate `deps` and `dynamicDeps` (#9709) (Dunqing)
+
+## [0.57.0] - 2025-03-11
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Refactor
+
+- c6edafe napi: Remove `npm/oxc-*/` npm packages (#9631) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Refactor
+
+- c6edafe napi: Remove `npm/oxc-*/` npm packages (#9631) (Boshen)
+
+## [0.56.4] - 2025-03-07
+
+### Bug Fixes
+
+- c08b7fc napi: Commit wasi files (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 45ace44 transformer: Add `/* @_PURE__ */` annotation for pure calls (#9424) (Dunqing)
+- ffd485c transformer, napi/transform: Expose `moduleRunnerTransform` function (#9532) (Dunqing)
+
+## [0.54.0] - 2025-03-04
+
+### Bug Fixes
+
+- b4f050c transformer/legacy-decorator: Metadata incorrectly wrapped by decorateParam (#9490) (Dunqing)
+
+### Testing
+
+- d129055 napi: Add tests for worker threads (#9408) (Boshen)
+
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- 8a5051e napi/transform: Support enabling `emitDecoratorMetadata` (#9190) (Dunqing)
+- 90ba283 transformer/decorator: Support emitting decorator metadata (#9057) (Dunqing)
+
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- fef82ff transformer/helper-loader: Replace `@babel/runtime` with `@oxc-project/runtime` (#9059) (Dunqing)
+
+## [0.49.0] - 2025-02-10
+
+### Features
+
+- d6daa75 napi/transform: Support for enabling legacy decorator (#8927) (Dunqing)
+- f2d28f3 transformer: Support for transforming legacy decorator (#8614) (Dunqing)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.46.0] - 2025-01-14
 
 ### Features

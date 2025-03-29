@@ -1,0 +1,107 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:43]
+ 1 │ function foo() { if (true) { if (false) { if (true) { } } } }
+   ·                                           ─────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:44]
+ 1 │ var foo = () => { if (true) { if (false) { if (true) { } } } }
+   ·                                            ─────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (2). Maximum allowed is 1.
+   ╭─[max_depth.tsx:1:38]
+ 1 │ function foo() { if (true) {} else { for(;;) {} } }
+   ·                                      ──────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (2). Maximum allowed is 1.
+   ╭─[max_depth.tsx:1:33]
+ 1 │ function foo() { while (true) { if (true) {} } }
+   ·                                 ────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (2). Maximum allowed is 1.
+   ╭─[max_depth.tsx:1:39]
+ 1 │ function foo() { for (let x of foo) { if (true) {} } }
+   ·                                       ────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (2). Maximum allowed is 1.
+   ╭─[max_depth.tsx:1:33]
+ 1 │ function foo() { while (true) { if (true) { if (false) { } } } }
+   ·                                 ────────────────────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 1.
+   ╭─[max_depth.tsx:1:45]
+ 1 │ function foo() { while (true) { if (true) { if (false) { } } } }
+   ·                                             ──────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (5). Maximum allowed is 4.
+   ╭─[max_depth.tsx:1:68]
+ 1 │ function foo() { if (true) { if (false) { if (true) { if (false) { if (true) { } } } } } }
+   ·                                                                    ─────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:43]
+ 1 │ function foo() { if (true) { if (false) { if (true) { } } } }
+   ·                                           ─────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (5). Maximum allowed is 4.
+   ╭─[max_depth.tsx:1:54]
+ 1 │ function foo() { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } }
+   ·                                                      ─────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (1). Maximum allowed is 0.
+   ╭─[max_depth.tsx:1:18]
+ 1 │ function foo() { if (true) {} }
+   ·                  ────────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:38]
+ 1 │ class C { static { if (1) { if (2) { if (3) {} } } } }
+   ·                                      ─────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:47]
+ 1 │ if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } }
+   ·                                               ─────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:64]
+ 1 │ function foo() { if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } } }
+   ·                                                                ─────────
+   ╰────
+  help: Consider refactoring your code.
+
+  ⚠ eslint(max-depth): Blocks are nested too deeply (3). Maximum allowed is 2.
+   ╭─[max_depth.tsx:1:80]
+ 1 │ function foo() { if (1) { class C { static { if (1) { if (2) {} } } } if (2) { if (3) {} } } }
+   ·                                                                                ─────────
+   ╰────
+  help: Consider refactoring your code.

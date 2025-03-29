@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn use_to_be_called_with(span: Span) -> OxcDiagnostic {

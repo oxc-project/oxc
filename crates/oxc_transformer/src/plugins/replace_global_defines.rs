@@ -1,14 +1,14 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use lazy_static::lazy_static;
 use oxc_allocator::{Address, Allocator, GetAddress};
-use oxc_ast::{ast::*, VisitMut};
+use oxc_ast::ast::*;
+use oxc_ast_visit::VisitMut;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
-use oxc_span::{CompactStr, SourceType, SPAN};
+use oxc_semantic::{IsGlobalReference, ScopeFlags, Scoping};
+use oxc_span::{CompactStr, SPAN, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx, traverse_mut};
 use rustc_hash::FxHashSet;
 
 /// Configuration for [ReplaceGlobalDefines].
@@ -20,9 +20,7 @@ use rustc_hash::FxHashSet;
 #[derive(Debug, Clone)]
 pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 
-lazy_static! {
-    static ref THIS_ATOM: Atom<'static> = Atom::from("this");
-}
+static THIS_ATOM: Atom<'static> = Atom::new_const("this");
 
 #[derive(Debug)]
 struct IdentifierDefine {
@@ -206,8 +204,7 @@ impl ReplaceGlobalDefinesConfig {
 
 #[must_use]
 pub struct ReplaceGlobalDefinesReturn {
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
 }
 
 /// Replace Global Defines.
@@ -280,12 +277,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     pub fn build(
         &mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
-        let (symbols, scopes) = traverse_mut(self, self.allocator, program, symbols, scopes);
-        ReplaceGlobalDefinesReturn { symbols, scopes }
+        let scoping = traverse_mut(self, self.allocator, program, scoping);
+        ReplaceGlobalDefinesReturn { scoping }
     }
 
     // Construct a new expression because we don't have ast clone right now.
@@ -302,11 +298,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         expr
     }
 
-    fn replace_identifier_defines(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::Identifier(ident) => {
                 if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
@@ -334,10 +326,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &self,
-        ident: &mut oxc_allocator::Box<'_, IdentifierReference<'_>>,
-        ctx: &mut TraverseCtx<'a>,
+        ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !ident.is_global_reference(ctx.symbols()) {
+        if !ident.is_global_reference(ctx.scoping()) {
             return None;
         }
         for (key, value) in &self.config.0.identifier.identifier_defines {
@@ -351,7 +343,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_define_with_assignment_expr(
-        &mut self,
+        &self,
         node: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
@@ -378,11 +370,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    fn replace_dot_defines(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_dot_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
@@ -429,9 +417,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_computed_member_expr(
-        &mut self,
+        &self,
         ctx: &mut TraverseCtx<'a>,
-        member: &mut ComputedMemberExpression<'a>,
+        member: &ComputedMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
@@ -448,9 +436,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_static_member_expr(
-        &mut self,
+        &self,
         ctx: &mut TraverseCtx<'a>,
-        member: &mut StaticMemberExpression<'a>,
+        member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
@@ -581,7 +569,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(ctx.symbols()) {
+                        if !ident.is_global_reference(ctx.scoping()) {
                             return false;
                         }
                         cur_part_name = &ident.name;
@@ -640,7 +628,7 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 
 fn destructing_dot_define_optimizer<'ast>(
     mut expr: Expression<'ast>,
-    ctx: &mut TraverseCtx<'ast>,
+    ctx: &TraverseCtx<'ast>,
 ) -> Expression<'ast> {
     let Expression::ObjectExpression(obj) = &mut expr else { return expr };
     let parent = ctx.parent();
@@ -677,11 +665,7 @@ fn destructing_dot_define_optimizer<'ast>(
         let v = match prop {
             ObjectPropertyKind::ObjectProperty(prop) => {
                 // not static key just preserve it
-                if let Some(name) = prop.key.name() {
-                    needed_keys.contains(&name)
-                } else {
-                    true
-                }
+                if let Some(name) = prop.key.name() { needed_keys.contains(&name) } else { true }
             }
             // not static key
             ObjectPropertyKind::SpreadProperty(_) => true,

@@ -4,6 +4,126 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
+### Refactor
+
+- 43e8efd transformer/using: Remove use of child scope ids in enter_program (#9748) (camc314)
+- 1d60e85 traverse: Use `ArenaBox` alias (#9759) (overlookmotel)
+- bda4b9a traverse: Add `TraverseCtx::insert_scope_below_statements` (#9757) (overlookmotel)
+- d7dda5c traverse: Add doc comment for `TraverseScoping::insert_scope_below_statements` and rename var (#9756) (overlookmotel)
+
+## [0.58.0] - 2025-03-13
+
+### Bug Fixes
+
+- 475b48f ast: Change `ImportExpression::attributes` to `options` (#9665) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+
+### Refactor
+
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+## [0.54.0] - 2025-03-04
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+- abb15e0 ast: [**BREAKING**] Add `pure` field to `Function`, `CallExpression`, and `NewExpression` (#9207) (overlookmotel)
+
+### Features
+
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+
+## [0.53.0] - 2025-02-26
+
+### Bug Fixes
+
+- 6a8f53f ast/estree: Visit `JSXOpeningFragment` and `JSXClosingFragment` (#9342) (overlookmotel)
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+- f39be5f traverse: Reduce scope of `unsafe` blocks (#9323) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+### Refactor
+
+- 97cc1c8 ast: Remove `TSLiteral::NullLiteral` (replaced by `TSNullKeyword`) (#9147) (Boshen)
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+- 9c3549d traverse: Apply `clippy::redundant_pub_crate` (#9258) (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+- 9091387 ast: [**BREAKING**] Remove `TSType::TSQualifiedName` (#9051) (Dunqing)
+
+### Features
+
+
+## [0.50.0] - 2025-02-12
+
+- d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)
+
+### Refactor
+
+
+## [0.49.0] - 2025-02-10
+
+### Refactor
+
+- 04786ac ast: Use `=` syntax for `#[scope]` attrs (#8878) (overlookmotel)
+
 ## [0.48.0] - 2025-01-24
 
 ### Refactor

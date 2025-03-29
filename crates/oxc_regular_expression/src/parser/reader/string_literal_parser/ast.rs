@@ -9,7 +9,7 @@ pub struct StringLiteral {
     pub body: Vec<CodePoint>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StringLiteralKind {
     Double,
     Single,

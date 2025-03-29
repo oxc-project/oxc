@@ -1,14 +1,14 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{IdentifierName, IdentifierReference, MethodDefinitionKind},
     AstKind,
+    ast::{IdentifierName, IdentifierReference, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_function_diagnostic<S: AsRef<str>>(
     span: Span,
@@ -66,7 +66,7 @@ impl Rule for NoEmptyFunction {
         let AstKind::FunctionBody(fb) = node.kind() else {
             return;
         };
-        if fb.is_empty() && !ctx.semantic().has_comments_between(fb.span) {
+        if fb.is_empty() && !ctx.has_comments_between(fb.span) {
             let (kind, fn_name) = get_function_name_and_kind(node, ctx);
             ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
         }

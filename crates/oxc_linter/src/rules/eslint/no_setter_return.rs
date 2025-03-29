@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_setter_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Setter cannot return a value").with_label(span)
@@ -46,8 +46,8 @@ impl Rule for NoSetterReturn {
             return;
         }
 
-        for scope_id in ctx.scopes().ancestors(node.scope_id()) {
-            let flags = ctx.scopes().get_flags(scope_id);
+        for scope_id in ctx.scoping().scope_ancestors(node.scope_id()) {
+            let flags = ctx.scoping().scope_flags(scope_id);
             if flags.is_set_accessor() {
                 ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
             } else if flags.is_function() {

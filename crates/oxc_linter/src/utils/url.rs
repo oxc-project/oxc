@@ -4,7 +4,7 @@
 ///
 /// # Example
 ///
-/// ```rust
+/// ```text
 /// find_url_query_value("https://example.com/?foo=bar&baz=qux", "baz") // => Some("qux")
 /// ```
 pub fn find_url_query_value<'url>(url: &'url str, key: &str) -> Option<&'url str> {
@@ -42,7 +42,10 @@ mod test {
             Some("bar")
         );
         assert_eq!(
-            find_url_query_value("https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6", "features"),
+            find_url_query_value(
+                "https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6",
+                "features"
+            ),
             Some("WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6")
         );
     }

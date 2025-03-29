@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+### Refactor
+
+- b2f3d23 isolated_declarations: Remove unused `self` params (#9868) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
+## [0.58.0] - 2025-03-13
+
+### Refactor
+
+- a61a50b isolated_declarations: Do not store temp values in arena (#9733) (overlookmotel)
+
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+## [0.54.0] - 2025-03-04
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+
+### Performance
+
+- 27a8e50 isolated_declarations: Reserve sufficient capacity in statements `Vec` (#9394) (overlookmotel)
+
+### Refactor
+
+- c880481 isolated_declarations: Rename var (#9390) (overlookmotel)
+- 37e41f0 isolated_declarations: Use aliases `ArenaBox` / `ArenaVec` (#9389) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+### Bug Fixes
+
+- 9e3571f isolated-declarations: Private accessors keep their types (#9132) (CPunisher)
+
+### Refactor
+
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+
+## [0.49.0] - 2025-02-10
+
+- bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)
+
+### Refactor
+
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Bug Fixes

@@ -2,7 +2,7 @@ use std::{borrow, fmt, hash, ops::Deref};
 
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::Visitor};
 
 /// Add or remove global variables.
 ///
@@ -30,7 +30,7 @@ use serde::{de::Visitor, Deserialize, Serialize};
 /// You may also use `"readable"` or `false` to represent `"readonly"`, and
 /// `"writeable"` or `true` to represent `"writable"`.
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize, JsonSchema, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema, Clone)]
 pub struct OxlintGlobals(FxHashMap<String, GlobalValue>);
 
 impl Deref for OxlintGlobals {
@@ -87,11 +87,7 @@ impl<'de> Deserialize<'de> for GlobalValue {
 impl From<bool> for GlobalValue {
     #[inline]
     fn from(value: bool) -> Self {
-        if value {
-            GlobalValue::Writeable
-        } else {
-            GlobalValue::Readonly
-        }
+        if value { GlobalValue::Writeable } else { GlobalValue::Readonly }
     }
 }
 

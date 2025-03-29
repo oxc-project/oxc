@@ -1,13 +1,13 @@
+use lazy_regex::Regex;
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression, FormalParameter, FormalParameters},
     AstKind,
+    ast::{BindingPatternKind, Expression, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(

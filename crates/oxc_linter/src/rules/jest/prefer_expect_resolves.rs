@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     AstKind,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, ParsedExpectFnCall, PossibleJestNode},
+    utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn expect_resolves(span: Span) -> OxcDiagnostic {

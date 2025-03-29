@@ -2,8 +2,8 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use super::{
-    extensions::{layout::Layout, visit::VisitVec},
     Def, Derives, Schema, TypeDef, TypeId,
+    extensions::{layout::Layout, visit::VisitVec},
 };
 
 /// Type definition for a `Vec`.

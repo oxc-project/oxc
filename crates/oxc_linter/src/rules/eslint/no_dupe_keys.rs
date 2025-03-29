@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{ObjectPropertyKind, PropertyKey, PropertyKind},
     AstKind,
+    ast::{ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_dupe_keys_diagnostic(first: Span, second: Span, key: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Duplicate key '{key}'"))

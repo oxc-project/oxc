@@ -1,19 +1,45 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Statement;
-use oxc_ecmascript::constant_evaluation::ValueType;
+use oxc_ast::ast::{IdentifierReference, Statement};
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    is_global_reference::IsGlobalReference,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+struct GlobalReferenceChecker {
+    global_variable_names: Vec<String>,
+}
+impl IsGlobalReference for GlobalReferenceChecker {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
+    }
+}
+
 fn test(source_text: &str, expected: ValueType) {
+    test_with_global_variables(
+        source_text,
+        vec!["undefined".to_string(), "NaN".to_string(), "Infinity".to_string()],
+        expected,
+    );
+}
+
+fn test_with_global_variables(
+    source_text: &str,
+    global_variable_names: Vec<String>,
+    expected: ValueType,
+) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
+    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
+
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    let result = ValueType::from(&stmt.expression);
+    let result = stmt.expression.value_type(&global_reference_checker);
     assert_eq!(result, expected, "{source_text}");
 }
 
@@ -39,8 +65,11 @@ fn literal_tests() {
 #[test]
 fn identifier_tests() {
     test("undefined", ValueType::Undefined);
+    test_with_global_variables("undefined", vec![], ValueType::Undetermined);
     test("NaN", ValueType::Number);
+    test_with_global_variables("NaN", vec![], ValueType::Undetermined);
     test("Infinity", ValueType::Number);
+    test_with_global_variables("Infinity", vec![], ValueType::Undetermined);
     test("foo", ValueType::Undetermined);
 }
 
@@ -91,16 +120,16 @@ fn binary_tests() {
     test("true + undefined", ValueType::Number);
     test("true + null", ValueType::Number);
     test("true + 0", ValueType::Number);
-    // test("undefined + true", ValueType::Number);
-    // test("null + true", ValueType::Number);
-    // test("0 + true", ValueType::Number);
+    test("undefined + true", ValueType::Number);
+    test("null + true", ValueType::Number);
+    test("0 + true", ValueType::Number);
     test("true + 0n", ValueType::Undetermined); // throws an error
-    test("({} + [])", ValueType::Undetermined);
-    test("[] + {}", ValueType::Undetermined);
+    test("({} + [])", ValueType::String); // [object Object]
+    test("[] + {}", ValueType::String); // [object Object]
 
     test("1 - 0", ValueType::Number);
     test("1n - 0n", ValueType::BigInt);
-    test("1 - 0n", ValueType::BigInt); // throws an error
+    test("1 - 0n", ValueType::Number); // throws an error
     test("foo - 1", ValueType::Number);
     test("foo - 1n", ValueType::BigInt);
     test("foo - undefined", ValueType::Number);
@@ -200,7 +229,8 @@ fn logical_tests() {
 
     test("foo ?? bar", ValueType::Undetermined);
     test("foo1 === foo2 ?? bar1 !== bar2", ValueType::Boolean);
-    // test("+foo ?? (bar1 !== bar2)", ValueType::Number);
+    test("+foo ?? (bar1 !== bar2)", ValueType::Number);
+    test("(void foo) ?? (bar1 !== bar2)", ValueType::Boolean);
 }
 
 #[test]

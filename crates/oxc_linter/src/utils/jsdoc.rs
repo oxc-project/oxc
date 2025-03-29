@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
     AstKind,
+    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
 };
-use oxc_semantic::JSDoc;
+use oxc_semantic::{JSDoc, Semantic};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
+use crate::{AstNode, config::JSDocPluginSettings};
 
 /// JSDoc is often attached on the parent node of a function.
 ///
@@ -27,11 +27,11 @@ use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
 /// ```
 pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
-    while ctx.jsdoc().get_all_by_node(current_node).is_none() {
+    while semantic.jsdoc().get_all_by_node(current_node).is_none() {
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {
@@ -50,13 +50,13 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             => {
                 // /** This JSDoc should NOT found for `VariableDeclaration` */
                 // export const foo = () => {}
-                let parent_node = ctx.nodes().parent_node(current_node.id())?;
+                let parent_node = semantic.nodes().parent_node(current_node.id())?;
                 match parent_node.kind() {
                     AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => return Some(parent_node),
                     _ => return None
                 }
             },
-            _ => current_node = ctx.nodes().parent_node(current_node.id())?,
+            _ => current_node = semantic.nodes().parent_node(current_node.id())?,
         }
     }
 

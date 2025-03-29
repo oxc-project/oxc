@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{match_member_expression, Expression, IdentifierReference, MemberExpression},
     AstKind,
+    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -27,7 +27,7 @@ impl Default for NoObjCalls {
     }
 }
 
-declare_oxc_lint! {
+declare_oxc_lint!(
     /// ### What it does
     /// Disallow calling some global objects as functions
     ///
@@ -65,18 +65,14 @@ declare_oxc_lint! {
     NoObjCalls,
     eslint,
     correctness,
-}
+);
 
 fn is_global_obj(s: &str) -> bool {
     NON_CALLABLE_GLOBALS.contains(&s)
 }
 
 fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
-    if expr.object().is_specific_id(GLOBAL_THIS) {
-        expr.static_property_name()
-    } else {
-        None
-    }
+    if expr.object().is_specific_id(GLOBAL_THIS) { expr.static_property_name() } else { None }
 }
 
 fn resolve_global_binding<'a, 'b: 'a>(
@@ -84,9 +80,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
-    let scope = ctx.scopes();
+    let scope = ctx.scoping();
     let nodes = ctx.nodes();
-    let symbols = ctx.symbols();
+    let symbols = ctx.scoping();
 
     if ctx.is_reference_to_global_variable(ident) {
         return Some(ident.name.as_str());
@@ -103,7 +99,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
         return None;
     };
 
-    let decl = nodes.get_node(symbols.get_declaration(binding_id));
+    let decl = nodes.get_node(symbols.symbol_declaration(binding_id));
     match decl.kind() {
         AstKind::VariableDeclarator(parent_decl) => {
             if !parent_decl.id.kind.is_binding_identifier() {

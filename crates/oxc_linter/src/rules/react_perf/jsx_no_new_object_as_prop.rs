@@ -1,11 +1,11 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_util::is_method_call,
-    utils::{find_initialized_binding, is_constructor_matching_name, ReactPerfRule},
+    utils::{ReactPerfRule, find_initialized_binding, is_constructor_matching_name},
 };
 
 #[derive(Debug, Default, Clone)]

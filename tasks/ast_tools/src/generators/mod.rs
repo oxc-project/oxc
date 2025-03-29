@@ -1,21 +1,25 @@
 use crate::{
-    output::Output,
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
     Codegen, Result, Runner, Schema,
+    output::Output,
+    parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
 };
 
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
 mod get_id;
+mod raw_transfer;
 mod typescript;
+mod utf8_to_utf16;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use get_id::GetIdGenerator;
+pub use raw_transfer::RawTransferGenerator;
 pub use typescript::TypescriptGenerator;
+pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;
 
 /// Trait to define a generator.
@@ -95,7 +99,7 @@ pub trait Generator: Runner {
     ///
     /// Runs before any `generate` or `derive` method runs.
     #[expect(unused_variables)]
-    fn prepare(&self, schema: &mut Schema) {}
+    fn prepare(&self, schema: &mut Schema, codegen: &Codegen) {}
 
     /// Generate single output.
     #[expect(unused_variables, clippy::unimplemented)]

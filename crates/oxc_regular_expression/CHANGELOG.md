@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Performance
+
+- a09bbcf regular_expression: Make all fieldless enums `Copy` (#9937) (overlookmotel)
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.54.0] - 2025-03-04
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+
+### Refactor
+
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+
+### Refactor
+
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- 6d1e1d8 ast: Make generated code consistent (#8872) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.0] - 2025-01-24
 
 ### Refactor

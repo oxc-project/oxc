@@ -1,5 +1,5 @@
 use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
-use oxc_ecmascript::ToBoolean;
+use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of
@@ -134,13 +134,14 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             let right =
                 stmt.alternate.as_ref().map_or(StatementReturnStatus::NotReturn, check_statement);
 
-            test.to_boolean().map_or_else(|| left.join(right), |val| if val { left } else { right })
+            test.to_boolean(&WithoutGlobalReferenceInformation {})
+                .map_or_else(|| left.join(right), |val| if val { left } else { right })
         }
 
         Statement::WhileStatement(stmt) => {
             let test = &stmt.test;
             let inner_return = check_statement(&stmt.body);
-            if test.to_boolean() == Some(true) {
+            if test.to_boolean(&WithoutGlobalReferenceInformation {}) == Some(true) {
                 inner_return
             } else {
                 inner_return.join(StatementReturnStatus::NotReturn)

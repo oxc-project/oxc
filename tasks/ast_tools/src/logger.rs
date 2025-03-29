@@ -3,11 +3,11 @@ use std::sync::OnceLock;
 static LOG: OnceLock<bool> = OnceLock::new();
 
 /// Disable logging.
-pub(super) fn quiet() {
+pub fn quiet() {
     LOG.set(false).expect("Failed to disable logger");
 }
 
-pub(super) fn __internal_log_enable() -> bool {
+pub fn __internal_log_enable() -> bool {
     *LOG.get_or_init(|| true)
 }
 
@@ -15,7 +15,7 @@ pub(super) fn __internal_log_enable() -> bool {
 ///
 /// Does not include a trailing newline.
 macro_rules! log {
-    ($fmt:literal $(, $args:expr)*) => {
+    ($fmt:literal $(, $args:expr_2021)*) => {
         if $crate::logger::__internal_log_enable() {
             print!($fmt$(, $args)*);
             std::io::Write::flush(&mut std::io::stdout()).unwrap();
@@ -28,7 +28,7 @@ pub(crate) use log;
 ///
 /// Includes a trailing newline.
 macro_rules! logln {
-    ($fmt:literal $(, $args:expr)*) => {
+    ($fmt:literal $(, $args:expr_2021)*) => {
         if $crate::logger::__internal_log_enable() {
             println!($fmt$(, $args)*);
             std::io::Write::flush(&mut std::io::stdout()).unwrap();
@@ -55,7 +55,7 @@ pub(crate) use log_failed;
 
 /// Log a [`Result`].
 macro_rules! log_result {
-    ($result:expr) => {
+    ($result:expr_2021) => {
         match &($result) {
             Ok(_) => {
                 $crate::log_success!();

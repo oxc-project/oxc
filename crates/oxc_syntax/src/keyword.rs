@@ -2,7 +2,7 @@
 //!
 //! ## References
 //! - [12.7.2 Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
 /// Checks if the given string is a [reserved keyword] or a [global object]
 /// (e.g. `NaN`).

@@ -1,10 +1,7 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::mpsc,
-};
+use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
 
-use ignore::{overrides::Override, DirEntry};
-use oxc_span::VALID_EXTENSIONS;
+use ignore::{DirEntry, overrides::Override};
+use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
 
@@ -13,7 +10,7 @@ pub struct Extensions(pub Vec<&'static str>);
 
 impl Default for Extensions {
     fn default() -> Self {
-        Self(VALID_EXTENSIONS.to_vec())
+        Self(LINTABLE_EXTENSIONS.to_vec())
     }
 }
 
@@ -24,7 +21,7 @@ pub struct Walk {
 }
 
 struct WalkBuilder {
-    sender: mpsc::Sender<Vec<Box<Path>>>,
+    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
 }
 
@@ -39,8 +36,8 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 }
 
 struct WalkCollector {
-    paths: Vec<Box<Path>>,
-    sender: mpsc::Sender<Vec<Box<Path>>>,
+    paths: Vec<Arc<OsStr>>,
+    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
 }
 
@@ -56,7 +53,7 @@ impl ignore::ParallelVisitor for WalkCollector {
         match entry {
             Ok(entry) => {
                 if Walk::is_wanted_entry(&entry, &self.extensions) {
-                    self.paths.push(entry.path().to_path_buf().into_boxed_path());
+                    self.paths.push(entry.path().as_os_str().into());
                 }
                 ignore::WalkState::Continue
             }
@@ -103,14 +100,15 @@ impl Walk {
         Self { inner, extensions: Extensions::default() }
     }
 
-    pub fn paths(self) -> Vec<Box<Path>> {
-        let (sender, receiver) = mpsc::channel::<Vec<Box<Path>>>();
+    pub fn paths(self) -> Vec<Arc<OsStr>> {
+        let (sender, receiver) = mpsc::channel::<Vec<Arc<OsStr>>>();
         let mut builder = WalkBuilder { sender, extensions: self.extensions };
         self.inner.visit(&mut builder);
         drop(builder);
         receiver.into_iter().flatten().collect()
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn with_extensions(mut self, extensions: Extensions) -> Self {
         self.extensions = extensions;
         self
@@ -133,7 +131,7 @@ impl Walk {
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString};
+    use std::{env, ffi::OsString, path::Path};
 
     use ignore::overrides::OverrideBuilder;
 
@@ -157,7 +155,9 @@ mod test {
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
-            .map(|path| path.strip_prefix(&fixture).unwrap().to_string_lossy().to_string())
+            .map(|path| {
+                Path::new(&path).strip_prefix(&fixture).unwrap().to_string_lossy().to_string()
+            })
             .collect::<Vec<_>>();
         paths.sort();
 

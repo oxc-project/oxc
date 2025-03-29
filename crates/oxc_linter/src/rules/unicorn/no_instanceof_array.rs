@@ -1,10 +1,10 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_instanceof_array_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array.isArray()` instead of `instanceof Array`.")

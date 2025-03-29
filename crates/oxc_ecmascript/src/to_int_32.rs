@@ -39,19 +39,11 @@ impl ToInt32 for f64 {
             let d64 = number.to_bits();
             let significand = d64 & SIGNIFICAND_MASK;
 
-            if is_denormal(number) {
-                significand
-            } else {
-                significand + HIDDEN_BIT
-            }
+            if is_denormal(number) { significand } else { significand + HIDDEN_BIT }
         }
 
         fn sign(number: f64) -> i64 {
-            if (number.to_bits() & SIGN_MASK) == 0 {
-                1
-            } else {
-                -1
-            }
+            if (number.to_bits() & SIGN_MASK) == 0 { 1 } else { -1 }
         }
 
         let number = *self;

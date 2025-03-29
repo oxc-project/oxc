@@ -1,14 +1,14 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop},
-    AstNode,
 };
 
 fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
@@ -106,7 +106,7 @@ impl Rule for NoAutofocus {
 
         if self.ignore_non_dom {
             if HTML_TAG.contains(&element_type) {
-                if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+                if let JSXAttributeItem::Attribute(attr) = autofocus {
                     ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                         fixer.delete(&attr.span)
                     });
@@ -115,7 +115,7 @@ impl Rule for NoAutofocus {
             return;
         }
 
-        if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+        if let JSXAttributeItem::Attribute(attr) = autofocus {
             ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                 fixer.delete(&attr.span)
             });
@@ -143,38 +143,38 @@ fn test() {
     }
 
     let pass = vec![
-        ("<div />;", None, None, None),
-        ("<div autofocus />;", None, None, None),
-        ("<input autofocus='true' />;", None, None, None),
-        ("<Foo bar />", None, None, None),
-        ("<Button />", None, None, None),
-        ("<Foo autoFocus />", Some(config()), None, None),
-        ("<div><div autofocus /></div>", Some(config()), None, None),
-        ("<Button />", None, Some(settings()), None),
-        ("<Button />", Some(config()), Some(settings()), None),
+        ("<div />;", None, None),
+        ("<div autofocus />;", None, None),
+        ("<input autofocus='true' />;", None, None),
+        ("<Foo bar />", None, None),
+        ("<Button />", None, None),
+        ("<Foo autoFocus />", Some(config()), None),
+        ("<div><div autofocus /></div>", Some(config()), None),
+        ("<Button />", None, Some(settings())),
+        ("<Button />", Some(config()), Some(settings())),
     ];
 
     let fail = vec![
-        ("<div autoFocus />", None, None, None),
-        ("<div autoFocus={true} />", None, None, None),
-        ("<div autoFocus={false} />", None, None, None),
-        ("<div autoFocus={undefined} />", None, None, None),
-        ("<div autoFocus='true' />", None, None, None),
-        ("<div autoFocus='false' />", None, None, None),
-        ("<input autoFocus />", None, None, None),
-        ("<Foo autoFocus />", None, None, None),
-        ("<Button autoFocus />", None, None, None),
-        ("<Button autoFocus />", Some(config()), Some(settings()), None),
+        ("<div autoFocus />", None, None),
+        ("<div autoFocus={true} />", None, None),
+        ("<div autoFocus={false} />", None, None),
+        ("<div autoFocus={undefined} />", None, None),
+        ("<div autoFocus='true' />", None, None),
+        ("<div autoFocus='false' />", None, None),
+        ("<input autoFocus />", None, None),
+        ("<Foo autoFocus />", None, None),
+        ("<Button autoFocus />", None, None),
+        ("<Button autoFocus />", Some(config()), Some(settings())),
     ];
 
     let fix = vec![
-        ("<div autoFocus />", "<div  />", None),
-        ("<div autoFocus={true} />", "<div  />", None),
-        ("<div autoFocus='true' />", "<div  />", None),
-        ("<Button autoFocus='true' />", "<Button  />", None),
-        ("<input autoFocus />", "<input  />", None),
-        ("<div autoFocus>foo</div>", "<div >foo</div>", None),
-        ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>", None),
+        ("<div autoFocus />", "<div  />"),
+        ("<div autoFocus={true} />", "<div  />"),
+        ("<div autoFocus='true' />", "<div  />"),
+        ("<Button autoFocus='true' />", "<Button  />"),
+        ("<input autoFocus />", "<input  />"),
+        ("<div autoFocus>foo</div>", "<div >foo</div>"),
+        ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>"),
     ];
 
     Tester::new(NoAutofocus::NAME, NoAutofocus::PLUGIN, pass, fail)

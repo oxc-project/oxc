@@ -66,12 +66,13 @@ bench = false
 [dependencies]
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
+oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
-oxc_parser = { workspace = true, features = ["benchmarking"], optional = true }
+oxc_parser = { workspace = true, features = ["benchmarking", "regular_expression"], optional = true }
 oxc_prettier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
@@ -86,27 +87,37 @@ serde_json = { workspace = true, optional = true }
 
 [features]
 default = [
-  "dep:oxc_allocator",
-  "dep:oxc_ast",
-  "dep:oxc_codegen",
-  "dep:oxc_isolated_declarations",
-  "dep:oxc_linter",
-  "dep:oxc_minifier",
-  "dep:oxc_mangler",
-  "dep:oxc_parser",
-  "dep:oxc_prettier",
-  "dep:oxc_semantic",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-  "dep:oxc_transformer",
+  "lexer",
+  "parser",
+  "transformer",
+  "semantic",
+  "minifier",
+  "codegen",
+  "linter",
+  "prettier",
+  "isolated_declarations",
 ]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
 # Features for running each benchmark separately with minimum dependencies that benchmark needs.
-# e.g. `cargo build --release -p oxc_benchmark --bench parser --no-default-features --features parser`
-lexer = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
-parser = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+# e.g. `cargo bench -p oxc_benchmark --bench parser --no-default-features --features parser`
+lexer = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
+parser = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 transformer = [
   "dep:oxc_allocator",
   "dep:oxc_parser",

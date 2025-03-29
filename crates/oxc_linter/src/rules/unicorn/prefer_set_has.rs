@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
-    ast::{Expression, MemberExpression, VariableDeclarationKind},
     AstKind,
+    ast::{Expression, MemberExpression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,7 +9,7 @@ use oxc_semantic::ScopeId;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 const ARRAY_METHODS_RETURNS_ARRAY: phf::Set<&'static str> = phf_set! {
    "concat",
@@ -132,7 +132,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if let VariableDeclarationKind::Var = declarator.kind {
+        if declarator.kind == VariableDeclarationKind::Var {
             return;
         }
 
@@ -160,7 +160,7 @@ impl Rule for PreferSetHas {
         {
             return;
         }
-        let symbol_table = ctx.symbols();
+        let symbol_table = ctx.scoping();
 
         let mut references = symbol_table.get_resolved_references(symbol_id).peekable();
 

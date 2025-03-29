@@ -2,6 +2,27 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:5]
+ 1 │ var undefined = 5;
+   ·     ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ function NaN(){}
+   ·          ───
+   ╰────
+  help: Shadowing of global properties 'NaN'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:14]
+ 1 │ try {} catch(eval){}
+   ·              ────
+   ╰────
+  help: Shadowing of global properties 'eval'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:10]
  1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
    ·          ───
@@ -315,3 +336,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────
    ╰────
   help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:7]
+ 1 │ class Infinity {}
+   ·       ────────
+   ╰────
+  help: Shadowing of global properties 'Infinity'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ import { undefined } from "bar";
+   ·          ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:8]
+ 1 │ import NaN from "foo";
+   ·        ───
+   ╰────
+  help: Shadowing of global properties 'NaN'.

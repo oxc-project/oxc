@@ -1,11 +1,11 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
-use crate::{diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl};
+use crate::{Context, ParserImpl, diagnostics, lexer::Kind, modifiers::Modifiers};
 
 impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
@@ -363,13 +363,18 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
+        let export_kind = if declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        };
         self.ctx = reserved_ctx;
         Ok(self.ast.alloc_export_named_declaration(
             self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,
-            ImportOrExportKind::Value,
+            export_kind,
             NONE,
         ))
     }
@@ -383,6 +388,8 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let decl_span = self.start_span();
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
@@ -406,9 +413,13 @@ impl<'a> ParserImpl<'a> {
                     }
                 })?
             }
-            _ if self.at_function_with_async() => self
-                .parse_function_impl(FunctionKind::DefaultExport)
-                .map(ExportDefaultDeclarationKind::FunctionDeclaration)?,
+            _ if self.at_function_with_async() => {
+                let mut func = self.parse_function_impl(FunctionKind::DefaultExport)?;
+                if has_no_side_effects_comment {
+                    func.pure = true;
+                }
+                ExportDefaultDeclarationKind::FunctionDeclaration(func)
+            }
             _ => {
                 let decl = self
                     .parse_assignment_expression_or_higher()
@@ -419,7 +430,7 @@ impl<'a> ParserImpl<'a> {
         };
         let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        Ok(self.ast.alloc_export_default_declaration(span, declaration, exported))
+        Ok(self.ast.alloc_export_default_declaration(span, exported, declaration))
     }
 
     // export ExportFromClause FromClause ;
@@ -492,7 +503,7 @@ impl<'a> ParserImpl<'a> {
                 let literal = self.parse_literal_string()?;
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if !literal.is_string_well_formed_unicode() {
+                if literal.lone_surrogates || !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))

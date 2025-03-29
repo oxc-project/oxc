@@ -5,11 +5,11 @@ mod options;
 mod parser_impl;
 
 pub use options::Options;
-pub use parser_impl::{parse_regexp_literal, Parser};
+pub use parser_impl::{Parser, parse_regexp_literal};
 
 #[cfg(test)]
 mod test {
-    use super::{ast, parse_regexp_literal, Options, Parser};
+    use super::{Options, Parser, ast, parse_regexp_literal};
 
     #[test]
     fn should_pass() {

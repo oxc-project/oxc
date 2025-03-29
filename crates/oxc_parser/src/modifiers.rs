@@ -2,12 +2,11 @@ use bitflags::bitflags;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
-    diagnostics,
+    ParserImpl, diagnostics,
     lexer::{Kind, Token},
-    ParserImpl,
 };
 
 bitflags! {
@@ -465,11 +464,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
         };
-        if b {
-            Ok(())
-        } else {
-            Err(self.unexpected())
-        }
+        if b { Ok(()) } else { Err(self.unexpected()) }
     }
 
     fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> Result<()> {
@@ -507,7 +502,7 @@ impl<'a> ParserImpl<'a> {
         self.can_follow_export_modifier()
     }
 
-    fn can_follow_export_modifier(&mut self) -> bool {
+    fn can_follow_export_modifier(&self) -> bool {
         let kind = self.cur_kind();
         kind == Kind::At
             && kind != Kind::Star
@@ -516,7 +511,7 @@ impl<'a> ParserImpl<'a> {
             && self.can_follow_modifier()
     }
 
-    fn can_follow_modifier(&mut self) -> bool {
+    fn can_follow_modifier(&self) -> bool {
         match self.cur_kind() {
             Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
             kind => kind.is_identifier_or_keyword(),

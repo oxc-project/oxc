@@ -20,8 +20,9 @@ export default class CustomReporter extends JsonReporter {
       if (testResult.status === 'passed') continue;
 
       const name = testResult.name.replace(currentDir, './');
-      const message = testResult.message ||
-        testResult.assertionResults.flatMap(result => result.failureMessages.map(formatMessage)).join('\n');
+      const message = testResult.message
+        ? testResult.message.replace(rootDir, './')
+        : testResult.assertionResults.flatMap(result => result.failureMessages.map(formatMessage)).join('\n');
       console.log();
       console.log(name);
       console.log(message);

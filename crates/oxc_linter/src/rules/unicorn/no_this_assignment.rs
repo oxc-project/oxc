@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
+    ast::{AssignmentTarget, BindingPatternKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_assignment_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not assign `this` to `{ident_name}`"))

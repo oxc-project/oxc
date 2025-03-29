@@ -4,11 +4,11 @@ use oxc_span::Span;
 use serde::Deserialize;
 
 use crate::{
+    AstNode,
     ast_util::is_function_node,
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
-    AstNode,
 };
 
 fn no_defaults_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {

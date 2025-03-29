@@ -1,0 +1,140 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:13]
+ 1 │ fetch(url, {body})
+   ·             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:19]
+ 1 │ new Request(url, {body})
+   ·                   ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:28]
+ 1 │ fetch(url, {method: "GET", body})
+   ·                            ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:34]
+ 1 │ new Request(url, {method: "GET", body})
+   ·                                  ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:29]
+ 1 │ fetch(url, {method: "HEAD", body})
+   ·                             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:35]
+ 1 │ new Request(url, {method: "HEAD", body})
+   ·                                   ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:29]
+ 1 │ fetch(url, {method: "head", body})
+   ·                             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:29]
+ 1 │ fetch(url, {method: `head`, body: "foo=bar"})
+   ·                             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:35]
+ 1 │ new Request(url, {method: "head", body})
+   ·                                   ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:50]
+ 1 │ const method = "head"; new Request(url, {method, body: "foo=bar"})
+   ·                                                  ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:44]
+ 1 │ const method = "head"; fetch(url, {method, body: "foo=bar"})
+   ·                                            ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:44]
+ 1 │ const method = `head`; fetch(url, {method, body: "foo=bar"})
+   ·                                            ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:13]
+ 1 │ fetch(url, {body}, extraArgument)
+   ·             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:19]
+ 1 │ new Request(url, {body}, extraArgument)
+   ·                   ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:30]
+ 1 │ fetch(url, {body: undefined, body: "foo=bar"});
+   ·                              ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:36]
+ 1 │ new Request(url, {body: undefined, body: "foo=bar"});
+   ·                                    ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:29]
+ 1 │ fetch(url, {method: "post", body: "foo=bar", method: "HEAD"});
+   ·                             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "HEAD"
+   ╭─[no_invalid_fetch_options.tsx:1:35]
+ 1 │ new Request(url, {method: "post", body: "foo=bar", method: "HEAD"});
+   ·                                   ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:1:13]
+ 1 │ fetch('/', {body: new URLSearchParams({ data: "test" })})
+   ·             ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:2:46]
+ 1 │ function foo(method: "HEAD" | "GET") {
+ 2 │             return new Request(url, {method, body: ""});
+   ·                                              ────
+ 3 │         }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:6:12]
+ 5 │            method: Method.Get,
+ 6 │            body: "",
+   ·            ────
+ 7 │           });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
+   ╭─[no_invalid_fetch_options.tsx:6:12]
+ 5 │            method: Method.Foo,
+ 6 │            body: "",
+   ·            ────
+ 7 │           });
+   ╰────

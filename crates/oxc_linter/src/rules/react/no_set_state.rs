@@ -1,13 +1,13 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::get_parent_component,
-    AstNode,
 };
 
 fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -63,7 +63,7 @@ impl Rule for NoSetState {
         };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
-            || !member_expr.static_property_name().is_some_and(|str| str == "setState")
+            || member_expr.static_property_name().is_none_or(|str| str != "setState")
             || get_parent_component(node, ctx).is_none()
         {
             return;

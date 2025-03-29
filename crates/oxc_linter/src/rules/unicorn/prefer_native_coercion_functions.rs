@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement},
     AstKind,
+    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::get_first_parameter_name};
 
 fn function(span: Span, called_fn: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(

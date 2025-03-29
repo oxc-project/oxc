@@ -2,14 +2,14 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{BindingPatternKind, VariableDeclarator},
     AstKind,
+    ast::{BindingPatternKind, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable declarations should be sorted").with_label(span)

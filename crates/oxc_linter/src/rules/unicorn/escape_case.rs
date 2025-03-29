@@ -1,14 +1,11 @@
 use std::str::Chars;
 
-use oxc_ast::{
-    ast::{StringLiteral, TemplateLiteral},
-    AstKind,
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn escape_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use uppercase characters for the value of the escape sequence.")
@@ -21,16 +18,17 @@ pub struct EscapeCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces defining escape sequence values with uppercase characters rather than lowercase ones. This promotes readability by making the escaped value more distinguishable from the identifier.
+    /// Enforces defining escape sequence values with uppercase characters rather than lowercase ones.
+    /// This promotes readability by making the escaped value more distinguishable from the identifier.
     ///
     /// ### Why is this bad?
+    ///
+    /// Using lowercase characters in escape sequences makes them less readable and harder to distinguish
+    /// from surrounding code. Most style guides recommend uppercase for consistency and clarity.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
-    /// <!-- prettier-ignore-start -->
-    ///
     /// ```javascript
     /// const foo = "\xa9";
     /// const foo = "\ud834";
@@ -45,22 +43,18 @@ declare_oxc_lint!(
     /// const foo = "\u{1D306}";
     /// const foo = "\cA";
     /// ```
-    ///
-    /// <!-- prettier-ignore-end -->
     EscapeCase,
     unicorn,
     pedantic,
     fix
 );
 
-fn is_hex_char(c: char) -> bool {
-    c.is_ascii_hexdigit()
-}
-fn is_hex(iter: &Chars, count: i32) -> bool {
+fn is_hex(iter: &Chars, count: usize) -> bool {
     let mut iter = iter.clone();
     for _ in 0..count {
-        if !matches!(iter.next(), Some(c) if is_hex_char(c)) {
-            return false;
+        match iter.next() {
+            Some(c) if c.is_ascii_hexdigit() => continue,
+            _ => return false,
         }
     }
     true
@@ -68,32 +62,31 @@ fn is_hex(iter: &Chars, count: i32) -> bool {
 
 // /(?<=(?:^|[^\\])(?:\\\\)*\\)(?<data>x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4}|u{[\dA-Fa-f]+})/g
 fn check_case(value: &str, is_regex: bool) -> Option<String> {
-    let mut in_escape = false;
     let mut result = String::with_capacity(value.len());
+
+    let mut in_escape = false;
     let mut p = value.chars();
     while let Some(c) = p.next() {
         result.push(c);
         if in_escape {
             match c {
-                'x' => {
-                    if is_hex(&p, 2) {
-                        for _ in 0..2 {
-                            result.push(p.next().unwrap().to_ascii_uppercase());
-                        }
+                'x' if is_hex(&p, 2) => {
+                    for _ in 0..2 {
+                        result.push(p.next().unwrap().to_ascii_uppercase());
                     }
                 }
                 'u' => {
                     let mut iter = p.clone();
                     let c = iter.next();
                     if c == Some('{') {
+                        let mut count = 0;
                         let mut is_match = false;
-                        let mut chars = vec![];
                         for c in iter {
                             if c == '}' {
                                 is_match = true;
                                 break;
-                            } else if is_hex_char(c) {
-                                chars.push(c);
+                            } else if c.is_ascii_hexdigit() {
+                                count += 1;
                             } else {
                                 break;
                             }
@@ -101,7 +94,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                         if is_match {
                             p.next();
                             result.push('{');
-                            for _ in 0..chars.len() {
+                            for _ in 0..count {
                                 result.push(p.next().unwrap().to_ascii_uppercase());
                             }
                             p.next();
@@ -126,28 +119,24 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
         }
     }
 
-    if result == value {
-        None
-    } else {
-        Some(result)
-    }
+    (result != value).then_some(result)
 }
+
 impl Rule for EscapeCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::StringLiteral(StringLiteral { span, .. }) => {
-                let text = span.source_text(ctx.source_text());
+            AstKind::StringLiteral(lit) => {
+                let text = lit.span.source_text(ctx.source_text());
                 if let Some(fixed) = check_case(text, false) {
-                    ctx.diagnostic_with_fix(escape_case_diagnostic(*span), |fixer| {
-                        fixer.replace(*span, fixed)
+                    ctx.diagnostic_with_fix(escape_case_diagnostic(lit.span), |fixer| {
+                        fixer.replace(lit.span, fixed)
                     });
                 }
             }
-            AstKind::TemplateLiteral(TemplateLiteral { quasis, .. }) => {
-                quasis.iter().for_each(|quasi| {
-                    if let Some(fixed) =
-                        check_case(quasi.span.source_text(ctx.source_text()), false)
-                    {
+            AstKind::TemplateLiteral(lit) => {
+                lit.quasis.iter().for_each(|quasi| {
+                    let text = quasi.span.source_text(ctx.source_text());
+                    if let Some(fixed) = check_case(text, false) {
                         ctx.diagnostic_with_fix(escape_case_diagnostic(quasi.span), |fixer| {
                             fixer.replace(quasi.span, fixed)
                         });
@@ -214,13 +203,17 @@ fn test() {
         r#"const foo = new RegExp("/\u{1D306}/", "u")"#,
         r#"const foo = new RegExp("/\ca/")"#,
         r#"const foo = new RegExp("/\cA/")"#,
+        // Issue: <https://github.com/oxc-project/oxc/issues/9583>
+        r"const foo = e`\u`;",
     ];
+
     let fail = vec![
         r#"const foo = "\xAab\xaab\xAAb\uAaAab\uaaaab\uAAAAb\u{AaAa}b\u{aaaa}b\u{AAAA}";"#,
         r"const foo = `\xAab\xaab\xAA${foo}\uAaAab\uaaaab\uAAAAb\u{AaAa}${foo}\u{aaaa}b\u{AAAA}`;",
         r"const foo = `\ud834${foo}\ud834${foo}\ud834`;",
         r#"const foo = new RegExp("/\u{1d306}/", "u")"#,
     ];
+
     let fix = vec![
         (r#"const foo = "\xa9";"#, r#"const foo = "\xA9";"#, None),
         (r#"const foo = "\xAa";"#, r#"const foo = "\xAA";"#, None),

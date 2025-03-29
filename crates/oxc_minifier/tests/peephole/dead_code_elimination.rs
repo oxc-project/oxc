@@ -7,6 +7,7 @@ use oxc_minifier::Compressor;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+#[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -17,6 +18,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     Codegen::new().build(program).code
 }
 
+#[track_caller]
 fn test(source_text: &str, expected: &str) {
     let t = "('production' == 'production')";
     let f = "('production' == 'development')";
@@ -29,6 +31,7 @@ fn test(source_text: &str, expected: &str) {
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
+#[track_caller]
 fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
@@ -68,9 +71,11 @@ fn dce_if_statement() {
 
     test("if (!false && xxx) { foo }", "if (xxx) foo");
     test("if (!true && yyy) { foo } else { bar }", "bar");
+    test("if (xxx && false) { foo } else { bar }", "if (xxx && false); else bar");
 
     test("if (true || xxx) { foo }", "foo");
     test("if (false || xxx) { foo }", "if (xxx) foo");
+    test("if (xxx || true) { foo } else { bar }", "if (xxx || true) foo");
 
     test("if ('production' == 'production') { foo } else { bar }", "foo");
     test("if ('development' == 'production') { foo } else { bar }", "bar");
@@ -80,7 +85,8 @@ fn dce_if_statement() {
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
-    test_same("function foo(undefined) { if (!undefined) foo }");
+    // <https://github.com/rollup/rollup/blob/master/test/function/samples/allow-undefined-as-parameter/main.js>
+    test_same("function foo(undefined) { if (!undefined) throw Error('') }");
 
     test("function foo() { if (undefined) { bar } }", "function foo() { }");
     test("function foo() { { bar } }", "function foo() { bar }");

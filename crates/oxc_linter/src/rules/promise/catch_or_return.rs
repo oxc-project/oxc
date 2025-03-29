@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression},
     AstKind,
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise, AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise,
 };
 
 fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {

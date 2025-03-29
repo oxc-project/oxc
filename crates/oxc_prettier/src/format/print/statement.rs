@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::{hardline, ir::Doc, Format, Prettier};
+use crate::{Format, Prettier, hardline, ir::Doc};
 
 pub fn print_statement_sequence<'a>(
     p: &mut Prettier<'a>,

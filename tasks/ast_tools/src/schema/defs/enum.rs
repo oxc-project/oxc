@@ -8,15 +8,17 @@ use syn::Ident;
 use crate::utils::{create_ident, pluralize};
 
 use super::{
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
+        ast_builder::AstBuilderType,
         clone_in::CloneInType,
         content_eq::ContentEqType,
+        dummy::DummyEnum,
         estree::{ESTreeEnum, ESTreeEnumVariant},
         kind::Kind,
-        layout::Layout,
+        layout::{GetLayout, Layout},
         visit::{VisitEnum, VisitFieldOrVariant},
     },
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 pub type Discriminant = u8;
@@ -28,28 +30,35 @@ pub struct EnumDef {
     pub name: String,
     pub plural_name: Option<String>,
     pub has_lifetime: bool,
+    #[expect(unused)]
+    pub is_foreign: bool,
     pub file_id: FileId,
+    #[expect(unused)]
+    pub visibility: Visibility,
     pub generated_derives: Derives,
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<TypeId>,
+    pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub kind: Kind,
     pub layout: Layout,
     pub clone_in: CloneInType,
+    pub dummy: DummyEnum,
     pub content_eq: ContentEqType,
     pub estree: ESTreeEnum,
 }
 
 impl EnumDef {
     /// Create new [`EnumDef`].
-    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: TypeId,
         name: String,
         plural_name: Option<String>,
         has_lifetime: bool,
+        is_foreign: bool,
         file_id: FileId,
+        visibility: Visibility,
         generated_derives: Derives,
         variants: Vec<VariantDef>,
         inherits: Vec<TypeId>,
@@ -59,14 +68,18 @@ impl EnumDef {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            visibility,
             generated_derives,
             variants,
             inherits,
+            builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             kind: Kind::default(),
             layout: Layout::default(),
             clone_in: CloneInType::default(),
+            dummy: DummyEnum::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeEnum::default(),
         }
@@ -97,11 +110,10 @@ impl EnumDef {
         // All AST enums are `#[repr(C, u8)]` or `#[repr(u8)]`.
         // Such enums must have at least 1 variant, so only way can have size 1
         // is if all variants are fieldless.
-        self.layout.layout_64.size == 1
+        self.layout_64().size == 1
     }
 
     /// Get the [`File`] which this struct is defined in.
-    #[expect(dead_code)]
     pub fn file<'s>(&self, schema: &'s Schema) -> &'s File {
         &schema.files[self.file_id]
     }

@@ -1,13 +1,13 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{BigIntLiteral, NumericLiteral},
     AstKind,
+    ast::{BigIntLiteral, NumericLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid group length in numeric value.")

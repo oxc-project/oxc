@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{
-        match_member_expression, CallExpression, Expression, ImportDeclaration,
-        ImportDeclarationSpecifier, TemplateLiteral,
-    },
     AstKind,
+    ast::{
+        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier, TemplateLiteral,
+        match_member_expression,
+    },
 };
 use oxc_index::Idx;
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
@@ -16,9 +16,9 @@ use crate::LintContext;
 
 mod parse_jest_fn;
 pub use crate::utils::jest::parse_jest_fn::{
-    parse_jest_fn_call, ExpectError, KnownMemberExpressionParentKind,
-    KnownMemberExpressionProperty, MemberExpressionElement, ParsedExpectFnCall,
-    ParsedGeneralJestFnCall, ParsedJestFnCall as ParsedJestFnCallNew,
+    ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
+    MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
+    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
 
 pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
@@ -177,24 +177,26 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
-        let mut id = semantic.symbols().get_reference(reference_id).node_id();
-        std::iter::from_fn(move || loop {
-            let parent = semantic.nodes().parent_node(id);
-            if let Some(parent) = parent {
-                let parent_kind = parent.kind();
-                if matches!(parent_kind, AstKind::CallExpression(_)) {
-                    id = parent.id();
-                    return Some(PossibleJestNode { node: parent, original });
-                } else if matches!(
-                    parent_kind,
-                    AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
-                ) {
-                    id = parent.id();
+        let mut id = semantic.scoping().get_reference(reference_id).node_id();
+        std::iter::from_fn(move || {
+            loop {
+                let parent = semantic.nodes().parent_node(id);
+                if let Some(parent) = parent {
+                    let parent_kind = parent.kind();
+                    if matches!(parent_kind, AstKind::CallExpression(_)) {
+                        id = parent.id();
+                        return Some(PossibleJestNode { node: parent, original });
+                    } else if matches!(
+                        parent_kind,
+                        AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
+                    ) {
+                        id = parent.id();
+                    } else {
+                        return None;
+                    }
                 } else {
                     return None;
                 }
-            } else {
-                return None;
             }
         })
     })
@@ -204,19 +206,19 @@ fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
-        .symbols()
+        .scoping()
         .resolved_references()
         .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.symbols().get_flags(symbol_id).is_import() {
-                let id = semantic.symbols().get_declaration(symbol_id);
+            if semantic.scoping().symbol_flags(symbol_id).is_import() {
+                let id = semantic.scoping().symbol_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =
                     semantic.nodes().parent_kind(id)
                 else {
                     return None;
                 };
-                let name = semantic.symbols().get_name(symbol_id);
+                let name = semantic.scoping().symbol_name(symbol_id);
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
@@ -248,9 +250,9 @@ fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &str) ->
 
 fn collect_ids_referenced_to_global<'c>(
     semantic: &'c Semantic,
-) -> impl Iterator<Item = ReferenceId> + 'c {
+) -> impl Iterator<Item = ReferenceId> + 'c + use<'c> {
     semantic
-        .scopes()
+        .scoping()
         .root_unresolved_references()
         .iter()
         .filter(|(name, _)| JEST_METHOD_NAMES.contains(name))
@@ -315,7 +317,7 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::{options::LintOptions, ContextHost, ModuleRecord};
+    use crate::{ContextHost, ModuleRecord, options::LintOptions};
 
     #[test]
     fn test_is_jest_file() {

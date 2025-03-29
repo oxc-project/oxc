@@ -2,11 +2,11 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{
-        match_member_expression, Argument, CallExpression, Expression, IdentifierName,
-        IdentifierReference, MemberExpression,
-    },
     AstKind,
+    ast::{
+        Argument, CallExpression, Expression, IdentifierName, IdentifierReference,
+        MemberExpression, match_member_expression,
+    },
 };
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -14,7 +14,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     utils::{
-        jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+        jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_pure_string},
         vitest::VALID_VITEST_FN_CALL_CHAINS,
     },
 };

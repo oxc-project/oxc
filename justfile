@@ -37,10 +37,10 @@ ready:
 # Make sure to update `.github/actions/clone-submodules/action.yml` too
 submodules:
   just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git bc5c14176e2b11a78859571eb693f028c8822458
-  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git acbc09a87016778c1551ab5e7162fdd0e70b6663
-  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git d85767abfd83880cea17cea70f9913e9c4496dcc
-  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 37fd1774d13ef68abcc03775ceef0a91f87a57d7
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 ccd386837e02a92036b948239c67abf864cdd785
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 578ac4df1c8a05f01350553950dbfbbeaac013c2
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git 15392346d05045742e653eab5c87538ff2a3c863
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 7584432401a47a26943dd7a9ca9a8e032ead7285
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 b4592303caa442d3592f5c1c361dc703cec841b2
   just update-transformer-fixtures
 
 # Install git pre-commit to format files
@@ -126,6 +126,12 @@ codecov:
 benchmark:
   cargo benchmark
 
+# Run the benchmarks for a single component.
+# e.g. `just benchmark-one parser`.
+# See `tasks/benchmark`.
+benchmark-one *args:
+  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+
 # Automatically DRY up Cargo.toml manifests in a workspace.
 autoinherit:
   cargo binstall cargo-autoinherit
@@ -144,17 +150,15 @@ update-transformer-fixtures:
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
-# Install wasm-pack
+# Install wasm32-wasip1-threads for playground
 install-wasm:
-  cargo binstall wasm-pack
+  rustup target add wasm32-wasip1-threads
 
-watch-wasm:
-  just watch 'just build-wasm dev'
+watch-playground:
+  just watch 'pnpm --filter oxc-playground dev'
 
-build-wasm mode="release":
-  wasm-pack build crates/oxc_wasm --no-pack --target web --scope oxc --out-dir ../../npm/oxc-wasm --{{mode}}
-  cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
-  rm npm/oxc-wasm/.gitignore
+build-playground mode="release":
+  pnpm --filter oxc-playground build
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

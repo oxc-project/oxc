@@ -9,12 +9,12 @@ fn test_only_program() {
     tester.has_root_symbol("x").is_in_scope(ScopeFlags::Top).test();
 
     let semantic = tester.build();
-    let scopes = semantic.scopes();
-    let root = semantic.scopes().root_scope_id();
+    let scopes = semantic.scoping();
+    let root = semantic.scoping().root_scope_id();
 
     // ScopeTree contains a single root scope
-    assert_eq!(scopes.len(), 1);
-    assert!(!scopes.is_empty());
+    assert_eq!(scopes.scopes_len(), 1);
+    assert!(!scopes.scopes_is_empty());
 
     // Root scope is associated with the Program
     let root_node_id = scopes.get_node_id(root);
@@ -22,8 +22,8 @@ fn test_only_program() {
     assert!(matches!(root_node.kind(), AstKind::Program(_)));
 
     // ancestors
-    assert_eq!(scopes.ancestors(root).count(), 1);
-    assert!(scopes.get_parent_id(root).is_none());
+    assert_eq!(scopes.scope_ancestors(root).count(), 1);
+    assert!(scopes.scope_parent_id(root).is_none());
 }
 
 #[test]
@@ -96,18 +96,19 @@ fn test_function_level_strict() {
     )
     .with_module(false);
 
-    tester.has_some_symbol("x")
+    tester
+        .has_some_symbol("x")
         .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
-            let Some(parent_scope_id) = semantic.scopes().get_parent_id(scope_id) else {
-                return Err("Expected x's scope to have a parent")
+            let Some(parent_scope_id) = semantic.scoping().scope_parent_id(scope_id) else {
+                return Err("Expected x's scope to have a parent");
             };
-            let parent_flags = semantic.scopes().get_flags(parent_scope_id);
+            let parent_flags = semantic.scoping().scope_flags(parent_scope_id);
             if parent_flags.contains(ScopeFlags::Top) {
                 Ok(())
             } else {
-                Err("Expected x to be in a top-level function declaration, but its parent scope has flags {parent_flags:?}")
+                Err("Expected x to be in a top-level function declaration.")
             }
         })
         .test();
@@ -182,7 +183,7 @@ fn test_enums() {
         .iter()
         .find(|node| matches!(node.kind(), AstKind::Program(_)))
         .expect("No program node found");
-    assert_eq!(program.scope_id(), semantic.scopes().root_scope_id());
+    assert_eq!(program.scope_id(), semantic.scoping().root_scope_id());
 
     let (enum_node, enum_decl) = semantic
         .nodes()
@@ -232,11 +233,11 @@ fn get_child_ids() {
     )
     .with_scope_tree_child_ids(true);
     let semantic = test.build();
-    let (_symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+    let scoping = semantic.into_scoping();
 
-    let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
+    let child_scope_ids = scoping.get_scope_child_ids(scoping.root_scope_id());
     assert_eq!(child_scope_ids.len(), 1);
-    let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
+    let child_scope_ids = scoping.get_scope_child_ids(child_scope_ids[0]);
     assert!(child_scope_ids.is_empty());
 }
 
@@ -260,4 +261,26 @@ fn test_ts_conditional_types() {
         .has_some_symbol("R")
         .has_number_of_references(0)
         .test();
+}
+
+#[test]
+fn test_eval() {
+    let direct_evals = ["eval('')", "function foo() { eval('') }"];
+    for code in direct_evals {
+        let tester = SemanticTester::js(code);
+        let semantic = tester.build();
+        assert!(semantic.scoping().root_scope_flags().contains_direct_eval());
+    }
+
+    let indirect_evals = [
+        "eval?.('')",
+        "(0, eval)('')",
+        "const myEval = eval; myEval('')",
+        "const obj = { eval }; obj.eval('x + y')",
+    ];
+    for code in indirect_evals {
+        let tester = SemanticTester::js(code);
+        let semantic = tester.build();
+        assert!(!semantic.scoping().root_scope_flags().contains_direct_eval());
+    }
 }

@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn use_equality_matcher_diagnostic(span: Span) -> OxcDiagnostic {

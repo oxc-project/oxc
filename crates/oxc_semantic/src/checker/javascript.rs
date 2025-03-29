@@ -1,17 +1,18 @@
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_ecmascript::{IsSimpleParameterList, PropName};
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     scope::ScopeFlags,
+    symbol::SymbolFlags,
 };
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
+use crate::{AstNode, builder::SemanticBuilder, diagnostics::redeclaration};
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
@@ -80,7 +81,7 @@ pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &Se
             return ctx.error(reserved_keyword(name, span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+        if ctx.scoping.scope_flags(node.scope_id()).is_class_static_block() {
             return ctx.error(class_static_block_await(span));
         }
     }
@@ -301,7 +302,7 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
+    if matches!(ctx.nodes.kind(ctx.scoping.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
         | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. })
         if !params.is_simple_parameter_list())
@@ -382,8 +383,8 @@ pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Se
         "new" => {
             if prop.property.name == "target" {
                 let mut in_function_scope = false;
-                for scope_id in ctx.scope.ancestors(node.scope_id()) {
-                    let flags = ctx.scope.get_flags(scope_id);
+                for scope_id in ctx.scoping.scope_ancestors(node.scope_id()) {
+                    let flags = ctx.scoping.scope_flags(scope_id);
                     // In arrow functions, new.target is inherited from the surrounding scope.
                     if flags.contains(ScopeFlags::Arrow) {
                         continue;
@@ -429,6 +430,81 @@ pub fn check_function_declaration<'a>(
             ctx.error(function_declaration_non_strict(decl.span));
         }
     };
+}
+
+// It is a Syntax Error if any element of the LexicallyDeclaredNames of
+// StatementList also occurs in the VarDeclaredNames of StatementList.
+pub fn check_variable_declarator_redeclaration(
+    decl: &VariableDeclarator,
+    ctx: &SemanticBuilder<'_>,
+) {
+    if decl.kind != VariableDeclarationKind::Var || ctx.current_scope_flags().is_top() {
+        return;
+    }
+
+    decl.id.bound_names(&mut |ident| {
+        let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
+        let Some(rd) = redeclarations.iter().nth_back(1) else { return };
+
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        if rd.flags.is_function() {
+            ctx.error(redeclaration(&ident.name, rd.span, decl.span));
+        }
+    });
+}
+
+// It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
+// unless the source text matched by this production is not strict mode code
+// and the duplicate entries are only bound by FunctionDeclarations.
+// https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
+pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &func.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
+    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
+        return;
+    }
+
+    let current_scope_flags = ctx.current_scope_flags();
+    if !current_scope_flags.is_strict_mode() {
+        if current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+            && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+        {
+            // `function a() {}; function a() {}` and `var a; function a() {}` is invalid in non-strict mode
+            return;
+        } else if !(func.r#async || func.generator) {
+            // `{ var a; function a() {} }` is invalid in both strict and non-strict mode
+            let prev_function = ctx.nodes.kind(prev.declaration).as_function();
+            if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+                return;
+            }
+        }
+    }
+
+    ctx.error(redeclaration(&id.name, prev.span, id.span));
+}
+
+pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &class.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    if prev.flags.contains(SymbolFlags::Function) {
+        ctx.error(redeclaration(&id.name, prev.span, id.span));
+    }
 }
 
 fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
@@ -624,11 +700,10 @@ fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnost
         .with_label(span1)
 }
 
-pub fn check_for_statement_left<'a>(
+pub fn check_for_statement_left(
     left: &ForStatementLeft,
     is_for_in: bool,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'_>,
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
@@ -765,11 +840,11 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     };
 
     let Some(class_id) = ctx.class_table_builder.current_class_id else {
-        for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
-            let flags = ctx.scope.get_flags(scope_id);
+        for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+            let flags = ctx.scoping.scope_flags(scope_id);
             if flags.is_function()
                 && matches!(
-                    ctx.nodes.parent_kind(ctx.scope.get_node_id(scope_id)),
+                    ctx.nodes.parent_kind(ctx.scoping.get_node_id(scope_id)),
                     Some(AstKind::ObjectProperty(_))
                 )
             {
@@ -794,8 +869,8 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
     let class_scope_id = class.scope_id();
 
-    for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
-        let flags = ctx.scope.get_flags(scope_id);
+    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+        let flags = ctx.scoping.scope_flags(scope_id);
 
         if flags.intersects(ScopeFlags::Constructor) {
             // ClassTail : ClassHeritageopt { ClassBody }
@@ -837,7 +912,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
         if flags.is_function() && !flags.is_arrow() {
             // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
             // Check this function if is a class method, if it isn't, then it a plain function
-            let function_node_id = ctx.scope.get_node_id(scope_id);
+            let function_node_id = ctx.scoping.get_node_id(scope_id);
             let is_class_method = matches!(
                 ctx.nodes.parent_kind(function_node_id),
                 Some(AstKind::MethodDefinition(_))
@@ -864,11 +939,7 @@ fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span)
 }
 
-pub fn check_formal_parameters<'a>(
-    params: &FormalParameters,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if let Some(rest) = &params.rest {
         if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
             ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
@@ -1000,11 +1071,7 @@ fn delete_private_field(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_unary_expression<'a>(
-    unary_expr: &'a UnaryExpression,
-    _node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
         match unary_expr.argument.get_inner_expression() {
@@ -1051,7 +1118,7 @@ pub fn check_await_expression<'a>(
         ctx.error(await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+    if ctx.scoping.scope_flags(node.scope_id()).is_class_static_block() {
         let start = expr.span.start;
         ctx.error(class_static_block_await(Span::new(start, start + 5)));
     }

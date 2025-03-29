@@ -1,8 +1,101 @@
-commit: c4317b0c
+commit: bc5c1417
 
 runtime Summary:
-AST Parsed     : 17878/17878 (100.00%)
-Positive Passed: 17625/17878 (98.58%)
+AST Parsed     : 18253/18253 (100.00%)
+Positive Passed: 17307/18253 (94.82%)
+tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
+codegen error: Test262Error: descriptor should be enumerable; descriptor should be writable
+
+tasks/coverage/test262/test/language/eval-code/direct/var-env-var-init-global-exstng.js
+codegen error: Test262Error: descriptor should not be configurable
+
+tasks/coverage/test262/test/language/eval-code/indirect/var-env-func-init-global-update-configurable.js
+codegen error: Test262Error: descriptor should be enumerable; descriptor should be writable
+
+tasks/coverage/test262/test/language/eval-code/indirect/var-env-var-init-global-exstng.js
+codegen error: Test262Error: descriptor should not be configurable
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/arrow-function/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-init-fn-name-class.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-evaluation.js
+minify error: Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-let.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-yield-expr.js
+minify error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/assignment/fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/assignment/fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/assignment/fn-name-gen.js
+minify error: Test262Error: Expected true but got false
+
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
@@ -26,6 +119,9 @@ transform error: Test262Error: Expected SameValue(«true», «false») to be tru
 
 tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-caller.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/name.js
+minify error: Test262Error: descriptor value should be func; object value should be func
 
 tasks/coverage/test262/test/language/expressions/async-function/named-reassign-fn-name-in-body-in-arrow.js
 transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
@@ -54,6 +150,78 @@ transform error: Test262Error: Expected SameValue(«0», «1») to be true
 tasks/coverage/test262/test/language/expressions/async-generator/default-proto.js
 transform error: Test262Error: fn.prototype is undefined Expected SameValue(«[object Object]», «[object Object]») to be true
 
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/named-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/async-generator/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
 tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-arguments.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
@@ -65,6 +233,9 @@ transform error: Test262Error: Expected SameValue(«true», «false») to be tru
 
 tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/name.js
+minify error: Test262Error: descriptor value should be func; object value should be func
 
 tasks/coverage/test262/test/language/expressions/async-generator/named-no-strict-reassign-fn-name-in-body-in-arrow.js
 transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
@@ -153,6 +324,12 @@ transform error: throw-arg-1
 tasks/coverage/test262/test/language/expressions/await/await-monkey-patched-promise.js
 transform error: Test262Error: Monkey-patched "then" on native promises should not be called. Expected SameValue(«1», «0») to be true
 
+tasks/coverage/test262/test/language/expressions/class/accessor-name-inst/computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/accessor-name-static/computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
 
@@ -212,6 +389,469 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; () => new.target;"));
+	}
+}», «undefined») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -279,8 +919,30 @@ transform error: Test262Error: Expected SameValue(«"_Class"», «"C"») to be t
 tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-default-export.js
 transform error: Test262Error: Expected SameValue(«"_Class"», «"default"») to be true
 
+tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-expr.js
+minify error: Test262Error: Expected SameValue(«"expr"», «"C"») to be true
+
 tasks/coverage/test262/test/language/expressions/class/elements/computed-name-toprimitive-symbol.js
 transform error: TypeError: Cannot convert a Symbol value to a string
+
+tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/elements/direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
+	}
+}», «undefined») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/evaluation-error/computed-name-toprimitive-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
@@ -297,11 +959,57 @@ transform error: Test262Error: Expected a Test262Error to be thrown but no excep
 tasks/coverage/test262/test/language/expressions/class/elements/evaluation-error/computed-name-valueof-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
+tasks/coverage/test262/test/language/expressions/class/elements/fields-computed-name-static-propname-prototype.js
+minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
+	}
+}», «undefined») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/nested-private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/class/elements/private-async-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/private-async-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/expressions/class/elements/private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/class/elements/private-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
@@ -338,6 +1046,9 @@ transform error: Test262Error: Expected SameValue(«"undefinedtest"», «"test26
 
 tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/name.js
+minify error: Test262Error: descriptor value should be cls; object value should be cls
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-add.js
 transform error: Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
@@ -378,11 +1089,110 @@ transform error: Test262Error: The expression should evaluate to the result Expe
 tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 minify error: Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
 
+tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
+minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-invocation.js
+minify error: Test262Error: method invoked exactly once Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-return-obj.js
+minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/equals/get-symbol-to-prim-err.js
+minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
 
-tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
-transform error: Test262Error: Expected SameValue(«null», «null») to be false
+tasks/coverage/test262/test/language/expressions/function/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/function/name.js
+minify error: Test262Error: descriptor value should be func; object value should be func
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/generators/name.js
+minify error: Test262Error: descriptor value should be func; object value should be func
+
+tasks/coverage/test262/test/language/expressions/greater-than/S11.8.2_A2.3_T1.js
+minify error: Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
+
+tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-symbol.js
+minify error: Test262Error: 3n > Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/less-than/bigint-and-symbol.js
+minify error: Test262Error: 3n < Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/less-than-or-equal/S11.8.3_A2.3_T1.js
+minify error: Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
 
 tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-and.js
 transform error: Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «false») to be true
@@ -405,8 +1215,128 @@ transform error: Test262Error: The right-hand side should not be evaluated
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
 
+tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/expressions/object/dstr/meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
 tasks/coverage/test262/test/language/expressions/object/dstr/object-rest-proxy-gopd-not-called-on-excluded-keys.js
 transform error: Test262Error: Actual [excludedString, 0, includedString, 1, Symbol(included_symbol)] and expected [Symbol(included_symbol), includedString, 1] should have the same contents. 
+
+tasks/coverage/test262/test/language/expressions/object/fn-name-class.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/object/fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/object/fn-name-gen.js
+minify error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -447,8 +1377,8 @@ transform error: TypeError: Cannot read properties of undefined (reading 'enumer
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-ownkeys-returned-keys-order.js
 transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
 
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/S11.7.3_A2.2_T1.js
-minify error: Test262Error: #8.2: -4 >>> {valueOf: function() {return {}}, toString: function() {return {}}} throw TypeError. Actual: ReferenceError: e is not defined
+tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
+minify error: Test262Error: Expected SameValue(«"a"», «""») to be true
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -458,6 +1388,42 @@ transform error: Test262Error: Expected SameValue(«true», «false») to be tru
 
 tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-caller.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/async-generator/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
 tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-arguments.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -576,6 +1542,469 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
 
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class C {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; () => new.target;"));
+	}
+}», «undefined») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a TypeError
+
+tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
 
@@ -642,6 +2071,25 @@ transform error: Test262Error: Frozen objects can't be changed Expected a TypeEr
 tasks/coverage/test262/test/language/statements/class/elements/computed-name-toprimitive-symbol.js
 transform error: TypeError: Cannot convert a Symbol value to a string
 
+tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/class/elements/direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class C {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
+	}
+}», «undefined») to be true
+
 tasks/coverage/test262/test/language/statements/class/elements/evaluation-error/computed-name-toprimitive-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
@@ -657,11 +2105,54 @@ transform error: Test262Error: Expected a Test262Error to be thrown but no excep
 tasks/coverage/test262/test/language/statements/class/elements/evaluation-error/computed-name-valueof-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
+tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-direct-eval-err-contains-newtarget.js
+transform error: Test262Error: Expected SameValue(«class C {
+	constructor() {
+		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
+	}
+}», «undefined») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/nested-private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/statements/class/elements/private-async-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/private-async-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
+transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
+
+tasks/coverage/test262/test/language/statements/class/elements/private-direct-eval-err-contains-arguments.js
+transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/statements/class/elements/private-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
@@ -696,8 +2187,14 @@ transform error: Test262Error: Expected SameValue(«"_"», «"#field"») to be t
 tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 transform error: Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
+tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-grouped.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/statements/class/static-init-expr-new-target.js
 transform error: SyntaxError: new.target expression is not allowed here
+
+tasks/coverage/test262/test/language/statements/class/subclass/class-definition-null-proto-this.js
+minify error: Test262Error: Expected a ReferenceError but got a Test262Error
 
 tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-function.js
 transform error: TypeError: Cannot redefine property: prototype
@@ -705,8 +2202,104 @@ transform error: TypeError: Cannot redefine property: prototype
 tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-generator-function.js
 transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
+tasks/coverage/test262/test/language/statements/const/block-local-use-before-initialization-in-prior-statement.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/const/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/const/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/const/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/const/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/const/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/const/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/const/fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/const/fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/const/fn-name-gen.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/const/function-local-use-before-initialization-in-prior-statement.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/const-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/let-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for/dstr/var-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
 tasks/coverage/test262/test/language/statements/for-await-of/async-from-sync-iterator-continuation-abrupt-completion-get-constructor.js
 transform error: Test262Error: Actual [start, tick 1, catch, tick 2] and expected [start, tick 1, tick 2, catch] should have the same contents. 
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-init-fn-name-class.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-valid.js
 transform error: Test262Error: Expected SameValue(«undefined», «4») to be true
@@ -729,8 +2322,29 @@ transform error: Test262Error: Expected SameValue(«undefined», «2») to be tr
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-yield-ident-valid.js
 transform error: TypeError: Cannot read properties of undefined (reading 'length')
 
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-yield-ident-valid.js
 transform error: Test262Error: Expected SameValue(«undefined», «3») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-evaluation.js
+minify error: Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-yield-ident-valid.js
 transform error: Test262Error: Expected SameValue(«undefined», «4») to be true
@@ -743,6 +2357,255 @@ transform error: Test262Error: Expected SameValue(«undefined», «22») to be t
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-nested-obj-yield-ident-valid.js
 transform error: Test262Error: Expected SameValue(«undefined», «2») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-init-fn-name-class.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-evaluation.js
+minify error: Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-yield-expr.js
+minify error: Timed out.
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-async-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
 tasks/coverage/test262/test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup-two.js
 transform error: Test262Error: Actual [pre, constructor, constructor, tick 1, loop, constructor, constructor, tick 2, post] and expected [pre, constructor, tick 1, loop, constructor, tick 2, post] should have the same contents. Ticks and constructor lookups
@@ -762,6 +2625,96 @@ minify error: Test262Error: Expected a ReferenceError to be thrown but no except
 tasks/coverage/test262/test/language/statements/for-in/scope-head-lex-open.js
 minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-init-fn-name-class.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/const-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/let-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-evaluation.js
+minify error: Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-let.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-yield-expr.js
+minify error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
 tasks/coverage/test262/test/language/statements/for-of/scope-body-lex-open.js
 minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
@@ -773,4 +2726,154 @@ minify error: Test262Error: Expected a ReferenceError to be thrown but no except
 
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
+
+tasks/coverage/test262/test/language/statements/function/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/function/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/dflt-obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/let/block-local-use-before-initialization-in-prior-statement.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/let/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/let/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/let/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/let/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/let/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/let/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/let/fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/let/fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/let/fn-name-gen.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/let/function-local-use-before-initialization-in-prior-statement.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/try/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/try/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/try/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/try/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/try/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/try/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/ary-ptrn-elem-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/ary-ptrn-elem-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/obj-ptrn-id-init-fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/obj-ptrn-id-init-fn-name-fn.js
+minify error: Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/dstr/obj-ptrn-id-init-fn-name-gen.js
+minify error: Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/fn-name-class.js
+minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
+
+tasks/coverage/test262/test/language/statements/variable/fn-name-fn.js
+minify error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/statements/variable/fn-name-gen.js
+minify error: Test262Error: Expected true but got false
 

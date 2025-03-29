@@ -30,7 +30,7 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // And if the passed `Span` for miette diagnostics is multiline,
     // it will just render arrow markers which is not intuitive.
-    // (It renders a nice undeline for single line span, but not for multiline)
+    // (It renders a nice underline for single line span, but not for multiline)
     // ```
     // ╭─▶ * @kind1 COMMENT
     // │   * WILL BE ...
@@ -157,8 +157,9 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 }
 
 #[cfg(test)]
+#[expect(clippy::literal_string_with_formatting_args)]
 mod test {
-    use oxc_span::{Span, SPAN};
+    use oxc_span::{SPAN, Span};
 
     use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
 

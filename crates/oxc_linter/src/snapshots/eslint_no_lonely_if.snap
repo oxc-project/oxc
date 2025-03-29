@@ -1,0 +1,84 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:19]
+ 1 │ if (a) {;} else { if (b) {;} }
+   ·                   ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:20]
+ 1 │ if (foo) {} else { if (bar) baz(); }
+   ·                    ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:20]
+ 1 │ if (foo) {} else { if (bar) baz() } qux();
+   ·                    ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:20]
+ 1 │ if (foo) {} else { if (bar) baz(); } qux();
+   ·                    ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:4:48]
+ 3 │          } else {
+ 4 │            /* otherwise, do the other thing */ if (b) {
+   ·                                                ──
+ 5 │              bar();
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:4:12]
+ 3 │          } else {
+ 4 │            if (b) {
+   ·            ──
+ 5 │              bar();
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:3:12]
+ 2 │          } else {
+ 3 │            if (bar) baz();
+   ·            ──
+ 4 │          }
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:3:12]
+ 2 │          } else {
+ 3 │            if (bar) baz();
+   ·            ──
+ 4 │          }
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:2:12]
+ 1 │ if (foo) { } else {
+ 2 │            if (bar) baz++;
+   ·            ──
+ 3 │          }
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:4:12]
+ 3 │          } else {
+ 4 │            if (b) bar();
+   ·            ──
+ 5 │          }
+   ╰────
+  help: Consider using `else if` instead.

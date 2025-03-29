@@ -19,5 +19,5 @@ fn main() {
         );
     }
 
-    TestRunner::new(options.clone()).run();
+    TestRunner::new(options).run();
 }

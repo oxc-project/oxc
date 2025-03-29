@@ -72,7 +72,7 @@ impl FrameworkFlags {
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
-pub(crate) fn is_jestlike_file(path: &Path) -> bool {
+pub fn is_jestlike_file(path: &Path) -> bool {
     use std::ffi::OsStr;
 
     if path.components().any(|c| match c {
@@ -88,10 +88,10 @@ pub(crate) fn is_jestlike_file(path: &Path) -> bool {
         .is_some_and(|name_or_first_ext| name_or_first_ext == "test" || name_or_first_ext == "spec")
 }
 
-pub(crate) fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
+pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "vitest")
 }
 
-pub(crate) fn has_jest_imports(module_record: &ModuleRecord) -> bool {
+pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
 }

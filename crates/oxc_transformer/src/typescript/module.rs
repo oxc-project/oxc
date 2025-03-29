@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -51,7 +51,7 @@ impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
 impl<'a> TypeScriptModule<'a, '_> {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
-        &mut self,
+        &self,
         export_assignment: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -96,13 +96,13 @@ impl<'a> TypeScriptModule<'a, '_> {
     ) -> Option<Declaration<'a>> {
         if !self.only_remove_type_imports
             && !ctx.parent().is_export_named_declaration()
-            && ctx.symbols().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
+            && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             match &mut decl.module_reference {
                 module_reference @ match_ts_type_name!(TSModuleReference) => {
                     let ident = module_reference.to_ts_type_name().get_identifier_reference();
-                    let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
+                    let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
                     // The binding of TSImportEqualsDeclaration has treated as a type reference,
                     // so an identifier reference that it referenced also should be treated as a type reference.
                     // `import TypeBinding = X.Y.Z`
@@ -114,7 +114,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 TSModuleReference::ExternalModuleReference(_) => {}
             }
             let scope_id = ctx.current_scope_id();
-            ctx.scopes_mut().remove_binding(scope_id, &decl.id.name);
+            ctx.scoping_mut().remove_binding(scope_id, &decl.id.name);
             return None;
         }
 
@@ -123,7 +123,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
         let decl_span = decl.span;
 
-        let flags = ctx.symbols_mut().get_flags_mut(decl.id.symbol_id());
+        let flags = ctx.scoping_mut().symbol_flags_mut(decl.id.symbol_id());
         flags.remove(SymbolFlags::Import);
 
         let (kind, init) = match &mut decl.module_reference {
@@ -143,7 +143,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 }
 
                 let require_symbol_id =
-                    ctx.scopes().find_binding(ctx.current_scope_id(), "require");
+                    ctx.scoping().find_binding(ctx.current_scope_id(), "require");
                 let callee = ctx.create_ident_expr(
                     SPAN,
                     Atom::from("require"),
@@ -173,7 +173,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let ident = ident.clone();
-                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
+                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
                 *reference.flags_mut() = ReferenceFlags::Read;
                 Expression::Identifier(ctx.alloc(ident))
             }

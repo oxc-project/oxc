@@ -5,9 +5,9 @@ use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {

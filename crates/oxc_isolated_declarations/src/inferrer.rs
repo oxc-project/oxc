@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, CloneIn};
+use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
     ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
     TSType, TSTypeAnnotation, UnaryExpression,
@@ -6,9 +6,9 @@ use oxc_ast::ast::{
 use oxc_span::SPAN;
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{array_inferred, inferred_type_of_class_expression},
     return_type::FunctionReturnType,
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {
@@ -101,7 +101,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn infer_function_return_type(
         &self,
         function: &Function<'a>,
-    ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
             return function.return_type.clone_in(self.ast.allocator);
         }
@@ -119,7 +119,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn infer_arrow_function_return_type(
         &self,
         function: &ArrowFunctionExpression<'a>,
-    ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
             return function.return_type.clone_in(self.ast.allocator);
         }

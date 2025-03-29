@@ -92,7 +92,8 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
@@ -102,7 +103,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, EnvOptions};
+use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -511,12 +512,12 @@ impl<'a> ArrowFunctionConverter<'a> {
         // <https://github.com/oxc-project/oxc/pull/5840>
         let this_var = self.this_var_stack.last_or_init(|| {
             let target_scope_id = ctx
-                .scopes()
-                .ancestors(arrow_scope_id)
+                .scoping()
+                .scope_ancestors(arrow_scope_id)
                 // Skip arrow function scope
                 .skip(1)
                 .find(|&scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(scope_id);
+                    let scope_flags = ctx.scoping().scope_flags(scope_id);
                     scope_flags.intersects(
                         ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
@@ -532,7 +533,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
     /// that potential affects the `this` expression.
-    fn get_scope_id_from_this_affected_block(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    fn get_scope_id_from_this_affected_block(&self, ctx: &TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -634,7 +635,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) -> Expression<'a> {
         let arrow_function_expr = arrow_function_expr.unbox();
         let scope_id = arrow_function_expr.scope_id();
-        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
         let mut body = arrow_function_expr.body;
@@ -648,7 +649,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             body.statements.push(return_statement);
         }
 
-        Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        ctx.ast.expression_function_with_scope_id_and_pure(
             arrow_function_expr.span,
             FunctionType::FunctionExpression,
             None,
@@ -661,7 +662,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.return_type,
             Some(body),
             scope_id,
-        ))
+            false,
+        )
     }
 
     /// Check whether the given [`Ancestor`] is a class method-like node.
@@ -678,7 +680,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Check whether currently in a class property initializer.
     /// e.g. `x` in `class C { prop = [foo(x)]; }`
-    fn in_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
+    fn in_class_property_definition_value(ctx: &TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             if ancestor.is_parent_of_statement() {
                 return false;
@@ -873,10 +875,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let original_scope_id = ctx.symbols().get_scope_id(binding.symbol_id);
+        let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
-            ctx.symbols_mut().set_scope_id(binding.symbol_id, target_scope_id);
-            ctx.scopes_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
+            ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
+            ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
         }
     }
 
@@ -952,14 +954,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let init = ctx.ast.alloc_arrow_function_expression_with_scope_id(
-            SPAN, true, false, NONE, params, NONE, body, scope_id,
+        let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+            SPAN, true, false, NONE, params, NONE, body, scope_id, false,
         );
         ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
-            Some(Expression::ArrowFunctionExpression(init)),
+            Some(init),
             false,
         )
     }
@@ -1012,7 +1014,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = ctx.symbols().get_scope_id(symbol_id);
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.rename_symbol(symbol_id, scope_id, name);
     }
 
@@ -1029,7 +1031,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
 
         let reference_id = ident.reference_id();
-        let symbol_id = ctx.symbols().get_reference(reference_id).symbol_id();
+        let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id();
 
         let binding = self.arguments_var_stack.last_or_init(|| {
             if let Some(symbol_id) = symbol_id {
@@ -1043,7 +1045,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 // We cannot determine the final scope ID of the `arguments` variable insertion,
                 // because the `arguments` variable will be inserted to a new scope which haven't been created yet,
                 // so we temporary use root scope id as the fake target scope ID.
-                let target_scope_id = ctx.scopes().root_scope_id();
+                let target_scope_id = ctx.scoping().root_scope_id();
                 ctx.generate_uid("arguments", target_scope_id, SymbolFlags::FunctionScopedVariable)
             }
         });
@@ -1051,10 +1053,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         // If no symbol ID, it means there is no variable named `arguments` in the scope.
         // The following code is just to sync semantics.
         if symbol_id.is_none() {
-            let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+            let reference = ctx.scoping_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
-            ctx.scopes_mut().delete_root_unresolved_reference(&ident.name, reference_id);
-            ctx.symbols_mut().add_resolved_reference(binding.symbol_id, reference_id);
+            ctx.scoping_mut().delete_root_unresolved_reference(&ident.name, reference_id);
+            ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
         ident.name = binding.name;
@@ -1106,7 +1108,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
-        if ctx.scopes().root_scope_id() == target_scope_id {
+        if ctx.scoping().root_scope_id() == target_scope_id {
             let argument =
                 ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
@@ -1131,7 +1133,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Insert variable statement at the top of the statements.
     fn insert_variable_statement_at_the_top_of_statements(
-        &mut self,
+        &self,
         target_scope_id: ScopeId,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: Option<BoundIdentifier<'a>>,
@@ -1168,7 +1170,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // `_this = this;`
         if let Some(this_var) = this_var {
-            let is_constructor = ctx.scopes().get_flags(target_scope_id).is_constructor();
+            let is_constructor = ctx.scoping().scope_flags(target_scope_id).is_constructor();
             let init = if is_constructor && *self.constructor_super_stack.last() {
                 // `super()` is called in the constructor body, so we need to insert `_this = this;`
                 // after `super()` call. Because `this` is not available before `super()` call.

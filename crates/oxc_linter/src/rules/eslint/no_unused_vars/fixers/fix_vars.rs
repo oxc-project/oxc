@@ -1,11 +1,11 @@
 use oxc_ast::{
-    ast::{Expression, VariableDeclarator},
     AstKind,
+    ast::{Expression, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
 use oxc_span::CompactStr;
 
-use super::{count_whitespace_or_commas, BindingInfo, NoUnusedVars, Symbol};
+use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
     fixer::{RuleFix, RuleFixer},
     rules::eslint::no_unused_vars::options::IgnorePattern,
@@ -128,11 +128,11 @@ impl NoUnusedVars {
         };
 
         // adjust name to avoid conflicts
-        let scopes = symbol.scopes();
+        let scopes = symbol.scoping();
         let scope_id = symbol.scope_id();
         let mut i = 0;
         let mut new_name = ignored_name.clone();
-        while scopes.has_binding(scope_id, &new_name) {
+        while scopes.scope_has_binding(scope_id, &new_name) {
             new_name = format!("{ignored_name}{i}");
             i += 1;
         }

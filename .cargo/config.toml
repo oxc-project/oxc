@@ -4,12 +4,41 @@ ck = "check --workspace --all-features --all-targets --locked"
 lint = "clippy --workspace --all-targets --all-features"
 codecov = "llvm-cov --workspace --ignore-filename-regex tasks"
 coverage = "run -p oxc_coverage --profile coverage --"
-benchmark = "run -p oxc_benchmark --release --"
+benchmark = "bench -p oxc_benchmark"
 minsize = "run -p oxc_minsize --profile coverage --"
 rule = "run -p rulegen"
 
 # Build oxlint in release mode
 oxlint = "build --release --bin oxlint --features allocator"
 
-[resolver]
-incompatible-rust-versions = "fallback"
+# Fix napi breaking in test environment <https://github.com/napi-rs/napi-rs/issues/1005#issuecomment-1011034770>
+# To be able to run unit tests on macOS, support compilation to 'x86_64-apple-darwin'.
+[target.'cfg(target_vendor = "apple")']
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-no_fixup_chains"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.i686-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+# To be able to run unit tests on Windows, support compilation to 'x86_64-pc-windows-msvc'.
+# Use Hybrid CRT to reduce the size of the binary (Coming by default with Windows 10 and later versions).
+[target.'cfg(target_os = "windows")']
+rustflags = [
+  "-C",
+  "link-args=/FORCE",
+  "-C",
+  "link-args=/NODEFAULTLIB:libucrt.lib",
+  "-C",
+  "link-args=/DEFAULTLIB:ucrt.lib",
+]
+
+# Addresses a potential segmentation fault issue that occurs when
+# running napi-rs within a Node.js worker thread on GNU/Linux systems.
+# See https://x.com/Brooooook_lyn/status/1895848334692401270
+[target.'cfg(target_env = "gnu")']
+rustflags = ["-C", "link-args=-Wl,-z,nodelete"]

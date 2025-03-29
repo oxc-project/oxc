@@ -7,13 +7,13 @@ use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
         get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
         should_ignore_as_private,
     },
-    AstNode,
 };
 
 fn missing_yields(span: Span) -> OxcDiagnostic {

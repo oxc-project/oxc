@@ -1,6 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, SPAN};
+use oxc_span::{SPAN, Span};
 
 use crate::{context::LintContext, rule::Rule};
 

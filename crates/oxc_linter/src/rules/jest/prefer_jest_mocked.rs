@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
     AstKind,
+    ast::{TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn use_jest_mocked(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")

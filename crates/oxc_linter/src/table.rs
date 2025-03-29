@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{rules::RULES, RuleCategory, RuleFixMeta};
+use crate::{RuleCategory, RuleFixMeta, rules::RULES};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -21,6 +21,7 @@ pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
     pub category: RuleCategory,
+    #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,
@@ -46,6 +47,7 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
+                    #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),
@@ -131,11 +133,7 @@ impl RuleTableSection {
             };
             let (fix_emoji, fix_emoji_width) = row.autofix.emoji().map_or(("", FIX), |emoji| {
                 let len = emoji.len();
-                if len > FIX {
-                    (emoji, 0)
-                } else {
-                    (emoji, FIX - len)
-                }
+                if len > FIX { (emoji, 0) } else { (emoji, FIX - len) }
             });
             writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
         }
@@ -148,7 +146,7 @@ impl RuleTableSection {
 mod test {
     use std::sync::OnceLock;
 
-    use markdown::{to_html_with_options, Options};
+    use markdown::{Options, to_html_with_options};
 
     use super::*;
 

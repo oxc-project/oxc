@@ -64,7 +64,7 @@ use std::ptr;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 
 pub mod ast_operations;
 mod context;
@@ -75,9 +75,9 @@ pub use context::{
 
 mod generated {
     pub mod ancestor;
-    pub(super) mod scopes_collector;
+    pub mod scopes_collector;
     pub mod traverse;
-    pub(super) mod walk;
+    pub mod walk;
 }
 pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
 use generated::{scopes_collector, walk::walk_ast};
@@ -151,12 +151,11 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     allocator: &'a Allocator,
     program: &mut Program<'a>,
-    symbols: SymbolTable,
-    scopes: ScopeTree,
-) -> (SymbolTable, ScopeTree) {
-    let mut ctx = ReusableTraverseCtx::new(scopes, symbols, allocator);
+    scoping: Scoping,
+) -> Scoping {
+    let mut ctx = ReusableTraverseCtx::new(scoping, allocator);
     traverse_mut_with_ctx(traverser, program, &mut ctx);
-    ctx.into_symbol_table_and_scope_tree()
+    ctx.into_scoping()
 }
 
 /// Traverse AST with a [`Traverse`] impl, reusing an existing [`ReusableTraverseCtx`].

@@ -9,7 +9,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
 };
 
-use crate::{diagnostics::enum_member_initializers, IsolatedDeclarations};
+use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
@@ -104,9 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.evaluate(expr, enum_name, prev_members)
     }
 
-    #[expect(clippy::unused_self)]
     fn evaluate_ref(
-        &self,
         expr: &Expression<'a>,
         enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
@@ -150,7 +148,7 @@ impl<'a> IsolatedDeclarations<'a> {
             | Expression::ComputedMemberExpression(_)
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_) => {
-                self.evaluate_ref(expr, enum_name, prev_members)
+                Self::evaluate_ref(expr, enum_name, prev_members)
             }
             Expression::BinaryExpression(expr) => {
                 self.eval_binary_expression(expr, enum_name, prev_members)

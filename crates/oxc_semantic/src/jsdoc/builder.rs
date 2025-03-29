@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::Comment, AstKind};
+use oxc_ast::{AstKind, ast::Comment};
 use oxc_span::{GetSpan, Span};
 
 use crate::jsdoc::JSDocFinder;
@@ -16,7 +16,7 @@ pub struct JSDocBuilder<'a> {
 impl<'a> JSDocBuilder<'a> {
     pub fn new(source_text: &'a str, comments: &[Comment]) -> Self {
         let mut not_attached_docs: FxHashMap<u32, Vec<_>> = FxHashMap::default();
-        for comment in comments.iter().filter(|comment| comment.is_jsdoc(source_text)) {
+        for comment in comments.iter().filter(|comment| comment.is_jsdoc()) {
             not_attached_docs
                 .entry(comment.attached_to)
                 .or_default()

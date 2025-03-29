@@ -1,12 +1,12 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 
 use crate::{
-    array,
+    Format, Prettier, array,
     format::print::{binaryish, class},
     group, indent, indent_if_break,
     ir::Doc,
-    line, text, Format, Prettier,
+    line, text,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -340,7 +340,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Express
             return false;
         }
 
-        if let Some(type_parameters) = &call_expression.type_parameters {
+        if let Some(type_parameters) = &call_expression.type_arguments {
             return is_complex_type_arguments(type_parameters);
         }
     }

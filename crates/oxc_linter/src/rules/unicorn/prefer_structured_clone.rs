@@ -1,11 +1,20 @@
 use std::ops::Deref;
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    AstNode,
+    ast_util::is_method_call,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `structuredClone(…)` to create a deep clone.")
@@ -54,7 +63,7 @@ declare_oxc_lint!(
     PreferStructuredClone,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 impl Rule for PreferStructuredClone {
@@ -73,7 +82,7 @@ impl Rule for PreferStructuredClone {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr): oxc_ast::AstKind<'a> = node.kind() else {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
@@ -85,7 +94,6 @@ impl Rule for PreferStructuredClone {
             return;
         }
 
-        // `JSON.parse(JSON.stringify(…))
         if is_method_call(call_expr, Some(&["JSON"]), Some(&["parse"]), Some(1), Some(1)) {
             let Some(first_argument) = call_expr.arguments[0].as_expression() else {
                 return;
@@ -110,27 +118,47 @@ impl Rule for PreferStructuredClone {
                 return;
             }
 
-            if inner_call_expr.arguments[0].is_spread() {
+            let Some(first_argument) = inner_call_expr.arguments[0].as_expression() else {
                 return;
-            }
+            };
 
-            let span = Span::new(call_expr.span.start, inner_call_expr.span.end);
-            ctx.diagnostic(prefer_structured_clone_diagnostic(span));
-        } else if !call_expr.arguments[0].is_spread() {
+            ctx.diagnostic_with_suggestion(
+                prefer_structured_clone_diagnostic(call_expr.span),
+                |fixer| replace_with_structured_clone(fixer, call_expr, first_argument),
+            );
+        } else if let Some(first_argument) = call_expr.arguments[0].as_expression() {
             for function in &self.allowed_functions {
                 if let Some((object, method)) = function.split_once('.') {
                     if is_method_call(call_expr, Some(&[object]), Some(&[method]), None, None) {
-                        ctx.diagnostic(prefer_structured_clone_diagnostic(call_expr.span));
+                        ctx.diagnostic_with_suggestion(
+                            prefer_structured_clone_diagnostic(call_expr.span),
+                            |fixer| replace_with_structured_clone(fixer, call_expr, first_argument),
+                        );
                     }
                 } else if is_method_call(call_expr, None, Some(&[function]), None, None)
                     || is_method_call(call_expr, Some(&[function]), None, None, None)
                     || call_expr.callee.is_specific_id(function)
                 {
-                    ctx.diagnostic(prefer_structured_clone_diagnostic(call_expr.span));
+                    ctx.diagnostic_with_suggestion(
+                        prefer_structured_clone_diagnostic(call_expr.span),
+                        |fixer| replace_with_structured_clone(fixer, call_expr, first_argument),
+                    );
                 }
             }
         }
     }
+}
+
+fn replace_with_structured_clone<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    call_expr: &CallExpression<'_>,
+    first_argument: &Expression<'_>,
+) -> RuleFix<'a> {
+    let mut codegen = fixer.codegen();
+    codegen.print_str("structuredClone(");
+    codegen.print_expression(first_argument);
+    codegen.print_str(")");
+    fixer.replace(call_expr.span, codegen)
 }
 
 #[test]
@@ -174,6 +202,7 @@ fn test() {
         ("JSON.parse( ((JSON.stringify)) (foo))", None),
         ("(( JSON.parse)) (JSON.stringify(foo))", None),
         ("JSON.parse(JSON.stringify( ((foo)) ))", None),
+        ("JSON.parse(JSON.stringify( ((foo.bar['hello'])) ))", None),
         (
             "
             function foo() {
@@ -185,7 +214,7 @@ fn test() {
                                             ),
                             );
             }
-        ",
+            ",
             None,
         ),
         ("_.cloneDeep(foo)", None),
@@ -198,6 +227,55 @@ fn test() {
         ("my.cloneDeep(foo,)", Some(serde_json::json!([{"functions": ["my.cloneDeep"]}]))),
     ];
 
+    let fix = vec![
+        ("JSON.parse((JSON.stringify((foo))))", "structuredClone(foo)", None),
+        ("JSON.parse(JSON.stringify(foo))", "structuredClone(foo)", None),
+        ("JSON.parse(JSON.stringify(foo),)", "structuredClone(foo)", None),
+        ("JSON.parse(JSON.stringify(foo,))", "structuredClone(foo)", None),
+        ("JSON.parse(JSON.stringify(foo,),)", "structuredClone(foo)", None),
+        ("JSON.parse( ((JSON.stringify)) (foo))", "structuredClone(foo)", None),
+        ("(( JSON.parse)) (JSON.stringify(foo))", "structuredClone(foo)", None),
+        ("JSON.parse(JSON.stringify( ((foo)) ))", "structuredClone(foo)", None),
+        (
+            "JSON.parse(JSON.stringify( ((foo.bar['hello'])) ))",
+            "structuredClone(foo.bar['hello'])",
+            None,
+        ),
+        (
+            "
+            function foo() {
+                    return JSON
+                            .parse(
+                                    JSON.
+                                            stringify(
+                                                    bar,
+                                            ),
+                            );
+            }
+            ",
+            "
+            function foo() {
+                    return structuredClone(bar);
+            }
+            ",
+            None,
+        ),
+        ("_.cloneDeep(foo)", "structuredClone(foo)", None),
+        ("lodash.cloneDeep(foo)", "structuredClone(foo)", None),
+        ("lodash.cloneDeep(foo,)", "structuredClone(foo)", None),
+        (
+            "myCustomDeepCloneFunction(foo,)",
+            "structuredClone(foo)",
+            Some(serde_json::json!([{"functions": ["myCustomDeepCloneFunction"]}])),
+        ),
+        (
+            "my.cloneDeep(foo,)",
+            "structuredClone(foo)",
+            Some(serde_json::json!([{"functions": ["my.cloneDeep"]}])),
+        ),
+    ];
+
     Tester::new(PreferStructuredClone::NAME, PreferStructuredClone::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

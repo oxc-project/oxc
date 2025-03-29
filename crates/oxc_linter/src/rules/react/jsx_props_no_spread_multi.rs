@@ -1,16 +1,16 @@
 use itertools::Itertools;
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     fixer::{Fix, RuleFix},
     rule::Rule,
     utils::is_same_member_expression,
-    AstNode,
 };
 
 fn jsx_props_no_spread_multiple_identifiers_diagnostic(

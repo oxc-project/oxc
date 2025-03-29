@@ -1,18 +1,18 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::MemberExpression;
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, FormalParameters},
     AstKind,
+    ast::{Argument, CallExpression, Expression, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     ast_util::{could_be_error, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
@@ -218,12 +218,18 @@ fn test() {
         ("Promise.reject(5 && foo)", None),
         ("new Foo((resolve, reject) => reject(5))", None),
         ("new Promise(function(resolve, reject) { return function(reject) { reject(5) } })", None),
-        ("new Promise(function(resolve, reject) { if (foo) { const reject = somethingElse; reject(5) } })", None),
+        (
+            "new Promise(function(resolve, reject) { if (foo) { const reject = somethingElse; reject(5) } })",
+            None,
+        ),
         ("new Promise(function(resolve, {apply}) { apply(5) })", None),
         ("new Promise(function(resolve, reject) { resolve(5, reject) })", None),
         ("async function foo() { Promise.reject(await foo); }", None),
         ("Promise.reject()", Some(serde_json::json!([{ "allowEmptyReject": true }]))),
-        ("new Promise(function(resolve, reject) { reject() })", Some(serde_json::json!([{ "allowEmptyReject": true }]))),
+        (
+            "new Promise(function(resolve, reject) { reject() })",
+            Some(serde_json::json!([{ "allowEmptyReject": true }])),
+        ),
         ("Promise.reject(obj?.foo)", None),
         ("Promise.reject(obj?.foo())", None),
         ("Promise.reject(foo = new Error())", None),

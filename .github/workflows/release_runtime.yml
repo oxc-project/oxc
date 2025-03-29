@@ -25,7 +25,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
         id: version
         with:
           static-checking: localIsNew
@@ -53,7 +53,7 @@ jobs:
       - uses: ./.github/actions/pnpm
 
       - name: Publish
-        working-directory: npm/oxc-runtime
+        working-directory: npm/runtime
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks

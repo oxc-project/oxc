@@ -1,5 +1,5 @@
 //! XML Entities
-use phf::{phf_map, Map};
+use phf::{Map, phf_map};
 
 /// XML Entities
 ///

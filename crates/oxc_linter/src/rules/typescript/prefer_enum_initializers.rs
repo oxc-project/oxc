@@ -1,12 +1,12 @@
-use oxc_ast::{ast::TSEnumMemberName, AstKind};
+use oxc_ast::{AstKind, ast::TSEnumMemberName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_enum_initializers_diagnostic(

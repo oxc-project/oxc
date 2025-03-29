@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use oxc_ast::{
-    ast::{BindingPatternKind, ObjectPattern},
     AstKind,
+    ast::{BindingPatternKind, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -130,10 +130,11 @@ impl Rule for Namespace {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
-                    if let Some(module) = loaded_modules.get(source) {
-                        (source.to_string(), Arc::clone(module))
-                    } else {
-                        return;
+                    match loaded_modules.get(source) {
+                        Some(module) => (source.to_string(), Arc::clone(module)),
+                        _ => {
+                            return;
+                        }
                     }
                 }
                 ImportImportName::Name(name) => {
@@ -162,11 +163,11 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name()) else {
+            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name()) else {
                 return;
             };
 
-            ctx.symbols().get_resolved_references(symbol_id).for_each(|reference| {
+            ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
                 if let Some(node) = ctx.nodes().parent_node(reference.node_id()) {
                     let name = entry.local_name.name();
 

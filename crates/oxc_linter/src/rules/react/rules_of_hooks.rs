@@ -1,22 +1,22 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, Function},
     AstKind,
+    ast::{ArrowFunctionExpression, Function},
 };
 use oxc_cfg::{
-    graph::{algo, visit::Control},
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
+    graph::{algo, visit::Control},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
-    AstNode,
 };
 
 mod diagnostics {
@@ -129,8 +129,7 @@ impl Rule for RulesOfHooks {
         let hook_name =
             call.callee_name().expect("We identify hooks using their names so it should be named.");
 
-        let semantic = ctx.semantic();
-        let nodes = semantic.nodes();
+        let nodes = ctx.nodes();
 
         let is_use = is_react_function_call(call, "use");
 
@@ -443,6 +442,62 @@ fn test() {
         "
             function ComponentWithHook() {
               useHook();
+            }
+        ",
+
+
+        // Valid because hooks can be used in condition expressions beginning with a ternary condition
+        "
+            function ComponentWithConditionalHook() {
+               if (useHook() ? good() : bad()) {
+                    check();
+               }
+            }
+        ",
+
+        // Valid because hooks can be used in condition expressions
+        "
+            function Component() {
+              if (!useHasPermission()) {
+                return null;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in ternary condition expressions
+        "
+            function Component() {
+              return useHasPermission() ? <Content /> : null;
+            }
+        ",
+        // Valid because hooks can be used in logical expressions (left side)
+        "
+            function Component() {
+              return useHasPermission() && <Content />;
+            }
+        ",
+        // Valid because hooks can be used with negation in condition expressions
+        "
+            function Component() {
+              if (!useHasPermission()) {
+                return null;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in complex condition expressions
+        "
+            function Component() {
+              if (useHasPermission() && isAdmin()) {
+                return <AdminContent />;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in nested condition expressions
+        "
+            function Component() {
+              return (useHasPermission() && isAdmin()) ? <AdminContent /> : <Content />;
             }
         ",
         // Valid because components can use hooks.
@@ -968,6 +1023,38 @@ fn test() {
                  useConditionalHook();
                }
              }
+        ",
+        // Invalid because hooks are used in the right side of logical expressions
+        "
+            function useHook() {
+                a && useHook1();
+                b && useHook2();
+            }
+        ",
+        // Invalid because hooks are used conditionally after a condition
+        "
+            function Component() {
+                if (condition) {
+                    // This is invalid because the hook is called conditionally
+                    useHook();
+                }
+            }
+        ",
+        // Invalid because hooks are used in the right side of ternary expressions
+        "
+            function Component() {
+                condition ? useHook() : null;
+            }
+        ",
+        "
+        function Component() {
+          if (Math.random()) {
+            return null;
+          } else if (!useHasPermission()) {
+            return <Foo />
+          }
+          return <Content />;
+        }
         ",
         // Invalid because hooks can only be called inside of a component.
         // errors: [

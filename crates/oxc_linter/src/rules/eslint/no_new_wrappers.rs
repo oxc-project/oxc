@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_wrappers_diagnostic(builtin_name: &str, new_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use `{builtin_name}` as a constructor"))

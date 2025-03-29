@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct SymbolDescription;
@@ -59,7 +59,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.len() == 0
-            && ctx.is_reference_to_global_variable(ident)
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }

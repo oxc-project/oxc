@@ -1,3 +1,4 @@
+import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
 import { HelperMode, transform } from '../index';
@@ -102,8 +103,8 @@ describe('target', () => {
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toMatchInlineSnapshot(`
-      "import _classPrivateFieldInitSpec from "@babel/runtime/helpers/classPrivateFieldInitSpec";
-      var _a = new WeakMap();
+      "import _classPrivateFieldInitSpec from "@oxc-project/runtime/helpers/classPrivateFieldInitSpec";
+      var _a = /* @__PURE__ */ new WeakMap();
       class Foo {
       	constructor() {
       		_classPrivateFieldInitSpec(this, _a, void 0);
@@ -117,7 +118,10 @@ describe('target', () => {
 describe('helpers', () => {
   const data: Array<[HelperMode, string]> = [
     [HelperMode.External, 'babelHelpers.objectSpread2({}, x);\n'],
-    [HelperMode.Runtime, 'import _objectSpread from "@babel/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n'],
+    [
+      HelperMode.Runtime,
+      'import _objectSpread from "@oxc-project/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n',
+    ],
   ];
 
   test.each(data)('%s', (mode, expected) => {
@@ -128,7 +132,7 @@ describe('helpers', () => {
     });
     expect(ret.code).toEqual(expected);
     expect(ret.helpersUsed).toStrictEqual({
-      objectSpread2: '@babel/runtime/helpers/objectSpread2',
+      objectSpread2: '@oxc-project/runtime/helpers/objectSpread2',
     });
   });
 });
@@ -160,7 +164,11 @@ describe('jsx', () => {
 
   it('enables jsx transform by default', () => {
     const ret = transform('test.tsx', code);
-    expect(ret.code).toEqual('import { jsx as _jsx } from "react/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import { jsx as _jsx } from "react/jsx-runtime";
+      const foo = /* @__PURE__ */ _jsx("div", {});
+      "
+    `);
   });
 
   it('configures jsx', () => {
@@ -169,7 +177,11 @@ describe('jsx', () => {
         importSource: 'xxx',
       },
     });
-    expect(ret.code).toEqual('import { jsx as _jsx } from "xxx/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import { jsx as _jsx } from "xxx/jsx-runtime";
+      const foo = /* @__PURE__ */ _jsx("div", {});
+      "
+    `);
   });
 
   it('can preserve jsx transform', () => {
@@ -189,23 +201,25 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = transform('test.tsx', code, { jsx: { refresh: {} } });
-    expect(ret.code).toEqual(
-      `import { useState } from "react";
-import { jsxs as _jsxs } from "react/jsx-runtime";
-var _s = $RefreshSig$();
-export const App = () => {
-	_s();
-	const [count, setCount] = useState(0);
-	return _jsxs("button", {
-		onClick: () => setCount(count + 1),
-		children: ["count is ", count]
-	});
-};
-_s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
-_c = App;
-var _c;
-$RefreshReg$(_c, "App");
-`,
+    expect(ret.code).toMatchInlineSnapshot(
+      `
+      "import { useState } from "react";
+      import { jsxs as _jsxs } from "react/jsx-runtime";
+      var _s = $RefreshSig$();
+      export const App = () => {
+      	_s();
+      	const [count, setCount] = useState(0);
+      	return /* @__PURE__ */ _jsxs("button", {
+      		onClick: () => setCount(count + 1),
+      		children: ["count is ", count]
+      	});
+      };
+      _s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
+      _c = App;
+      var _c;
+      $RefreshReg$(_c, "App");
+      "
+    `,
     );
   });
 });
@@ -242,5 +256,87 @@ describe('inject plugin', () => {
       },
     });
     expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
+  });
+});
+
+describe('legacy decorator', () => {
+  it('matches output', () => {
+    const code = `
+      export default @dce class C {
+        @dce
+        prop = 0;
+        method(@dce param) {}
+      }
+    `;
+    const ret = transform('test.tsx', code, {
+      decorator: {
+        legacy: true,
+      },
+    });
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import _decorate from "@oxc-project/runtime/helpers/decorate";
+      import _decorateParam from "@oxc-project/runtime/helpers/decorateParam";
+      let C = class C {
+      	prop = 0;
+      	method(param) {}
+      };
+      _decorate([dce], C.prototype, "prop", void 0);
+      _decorate([_decorateParam(0, dce)], C.prototype, "method", null);
+      C = _decorate([dce], C);
+      export default C;
+      "
+    `);
+  });
+
+  describe('emitDecoratorMetadata', () => {
+    it('matches output', () => {
+      const code = `
+    export default @dce class C {
+      @dce
+      prop = 0;
+      method(@dce param) {}
+    }
+  `;
+      const ret = transform('test.tsx', code, {
+        decorator: {
+          legacy: true,
+          emitDecoratorMetadata: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorateMetadata from "@oxc-project/runtime/helpers/decorateMetadata";
+        import _decorate from "@oxc-project/runtime/helpers/decorate";
+        import _decorateParam from "@oxc-project/runtime/helpers/decorateParam";
+        let C = class C {
+        	prop = 0;
+        	method(param) {}
+        };
+        _decorate([dce, _decorateMetadata("design:type", Object)], C.prototype, "prop", void 0);
+        _decorate([
+        	_decorateMetadata("design:type", Function),
+        	_decorateMetadata("design:paramtypes", [Object]),
+        	_decorateMetadata("design:returntype", void 0),
+        	_decorateParam(0, dce)
+        ], C.prototype, "method", null);
+        C = _decorate([dce], C);
+        export default C;
+        "
+      `);
+    });
+  });
+});
+
+describe('worker', () => {
+  it('should run', async () => {
+    const code = await new Promise((resolve, reject) => {
+      const worker = new Worker('./test/worker.mjs');
+      worker.on('error', (err) => {
+        reject(err);
+      });
+      worker.on('exit', (code) => {
+        resolve(code);
+      });
+    });
+    expect(code).toBe(0);
   });
 });

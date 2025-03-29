@@ -1,6 +1,6 @@
 [package]
 name = "oxc_codegen"
-version = "0.48.2"
+version = "0.61.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,19 +17,18 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_data_structures = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["code_buffer", "stack"] }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_sourcemap = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
 nonmax = { workspace = true }

@@ -7,7 +7,7 @@ use bpaf::Bpaf;
 
 pub use self::{
     ignore::IgnoreOptions,
-    lint::{lint_command, LintCommand, OutputOptions, WarningOptions},
+    lint::{LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions, lint_command},
 };
 
 const VERSION: &str = match option_env!("OXC_VERSION") {
@@ -45,7 +45,7 @@ const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 
 #[cfg(test)]
 mod misc_options {
-    use super::{lint::lint_command, MiscOptions};
+    use super::{MiscOptions, lint::lint_command};
 
     fn get_misc_options(arg: &str) -> MiscOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();

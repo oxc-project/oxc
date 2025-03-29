@@ -1,10 +1,10 @@
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
 use oxc_ast::AstKind;
+use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn vars_on_top_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All 'var' declarations must be at the top of the function scope.")
@@ -236,10 +236,10 @@ fn test() {
 			    first = 2;
 			}
 			",
-"function foo() {
+        "function foo() {
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   if (true) {
 			       first = true;
@@ -248,7 +248,7 @@ fn test() {
 			   }
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   var second = 1;
 			   var third;
@@ -260,14 +260,14 @@ fn test() {
 			   first = second;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var i;
 			   for (i = 0; i < 10; i++) {
 			       alert(i);
 			   }
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var outer;
 			   function inner() {
 			       var inner = 1;
@@ -276,14 +276,14 @@ fn test() {
 			   outer = 1;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   //Hello
 			   var second = 1;
 			   first = second;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   /*
 			       Hello Clarice
@@ -292,7 +292,7 @@ fn test() {
 			   first = second;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   var second = 1;
 			   function bar(){
@@ -302,7 +302,7 @@ fn test() {
 			   first = second;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   var second = 1;
 			   function bar(){
@@ -312,7 +312,7 @@ fn test() {
 			   first = second;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   var bar = function(){
 			       var third;
@@ -321,7 +321,7 @@ fn test() {
 			   first = 5;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var first;
 			   first.onclick(function(){
 			       var third;
@@ -330,65 +330,65 @@ fn test() {
 			   first = 5;
 			}
 			",
-"function foo() {
+        "function foo() {
 			   var i = 0;
 			   for (let j = 0; j < 10; j++) {
 			       alert(j);
 			   }
 			   i = i + 1;
 			}", // {                "ecmaVersion": 6            },
-"'use strict'; var x; f();",
-"'use strict'; 'directive'; var x; var y; f();",
-"function f() { 'use strict'; var x; f(); }",
-"function f() { 'use strict'; 'directive'; var x; var y; f(); }",
-"import React from 'react'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"'use strict'; import React from 'react'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import React from 'react'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import * as foo from 'mod.js'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import { square, diag } from 'lib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import { default as foo } from 'lib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import 'src/mylib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"import theDefault, { named1, named2 } from 'src/mylib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
-"export var x;
+        "'use strict'; var x; f();",
+        "'use strict'; 'directive'; var x; var y; f();",
+        "function f() { 'use strict'; var x; f(); }",
+        "function f() { 'use strict'; 'directive'; var x; var y; f(); }",
+        "import React from 'react'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "'use strict'; import React from 'react'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import React from 'react'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import * as foo from 'mod.js'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import { square, diag } from 'lib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import { default as foo } from 'lib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import 'src/mylib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "import theDefault, { named1, named2 } from 'src/mylib'; 'use strict'; var y; function f() { 'use strict'; var x; var y; f(); }", // { "ecmaVersion": 6, "sourceType": "module" },
+        "export var x;
 			var y;
 			var z;", // {                "ecmaVersion": 6,                "sourceType": "module"            },
-"var x;
+        "var x;
 			export var y;
 			var z;", // {                "ecmaVersion": 6,                "sourceType": "module"            },
-"var x;
+        "var x;
 			var y;
 			export var z;", // {                "ecmaVersion": 6,                "sourceType": "module"            },
-"class C {
+        "class C {
 			    static {
 			        var x;
 			    }
 			}", // {                "ecmaVersion": 2022            },
-"class C {
+        "class C {
 			    static {
 			        var x;
 			        foo();
 			    }
 			}", // {                "ecmaVersion": 2022            },
-"class C {
+        "class C {
 			    static {
 			        var x;
 			        var y;
 			    }
 			}", // {                "ecmaVersion": 2022            },
-"class C {
+        "class C {
 			    static {
 			        var x;
 			        var y;
 			        foo();
 			    }
 			}", // {                "ecmaVersion": 2022            },
-"class C {
+        "class C {
 			    static {
 			        let x;
 			        var y;
 			    }
 			}", // {                "ecmaVersion": 2022            },
-"class C {
+        "class C {
 			    static {
 			        foo();
 			        let x;

@@ -1,10 +1,10 @@
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::{Regex, RegexBuilder};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require default cases in switch statements.")
@@ -35,14 +35,76 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Some code conventions require that all switch statements have a default case, even if the
-    /// default case is empty.
+    /// Some code conventions require that all switch statements have a default case,
+    /// even if the default case is empty. The thinking is that it’s better to always
+    /// explicitly state what the default behavior should be so that it’s clear
+    /// whether or not the developer forgot to include the default behavior by mistake.
     ///
-    /// ### Example
+    /// You may optionally include a `// no default` after the last case if there is
+    /// no default case. The comment may be in any desired case, such as `// No Default`.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// switch (foo) {
     ///   case 1:
     ///     break;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// switch (a) {
+    ///   case 1:
+    ///     /* code */
+    ///     break;
+    ///
+    ///   default:
+    ///     /* code */
+    ///     break;
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// switch (a) {
+    ///   case 1:
+    ///     /* code */
+    ///     break;
+    ///
+    ///   // no default
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// switch (a) {
+    ///   case 1:
+    ///     /* code */
+    ///     break;
+    ///
+    ///   // No Default
+    /// }
+    /// ```
+    ///
+    ///  ### Options
+    ///
+    ///  ### commentPattern
+    ///
+    /// `{ "commentPattern": string }`
+    ///
+    ///  This option is for specifying an alternative regular expression which
+    ///  will override the default `/^no default$/i` comment test pattern.
+    ///
+    ///  For example if `{ "commentPattern": "^skip\\sdefault" }` were used
+    ///  then the following example would not violate the rule:
+    ///
+    /// ```javascript
+    /// switch(a) {
+    ///   case 1:
+    ///     /* code */
+    ///     break;
+    ///
+    ///   // skip default
     /// }
     /// ```
     DefaultCase,

@@ -5,11 +5,11 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    array,
+    Format, Prettier, array,
     format::print::{assignment, function, property},
     group, hardline, if_break, indent,
-    ir::{Doc, JoinSeparator},
-    join, line, softline, text, Format, Prettier,
+    ir::Doc,
+    join, line, softline, text,
 };
 
 pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -29,7 +29,7 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
         extend_parts.push(text!("extends "));
         extend_parts.push(super_class.format(p));
 
-        if let Some(super_type_parameters) = &class.super_type_parameters {
+        if let Some(super_type_parameters) = &class.super_type_arguments {
             extend_parts.push(super_type_parameters.format(p));
         }
 
@@ -229,7 +229,7 @@ impl<'a> ClassPropertyLike<'a, '_> {
         }
     }
 
-    fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
+    fn format_accessibility(&self, p: &Prettier<'a>) -> Option<Doc<'a>> {
         match self {
             ClassPropertyLike::AccessorProperty(def) => {
                 def.accessibility.map(|v| text!(v.as_str()))
@@ -310,8 +310,8 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassPropertyLike<'
     let mut result =
         assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
-    if let Some(semi) = p.semi() {
-        return array!(p, [result, semi]);
+    if p.options.semi {
+        return array!(p, [result, text!(";")]);
     }
 
     result
@@ -434,7 +434,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent!(
         p,
-        [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs)])]
+        [group!(p, [softline!(), join!(p, array!(p, [text!(","), line!()]), implements_docs)])]
     ));
     parts.push(text!(" "));
 

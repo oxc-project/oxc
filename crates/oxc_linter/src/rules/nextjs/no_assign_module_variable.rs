@@ -1,9 +1,9 @@
-use oxc_ast::{ast::BindingPatternKind, AstKind};
+use oxc_ast::{AstKind, ast::BindingPatternKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_assign_module_variable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not assign to the variable `module`.")

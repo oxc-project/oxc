@@ -2,18 +2,18 @@ use std::ops::Deref;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name, has_jsx_prop, is_react_component_name},
-    AstNode,
 };
 
 fn label_has_associated_control_diagnostic(span: Span) -> OxcDiagnostic {

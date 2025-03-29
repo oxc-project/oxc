@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_native_nonconstructor_diagnostic(fn_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{fn_name}` cannot be called as a constructor.")).with_label(span)
@@ -54,7 +54,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.is_reference_to_global_variable(ident)
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
         {
             let start = expr.span.start;
             let end = start + 3;

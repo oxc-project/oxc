@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,10 +8,10 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::get_prop_value,
-    AstNode,
 };
 
 fn boolean_value_diagnostic(attr: &str, span: Span) -> OxcDiagnostic {

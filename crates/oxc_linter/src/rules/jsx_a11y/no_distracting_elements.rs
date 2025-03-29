@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{rule::Rule, utils::get_element_type, LintContext};
+use crate::{LintContext, rule::Rule, utils::get_element_type};
 
 fn no_distracting_elements_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
@@ -89,22 +89,22 @@ fn test() {
     }
 
     let pass = vec![
-        (r"<div />", None, None, None),
-        (r"<Marquee />", None, None, None),
-        (r"<div marquee />", None, None, None),
-        (r"<Blink />", None, None, None),
-        (r"<div blink />", None, None, None),
+        (r"<div />", None, None),
+        (r"<Marquee />", None, None),
+        (r"<div marquee />", None, None),
+        (r"<Blink />", None, None),
+        (r"<div blink />", None, None),
     ];
 
     let fail = vec![
-        (r"<marquee />", None, None, None),
-        (r"<marquee {...props} />", None, None, None),
-        (r"<marquee lang={undefined} />", None, None, None),
-        (r"<blink />", None, None, None),
-        (r"<blink {...props} />", None, None, None),
-        (r"<blink foo={undefined} />", None, None, None),
-        (r"<Blink />", Some(config()), Some(settings()), None),
-        (r"<Marquee />", Some(config()), Some(settings()), None),
+        (r"<marquee />", None, None),
+        (r"<marquee {...props} />", None, None),
+        (r"<marquee lang={undefined} />", None, None),
+        (r"<blink />", None, None),
+        (r"<blink {...props} />", None, None),
+        (r"<blink foo={undefined} />", None, None),
+        (r"<Blink />", Some(config()), Some(settings())),
+        (r"<Marquee />", Some(config()), Some(settings())),
     ];
 
     Tester::new(NoDistractingElements::NAME, NoDistractingElements::PLUGIN, pass, fail)

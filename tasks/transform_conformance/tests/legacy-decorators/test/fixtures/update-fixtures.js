@@ -56,11 +56,19 @@ function copyTestsFromTypeScript() {
   }
 }
 
-function writeBabelOptions(folder) {
+function writeBabelOptions(folder, emitDecoratorMetadata = false) {
   const optionsFile = join(folder, "options.json");
-  const content = JSON.stringify({
-    plugins: ["transform-legacy-decorator"],
-  }, null, 2);
+  const legacyDecoratorPlugin = [
+    "transform-legacy-decorator",
+    emitDecoratorMetadata ? { emitDecoratorMetadata: true } : null,
+  ].filter(Boolean);
+  const content = JSON.stringify(
+    {
+      plugins: [legacyDecoratorPlugin.length === 1 ? legacyDecoratorPlugin[0] : legacyDecoratorPlugin],
+    },
+    null,
+    2,
+  );
   writeFileSync(optionsFile, content);
 }
 
@@ -75,6 +83,10 @@ async function generateOutputFiles() {
 
     const emitDecoratorMetadata = /\@emitDecoratorMetadata/gi.test(source);
 
+    if (emitDecoratorMetadata) {
+      writeBabelOptions(dirname(inputFile), true);
+    }
+
     /// Generate the output file path by using `typescript` library, and we need to set target to esnext
     const output = transpileModule(source, {
       compilerOptions: {
@@ -88,7 +100,8 @@ async function generateOutputFiles() {
     // Rename helper functions to our own
     const outputText = output.outputText
       .replaceAll("__decorate(", "babelHelpers.decorate(")
-      .replaceAll("__param(", "babelHelpers.decorateParam(");
+      .replaceAll("__param(", "babelHelpers.decorateParam(")
+      .replaceAll("__metadata(", "babelHelpers.decorateMetadata(");
 
     const outputFile = join(dirname(inputFile), "output.js");
     writeFileSync(outputFile, outputText);

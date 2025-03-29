@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, PossibleJestNode},
+    utils::{JestFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
 fn no_conditional_in_test(span: Span) -> OxcDiagnostic {

@@ -11,7 +11,8 @@ impl Lexer<'_> {
     /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
     /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
-        BYTE_HANDLERS[byte as usize](self)
+        // SAFETY: Caller guarantees to uphold safety invariants
+        unsafe { BYTE_HANDLERS[byte as usize](self) }
     }
 }
 
@@ -64,7 +65,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 /// };
 /// ```
 macro_rules! byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
+    ($id:ident($lex:ident) $body:expr_2021) => {
         const $id: ByteHandler = {
             #[expect(non_snake_case)]
             fn $id($lex: &mut Lexer) -> Kind {
@@ -107,7 +108,7 @@ macro_rules! byte_handler {
 ///   fn SPS(lexer: &mut Lexer) {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
-///       use assert_unchecked::assert_unchecked;
+///       use oxc_data_structures::assert_unchecked;
 ///       assert_unchecked!(!lexer.source.is_eof());
 ///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
@@ -120,11 +121,11 @@ macro_rules! byte_handler {
 /// };
 /// ```
 macro_rules! ascii_byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
+    ($id:ident($lex:ident) $body:expr_2021) => {
         byte_handler!($id($lex) {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
-                use assert_unchecked::assert_unchecked;
+                use oxc_data_structures::assert_unchecked;
                 assert_unchecked!(!$lex.source.is_eof());
                 assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }
@@ -171,7 +172,7 @@ macro_rules! ascii_byte_handler {
 /// };
 /// ```
 macro_rules! ascii_identifier_handler {
-    ($id:ident($str:ident) $body:expr) => {
+    ($id:ident($str:ident) $body:expr_2021) => {
         byte_handler!($id(lexer) {
             // SAFETY: This macro is only used for ASCII characters
             let $str = unsafe { lexer.identifier_name_handler() };

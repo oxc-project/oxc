@@ -1,4 +1,4 @@
-js compatibility: 251/641 (39.16%)
+js compatibility: 252/645 (39.07%)
 
 # Failed
 
@@ -12,13 +12,13 @@ js compatibility: 251/641 (39.16%)
 | js/arrays/numbers-with-tricky-comments.js | 💥 | 40.00% |
 | js/arrays/numbers2.js | 💥 | 93.62% |
 | js/arrays/numbers3.js | 💥 | 66.67% |
-| js/arrays/preserve_empty_lines.js | 💥 | 62.81% |
+| js/arrays/preserve_empty_lines.js | 💥 | 73.60% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 40.40% |
 | js/arrow-call/class-property.js | 💥💥💥 | 0.00% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 6.67% |
 | js/arrows/arrow_function_expression.js | 💥💥 | 97.14% |
 | js/arrows/assignment-chain-with-arrow-chain.js | 💥💥 | 60.25% |
-| js/arrows/call.js | 💥💥 | 35.38% |
+| js/arrows/call.js | 💥💥 | 39.27% |
 | js/arrows/chain-as-arg.js | 💥💥 | 75.76% |
 | js/arrows/chain-in-logical-expression.js | 💥💥 | 28.57% |
 | js/arrows/comment.js | 💥💥 | 32.79% |
@@ -42,7 +42,7 @@ js compatibility: 251/641 (39.16%)
 | js/assignment/issue-6922.js | 💥 | 68.00% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/issue-7961.js | 💥 | 83.33% |
-| js/assignment/lone-arg.js | 💥 | 51.16% |
+| js/assignment/lone-arg.js | 💥 | 61.54% |
 | js/assignment-comments/call.js | 💥 | 66.67% |
 | js/assignment-comments/call2.js | 💥 | 0.00% |
 | js/assignment-comments/function.js | 💥 | 28.21% |
@@ -51,17 +51,18 @@ js compatibility: 251/641 (39.16%)
 | js/assignment-comments/string.js | 💥 | 52.11% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 0.00% |
-| js/binary-expressions/arrow.js | 💥 | 55.32% |
-| js/binary-expressions/call.js | 💥 | 76.79% |
-| js/binary-expressions/comment.js | 💥 | 34.48% |
-| js/binary-expressions/if.js | 💥 | 92.31% |
-| js/binary-expressions/in_instanceof.js | 💥 | 98.63% |
-| js/binary-expressions/inline-jsx.js | 💥 | 33.33% |
-| js/binary-expressions/inline-object-array.js | 💥 | 48.24% |
-| js/binary-expressions/jsx_parent.js | 💥 | 33.33% |
-| js/binary-expressions/short-right.js | 💥 | 68.75% |
-| js/binary-expressions/test.js | 💥 | 82.46% |
-| js/binary-expressions/unary.js | 💥 | 75.00% |
+| js/binary-expressions/arrow.js | 💥💥 | 53.19% |
+| js/binary-expressions/call.js | 💥💥 | 54.46% |
+| js/binary-expressions/comment.js | 💥💥 | 29.63% |
+| js/binary-expressions/if.js | 💥💥 | 82.05% |
+| js/binary-expressions/in_instanceof.js | 💥💥 | 98.63% |
+| js/binary-expressions/inline-jsx.js | 💥💥 | 33.33% |
+| js/binary-expressions/inline-object-array.js | 💥💥 | 46.73% |
+| js/binary-expressions/jsx_parent.js | 💥💥 | 31.82% |
+| js/binary-expressions/return.js | 💥✨ | 35.00% |
+| js/binary-expressions/short-right.js | 💥💥 | 50.50% |
+| js/binary-expressions/test.js | 💥💥 | 63.16% |
+| js/binary-expressions/unary.js | 💥💥 | 62.50% |
 | js/break-calls/break.js | 💥 | 71.74% |
 | js/break-calls/parent.js | 💥 | 0.00% |
 | js/break-calls/react.js | 💥 | 52.92% |
@@ -121,7 +122,7 @@ js compatibility: 251/641 (39.16%)
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 77.78% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 56.41% |
 | js/comments/jsdoc.js | 💥💥 | 19.51% |
-| js/comments/jsx.js | 💥💥 | 47.85% |
+| js/comments/jsx.js | 💥💥 | 53.76% |
 | js/comments/last-arg.js | 💥💥 | 32.65% |
 | js/comments/multi-comments-2.js | 💥💥 | 90.91% |
 | js/comments/multi-comments-on-same-line-2.js | 💥💥 | 0.00% |
@@ -132,14 +133,14 @@ js compatibility: 251/641 (39.16%)
 | js/comments/single-star-jsdoc.js | 💥💥 | 12.50% |
 | js/comments/switch.js | 💥💥 | 80.00% |
 | js/comments/tagged-template-literal.js | 💥💥 | 53.85% |
-| js/comments/template-literal.js | 💥💥 | 39.13% |
+| js/comments/template-literal.js | 💥💥 | 43.48% |
 | js/comments/trailing-jsdocs.js | 💥💥 | 0.00% |
 | js/comments/trailing_space.js | 💥💥 | 57.14% |
 | js/comments/try.js | 💥💥 | 44.44% |
-| js/comments/variable_declarator.js | 💥💥 | 51.69% |
+| js/comments/variable_declarator.js | 💥💥 | 52.54% |
 | js/comments/while.js | 💥💥 | 33.33% |
 | js/comments/flow-types/inline.js | 💥 | 16.67% |
-| js/comments/function/between-parentheses-and-function-body.js | 💥 | 72.00% |
+| js/comments/function/between-parentheses-and-function-body.js | 💥 | 74.51% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
 | js/comments-closure-typecast/binary-expr.js | 💥 | 0.00% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 35.29% |
@@ -163,8 +164,8 @@ js compatibility: 251/641 (39.16%)
 | js/conditional/new-ternary-spec.js | 💥💥 | 33.16% |
 | js/conditional/no-confusing-arrow.js | 💥💥 | 40.00% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 52.77% |
-| js/destructuring/destructuring.js | 💥 | 75.73% |
-| js/destructuring-ignore/ignore.js | 💥💥💥 | 33.33% |
+| js/destructuring/destructuring.js | 💥 | 89.66% |
+| js/destructuring-ignore/ignore.js | 💥💥💥 | 27.59% |
 | js/directives/escaped.js | 💥 | 69.84% |
 | js/directives/issue-7346.js | 💥 | 25.00% |
 | js/directives/newline.js | 💥 | 83.33% |
@@ -198,7 +199,7 @@ js compatibility: 251/641 (39.16%)
 | js/functional-composition/rxjs_pipe.js | 💥 | 45.45% |
 | js/generator/async.js | 💥 | 92.86% |
 | js/generator/function-name-starts-with-get.js | 💥 | 83.33% |
-| js/identifier/parentheses/let.js | 💥💥 | 89.09% |
+| js/identifier/parentheses/let.js | 💥💥 | 90.00% |
 | js/if/comment_before_else.js | 💥 | 66.67% |
 | js/if/else.js | 💥 | 94.44% |
 | js/if/expr_and_same_line_comments.js | 💥 | 41.98% |
@@ -225,7 +226,7 @@ js compatibility: 251/641 (39.16%)
 | js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 0.00% |
 | js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
 | js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
-| js/last-argument-expansion/issue-7518.js | 💥 | 72.00% |
+| js/last-argument-expansion/issue-7518.js | 💥 | 22.22% |
 | js/last-argument-expansion/jsx.js | 💥 | 20.00% |
 | js/last-argument-expansion/overflow.js | 💥 | 51.02% |
 | js/line-suffix-boundary/boundary.js | 💥 | 40.00% |
@@ -263,7 +264,7 @@ js compatibility: 251/641 (39.16%)
 | js/no-semi/class.js | 💥💥 | 88.37% |
 | js/no-semi/comments.js | 💥💥 | 71.43% |
 | js/no-semi/issue2006.js | 💥✨ | 37.50% |
-| js/no-semi/no-semi.js | 💥💥 | 84.12% |
+| js/no-semi/no-semi.js | 💥💥 | 86.47% |
 | js/non-strict/keywords.js | 💥 | 76.92% |
 | js/nullish-coalescing/nullish_coalesing_operator.js | 💥 | 80.00% |
 | js/numeric-separators/number.js | 💥 | 66.67% |
@@ -271,9 +272,8 @@ js compatibility: 251/641 (39.16%)
 | js/object-prop-break-in/short-keys.js | 💥 | 60.00% |
 | js/object-property-comment/after-key.js | 💥 | 71.43% |
 | js/object-property-ignore/ignore.js | 💥💥💥 | 69.14% |
-| js/object-property-ignore/issue-5678.js | 💥💥💥 | 23.88% |
+| js/object-property-ignore/issue-5678.js | 💥💥💥 | 36.11% |
 | js/objects/escape-sequence-key.js | 💥 | 66.67% |
-| js/objects/expand.js | 💥 | 50.00% |
 | js/objects/right-break.js | 💥 | 89.47% |
 | js/optional-chaining/chaining.js | 💥 | 83.91% |
 | js/optional-chaining/comments.js | 💥 | 17.91% |
@@ -285,7 +285,7 @@ js compatibility: 251/641 (39.16%)
 | js/preserve-line/argument-list.js | 💥 | 76.87% |
 | js/preserve-line/comments.js | 💥 | 75.47% |
 | js/preserve-line/member-chain.js | 💥 | 21.78% |
-| js/preserve-line/parameter-list.js | 💥 | 77.06% |
+| js/preserve-line/parameter-list.js | 💥 | 81.74% |
 | js/quote-props/numeric-separator.js | 💥💥💥💥 | 40.00% |
 | js/quote-props/objects.js | 💥💥💥💥 | 75.26% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
@@ -331,7 +331,7 @@ js compatibility: 251/641 (39.16%)
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 27.12% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 27.12% |
 | js/test-declarations/jest-each-template-string.js | 💥💥 | 25.00% |
-| js/test-declarations/jest-each.js | 💥💥 | 59.15% |
+| js/test-declarations/jest-each.js | 💥💥 | 56.94% |
 | js/test-declarations/test_declarations.js | 💥💥 | 39.68% |
 | js/throw_statement/binaryish.js | 💥 | 40.74% |
 | js/throw_statement/comment.js | 💥 | 47.06% |
@@ -345,6 +345,8 @@ js compatibility: 251/641 (39.16%)
 | js/unary-expression/comments.js | 💥 | 18.23% |
 | js/unicode/combining-characters.js | 💥 | 0.00% |
 | js/unicode/nbsp-jsx.js | 💥 | 0.00% |
+| js/v8_intrinsic/avoid-conflicts-to-pipeline.js | 💥 | 66.67% |
+| js/v8_intrinsic/intrinsic_call.js | 💥 | 81.82% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
 | js/yield/jsx.js | 💥 | 50.00% |
 | jsx/attr-element/attr-element.js | 💥 | 0.00% |
@@ -378,7 +380,7 @@ js compatibility: 251/641 (39.16%)
 | jsx/jsx/quotes.js | 💥💥💥💥 | 42.55% |
 | jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/jsx/return-statement.js | 💥💥💥💥 | 72.92% |
-| jsx/jsx/spacing.js | 💥💥💥💥 | 22.22% |
+| jsx/jsx/spacing.js | 💥💥💥💥 | 40.00% |
 | jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 26.67% |
 | jsx/last-line/last_line.js | 💥💥 | 44.51% |
 | jsx/last-line/single_prop_multiline_string.js | 💥💥 | 22.88% |
@@ -393,4 +395,5 @@ js compatibility: 251/641 (39.16%)
 | jsx/spread/attribute.js | 💥 | 30.19% |
 | jsx/spread/child.js | 💥 | 26.67% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
-| jsx/text-wrap/test.js | 💥 | 38.05% |
+| jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
+| jsx/text-wrap/test.js | 💥 | 38.12% |

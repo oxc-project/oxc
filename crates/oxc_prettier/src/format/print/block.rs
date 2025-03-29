@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 
-use crate::{array, format::print::statement, hardline, indent, ir::Doc, text, Format, Prettier};
+use crate::{Format, Prettier, array, format::print::statement, hardline, indent, ir::Doc, text};
 
 pub fn print_block<'a>(
     p: &mut Prettier<'a>,

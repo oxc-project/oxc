@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
@@ -11,7 +12,6 @@ use crate::{
         get_element_type, has_jsx_prop, is_hidden_from_screen_reader, is_interactive_element,
         is_presentation_role,
     },
-    AstNode,
 };
 
 fn click_events_have_key_events_diagnostic(span: Span) -> OxcDiagnostic {
@@ -92,48 +92,43 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"<div onClick={() => void 0} onKeyDown={foo}/>;", None, None, None),
-        (r"<div onClick={() => void 0} onKeyUp={foo} />;", None, None, None),
-        (r"<div onClick={() => void 0} onKeyPress={foo}/>;", None, None, None),
-        (r"<div onClick={() => void 0} onKeyDown={foo} onKeyUp={bar} />;", None, None, None),
-        (r"<div onClick={() => void 0} onKeyDown={foo} {...props} />;", None, None, None),
-        (r#"<div className="foo" />;"#, None, None, None),
-        (r"<div onClick={() => void 0} aria-hidden />;", None, None, None),
-        (r"<div onClick={() => void 0} aria-hidden={true} />;", None, None, None),
-        (r"<div onClick={() => void 0} aria-hidden={false} onKeyDown={foo} />;", None, None, None),
-        (
-            r"<div onClick={() => void 0} onKeyDown={foo} aria-hidden={undefined} />;",
-            None,
-            None,
-            None,
-        ),
-        (r#"<input type="text" onClick={() => void 0} />"#, None, None, None),
-        (r"<input onClick={() => void 0} />", None, None, None),
-        (r#"<button onClick={() => void 0} className="foo" />"#, None, None, None),
-        (r#"<select onClick={() => void 0} className="foo" />"#, None, None, None),
-        (r#"<textarea onClick={() => void 0} className="foo" />"#, None, None, None),
-        (r#"<a onClick={() => void 0} href="http://x.y.z" />"#, None, None, None),
-        (r#"<a onClick={() => void 0} href="http://x.y.z" tabIndex="0" />"#, None, None, None),
-        (r#"<input onClick={() => void 0} type="hidden" />;"#, None, None, None),
-        (r#"<div onClick={() => void 0} role="presentation" />;"#, None, None, None),
-        (r#"<div onClick={() => void 0} role="none" />;"#, None, None, None),
-        (r"<TestComponent onClick={doFoo} />", None, None, None),
-        (r"<Button onClick={doFoo} />", None, None, None),
-        (r"<Footer onClick={doFoo} />", None, None, None),
+        (r"<div onClick={() => void 0} onKeyDown={foo}/>;", None, None),
+        (r"<div onClick={() => void 0} onKeyUp={foo} />;", None, None),
+        (r"<div onClick={() => void 0} onKeyPress={foo}/>;", None, None),
+        (r"<div onClick={() => void 0} onKeyDown={foo} onKeyUp={bar} />;", None, None),
+        (r"<div onClick={() => void 0} onKeyDown={foo} {...props} />;", None, None),
+        (r#"<div className="foo" />;"#, None, None),
+        (r"<div onClick={() => void 0} aria-hidden />;", None, None),
+        (r"<div onClick={() => void 0} aria-hidden={true} />;", None, None),
+        (r"<div onClick={() => void 0} aria-hidden={false} onKeyDown={foo} />;", None, None),
+        (r"<div onClick={() => void 0} onKeyDown={foo} aria-hidden={undefined} />;", None, None),
+        (r#"<input type="text" onClick={() => void 0} />"#, None, None),
+        (r"<input onClick={() => void 0} />", None, None),
+        (r#"<button onClick={() => void 0} className="foo" />"#, None, None),
+        (r#"<select onClick={() => void 0} className="foo" />"#, None, None),
+        (r#"<textarea onClick={() => void 0} className="foo" />"#, None, None),
+        (r#"<a onClick={() => void 0} href="http://x.y.z" />"#, None, None),
+        (r#"<a onClick={() => void 0} href="http://x.y.z" tabIndex="0" />"#, None, None),
+        (r#"<input onClick={() => void 0} type="hidden" />;"#, None, None),
+        (r#"<div onClick={() => void 0} role="presentation" />;"#, None, None),
+        (r#"<div onClick={() => void 0} role="none" />;"#, None, None),
+        (r"<TestComponent onClick={doFoo} />", None, None),
+        (r"<Button onClick={doFoo} />", None, None),
+        (r"<Footer onClick={doFoo} />", None, None),
     ];
 
     let fail = vec![
-        (r"<div onClick={() => void 0} />;", None, None, None),
-        (r"<div onClick={() => void 0} role={undefined} />;", None, None, None),
-        (r"<div onClick={() => void 0} {...props} />;", None, None, None),
-        (r"<section onClick={() => void 0} />;", None, None, None),
-        (r"<main onClick={() => void 0} />;", None, None, None),
-        (r"<article onClick={() => void 0} />;", None, None, None),
-        (r"<header onClick={() => void 0} />;", None, None, None),
-        (r"<footer onClick={() => void 0} />;", None, None, None),
-        (r"<div onClick={() => void 0} aria-hidden={false} />;", None, None, None),
-        (r"<a onClick={() => void 0} />", None, None, None),
-        (r#"<a tabIndex="0" onClick={() => void 0} />"#, None, None, None),
+        (r"<div onClick={() => void 0} />;", None, None),
+        (r"<div onClick={() => void 0} role={undefined} />;", None, None),
+        (r"<div onClick={() => void 0} {...props} />;", None, None),
+        (r"<section onClick={() => void 0} />;", None, None),
+        (r"<main onClick={() => void 0} />;", None, None),
+        (r"<article onClick={() => void 0} />;", None, None),
+        (r"<header onClick={() => void 0} />;", None, None),
+        (r"<footer onClick={() => void 0} />;", None, None),
+        (r"<div onClick={() => void 0} aria-hidden={false} />;", None, None),
+        (r"<a onClick={() => void 0} />", None, None),
+        (r#"<a tabIndex="0" onClick={() => void 0} />"#, None, None),
         (
             r"<Footer onClick={doFoo} />",
             None,
@@ -144,7 +139,6 @@ fn test() {
                     }
                 } }
             })),
-            None,
         ),
     ];
 

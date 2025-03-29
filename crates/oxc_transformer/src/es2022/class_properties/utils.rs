@@ -26,7 +26,7 @@ pub(super) fn create_assignment<'a>(
 pub(super) fn create_variable_declaration<'a>(
     binding: &BoundIdentifier<'a>,
     init: Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Statement<'a> {
     let kind = VariableDeclarationKind::Var;
     let declarator = ctx.ast.variable_declarator(
@@ -52,7 +52,7 @@ where
 }
 
 /// Create `IdentifierName` for `_`.
-pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> IdentifierName<'a> {
+pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
 

@@ -17,9 +17,10 @@ use oxc::{
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
+    TestRunnerOptions,
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, override_root, oxc_test_root, packages_root, TestRunnerOptions,
+    fixture_root, override_root, oxc_test_root, packages_root,
 };
 
 #[derive(Debug)]
@@ -230,22 +231,26 @@ impl TestCase {
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
+        options.proposals.explicit_resource_management = true;
         let cwd_path = self
             .options
             .cwd
             .as_ref()
             .and_then(|cwd| path.strip_prefix(cwd).ok().map(|p| Path::new("<CWD>").join(p)))
             .unwrap_or(path.clone());
-        let mut driver = Driver::new(false, allow_return_outside_function, options).execute(
-            &source_text,
-            self.source_type,
-            cwd_path.as_path(),
-        );
+        let mut driver = Driver::new(
+            false,
+            allow_return_outside_function,
+            /* print_annotation_comments */
+            !self.options.plugins.async_to_generator,
+            options,
+        )
+        .execute(&source_text, self.source_type, cwd_path.as_path());
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text.to_string(),
+                source_text,
             );
             return Err(errors
                 .into_iter()
@@ -310,7 +315,7 @@ impl TestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, self.source_type)
+                    let mut ret = Parser::new(&allocator, &output, self.source_type)
                         .with_options(ParseOptions {
                             // Related: async to generator, regression
                             allow_return_outside_function: true,
@@ -318,9 +323,15 @@ impl TestCase {
                         })
                         .parse();
 
+                    // Clear comments to avoid pure annotation comments that cause mismatch.
+                    ret.program.comments.clear();
+
                     CodeGenerator::new()
                         .with_options(CodegenOptions {
                             comments: false,
+                            // Disable pure annotation comments for async_to_generator plugin,
+                            // because it's weird some tests have it and some don't.
+                            annotation_comments: !babel_options.plugins.async_to_generator,
                             ..CodegenOptions::default()
                         })
                         .build(&ret.program)
@@ -378,10 +389,15 @@ impl TestCase {
 
         if passed {
             if let Some(options) = transform_options {
-                let mismatch_errors =
-                    Driver::new(/* check transform mismatch */ true, false, options)
-                        .execute(&input, self.source_type, &self.path)
-                        .errors();
+                let mismatch_errors = Driver::new(
+                    /* check transform mismatch */ true,
+                    false,
+                    /* print_annotation_comments */
+                    !self.options.plugins.async_to_generator,
+                    options,
+                )
+                .execute(&input, self.source_type, &self.path)
+                .errors();
                 self.errors.extend(mismatch_errors);
             }
         } else if let Some(actual_errors) = actual_errors {
@@ -389,7 +405,7 @@ impl TestCase {
         }
     }
 
-    fn test_exec(&mut self, filtered: bool) {
+    fn test_exec(&self, filtered: bool) {
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());

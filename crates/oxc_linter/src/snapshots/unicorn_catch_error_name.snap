@@ -6,42 +6,49 @@ source: crates/oxc_linter/src/tester.rs
  1 │ try { } catch (descriptiveError) { }
    ·                ────────────────
    ╰────
+  help: Replace `descriptiveError` with `exception`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "has_space_after "
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "has_space_after"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
+  help: Replace `e` with `has_space_after`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "1_start_with_a_number"
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
+  help: Replace `e` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "_){ } evilCode; if(false"
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
+  help: Replace `e` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
+  help: Replace `notMatching` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
+  help: Replace `notMatching` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
+  help: Replace `notMatching` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "_" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
@@ -49,44 +56,57 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─
    ╰────
 
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:1:16]
+ 1 │ try { } catch (err) { console.error(err) }
+   ·                ───
+   ╰────
+
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:15]
  1 │ promise.catch(notMatching => { })
    ·               ───────────
    ╰────
+  help: Replace `notMatching` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ promise.catch((foo) => { })
    ·                ───
    ╰────
+  help: Replace `foo` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:25]
  1 │ promise.catch(function (foo) { })
    ·                         ───
    ╰────
+  help: Replace `foo` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:26]
  1 │ promise.catch((function (foo) { }))
    ·                          ───
    ╰────
+  help: Replace `foo` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:41]
  1 │ promise.then(function (foo) { }).catch((foo) => { })
    ·                                         ───
    ╰────
+  help: Replace `foo` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:35]
  1 │ promise.then(undefined, function (foo) { })
    ·                                   ───
    ╰────
+  help: Replace `foo` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:26]
  1 │ promise.then(undefined, (foo) => { })
    ·                          ───
    ╰────
+  help: Replace `foo` with `error`.

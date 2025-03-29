@@ -1,13 +1,13 @@
 use cow_utils::CowUtils;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::TSTypeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
@@ -61,10 +61,10 @@ declare_oxc_lint!(
 impl Rule for BanTypes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSTypeReference(typ) => {
-                let name = match &typ.type_name {
-                    oxc_ast::ast::TSTypeName::IdentifierReference(v) => &v.name,
-                    oxc_ast::ast::TSTypeName::QualifiedName(_) => return,
+            AstKind::TSTypeReference(ty) => {
+                let name = match &ty.type_name {
+                    TSTypeName::IdentifierReference(v) => &v.name,
+                    TSTypeName::QualifiedName(_) => return,
                 };
 
                 match name.as_str() {
@@ -72,21 +72,21 @@ impl Rule for BanTypes {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
                             &name.as_str().cow_to_ascii_lowercase(),
-                            typ.span,
+                            ty.span,
                         ));
                     }
                     "Object" => {
-                        ctx.diagnostic(object(typ.span));
+                        ctx.diagnostic(object(ty.span));
                     }
                     "Function" => {
-                        ctx.diagnostic(function(typ.span));
+                        ctx.diagnostic(function(ty.span));
                     }
                     _ => {}
                 }
             }
-            AstKind::TSTypeLiteral(typ) => {
-                if typ.members.is_empty() {
-                    ctx.diagnostic(type_literal(typ.span));
+            AstKind::TSTypeLiteral(ty) => {
+                if ty.members.is_empty() {
+                    ctx.diagnostic(type_literal(ty.span));
                 }
             }
             _ => {}

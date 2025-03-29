@@ -1,14 +1,14 @@
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
     AstKind,
+    ast::{Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::get_declaration_of_variable, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
-    rule::Rule, AstNode,
+    AstNode, ast_util::get_declaration_of_variable, context::LintContext,
+    globals::GLOBAL_OBJECT_NAMES, rule::Rule,
 };
 
 fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
@@ -60,7 +60,7 @@ declare_oxc_lint!(
     /// ```
     NoDocumentCookie,
     unicorn,
-    correctness
+    restriction
 );
 
 impl Rule for NoDocumentCookie {

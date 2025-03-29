@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MethodDefinitionKind},
     AstKind,
+    ast::{Argument, Expression, MethodDefinitionKind},
 };
 use oxc_cfg::{
-    graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
+    graph::visit::{EdgeRef, neighbors_filtered_by_edge_weight},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,7 +12,7 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always call super() before this/super property access.")
@@ -57,14 +57,13 @@ enum DefinitelyCallsThisBeforeSuper {
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
         let cfg = ctx.cfg();
-        let semantic = ctx.semantic();
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
         let mut basic_blocks_with_super_called = FxHashSet::<BlockNodeId>::default();
         let mut basic_blocks_with_local_violations =
             FxHashMap::<BlockNodeId, Vec<NodeId>>::default();
-        for node in semantic.nodes() {
+        for node in ctx.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     if Self::is_wanted_node(node, ctx).unwrap_or_default() {
@@ -73,7 +72,7 @@ impl Rule for NoThisBeforeSuper {
                 }
                 AstKind::Super(_) => {
                     let basic_block_id = node.cfg_id();
-                    if let Some(parent) = semantic.nodes().parent_node(node.id()) {
+                    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
                         if let AstKind::CallExpression(call_expr) = parent.kind() {
                             let has_this_or_super_in_args =
                                 Self::contains_this_or_super_in_args(&call_expr.arguments);

@@ -1,12 +1,16 @@
+use std::ops::ControlFlow;
+
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -26,11 +30,18 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, '_>) {
+    pub fn minimize_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        for stmt in ctx.ast.vec_from_iter(stmts.drain(..)) {
+        let mut new_stmts = ctx.ast.vec_from_iter(stmts.drain(..));
+        for i in 0..new_stmts.len() {
+            let stmt = ctx.ast.move_statement(&mut new_stmts[i]);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -38,7 +49,20 @@ impl<'a> PeepholeOptimizations {
                 keep_var.visit_statement(&stmt);
                 continue;
             }
-            self.minimize_statement(stmt, &mut result, &mut is_control_flow_dead, ctx);
+            if self
+                .minimize_statement(
+                    stmt,
+                    i,
+                    &mut new_stmts,
+                    &mut result,
+                    &mut is_control_flow_dead,
+                    state,
+                    ctx,
+                )
+                .is_break()
+            {
+                break;
+            };
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             result.push(stmt);
@@ -51,14 +75,14 @@ impl<'a> PeepholeOptimizations {
                 Statement::ContinueStatement(s) if s.label.is_none() => {
                     if let Some(Ancestor::ForStatementBody(_)) = ctx.ancestors().nth(1) {
                         result.pop();
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
                 // "function f() { x(); return; }" => "function f() { x(); }"
                 Statement::ReturnStatement(s) if s.argument.is_none() => {
                     if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
                         result.pop();
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
                 _ => {}
@@ -78,7 +102,7 @@ impl<'a> PeepholeOptimizations {
                                     break 'return_loop;
                                 }
                             }
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             // "a(); return b;" => "return a(), b;"
                             let last_stmt = result.pop().unwrap();
                             let Statement::ReturnStatement(mut last_return) = last_stmt else {
@@ -106,7 +130,7 @@ impl<'a> PeepholeOptimizations {
                                 break 'return_loop;
                             };
 
-                            self.mark_current_function_as_changed();
+                            state.changed = true;
                             let last_stmt = result.pop().unwrap();
                             let Statement::ReturnStatement(last_return) = last_stmt else {
                                 unreachable!()
@@ -157,7 +181,7 @@ impl<'a> PeepholeOptimizations {
                                     right,
                                     ctx,
                                 );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
+                                self.minimize_conditions_exit_expression(&mut expr, state, ctx);
                                 expr
                             };
                             let last_return_stmt =
@@ -167,6 +191,93 @@ impl<'a> PeepholeOptimizations {
                         _ => break 'return_loop,
                     }
                 }
+            } else if let Some(Statement::ThrowStatement(_)) = result.last() {
+                'throw_loop: while result.len() >= 2 {
+                    let prev_index = result.len() - 2;
+                    let prev_stmt = &result[prev_index];
+                    match prev_stmt {
+                        Statement::ExpressionStatement(_) => {
+                            state.changed = true;
+                            // "a(); throw b;" => "throw a(), b;"
+                            let last_stmt = result.pop().unwrap();
+                            let Statement::ThrowStatement(mut last_throw) = last_stmt else {
+                                unreachable!()
+                            };
+                            let prev_stmt = result.pop().unwrap();
+                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
+                                unreachable!()
+                            };
+                            let argument = Self::join_sequence(
+                                &mut expr_stmt.expression,
+                                &mut last_throw.argument,
+                                ctx,
+                            );
+                            let right_span = last_throw.span;
+                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            result.push(last_throw_stmt);
+                        }
+                        // Merge the last two statements
+                        Statement::IfStatement(if_stmt) => {
+                            // The previous statement must be an if statement with no else clause
+                            if if_stmt.alternate.is_some() {
+                                break 'throw_loop;
+                            }
+                            // The then clause must be a throw
+                            let Statement::ThrowStatement(_) = &if_stmt.consequent else {
+                                break 'throw_loop;
+                            };
+
+                            state.changed = true;
+                            let last_stmt = result.pop().unwrap();
+                            let Statement::ThrowStatement(last_throw) = last_stmt else {
+                                unreachable!()
+                            };
+                            let prev_stmt = result.pop().unwrap();
+                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                            let mut prev_if = prev_if.unbox();
+                            let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
+                                unreachable!()
+                            };
+
+                            let right_span = last_throw.span;
+                            let mut left = prev_throw.unbox().argument;
+                            let mut right = last_throw.unbox().argument;
+
+                            // "if (!a) throw b; throw c;" => "throw a ? c : b;"
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
+                                if unary_expr.operator.is_not() {
+                                    prev_if.test =
+                                        ctx.ast.move_expression(&mut unary_expr.argument);
+                                    std::mem::swap(&mut left, &mut right);
+                                }
+                            }
+
+                            let argument = if let Expression::SequenceExpression(sequence_expr) =
+                                &mut prev_if.test
+                            {
+                                // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
+                                let test = sequence_expr.expressions.pop().unwrap();
+                                let mut b =
+                                    self.minimize_conditional(prev_if.span, test, left, right, ctx);
+                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
+                            } else {
+                                // "if (a) throw b; throw c;" => "throw a ? b : c;"
+                                let mut expr = self.minimize_conditional(
+                                    prev_if.span,
+                                    ctx.ast.move_expression(&mut prev_if.test),
+                                    left,
+                                    right,
+                                    ctx,
+                                );
+                                self.minimize_conditions_exit_expression(&mut expr, state, ctx);
+                                expr
+                            };
+                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            result.push(last_throw_stmt);
+                        }
+                        _ => break 'throw_loop,
+                    }
+                }
             }
         }
 
@@ -174,12 +285,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn minimize_statement(
-        &mut self,
+        &self,
         stmt: Statement<'a>,
+        i: usize,
+        stmts: &mut Vec<'a, Statement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
-    ) {
+    ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
             Statement::BreakStatement(s) => {
@@ -190,259 +304,39 @@ impl<'a> PeepholeOptimizations {
                 *is_control_flow_dead = true;
                 result.push(Statement::ContinueStatement(s));
             }
-            Statement::VariableDeclaration(mut var_decl) => {
-                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-                    if var_decl.kind == prev_var_decl.kind {
-                        var_decl.declarations.splice(0..0, prev_var_decl.declarations.drain(..));
-                        result.pop();
-                        self.mark_current_function_as_changed();
-                    }
-                }
-                result.push(Statement::VariableDeclaration(var_decl));
+            Statement::VariableDeclaration(var_decl) => {
+                self.handle_variable_declaration(var_decl, result, state);
             }
-            Statement::ExpressionStatement(mut expr_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    let a = &mut prev_expr_stmt.expression;
-                    let b = &mut expr_stmt.expression;
-                    expr_stmt.expression = Self::join_sequence(a, b, ctx);
-                    result.pop();
-                    self.mark_current_function_as_changed();
-                }
-                result.push(Statement::ExpressionStatement(expr_stmt));
+            Statement::ExpressionStatement(expr_stmt) => {
+                self.handle_expression_statement(expr_stmt, result, state, ctx);
             }
-            Statement::SwitchStatement(mut switch_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    let a = &mut prev_expr_stmt.expression;
-                    let b = &mut switch_stmt.discriminant;
-                    switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-                    result.pop();
-                    self.mark_current_function_as_changed();
-                }
-                result.push(Statement::SwitchStatement(switch_stmt));
+            Statement::SwitchStatement(switch_stmt) => {
+                self.handle_switch_statement(switch_stmt, result, state, ctx);
             }
-            Statement::IfStatement(mut if_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    let a = &mut prev_expr_stmt.expression;
-                    let b = &mut if_stmt.test;
-                    if_stmt.test = Self::join_sequence(a, b, ctx);
-                    result.pop();
-                    self.mark_current_function_as_changed();
+            Statement::IfStatement(if_stmt) => {
+                if self.handle_if_statement(i, stmts, if_stmt, result, state, ctx).is_break() {
+                    return ControlFlow::Break(());
                 }
-
-                if if_stmt.consequent.is_jump_statement() {
-                    // Absorb a previous if statement
-                    if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
-                        if prev_if_stmt.alternate.is_none()
-                            && Self::jump_stmts_look_the_same(
-                                &prev_if_stmt.consequent,
-                                &if_stmt.consequent,
-                            )
-                        {
-                            // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                            // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                            // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                            // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                            if_stmt.test = Self::join_with_left_associative_op(
-                                if_stmt.test.span(),
-                                LogicalOperator::Or,
-                                ctx.ast.move_expression(&mut prev_if_stmt.test),
-                                ctx.ast.move_expression(&mut if_stmt.test),
-                                ctx,
-                            );
-                            result.pop();
-                            self.mark_current_function_as_changed();
-                        }
-                    }
-
-                    if if_stmt.alternate.is_some() {
-                        // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
-                        result.push(Statement::IfStatement(if_stmt));
-                        loop {
-                            if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
-                                if if_stmt.consequent.is_jump_statement() {
-                                    if let Some(stmt) = if_stmt.alternate.take() {
-                                        result.push(stmt);
-                                        self.mark_current_function_as_changed();
-                                        continue;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                        return;
-                    }
-                }
-
-                result.push(Statement::IfStatement(if_stmt));
             }
-            Statement::ReturnStatement(mut ret_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    if let Some(argument) = &mut ret_stmt.argument {
-                        let a = &mut prev_expr_stmt.expression;
-                        *argument = Self::join_sequence(a, argument, ctx);
-                        result.pop();
-                        self.mark_current_function_as_changed();
-                    }
-                }
-                result.push(Statement::ReturnStatement(ret_stmt));
-                *is_control_flow_dead = true;
+            Statement::ReturnStatement(ret_stmt) => {
+                self.handle_return_statement(ret_stmt, result, is_control_flow_dead, state, ctx);
             }
-            Statement::ThrowStatement(mut throw_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    let a = &mut prev_expr_stmt.expression;
-                    let b = &mut throw_stmt.argument;
-                    throw_stmt.argument = Self::join_sequence(a, b, ctx);
-                    result.pop();
-                    self.mark_current_function_as_changed();
-                }
-                result.push(Statement::ThrowStatement(throw_stmt));
-                *is_control_flow_dead = true;
+            Statement::ThrowStatement(throw_stmt) => {
+                self.handle_throw_statement(throw_stmt, result, is_control_flow_dead, state, ctx);
             }
-            Statement::ForStatement(mut for_stmt) => {
-                match result.last_mut() {
-                    Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
-                        if let Some(init) = &mut for_stmt.init {
-                            if let Some(init) = init.as_expression_mut() {
-                                let a = &mut prev_expr_stmt.expression;
-                                *init = Self::join_sequence(a, init, ctx);
-                                result.pop();
-                                self.mark_current_function_as_changed();
-                            }
-                        } else {
-                            for_stmt.init = Some(ForStatementInit::from(
-                                ctx.ast.move_expression(&mut prev_expr_stmt.expression),
-                            ));
-                            result.pop();
-                            self.mark_current_function_as_changed();
-                        }
-                    }
-                    Some(Statement::VariableDeclaration(prev_var_decl)) => {
-                        if let Some(init) = &mut for_stmt.init {
-                            if prev_var_decl.kind.is_var() {
-                                if let ForStatementInit::VariableDeclaration(var_decl) = init {
-                                    if var_decl.kind.is_var() {
-                                        var_decl
-                                            .declarations
-                                            .splice(0..0, prev_var_decl.declarations.drain(..));
-                                        result.pop();
-                                        self.mark_current_function_as_changed();
-                                    }
-                                }
-                            }
-                        } else if prev_var_decl.kind.is_var() {
-                            let var_decl = ctx.ast.move_variable_declaration(prev_var_decl);
-                            for_stmt.init = Some(ForStatementInit::VariableDeclaration(
-                                ctx.ast.alloc(var_decl),
-                            ));
-                            result.pop();
-                            self.mark_current_function_as_changed();
-                        }
-                    }
-                    _ => {}
-                }
-                result.push(Statement::ForStatement(for_stmt));
+            Statement::ForStatement(for_stmt) => {
+                self.handle_for_statement(for_stmt, result, state, ctx);
             }
-            Statement::ForInStatement(mut for_in_stmt) => {
-                match result.last_mut() {
-                    // "a; for (var b in c) d" => "for (var b in a, c) d"
-                    Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
-                        // Annex B.3.5 allows initializers in non-strict mode
-                        // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                        // If there's a side-effectful initializer, we should not move the previous statement inside.
-                        let has_side_effectful_initializer = {
-                            if let ForStatementLeft::VariableDeclaration(var_decl) =
-                                &for_in_stmt.left
-                            {
-                                if var_decl.declarations.len() == 1 {
-                                    // only var can have a initializer
-                                    var_decl.kind.is_var()
-                                        && var_decl.declarations[0].init.as_ref().is_some_and(
-                                            |init| ctx.expression_may_have_side_effects(init),
-                                        )
-                                } else {
-                                    // the spec does not allow multiple declarations though
-                                    true
-                                }
-                            } else {
-                                false
-                            }
-                        };
-                        if !has_side_effectful_initializer {
-                            let a = &mut prev_expr_stmt.expression;
-                            for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
-                            result.pop();
-                            self.mark_current_function_as_changed();
-                        }
-                    }
-                    // "var a; for (a in b) c" => "for (var a in b) c"
-                    Some(Statement::VariableDeclaration(prev_var_decl)) => {
-                        if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_in_stmt.left
-                        {
-                            let prev_var_decl_no_init_item = {
-                                if prev_var_decl.kind.is_var()
-                                    && prev_var_decl.declarations.len() == 1
-                                    && prev_var_decl.declarations[0].init.is_none()
-                                {
-                                    Some(&prev_var_decl.declarations[0])
-                                } else {
-                                    None
-                                }
-                            };
-                            if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                                if let BindingPatternKind::BindingIdentifier(decl_id) =
-                                    &prev_var_decl_item.id.kind
-                                {
-                                    if id.name == decl_id.name {
-                                        for_in_stmt.left =
-                                            ForStatementLeft::VariableDeclaration(ctx.ast.alloc(
-                                                ctx.ast.move_variable_declaration(prev_var_decl),
-                                            ));
-                                        result.pop();
-                                        self.mark_current_function_as_changed();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-                result.push(Statement::ForInStatement(for_in_stmt));
+            Statement::ForInStatement(for_in_stmt) => {
+                self.handle_for_in_statement(for_in_stmt, result, state, ctx);
             }
-            Statement::ForOfStatement(mut for_of_stmt) => {
-                // "var a; for (a of b) c" => "for (var a of b) c"
-                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-                    if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
-                        let prev_var_decl_no_init_item = {
-                            if prev_var_decl.kind.is_var()
-                                && prev_var_decl.declarations.len() == 1
-                                && prev_var_decl.declarations[0].init.is_none()
-                            {
-                                Some(&prev_var_decl.declarations[0])
-                            } else {
-                                None
-                            }
-                        };
-                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                            if let BindingPatternKind::BindingIdentifier(decl_id) =
-                                &prev_var_decl_item.id.kind
-                            {
-                                if id.name == decl_id.name {
-                                    for_of_stmt.left =
-                                        ForStatementLeft::VariableDeclaration(ctx.ast.alloc(
-                                            ctx.ast.move_variable_declaration(prev_var_decl),
-                                        ));
-                                    result.pop();
-                                    self.mark_current_function_as_changed();
-                                }
-                            }
-                        }
-                    }
-                }
-                result.push(Statement::ForOfStatement(for_of_stmt));
+            Statement::ForOfStatement(for_of_stmt) => {
+                self.handle_for_of_statement(for_of_stmt, result, state, ctx);
             }
-            Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt),
+            Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt, state),
             stmt => result.push(stmt),
         }
+        ControlFlow::Continue(())
     }
 
     fn join_sequence(
@@ -475,18 +369,414 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    fn handle_variable_declaration(
+        &self,
+        mut var_decl: Box<'a, VariableDeclaration<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+    ) {
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
+            if var_decl.kind == prev_var_decl.kind {
+                var_decl.declarations.splice(0..0, prev_var_decl.declarations.drain(..));
+                result.pop();
+                state.changed = true;
+            }
+        }
+        result.push(Statement::VariableDeclaration(var_decl));
+    }
+
+    fn handle_expression_statement(
+        &self,
+        mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut expr_stmt.expression;
+            expr_stmt.expression = Self::join_sequence(a, b, ctx);
+            result.pop();
+            state.changed = true;
+        }
+        result.push(Statement::ExpressionStatement(expr_stmt));
+    }
+
+    fn handle_switch_statement(
+        &self,
+        mut switch_stmt: Box<'a, SwitchStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut switch_stmt.discriminant;
+            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
+            result.pop();
+            state.changed = true;
+        }
+        result.push(Statement::SwitchStatement(switch_stmt));
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    fn handle_if_statement(
+        &self,
+        i: usize,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        mut if_stmt: Box<'a, IfStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) -> ControlFlow<()> {
+        // Absorb a previous expression statement
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut if_stmt.test;
+            if_stmt.test = Self::join_sequence(a, b, ctx);
+            result.pop();
+            state.changed = true;
+        }
+
+        if if_stmt.consequent.is_jump_statement() {
+            // Absorb a previous if statement
+            if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
+                if prev_if_stmt.alternate.is_none()
+                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
+                {
+                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
+                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
+                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
+                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
+                    if_stmt.test = self.join_with_left_associative_op(
+                        if_stmt.test.span(),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut prev_if_stmt.test),
+                        ctx.ast.move_expression(&mut if_stmt.test),
+                        ctx,
+                    );
+                    result.pop();
+                    state.changed = true;
+                }
+            }
+
+            let mut optimize_implicit_jump = false;
+            // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
+            // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
+            if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement) {
+                if let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent {
+                    if continue_stmt.label.is_none() {
+                        optimize_implicit_jump = true;
+                    }
+                }
+            }
+
+            // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
+            // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
+            if ctx.parent().is_function_body() {
+                if let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent {
+                    if return_stmt.argument.is_none() {
+                        optimize_implicit_jump = true;
+                    }
+                }
+            }
+            if optimize_implicit_jump {
+                // Don't do this transformation if the branch condition could
+                // potentially access symbols declared later on on this scope below.
+                // If so, inverting the branch condition and nesting statements after
+                // this in a block would break that access which is a behavior change.
+                //
+                //   // This transformation is incorrect
+                //   if (a()) return; function a() {}
+                //   if (!a()) { function a() {} }
+                //
+                //   // This transformation is incorrect
+                //   if (a(() => b)) return; let b;
+                //   if (a(() => b)) { let b; }
+                //
+                let mut can_move_branch_condition_outside_scope = true;
+                if let Some(alternate) = &if_stmt.alternate {
+                    if Self::statement_cares_about_scope(alternate) {
+                        can_move_branch_condition_outside_scope = false;
+                    }
+                }
+                if let Some(stmts) = stmts.get(i + 1..) {
+                    for stmt in stmts {
+                        if Self::statement_cares_about_scope(stmt) {
+                            can_move_branch_condition_outside_scope = false;
+                            break;
+                        }
+                    }
+                }
+
+                if can_move_branch_condition_outside_scope {
+                    let mut body = ctx.ast.vec();
+                    if let Some(alternate) = if_stmt.alternate.take() {
+                        body.push(alternate);
+                    }
+                    body.extend(stmts.drain(i + 1..));
+
+                    self.minimize_statements(&mut body, state, ctx);
+                    let span =
+                        if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
+                    let test = ctx.ast.move_expression(&mut if_stmt.test);
+                    let mut test = self.minimize_not(test.span(), test, ctx);
+                    self.try_fold_expr_in_boolean_context(&mut test, ctx);
+                    let consequent = if body.len() == 1 {
+                        body.remove(0)
+                    } else {
+                        let scope_id = ScopeId::new(ctx.scoping().scopes_len() as u32);
+                        let block_stmt =
+                            ctx.ast.block_statement_with_scope_id(span, body, scope_id);
+                        Statement::BlockStatement(ctx.ast.alloc(block_stmt))
+                    };
+                    let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
+                    let if_stmt = self
+                        .try_minimize_if(&mut if_stmt, state, ctx)
+                        .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
+                    result.push(if_stmt);
+                    state.changed = true;
+                    return ControlFlow::Break(());
+                }
+            }
+
+            if if_stmt.alternate.is_some() {
+                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                result.push(Statement::IfStatement(if_stmt));
+                loop {
+                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
+                        if if_stmt.consequent.is_jump_statement() {
+                            if let Some(stmt) = if_stmt.alternate.take() {
+                                if let Statement::BlockStatement(block_stmt) = stmt {
+                                    self.handle_block(result, block_stmt, state);
+                                } else {
+                                    result.push(stmt);
+                                    state.changed = true;
+                                }
+                                continue;
+                            }
+                        }
+                    }
+                    break;
+                }
+                return ControlFlow::Continue(());
+            }
+        }
+
+        result.push(Statement::IfStatement(if_stmt));
+        ControlFlow::Continue(())
+    }
+
+    fn handle_return_statement(
+        &self,
+        mut ret_stmt: Box<'a, ReturnStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        is_control_flow_dead: &mut bool,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            if let Some(argument) = &mut ret_stmt.argument {
+                let a = &mut prev_expr_stmt.expression;
+                *argument = Self::join_sequence(a, argument, ctx);
+                result.pop();
+                state.changed = true;
+            }
+        }
+        result.push(Statement::ReturnStatement(ret_stmt));
+        *is_control_flow_dead = true;
+    }
+
+    fn handle_throw_statement(
+        &self,
+        mut throw_stmt: Box<'a, ThrowStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        is_control_flow_dead: &mut bool,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut throw_stmt.argument;
+            throw_stmt.argument = Self::join_sequence(a, b, ctx);
+            result.pop();
+            state.changed = true;
+        }
+        result.push(Statement::ThrowStatement(throw_stmt));
+        *is_control_flow_dead = true;
+    }
+
+    fn handle_for_statement(
+        &self,
+        mut for_stmt: Box<'a, ForStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        match result.last_mut() {
+            Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                if let Some(init) = &mut for_stmt.init {
+                    if let Some(init) = init.as_expression_mut() {
+                        let a = &mut prev_expr_stmt.expression;
+                        *init = Self::join_sequence(a, init, ctx);
+                        result.pop();
+                        state.changed = true;
+                    }
+                } else {
+                    for_stmt.init = Some(ForStatementInit::from(
+                        ctx.ast.move_expression(&mut prev_expr_stmt.expression),
+                    ));
+                    result.pop();
+                    state.changed = true;
+                }
+            }
+            Some(Statement::VariableDeclaration(prev_var_decl)) => {
+                if let Some(init) = &mut for_stmt.init {
+                    if prev_var_decl.kind.is_var() {
+                        if let ForStatementInit::VariableDeclaration(var_decl) = init {
+                            if var_decl.kind.is_var() {
+                                var_decl
+                                    .declarations
+                                    .splice(0..0, prev_var_decl.declarations.drain(..));
+                                result.pop();
+                                state.changed = true;
+                            }
+                        }
+                    }
+                } else if prev_var_decl.kind.is_var() {
+                    let var_decl = ctx.ast.move_variable_declaration(prev_var_decl);
+                    for_stmt.init =
+                        Some(ForStatementInit::VariableDeclaration(ctx.ast.alloc(var_decl)));
+                    result.pop();
+                    state.changed = true;
+                }
+            }
+            _ => {}
+        }
+        result.push(Statement::ForStatement(for_stmt));
+    }
+
+    fn handle_for_in_statement(
+        &self,
+        mut for_in_stmt: Box<'a, ForInStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        match result.last_mut() {
+            // "a; for (var b in c) d" => "for (var b in a, c) d"
+            Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                // Annex B.3.5 allows initializers in non-strict mode
+                // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+                // If there's a side-effectful initializer, we should not move the previous statement inside.
+                let has_side_effectful_initializer = {
+                    if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
+                        if var_decl.declarations.len() == 1 {
+                            // only var can have a initializer
+                            var_decl.kind.is_var()
+                                && var_decl.declarations[0]
+                                    .init
+                                    .as_ref()
+                                    .is_some_and(|init| init.may_have_side_effects(&ctx))
+                        } else {
+                            // the spec does not allow multiple declarations though
+                            true
+                        }
+                    } else {
+                        false
+                    }
+                };
+                if !has_side_effectful_initializer {
+                    let a = &mut prev_expr_stmt.expression;
+                    for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
+                    result.pop();
+                    state.changed = true;
+                }
+            }
+            // "var a; for (a in b) c" => "for (var a in b) c"
+            Some(Statement::VariableDeclaration(prev_var_decl)) => {
+                if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_in_stmt.left {
+                    let prev_var_decl_no_init_item = {
+                        if prev_var_decl.kind.is_var()
+                            && prev_var_decl.declarations.len() == 1
+                            && prev_var_decl.declarations[0].init.is_none()
+                        {
+                            Some(&prev_var_decl.declarations[0])
+                        } else {
+                            None
+                        }
+                    };
+                    if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
+                        if let BindingPatternKind::BindingIdentifier(decl_id) =
+                            &prev_var_decl_item.id.kind
+                        {
+                            if id.name == decl_id.name {
+                                for_in_stmt.left = ForStatementLeft::VariableDeclaration(
+                                    ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
+                                );
+                                result.pop();
+                                state.changed = true;
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        result.push(Statement::ForInStatement(for_in_stmt));
+    }
+
+    fn handle_for_of_statement(
+        &self,
+        mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        // "var a; for (a of b) c" => "for (var a of b) c"
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
+            if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
+                let prev_var_decl_no_init_item = {
+                    if prev_var_decl.kind.is_var()
+                        && prev_var_decl.declarations.len() == 1
+                        && prev_var_decl.declarations[0].init.is_none()
+                    {
+                        Some(&prev_var_decl.declarations[0])
+                    } else {
+                        None
+                    }
+                };
+                if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
+                    if let BindingPatternKind::BindingIdentifier(decl_id) =
+                        &prev_var_decl_item.id.kind
+                    {
+                        if id.name == decl_id.name {
+                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(
+                                ctx.ast.alloc(ctx.ast.move_variable_declaration(prev_var_decl)),
+                            );
+                            result.pop();
+                            state.changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        result.push(Statement::ForOfStatement(for_of_stmt));
+    }
+
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
     fn handle_block(
-        &mut self,
+        &self,
         result: &mut Vec<'a, Statement<'a>>,
         block_stmt: Box<'a, BlockStatement<'a>>,
+        state: &mut State,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
         if keep_block {
             result.push(Statement::BlockStatement(block_stmt));
         } else {
             result.append(&mut block_stmt.unbox().body);
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 

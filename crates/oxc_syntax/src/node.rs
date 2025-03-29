@@ -30,10 +30,9 @@ impl NodeId {
     ///
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
-    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
         // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-        Self(NonMaxU32::new_unchecked(idx))
+        unsafe { Self(NonMaxU32::new_unchecked(idx)) }
     }
 }
 
@@ -52,25 +51,10 @@ impl Idx for NodeId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for NodeId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type NodeId = number;
-export type NodeFlags = {
-    JSDoc: 1,
-    Class: 2,
-    HasYield: 4
-    Parameter: 8
-};
-"#;
 
 bitflags! {
     /// Contains additional information about an AST node.

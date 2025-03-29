@@ -6,9 +6,8 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
-    Context, ParserImpl,
 };
 
 #[derive(Clone, Copy)]
@@ -188,7 +187,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// # Errors
-    pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
+    pub(crate) fn expect_without_advance(&self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
             return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
@@ -283,13 +282,12 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
-            checkpoint;
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos } = checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
-        self.errors.truncate(errors_lens);
+        self.errors.truncate(errors_pos);
     }
 
     /// # Errors
@@ -350,10 +348,13 @@ impl<'a> ParserImpl<'a> {
             if kind == close || kind == Kind::Eof {
                 break;
             }
-            if let Some(e) = f(self)? {
-                list.push(e);
-            } else {
-                break;
+            match f(self)? {
+                Some(e) => {
+                    list.push(e);
+                }
+                _ => {
+                    break;
+                }
             }
         }
         self.expect(close)?;

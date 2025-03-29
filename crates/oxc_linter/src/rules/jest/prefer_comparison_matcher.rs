@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, BinaryExpression, Expression},
     AstKind,
+    ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,8 +12,8 @@ use crate::{
     fixer::RuleFixer,
     rule::Rule,
     utils::{
-        is_equality_matcher, parse_expect_jest_fn_call, KnownMemberExpressionProperty,
-        PossibleJestNode,
+        KnownMemberExpressionProperty, PossibleJestNode, is_equality_matcher,
+        parse_expect_jest_fn_call,
     },
 };
 

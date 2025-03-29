@@ -3,12 +3,12 @@ use std::{cmp::Ordering, str::Chars};
 use cow_utils::CowUtils;
 use itertools::all;
 
-use oxc_ast::{ast::ObjectPropertyKind, AstKind};
+use oxc_ast::{AstKind, ast::ObjectPropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct SortKeys(Box<SortKeysOptions>);

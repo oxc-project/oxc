@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{StringLiteral, TemplateLiteral},
     AstKind,
+    ast::{StringLiteral, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use oxc_regular_expression::{
 };
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_hex_escape_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span)

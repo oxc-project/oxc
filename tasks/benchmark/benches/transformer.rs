@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -24,6 +24,8 @@ fn bench_transformer(criterion: &mut Criterion) {
         // Even the plugins are unfinished, we still want to enable all of them
         // to track the performance changes during the development.
         transform_options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
+        transform_options.decorator.legacy = true;
+        transform_options.decorator.emit_decorator_metadata = true;
 
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
@@ -33,12 +35,12 @@ fn bench_transformer(criterion: &mut Criterion) {
                 // Create fresh AST + semantic data for each iteration
                 let ParserReturn { mut program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
-                let (symbols, scopes) = SemanticBuilder::new()
+                let scoping = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
                     .build(&program)
                     .semantic
-                    .into_symbol_table_and_scope_tree();
+                    .into_scoping();
 
                 runner.run(|| {
                     let ret = Transformer::new(
@@ -46,11 +48,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                         Path::new(&file.file_name),
                         &transform_options,
                     )
-                    .build_with_symbols_and_scopes(
-                        symbols,
-                        scopes,
-                        &mut program,
-                    );
+                    .build_with_scoping(scoping, &mut program);
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.

@@ -5,7 +5,7 @@ use quote::quote;
 
 use crate::schema::{Def, EnumDef, Schema};
 
-use super::{define_derive, Derive, StructOrEnum};
+use super::{Derive, StructOrEnum, define_derive};
 
 /// Derive for `GetAddress` trait.
 pub struct DeriveGetAddress;

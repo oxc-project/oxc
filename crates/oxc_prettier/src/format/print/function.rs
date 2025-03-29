@@ -2,11 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text,
+    Format, Prettier, array, dynamic_text,
     format::print::{function, function_parameters, property},
     group, if_break, indent,
     ir::Doc,
-    softline, text, Format, Prettier,
+    softline, text,
 };
 
 pub fn print_function<'a>(
@@ -64,10 +64,8 @@ pub fn print_function<'a>(
         parts.push(text!(" "));
         parts.push(body.format(p));
     }
-    if func.is_ts_declare_function() || func.body.is_none() {
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
-        }
+    if (func.is_ts_declare_function() || func.body.is_none()) && p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)
@@ -155,9 +153,9 @@ pub fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> 
 
     parts.push(group!(p, [parameters_doc]));
 
-    if let Some(ret_typ) = &function.return_type {
+    if let Some(ret_type) = &function.return_type {
         parts.push(text!(": "));
-        parts.push(ret_typ.type_annotation.format(p));
+        parts.push(ret_type.type_annotation.format(p));
     }
 
     if let Some(body) = &function.body {
@@ -196,8 +194,8 @@ pub fn print_return_or_throw_argument<'a>(
         );
     }
 
-    if let Some(semi) = p.semi() {
-        parts.push(semi);
+    if p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)

@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{punctuated::Punctuated, token::Comma, Attribute, Fields, Ident, Item, ItemEnum};
+use syn::{Attribute, Fields, Ident, Item, ItemEnum, punctuated::Punctuated, token::Comma};
 
 use crate::generated::get_trait_crate_and_generics;
 
@@ -63,7 +63,7 @@ fn assert_generated_derives(attrs: &[Attribute]) -> TokenStream {
 }
 
 #[inline]
-fn parse_attr(attr: &Attribute) -> impl Iterator<Item = Ident> {
+fn parse_attr(attr: &Attribute) -> impl Iterator<Item = Ident> + use<> {
     attr.parse_args_with(Punctuated::<Ident, Comma>::parse_terminated)
         .expect("`#[generate_derive]` only accepts traits as single segment paths. Found an invalid argument.")
         .into_iter()

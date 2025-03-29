@@ -68,6 +68,7 @@ impl ContentEq for Expression<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -162,6 +163,7 @@ impl ContentEq for ArrayExpressionElement<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -253,6 +255,7 @@ impl ContentEq for PropertyKey<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -280,14 +283,14 @@ impl ContentEq for TaggedTemplateExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.tag, &other.tag)
             && ContentEq::content_eq(&self.quasi, &other.quasi)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
 impl ContentEq for TemplateElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.tail, &other.tail)
-            && ContentEq::content_eq(&self.value, &other.value)
+        ContentEq::content_eq(&self.value, &other.value)
+            && ContentEq::content_eq(&self.tail, &other.tail)
     }
 }
 
@@ -338,9 +341,10 @@ impl ContentEq for PrivateFieldExpression<'_> {
 impl ContentEq for CallExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.optional, &other.optional)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -348,7 +352,8 @@ impl ContentEq for NewExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -412,6 +417,7 @@ impl ContentEq for Argument<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -448,7 +454,6 @@ impl ContentEq for BinaryExpression<'_> {
 impl ContentEq for PrivateInExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.left, &other.left)
-            && ContentEq::content_eq(&self.operator, &other.operator)
             && ContentEq::content_eq(&self.right, &other.right)
     }
 }
@@ -487,9 +492,6 @@ impl ContentEq for AssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -512,9 +514,6 @@ impl ContentEq for SimpleAssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -568,9 +567,6 @@ impl ContentEq for AssignmentTargetMaybeDefault<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -862,6 +858,7 @@ impl ContentEq for ForStatementInit<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -891,9 +888,6 @@ impl ContentEq for ForStatementLeft<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1062,6 +1056,7 @@ impl ContentEq for Function<'_> {
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -1110,6 +1105,7 @@ impl ContentEq for ArrowFunctionExpression<'_> {
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -1127,7 +1123,7 @@ impl ContentEq for Class<'_> {
             && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.super_class, &other.super_class)
-            && ContentEq::content_eq(&self.super_type_parameters, &other.super_type_parameters)
+            && ContentEq::content_eq(&self.super_type_arguments, &other.super_type_arguments)
             && ContentEq::content_eq(&self.implements, &other.implements)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
@@ -1264,7 +1260,7 @@ impl ContentEq for AccessorProperty<'_> {
 impl ContentEq for ImportExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source, &other.source)
-            && ContentEq::content_eq(&self.arguments, &other.arguments)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.phase, &other.phase)
     }
 }
@@ -1354,8 +1350,8 @@ impl ContentEq for ExportNamedDeclaration<'_> {
 
 impl ContentEq for ExportDefaultDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.declaration, &other.declaration)
-            && ContentEq::content_eq(&self.exported, &other.exported)
+        ContentEq::content_eq(&self.exported, &other.exported)
+            && ContentEq::content_eq(&self.declaration, &other.declaration)
     }
 }
 
@@ -1425,6 +1421,7 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1443,6 +1440,13 @@ impl ContentEq for ModuleExportName<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             _ => false,
         }
+    }
+}
+
+impl ContentEq for V8IntrinsicExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
     }
 }
 
@@ -1467,6 +1471,7 @@ impl ContentEq for NumericLiteral<'_> {
 impl ContentEq for StringLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
+            && ContentEq::content_eq(&self.lone_surrogates, &other.lone_surrogates)
     }
 }
 
@@ -1502,7 +1507,7 @@ impl ContentEq for JSXOpeningElement<'_> {
         ContentEq::content_eq(&self.self_closing, &other.self_closing)
             && ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -1548,7 +1553,7 @@ impl ContentEq for JSXElementName<'_> {
 impl ContentEq for JSXNamespacedName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.namespace, &other.namespace)
-            && ContentEq::content_eq(&self.property, &other.property)
+            && ContentEq::content_eq(&self.name, &other.name)
     }
 }
 
@@ -1623,6 +1628,7 @@ impl ContentEq for JSXExpression<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1763,10 +1769,8 @@ impl ContentEq for TSLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
-            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
             (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
             (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
-            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
@@ -1802,7 +1806,6 @@ impl ContentEq for TSType<'_> {
             (Self::TSLiteralType(a), Self::TSLiteralType(b)) => a.content_eq(b),
             (Self::TSMappedType(a), Self::TSMappedType(b)) => a.content_eq(b),
             (Self::TSNamedTupleMember(a), Self::TSNamedTupleMember(b)) => a.content_eq(b),
-            (Self::TSQualifiedName(a), Self::TSQualifiedName(b)) => a.content_eq(b),
             (Self::TSTemplateLiteralType(a), Self::TSTemplateLiteralType(b)) => a.content_eq(b),
             (Self::TSThisType(a), Self::TSThisType(b)) => a.content_eq(b),
             (Self::TSTupleType(a), Self::TSTupleType(b)) => a.content_eq(b),
@@ -1929,7 +1932,6 @@ impl ContentEq for TSTupleElement<'_> {
             (Self::TSLiteralType(a), Self::TSLiteralType(b)) => a.content_eq(b),
             (Self::TSMappedType(a), Self::TSMappedType(b)) => a.content_eq(b),
             (Self::TSNamedTupleMember(a), Self::TSNamedTupleMember(b)) => a.content_eq(b),
-            (Self::TSQualifiedName(a), Self::TSQualifiedName(b)) => a.content_eq(b),
             (Self::TSTemplateLiteralType(a), Self::TSTemplateLiteralType(b)) => a.content_eq(b),
             (Self::TSThisType(a), Self::TSThisType(b)) => a.content_eq(b),
             (Self::TSTupleType(a), Self::TSTupleType(b)) => a.content_eq(b),
@@ -2035,7 +2037,7 @@ impl ContentEq for TSBigIntKeyword {
 impl ContentEq for TSTypeReference<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.type_name, &other.type_name)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2097,7 +2099,7 @@ impl ContentEq for TSAccessibility {
 impl ContentEq for TSClassImplements<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2200,7 +2202,7 @@ impl ContentEq for TSIndexSignatureName<'_> {
 impl ContentEq for TSInterfaceHeritage<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2279,7 +2281,7 @@ impl ContentEq for TSInferType<'_> {
 impl ContentEq for TSTypeQuery<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expr_name, &other.expr_name)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2296,35 +2298,11 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
-            && ContentEq::content_eq(&self.parameter, &other.parameter)
+        ContentEq::content_eq(&self.argument, &other.argument)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
-    }
-}
-
-impl ContentEq for TSImportAttributes<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.attributes_keyword, &other.attributes_keyword)
-            && ContentEq::content_eq(&self.elements, &other.elements)
-    }
-}
-
-impl ContentEq for TSImportAttribute<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
-            && ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
-impl ContentEq for TSImportAttributeName<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            _ => false,
-        }
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 
@@ -2484,6 +2462,12 @@ impl ContentEq for CommentPosition {
     }
 }
 
+impl ContentEq for CommentAnnotation {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
@@ -2491,5 +2475,6 @@ impl ContentEq for Comment {
             && ContentEq::content_eq(&self.position, &other.position)
             && ContentEq::content_eq(&self.preceded_by_newline, &other.preceded_by_newline)
             && ContentEq::content_eq(&self.followed_by_newline, &other.followed_by_newline)
+            && ContentEq::content_eq(&self.annotation, &other.annotation)
     }
 }

@@ -4,6 +4,140 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- b4f3d00 oxc_semantic: Make `Scoping` cloneable (#9953) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+### Bug Fixes
+
+- 3d4c5f3 semantic: Correctly visit `IfStmt` `test` when building cfg (#9864) (camc314)
+
+### Performance
+
+- f7d078c semantic: Use `reserve_exact` instead of `reserve` to save memory in pre-reserve (#9910) (Dunqing)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- 3f808cb semantic: Speed up creating redeclarations (#9851) (overlookmotel)
+
+### Refactor
+
+- 78d0713 semantic: Remove dead code (#9852) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
+## [0.57.0] - 2025-03-11
+
+- b0d979d semantic: [**BREAKING**] Make `Scoping::references` private (#9629) (Boshen)
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Bug Fixes
+
+
+### Refactor
+
+- a43c341 semantic: Add `Scoping` to `Semantic` (#9614) (Boshen)
+
+## [0.56.5] - 2025-03-07
+
+### Refactor
+
+- 5103322 semantic: Move `IsGlobalReference` to its own file (#9592) (Boshen)
+- b7484b8 semantic: Remove `CompactStr` usage from `ClassTable` (#9591) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 803f061 minifier: Apply `__NO_SIDE_EFFECTS__` (#9533) (Boshen)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+
+### Performance
+
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+
+### Refactor
+
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+- 9c3549d traverse: Apply `clippy::redundant_pub_crate` (#9258) (Boshen)
+
+## [0.49.0] - 2025-02-10
+
+### Refactor
+
+- 85b8ea4 minifier: Extract `symbols().symbol_is_used(symbol_id)` (#8995) (sapphi-red)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Features

@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class property declarations (instance or static properties).
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
@@ -9,8 +9,8 @@ use oxc_traverse::TraverseCtx;
 use crate::common::helper_loader::Helper;
 
 use super::{
-    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
     ClassProperties,
+    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
 };
 
 // Instance properties
@@ -25,8 +25,8 @@ impl<'a> ClassProperties<'a, '_> {
     ) {
         // Get value
         let value = match prop.value.take() {
-            Some(mut value) => {
-                self.transform_instance_initializer(&mut value, ctx);
+            Some(value) => {
+                self.transform_instance_initializer(&value, ctx);
                 value
             }
             None => ctx.ast.void_0(SPAN),
@@ -47,7 +47,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// Loose: `Object.defineProperty(this, _prop, {writable: true, value: value})`
     /// Not loose: `_classPrivateFieldInitSpec(this, _prop, value)`
     fn create_private_instance_init_assignment(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -62,7 +62,7 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldInitSpec(this, _prop, value)`
     fn create_private_instance_init_assignment_not_loose(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -309,14 +309,14 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`
     fn create_private_init_assignment_loose(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Object");
+        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Object");
         let object = ctx.create_ident_expr(
             SPAN,
             Atom::from("Object"),

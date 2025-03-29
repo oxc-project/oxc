@@ -53,10 +53,7 @@ impl<T> Default for OneOrMany<T> {
 }
 
 impl<T: Serialize> Serialize for OneOrMany<T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::One(val) => val.serialize(serializer),
             Self::Many(vec) => vec.serialize(serializer),

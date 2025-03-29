@@ -30,7 +30,3 @@ Environment variables `GITHUB_TOKEN` is required when `--update` is specified.
   - Some plugins do not provide static rules list
     - https://github.com/jest-community/eslint-plugin-jest/
   - Easiest way to collect the list is just evaluating config file in JavaScript
-- Why `.cjs`?
-  - To keep dependencies as simple as possible
-  - Some plugins only provide their module as CommonJS
-  - So, CommonJS is the only way to go without bundling

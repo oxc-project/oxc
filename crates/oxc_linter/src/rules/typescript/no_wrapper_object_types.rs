@@ -1,13 +1,13 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{Expression, TSTypeName},
     AstKind,
+    ast::{Expression, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_wrapper_object_types(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span)
@@ -85,7 +85,7 @@ impl Rule for NoWrapperObjectTypes {
         };
 
         if matches!(ident_name, "BigInt" | "Boolean" | "Number" | "Object" | "String" | "Symbol") {
-            if ctx.symbols().get_reference(reference_id).symbol_id().is_some() {
+            if ctx.scoping().get_reference(reference_id).symbol_id().is_some() {
                 return;
             }
 

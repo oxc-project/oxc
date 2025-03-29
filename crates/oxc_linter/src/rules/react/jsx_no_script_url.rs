@@ -1,17 +1,16 @@
-use lazy_static::lazy_static;
-use regex::Regex;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
@@ -21,10 +20,9 @@ fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-lazy_static! {
-    static ref JS_SCRIPT_REGEX: Regex =
-        Regex::new(r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:").unwrap();
-}
+static JS_SCRIPT_REGEX: Lazy<Regex> = lazy_regex!(
+    r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:"
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoScriptUrl(Box<JsxNoScriptUrlConfig>);
@@ -135,31 +133,33 @@ impl Rule for JsxNoScriptUrl {
 
     fn from_configuration(value: Value) -> Self {
         let mut components: FxHashMap<String, Vec<String>> = FxHashMap::default();
-        if let Some(arr) = value.get(0).and_then(Value::as_array) {
-            for component in arr {
-                let name = component.get("name").and_then(Value::as_str).unwrap_or("").to_string();
-                let props =
-                    component.get("props").and_then(Value::as_array).map_or(vec![], |array| {
-                        array
-                            .iter()
-                            .map(|prop| prop.as_str().map_or(String::new(), String::from))
-                            .collect::<Vec<String>>()
-                    });
-                components.insert(name, props);
+        match value.get(0).and_then(Value::as_array) {
+            Some(arr) => {
+                for component in arr {
+                    let name =
+                        component.get("name").and_then(Value::as_str).unwrap_or("").to_string();
+                    let props =
+                        component.get("props").and_then(Value::as_array).map_or(vec![], |array| {
+                            array
+                                .iter()
+                                .map(|prop| prop.as_str().map_or(String::new(), String::from))
+                                .collect::<Vec<String>>()
+                        });
+                    components.insert(name, props);
+                }
+                Self(Box::new(JsxNoScriptUrlConfig {
+                    include_from_settings: value.get(1).is_some_and(|conf| {
+                        conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
+                    }),
+                    components,
+                }))
             }
-            Self(Box::new(JsxNoScriptUrlConfig {
-                include_from_settings: value.get(1).is_some_and(|conf| {
-                    conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
-                }),
-                components,
-            }))
-        } else {
-            Self(Box::new(JsxNoScriptUrlConfig {
+            _ => Self(Box::new(JsxNoScriptUrlConfig {
                 include_from_settings: value.get(0).is_some_and(|conf| {
                     conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
                 }),
                 components: FxHashMap::default(),
-            }))
+            })),
         }
     }
 

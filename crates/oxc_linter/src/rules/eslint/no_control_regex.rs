@@ -1,16 +1,16 @@
 use itertools::Itertools as _;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Argument, AstKind};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
-    ast::{CapturingGroup, Character, Pattern},
-    visit::{walk, Visit},
     ConstructorParser, Options,
+    ast::{CapturingGroup, Character, Pattern},
+    visit::{Visit, walk},
 };
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_control_regex_diagnostic(count: usize, regex: &str, span: Span) -> OxcDiagnostic {
     debug_assert!(count > 0);

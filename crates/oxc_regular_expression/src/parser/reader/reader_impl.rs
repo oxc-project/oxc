@@ -2,8 +2,8 @@ use oxc_diagnostics::Result;
 use oxc_span::Atom;
 
 use crate::parser::reader::string_literal_parser::{
-    ast as StringLiteralAst, parse_regexp_literal, Options as StringLiteralParserOptions,
-    Parser as StringLiteralParser,
+    Options as StringLiteralParserOptions, Parser as StringLiteralParser, ast as StringLiteralAst,
+    parse_regexp_literal,
 };
 
 pub struct Reader<'a> {

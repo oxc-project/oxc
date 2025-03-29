@@ -1,14 +1,14 @@
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn scope_diagnostic(span: Span) -> OxcDiagnostic {

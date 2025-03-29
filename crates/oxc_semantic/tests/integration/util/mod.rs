@@ -9,7 +9,7 @@ use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
-use oxc_semantic::{dot::DebugDot, Semantic, SemanticBuilder, SemanticBuilderReturn};
+use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn, dot::DebugDot};
 use oxc_span::SourceType;
 pub use symbol_tester::SymbolTester;
 

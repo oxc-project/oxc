@@ -46,6 +46,7 @@ impl<'a> Traverse<'a> for Common<'a, '_> {
         self.var_declarations.exit_program(program, ctx);
         self.top_level_statements.exit_program(program, ctx);
         self.arrow_function_converter.exit_program(program, ctx);
+        self.statement_injector.exit_program(program, ctx);
     }
 
     fn enter_statements(
