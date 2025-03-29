@@ -14,7 +14,7 @@ use super::{
 };
 use crate::write;
 
-/// A trait for writing or formatting into [FormatElement]-accepting buffers or streams.
+/// A trait for writing or formatting into `FormatElement`-accepting buffers or streams.
 pub trait Buffer<'ast> {
     /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
     ///
