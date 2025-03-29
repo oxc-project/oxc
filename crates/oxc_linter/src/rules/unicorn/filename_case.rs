@@ -34,12 +34,14 @@ pub struct FilenameCaseConfig {
     /// Whether pascal case is allowed.
     pascal_case: bool,
     ignore: Option<Regex>,
+    multi_extensions: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces specific case styles for filenames. By default, kebab case is enforced.
+    /// Enforces a consistent case style for filenames to improve project organization and maintainability.
+    /// By default, `kebab-case` is enforced, but other styles can be configured.
     ///
     /// ### Why is this bad?
     ///
@@ -77,8 +79,6 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// Use `kebabCase` as the default option.
-    ///
     /// #### case
     ///
     /// `{ type: 'kebabCase' | 'camelCase' | 'snakeCase' | 'pascalCase' }`
@@ -112,7 +112,9 @@ declare_oxc_lint!(
     ///
     /// #### ignore
     ///
-    /// `{ type: String (must be a valid regular expression) }`
+    /// `{ type: string }`
+    ///
+    /// Specifies a regular expression pattern for filenames that should be ignored by this rule.
     ///
     /// You can set the `ignore` option like this:
     /// ```json
@@ -123,6 +125,12 @@ declare_oxc_lint!(
     ///   }
     /// ]
     /// ```
+    ///
+    /// #### multipleFileExtensions
+    ///
+    /// `{ type: boolean, default: true }`
+    ///
+    /// Whether to treat additional, `.`-separated parts of a filename as parts of the extension rather than parts of the filename.
     FilenameCase,
     unicorn,
     style
@@ -130,11 +138,15 @@ declare_oxc_lint!(
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = FilenameCaseConfig::default();
+        let mut config = FilenameCaseConfig { multi_extensions: true, ..Default::default() };
 
         if let Some(value) = value.get(0) {
-            if let Some(Value::String(pat)) = value.get("ignore") {
-                config.ignore = RegexBuilder::new(pat).build().ok();
+            if let Some(Value::String(val)) = value.get("ignore") {
+                config.ignore = RegexBuilder::new(val).build().ok();
+            }
+
+            if let Some(Value::Bool(val)) = value.get("multipleFileExtensions") {
+                config.multi_extensions = *val;
             }
 
             if let Some(Value::String(s)) = value.get("case") {
@@ -176,7 +188,12 @@ impl Rule for FilenameCase {
             return;
         }
 
-        let filename = raw_filename.rsplit_once('.').map(|(before, _)| before);
+        let filename = if self.multi_extensions {
+            raw_filename.split('.').next()
+        } else {
+            raw_filename.rsplit_once('.').map(|(before, _)| before)
+        };
+
         let filename = filename.unwrap_or(raw_filename);
         let trimmed_filename = filename.trim_matches('_');
 
@@ -286,29 +303,29 @@ fn test() {
         test_case("src/foo/fooBar.js", "camelCase"),
         test_case("src/foo/bar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test.js", "camelCase"),
-        // test_case("src/foo/fooBar.test-utils.js", "camelCase"),
-        // test_case("src/foo/fooBar.test_utils.js", "camelCase"),
+        test_case("src/foo/fooBar.test-utils.js", "camelCase"),
+        test_case("src/foo/fooBar.test_utils.js", "camelCase"),
         test_case("src/foo/.test_utils.js", "camelCase"),
         test_case("src/foo/foo.js", "snakeCase"),
         test_case("src/foo/foo_bar.js", "snakeCase"),
         test_case("src/foo/foo.test.js", "snakeCase"),
         test_case("src/foo/foo_bar.test.js", "snakeCase"),
         test_case("src/foo/foo_bar.test_utils.js", "snakeCase"),
-        // test_case("src/foo/foo_bar.test-utils.js", "snakeCase"),
+        test_case("src/foo/foo_bar.test-utils.js", "snakeCase"),
         test_case("src/foo/.test-utils.js", "snakeCase"),
         test_case("src/foo/foo.js", "kebabCase"),
         test_case("src/foo/foo-bar.js", "kebabCase"),
         test_case("src/foo/foo.test.js", "kebabCase"),
         test_case("src/foo/foo-bar.test.js", "kebabCase"),
         test_case("src/foo/foo-bar.test-utils.js", "kebabCase"),
-        // test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
+        test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
         test_case("src/foo/.test_utils.js", "kebabCase"),
         test_case("src/foo/Foo.js", "pascalCase"),
         test_case("src/foo/FooBar.js", "pascalCase"),
         test_case("src/foo/Foo.test.js", "pascalCase"),
         test_case("src/foo/FooBar.test.js", "pascalCase"),
-        // test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
-        // test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
+        test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
+        test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
         test_case("src/foo/.test_utils.js", "pascalCase"),
         test_case("spec/iss47Spec.js", "camelCase"),
         test_case("spec/iss47Spec100.js", "camelCase"),
@@ -355,6 +372,14 @@ fn test() {
             "src/foo/BAR.js",
             serde_json::json!([{ "case": "kebabCase", "ignore": r"FOO.js|BAR.js" }]),
         ),
+        test_case_with_options(
+            "src/foo/fooBar.testUtils.js",
+            serde_json::json!([{ "case": "camelCase", "multipleFileExtensions": false }]),
+        ),
+        test_case_with_options(
+            "src/foo/foo_bar.test_utils.js",
+            serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
+        ),
     ];
 
     let fail = vec![
@@ -391,6 +416,14 @@ fn test() {
         test_case_with_options(
             "src/foo/FOOBAR.js",
             serde_json::json!([{ "case": "kebabCase", "ignore": r"foobar.js" }]),
+        ),
+        test_case_with_options(
+            "src/foo/fooBar.TestUtils.js",
+            serde_json::json!([{ "case": "camelCase", "multipleFileExtensions": false }]),
+        ),
+        test_case_with_options(
+            "src/foo/foo_bar.test-utils.js",
+            serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
     ];
 
