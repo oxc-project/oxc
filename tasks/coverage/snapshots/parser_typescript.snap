@@ -2,8 +2,8 @@ commit: 15392346
 
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
-Positive Passed: 6510/6531 (99.68%)
-Negative Passed: 1296/5754 (22.52%)
+Positive Passed: 6511/6531 (99.69%)
+Negative Passed: 1290/5754 (22.42%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -220,6 +220,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOnInstan
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloadViaElementAccessExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads2.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads3.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads4.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callSignaturesShouldBeResolvedBeforeSpecialization.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callWithWrongNumberOfTypeArguments.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDifferByOptionality.ts
@@ -318,6 +321,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMemberI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMergedWithInterfaceMultipleBasesNoError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOrder2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classPropertyErrorOnNameOnly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance2.ts
@@ -848,6 +852,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStrictN
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardDeclaredCommonTypes01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInClassProperties.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInEnum.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/funClodule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionAndImportNameConflict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionAndInterfaceWithSeparateErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionArgShadowing.ts
@@ -1880,6 +1885,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadInvali
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadOfParamsFromGeneratorMakesRequiredParams.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticAsIdentifier.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticClassMemberError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMemberExportAccess.ts
@@ -4557,20 +4563,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ─
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads5.ts
-
-  × Identifier `RegExp` has already been declared
-   ╭─[typescript/tests/cases/compiler/constructorOverloads5.ts:4:21]
- 3 │  declare module M {
- 4 │     export function RegExp(pattern: string): RegExp;
-   ·                     ───┬──
-   ·                        ╰── `RegExp` has already been declared here
- 5 │     export function RegExp(pattern: string, flags: string): RegExp;
- 6 │     export class RegExp {
-   ·                  ───┬──
-   ·                     ╰── It can not be redeclared here
- 7 │         constructor(pattern: string);
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 
   × 'with' statements are not allowed
@@ -5476,30 +5468,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     foo() {
     ╰────
 
-  × Identifier `y3` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:13:10]
- 12 │ // function then class
- 13 │ function y3() { } // error
-    ·          ─┬
-    ·           ╰── `y3` has already been declared here
- 14 │ class y3 { } // error
-    ·       ─┬
-    ·        ╰── It can not be redeclared here
- 15 │ 
-    ╰────
-
-  × Identifier `y3a` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:16:10]
- 15 │ 
- 16 │ function y3a() { } // error
-    ·          ─┬─
-    ·           ╰── `y3a` has already been declared here
- 17 │ class y3a { public foo() { } } // error
-    ·       ─┬─
-    ·        ╰── It can not be redeclared here
- 18 │ 
-    ╰────
-
   × Identifier `y4` has already been declared
     ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:20:10]
  19 │ // function then enum
@@ -5857,42 +5825,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·       ─
    ╰────
 
-  × Identifier `Foo` has already been declared
-   ╭─[typescript/tests/cases/compiler/callOverloads3.ts:1:10]
- 1 │ function Foo():Foo; // error
-   ·          ─┬─
-   ·           ╰── `Foo` has already been declared here
- 2 │ function Foo(s:string):Foo; // error
- 3 │ class Foo { // error
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
- 4 │     bar1() { /*WScript.Echo("bar1");*/ }
-   ╰────
-
-  × Identifier `Foo` has already been declared
-   ╭─[typescript/tests/cases/compiler/callOverloads4.ts:1:10]
- 1 │ function Foo():Foo; // error
-   ·          ─┬─
-   ·           ╰── `Foo` has already been declared here
- 2 │ function Foo(s:string):Foo; // error
- 3 │ class Foo { // error
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
- 4 │     bar1() { /*WScript.Echo("bar1");*/ }
-   ╰────
-
-  × Identifier `Foo` has already been declared
-   ╭─[typescript/tests/cases/compiler/callOverloads5.ts:1:10]
- 1 │ function Foo():Foo; // error
-   ·          ─┬─
-   ·           ╰── `Foo` has already been declared here
- 2 │ function Foo(s:string):Foo; // error
- 3 │ class Foo { // error
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
- 4 │     bar1(s:string);
-   ╰────
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/cannotInvokeNewOnErrorExpression.ts:5:22]
  4 │ }
@@ -5995,16 +5927,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     public {[name:string]:VariableDeclaration};
    ·            ─
  3 │ }
-   ╰────
-
-  × Identifier `bar` has already been declared
-   ╭─[typescript/tests/cases/compiler/classOverloadForFunction2.ts:1:10]
- 1 │ function bar(): string;
-   ·          ─┬─
-   ·           ╰── `bar` has already been declared here
- 2 │ class bar {}
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8307,20 +8229,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Identifier `foo3` has already been declared
-    ╭─[typescript/tests/cases/compiler/funClodule.ts:15:10]
- 14 │ 
- 15 │ function foo3() { }
-    ·          ──┬─
-    ·            ╰── `foo3` has already been declared here
- 16 │ module foo3 {
- 17 │      export function x(): any { }
- 18 │ }
- 19 │ class foo3 { } // Should error
-    ·       ──┬─
-    ·         ╰── It can not be redeclared here
-    ╰────
-
   × Identifier `aaaaa` has already been declared
    ╭─[typescript/tests/cases/compiler/functionAndPropertyNameConflict.ts:2:12]
  1 │ class C65 {
@@ -10004,18 +9912,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·              ┬
     ·              ╰── It can not be redeclared here
  26 │ 
-    ╰────
-
-  × Identifier `C2` has already been declared
-    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:36:14]
- 35 │ 
- 36 │     function C2() { }
-    ·              ─┬
-    ·               ╰── `C2` has already been declared here
- 37 │     class C2 { } // error
-    ·           ─┬
-    ·            ╰── It can not be redeclared here
- 38 │ 
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -12119,18 +12015,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ──────
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
-
-  × Identifier `Foo` has already been declared
-    ╭─[typescript/tests/cases/compiler/staticClassMemberError.ts:9:10]
-  8 │ // just want to make sure this one doesn't crash the compiler
-  9 │ function Foo();
-    ·          ─┬─
-    ·           ╰── `Foo` has already been declared here
- 10 │ class Foo {
-    ·       ─┬─
-    ·        ╰── It can not be redeclared here
- 11 │  static bar;
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/staticClassProps.ts:4:15]

@@ -144,7 +144,8 @@ bitflags! {
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits();
         const FunctionExcludes = Self::Value.bits() & !(Self::Function.bits() | Self::ValueModule.bits() | Self::Class.bits());
-        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !(Self::ValueModule.bits() | Self::Interface.bits());
+        const ClassExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::ValueModule.bits() | Self::Function.bits() | Self::Interface.bits());
+
         const ImportBindingExcludes = Self::Import.bits() | Self::TypeImport.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();

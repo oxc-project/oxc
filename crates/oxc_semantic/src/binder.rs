@@ -122,11 +122,7 @@ impl<'a> Binder<'a> for Class<'a> {
                 ident.span,
                 &ident.name,
                 SymbolFlags::Class,
-                if self.is_declaration() {
-                    SymbolFlags::ClassExcludes
-                } else {
-                    SymbolFlags::empty()
-                },
+                SymbolFlags::ClassExcludes,
             );
             ident.symbol_id.set(Some(symbol_id));
         }

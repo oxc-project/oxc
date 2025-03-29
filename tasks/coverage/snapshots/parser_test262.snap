@@ -2698,15 +2698,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js:24:18]
- 23 │ 
- 24 │ { async function f() {} class f {} }
-    ·                  ┬            ┬
-    ·                  │            ╰── It can not be redeclared here
-    ·                  ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js:24:18]
  23 │ 
  24 │ { async function f() {} const f = 0 }
@@ -2766,15 +2757,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
  24 │ { async function* f() {} async function* f() {} }
     ·                   ┬                      ┬
     ·                   │                      ╰── It can not be redeclared here
-    ·                   ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
-    ╭─[test262/test/language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js:24:19]
- 23 │ 
- 24 │ { async function* f() {} class f {} }
-    ·                   ┬            ┬
-    ·                   │            ╰── It can not be redeclared here
     ·                   ╰── `f` has already been declared here
     ╰────
 
@@ -3089,15 +3071,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js:23:12]
- 22 │ 
- 23 │ { function f() {} class f {} }
-    ·            ┬            ┬
-    ·            │            ╰── It can not be redeclared here
-    ·            ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
     ╭─[test262/test/language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js:23:12]
  22 │ 
  23 │ { function f() {} const f = 0 }
@@ -3157,15 +3130,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
  24 │ { function* f() {} async function* f() {} }
     ·             ┬                      ┬
     ·             │                      ╰── It can not be redeclared here
-    ·             ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
-    ╭─[test262/test/language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js:24:13]
- 23 │ 
- 24 │ { function* f() {} class f {} }
-    ·             ┬            ┬
-    ·             │            ╰── It can not be redeclared here
     ·             ╰── `f` has already been declared here
     ╰────
 
@@ -38295,15 +38259,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js:24:37]
- 23 │ 
- 24 │ switch (0) { case 1: async function f() {} default: class f {} }
-    ·                                     ┬                     ┬
-    ·                                     │                     ╰── It can not be redeclared here
-    ·                                     ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js:24:37]
  23 │ 
  24 │ switch (0) { case 1: async function f() {} default: const f = 0 }
@@ -38363,15 +38318,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
  24 │ switch (0) { case 1: async function* f() {} default: async function* f() {} }
     ·                                      ┬                               ┬
     ·                                      │                               ╰── It can not be redeclared here
-    ·                                      ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js:24:38]
- 23 │ 
- 24 │ switch (0) { case 1: async function* f() {} default: class f {} }
-    ·                                      ┬                     ┬
-    ·                                      │                     ╰── It can not be redeclared here
     ·                                      ╰── `f` has already been declared here
     ╰────
 
@@ -38601,15 +38547,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js:23:31]
- 22 │ 
- 23 │ switch (0) { case 1: function f() {} default: class f {} }
-    ·                               ┬                     ┬
-    ·                               │                     ╰── It can not be redeclared here
-    ·                               ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js:23:31]
  22 │ 
  23 │ switch (0) { case 1: function f() {} default: const f = 0 }
@@ -38669,15 +38606,6 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
  24 │ switch (0) { case 1: function* f() {} default: async function* f() {} }
     ·                                ┬                               ┬
     ·                                │                               ╰── It can not be redeclared here
-    ·                                ╰── `f` has already been declared here
-    ╰────
-
-  × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js:24:32]
- 23 │ 
- 24 │ switch (0) { case 1: function* f() {} default: class f {} }
-    ·                                ┬                     ┬
-    ·                                │                     ╰── It can not be redeclared here
     ·                                ╰── `f` has already been declared here
     ╰────
 
