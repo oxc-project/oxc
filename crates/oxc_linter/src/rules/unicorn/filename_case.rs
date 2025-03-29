@@ -132,37 +132,33 @@ impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut config = FilenameCaseConfig::default();
 
-        let Some(case_type) = value.get(0) else {
-            config.kebab_case = true;
-            return Self(Box::new(config));
-        };
-
-        if let Some(Value::String(pat)) = case_type.get("ignore") {
-            config.ignore = RegexBuilder::new(pat).build().ok();
-        }
-
-        if let Some(Value::String(s)) = case_type.get("case") {
-            match s.as_str() {
-                "camelCase" => config.camel_case = true,
-                "snakeCase" => config.snake_case = true,
-                "pascalCase" => config.pascal_case = true,
-                _ => config.kebab_case = true,
+        if let Some(value) = value.get(0) {
+            if let Some(Value::String(pat)) = value.get("ignore") {
+                config.ignore = RegexBuilder::new(pat).build().ok();
             }
 
-            return Self(Box::new(config));
-        }
-
-        if let Some(Value::Object(map)) = case_type.get("cases") {
-            for (key, value) in map {
-                match (key.as_str(), value) {
-                    ("kebabCase", Value::Bool(b)) => config.kebab_case = *b,
-                    ("camelCase", Value::Bool(b)) => config.camel_case = *b,
-                    ("snakeCase", Value::Bool(b)) => config.snake_case = *b,
-                    ("pascalCase", Value::Bool(b)) => config.pascal_case = *b,
-                    _ => (),
+            if let Some(Value::String(s)) = value.get("case") {
+                match s.as_str() {
+                    "camelCase" => config.camel_case = true,
+                    "snakeCase" => config.snake_case = true,
+                    "pascalCase" => config.pascal_case = true,
+                    _ => config.kebab_case = true,
                 }
+                return Self(Box::new(config));
             }
-            return Self(Box::new(config));
+
+            if let Some(Value::Object(map)) = value.get("cases") {
+                for (key, value) in map {
+                    match (key.as_str(), value) {
+                        ("kebabCase", Value::Bool(b)) => config.kebab_case = *b,
+                        ("camelCase", Value::Bool(b)) => config.camel_case = *b,
+                        ("snakeCase", Value::Bool(b)) => config.snake_case = *b,
+                        ("pascalCase", Value::Bool(b)) => config.pascal_case = *b,
+                        _ => (),
+                    }
+                }
+                return Self(Box::new(config));
+            }
         }
 
         config.kebab_case = true;
@@ -170,17 +166,13 @@ impl Rule for FilenameCase {
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
-        let file_path = ctx.file_path();
-        let Some(raw_filename) = file_path.file_name().and_then(|s| s.to_str()) else {
+        let Some(raw_filename) = ctx.file_path().file_name().and_then(|s| s.to_str()) else {
             return;
         };
 
-        if self.ignore.as_ref().is_some_and(|regex| regex.is_match(raw_filename)) {
-            return;
-        }
-
-        // Get valid filename
-        if raw_filename.as_bytes() == b".." || raw_filename.starts_with('.') {
+        if raw_filename.starts_with('.')
+            || self.ignore.as_ref().is_some_and(|r| r.is_match(raw_filename))
+        {
             return;
         }
 
