@@ -315,6 +315,35 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_statements(stmts, flags)
     }
 
+    /// Insert a scope between a parent and a child scope.
+    ///
+    /// For example, given the following scopes
+    /// ```ts
+    /// parentScope1: {
+    ///     childScope: { }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// and calling this function with `parentScope1` and `childScope`,
+    /// the resulting scopes will be:
+    /// ```ts
+    /// parentScope1: {
+    ///     newScope: {   
+    ///         childScope: { }
+    ///     }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// This is a shortcut for `ctx.scoping.insert_scope_between`.
+    pub fn insert_scope_between(
+        &mut self,
+        parent_id: ScopeId,
+        child_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_between(parent_id, child_id, flags)
+    }
+
     /// Remove scope for an expression from the scope chain.
     ///
     /// Delete the scope and set parent of its child scopes to its parent scope.
