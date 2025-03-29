@@ -39,6 +39,7 @@ pub struct Token {
     // Padding to fill to 16 bytes.
     // This makes copying a `Token` 1 x xmmword load & store, rather than 1 x dword + 1 x qword
     // and `Token::default()` is 1 x xmmword store, rather than 1 x dword + 1 x qword.
+    _padding: u8,
     _padding2: u16,
 }
 
