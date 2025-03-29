@@ -66,13 +66,11 @@ impl Generator for FormatterFormatGenerator {
         let output = quote! {
             #![allow(clippy::undocumented_unsafe_blocks)]
 
-            use oxc_allocator::Vec;
             use oxc_ast::{AstKind, ast::*};
-            use oxc_span::GetSpan;
 
             ///@@line_break
             use crate::{
-                formatter::{Buffer, Format, FormatContext, FormatResult, Formatter, prelude::*},
+                formatter::{Buffer, Format, FormatResult, Formatter},
                 write,
                 write::FormatWrite,
             };
