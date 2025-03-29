@@ -5,29 +5,12 @@ use crate::formatter::{
 };
 
 #[derive(Default)]
-pub struct FormatJsLeadingComment;
+pub struct FormatComment;
 
-impl FormatRule<SourceComment> for FormatJsLeadingComment {
+impl FormatRule<SourceComment> for FormatComment {
     fn fmt(&self, comment: &SourceComment, f: &mut Formatter) -> FormatResult<()> {
         // let text = comment.span.source_text(f.context().source_text());
         // write!(f, [dynamic_text(text, comment.span.start)])
         Ok(())
-    }
-}
-
-#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
-pub struct JsCommentStyle;
-
-impl CommentStyle for JsCommentStyle {
-    fn is_suppression(text: &str) -> bool {
-        todo!()
-    }
-
-    fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind {
-        todo!()
-    }
-
-    fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
-        todo!()
     }
 }
