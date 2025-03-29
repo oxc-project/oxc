@@ -5728,6 +5728,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumMember<'_> {
         TSEnumMember {
             span: CloneIn::clone_in(&self.span, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
+            computed: CloneIn::clone_in(&self.computed, allocator),
             initializer: CloneIn::clone_in(&self.initializer, allocator),
         }
     }
@@ -5736,6 +5737,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumMember<'_> {
         TSEnumMember {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             id: CloneIn::clone_in_with_semantic_ids(&self.id, allocator),
+            computed: CloneIn::clone_in_with_semantic_ids(&self.computed, allocator),
             initializer: CloneIn::clone_in_with_semantic_ids(&self.initializer, allocator),
         }
     }
@@ -5748,6 +5750,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => TSEnumMemberName::Identifier(CloneIn::clone_in(it, allocator)),
             Self::String(it) => TSEnumMemberName::String(CloneIn::clone_in(it, allocator)),
+            Self::TemplateString(it) => {
+                TSEnumMemberName::TemplateString(CloneIn::clone_in(it, allocator))
+            }
         }
     }
 
@@ -5758,6 +5763,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumMemberName<'_> {
             }
             Self::String(it) => {
                 TSEnumMemberName::String(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            }
+            Self::TemplateString(it) => {
+                TSEnumMemberName::TemplateString(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
         }
     }
