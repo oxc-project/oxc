@@ -256,6 +256,9 @@ export async function activate(context: ExtensionContext) {
       return;
     }
 
+    // update the initializationOptions for a possible restart
+    client.clientOptions.initializationOptions = { settings };
+
     if (client.isRunning()) {
       client.sendNotification('workspace/didChangeConfiguration', { settings });
     }
