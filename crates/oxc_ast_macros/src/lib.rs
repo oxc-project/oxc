@@ -73,6 +73,7 @@ pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
         plural,
         scope,
         span,
+        to_rust,
         ts,
         visit
     )

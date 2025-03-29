@@ -230,3 +230,10 @@ impl ESTree for Atom<'_> {
         ESTree::serialize(self.as_str(), serializer);
     }
 }
+
+#[cfg(feature = "serialize")]
+impl oxc_quote_types::ToRust for Atom<'_> {
+    fn to_rust(&self) -> oxc_quote_types::Node {
+        oxc_quote_types::Node::Atom(self.into_string())
+    }
+}

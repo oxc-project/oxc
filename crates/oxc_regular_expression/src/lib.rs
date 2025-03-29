@@ -13,6 +13,8 @@ mod generated {
     mod derive_content_eq;
     #[cfg(feature = "serialize")]
     mod derive_estree;
+    #[cfg(feature = "serialize")]
+    mod derive_to_rust;
 }
 
 pub mod ast;

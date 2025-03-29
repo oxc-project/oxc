@@ -2,11 +2,12 @@
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
+use oxc_quote_types::ToRust;
 use oxc_span::{ContentEq, Span};
 
 /// Indicates a line or block comment.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, ToRust)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(no_rename_variants, no_ts_def)]
 pub enum CommentKind {
@@ -19,7 +20,7 @@ pub enum CommentKind {
 
 /// Information about a comment's position relative to a token.
 #[ast]
-#[generate_derive(CloneIn, ContentEq)]
+#[generate_derive(CloneIn, ContentEq, ToRust)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CommentPosition {
     /// Comments prior to a token until another token or trailing comment.
@@ -42,7 +43,7 @@ pub enum CommentPosition {
 
 /// Annotation comment that has special meaning.
 #[ast]
-#[generate_derive(CloneIn, ContentEq)]
+#[generate_derive(CloneIn, ContentEq, ToRust)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CommentAnnotation {
     /// No Annotation
@@ -79,7 +80,7 @@ pub enum CommentAnnotation {
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, ToRust)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), field_order(kind, value, span), no_ts_def)]
 pub struct Comment {
