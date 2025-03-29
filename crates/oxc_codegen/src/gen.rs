@@ -3655,6 +3655,8 @@ impl Gen for TSModuleDeclaration<'_> {
                     }
                 }
             }
+        } else {
+            p.print_semicolon();
         }
         p.needs_semicolon = false;
     }
