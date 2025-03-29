@@ -61,6 +61,7 @@ impl ignore::ParallelVisitor for WalkCollector {
         }
     }
 }
+
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
