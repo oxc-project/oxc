@@ -586,13 +586,14 @@ impl<'a> Codegen<'a> {
         self.add_source_mapping(s.span);
 
         let quote = if self.options.minify {
-            let mut single_cost: i32 = 0;
-            let mut double_cost: i32 = 0;
-            let mut backtick_cost: i32 = 0;
+            // String length is max `u32::MAX`, so use `i64` to make overflow impossible
+            let mut single_cost: i64 = 0;
+            let mut double_cost: i64 = 0;
+            let mut backtick_cost: i64 = 0;
             let mut bytes = s.value.as_bytes().iter().peekable();
             while let Some(b) = bytes.next() {
                 match b {
-                    b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
+                    b'\n' => backtick_cost -= 1,
                     b'\'' => single_cost += 1,
                     b'"' => double_cost += 1,
                     b'`' => backtick_cost += 1,
