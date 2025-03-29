@@ -72,7 +72,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for Extensions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // the default.rs rule has good reference points for reading file names in an import.
+        // ctx.file_path().extension()
+    }
 }
 
 #[test]
