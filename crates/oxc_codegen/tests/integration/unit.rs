@@ -500,6 +500,13 @@ fn getter_setter() {
 
 #[test]
 fn string() {
+    test("let x = \"${}\";", "let x = \"${}\";\n");
+    test_minify("let x = \"${}\";", "let x=\"${}\";");
+    test("let x = '\"\"${}';", "let x = \"\\\"\\\"${}\";\n");
+    test_minify("let x = '\"\"${}';", "let x='\"\"${}';");
+    test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"''${}\";\n");
+    test_minify("let x = '\"\"\\'\\'${}';", "let x=`\"\"''\\${}`;");
+
     test_minify(
         r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,

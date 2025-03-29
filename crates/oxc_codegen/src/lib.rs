@@ -675,7 +675,7 @@ impl<'a> Codegen<'a> {
                     self.print_ascii_byte(b'`');
                 }
                 '$' => {
-                    if chars.peek() == Some(&'{') {
+                    if quote == Quote::Backtick && chars.peek() == Some(&'{') {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'$');
