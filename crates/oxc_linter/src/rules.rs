@@ -25,7 +25,6 @@ mod import {
     pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
-    pub mod no_deprecated;
     pub mod no_duplicates;
     pub mod no_dynamic_require;
     pub mod no_named_as_default;
@@ -33,7 +32,6 @@ mod import {
     pub mod no_named_default;
     pub mod no_namespace;
     pub mod no_self_import;
-    // pub mod no_unused_modules;
     pub mod no_webpack_loader_syntax;
     pub mod unambiguous;
 }
