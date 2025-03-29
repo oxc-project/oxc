@@ -1,8 +1,6 @@
-use super::prelude::*;
-use std::cell::OnceCell;
-use std::marker::PhantomData;
+use std::{cell::OnceCell, marker::PhantomData};
 
-use super::Buffer;
+use super::{Buffer, prelude::*};
 
 /// Utility trait that allows memorizing the output of a [Format].
 /// Useful to avoid re-formatting the same object twice.

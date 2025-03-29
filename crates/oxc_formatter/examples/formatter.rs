@@ -2,12 +2,11 @@
 
 use std::{fs, path::Path};
 
-use pico_args::Arguments;
-
 use oxc_allocator::Allocator;
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
+use pico_args::Arguments;
 
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();

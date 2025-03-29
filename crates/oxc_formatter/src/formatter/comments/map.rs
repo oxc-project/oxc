@@ -1,8 +1,11 @@
+use std::{
+    fmt::{Debug, Formatter},
+    iter::FusedIterator,
+    num::NonZeroU32,
+    ops::Range,
+};
+
 use rustc_hash::FxHashMap;
-use std::fmt::{Debug, Formatter};
-use std::iter::FusedIterator;
-use std::num::NonZeroU32;
-use std::ops::Range;
 
 /// An optimized multi-map implementation for storing leading, dangling, and trailing parts for a key.
 ///

@@ -79,17 +79,17 @@ mod map;
 
 #[cfg(debug_assertions)]
 use std::cell::{Cell, RefCell};
-use std::marker::PhantomData;
-use std::rc::Rc;
+use std::{marker::PhantomData, rc::Rc};
 
 use oxc_ast::Comment;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use self::map::CommentsMap;
-use super::buffer::Buffer;
-use super::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
-use super::{Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken, TextSize};
-use rustc_hash::FxHashSet;
+use super::{
+    Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken, TextSize,
+    buffer::Buffer, syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
+};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CommentKind {

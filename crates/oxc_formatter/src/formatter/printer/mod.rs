@@ -4,30 +4,32 @@ mod printer_options;
 mod queue;
 mod stack;
 
+use std::num::NonZeroU8;
+
 pub use printer_options::*;
+use unicode_width::UnicodeWidthChar;
 
 use self::call_stack::PrintIndentStack;
-use super::format_element::document::Document;
-use super::format_element::tag::Condition;
-use super::format_element::{BestFittingElement, LineMode, PrintMode};
-use super::prelude::Tag::EndFill;
-use super::prelude::tag::{DedentMode, Tag, TagKind};
-use super::printer::call_stack::{
-    CallStack, FitsCallStack, FitsIndentStack, IndentStack, PrintCallStack, PrintElementArgs,
-    StackFrame, SuffixStack,
-};
-use super::printer::line_suffixes::{LineSuffixEntry, LineSuffixes};
-use super::printer::queue::{
-    AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
-};
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    SourceMarker, TextRange,
+    SourceMarker, TextLen, TextRange, TextSize,
+    format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
+    prelude::{
+        Tag::EndFill,
+        tag::{DedentMode, Tag, TagKind},
+    },
+    printer::{
+        call_stack::{
+            CallStack, FitsCallStack, FitsIndentStack, IndentStack, PrintCallStack,
+            PrintElementArgs, StackFrame, SuffixStack,
+        },
+        line_suffixes::{LineSuffixEntry, LineSuffixes},
+        queue::{
+            AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
+        },
+    },
 };
-use super::{TextLen, TextSize};
 use crate::options::IndentStyle;
-use std::num::NonZeroU8;
-use unicode_width::UnicodeWidthChar;
 
 /// Prints the format elements into a string
 #[derive(Debug, Default)]

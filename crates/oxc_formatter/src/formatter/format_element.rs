@@ -1,16 +1,16 @@
 pub mod document;
 pub mod tag;
 
-use super::format_element::tag::{LabelId, Tag};
-use std::borrow::Cow;
-
-use super::{TagKind, TextSize, TokenText};
 // use biome_rowan::TokenText;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-use std::rc::Rc;
+use std::{borrow::Cow, ops::Deref, rc::Rc};
+
+use super::{
+    TagKind, TextSize, TokenText,
+    format_element::tag::{LabelId, Tag},
+};
 
 /// Language agnostic IR for formatting source code.
 ///

@@ -1,10 +1,10 @@
-use super::TextRange;
-use super::prelude::TagKind;
 // use biome_console::fmt::Formatter;
 // use biome_console::markup;
 // use biome_diagnostics::{Category, Diagnostic, DiagnosticTags, Location, Severity, category};
 // use biome_rowan::{SyntaxError, TextRange};
 use std::error::Error;
+
+use super::{TextRange, prelude::TagKind};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 /// Series of errors encountered during formatting

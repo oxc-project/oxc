@@ -23,7 +23,6 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
 use crate::formatter::FormatContext;
-
 pub use crate::options::*;
 
 pub struct Formatter<'a> {

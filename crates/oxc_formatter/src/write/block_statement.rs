@@ -2,12 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
+use super::FormatWrite;
 use crate::{
     formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
     write,
 };
-
-use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for BlockStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {

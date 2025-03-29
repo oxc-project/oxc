@@ -1,8 +1,7 @@
 use oxc_ast::ast::Program;
 
-use crate::options::FormatOptions;
-
 use super::{CommentStyle, Comments, SourceComment};
+use crate::options::FormatOptions;
 
 /// Context object storing data relevant when formatting an object.
 #[derive(Debug, Clone)]
