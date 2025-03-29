@@ -76,6 +76,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::Class(class) => {
             js::check_class(class, node, ctx);
+            if !is_typescript {
+                js::check_class_redeclaration(class, ctx);
+            }
             ts::check_class(class, ctx);
         }
         AstKind::Function(func) if !is_typescript => {

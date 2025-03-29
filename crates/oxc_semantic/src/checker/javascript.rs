@@ -492,6 +492,21 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     ctx.error(redeclaration(&id.name, prev.span, id.span));
 }
 
+pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &class.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    if prev.flags.contains(SymbolFlags::Function) {
+        ctx.error(redeclaration(&id.name, prev.span, id.span));
+    }
+}
+
 fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
