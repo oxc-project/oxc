@@ -2,9 +2,7 @@ use oxc_ast::ast::Program;
 
 use crate::context::JsFormatOptions;
 
-use super::{
-    CommentStyle, Comments, FormatOptions, FormatRule, SimpleFormatOptions, SourceComment,
-};
+use super::{CommentStyle, Comments, FormatOptions, SimpleFormatOptions, SourceComment};
 
 /// Context object storing data relevant when formatting an object.
 #[derive(Debug, Clone)]

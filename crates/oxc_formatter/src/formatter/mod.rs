@@ -6,11 +6,6 @@
 //! ## Formatting Traits
 //!
 //! * [Format]: Implemented by objects that can be formatted.
-//! * [FormatRule]: Rule that knows how to format an object of another type. Necessary in the situation where
-//!     it's necessary to implement [Format] on an object from another crate. This module defines the
-//!     [FormatRefWithRule] structs to pass an item with its corresponding rule.
-//! * [FormatWithRule] implemented by objects that know how to format another type. Useful for implementing
-//!     some reusable formatting logic inside of this module if the type itself doesn't implement [Format]
 //!
 //! ## Formatting Macros
 //!
@@ -875,10 +870,6 @@ impl Format<'_> for () {
     }
 }
 
-pub trait FormatRule<T> {
-    fn fmt(&self, item: &T, f: &mut Formatter) -> FormatResult<()>;
-}
-
 /// Default implementation for formatting a token
 pub struct FormatToken<C> {
     context: PhantomData<C>,
@@ -887,63 +878,6 @@ pub struct FormatToken<C> {
 impl<C> Default for FormatToken<C> {
     fn default() -> Self {
         Self { context: PhantomData }
-    }
-}
-
-pub trait FormatWithRule<'ast>: Format<'ast> {
-    type Item;
-
-    /// Returns the associated item
-    fn item(&self) -> &Self::Item;
-}
-
-/// Formats the referenced `item` with the specified rule.
-#[derive(Debug, Copy, Clone)]
-pub struct FormatRefWithRule<'b, T, R>
-where
-    R: FormatRule<T>,
-{
-    item: &'b T,
-    rule: R,
-}
-
-impl<'b, T, R> FormatRefWithRule<'b, T, R>
-where
-    R: FormatRule<T>,
-{
-    pub fn new(item: &'b T, rule: R) -> Self {
-        Self { item, rule }
-    }
-}
-
-// impl<T, R, O> FormatRefWithRule<'_, T, R>
-// where
-// R: FormatRuleWithOptions<T, Options = O>,
-// {
-// pub fn with_options(mut self, options: O) -> Self {
-// self.rule = self.rule.with_options(options);
-// self
-// }
-// }
-
-impl<T, R> FormatWithRule<'_> for FormatRefWithRule<'_, T, R>
-where
-    R: FormatRule<T>,
-{
-    type Item = T;
-
-    fn item(&self) -> &Self::Item {
-        self.item
-    }
-}
-
-impl<T, R> Format<'_> for FormatRefWithRule<'_, T, R>
-where
-    R: FormatRule<T>,
-{
-    #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        self.rule.fmt(self.item, f)
     }
 }
 

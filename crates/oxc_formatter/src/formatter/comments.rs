@@ -249,11 +249,11 @@ impl SourceComment {
     }
 }
 
-// impl<Context> Format<Context> for SourceComment {
-// fn fmt(&self, f: &mut Formatter<Context>) -> FormatResult<()> {
-// todo!()
-// }
-// }
+impl<'a> Format<'a> for SourceComment {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        Ok(())
+    }
+}
 
 /// A comment decorated with additional information about its surrounding context in the source document.
 ///
@@ -761,14 +761,14 @@ impl CommentStyle {
     }
 
     /// Returns the (kind)[CommentKind] of the comment
-    pub fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind {
+    pub fn get_comment_kind(_comment: &SyntaxTriviaPieceComments) -> CommentKind {
         todo!()
     }
 
     /// Determines the placement of `comment`.
     ///
     /// The default implementation returns [CommentPlacement::Default].
-    pub fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
+    pub fn place_comment(&self, _comment: DecoratedComment) -> CommentPlacement {
         todo!()
     }
 }

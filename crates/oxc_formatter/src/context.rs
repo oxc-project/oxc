@@ -10,8 +10,8 @@ use crate::formatter::printer::PrinterOptions;
 use crate::formatter::{
     AttributePosition, BracketSameLine, BracketSpacing, Buffer, CommentKind, CommentPlacement,
     CommentStyle, Comments, DecoratedComment, Expand, Format, FormatContext, FormatOptions,
-    FormatResult, FormatRule, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle,
-    SourceComment, SyntaxTriviaPieceComments,
+    FormatResult, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle, SourceComment,
+    SyntaxTriviaPieceComments,
 };
 use crate::write;
 
