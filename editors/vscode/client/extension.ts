@@ -41,7 +41,7 @@ const enum LspCommands {
   FixAll = 'oxc.fixAll',
 }
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
 let myStatusBarItem: StatusBarItem;
 
@@ -50,7 +50,7 @@ export async function activate(context: ExtensionContext) {
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
-      if (!client) {
+      if (client === undefined) {
         window.showErrorMessage('oxc client not found');
         return;
       }
@@ -65,7 +65,7 @@ export async function activate(context: ExtensionContext) {
 
           window.showInformationMessage('oxc server restarted.');
         } else {
-          await startClient();
+          await startClient(client);
         }
       } catch (err) {
         client.error('Restarting client failed', err, 'force');
@@ -85,13 +85,17 @@ export async function activate(context: ExtensionContext) {
     async () => {
       await configService.config.updateEnable(!configService.config.enable);
 
+      if (client === undefined) {
+        return;
+      }
+
       if (client.isRunning()) {
         if (!configService.config.enable) {
           await client.stop();
         }
       } else {
         if (configService.config.enable) {
-          await startClient();
+          await startClient(client);
         }
       }
     },
@@ -239,14 +243,18 @@ export async function activate(context: ExtensionContext) {
   });
 
   workspace.onDidDeleteFiles((event) => {
-    event.files.forEach((fileUri) => {
-      client.diagnostics?.delete(fileUri);
-    });
+    for (const fileUri of event.files) {
+      client?.diagnostics?.delete(fileUri);
+    }
   });
 
   configService.onConfigChange = async function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
     updateStatsBar(this.config.enable);
+
+    if (client === undefined) {
+      return;
+    }
 
     if (client.isRunning()) {
       client.sendNotification('workspace/didChangeConfiguration', { settings });
@@ -286,12 +294,15 @@ export async function activate(context: ExtensionContext) {
   updateStatsBar(configService.config.enable);
 
   if (configService.config.enable) {
-    await startClient();
+    await startClient(client);
   }
 }
 
 // Starts the client, it does not check if it is already started
-async function startClient() {
+async function startClient(client: LanguageClient | undefined) {
+  if (client === undefined) {
+    return;
+  }
   await client.start();
   // ToDo: refactor it on the server side.
   // Do not touch watchers on client side, just simplify the start of the server.
