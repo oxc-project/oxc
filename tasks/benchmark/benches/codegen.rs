@@ -27,6 +27,18 @@ fn bench_codegen(criterion: &mut Criterion) {
         });
         group.finish();
 
+        // Codegen minified
+        let mut group = criterion.benchmark_group("codegen_minify");
+        group.bench_function(id.clone(), |b| {
+            b.iter_with_large_drop(|| {
+                CodeGenerator::new()
+                    .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+                    .build(&program)
+                    .map
+            });
+        });
+        group.finish();
+
         // Codegen sourcemap
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
