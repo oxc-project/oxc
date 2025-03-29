@@ -201,9 +201,7 @@ export async function activate(context: ExtensionContext) {
     })),
     synchronize: {
       // Notify the server about file config changes in the workspace
-      fileEvents: configService.config.configPath !== null
-        ? createFileEventWatchers(configService.config.configPath)
-        : undefined,
+      fileEvents: createFileEventWatchers(configService.config.configPath),
     },
     initializationOptions: {
       settings: configService.config.toLanguageServerConfig(),
@@ -256,9 +254,7 @@ export async function activate(context: ExtensionContext) {
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = configService.config.configPath !== null
-        ? createFileEventWatchers(configService.config.configPath)
-        : undefined;
+      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
 
       if (client.isRunning()) {
         client.restart().then(async () => {
@@ -311,10 +307,12 @@ export function deactivate(): Thenable<void> | undefined {
   return client.stop();
 }
 
-function createFileEventWatchers(configRelativePath: string) {
-  const workspaceConfigPatterns = (workspace.workspaceFolders || []).map((workspaceFolder) =>
-    new RelativePattern(workspaceFolder, configRelativePath)
-  );
+function createFileEventWatchers(configRelativePath: string | null) {
+  const workspaceConfigPatterns = configRelativePath !== null
+    ? (workspace.workspaceFolders || []).map((workspaceFolder) =>
+      new RelativePattern(workspaceFolder, configRelativePath)
+    )
+    : [];
 
   return [
     workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
