@@ -751,20 +751,25 @@ impl CommentPlacement {
 }
 
 /// Defines how to format comments for a specific [Language].
-pub trait CommentStyle: Default {
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
+pub struct CommentStyle;
+
+impl CommentStyle {
     /// Returns `true` if a comment with the given `text` is a `biome-ignore format:` suppression comment.
-    fn is_suppression(_text: &str) -> bool {
-        false
+    pub fn is_suppression(_text: &str) -> bool {
+        todo!()
     }
 
     /// Returns the (kind)[CommentKind] of the comment
-    fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind;
+    pub fn get_comment_kind(comment: &SyntaxTriviaPieceComments) -> CommentKind {
+        todo!()
+    }
 
     /// Determines the placement of `comment`.
     ///
     /// The default implementation returns [CommentPlacement::Default].
-    fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
-        CommentPlacement::Default(comment)
+    pub fn place_comment(&self, comment: DecoratedComment) -> CommentPlacement {
+        todo!()
     }
 }
 

@@ -8,7 +8,7 @@ use super::{
     comments::{CommentKind, CommentStyle},
 };
 use super::{SyntaxNode, SyntaxToken, TextSize};
-use crate::comment::FormatJsLeadingComment;
+use crate::comment::FormatComment;
 use crate::write;
 // use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
 #[cfg(debug_assertions)]
@@ -68,7 +68,7 @@ impl Format<'_> for FormatLeadingComments<'_> {
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
+            let format_comment = FormatRefWithRule::new(comment, FormatComment);
             write!(f, [format_comment])?;
 
             match comment.kind() {
@@ -131,7 +131,7 @@ impl Format<'_> for FormatTrailingComments<'_> {
         for comment in trailing_comments {
             total_lines_before += comment.lines_before();
 
-            let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
+            let format_comment = FormatRefWithRule::new(comment, FormatComment);
 
             let should_nestle = previous_comment.is_some_and(|previous_comment| {
                 should_nestle_adjacent_doc_comments(previous_comment, comment)
@@ -293,7 +293,7 @@ impl Format<'_> for FormatDanglingComments<'_> {
             let mut previous_comment: Option<&SourceComment> = None;
 
             for comment in dangling_comments {
-                let format_comment = FormatRefWithRule::new(comment, FormatJsLeadingComment);
+                let format_comment = FormatRefWithRule::new(comment, FormatComment);
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
                     should_nestle_adjacent_doc_comments(previous_comment, comment)
