@@ -27,6 +27,7 @@ pub mod string;
 mod take_in;
 mod vec;
 mod vec2;
+mod vec_builder;
 
 pub use address::{Address, GetAddress};
 pub use allocator::Allocator;
@@ -37,3 +38,4 @@ pub use hash_map::HashMap;
 pub use string::String;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+pub use vec_builder::{VEC_BUILDER_STACK_CAPACITY, VecBuilder};

@@ -44,7 +44,7 @@ unsafe impl<T> Sync for Vec<'_, T> {}
 impl<'alloc, T> Vec<'alloc, T> {
     /// Const assertion that `T` is not `Drop`.
     /// Must be referenced in all methods which create a `Vec`.
-    const ASSERT_T_IS_NOT_DROP: () =
+    pub(crate) const ASSERT_T_IS_NOT_DROP: () =
         assert!(!std::mem::needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
 
     /// Constructs a new, empty `Vec<T>`.
@@ -162,6 +162,25 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
+        Self(vec)
+    }
+
+    /// TODO: Comment
+    ///
+    /// # SAFETY
+    ///
+    /// TODO
+    #[inline]
+    pub unsafe fn from_raw_parts_in(
+        ptr: *mut T,
+        length: usize,
+        capacity: usize,
+        allocator: &'alloc Allocator,
+    ) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        // SAFETY: TODO
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, length, capacity, allocator.bump()) };
         Self(vec)
     }
 }
