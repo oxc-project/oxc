@@ -157,9 +157,6 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if self.r#type.is_typescript_syntax() {
-            return;
-        }
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.scoping.create_symbol(

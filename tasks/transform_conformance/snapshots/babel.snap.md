@@ -1417,7 +1417,7 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["E", "M", "N", "m", "x"]
+after transform: ScopeId(0): ["E", "M", "N", "f", "m", "x"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
@@ -1778,11 +1778,23 @@ rebuilt        : SymbolId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "f":
+after transform: SymbolId(0): Span { start: 9, end: 10 }
+rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
+Symbol redeclarations mismatch for "f":
+after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
+rebuilt        : SymbolId(0): []
 
 * function/overloads-exports/input.mjs
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "f":
+after transform: SymbolId(0): Span { start: 9, end: 10 }
+rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
+Symbol redeclarations mismatch for "f":
+after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
+rebuilt        : SymbolId(0): []
 
 * imports/elide-preact/input.ts
 Bindings mismatch:
@@ -2198,7 +2210,7 @@ rebuilt        : SymbolId(101): Span { start: 0, end: 0 }
 
 * namespace/declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(1): ["B", "_N", "e", "v"]
+after transform: ScopeId(1): ["B", "_N", "e", "f", "v"]
 rebuilt        : ScopeId(1): ["_N"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
