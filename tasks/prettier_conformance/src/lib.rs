@@ -12,7 +12,7 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -208,13 +208,13 @@ fn test_snapshots(
         let mut failed_count = 0;
         let mut total_diff_ratio = 0.0;
         // Check every combination of options!
-        for (prettier_options, snapshot_options) in &spec_calls {
+        for (format_options, snapshot_options) in &spec_calls {
             // Single snapshot file contains multiple test cases, so need to find the right one
             let expected = find_output_from_snapshots(
                 &snapshots,
                 path.file_name().unwrap().to_string_lossy().as_ref(),
                 snapshot_options,
-                prettier_options.print_width,
+                format_options.line_width.value() as usize,
             )
             .unwrap();
 
@@ -222,7 +222,7 @@ fn test_snapshots(
                 &run_oxc_formatter(
                     &source_text,
                     SourceType::from_path(path).unwrap(),
-                    *prettier_options,
+                    format_options.clone(),
                 ),
                 expected.contains("LF>") || expected.contains("<CR"),
             );
@@ -237,7 +237,7 @@ fn test_snapshots(
 
             if has_debug_filter {
                 let print_with_border = |title: &str| {
-                    let w = prettier_options.print_width;
+                    let w = format_options.line_width.value() as usize;
                     println!("--- {title} {}", "-".repeat(w - title.len() - 5));
                 };
 
@@ -383,7 +383,7 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
 fn run_oxc_formatter(
     source_text: &str,
     source_type: SourceType,
-    formatter_options: FormatterOptions,
+    formatter_options: FormatOptions,
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)

@@ -25,7 +25,7 @@ use oxc::{
     syntax::reference::Reference,
     transformer::{TransformOptions, Transformer},
 };
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc_formatter::{FormatOptions, Formatter};
 use oxc_index::Idx;
 use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
@@ -287,7 +287,7 @@ impl Oxc {
                 .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
                 .parse();
 
-            let mut formatter = Formatter::new(&allocator, FormatterOptions::default());
+            let mut formatter = Formatter::new(&allocator, FormatOptions::default());
 
             if run_options.formatter_format.unwrap_or_default() {
                 self.formatter_formatted_text = formatter.build(&ret.program);
@@ -298,7 +298,7 @@ impl Oxc {
             // self.formatter_ir_text = {
             // let ret =
             // Parser::new(&allocator, &formatter_doc, SourceType::default()).parse();
-            // Formatter::new(&allocator, FormatterOptions::default()).build(&ret.program)
+            // Formatter::new(&allocator, FormatOptions::default()).build(&ret.program)
             // };
             // }
         }

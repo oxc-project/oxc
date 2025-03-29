@@ -5,7 +5,7 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc_formatter::{FormatOptions, Formatter};
 
 use crate::{
     babel::BabelCase,
@@ -17,13 +17,13 @@ use crate::{
 
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let options = FormatterOptions::default();
+    let options = FormatOptions::default();
 
     let allocator = Allocator::default();
     let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ParserReturn { program, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
-    let source_text1 = Formatter::new(&allocator, options).build(&program);
+    let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
     let allocator = Allocator::default();
     let ParserReturn { program, .. } =

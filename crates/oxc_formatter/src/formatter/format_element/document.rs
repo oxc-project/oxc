@@ -4,11 +4,11 @@ use super::super::format_element::tag::DedentMode;
 use super::super::prelude::tag::GroupMode;
 use super::super::prelude::*;
 use super::super::{
-    BufferExtensions, Format, FormatContext, FormatElement, FormatOptions, FormatResult, Formatter,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
+    BufferExtensions, Format, FormatContext, FormatElement, FormatResult, Formatter, PrinterOptions,
 };
 use super::tag::Tag;
-use crate::{format, write};
+use crate::options::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use crate::{FormatOptions, format, write};
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
@@ -180,36 +180,6 @@ impl std::fmt::Display for Document {
 // // None
 // // }
 // }
-
-#[derive(Debug, Clone, Default)]
-struct IrFormatOptions;
-
-impl FormatOptions for IrFormatOptions {
-    fn indent_style(&self) -> IndentStyle {
-        IndentStyle::Space
-    }
-
-    fn indent_width(&self) -> IndentWidth {
-        IndentWidth::default()
-    }
-
-    fn line_width(&self) -> LineWidth {
-        LineWidth::default()
-    }
-
-    fn line_ending(&self) -> LineEnding {
-        LineEnding::Lf
-    }
-
-    fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions {
-            indent_width: self.indent_width(),
-            print_width: self.line_width().into(),
-            line_ending: LineEnding::Lf,
-            indent_style: IndentStyle::Space,
-        }
-    }
-}
 
 // impl Format<IrFormatContext> for &[FormatElement] {
 // fn fmt(&self, f: &mut Formatter<IrFormatContext>) -> FormatResult<()> {

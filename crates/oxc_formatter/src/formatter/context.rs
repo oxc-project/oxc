@@ -1,13 +1,13 @@
 use oxc_ast::ast::Program;
 
-use crate::context::JsFormatOptions;
+use crate::options::FormatOptions;
 
-use super::{CommentStyle, Comments, FormatOptions, SimpleFormatOptions, SourceComment};
+use super::{CommentStyle, Comments, SourceComment};
 
 /// Context object storing data relevant when formatting an object.
 #[derive(Debug, Clone)]
 pub struct FormatContext<'ast> {
-    options: JsFormatOptions,
+    options: FormatOptions,
 
     source_text: &'ast str,
 
@@ -15,7 +15,7 @@ pub struct FormatContext<'ast> {
 }
 
 impl<'ast> FormatContext<'ast> {
-    pub fn new(program: &'ast Program<'ast>, options: JsFormatOptions) -> Self {
+    pub fn new(program: &'ast Program<'ast>, options: FormatOptions) -> Self {
         Self {
             options,
             source_text: program.source_text,
@@ -24,7 +24,7 @@ impl<'ast> FormatContext<'ast> {
     }
 
     /// Returns the formatting options
-    pub fn options(&self) -> &JsFormatOptions {
+    pub fn options(&self) -> &FormatOptions {
         &self.options
     }
 

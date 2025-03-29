@@ -1,6 +1,6 @@
 use oxc_ast::AstKind;
 
-use crate::context::JsFormatOptions;
+use crate::options::FormatOptions;
 
 use super::buffer::BufferSnapshot;
 use super::builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line};
@@ -25,7 +25,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     /// Returns the format options
-    pub fn options(&self) -> &JsFormatOptions {
+    pub fn options(&self) -> &FormatOptions {
         self.context().options()
     }
 

@@ -42,6 +42,8 @@ pub trait Buffer<'ast> {
     ///
     /// This method should generally not be invoked manually, but rather through the [`write!`] macro itself.
     ///
+    /// # Errors
+    ///
     /// # Examples
     ///
     /// ```
