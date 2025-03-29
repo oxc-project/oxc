@@ -578,7 +578,7 @@ impl<'a> Codegen<'a> {
 
     fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
-        if s.lossy {
+        if s.lone_surrogates {
             self.print_str(s.raw.unwrap().as_str());
             return;
         }

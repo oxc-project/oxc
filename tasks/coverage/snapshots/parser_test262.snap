@@ -24775,7 +24775,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/function/S14_A5
  24 │ 
     ╰────
 
-  × Duplicated export '�'
+  × Duplicated export '�d83c'
     ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
  20 │ // 🌙 is '\uD83C\uDF19'
  21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";

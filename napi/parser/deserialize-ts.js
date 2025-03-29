@@ -1126,14 +1126,16 @@ function deserializeNumericLiteral(pos) {
 }
 
 function deserializeStringLiteral(pos) {
-  const raw = deserializeOptionStr(pos + 24);
-  const lossy = deserializeBool(pos + 40);
+  let value = deserializeStr(pos + 8);
+  if (deserializeBool(pos + 40)) {
+    value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+  }
   return {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: (lossy && raw !== null) ? (0, eval)(raw) : deserializeStr(pos + 8),
-    raw,
+    value,
+    raw: deserializeOptionStr(pos + 24),
   };
 }
 

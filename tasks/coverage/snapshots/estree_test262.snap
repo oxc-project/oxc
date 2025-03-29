@@ -2,37 +2,13 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44047/44047 (100.00%)
-Positive Passed: 44014/44047 (99.93%)
-Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-string-wrapper.js
-Mismatch: tasks/coverage/test262/test/built-ins/JSON/stringify/value-string-escape-unicode.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/dotall/with-dotall-unicode.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/dotall/with-dotall.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/dotall/without-dotall-unicode.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/dotall/without-dotall.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/escape/escaped-surrogates.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/add-dotAll.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/remove-dotAll.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/at/returns-code-unit.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/codePointAt/return-first-code-unit.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/codePointAt/return-single-code-unit.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/isWellFormed/returns-boolean.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/match/regexp-prototype-match-v-u-flag.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/padEnd/normal-operation.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/padStart/normal-operation.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/toWellFormed/returns-well-formed-string.js
-Mismatch: tasks/coverage/test262/test/built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js
-Mismatch: tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-non-finite-numbers.js
+Positive Passed: 44038/44047 (99.98%)
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/target-cover-id.js
-Mismatch: tasks/coverage/test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js
-Mismatch: tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-cover.js
