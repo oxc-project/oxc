@@ -58,6 +58,7 @@ jobs:
           - semantic
           - minifier
           - codegen
+          - formatter
 
     steps:
       - name: Checkout Branch
