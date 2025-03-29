@@ -1,7 +1,6 @@
 // use biome_rowan::{Language, SyntaxToken};
 // use biome_string_case::StrLikeExtension;
-use std::borrow::Cow;
-use std::num::NonZeroUsize;
+use std::{borrow::Cow, num::NonZeroUsize};
 
 use super::super::SyntaxToken;
 

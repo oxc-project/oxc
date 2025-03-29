@@ -1,16 +1,19 @@
-use std::marker::PhantomData;
-use std::{fmt, num::ParseIntError, rc::Rc, str::FromStr};
+use std::{fmt, marker::PhantomData, num::ParseIntError, rc::Rc, str::FromStr};
 
 use oxc_allocator::Vec;
 use oxc_ast::{Comment, ast::Program};
 
-use crate::formatter::formatter::Formatter;
-use crate::formatter::prelude::{dynamic_text, if_group_breaks, text};
-use crate::formatter::printer::PrinterOptions;
 pub use crate::formatter::{
     Buffer, Format, FormatResult, SourceComment, SyntaxTriviaPieceComments, token::string::Quote,
 };
-use crate::write;
+use crate::{
+    formatter::{
+        formatter::Formatter,
+        prelude::{dynamic_text, if_group_breaks, text},
+        printer::PrinterOptions,
+    },
+    write,
+};
 
 // TODO: rename these to align with prettier
 #[derive(Debug, Default, Clone)]
@@ -213,9 +216,8 @@ impl fmt::Display for LineEnding {
 pub struct IndentWidth(u8);
 
 impl IndentWidth {
-    pub const MIN: u8 = 0;
-
     pub const MAX: u8 = 24;
+    pub const MIN: u8 = 0;
 
     /// Return the numeric value for this [IndentWidth]
     pub fn value(&self) -> u8 {
@@ -271,10 +273,10 @@ impl fmt::Debug for IndentWidth {
 pub struct LineWidth(u16);
 
 impl LineWidth {
-    /// Minimum allowed value for a valid [LineWidth]
-    pub const MIN: u16 = 1;
     /// Maximum allowed value for a valid [LineWidth]
     pub const MAX: u16 = 320;
+    /// Minimum allowed value for a valid [LineWidth]
+    pub const MIN: u16 = 1;
 
     /// Return the numeric value for this [LineWidth]
     pub fn value(&self) -> u16 {
@@ -672,9 +674,11 @@ impl TrailingCommas {
     pub const fn is_es5(&self) -> bool {
         matches!(self, TrailingCommas::Es5)
     }
+
     pub const fn is_all(&self) -> bool {
         matches!(self, TrailingCommas::All)
     }
+
     pub const fn is_none(&self) -> bool {
         matches!(self, TrailingCommas::None)
     }
@@ -827,6 +831,7 @@ pub enum Expand {
 
 impl FromStr for Expand {
     type Err = String;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "auto" => Ok(Self::Auto),

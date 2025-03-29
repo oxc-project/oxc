@@ -1,14 +1,13 @@
 use oxc_ast::AstKind;
 
-use crate::options::FormatOptions;
-
-use super::buffer::BufferSnapshot;
-use super::builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line};
-use super::prelude::*;
 use super::{
     Arguments, Buffer, Comments, FormatContext, FormatState, FormatStateSnapshot, GroupId,
     VecBuffer,
+    buffer::BufferSnapshot,
+    builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
+    prelude::*,
 };
+use crate::options::FormatOptions;
 
 /// Handles the formatting of a CST and stores the context how the CST should be formatted (user preferences).
 ///

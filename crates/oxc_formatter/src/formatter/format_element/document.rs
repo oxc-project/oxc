@@ -1,16 +1,22 @@
 #![expect(clippy::mutable_key_type)]
-use super::super::TextSize;
-use super::super::format_element::tag::DedentMode;
-use super::super::prelude::tag::GroupMode;
-use super::super::prelude::*;
-use super::super::{
-    BufferExtensions, Format, FormatContext, FormatElement, FormatResult, Formatter, PrinterOptions,
-};
-use super::tag::Tag;
-use crate::options::{IndentStyle, IndentWidth, LineEnding, LineWidth};
-use crate::{FormatOptions, format, write};
-use rustc_hash::FxHashMap;
 use std::ops::Deref;
+
+use rustc_hash::FxHashMap;
+
+use super::{
+    super::{
+        BufferExtensions, Format, FormatContext, FormatElement, FormatResult, Formatter,
+        PrinterOptions, TextSize,
+        format_element::tag::DedentMode,
+        prelude::{tag::GroupMode, *},
+    },
+    tag::Tag,
+};
+use crate::{
+    FormatOptions, format,
+    options::{IndentStyle, IndentWidth, LineEnding, LineWidth},
+    write,
+};
 
 /// A formatted document.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]

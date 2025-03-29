@@ -1,20 +1,19 @@
 //! Provides builders for comments and skipped token trivia.
 
-use super::comments::{SourceComment, is_doc_comment};
-use super::format_element::tag::VerbatimKind;
-use super::prelude::*;
-use super::{
-    Argument, Arguments, FormatContext, GroupId, TextRange,
-    comments::{CommentKind, CommentStyle},
-};
-use super::{SyntaxNode, SyntaxToken, TextSize};
-use crate::write;
 // use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
 #[cfg(debug_assertions)]
 use std::cell::Cell;
 use std::ops::Sub;
 
 use oxc_span::Span;
+
+use super::{
+    Argument, Arguments, FormatContext, GroupId, SyntaxNode, SyntaxToken, TextRange, TextSize,
+    comments::{CommentKind, CommentStyle, SourceComment, is_doc_comment},
+    format_element::tag::VerbatimKind,
+    prelude::*,
+};
+use crate::write;
 
 /// Returns true if:
 /// - `next_comment` is Some, and

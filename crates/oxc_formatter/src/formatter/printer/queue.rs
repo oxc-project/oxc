@@ -1,11 +1,10 @@
-use super::super::format_element::tag::TagKind;
-use super::super::prelude::Tag;
-use super::stack::{Stack, StackedStack};
-use super::{FormatElement, PrintResult};
-use super::{invalid_end_tag, invalid_start_tag};
-use std::fmt::Debug;
-use std::iter::FusedIterator;
-use std::marker::PhantomData;
+use std::{fmt::Debug, iter::FusedIterator, marker::PhantomData};
+
+use super::{
+    super::{format_element::tag::TagKind, prelude::Tag},
+    FormatElement, PrintResult, invalid_end_tag, invalid_start_tag,
+    stack::{Stack, StackedStack},
+};
 
 /// Queue of [FormatElement]s.
 pub(super) trait Queue<'a> {

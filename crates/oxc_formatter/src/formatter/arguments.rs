@@ -1,7 +1,6 @@
-use super::FormatResult;
-use super::{Buffer, Format, Formatter};
-use std::ffi::c_void;
-use std::marker::PhantomData;
+use std::{ffi::c_void, marker::PhantomData};
+
+use super::{Buffer, Format, FormatResult, Formatter};
 
 /// Mono-morphed type to format an object. Used by the [crate::format!], [crate::format_args!], and
 /// [crate::write!] macros.

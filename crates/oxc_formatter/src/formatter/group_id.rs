@@ -1,5 +1,7 @@
-use std::num::NonZeroU32;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::{
+    num::NonZeroU32,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 #[cfg(debug_assertions)]
 mod debug {

@@ -1,11 +1,14 @@
-use super::super::format_element::PrintMode;
-use super::super::format_element::tag::TagKind;
-use super::super::printer::Indention;
-use super::super::printer::stack::{Stack, StackedStack};
-use super::super::{InvalidDocumentError, PrintError, PrintResult};
+use std::{fmt::Debug, num::NonZeroU8};
+
+use super::super::{
+    InvalidDocumentError, PrintError, PrintResult,
+    format_element::{PrintMode, tag::TagKind},
+    printer::{
+        Indention,
+        stack::{Stack, StackedStack},
+    },
+};
 use crate::options::IndentStyle;
-use std::fmt::Debug;
-use std::num::NonZeroU8;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(super) enum StackFrameKind {
@@ -248,13 +251,14 @@ impl PrintIndentStack {
             suffix_indentions: Vec::new(),
         }
     }
+
     pub fn flush_suffixes(&mut self) {
         self.indentions.extend(self.suffix_indentions.drain(..).rev());
     }
 }
 impl IndentStack for PrintIndentStack {
-    type Stack = Vec<Indention>;
     type HistoryStack = Vec<Indention>;
+    type Stack = Vec<Indention>;
 
     fn current_stack(&self) -> &Self::Stack {
         &self.indentions
@@ -263,12 +267,14 @@ impl IndentStack for PrintIndentStack {
     fn current_stack_mut(&mut self) -> &mut Self::Stack {
         &mut self.indentions
     }
+
     fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
         &mut self.history_indentions
     }
 }
 impl SuffixStack for PrintIndentStack {
     type SuffixStack = Vec<Indention>;
+
     fn suffix_stack_mut(&mut self) -> &mut Self::SuffixStack {
         &mut self.suffix_indentions
     }
@@ -296,8 +302,8 @@ impl<'print> FitsIndentStack<'print> {
 }
 
 impl<'a> IndentStack for FitsIndentStack<'a> {
-    type Stack = StackedStack<'a, Indention>;
     type HistoryStack = StackedStack<'a, Indention>;
+    type Stack = StackedStack<'a, Indention>;
 
     fn current_stack(&self) -> &Self::Stack {
         &self.indentions
@@ -306,6 +312,7 @@ impl<'a> IndentStack for FitsIndentStack<'a> {
     fn current_stack_mut(&mut self) -> &mut Self::Stack {
         &mut self.indentions
     }
+
     fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
         &mut self.history_indentions
     }

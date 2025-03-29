@@ -1,14 +1,18 @@
 #![expect(clippy::mutable_key_type)]
-use super::format_element::Interned;
-use super::prelude::tag::Condition;
-use super::prelude::{LineMode, PrintMode, Tag};
-use super::{Arguments, FormatElement};
-use super::{Format, FormatResult, FormatState};
-use crate::write;
+use std::{
+    any::{Any, TypeId},
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+};
+
 use rustc_hash::FxHashMap;
-use std::any::{Any, TypeId};
-use std::fmt::Debug;
-use std::ops::{Deref, DerefMut};
+
+use super::{
+    Arguments, Format, FormatElement, FormatResult, FormatState,
+    format_element::Interned,
+    prelude::{LineMode, PrintMode, Tag, tag::Condition},
+};
+use crate::write;
 
 /// A trait for writing or formatting into [FormatElement]-accepting buffers or streams.
 pub trait Buffer<'ast> {

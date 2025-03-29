@@ -46,32 +46,15 @@ mod token_text;
 pub mod trivia;
 mod verbatim;
 
-pub use self::arguments::{Argument, Arguments};
-pub use self::formatter::Formatter;
-use self::group_id::UniqueGroupIdBuilder;
-use self::prelude::TagKind;
-pub use self::state::{FormatState, FormatStateSnapshot};
-pub use self::syntax_trivia_piece_comments::SyntaxTriviaPieceComments;
-use std::fmt;
-use std::fmt::{Debug, Display};
-use std::marker::PhantomData;
-// use self::builders::syntax_token_cow_slice;
-pub use self::comments::{
-    CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment, SourceComment,
+// use std::marker::PhantomData;
+use std::num::ParseIntError;
+use std::{
+    fmt,
+    fmt::{Debug, Display},
+    marker::PhantomData,
+    str::FromStr,
 };
-pub use self::context::FormatContext;
-pub use self::diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
-use self::format_element::document::Document;
-// #[cfg(debug_assertions)]
-// use self::printed_tokens::PrintedTokens;
-use self::printer::{Printer, PrinterOptions};
-pub use self::syntax_element_key::SyntaxElementKey;
-pub use self::syntax_node::SyntaxNode;
-pub use self::syntax_token::SyntaxToken;
-pub use self::text_len::TextLen;
-pub use self::text_range::TextRange;
-pub use self::text_size::TextSize;
-pub use self::token_text::TokenText;
+
 // use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
 pub use buffer::{
     Buffer, BufferExtensions, BufferSnapshot, Inspect, PreambleBuffer, RemoveSoftLinesBuffer,
@@ -81,10 +64,31 @@ pub use builders::BestFitting;
 pub use format_element::{FormatElement, LINE_TERMINATORS, normalize_newlines};
 pub use group_id::GroupId;
 use oxc_ast::ast::Program;
-// use std::marker::PhantomData;
-use std::num::ParseIntError;
-use std::str::FromStr;
 use token::string::Quote;
+
+// use self::builders::syntax_token_cow_slice;
+pub use self::comments::{
+    CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment, SourceComment,
+};
+// #[cfg(debug_assertions)]
+// use self::printed_tokens::PrintedTokens;
+use self::printer::{Printer, PrinterOptions};
+pub use self::{
+    arguments::{Argument, Arguments},
+    context::FormatContext,
+    diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
+    formatter::Formatter,
+    state::{FormatState, FormatStateSnapshot},
+    syntax_element_key::SyntaxElementKey,
+    syntax_node::SyntaxNode,
+    syntax_token::SyntaxToken,
+    syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
+    text_len::TextLen,
+    text_range::TextRange,
+    text_size::TextSize,
+    token_text::TokenText,
+};
+use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
 /// Lightweight sourcemap marker between source and output tokens
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
