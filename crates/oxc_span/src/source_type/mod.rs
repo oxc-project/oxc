@@ -97,7 +97,7 @@ impl ContentEq for SourceType {
 }
 
 /// Valid file extensions
-pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
     /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.

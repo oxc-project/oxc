@@ -10,16 +10,15 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
+    LintService, LintServiceOptions, Linter, Oxlintrc,
 };
-use oxc_span::VALID_EXTENSIONS;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    walk::{Extensions, Walk},
+    walk::Walk,
 };
 
 #[derive(Debug)]
@@ -79,12 +78,6 @@ impl Runner for LintRunner {
                 return result;
             }
         };
-
-        let extensions = VALID_EXTENSIONS
-            .iter()
-            .chain(LINT_PARTIAL_LOADER_EXT.iter())
-            .copied()
-            .collect::<Vec<&'static str>>();
 
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
@@ -172,7 +165,7 @@ impl Runner for LintRunner {
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
-        let paths = walker.with_extensions(Extensions(extensions)).paths();
+        let paths = walker.paths();
 
         let number_of_files = paths.len();
 

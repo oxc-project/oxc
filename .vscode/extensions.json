@@ -5,6 +5,6 @@
     "tamasfe.even-better-toml", // toml syntax
     "nefrob.vscode-just-syntax", // justfile syntax & task runner
     "tekumara.typos-vscode", // spell checker
-    "EditorConfig.EditorConfig", // editorconfig
+    "EditorConfig.EditorConfig" // editorconfig
   ]
 }

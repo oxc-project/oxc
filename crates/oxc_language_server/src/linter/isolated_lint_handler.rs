@@ -12,12 +12,11 @@ use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverit
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    Linter, ModuleRecord,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, Loader},
+    LINTABLE_EXTENSIONS, Linter, ModuleRecord,
+    loader::{JavaScriptSource, Loader},
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::VALID_EXTENSIONS;
 
 use crate::DiagnosticReport;
 use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
@@ -187,9 +186,8 @@ impl IsolatedLintHandler {
 
     fn should_lint_path(path: &Path) -> bool {
         static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
-        let wanted_exts = WANTED_EXTENSIONS.get_or_init(|| {
-            VALID_EXTENSIONS.iter().chain(LINT_PARTIAL_LOADER_EXT.iter()).copied().collect()
-        });
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
         path.extension()
             .and_then(std::ffi::OsStr::to_str)

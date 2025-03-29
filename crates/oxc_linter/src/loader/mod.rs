@@ -4,7 +4,7 @@ use oxc_span::SourceType;
 
 mod partial_loader;
 mod source;
-pub use partial_loader::{LINT_PARTIAL_LOADER_EXT, PartialLoader};
+pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, LINTABLE_EXTENSIONS, PartialLoader};
 pub use source::JavaScriptSource;
 
 // TODO: use oxc_resolver::FileSystem. We can't do so until that crate exposes FileSystemOs
@@ -19,7 +19,7 @@ impl Loader {
             || path
                 .extension()
                 .and_then(std::ffi::OsStr::to_str)
-                .is_some_and(|ext| LINT_PARTIAL_LOADER_EXT.contains(&ext))
+                .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
     }
 
     /// # Errors
