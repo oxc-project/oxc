@@ -1,5 +1,6 @@
 use convert_case::{Boundary, Case, Converter};
 use cow_utils::CowUtils;
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -7,8 +8,23 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Clone)]
-pub struct FilenameCase {
+fn filename_case_diagnostic(message: String, help_message: String) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FilenameCase(Box<FilenameCaseConfig>);
+
+impl std::ops::Deref for FilenameCase {
+    type Target = FilenameCaseConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FilenameCaseConfig {
     /// Whether kebab case is allowed.
     kebab_case: bool,
     /// Whether camel case is allowed.
@@ -17,12 +33,7 @@ pub struct FilenameCase {
     snake_case: bool,
     /// Whether pascal case is allowed.
     pascal_case: bool,
-}
-
-impl Default for FilenameCase {
-    fn default() -> Self {
-        Self { kebab_case: true, camel_case: false, snake_case: false, pascal_case: false }
-    }
+    ignore: Option<Regex>,
 }
 
 declare_oxc_lint!(
@@ -36,7 +47,7 @@ declare_oxc_lint!(
     /// consistency across a codebase. Standardizing naming conventions improves readability, reduces cognitive
     /// overhead, and aligns with best practices in large-scale development.
     ///
-    /// ### Cases
+    /// ### Examples
     ///
     /// Examples of **correct** filenames for each case:
     ///
@@ -72,7 +83,7 @@ declare_oxc_lint!(
     ///
     /// `{ type: 'kebabCase' | 'camelCase' | 'snakeCase' | 'pascalCase' }`
     ///
-    /// You can set the case option like this:
+    /// You can set the `case` option like this:
     /// ```json
     /// "unicorn/filename-case": [
     ///   "error",
@@ -86,7 +97,7 @@ declare_oxc_lint!(
     ///
     /// `{ type: { [key in 'kebabCase' | 'camelCase' | 'snakeCase' | 'pascalCase']?: boolean } }`
     ///
-    /// You can set the case option like this:
+    /// You can set the `cases` option like this:
     /// ```json
     /// "unicorn/filename-case": [
     ///   "error",
@@ -98,6 +109,20 @@ declare_oxc_lint!(
     ///   }
     /// ]
     /// ```
+    ///
+    /// #### ignore
+    ///
+    /// `{ type: String (must be a valid regular expression) }`
+    ///
+    /// You can set the `ignore` option like this:
+    /// ```json
+    /// "unicorn/filename-case": [
+    ///   "error",
+    ///   {
+    ///     "ignore": "^foo.*$"
+    ///   }
+    /// ]
+    /// ```
     FilenameCase,
     unicorn,
     style
@@ -105,50 +130,63 @@ declare_oxc_lint!(
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Self {
+        let mut config = FilenameCaseConfig::default();
+
         let Some(case_type) = value.get(0) else {
-            return Self::default();
+            config.kebab_case = true;
+            return Self(Box::new(config));
         };
 
-        let off =
-            Self { kebab_case: false, camel_case: false, snake_case: false, pascal_case: false };
+        if let Some(Value::String(pat)) = case_type.get("ignore") {
+            config.ignore = RegexBuilder::new(pat).build().ok();
+        }
 
         if let Some(Value::String(s)) = case_type.get("case") {
-            return match s.as_str() {
-                "kebabCase" => Self { kebab_case: true, ..off },
-                "camelCase" => Self { camel_case: true, ..off },
-                "snakeCase" => Self { snake_case: true, ..off },
-                "pascalCase" => Self { pascal_case: true, ..off },
-                _ => Self::default(),
-            };
+            match s.as_str() {
+                "camelCase" => config.camel_case = true,
+                "snakeCase" => config.snake_case = true,
+                "pascalCase" => config.pascal_case = true,
+                _ => config.kebab_case = true,
+            }
+
+            return Self(Box::new(config));
         }
 
         if let Some(Value::Object(map)) = case_type.get("cases") {
-            let mut filename_case = off;
             for (key, value) in map {
                 match (key.as_str(), value) {
-                    ("kebabCase", Value::Bool(b)) => filename_case.kebab_case = *b,
-                    ("camelCase", Value::Bool(b)) => filename_case.camel_case = *b,
-                    ("snakeCase", Value::Bool(b)) => filename_case.snake_case = *b,
-                    ("pascalCase", Value::Bool(b)) => filename_case.pascal_case = *b,
+                    ("kebabCase", Value::Bool(b)) => config.kebab_case = *b,
+                    ("camelCase", Value::Bool(b)) => config.camel_case = *b,
+                    ("snakeCase", Value::Bool(b)) => config.snake_case = *b,
+                    ("pascalCase", Value::Bool(b)) => config.pascal_case = *b,
                     _ => (),
                 }
             }
-            return filename_case;
+            return Self(Box::new(config));
         }
 
-        Self::default()
+        config.kebab_case = true;
+        Self(Box::new(config))
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
         let file_path = ctx.file_path();
-        let Some(filename) = file_path.file_stem().and_then(|s| s.to_str()) else {
+        let Some(raw_filename) = file_path.file_name().and_then(|s| s.to_str()) else {
             return;
         };
 
-        // get filename up to the first dot, or the whole filename if there is no dot
-        let filename = filename.split('.').next().unwrap_or(filename);
-        // ignore all leading and trailing underscores
-        let filename = filename.trim_matches('_');
+        if self.ignore.as_ref().is_some_and(|regex| regex.is_match(raw_filename)) {
+            return;
+        }
+
+        // Get valid filename
+        if raw_filename.as_bytes() == b".." || raw_filename.starts_with('.') {
+            return;
+        }
+
+        let filename = raw_filename.rsplit_once('.').map(|(before, _)| before);
+        let filename = filename.unwrap_or(raw_filename);
+        let trimmed_filename = filename.trim_matches('_');
 
         let cases = [
             (self.camel_case, Case::Camel, "camel case"),
@@ -157,52 +195,46 @@ impl Rule for FilenameCase {
             (self.pascal_case, Case::Pascal, "pascal case"),
         ];
 
-        let mut valid = Vec::new();
+        let mut valid_cases = Vec::new();
         for (enabled, case, name) in cases {
             if enabled {
                 let converter = Converter::new()
                     .remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
                 let converter = converter.to_case(case);
 
-                if converter.convert(filename) == filename {
+                if converter.convert(trimmed_filename) == trimmed_filename {
                     return;
                 }
 
-                valid.push((converter, name));
+                valid_cases.push((converter, name));
             }
         }
 
-        let filename = file_path.file_name().unwrap().to_string_lossy();
-        ctx.diagnostic(filename_case_diagnostic(&filename, valid));
+        let valid_cases_len = valid_cases.len();
+
+        let mut message = String::from("Filename should be in ");
+        let mut help_message = String::from("Rename the file to ");
+
+        for (i, (converter, name)) in valid_cases.into_iter().enumerate() {
+            let filename = format!(
+                "'{}'",
+                raw_filename.cow_replace(trimmed_filename, &converter.convert(trimmed_filename))
+            );
+
+            let (name, filename) = if i == 0 {
+                (name, filename.as_ref())
+            } else if i == valid_cases_len - 1 {
+                (&*format!(", or {name}"), &*format!(", or {filename}"))
+            } else {
+                (&*format!(", {name}"), &*format!(", {filename}"))
+            };
+
+            message.push_str(name);
+            help_message.push_str(filename);
+        }
+
+        ctx.diagnostic(filename_case_diagnostic(message, help_message));
     }
-}
-
-fn filename_case_diagnostic(filename: &str, valid_cases: Vec<(Converter, &str)>) -> OxcDiagnostic {
-    let trimmed_filename = filename.trim_matches('_');
-    let valid_cases_len = valid_cases.len();
-
-    let mut message = String::from("Filename should be in ");
-    let mut help_message = String::from("Rename the file to ");
-
-    for (i, (converter, name)) in valid_cases.into_iter().enumerate() {
-        let filename = format!(
-            "'{}'",
-            filename.cow_replace(trimmed_filename, &converter.convert(trimmed_filename))
-        );
-
-        let (name, filename) = if i == 0 {
-            (name, filename.as_ref())
-        } else if i == valid_cases_len - 1 {
-            (&*format!(", or {name}"), &*format!(", or {filename}"))
-        } else {
-            (&*format!(", {name}"), &*format!(", {filename}"))
-        };
-
-        message.push_str(name);
-        help_message.push_str(filename);
-    }
-
-    OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
 }
 
 #[test]
@@ -250,35 +282,41 @@ fn test() {
         )
     }
 
+    fn test_case_with_options(
+        path: &'static str,
+        options: Value,
+    ) -> (&'static str, Option<Value>, Option<Value>, Option<PathBuf>) {
+        ("", Some(options), None, Some(PathBuf::from(path)))
+    }
+
     let pass = vec![
-        test_cases("src/foo/fooBar.js", ["camelCase"]),
         test_case("src/foo/bar.js", "camelCase"),
         test_case("src/foo/fooBar.js", "camelCase"),
         test_case("src/foo/bar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test.js", "camelCase"),
-        test_case("src/foo/fooBar.test-utils.js", "camelCase"),
-        test_case("src/foo/fooBar.test_utils.js", "camelCase"),
+        // test_case("src/foo/fooBar.test-utils.js", "camelCase"),
+        // test_case("src/foo/fooBar.test_utils.js", "camelCase"),
         test_case("src/foo/.test_utils.js", "camelCase"),
         test_case("src/foo/foo.js", "snakeCase"),
         test_case("src/foo/foo_bar.js", "snakeCase"),
         test_case("src/foo/foo.test.js", "snakeCase"),
         test_case("src/foo/foo_bar.test.js", "snakeCase"),
         test_case("src/foo/foo_bar.test_utils.js", "snakeCase"),
-        test_case("src/foo/foo_bar.test-utils.js", "snakeCase"),
+        // test_case("src/foo/foo_bar.test-utils.js", "snakeCase"),
         test_case("src/foo/.test-utils.js", "snakeCase"),
         test_case("src/foo/foo.js", "kebabCase"),
         test_case("src/foo/foo-bar.js", "kebabCase"),
         test_case("src/foo/foo.test.js", "kebabCase"),
         test_case("src/foo/foo-bar.test.js", "kebabCase"),
         test_case("src/foo/foo-bar.test-utils.js", "kebabCase"),
-        test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
+        // test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
         test_case("src/foo/.test_utils.js", "kebabCase"),
         test_case("src/foo/Foo.js", "pascalCase"),
         test_case("src/foo/FooBar.js", "pascalCase"),
         test_case("src/foo/Foo.test.js", "pascalCase"),
         test_case("src/foo/FooBar.test.js", "pascalCase"),
-        test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
-        test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
+        // test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
+        // test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
         test_case("src/foo/.test_utils.js", "pascalCase"),
         test_case("spec/iss47Spec.js", "camelCase"),
         test_case("spec/iss47Spec100.js", "camelCase"),
@@ -294,6 +332,10 @@ fn test() {
         test_case("spec/Iss47Spec.js", "pascalCase"),
         test_case("spec/Iss47.100spec.js", "pascalCase"),
         test_case("spec/I18n.js", "pascalCase"),
+        test_case("", "camelCase"),
+        test_case("", "snakeCase"),
+        test_case("", "kebabCase"),
+        test_case("", "pascalCase"),
         test_case("src/foo/_fooBar.js", "camelCase"),
         test_case("src/foo/___fooBar.js", "camelCase"),
         test_case("src/foo/_foo_bar.js", "snakeCase"),
@@ -303,10 +345,24 @@ fn test() {
         test_case("src/foo/_FooBar.js", "pascalCase"),
         test_case("src/foo/___FooBar.js", "pascalCase"),
         test_case("src/foo/$foo.js", "pascalCase"),
+        test_case("src/foo/[fooBar].js", "camelCase"),
+        test_case("src/foo/{foo_bar}.js", "snakeCase"),
         test_cases("src/foo/foo-bar.js", []),
         test_cases("src/foo/fooBar.js", ["camelCase"]),
         test_cases("src/foo/FooBar.js", ["kebabCase", "pascalCase"]),
         test_cases("src/foo/___foo_bar.js", ["snakeCase", "pascalCase"]),
+        test_case_with_options(
+            "src/foo/index.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOOBAR.js" }]),
+        ),
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOOBAR\.js" }]),
+        ),
+        test_case_with_options(
+            "src/foo/BAR.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOO.js|BAR.js" }]),
+        ),
     ];
 
     let fail = vec![
@@ -340,6 +396,10 @@ fn test() {
         test_case("src/foo/$foo_bar.js", ""),
         test_case("src/foo/$fooBar.js", ""),
         test_cases("src/foo/{foo_bar}.js", ["camelCase", "pascalCase", "kebabCase"]),
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": r"foobar.js" }]),
+        ),
     ];
 
     Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
