@@ -242,6 +242,12 @@ impl<'a> Codegen<'a> {
         self.code.print_str(s);
     }
 
+    /// Push `char` into the buffer.
+    #[inline]
+    pub fn print_char(&mut self, ch: char) {
+        self.code.print_char(ch);
+    }
+
     /// Print a single [`Expression`], adding it to the code generator's
     /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
     #[inline]
@@ -578,14 +584,7 @@ impl<'a> Codegen<'a> {
 
     fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
-        if s.lone_surrogates {
-            self.print_str(s.raw.unwrap().as_str());
-            return;
-        }
-        self.print_quoted_utf16(s, allow_backtick);
-    }
 
-    fn print_quoted_utf16(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         let quote = if self.options.minify {
             let mut single_cost: i32 = 0;
             let mut double_cost: i32 = 0;
@@ -679,6 +678,26 @@ impl<'a> Codegen<'a> {
                         self.print_ascii_byte(b'\\');
                     }
                     self.print_ascii_byte(b'$');
+                }
+                '\u{FFFD}' if s.lone_surrogates => {
+                    // If `lone_surrogates` is set, string contains lone surrogates which are escaped
+                    // using the lossy replacement character (U+FFFD) as an escape marker.
+                    // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
+                    let hex1 = chars.next().unwrap();
+                    let hex2 = chars.next().unwrap();
+                    let hex3 = chars.next().unwrap();
+                    let hex4 = chars.next().unwrap();
+                    if [hex1, hex2, hex3, hex4] == ['f', 'f', 'f', 'd'] {
+                        // Actual lossy replacement character
+                        self.print_char('\u{FFFD}');
+                    } else {
+                        // Lossy replacement character representing a lone surrogate
+                        self.print_str("\\u");
+                        self.print_char(hex1);
+                        self.print_char(hex2);
+                        self.print_char(hex3);
+                        self.print_char(hex4);
+                    }
                 }
                 _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
             }
