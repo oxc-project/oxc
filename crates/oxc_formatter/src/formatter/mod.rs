@@ -53,18 +53,13 @@ use std::{
 };
 
 // use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
-pub use buffer::{
-    Buffer, BufferExtensions,
-    VecBuffer,
-};
+pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
 use oxc_ast::ast::Program;
 
 // use self::builders::syntax_token_cow_slice;
-pub use self::comments::{
-    CommentStyle, Comments, SourceComment,
-};
+pub use self::comments::{CommentStyle, Comments, SourceComment};
 // #[cfg(debug_assertions)]
 // use self::printed_tokens::PrintedTokens;
 use self::printer::{Printer, PrinterOptions};

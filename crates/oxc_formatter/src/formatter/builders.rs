@@ -12,8 +12,7 @@ use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
 use super::{
-    Argument, Arguments, Buffer, GroupId, TextSize, TokenText,
-    VecBuffer, format_element,
+    Argument, Arguments, Buffer, GroupId, TextSize, TokenText, VecBuffer, format_element,
     format_element::tag::{Condition, Tag},
     prelude::{
         tag::{DedentMode, GroupMode, LabelId},

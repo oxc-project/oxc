@@ -1,6 +1,5 @@
 use std::{fmt, num::ParseIntError, str::FromStr};
 
-
 pub use crate::formatter::{
     Buffer, Format, FormatResult, SourceComment, SyntaxTriviaPieceComments, token::string::Quote,
 };

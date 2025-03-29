@@ -4,10 +4,7 @@ use std::ops::Deref;
 use rustc_hash::FxHashMap;
 
 use super::{
-    super::{
-        FormatElement,
-        prelude::*,
-    },
+    super::{FormatElement, prelude::*},
     tag::Tag,
 };
 
