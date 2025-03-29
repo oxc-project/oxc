@@ -19,6 +19,7 @@ impl Quote {
     }
 
     /// Given the current quote, it returns the other one
+    #[must_use]
     pub fn other(&self) -> Self {
         match self {
             Quote::Double => Quote::Single,

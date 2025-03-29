@@ -2,7 +2,8 @@ use super::super::format_element::PrintMode;
 use super::super::format_element::tag::TagKind;
 use super::super::printer::Indention;
 use super::super::printer::stack::{Stack, StackedStack};
-use super::super::{IndentStyle, InvalidDocumentError, PrintError, PrintResult};
+use super::super::{InvalidDocumentError, PrintError, PrintResult};
+use crate::options::IndentStyle;
 use std::fmt::Debug;
 use std::num::NonZeroU8;
 

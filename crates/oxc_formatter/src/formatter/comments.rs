@@ -738,6 +738,7 @@ impl CommentPlacement {
     }
 
     /// Returns the placement if it isn't [CommentPlacement::Default], otherwise calls `f` and returns the result.
+    #[must_use]
     #[inline]
     pub fn or_else<F>(self, f: F) -> Self
     where

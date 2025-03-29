@@ -6,14 +6,10 @@ mod stack;
 
 pub use printer_options::*;
 
-use super::format_element::{BestFittingElement, LineMode, PrintMode};
-use super::{
-    ActualStart, FormatElement, GroupId, IndentStyle, InvalidDocumentError, PrintError,
-    PrintResult, Printed, SourceMarker, TextRange,
-};
-
+use self::call_stack::PrintIndentStack;
 use super::format_element::document::Document;
 use super::format_element::tag::Condition;
+use super::format_element::{BestFittingElement, LineMode, PrintMode};
 use super::prelude::Tag::EndFill;
 use super::prelude::tag::{DedentMode, Tag, TagKind};
 use super::printer::call_stack::{
@@ -24,11 +20,14 @@ use super::printer::line_suffixes::{LineSuffixEntry, LineSuffixes};
 use super::printer::queue::{
     AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
 };
+use super::{
+    ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
+    SourceMarker, TextRange,
+};
 use super::{TextLen, TextSize};
+use crate::options::IndentStyle;
 use std::num::NonZeroU8;
 use unicode_width::UnicodeWidthChar;
-
-use self::call_stack::PrintIndentStack;
 
 /// Prints the format elements into a string
 #[derive(Debug, Default)]
