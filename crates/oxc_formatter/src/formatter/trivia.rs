@@ -4,11 +4,10 @@ use super::comments::{SourceComment, is_doc_comment};
 use super::format_element::tag::VerbatimKind;
 use super::prelude::*;
 use super::{
-    Argument, Arguments, FormatContext, FormatRefWithRule, GroupId, TextRange,
+    Argument, Arguments, FormatContext, GroupId, TextRange,
     comments::{CommentKind, CommentStyle},
 };
 use super::{SyntaxNode, SyntaxToken, TextSize};
-use crate::comment::FormatComment;
 use crate::write;
 // use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
 #[cfg(debug_assertions)]
@@ -68,8 +67,7 @@ impl Format<'_> for FormatLeadingComments<'_> {
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            let format_comment = FormatRefWithRule::new(comment, FormatComment);
-            write!(f, [format_comment])?;
+            write!(f, [comment])?;
 
             match comment.kind() {
                 CommentKind::Block | CommentKind::InlineBlock => {
@@ -131,8 +129,6 @@ impl Format<'_> for FormatTrailingComments<'_> {
         for comment in trailing_comments {
             total_lines_before += comment.lines_before();
 
-            let format_comment = FormatRefWithRule::new(comment, FormatComment);
-
             let should_nestle = previous_comment.is_some_and(|previous_comment| {
                 should_nestle_adjacent_doc_comments(previous_comment, comment)
             });
@@ -176,14 +172,13 @@ impl Format<'_> for FormatTrailingComments<'_> {
                                 _ => write!(f, [empty_line()])?,
                             };
 
-                            write!(f, [format_comment])
+                            write!(f, [comment])
                         })),
                         expand_parent()
                     ]
                 )?;
             } else {
-                let content =
-                    format_with(|f| write!(f, [maybe_space(!should_nestle), format_comment]));
+                let content = format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
                 if comment.kind().is_line() {
                     write!(f, [line_suffix(&content), expand_parent()])?;
                 } else {
@@ -293,8 +288,6 @@ impl Format<'_> for FormatDanglingComments<'_> {
             let mut previous_comment: Option<&SourceComment> = None;
 
             for comment in dangling_comments {
-                let format_comment = FormatRefWithRule::new(comment, FormatComment);
-
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
                     should_nestle_adjacent_doc_comments(previous_comment, comment)
                 });
@@ -303,7 +296,7 @@ impl Format<'_> for FormatDanglingComments<'_> {
                     f,
                     [
                         (previous_comment.is_some() && !should_nestle).then_some(hard_line_break()),
-                        format_comment
+                        comment
                     ]
                 )?;
 

@@ -15,7 +15,6 @@
 mod generated {
     pub mod format;
 }
-mod comment;
 mod context;
 mod formatter;
 mod options;
