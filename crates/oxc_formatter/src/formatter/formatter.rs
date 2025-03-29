@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 use oxc_ast::AstKind;
 
 use super::{

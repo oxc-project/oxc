@@ -87,8 +87,8 @@ use rustc_hash::FxHashSet;
 
 use self::map::CommentsMap;
 use super::{
-    Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize,
-    buffer::Buffer, syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
+    Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize, buffer::Buffer,
+    syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -124,15 +124,15 @@ pub enum CommentKind {
 }
 
 impl CommentKind {
-    pub const fn is_line(&self) -> bool {
+    pub const fn is_line(self) -> bool {
         matches!(self, CommentKind::Line)
     }
 
-    pub const fn is_block(&self) -> bool {
+    pub const fn is_block(self) -> bool {
         matches!(self, CommentKind::Block)
     }
 
-    pub const fn is_inline_block(&self) -> bool {
+    pub const fn is_inline_block(self) -> bool {
         matches!(self, CommentKind::InlineBlock)
     }
 
@@ -150,7 +150,7 @@ impl CommentKind {
     /// // But not line comments
     /// assert!(!CommentKind::Line.is_inline())
     /// ```
-    pub const fn is_inline(&self) -> bool {
+    pub const fn is_inline(self) -> bool {
         matches!(self, CommentKind::InlineBlock | CommentKind::Block)
     }
 }
@@ -531,15 +531,15 @@ pub enum CommentTextPosition {
 }
 
 impl CommentTextPosition {
-    pub const fn is_same_line(&self) -> bool {
+    pub const fn is_same_line(self) -> bool {
         matches!(self, CommentTextPosition::SameLine)
     }
 
-    pub const fn is_own_line(&self) -> bool {
+    pub const fn is_own_line(self) -> bool {
         matches!(self, CommentTextPosition::OwnLine)
     }
 
-    pub const fn is_end_of_line(&self) -> bool {
+    pub const fn is_end_of_line(self) -> bool {
         matches!(self, CommentTextPosition::EndOfLine)
     }
 }
@@ -769,7 +769,7 @@ impl CommentStyle {
     /// Determines the placement of `comment`.
     ///
     /// The default implementation returns [CommentPlacement::Default].
-    pub fn place_comment(&self, _comment: DecoratedComment) -> CommentPlacement {
+    pub fn place_comment(self, _comment: DecoratedComment) -> CommentPlacement {
         todo!()
     }
 }

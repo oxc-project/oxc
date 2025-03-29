@@ -148,7 +148,7 @@ pub enum GroupMode {
 }
 
 impl GroupMode {
-    pub const fn is_flat(&self) -> bool {
+    pub const fn is_flat(self) -> bool {
         matches!(self, GroupMode::Flat)
     }
 }
@@ -291,7 +291,7 @@ pub enum VerbatimKind {
 }
 
 impl VerbatimKind {
-    pub const fn is_bogus(&self) -> bool {
+    pub const fn is_bogus(self) -> bool {
         matches!(self, VerbatimKind::Bogus)
     }
 }

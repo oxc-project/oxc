@@ -4,12 +4,9 @@
     clippy::missing_panics_doc,
     clippy::needless_pass_by_ref_mut,
     clippy::todo,
-    clippy::trivially_copy_pass_by_ref,
     clippy::unused_self,
     clippy::enum_variant_names,
-    clippy::module_inception,
-    clippy::struct_field_names,
-    clippy::self_named_module_files
+    clippy::struct_field_names
 )] // FIXME: all these needs to be fixed.
 
 mod generated {
