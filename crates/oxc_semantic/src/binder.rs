@@ -116,16 +116,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
 impl<'a> Binder<'a> for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if !self.declare {
-            let Some(ident) = &self.id else { return };
-            let symbol_id = builder.declare_symbol(
-                ident.span,
-                &ident.name,
-                SymbolFlags::Class,
-                SymbolFlags::ClassExcludes,
-            );
-            ident.symbol_id.set(Some(symbol_id));
-        }
+        let Some(ident) = &self.id else { return };
+        let symbol_id = builder.declare_symbol(
+            ident.span,
+            &ident.name,
+            SymbolFlags::Class,
+            SymbolFlags::ClassExcludes,
+        );
+        ident.symbol_id.set(Some(symbol_id));
     }
 }
 

@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1290/5754 (22.42%)
+Negative Passed: 1292/5754 (22.45%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -806,7 +806,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaul
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultTypeClassAndValue.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualErrorType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualMemberMissing.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportInterfaceClassAndValue.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndLocalMemberDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
@@ -2349,7 +2348,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classImplementsMergedClassInterface.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts
@@ -8045,6 +8043,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/compiler/exportInFunction.ts:2:16]
  1 │ function f() {
  2 │     export = 0;
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[typescript/tests/cases/compiler/exportInterfaceClassAndValue.ts:1:14]
+ 1 │ export const foo = 1
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export declare class foo {}
+   ·                      ─┬─
+   ·                       ╰── It can not be redeclared here
+ 3 │ export interface foo {}
    ╰────
 
   × Identifier `a` has already been declared
@@ -14309,6 +14318,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  18 │ 
     ╰────
 
+  × Identifier `DCC1` has already been declared
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:25:24]
+ 24 │ 
+ 25 │ declare abstract class DCC1 {}
+    ·                        ──┬─
+    ·                          ╰── `DCC1` has already been declared here
+ 26 │ declare class DCC1 {}
+    ·               ──┬─
+    ·                 ╰── It can not be redeclared here
+ 27 │ 
+    ╰────
+
+  × Identifier `DCC2` has already been declared
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:28:15]
+ 27 │ 
+ 28 │ declare class DCC2 {}
+    ·               ──┬─
+    ·                 ╰── `DCC2` has already been declared here
+ 29 │ declare abstract class DCC2 {}
+    ·                        ──┬─
+    ·                          ╰── It can not be redeclared here
+ 30 │ 
+    ╰────
+
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
  1 │ class A {
@@ -14461,6 +14494,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ class void {}
    ·       ──┬─
    ·         ╰── `{` expected
+   ╰────
+
+  × Identifier `C1` has already been declared
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts:1:15]
+ 1 │ declare class C1 {}
+   ·               ─┬
+   ·                ╰── `C1` has already been declared here
+ 2 │ 
+ 3 │ declare class C1 {}
+   ·               ─┬
+   ·                ╰── It can not be redeclared here
+ 4 │ 
+   ╰────
+
+  × Identifier `C2` has already been declared
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts:5:15]
+ 4 │ 
+ 5 │ declare class C2 {}
+   ·               ─┬
+   ·                ╰── `C2` has already been declared here
+ 6 │ 
+ 7 │ interface C2 {}
+ 8 │ 
+ 9 │ declare class C2 {}
+   ·               ─┬
+   ·                ╰── It can not be redeclared here
    ╰────
 
   × Private field 'y' must be declared in an enclosing class

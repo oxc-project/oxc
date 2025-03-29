@@ -95,7 +95,7 @@ rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12
 
 * elimination-declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
+after transform: ScopeId(0): ["A", "ReactiveMarker", "ReactiveMarkerSymbol"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
