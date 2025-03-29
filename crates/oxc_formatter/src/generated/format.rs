@@ -5,7 +5,8 @@
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
-    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, Format, FormatResult, Formatter},
+    write,
     write::FormatWrite,
 };
 
