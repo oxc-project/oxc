@@ -38,7 +38,7 @@ impl PrintElementArgs {
         Self::default()
     }
 
-    pub(super) fn mode(&self) -> PrintMode {
+    pub(super) fn mode(self) -> PrintMode {
         self.mode
     }
 

@@ -103,7 +103,7 @@ pub enum LineMode {
 }
 
 impl LineMode {
-    pub const fn is_hard(&self) -> bool {
+    pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
 }
@@ -117,11 +117,11 @@ pub enum PrintMode {
 }
 
 impl PrintMode {
-    pub const fn is_flat(&self) -> bool {
+    pub const fn is_flat(self) -> bool {
         matches!(self, PrintMode::Flat)
     }
 
-    pub const fn is_expanded(&self) -> bool {
+    pub const fn is_expanded(self) -> bool {
         matches!(self, PrintMode::Expanded)
     }
 }
