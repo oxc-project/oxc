@@ -244,7 +244,7 @@ export async function activate(context: ExtensionContext) {
     });
   });
 
-  configService.onConfigChange = function onConfigChange(event) {
+  configService.onConfigChange = async function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
     updateStatsBar(this.config.enable);
 
@@ -257,10 +257,9 @@ export async function activate(context: ExtensionContext) {
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
 
       if (client.isRunning()) {
-        client.restart().then(async () => {
-          const configFiles = await findOxlintrcConfigFiles();
-          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-        });
+        await client.restart();
+        const configFiles = await findOxlintrcConfigFiles();
+        await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
       }
     }
   };
