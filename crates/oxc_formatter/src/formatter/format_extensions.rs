@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, marker::PhantomData};
+use std::cell::OnceCell;
 
 use super::{Buffer, prelude::*};
 

@@ -87,7 +87,7 @@ use rustc_hash::FxHashSet;
 
 use self::map::CommentsMap;
 use super::{
-    Format, FormatResult, Formatter, SyntaxElementKey, SyntaxNode, SyntaxToken, TextSize,
+    Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize,
     buffer::Buffer, syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
 };
 

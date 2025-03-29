@@ -47,28 +47,23 @@ pub mod trivia;
 mod verbatim;
 
 // use std::marker::PhantomData;
-use std::num::ParseIntError;
 use std::{
-    fmt,
     fmt::{Debug, Display},
     marker::PhantomData,
-    str::FromStr,
 };
 
 // use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
 pub use buffer::{
-    Buffer, BufferExtensions, BufferSnapshot, Inspect, PreambleBuffer, RemoveSoftLinesBuffer,
+    Buffer, BufferExtensions,
     VecBuffer,
 };
-pub use builders::BestFitting;
-pub use format_element::{FormatElement, LINE_TERMINATORS, normalize_newlines};
+pub use format_element::FormatElement;
 pub use group_id::GroupId;
 use oxc_ast::ast::Program;
-use token::string::Quote;
 
 // use self::builders::syntax_token_cow_slice;
 pub use self::comments::{
-    CommentKind, CommentPlacement, CommentStyle, Comments, DecoratedComment, SourceComment,
+    CommentStyle, Comments, SourceComment,
 };
 // #[cfg(debug_assertions)]
 // use self::printed_tokens::PrintedTokens;

@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, fmt, ops::Deref};
+use std::{fmt, ops::Deref};
 
 use super::TextRange;
 
