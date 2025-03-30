@@ -1,12 +1,12 @@
 use cow_utils::CowUtils;
 
+use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
     PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
 };
-
-use crate::ast::*;
+use oxc_span::{GetSpan, Span};
 
 /// Main serialization methods for `Program`.
 ///
@@ -53,7 +53,11 @@ impl Program<'_> {
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
-    pub fn to_pretty_estree_ts_json(&self) -> String {
+    pub fn to_pretty_estree_ts_json(&mut self) -> String {
+        if let Some(first_stat) = self.body.first() {
+            self.span = Span::new(first_stat.span().start, self.span.end); // self.span.expand_left(10);
+        }
+
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let mut serializer = PrettyTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
