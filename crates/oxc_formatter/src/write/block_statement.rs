@@ -1,5 +1,4 @@
-use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_ast::{AstKind, ast::*};
 
 use super::FormatWrite;
 use crate::{
@@ -9,27 +8,27 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for BlockStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text("{")])?;
+        write!(f, "{")?;
 
         if is_empty_block(self) {
             let comments = f.comments();
             let has_dangling_comments = comments.has_dangling_comments(self.span);
             if has_dangling_comments {
-            } else if is_non_collapsible() {
-                write!(f, [hard_line_break()])?;
+            } else if is_non_collapsible(f) {
+                write!(f, hard_line_break())?;
             }
         } else {
-            write!(f, [text("{")])?;
+            write!(f, "{")?;
         }
 
-        write!(f, [text("}")])
+        write!(f, "}")
     }
 }
 
 fn is_empty_block(block: &BlockStatement<'_>) -> bool {
-    true
+    block.body.is_empty()
 }
 
-fn is_non_collapsible() -> bool {
-    false
+fn is_non_collapsible(_f: &Formatter<'_, '_>) -> bool {
+    true
 }

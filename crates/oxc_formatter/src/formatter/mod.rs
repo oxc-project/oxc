@@ -276,6 +276,13 @@ impl Format<'_> for () {
     }
 }
 
+impl Format<'_> for &'static str {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+        crate::write!(f, builders::text(self))
+    }
+}
+
 /// Default implementation for formatting a token
 pub struct FormatToken<C> {
     context: PhantomData<C>,
@@ -331,9 +338,7 @@ impl<C> Default for FormatToken<C> {
 ///
 #[inline(always)]
 pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> FormatResult<()> {
-    let mut f = Formatter::new(output);
-
-    f.write_fmt(args)
+    Formatter::new(output).write_fmt(args)
 }
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
