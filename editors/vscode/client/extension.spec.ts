@@ -78,3 +78,5 @@ suite('commands', () => {
     strictEqual(content, '/* 😊 */');
   });
 });
+
+// hello world!
