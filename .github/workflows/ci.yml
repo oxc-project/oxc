@@ -134,9 +134,12 @@ jobs:
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
+          predicate-quantifier: "every"
           filters: |
             src:
               - '!crates/oxc_linter/**'
+              - '!crates/oxc_language_server/**'
+              - '!editors/**'
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
@@ -206,6 +209,7 @@ jobs:
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
+          predicate-quantifier: "every"
           filters: |
             src:
               - '!.github/**'
