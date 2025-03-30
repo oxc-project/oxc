@@ -56,7 +56,7 @@ impl Program<'_> {
     pub fn to_pretty_estree_ts_json(&mut self) -> String {
         // Set start span to first token of first statement.
         if let Some(first_stat) = self.body.first() {
-            self.span = Span::new(first_stat.span().start, self.span.end); // self.span.expand_left(10);
+            self.span = Span::new(first_stat.span().start, self.span.end);
         }
 
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
