@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1292/5754 (22.45%)
+Negative Passed: 1295/5754 (22.51%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -1753,7 +1753,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reactNamespa
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reactNamespaceMissingDeclaration.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reactReduxLikeDeferredInferenceAllowsAssignment.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/readonlyAssignmentInSubclassOfClassExpression.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/readonlyMembers.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/readonlyPropertySubtypeRelationDirected.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/readonlyTupleAndArrayElaboration.ts
@@ -2377,7 +2376,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyConstructorAssignment.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInConstructorParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorWithAssignableReturnExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassParameterProperties.ts
@@ -3661,7 +3659,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/overrideKeywordOrder.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/overrideParameterProperty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/overrideWithoutNoImplicitOverride1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js3.ts
@@ -11075,6 +11072,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:3:9]
+ 2 │ class X {
+ 3 │     method(readonly x: number) {}
+   ·            ──────────────────
+ 4 │     set x(readonly value: number) {}
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:4:8]
+ 3 │     method(readonly x: number) {}
+ 4 │     set x(readonly value: number) {}
+   ·           ──────────────────────
+ 5 │ }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:6:2]
+ 5 │ }
+ 6 │ (readonly x) => 0;
+   ·  ──────────
+ 7 │ // OK to use `readonly` as a name
+   ╰────
+
   × Identifier `bar` has already been declared
    ╭─[typescript/tests/cases/compiler/reassignStaticProp.ts:3:12]
  2 │  
@@ -14706,6 +14727,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·     ─────┬─────
    ·          ╰── it cannot be redeclared here
  9 │ }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts:2:14]
+ 1 │ declare class C{
+ 2 │     constructor(readonly x: number);
+   ·                 ──────────────────
+ 3 │     method(readonly x: number);
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts:3:9]
+ 2 │     constructor(readonly x: number);
+ 3 │     method(readonly x: number);
+   ·            ──────────────────
+ 4 │ }
    ╰────
 
   × TS(1030): readonly' modifier already seen.
@@ -20784,6 +20821,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  20 │ 
     ╰────
   help: Remove the duplicate modifier.
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/conformance/override/overrideParameterProperty.ts:25:5]
+ 24 │ 
+ 25 │   m(override p1: "hello") {}
+    ·     ────────────────────
+ 26 │ }
+    ╰────
 
   × Invalid Character `
   │ `
