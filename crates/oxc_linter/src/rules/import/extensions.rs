@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn extensions_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -79,8 +79,6 @@ impl Rule for Extensions {
         if let Some(extension) = ctx.file_path().extension() {
             println!("file extension: {extension:?}");
         };
-
-
     }
 }
 
