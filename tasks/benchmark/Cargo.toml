@@ -42,10 +42,9 @@ harness = false
 name = "codegen"
 harness = false
 
-# Broken
-# [[bench]]
-# name    = "prettier"
-# harness = false
+[[bench]]
+name = "formatter"
+harness = false
 
 [[bench]]
 name = "minifier"
@@ -68,12 +67,12 @@ oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true }
+oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, features = ["benchmarking", "regular_expression"], optional = true }
-oxc_prettier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common = { workspace = true, optional = true }
@@ -94,7 +93,7 @@ default = [
   "minifier",
   "codegen",
   "linter",
-  "prettier",
+  "formatter",
   "isolated_declarations",
 ]
 codspeed = ["criterion2/codspeed"]
@@ -153,7 +152,7 @@ linter = [
   "dep:oxc_span",
   "dep:oxc_tasks_common",
 ]
-prettier = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_prettier", "dep:oxc_span", "dep:oxc_tasks_common"]
+formatter = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_formatter", "dep:oxc_span", "dep:oxc_tasks_common"]
 isolated_declarations = [
   "dep:oxc_allocator",
   "dep:oxc_isolated_declarations",

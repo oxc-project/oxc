@@ -37,7 +37,7 @@ jobs:
 
       - name: Run
         env:
-          # Increase stack size to 10MB, avoid `oxc_prettier` from stack overflowing when printing long assignment expressions.
+          # Increase stack size to 10MB, avoid `oxc_formatter` from stack overflowing when printing long assignment expressions.
           RUST_MIN_STACK: 104857600
         run: cargo codecov --lcov --output-path lcov.info
 
