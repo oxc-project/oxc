@@ -9,16 +9,22 @@ use oxc_span::SourceType;
 
 struct Ctx {
     global_variable_names: Vec<String>,
+    annotation: bool,
 }
 impl IsGlobalReference for Ctx {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
-impl MayHaveSideEffectsContext for Ctx {}
+impl MayHaveSideEffectsContext for Ctx {
+    fn respect_annotations(&self) -> bool {
+        self.annotation
+    }
+}
 
 fn test(source_text: &str, expected: bool) {
-    test_with_global_variables(source_text, vec![], expected);
+    let ctx = Ctx { global_variable_names: vec![], annotation: true };
+    test_with_ctx(source_text, &ctx, expected);
 }
 
 fn test_with_global_variables(
@@ -26,17 +32,20 @@ fn test_with_global_variables(
     global_variable_names: Vec<String>,
     expected: bool,
 ) {
+    let ctx = Ctx { global_variable_names, annotation: true };
+    test_with_ctx(source_text, &ctx, expected);
+}
+
+fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let ctx = Ctx { global_variable_names };
-
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
+    assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -701,6 +710,10 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ new Foo(...`${bar}`)", true);
     test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
+
+    let ctx = Ctx { global_variable_names: vec![], annotation: false };
+    test_with_ctx("/* #__PURE__ */ foo()", &ctx, true);
+    test_with_ctx("/* #__PURE__ */ new Foo()", &ctx, true);
 }
 
 #[test]

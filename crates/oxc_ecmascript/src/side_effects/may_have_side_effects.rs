@@ -486,13 +486,21 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
 
 impl MayHaveSideEffects for CallExpression<'_> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if self.pure { self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) } else { true }
+        if self.pure && ctx.respect_annotations() {
+            self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
+        } else {
+            true
+        }
     }
 }
 
 impl MayHaveSideEffects for NewExpression<'_> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if self.pure { self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) } else { true }
+        if self.pure && ctx.respect_annotations() {
+            self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
+        } else {
+            true
+        }
     }
 }
 
