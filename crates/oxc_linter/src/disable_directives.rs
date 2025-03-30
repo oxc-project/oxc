@@ -164,10 +164,20 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-next-line`
                 else if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
-                    let stop = source_text[comment_span.end as usize..]
-                        .lines()
-                        .take(2)
-                        .fold(comment_span.end, |acc, line| acc + line.len() as u32);
+                    let mut stop = comment_span.end;
+                    let mut lines_after_comment_end =
+                        source_text[comment_span.end as usize..].split_inclusive('\n');
+
+                    if let Some(rest_of_line) = lines_after_comment_end.next() {
+                        stop += rest_of_line.len() as u32;
+                    }
+
+                    if let Some(next_line) = lines_after_comment_end.next() {
+                        let trimmed_next_line =
+                            next_line.trim_end_matches('\n').trim_end_matches('\r');
+                        stop += trimmed_next_line.len() as u32;
+                    }
+
                     if text.trim().is_empty() {
                         self.add_interval(
                             comment_span.end,
