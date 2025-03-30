@@ -62,6 +62,7 @@ impl MayHaveSideEffects for Expression<'_> {
             }
             Expression::CallExpression(e) => e.may_have_side_effects(ctx),
             Expression::NewExpression(e) => e.may_have_side_effects(ctx),
+            Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
     }
@@ -486,7 +487,7 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
 
 impl MayHaveSideEffects for CallExpression<'_> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if self.pure && ctx.respect_annotations() {
+        if (self.pure && ctx.respect_annotations()) || ctx.is_pure_call(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
         } else {
             true
@@ -496,11 +497,17 @@ impl MayHaveSideEffects for CallExpression<'_> {
 
 impl MayHaveSideEffects for NewExpression<'_> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if self.pure && ctx.respect_annotations() {
+        if (self.pure && ctx.respect_annotations()) || ctx.is_pure_call(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
         } else {
             true
         }
+    }
+}
+
+impl MayHaveSideEffects for TaggedTemplateExpression<'_> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+        if ctx.is_pure_call(&self.tag) { self.quasi.may_have_side_effects(ctx) } else { true }
     }
 }
 
