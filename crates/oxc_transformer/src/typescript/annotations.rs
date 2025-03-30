@@ -327,7 +327,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.accessibility.is_some() || param.readonly || param.r#override {
+                if param.has_modifier() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,

@@ -4,7 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext, loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
+    context::{ContextHost, LintContext},
+    loader::LINT_PARTIAL_LOADER_EXTENSIONS,
+    rule::Rule,
+    utils::is_empty_stmt,
 };
 
 fn no_empty_file_diagnostic(span: Span) -> OxcDiagnostic {
@@ -39,13 +42,6 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyFile {
     fn run_once(&self, ctx: &LintContext) {
-        if ctx
-            .file_path()
-            .extension()
-            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXT.contains(&ext.to_string_lossy().as_ref()))
-        {
-            return;
-        }
         let Some(root) = ctx.nodes().root_node() else {
             return;
         };
@@ -66,6 +62,12 @@ impl Rule for NoEmptyFile {
         // respected by this diagnostic.
         span.end = std::cmp::min(span.end, 100);
         ctx.diagnostic(no_empty_file_diagnostic(span));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.file_path().extension().is_some_and(|ext| {
+            !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext.to_string_lossy().as_ref())
+        })
     }
 }
 

@@ -9,7 +9,7 @@ use oxc_syntax::{
 };
 
 use crate::{
-    Codegen, Context, Operator,
+    Codegen, Context, Operator, Quote,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
 };
 
@@ -82,11 +82,11 @@ impl Gen for Directive<'_> {
         while let Some(c) = chars.next() {
             match c {
                 '"' => {
-                    quote = b'\'';
+                    quote = Quote::Single;
                     break;
                 }
                 '\'' => {
-                    quote = b'"';
+                    quote = Quote::Double;
                     break;
                 }
                 '\\' => {
@@ -95,9 +95,9 @@ impl Gen for Directive<'_> {
                 _ => {}
             }
         }
-        p.print_ascii_byte(quote);
+        quote.print(p);
         p.print_str(directive);
-        p.print_ascii_byte(quote);
+        quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
     }
@@ -3655,6 +3655,8 @@ impl Gen for TSModuleDeclaration<'_> {
                     }
                 }
             }
+        } else {
+            p.print_semicolon();
         }
         p.needs_semicolon = false;
     }

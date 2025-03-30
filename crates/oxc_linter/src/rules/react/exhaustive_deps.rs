@@ -9,7 +9,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
         CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
-        MemberExpression, StaticMemberExpression, VariableDeclarationKind,
+        MemberExpression, StaticMemberExpression, TSTypeAnnotation, TSTypeParameter,
+        TSTypeReference, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -1012,18 +1013,15 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         self.stack.pop();
     }
 
-    fn visit_ts_type_annotation(&mut self, _it: &oxc_ast::ast::TSTypeAnnotation<'a>) {
+    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
         // noop
     }
 
-    fn visit_ts_type_reference(&mut self, _it: &oxc_ast::ast::TSTypeReference<'a>) {
+    fn visit_ts_type_reference(&mut self, _it: &TSTypeReference<'a>) {
         // noop
     }
 
-    fn visit_ts_type_parameters(
-        &mut self,
-        _it: &oxc_allocator::Vec<'a, oxc_ast::ast::TSTypeParameter<'a>>,
-    ) {
+    fn visit_ts_type_parameters(&mut self, _it: &oxc_allocator::Vec<'a, TSTypeParameter<'a>>) {
         // noop
     }
 

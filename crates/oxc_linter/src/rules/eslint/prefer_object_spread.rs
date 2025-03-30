@@ -2,14 +2,10 @@ use std::cmp::max;
 
 use oxc_allocator::Box;
 use oxc_ast::AstKind;
-use oxc_ast::ast::Expression;
-use oxc_ast::ast::ObjectExpression;
-use oxc_ast::ast::ObjectPropertyKind;
-use oxc_ast::ast::PropertyKind;
+use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -121,7 +117,7 @@ impl Rule for PreferObjectSpread {
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
             let Some(Expression::ObjectExpression(obj_expr)) =
-                arg.as_expression().map(oxc_ast::ast::Expression::get_inner_expression)
+                arg.as_expression().map(Expression::get_inner_expression)
             else {
                 if idx == 0 {
                     return;

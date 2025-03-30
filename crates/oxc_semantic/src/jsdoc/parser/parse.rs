@@ -89,7 +89,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
     )
 }
 
-/// tag_content: Starts with `@`, may be mulitline
+/// tag_content: Starts with `@`, may be multiline
 fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
     debug_assert!(tag_content.starts_with('@'));
     // This surely exists, at least `@` itself

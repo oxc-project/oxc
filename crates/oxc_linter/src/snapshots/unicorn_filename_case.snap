@@ -14,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
    ╭─[filename_case.tsx:1:1]
    ╰────
-  help: Rename the file to 'fooBar.testUtils.js'
+  help: Rename the file to 'fooBar.test_utils.js'
 
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
    ╭─[filename_case.tsx:1:1]
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
    ╭─[filename_case.tsx:1:1]
    ╰────
-  help: Rename the file to 'foo_bar.test_utils.js'
+  help: Rename the file to 'foo_bar.testUtils.js'
 
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
    ╭─[filename_case.tsx:1:1]
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
    ╭─[filename_case.tsx:1:1]
    ╰────
-  help: Rename the file to 'foo-bar.test-utils.js'
+  help: Rename the file to 'foo-bar.testUtils.js'
 
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
    ╭─[filename_case.tsx:1:1]
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
    ╭─[filename_case.tsx:1:1]
    ╰────
-  help: Rename the file to 'FooBar.testUtils.js'
+  help: Rename the file to 'FooBar.test-utils.js'
 
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
    ╭─[filename_case.tsx:1:1]
@@ -140,3 +140,18 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[filename_case.tsx:1:1]
    ╰────
   help: Rename the file to '{fooBar}.js', '{foo-bar}.js', or '{fooBar}.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foobar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.testUtils.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo_bar.test_utils.js'

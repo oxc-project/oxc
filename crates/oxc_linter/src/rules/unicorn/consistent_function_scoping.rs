@@ -1,6 +1,9 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{Function, IdentifierReference, JSXElementName, ThisExpression},
+};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -254,22 +257,22 @@ struct ReferencesFinder {
 }
 
 impl<'a> Visit<'a> for ReferencesFinder {
-    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         self.references.push(it.reference_id());
     }
 
-    fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {
+    fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {
         // Ignore references in JSX elements e.g. `Foo` in `<Foo>`.
         // No need to walk children as only references they may contain are also JSX identifiers.
     }
 
-    fn visit_this_expression(&mut self, _: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _: &ThisExpression) {
         if self.in_function == 0 {
             self.is_parent_this_referenced = true;
         }
     }
 
-    fn visit_function(&mut self, func: &oxc_ast::ast::Function<'a>, flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.in_function += 1;
         walk::walk_function(self, func, flags);
         self.in_function -= 1;

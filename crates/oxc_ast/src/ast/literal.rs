@@ -85,10 +85,14 @@ pub struct StringLiteral<'a> {
     #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
 
-    /// The string value contains replacement character (U+FFFD).
+    /// The string value contains lone surrogates.
+    ///
+    /// `value` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
+    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
+    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
     #[builder(default)]
     #[estree(skip)]
-    pub lossy: bool,
+    pub lone_surrogates: bool,
 }
 
 /// BigInt literal

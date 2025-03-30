@@ -7,8 +7,9 @@ use equality_comparison::{abstract_equality_comparison, strict_equality_comparis
 use oxc_ast::{AstBuilder, ast::*};
 
 use crate::{
-    ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber, is_global_reference::IsGlobalReference,
-    side_effects::MayHaveSideEffects, to_numeric::ToNumeric,
+    ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+    to_numeric::ToNumeric,
 };
 
 mod equality_comparison;
@@ -21,7 +22,7 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluationCtx<'a>: IsGlobalReference {
+pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext {
     fn ast(&self) -> AstBuilder<'a>;
 }
 

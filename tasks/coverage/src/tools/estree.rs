@@ -61,6 +61,7 @@ impl Case for EstreeTest262Case {
         // We don't filter them out because they are genuine test fails, but leaving this list here so
         // can uncomment this block when debugging any new test failures, to filter out "known bad".
         /*
+        #[expect(clippy::items_after_statements)]
         static IGNORE_PATHS: &[&str] = &[
             // Missing `ParenthesizedExpression` on left side of assignment.
             // Oxc's parser does not support this, and we do not intend to fix.
@@ -74,46 +75,6 @@ impl Case for EstreeTest262Case {
             "test262/test/language/statements/for-in/head-lhs-cover.js",
             "test262/test/language/statements/for-of/head-lhs-async-parens.js",
             "test262/test/language/statements/for-of/head-lhs-cover.js",
-
-            // Lone surrogates in strings.
-            // We cannot pass these tests at present, as Oxc's parser does not handle them correctly.
-            // https://github.com/oxc-project/oxc/issues/3526#issuecomment-2650260735
-            "test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js",
-            "test262/test/annexB/built-ins/String/prototype/substr/surrogate-pairs.js",
-            "test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-string-wrapper.js",
-            "test262/test/built-ins/JSON/stringify/value-string-escape-unicode.js",
-            "test262/test/built-ins/RegExp/dotall/with-dotall-unicode.js",
-            "test262/test/built-ins/RegExp/dotall/with-dotall.js",
-            "test262/test/built-ins/RegExp/dotall/without-dotall-unicode.js",
-            "test262/test/built-ins/RegExp/dotall/without-dotall.js",
-            "test262/test/built-ins/RegExp/escape/escaped-surrogates.js",
-            "test262/test/built-ins/RegExp/named-groups/non-unicode-property-names-invalid.js",
-            "test262/test/built-ins/RegExp/named-groups/unicode-property-names-invalid.js",
-            "test262/test/built-ins/RegExp/prototype/Symbol.replace/coerce-unicode.js",
-            "test262/test/built-ins/RegExp/prototype/exec/u-captured-value.js",
-            "test262/test/built-ins/RegExp/regexp-modifiers/add-dotAll.js",
-            "test262/test/built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js",
-            "test262/test/built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js",
-            "test262/test/built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js",
-            "test262/test/built-ins/RegExp/regexp-modifiers/remove-dotAll.js",
-            "test262/test/built-ins/String/prototype/at/returns-code-unit.js",
-            "test262/test/built-ins/String/prototype/codePointAt/return-first-code-unit.js",
-            "test262/test/built-ins/String/prototype/codePointAt/return-single-code-unit.js",
-            "test262/test/built-ins/String/prototype/isWellFormed/returns-boolean.js",
-            "test262/test/built-ins/String/prototype/match/regexp-prototype-match-v-u-flag.js",
-            "test262/test/built-ins/String/prototype/padEnd/normal-operation.js",
-            "test262/test/built-ins/String/prototype/padStart/normal-operation.js",
-            "test262/test/built-ins/String/prototype/toWellFormed/returns-well-formed-string.js",
-            "test262/test/built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js",
-            "test262/test/intl402/NumberFormat/prototype/format/format-non-finite-numbers.js",
-            "test262/test/intl402/Segmenter/prototype/segment/containing/breakable-input.js",
-            "test262/test/intl402/Segmenter/prototype/segment/containing/unbreakable-input.js",
-            "test262/test/intl402/Segmenter/prototype/segment/containing/zero-index.js",
-            "test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js",
-            "test262/test/language/literals/regexp/u-astral.js",
-            "test262/test/language/literals/regexp/u-surrogate-pairs-atom-char-class.js",
-            "test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js",
-            "test262/test/language/statements/for-of/string-astral-truncated.js",
         ];
 
         let path = &*self.path().to_string_lossy();

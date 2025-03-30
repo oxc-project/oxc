@@ -41,6 +41,7 @@ oxc_syntax = { workspace = true, features = ["serialize"] }
 
 #
 bitflags = { workspace = true }
+constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }

@@ -66,18 +66,8 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
-        let parameter_properties: Vec<_> = method
-            .value
-            .params
-            .items
-            .iter()
-            .filter(|param| {
-                // TypeScript offers special syntax for turning a constructor parameter into a class property with the same name and value.
-                // These are called parameter properties and are created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly
-                // https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties
-                param.accessibility.is_some() || param.readonly
-            })
-            .collect();
+        let parameter_properties: Vec<_> =
+            method.value.params.items.iter().filter(|param| param.has_modifier()).collect();
 
         if parameter_properties.is_empty() {
             return;

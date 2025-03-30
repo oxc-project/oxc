@@ -1,7 +1,7 @@
 use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
 
 use ignore::{DirEntry, overrides::Override};
-use oxc_span::VALID_EXTENSIONS;
+use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
 
@@ -10,7 +10,7 @@ pub struct Extensions(pub Vec<&'static str>);
 
 impl Default for Extensions {
     fn default() -> Self {
-        Self(VALID_EXTENSIONS.to_vec())
+        Self(LINTABLE_EXTENSIONS.to_vec())
     }
 }
 
@@ -108,6 +108,7 @@ impl Walk {
         receiver.into_iter().flatten().collect()
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn with_extensions(mut self, extensions: Extensions) -> Self {
         self.extensions = extensions;
         self

@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::ClassElement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -74,19 +74,19 @@ impl Rule for NoStaticOnlyClass {
         }
         if class.body.body.iter().any(|node| {
             match node {
-                oxc_ast::ast::ClassElement::MethodDefinition(v) => {
+                ClassElement::MethodDefinition(v) => {
                     if v.accessibility.is_some() {
                         return true;
                     }
                 }
-                oxc_ast::ast::ClassElement::PropertyDefinition(v) => {
+                ClassElement::PropertyDefinition(v) => {
                     if v.accessibility.is_some() || v.readonly || v.declare {
                         return true;
                     }
                 }
-                oxc_ast::ast::ClassElement::AccessorProperty(_)
-                | oxc_ast::ast::ClassElement::StaticBlock(_)
-                | oxc_ast::ast::ClassElement::TSIndexSignature(_) => {}
+                ClassElement::AccessorProperty(_)
+                | ClassElement::StaticBlock(_)
+                | ClassElement::TSIndexSignature(_) => {}
             }
 
             if node.r#static() {

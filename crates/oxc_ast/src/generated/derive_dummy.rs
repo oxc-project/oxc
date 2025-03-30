@@ -1597,7 +1597,7 @@ impl<'a> Dummy<'a> for StringLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            lossy: Dummy::dummy(allocator),
+            lone_surrogates: Dummy::dummy(allocator),
         }
     }
 }

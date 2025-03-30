@@ -90,4 +90,11 @@ mod test {
         Tester::new_with_linter(linter)
             .test_and_snapshot_single_file("fixtures/linter/regexp_feature/index.ts");
     }
+
+    #[test]
+    fn test_frameworks() {
+        Tester::new().test_and_snapshot_single_file("fixtures/linter/astro/debugger.astro");
+        Tester::new().test_and_snapshot_single_file("fixtures/linter/vue/debugger.vue");
+        Tester::new().test_and_snapshot_single_file("fixtures/linter/svelte/debugger.svelte");
+    }
 }
