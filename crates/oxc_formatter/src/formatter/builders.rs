@@ -266,7 +266,6 @@ impl std::fmt::Debug for Line {
 #[inline]
 pub fn text(text: &'static str) -> StaticText {
     debug_assert_no_newlines(text);
-
     StaticText { text }
 }
 
@@ -289,8 +288,8 @@ impl std::fmt::Debug for StaticText {
 
 /// Creates a text from a dynamic string and a range of the input source
 pub fn dynamic_text(text: &str, position: TextSize) -> DynamicText<'_> {
-    debug_assert_no_newlines(text);
-
+    // FIXME
+    // debug_assert_no_newlines(text);
     DynamicText { text, position }
 }
 

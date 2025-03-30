@@ -1877,9 +1877,3 @@ impl<'a> Format<'a> for JSDocUnknownType {
         self.write(f)
     }
 }
-
-impl<'a> Format<'a> for Span {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
