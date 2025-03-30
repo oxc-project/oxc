@@ -37,7 +37,12 @@ const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
 
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
-    pub fn to_estree_ts_json(&self) -> String {
+    pub fn to_estree_ts_json(&mut self) -> String {
+        // Set start span to first token of first statement.
+        if let Some(first_stat) = self.body.first() {
+            self.span = Span::new(first_stat.span().start, self.span.end);
+        }
+
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let mut serializer = CompactTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
