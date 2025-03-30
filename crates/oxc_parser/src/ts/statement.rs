@@ -310,6 +310,7 @@ impl<'a> ParserImpl<'a> {
             let block = self.parse_ts_module_block()?;
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
         } else {
+            self.asi()?;
             None
         };
 

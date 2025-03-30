@@ -25,6 +25,16 @@ impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
     }
 }
 
+impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
+    fn respect_annotations(&self) -> bool {
+        true
+    }
+
+    fn is_pure_call(&self, _callee: &Expression) -> bool {
+        false
+    }
+}
+
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast

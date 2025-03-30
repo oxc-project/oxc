@@ -19,3 +19,8 @@ This is the linter for Oxc. The currently supported features are listed below.
 - Command to fix all auto-fixable content within the current text editor.
 - Support for `source.fixAll.oxc` as a code action provider. Configure this in your settings `editor.codeActionsOnSave`
   to automatically apply fixes when saving the file.
+
+## Testing
+
+Run `pnpm server:build:debug` to build the language server.
+After that, you can test the vscode plugin + E2E Tests with `pnm test`

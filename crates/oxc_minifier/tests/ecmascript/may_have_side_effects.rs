@@ -1,20 +1,44 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
+use oxc_ast::ast::{Expression, IdentifierReference, Statement};
+use oxc_ecmascript::{
+    is_global_reference::IsGlobalReference,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct GlobalReferenceChecker {
+struct Ctx {
     global_variable_names: Vec<String>,
+    annotation: bool,
+    pure_function_names: Vec<String>,
 }
-impl IsGlobalReference for GlobalReferenceChecker {
+impl Default for Ctx {
+    fn default() -> Self {
+        Self { global_variable_names: vec![], annotation: true, pure_function_names: vec![] }
+    }
+}
+impl IsGlobalReference for Ctx {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
+impl MayHaveSideEffectsContext for Ctx {
+    fn respect_annotations(&self) -> bool {
+        self.annotation
+    }
+
+    fn is_pure_call(&self, callee: &Expression) -> bool {
+        if let Expression::Identifier(id) = callee {
+            self.pure_function_names.iter().any(|name| name == id.name.as_str())
+        } else {
+            false
+        }
+    }
+}
 
 fn test(source_text: &str, expected: bool) {
-    test_with_global_variables(source_text, vec![], expected);
+    let ctx = Ctx::default();
+    test_with_ctx(source_text, &ctx, expected);
 }
 
 fn test_with_global_variables(
@@ -22,21 +46,20 @@ fn test_with_global_variables(
     global_variable_names: Vec<String>,
     expected: bool,
 ) {
+    let ctx = Ctx { global_variable_names, ..Default::default() };
+    test_with_ctx(source_text, &ctx, expected);
+}
+
+fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
-
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    assert_eq!(
-        stmt.expression.may_have_side_effects(&global_reference_checker),
-        expected,
-        "{source_text}"
-    );
+    assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -701,6 +724,30 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ new Foo(...`${bar}`)", true);
     test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
+
+    let ctx = Ctx { annotation: false, ..Default::default() };
+    test_with_ctx("/* #__PURE__ */ foo()", &ctx, true);
+    test_with_ctx("/* #__PURE__ */ new Foo()", &ctx, true);
+}
+
+#[test]
+fn test_is_pure_call_support() {
+    let ctx = Ctx {
+        pure_function_names: vec!["foo".to_string(), "Foo".to_string()],
+        ..Default::default()
+    };
+    test_with_ctx("foo()", &ctx, false);
+    test_with_ctx("foo(1)", &ctx, false);
+    test_with_ctx("foo(bar())", &ctx, true);
+    test_with_ctx("bar()", &ctx, true);
+    test_with_ctx("new Foo()", &ctx, false);
+    test_with_ctx("new Foo(1)", &ctx, false);
+    test_with_ctx("new Foo(bar())", &ctx, true);
+    test_with_ctx("new Bar()", &ctx, true);
+    test_with_ctx("foo``", &ctx, false);
+    test_with_ctx("foo`1`", &ctx, false);
+    test_with_ctx("foo`${bar()}`", &ctx, true);
+    test_with_ctx("bar``", &ctx, true);
 }
 
 #[test]

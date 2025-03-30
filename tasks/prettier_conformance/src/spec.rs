@@ -6,16 +6,17 @@ use oxc_ast::ast::{
     VariableDeclarator,
 };
 use oxc_ast_visit::VisitMut;
-use oxc_parser::Parser;
-use oxc_prettier::{
-    ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
+use oxc_formatter::{
+    ArrowParentheses, BracketSpacing, FormatOptions, IndentWidth, LineEnding, LineWidth,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
+use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
 /// Vec<(key, value)>
 type SnapshotOptions = Vec<(String, String)>;
 
-pub fn parse_spec(spec: &Path) -> Vec<(PrettierOptions, SnapshotOptions)> {
+pub fn parse_spec(spec: &Path) -> Vec<(FormatOptions, SnapshotOptions)> {
     let mut parser = SpecParser::default();
     parser.parse(spec);
     parser.calls
@@ -25,7 +26,7 @@ pub fn parse_spec(spec: &Path) -> Vec<(PrettierOptions, SnapshotOptions)> {
 struct SpecParser {
     source_text: String,
     parsers: Vec<String>,
-    calls: Vec<(PrettierOptions, SnapshotOptions)>,
+    calls: Vec<(FormatOptions, SnapshotOptions)>,
 }
 
 impl SpecParser {
@@ -77,7 +78,7 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = PrettierOptions::default();
+        let mut options = FormatOptions::default();
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {
@@ -113,42 +114,63 @@ impl VisitMut<'_> for SpecParser {
                         match &obj_prop.value {
                             Expression::BooleanLiteral(literal) => {
                                 if name == "semi" {
-                                    options.semi = literal.value;
+                                    options.semicolons = if literal.value {
+                                        Semicolons::Always
+                                    } else {
+                                        Semicolons::AsNeeded
+                                    }
                                 } else if name == "bracketSpacing" {
-                                    options.bracket_spacing = literal.value;
+                                    options.bracket_spacing = BracketSpacing::from(literal.value);
                                 } else if name == "singleQuote" {
-                                    options.single_quote = literal.value;
+                                    options.quote_style = if literal.value {
+                                        QuoteStyle::Single
+                                    } else {
+                                        QuoteStyle::Double
+                                    };
                                 }
                             }
                             #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                             Expression::NumericLiteral(literal) => match name.as_ref() {
-                                "printWidth" => options.print_width = literal.value as usize,
-                                "tabWidth" => options.tab_width = literal.value as usize,
-                                _ => {}
-                            },
-                            Expression::StringLiteral(literal) => match name.as_ref() {
-                                "trailingComma" => {
-                                    options.trailing_comma =
-                                        TrailingComma::from_str(literal.value.as_str()).unwrap();
+                                "printWidth" => {
+                                    options.line_width =
+                                        LineWidth::try_from(literal.value as u16).unwrap();
                                 }
-                                "endOfLine" => {
-                                    options.end_of_line =
-                                        EndOfLine::from_str(literal.value.as_str()).unwrap();
-                                }
-                                "quoteProps" => {
-                                    options.quote_props =
-                                        QuoteProps::from_str(literal.value.as_str()).unwrap();
-                                }
-                                "objectWrap" => {
-                                    options.object_wrap =
-                                        ObjectWrap::from_str(literal.value.as_str()).unwrap();
-                                }
-                                "arrowParens" => {
-                                    options.arrow_parens =
-                                        ArrowParens::from_str(literal.value.as_str()).unwrap();
+                                "tabWidth" => {
+                                    options.indent_width =
+                                        IndentWidth::try_from(literal.value as u8).unwrap();
                                 }
                                 _ => {}
                             },
+                            Expression::StringLiteral(literal) => {
+                                let s = literal.value.as_str();
+                                match name.as_ref() {
+                                    "trailingComma" => {
+                                        options.trailing_commas =
+                                            TrailingCommas::from_str(s).unwrap();
+                                    }
+                                    "endOfLine" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.line_ending =
+                                            LineEnding::from_str(s).unwrap_or_default();
+                                    }
+                                    "quoteProps" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.quote_properties =
+                                            QuoteProperties::from_str(s).unwrap_or_default();
+                                    }
+                                    "objectWrap" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.bracket_spacing =
+                                            BracketSpacing::from_str(s).unwrap_or_default();
+                                    }
+                                    "arrowParens" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.arrow_parentheses =
+                                            ArrowParentheses::from_str(s).unwrap_or_default();
+                                    }
+                                    _ => {}
+                                }
+                            }
                             _ => {}
                         };
                         if name != "errors" {

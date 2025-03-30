@@ -1061,11 +1061,15 @@ function deserializeNumericLiteral(pos) {
 }
 
 function deserializeStringLiteral(pos) {
+  let value = deserializeStr(pos + 8);
+  if (deserializeBool(pos + 40)) {
+    value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+  }
   return {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeStr(pos + 8),
+    value,
     raw: deserializeOptionStr(pos + 24),
   };
 }

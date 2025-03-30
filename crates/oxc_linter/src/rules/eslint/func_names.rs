@@ -12,7 +12,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
-use phf::phf_set;
 
 use crate::{AstNode, ast_util::get_function_name_with_kind, context::LintContext, rule::Rule};
 
@@ -385,20 +384,11 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
     None
 }
 
-const INVALID_NAMES: phf::set::Set<&'static str> = phf_set! {
-    "arguments",
-    "async",
-    "await",
-    "constructor",
-    "default",
-    "eval",
-    "null",
-    "undefined",
-    "yield",
-};
+const INVALID_NAMES: [&str; 9] =
+    ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
 
 fn is_valid_identifier_name(name: &str) -> bool {
-    !INVALID_NAMES.contains(name) && is_identifier_name(name)
+    !INVALID_NAMES.contains(&name) && is_identifier_name(name)
 }
 
 #[test]

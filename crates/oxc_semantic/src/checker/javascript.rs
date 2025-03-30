@@ -3,12 +3,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_ecmascript::{IsSimpleParameterList, PropName};
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     scope::ScopeFlags,
+    symbol::SymbolFlags,
 };
 
 use crate::{AstNode, builder::SemanticBuilder, diagnostics::redeclaration};
@@ -429,6 +430,81 @@ pub fn check_function_declaration<'a>(
             ctx.error(function_declaration_non_strict(decl.span));
         }
     };
+}
+
+// It is a Syntax Error if any element of the LexicallyDeclaredNames of
+// StatementList also occurs in the VarDeclaredNames of StatementList.
+pub fn check_variable_declarator_redeclaration(
+    decl: &VariableDeclarator,
+    ctx: &SemanticBuilder<'_>,
+) {
+    if decl.kind != VariableDeclarationKind::Var || ctx.current_scope_flags().is_top() {
+        return;
+    }
+
+    decl.id.bound_names(&mut |ident| {
+        let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
+        let Some(rd) = redeclarations.iter().nth_back(1) else { return };
+
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        if rd.flags.is_function() {
+            ctx.error(redeclaration(&ident.name, rd.span, decl.span));
+        }
+    });
+}
+
+// It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
+// unless the source text matched by this production is not strict mode code
+// and the duplicate entries are only bound by FunctionDeclarations.
+// https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
+pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &func.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
+    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
+        return;
+    }
+
+    let current_scope_flags = ctx.current_scope_flags();
+    if !current_scope_flags.is_strict_mode() {
+        if current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+            && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+        {
+            // `function a() {}; function a() {}` and `var a; function a() {}` is invalid in non-strict mode
+            return;
+        } else if !(func.r#async || func.generator) {
+            // `{ var a; function a() {} }` is invalid in both strict and non-strict mode
+            let prev_function = ctx.nodes.kind(prev.declaration).as_function();
+            if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+                return;
+            }
+        }
+    }
+
+    ctx.error(redeclaration(&id.name, prev.span, id.span));
+}
+
+pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &class.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    if prev.flags.contains(SymbolFlags::Function) {
+        ctx.error(redeclaration(&id.name, prev.span, id.span));
+    }
 }
 
 fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {

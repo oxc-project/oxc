@@ -102,8 +102,10 @@ impl Tester<'_> {
     #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
         let uri = get_file_uri(relative_file_path);
-        let content = std::fs::read_to_string(uri.to_file_path().unwrap())
-            .expect("could not read fixture file");
+        let content = match std::fs::read_to_string(uri.to_file_path().unwrap()) {
+            Ok(content) => content,
+            Err(err) => panic!("could not read fixture file: {err}: {relative_file_path}"),
+        };
         let reports = self.server_linter.run_single(&uri, Some(content)).unwrap();
         let snapshot = if reports.is_empty() {
             "No diagnostic reports".to_string()

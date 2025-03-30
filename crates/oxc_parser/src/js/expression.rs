@@ -406,7 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
-        let lossy = self.cur_token().lossy;
+        let lone_surrogates = self.cur_token().lone_surrogates;
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -415,7 +415,7 @@ impl<'a> ParserImpl<'a> {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
         let mut string_literal = self.ast.string_literal(span, value, Some(raw));
-        string_literal.lossy = lossy;
+        string_literal.lone_surrogates = lone_surrogates;
         Ok(string_literal)
     }
 

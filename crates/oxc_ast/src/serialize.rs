@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, PrettyJSSerializer,
-    PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
+    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
+    PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
 };
 
 use crate::ast::*;
@@ -222,6 +222,43 @@ impl ESTree for NullLiteralRaw<'_> {
         #[expect(clippy::collection_is_never_read)] // Clippy is wrong!
         let raw = if self.0.span.is_unspanned() { None } else { Some(JsonSafeString("null")) };
         raw.serialize(serializer);
+    }
+}
+
+/// Serializer for `value` field of `StringLiteral`.
+///
+/// Handle when `lossy` flag is set, indicating the string contains lone surrogates.
+#[ast_meta]
+#[estree(
+    ts_type = "string",
+    raw_deser = r#"
+        let value = DESER[Atom](POS_OFFSET.value);
+        if (DESER[bool](POS_OFFSET.lone_surrogates)) {
+            value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+        }
+        value
+    "#
+)]
+pub struct StringLiteralValue<'a, 'b>(pub &'b StringLiteral<'a>);
+
+impl ESTree for StringLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let lit = self.0;
+        #[expect(clippy::if_not_else)]
+        if !lit.lone_surrogates {
+            lit.value.serialize(serializer);
+        } else {
+            // String contains lone surrogates
+            self.serialize_lone_surrogates(serializer);
+        }
+    }
+}
+
+impl StringLiteralValue<'_, '_> {
+    #[cold]
+    #[inline(never)]
+    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
+        LoneSurrogatesString(self.0.value.as_str()).serialize(serializer);
     }
 }
 

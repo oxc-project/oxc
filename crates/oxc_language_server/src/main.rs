@@ -50,52 +50,18 @@ enum Run {
     #[default]
     OnType,
 }
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Options {
     run: Run,
-    enable: bool,
-    config_path: String,
+    config_path: Option<String>,
     flags: FxHashMap<String, String>,
 }
 
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            enable: true,
-            run: Run::default(),
-            config_path: OXC_CONFIG_FILE.into(),
-            flags: FxHashMap::default(),
-        }
-    }
-}
-
 impl Options {
-    fn get_lint_level(&self) -> SyntheticRunLevel {
-        if self.enable {
-            match self.run {
-                Run::OnSave => SyntheticRunLevel::OnSave,
-                Run::OnType => SyntheticRunLevel::OnType,
-            }
-        } else {
-            SyntheticRunLevel::Disable
-        }
-    }
-
-    fn get_config_path(&self) -> Option<PathBuf> {
-        if self.config_path.is_empty() { None } else { Some(PathBuf::from(&self.config_path)) }
-    }
-
     fn disable_nested_configs(&self) -> bool {
         self.flags.contains_key("disable_nested_config")
     }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
-enum SyntheticRunLevel {
-    Disable,
-    OnSave,
-    OnType,
 }
 
 #[tower_lsp::async_trait]
@@ -155,42 +121,15 @@ impl LanguageServer for Backend {
         "
         );
 
-        if current_option.get_lint_level() != changed_options.get_lint_level()
-            && changed_options.get_lint_level() == SyntheticRunLevel::Disable
-        {
-            debug!("lint level change detected {:?}", &changed_options.get_lint_level());
-            // clear all exists diagnostics when linter is disabled
-            let cleared_diagnostics = self
-                .diagnostics_report_map
-                .pin()
-                .keys()
-                .map(|uri| {
-                    (
-                        // should convert successfully, case the key is from `params.document.uri`
-                        Url::from_str(uri)
-                            .ok()
-                            .and_then(|url| url.to_file_path().ok())
-                            .expect("should convert to path"),
-                        vec![],
-                    )
-                })
-                .collect::<Vec<_>>();
-            self.publish_all_diagnostics(&cleared_diagnostics).await;
-        }
-
         if changed_options.disable_nested_configs() {
             self.nested_configs.pin().clear();
         }
 
         *self.options.lock().await = changed_options.clone();
 
-        // revalidate the config and all open files, when lint level is not disabled and the config path is changed
-        if changed_options.get_lint_level() != SyntheticRunLevel::Disable
-            && changed_options
-                .get_config_path()
-                .is_some_and(|path| path.to_str().unwrap() != current_option.config_path)
-        {
-            info!("config path change detected {:?}", &changed_options.get_config_path());
+        // revalidate the config and all open files
+        if changed_options.config_path != current_option.config_path {
+            info!("config path change detected {:?}", &changed_options.config_path);
             self.init_linter_config().await;
             self.revalidate_open_files().await;
         }
@@ -247,14 +186,15 @@ impl LanguageServer for Backend {
     }
 
     async fn shutdown(&self) -> Result<()> {
+        self.clear_all_diagnostics().await;
         Ok(())
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         // drop as fast as possible
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnSave {
+        let run_level = { self.options.lock().await.run };
+        if run_level != Run::OnSave {
             return;
         }
         let uri = params.text_document.uri;
@@ -267,8 +207,8 @@ impl LanguageServer for Backend {
     /// When the document changed, it may not be written to disk, so we should
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnType {
+        let run_level = { self.options.lock().await.run };
+        if run_level != Run::OnType {
             return;
         }
 
@@ -286,10 +226,6 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level <= SyntheticRunLevel::Disable {
-            return;
-        }
         if self.is_ignored(&params.text_document.uri).await {
             return;
         }
@@ -515,6 +451,25 @@ impl Backend {
         }
     }
 
+    async fn clear_all_diagnostics(&self) {
+        let cleared_diagnostics = self
+            .diagnostics_report_map
+            .pin()
+            .keys()
+            .map(|uri| {
+                (
+                    // should convert successfully, case the key is from `params.document.uri`
+                    Url::from_str(uri)
+                        .ok()
+                        .and_then(|url| url.to_file_path().ok())
+                        .expect("should convert to path"),
+                    vec![],
+                )
+            })
+            .collect::<Vec<_>>();
+        self.publish_all_diagnostics(&cleared_diagnostics).await;
+    }
+
     #[expect(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
         join_all(result.iter().map(|(path, diagnostics)| {
@@ -543,7 +498,7 @@ impl Backend {
         let Ok(root_path) = uri.to_file_path() else {
             return None;
         };
-        let relative_config_path = self.options.lock().await.get_config_path();
+        let relative_config_path = self.options.lock().await.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
             let config = root_path.join(relative_config_path.unwrap());
             config.try_exists().expect("Invalid config file path");
@@ -552,13 +507,15 @@ impl Backend {
             Oxlintrc::default()
         };
 
-        let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone())
+        let config_store = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone())
             .expect("failed to build config")
             .build()
             .expect("failed to build config");
 
+        let lint_options = LintOptions { fix: FixKind::SafeFix, ..Default::default() };
+
         let linter = if self.options.lock().await.disable_nested_configs() {
-            Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix)
+            Linter::new(lint_options, config_store)
         } else {
             let nested_configs = self.nested_configs.pin();
             let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
@@ -566,11 +523,7 @@ impl Backend {
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect::<FxHashMap<_, _>>();
 
-            Linter::new_with_nested_configs(
-                LintOptions::default(),
-                config_store,
-                nested_configs_copy,
-            )
+            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
         };
 
         *self.server_linter.write().await = ServerLinter::new_with_linter(linter);

@@ -315,9 +315,15 @@ dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
- "unicode-width",
+ "unicode-width 0.2.0",
  "windows-sys 0.59.0",
 ]
+
+[[package]]
+name = "constcat"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ffb5df6dd5dadb422897e8132f415d7a054e3cd757e5070b663f75bea1840fb"
 
 [[package]]
 name = "convert_case"
@@ -1546,7 +1552,7 @@ dependencies = [
  "oxc-miette-derive",
  "textwrap",
  "thiserror 2.0.12",
- "unicode-width",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -1640,12 +1646,12 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_codegen",
+ "oxc_formatter",
  "oxc_isolated_declarations",
  "oxc_linter",
  "oxc_mangler",
  "oxc_minifier",
  "oxc_parser",
- "oxc_prettier",
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
@@ -1715,7 +1721,7 @@ dependencies = [
  "futures",
  "lazy-regex",
  "oxc",
- "oxc_prettier",
+ "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "pico-args",
@@ -1766,6 +1772,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_formatter"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_data_structures",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+ "pico-args",
+ "rustc-hash",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
 name = "oxc_index"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1809,7 +1830,6 @@ dependencies = [
  "oxc_linter",
  "oxc_parser",
  "oxc_semantic",
- "oxc_span",
  "papaya",
  "rustc-hash",
  "serde",
@@ -1823,6 +1843,7 @@ name = "oxc_linter"
 version = "0.16.3"
 dependencies = [
  "bitflags 2.9.0",
+ "constcat",
  "convert_case",
  "cow-utils",
  "fast-glob",
@@ -2011,27 +2032,12 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_formatter",
  "oxc_index",
  "oxc_linter",
  "oxc_napi",
- "oxc_prettier",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "oxc_prettier"
-version = "0.0.0"
-dependencies = [
- "bitflags 2.9.0",
- "cow-utils",
- "oxc_allocator",
- "oxc_ast",
- "oxc_parser",
- "oxc_span",
- "oxc_syntax",
- "pico-args",
- "rustc-hash",
 ]
 
 [[package]]
@@ -2042,8 +2048,8 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_formatter",
  "oxc_parser",
- "oxc_prettier",
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
@@ -3034,7 +3040,7 @@ checksum = "c13547615a44dc9c452a8a534638acdf07120d4b6847c8178705da06306a3057"
 dependencies = [
  "smawk",
  "unicode-linebreak",
- "unicode-width",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -3321,6 +3327,12 @@ name = "unicode-segmentation"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
+
+[[package]]
+name = "unicode-width"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "unicode-width"

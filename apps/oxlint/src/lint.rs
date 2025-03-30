@@ -10,16 +10,15 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
+    LintService, LintServiceOptions, Linter, Oxlintrc,
 };
-use oxc_span::VALID_EXTENSIONS;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    walk::{Extensions, Walk},
+    walk::Walk,
 };
 
 #[derive(Debug)]
@@ -79,12 +78,6 @@ impl Runner for LintRunner {
                 return result;
             }
         };
-
-        let extensions = VALID_EXTENSIONS
-            .iter()
-            .chain(LINT_PARTIAL_LOADER_EXT.iter())
-            .copied()
-            .collect::<Vec<&'static str>>();
 
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
@@ -172,7 +165,7 @@ impl Runner for LintRunner {
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
-        let paths = walker.with_extensions(Extensions(extensions)).paths();
+        let paths = walker.paths();
 
         let number_of_files = paths.len();
 
@@ -316,8 +309,15 @@ impl Runner for LintRunner {
             }
         }
 
-        let mut options = LintServiceOptions::new(self.cwd, paths)
-            .with_cross_module(config_builder.plugins().has_import());
+        // TODO(refactor): pull this into a shared function, so that the language server can use
+        // the same functionality.
+        let use_cross_module = if use_nested_config {
+            nested_configs.values().any(|config| config.plugins().has_import())
+        } else {
+            config_builder.plugins().has_import()
+        };
+        let mut options =
+            LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build() {
             Ok(config) => config,
@@ -1056,5 +1056,11 @@ mod test {
         // Check that using a config which extends a config with overrides works as expected
         let args = &["overrides_same_directory"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_multi_file_analysis_imports() {
+        let args = &["issue_10054"];
+        Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
     }
 }

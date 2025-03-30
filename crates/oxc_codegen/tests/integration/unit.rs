@@ -143,7 +143,7 @@ fn unicode_escape() {
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
     test("console.log('안녕하세요');", "console.log(\"안녕하세요\");\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log(\"🧑‍🤝‍🧑\");\n");
-    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\uD800\\uD801\");\n");
+    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\ud800\\ud801\");\n");
 }
 
 #[test]
@@ -500,6 +500,13 @@ fn getter_setter() {
 
 #[test]
 fn string() {
+    test("let x = \"${}\";", "let x = \"${}\";\n");
+    test_minify("let x = \"${}\";", "let x=\"${}\";");
+    test("let x = '\"\"${}';", "let x = \"\\\"\\\"${}\";\n");
+    test_minify("let x = '\"\"${}';", "let x='\"\"${}';");
+    test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"''${}\";\n");
+    test_minify("let x = '\"\"\\'\\'${}';", "let x=`\"\"''\\${}`;");
+
     test_minify(
         r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
