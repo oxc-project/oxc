@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
     is_global_reference::IsGlobalReference,
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -11,10 +11,16 @@ struct Ctx {
     global_variable_names: Vec<String>,
     annotation: bool,
     pure_function_names: Vec<String>,
+    property_read_side_effects: PropertyReadSideEffects,
 }
 impl Default for Ctx {
     fn default() -> Self {
-        Self { global_variable_names: vec![], annotation: true, pure_function_names: vec![] }
+        Self {
+            global_variable_names: vec![],
+            annotation: true,
+            pure_function_names: vec![],
+            property_read_side_effects: PropertyReadSideEffects::All,
+        }
     }
 }
 impl IsGlobalReference for Ctx {
@@ -33,6 +39,10 @@ impl MayHaveSideEffectsContext for Ctx {
         } else {
             false
         }
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        self.property_read_side_effects
     }
 }
 
@@ -748,6 +758,31 @@ fn test_is_pure_call_support() {
     test_with_ctx("foo`1`", &ctx, false);
     test_with_ctx("foo`${bar()}`", &ctx, true);
     test_with_ctx("bar``", &ctx, true);
+}
+
+#[test]
+fn test_property_read_side_effects_support() {
+    let all_ctx =
+        Ctx { property_read_side_effects: PropertyReadSideEffects::All, ..Default::default() };
+    let only_member_ctx = Ctx {
+        property_read_side_effects: PropertyReadSideEffects::OnlyMemberPropertyAccess,
+        ..Default::default()
+    };
+    let none_ctx =
+        Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Default::default() };
+
+    test_with_ctx("foo.bar", &all_ctx, true);
+    test_with_ctx("foo.bar", &only_member_ctx, true);
+    test_with_ctx("foo.bar", &none_ctx, false);
+    test_with_ctx("foo[0]", &none_ctx, false);
+    test_with_ctx("foo[0n]", &none_ctx, false);
+    test_with_ctx("foo[bar()]", &none_ctx, true);
+    test_with_ctx("foo.#bar", &all_ctx, true);
+    test_with_ctx("foo.#bar", &only_member_ctx, true);
+    test_with_ctx("foo.#bar", &none_ctx, false);
+    test_with_ctx("({ bar } = foo)", &all_ctx, true);
+    // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
+    // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 }
 
 #[test]
