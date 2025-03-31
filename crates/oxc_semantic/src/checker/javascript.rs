@@ -474,18 +474,20 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     }
 
     let current_scope_flags = ctx.current_scope_flags();
-    if !current_scope_flags.is_strict_mode() {
-        if current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
-            && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
-        {
-            // `function a() {}; function a() {}` and `var a; function a() {}` is invalid in non-strict mode
+    if ctx.source_type.is_script()
+        && current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+        && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+    {
+        // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+        // `function a() {}; function a() {}` and `var a; function a() {}` are still valid in
+        // script code, and should not be valid for module code.
+        return;
+    } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
+        // `class a {}; function a() {}` and `async function a() {} function a () {}` are
+        // invalid in both strict and non-strict mode.
+        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
+        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
             return;
-        } else if !(func.r#async || func.generator) {
-            // `{ var a; function a() {} }` is invalid in both strict and non-strict mode
-            let prev_function = ctx.nodes.kind(prev.declaration).as_function();
-            if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
-                return;
-            }
         }
     }
 
