@@ -432,6 +432,37 @@ pub fn check_function_declaration<'a>(
     };
 }
 
+// It is a Syntax Error if IsLabelledFunction(Statement) is true.
+pub fn check_function_declaration_in_labeled_statement<'a>(
+    body: &Statement<'a>,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    if let Statement::FunctionDeclaration(decl) = body {
+        if ctx.strict_mode() {
+            ctx.error(function_declaration_strict(decl.span));
+        } else {
+            // skip(1) for `LabeledStatement`
+            for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
+                match kind {
+                    // Nested labeled statement
+                    AstKind::LabeledStatement(_) => continue,
+                    AstKind::ForOfStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+                    | AstKind::WithStatement(_)
+                    | AstKind::IfStatement(_) => break,
+
+                    _ => return,
+                }
+            }
+            ctx.error(function_declaration_non_strict(decl.span));
+        }
+    };
+}
+
 // It is a Syntax Error if any element of the LexicallyDeclaredNames of
 // StatementList also occurs in the VarDeclaredNames of StatementList.
 pub fn check_variable_declarator_redeclaration(
