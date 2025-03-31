@@ -27,7 +27,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 rustc-hash = { workspace = true }
-unicode-width = "0.1"
+unicode-width = "0.2"
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
