@@ -705,7 +705,7 @@ semi*/
 }
 
 #[cfg(test)]
-mod test_unused_directives {
+mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::Comment;
     use oxc_parser::Parser;
@@ -734,6 +734,17 @@ mod test_unused_directives {
                 DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
             test(comments, directives);
         }
+    }
+
+    fn test_directive_span(source_text: &str, expected_start: u32, expected_stop: u32) {
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let interval = &directives.intervals.intervals[0];
+
+        assert_eq!(interval.start, expected_start);
+        assert_eq!(interval.stop, expected_stop);
     }
 
     #[test]
@@ -899,5 +910,25 @@ mod test_unused_directives {
                 assert!(directives.collect_unused_disable_comments().is_empty());
             },
         );
+    }
+
+    #[test]
+    fn next_line_spans() {
+        test_directive_span("// eslint-disable-next-line max-params", 38, 38);
+        test_directive_span("// eslint-disable-next-line max-params\n", 38, 39);
+        test_directive_span("// eslint-disable-next-line max-params\r\n", 38, 40);
+        test_directive_span("// eslint-disable-next-line max-params\r\r\n", 38, 41);
+
+        test_directive_span("// eslint-disable-next-line max-params    \n", 42, 43);
+        test_directive_span("// eslint-disable-next-line max-params    \r\n", 42, 44);
+        test_directive_span("// eslint-disable-next-line max-params    \r\r\n", 42, 45);
+
+        test_directive_span("// eslint-disable-next-line max-params    \nabc", 42, 46);
+        test_directive_span("// eslint-disable-next-line max-params    \r\nabc", 42, 47);
+        test_directive_span("// eslint-disable-next-line max-params    \r\r\nabc", 42, 48);
+
+        test_directive_span("// eslint-disable-next-line max-params    \nabc\r\r\n", 42, 46);
+        test_directive_span("// eslint-disable-next-line max-params    \r\nabc\r\r\n", 42, 47);
+        test_directive_span("// eslint-disable-next-line max-params    \r\r\nabc\r\r\n", 42, 48);
     }
 }
