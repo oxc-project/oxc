@@ -29,4 +29,10 @@ pub trait MayHaveSideEffectsContext: IsGlobalReference {
 
     /// Whether property read accesses have side effects.
     fn property_read_side_effects(&self) -> PropertyReadSideEffects;
+
+    /// Whether accessing a global variable has side effects.
+    ///
+    /// Accessing a non-existing global variable will throw an error.
+    /// Global variable may be a getter that has side effects.
+    fn unknown_global_side_effects(&self) -> bool;
 }

@@ -37,6 +37,10 @@ impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         PropertyReadSideEffects::All
     }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
+    }
 }
 
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {

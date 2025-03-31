@@ -75,7 +75,7 @@ impl MayHaveSideEffects for IdentifierReference<'_> {
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
-            _ => ctx.is_global_reference(self) != Some(false),
+            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self) != Some(false),
         }
     }
 }

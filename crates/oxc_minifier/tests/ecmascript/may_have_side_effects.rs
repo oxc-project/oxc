@@ -12,6 +12,7 @@ struct Ctx {
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
+    unknown_global_side_effects: bool,
 }
 impl Default for Ctx {
     fn default() -> Self {
@@ -20,6 +21,7 @@ impl Default for Ctx {
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
+            unknown_global_side_effects: true,
         }
     }
 }
@@ -43,6 +45,10 @@ impl MayHaveSideEffectsContext for Ctx {
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         self.property_read_side_effects
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        self.unknown_global_side_effects
     }
 }
 
@@ -783,6 +789,22 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
     // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
+}
+
+#[test]
+fn test_unknown_global_side_effects_support() {
+    let true_ctx = Ctx {
+        unknown_global_side_effects: true,
+        global_variable_names: vec!["foo".to_string()],
+        ..Default::default()
+    };
+    let false_ctx = Ctx {
+        unknown_global_side_effects: false,
+        global_variable_names: vec!["foo".to_string()],
+        ..Default::default()
+    };
+    test_with_ctx("foo", &true_ctx, true);
+    test_with_ctx("foo", &false_ctx, false);
 }
 
 #[test]
