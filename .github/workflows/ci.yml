@@ -221,7 +221,6 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!tasks/**'
-              - 'tasks/conformance/**'
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
