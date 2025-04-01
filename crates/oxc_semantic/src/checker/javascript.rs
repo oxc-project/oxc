@@ -469,7 +469,10 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var || ctx.current_scope_flags().is_top() {
+    if decl.kind != VariableDeclarationKind::Var
+        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    {
+        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
         return;
     }
 
@@ -505,13 +508,15 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     }
 
     let current_scope_flags = ctx.current_scope_flags();
-    if ctx.source_type.is_script()
-        && current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
-        && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+    if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+        && (current_scope_flags.is_function()
+            || (ctx.source_type.is_script() && current_scope_flags.is_top()))
     {
         // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
-        // `function a() {}; function a() {}` and `var a; function a() {}` are still valid in
-        // script code, and should not be valid for module code.
+        // `function a() {}; function a() {}` and `var a; function a() {}` are
+        // still valid in script code, and should not be valid for module code.
+        //
+        // `function a() { var b; function b() { } }` valid in any mode.
         return;
     } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
         // `class a {}; function a() {}` and `async function a() {} function a () {}` are

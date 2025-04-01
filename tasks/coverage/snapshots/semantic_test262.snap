@@ -8522,18 +8522,12 @@ after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
 
 tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
-semantic error: Symbol span mismatch for "C":
-after transform: SymbolId(0): Span { start: 1235, end: 1236 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(12): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 1235, end: 1236 }
-Symbol span mismatch for "D":
+semantic error: Symbol span mismatch for "D":
 after transform: SymbolId(1): Span { start: 1551, end: 1552 }
-rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
 Symbol span mismatch for "D":
 after transform: SymbolId(10): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(12): Span { start: 1551, end: 1552 }
+rebuilt        : SymbolId(11): Span { start: 1551, end: 1552 }
 
 tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
 semantic error: Symbol span mismatch for "C":
