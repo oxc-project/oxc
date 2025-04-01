@@ -185,6 +185,8 @@ impl Runner for LintRunner {
                 // Start from the file's parent directory and walk up the tree
                 let mut current = path.parent();
                 while let Some(dir) = current {
+                    // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
+                    // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
                     directories.insert(dir);
                     current = dir.parent();
                 }
