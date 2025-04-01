@@ -29,3 +29,17 @@ let E = class E {
 };
 E = babelHelpers.decorate([dec], E);
 export default E;
+
+class F {
+  constructor() {
+    babelHelpers.defineProperty(this, "prop", 0);
+  }
+}
+babelHelpers.decorate([dec], F.prototype, "prop", void 0);
+
+export class G {
+  constructor() {
+    babelHelpers.defineProperty(this, "prop", 0);
+  }
+}
+babelHelpers.decorate([dec], G.prototype, "prop", void 0);

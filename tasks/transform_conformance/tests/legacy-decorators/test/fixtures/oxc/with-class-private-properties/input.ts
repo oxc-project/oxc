@@ -21,3 +21,13 @@ export default class E {
     return this.prop;
   }
 }
+
+class F {
+  @dec
+  prop = 0;
+}
+
+export class G {
+  @dec
+  prop = 0;
+}

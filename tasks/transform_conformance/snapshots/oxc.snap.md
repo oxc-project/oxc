@@ -374,20 +374,20 @@ Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 11, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
+after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 11, end: 12 }
 Symbol span mismatch for "D":
-after transform: SymbolId(1): Span { start: 87, end: 88 }
+after transform: SymbolId(1): Span { start: 85, end: 86 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "D":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 87, end: 88 }
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 85, end: 86 }
 Symbol span mismatch for "E":
-after transform: SymbolId(2): Span { start: 171, end: 172 }
+after transform: SymbolId(2): Span { start: 167, end: 168 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol span mismatch for "E":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(5): Span { start: 171, end: 172 }
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 167, end: 168 }
 
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
 Symbol flags mismatch for "_default":

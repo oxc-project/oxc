@@ -268,6 +268,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.exit_class(class, ctx);
         self.x2_es2022.exit_class(class, ctx);
     }
 
