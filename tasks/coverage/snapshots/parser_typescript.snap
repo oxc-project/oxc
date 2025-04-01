@@ -25096,6 +25096,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Identifier `x` has already been declared
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:35:9]
+ 34 │ var b = {
+ 35 │     foo(x, x) { },
+    ·         ┬  ┬
+    ·         │  ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 36 │     a: function foo(x: number, x: string) { },
+    ╰────
+
+  × Identifier `x` has already been declared
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:37:12]
  36 │     a: function foo(x: number, x: string) { },
  37 │     b: <T>(x: T, x: T) => { }

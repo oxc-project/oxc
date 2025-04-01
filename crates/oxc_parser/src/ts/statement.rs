@@ -415,7 +415,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Function)?;
         let func_kind = FunctionKind::TSDeclaration;
         let id = self.parse_function_id(func_kind, r#async, false)?;
-        self.parse_function(start_span, id, r#async, false, func_kind, modifiers)
+        self.parse_function(
+            start_span,
+            id,
+            r#async,
+            false,
+            func_kind,
+            FormalParameterKind::FormalParameter,
+            modifiers,
+        )
     }
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {

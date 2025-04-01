@@ -3,9 +3,7 @@ commit: bc5c1417
 parser_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
 Positive Passed: 44293/44293 (100.00%)
-Negative Passed: 4517/4519 (99.96%)
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js
+Negative Passed: 4519/4519 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -18685,6 +18683,16 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/met
  36 │     
     ╰────
 
+  × Identifier `a` has already been declared
+    ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js:28:13]
+ 27 │ ({
+ 28 │   async foo(a, a) { }
+    ·             ┬  ┬
+    ·             │  ╰── It can not be redeclared here
+    ·             ╰── `a` has already been declared here
+ 29 │ })
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js:17:15]
  16 │ ({
@@ -18732,6 +18740,16 @@ Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/met
  17 │   async foo () { super() }
     ·                  ───────
  18 │ })
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js:27:7]
+ 26 │ ({
+ 27 │   foo(a, a) { }
+    ·       ┬  ┬
+    ·       │  ╰── It can not be redeclared here
+    ·       ╰── `a` has already been declared here
+ 28 │ })
     ╰────
 
   × Cannot assign to 'eval' in strict mode
