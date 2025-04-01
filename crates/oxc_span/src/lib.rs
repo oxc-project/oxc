@@ -26,6 +26,8 @@ mod generated {
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
+    #[cfg(feature = "serialize")]
+    pub mod derive_to_rust;
 }
 
 #[doc(hidden)]

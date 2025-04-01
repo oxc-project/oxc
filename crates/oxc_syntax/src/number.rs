@@ -2,11 +2,12 @@
 
 use oxc_allocator::{CloneIn, Dummy};
 use oxc_ast_macros::ast;
+use oxc_quote_types::ToRust;
 use oxc_span::ContentEq;
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, Dummy, ContentEq)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ToRust)]
 pub enum NumberBase {
     Float = 0,
     Decimal = 1,
@@ -23,7 +24,7 @@ impl NumberBase {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, Dummy, ContentEq)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ToRust)]
 pub enum BigintBase {
     Decimal = 0,
     Binary = 1,

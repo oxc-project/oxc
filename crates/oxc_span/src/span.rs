@@ -564,6 +564,13 @@ impl Serialize for Span {
     }
 }
 
+#[cfg(feature = "serialize")]
+impl ::oxc_quote_types::ToRust for Span {
+    fn to_rust(&self) -> ::oxc_quote_types::Node {
+        ::oxc_quote_types::Node::Span(::oxc_quote_types::Span { start: self.start, end: self.end })
+    }
+}
+
 /// Zero-sized type which has pointer alignment (8 on 64-bit, 4 on 32-bit).
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]

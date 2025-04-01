@@ -23,6 +23,7 @@ doctest = true
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
+oxc_quote_types = { workspace = true }
 
 compact_str = { workspace = true }
 miette = { workspace = true }
@@ -32,5 +33,10 @@ serde = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde", "oxc_estree/serialize"]
+serialize = [
+    "compact_str/serde",
+    "dep:serde",
+    "oxc_estree/serialize",
+    "oxc_quote_types/serialize",
+]
 schemars = ["dep:schemars"]

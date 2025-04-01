@@ -67,6 +67,8 @@ mod generated {
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
     pub mod derive_take_in;
+    #[cfg(feature = "serialize")]
+    pub mod derive_to_rust;
     pub mod get_id;
 }
 

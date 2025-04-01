@@ -1,0 +1,30 @@
+[package]
+name = "oxc_quote"
+version = "0.61.2"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = true
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_ast = { workspace = true }
+oxc_span = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_quote_proc = { workspace = true }
+oxc_quote_types = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
