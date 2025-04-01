@@ -3,21 +3,9 @@ commit: bc5c1417
 parser_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
 Positive Passed: 44293/44293 (100.00%)
-Negative Passed: 4505/4519 (99.69%)
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-let-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-let.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-static-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-static.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-yield-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/expressions/class/class-name-ident-yield.js
+Negative Passed: 4517/4519 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js
 Expect Syntax Error: tasks/coverage/test262/test/language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-let-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-let.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-static-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-static.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-yield-escaped.js
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class-name-ident-yield.js
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -8641,6 +8629,48 @@ Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class
     ·               ─────
     ╰────
 
+  × The keyword 'let' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-let-escaped.js:28:15]
+ 27 │ 
+ 28 │ var C = class l\u0065t {};
+    ·               ────────
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-let.js:28:15]
+ 27 │ 
+ 28 │ var C = class let {};
+    ·               ───
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-static-escaped.js:28:15]
+ 27 │ 
+ 28 │ var C = class st\u0061tic {};
+    ·               ───────────
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-static.js:28:15]
+ 27 │ 
+ 28 │ var C = class static {};
+    ·               ──────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-yield-escaped.js:28:15]
+ 27 │ 
+ 28 │ var C = class yi\u0065ld {};
+    ·               ──────────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[test262/test/language/expressions/class/class-name-ident-yield.js:26:15]
+ 25 │ 
+ 26 │ var C = class yield {};
+    ·               ─────
+    ╰────
+
   × A rest parameter cannot have an initializer
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:58:21]
  57 │ var C = class {
@@ -13980,14 +14010,6 @@ Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/class/static-init-await-binding.js:22:12]
- 21 │   static {
- 22 │     (class await {});
-    ·            ─────
- 23 │   }
-    ╰────
-
-  × Cannot use await in class static initialization block
     ╭─[test262/test/language/expressions/class/static-init-await-binding.js:22:12]
  21 │   static {
  22 │     (class await {});
@@ -26790,6 +26812,48 @@ Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class
     ·       ─────
     ╰────
 
+  × The keyword 'let' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-let-escaped.js:28:7]
+ 27 │ 
+ 28 │ class l\u0065t {}
+    ·       ────────
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-let.js:28:7]
+ 27 │ 
+ 28 │ class let {}
+    ·       ───
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-static-escaped.js:28:7]
+ 27 │ 
+ 28 │ class st\u0061tic {}
+    ·       ───────────
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-static.js:28:7]
+ 27 │ 
+ 28 │ class static {}
+    ·       ──────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-yield-escaped.js:28:7]
+ 27 │ 
+ 28 │ class yi\u0065ld {}
+    ·       ──────────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[test262/test/language/statements/class/class-name-ident-yield.js:26:7]
+ 25 │ 
+ 26 │ class yield {}
+    ·       ─────
+    ╰────
+
   × Identifier `a` has already been declared
     ╭─[test262/test/language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js:29:13]
  28 │ class Foo {
@@ -32388,14 +32452,6 @@ Expect Syntax Error: tasks/coverage/test262/test/language/statements/class/class
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/statements/class/static-init-await-binding-invalid.js:25:11]
- 24 │   static {
- 25 │     class await {}
-    ·           ─────
- 26 │   }
-    ╰────
-
-  × Cannot use await in class static initialization block
     ╭─[test262/test/language/statements/class/static-init-await-binding-invalid.js:25:11]
  24 │   static {
  25 │     class await {}
