@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 140/229
+Passed: 140/231
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -346,7 +346,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/68)
+# legacy-decorators (2/70)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -358,6 +358,20 @@ Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
+* oxc/metadata/typescript-syntax/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "B"]
+rebuilt        : ScopeId(0): ["B"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Unresolved references mismatch:
+after transform: ["dec", "m"]
+rebuilt        : []
+
 * oxc/metadata/unbound-type-reference/input.ts
 Symbol span mismatch for "Example":
 after transform: SymbolId(0): Span { start: 6, end: 13 }
@@ -368,6 +382,14 @@ rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
 Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(4), ReferenceId(5)]
+
+* oxc/metadata/without-decorator/input.ts
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 106, end: 107 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 106, end: 107 }
 
 * oxc/with-class-private-properties/input.ts
 Symbol span mismatch for "C":
