@@ -173,9 +173,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     }
 
                     if let Some(next_line) = lines_after_comment_end.next() {
-                        let next_line = next_line.strip_suffix('\n').unwrap_or(next_line);
-                        let next_line = next_line.strip_suffix('\r').unwrap_or(next_line);
-                        stop += next_line.len() as u32;
+                        let next_line_trimmed = next_line.trim_end_matches(['\n', '\r']);
+                        stop += next_line_trimmed.len() as u32;
                     }
 
                     if text.trim().is_empty() {
