@@ -1059,6 +1059,7 @@ function deserializeExportDefaultDeclaration(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     declaration: deserializeExportDefaultDeclarationKind(pos + 64),
+    exportKind: 'value',
   };
 }
 

@@ -128,6 +128,18 @@ impl<T> ESTree for TsFalse<'_, T> {
     }
 }
 
+/// Serialized as `"value"`.
+#[ast_meta]
+#[estree(ts_type = "'value'", raw_deser = "'value'")]
+#[ts]
+pub struct TsValue<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsValue<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("value").serialize(serializer);
+    }
+}
+
 /// Serialized as `"in"`.
 #[ast_meta]
 #[estree(ts_type = "'in'", raw_deser = "'in'")]

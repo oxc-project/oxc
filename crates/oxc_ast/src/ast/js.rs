@@ -2508,6 +2508,7 @@ pub struct ExportNamedDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(exportKind = TsValue))]
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
     #[estree(skip)]

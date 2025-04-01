@@ -754,6 +754,7 @@ export interface ExportNamedDeclaration extends Span {
 export interface ExportDefaultDeclaration extends Span {
   type: 'ExportDefaultDeclaration';
   declaration: ExportDefaultDeclarationKind;
+  exportKind?: 'value';
 }
 
 export interface ExportAllDeclaration extends Span {

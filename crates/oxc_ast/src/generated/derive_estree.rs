@@ -1782,6 +1782,7 @@ impl ESTree for ExportDefaultDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declaration", &self.declaration);
+        state.serialize_ts_field("exportKind", &crate::serialize::TsValue(self));
         state.end();
     }
 }
