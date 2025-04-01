@@ -1014,6 +1014,14 @@ mod test {
     }
 
     #[test]
+    fn test_nested_config_subdirectory() {
+        // This tests the specific scenario from issue #10156
+        // where a file is located in a subdirectory of a directory with a config file
+        let args = &["package3-deep-config"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
