@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, Expression, MemberExpression, MethodDefinition, MethodDefinitionKind,
+        BindingPatternKind, MemberExpression, MethodDefinition, MethodDefinitionKind,
         ObjectProperty, PropertyKey, PropertyKind, UpdateExpression,
     },
 };
@@ -12,7 +12,14 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_accessor_recursion_diagnostic(span: Span, kind: &str) -> OxcDiagnostic {
+    let method_kind = match kind {
+        "setters" => "set",
+        _ => "get",
+    };
     OxcDiagnostic::warn(format!("Disallow recursive access to `this` within {kind}."))
+        .with_help(format!(
+            "Remove this property access, or remove `{method_kind}` from the method"
+        ))
         .with_label(span)
 }
 
@@ -55,29 +62,40 @@ declare_oxc_lint!(
 
 impl Rule for NoAccessorRecursion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::VariableDeclarator(decl) => {
-                // Here we deal with deconstructive access to this inside getter
-                // e.g. "const { baz } = this"
-                if let Some(init) = &decl.init {
-                    if !matches!(init.without_parentheses(), Expression::ThisExpression(_)) {
-                        return;
-                    }
-                    let Some(func) = get_closest_function(node, ctx) else {
-                        return;
-                    };
-                    if !is_parent_property_or_method_def(func, ctx) {
-                        return;
-                    }
-                    let Some(key_name) = get_property_or_method_def_name(func, ctx) else {
+        if let AstKind::ThisExpression(this_expr) = node.kind() {
+            let Some(target) = ctx.nodes().ancestors(node.id()).skip(1).find(|n| match n.kind() {
+                AstKind::MemberExpression(member_expr) => {
+                    member_expr.object().without_parentheses().span() == this_expr.span()
+                }
+                AstKind::VariableDeclarator(decl) => decl
+                    .init
+                    .as_ref()
+                    .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
+                _ => false,
+            }) else {
+                return;
+            };
+            // find the nearest MemberExpression or VariableDeclarator
+            let Some(nearest_func) = get_nearest_function(node, ctx) else {
+                return;
+            };
+            let Some(func_parent) = ctx.nodes().parent_node(nearest_func.id()) else {
+                return;
+            };
+            if !is_property_or_method_def(func_parent) {
+                return;
+            }
+            match target.kind() {
+                AstKind::VariableDeclarator(decl) => {
+                    let Some(key_name) = get_property_or_method_def_name(func_parent) else {
                         return;
                     };
                     if let BindingPatternKind::ObjectPattern(obj_pattern) = &decl.id.kind {
                         let exist = obj_pattern
                             .properties
                             .iter()
-                            .find(|ident| ident.key.name().is_some_and(|name| name == key_name));
-                        if exist.is_some() {
+                            .any(|ident| ident.key.name().is_some_and(|name| name == key_name));
+                        if exist {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 decl.span(),
                                 "getters",
@@ -85,25 +103,11 @@ impl Rule for NoAccessorRecursion {
                         }
                     }
                 }
-            }
-            AstKind::MemberExpression(member_expr) => {
-                // For MemberExpression, we need to verify that object is this expression
-                // And then we find the nearest Function
-                if !matches!(member_expr.object(), Expression::ThisExpression(_)) {
-                    return;
-                }
-                let Some(expr_key_name) = get_member_expr_key_name(member_expr) else {
-                    return;
-                };
-                let Some(func) = get_closest_function(node, ctx) else {
-                    return;
-                };
-                // check if the func is getter or setter
-                if !is_parent_property_or_method_def(func, ctx) {
-                    return;
-                }
-                if let Some(prop_or_method) = ctx.nodes().parent_node(func.id()) {
-                    match prop_or_method.kind() {
+                AstKind::MemberExpression(member_expr) => {
+                    let Some(expr_key_name) = get_member_expr_key_name(member_expr) else {
+                        return;
+                    };
+                    match func_parent.kind() {
                         // e.g. "const foo = { get bar() { return this.bar }}"
                         AstKind::ObjectProperty(property) => {
                             let Some(prop_key_name) = property.key.name() else {
@@ -129,7 +133,8 @@ impl Rule for NoAccessorRecursion {
                                     "getters",
                                 ));
                             }
-                            if property.kind == PropertyKind::Set && is_property_write(node, ctx) {
+                            if property.kind == PropertyKind::Set && is_property_write(target, ctx)
+                            {
                                 ctx.diagnostic(no_accessor_recursion_diagnostic(
                                     member_expr.span(),
                                     "setters",
@@ -162,7 +167,7 @@ impl Rule for NoAccessorRecursion {
                                 ));
                             }
                             if method_def.kind == MethodDefinitionKind::Set
-                                && is_property_write(node, ctx)
+                                && is_property_write(target, ctx)
                             {
                                 ctx.diagnostic(no_accessor_recursion_diagnostic(
                                     member_expr.span(),
@@ -173,8 +178,8 @@ impl Rule for NoAccessorRecursion {
                         _ => {}
                     }
                 }
+                _ => {}
             }
-            _ => {}
         }
     }
 }
@@ -206,30 +211,22 @@ fn get_member_expr_key_name<'a>(expr: &'a MemberExpression) -> Option<&'a str> {
     }
 }
 
-fn is_parent_property_or_method_def<'a>(node: &'a AstNode<'a>, ctx: &'a LintContext) -> bool {
-    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-        match parent.kind() {
-            AstKind::ObjectProperty(obj_prop) => {
-                !obj_prop.computed && matches!(obj_prop.kind, PropertyKind::Get | PropertyKind::Set)
-            }
-            AstKind::MethodDefinition(method_def) => {
-                !method_def.computed
-                    && matches!(
-                        method_def.kind,
-                        MethodDefinitionKind::Get | MethodDefinitionKind::Set
-                    )
-            }
-            _ => false,
+fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
+    match parent.kind() {
+        AstKind::ObjectProperty(obj_prop) => {
+            !obj_prop.computed && matches!(obj_prop.kind, PropertyKind::Get | PropertyKind::Set)
         }
-    } else {
-        false
+        AstKind::MethodDefinition(method_def) => {
+            !method_def.computed
+                && matches!(method_def.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+        }
+        _ => false,
     }
 }
 
-fn get_closest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
+fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
     let mut parent = ctx.nodes().parent_node(node.id())?;
-
-    loop {
+    while let Some(new_parent) = ctx.nodes().parent_node(parent.id()) {
         match parent.kind() {
             AstKind::Function(_) => {
                 break;
@@ -240,18 +237,14 @@ fn get_closest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
                 return None;
             }
             _ => {
-                parent = ctx.nodes().parent_node(parent.id())?;
+                parent = new_parent;
             }
         }
     }
-    Some(parent)
+    if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(
-    node: &'a AstNode<'a>,
-    ctx: &'a LintContext,
-) -> Option<String> {
-    let parent = ctx.nodes().parent_node(node.id())?;
+fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<String> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
         | AstKind::MethodDefinition(MethodDefinition { key, .. }) => Some(key.name()?.to_string()),
