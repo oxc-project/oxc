@@ -237,7 +237,11 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                search_value.to_expression().evaluate_value(&ctx)?.into_string()?
+                let value = search_value.to_expression();
+                if value.may_have_side_effects(&ctx) {
+                    return None;
+                }
+                value.evaluate_value(&ctx)?.into_string()?
             }
         };
         let replace_value = args.get(1).unwrap();
@@ -1142,6 +1146,7 @@ mod test {
         test("x = 'ca'.replace('c','x')", "x = 'xa'");
         test("x = 'ac'.replace('c','xxx')", "x = 'axxx'");
         test("x = 'ca'.replace('c','xxx')", "x = 'xxxa'");
+        test_same("x = 'c'.replace((foo(), 'c'), 'b')");
 
         // only one instance replaced
         test("x = 'acaca'.replace('c','x')", "x = 'axaca'");
