@@ -227,7 +227,7 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `value` field of `StringLiteral`.
 ///
-/// Handle when `lossy` flag is set, indicating the string contains lone surrogates.
+/// Handle when `lone_surrogates` flag is set, indicating the string contains lone surrogates.
 #[ast_meta]
 #[estree(
     ts_type = "string",
