@@ -746,7 +746,10 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = s.clone().into_in(ctx.ast.allocator);
+                    let cooked = match &s {
+                        Cow::Owned(s) => ctx.ast.atom(s),
+                        Cow::Borrowed(s) => Atom::from(*s),
+                    };
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
