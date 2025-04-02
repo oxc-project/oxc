@@ -1900,7 +1900,7 @@ impl<'a> AstBuilder<'a> {
         value: TemplateElementValue<'a>,
         tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, value, tail }
+        TemplateElement { span, value, tail, lone_surrogates: Default::default() }
     }
 
     /// Build a [`TemplateElement`], and store it in the memory arena.
@@ -1919,6 +1919,49 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
     ) -> Box<'a, TemplateElement<'a>> {
         Box::new_in(self.template_element(span, value, tail), self.allocator)
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_template_element_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `value`
+    /// * `tail`
+    /// * `lone_surrogates`: The template element contains lone surrogates.
+    #[inline]
+    pub fn template_element_with_lone_surrogates(
+        self,
+        span: Span,
+        value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> TemplateElement<'a> {
+        TemplateElement { span, value, tail, lone_surrogates }
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::template_element_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `value`
+    /// * `tail`
+    /// * `lone_surrogates`: The template element contains lone surrogates.
+    #[inline]
+    pub fn alloc_template_element_with_lone_surrogates(
+        self,
+        span: Span,
+        value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> Box<'a, TemplateElement<'a>> {
+        Box::new_in(
+            self.template_element_with_lone_surrogates(span, value, tail, lone_surrogates),
+            self.allocator,
+        )
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].

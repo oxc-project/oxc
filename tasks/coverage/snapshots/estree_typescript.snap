@@ -4014,10 +4014,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedE
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates08.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates09.ts
 tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates10.ts
-serde_json::from_str(estree_json) error: unexpected end of hex escape at line 37 column 36
+serde_json::from_str(oxc_json) error: unexpected end of hex escape at line 38 column 36
 
 tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates11.ts
-serde_json::from_str(estree_json) error: lone leading surrogate in hex escape at line 37 column 35
+serde_json::from_str(oxc_json) error: lone leading surrogate in hex escape at line 38 column 35
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates15.ts

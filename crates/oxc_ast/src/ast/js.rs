@@ -461,8 +461,17 @@ pub struct TaggedTemplateExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateElement<'a> {
     pub span: Span,
+    #[estree(via = TemplateElementValue)]
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
+    /// The template element contains lone surrogates.
+    ///
+    /// `value.cooked` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
+    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
+    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
+    #[builder(default)]
+    #[estree(skip)]
+    pub lone_surrogates: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)

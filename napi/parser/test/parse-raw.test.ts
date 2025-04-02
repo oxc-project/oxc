@@ -97,6 +97,10 @@ describe('edge cases', () => {
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',
     ';"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}";',
+    // `TemplateLiteral`s containing lone surrogates and/or lossy replacement characters
+    '`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;',
+    '`�\\u{FFFD}${x}�\\u{FFFD}`;',
+    '`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;',
   ])('%s', (sourceText) => {
     assertRawAndStandardMatch('dummy.js', sourceText);
   });

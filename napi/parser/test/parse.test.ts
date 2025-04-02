@@ -282,6 +282,146 @@ describe('parse', () => {
     });
   });
 
+  describe('`TemplateLiteral`', () => {
+    it('lone surrogates', () => {
+      const ret = parseSync('test.js', '`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 31,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 30,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 15,
+              end: 16,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 13,
+              value: {
+                raw: '\\uD800\\uDBFF',
+                cooked: '\ud800\udbff',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 17,
+              end: 29,
+              value: {
+                raw: '\\uD800\\uDBFF',
+                cooked: '\ud800\udbff',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}${x}�\\u{FFFD}`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 25,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 24,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 12,
+              end: 13,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 10,
+              value: {
+                raw: '�\\u{FFFD}',
+                cooked: '��',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 14,
+              end: 23,
+              value: {
+                raw: '�\\u{FFFD}',
+                cooked: '��',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+
+    it('lone surrogates and lossy replacement characters', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 37,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 36,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 18,
+              end: 19,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 16,
+              value: {
+                raw: '�\\u{FFFD}\\uD800',
+                cooked: '��\ud800',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 20,
+              end: 35,
+              value: {
+                raw: '\\uDBFF�\\u{FFFD}',
+                cooked: '\udbff��',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+  });
+
   describe('hashbang', () => {
     it('is `null` when no hashbang', () => {
       const ret = parseSync('test.js', 'let x;');

@@ -159,11 +159,16 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
+  let value = deserializeTemplateElementValue(pos + 8);
+  if (value.cooked !== null && deserializeBool(pos + 41)) {
+    value.cooked = value.cooked
+      .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+  }
   return {
     type: 'TemplateElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeTemplateElementValue(pos + 8),
+    value,
     tail: deserializeBool(pos + 40),
   };
 }

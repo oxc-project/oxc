@@ -357,6 +357,52 @@ impl ESTree for RegExpFlagsConverter<'_> {
     }
 }
 
+/// Serializer for `value` field of `TemplateElement`.
+///
+/// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
+#[ast_meta]
+#[estree(
+    ts_type = "TemplateElementValue",
+    raw_deser = r#"
+        let value = DESER[TemplateElementValue](POS_OFFSET.value);
+        if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
+            value.cooked = value.cooked
+                .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+        }
+        value
+    "#
+)]
+pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
+
+impl ESTree for TemplateElementValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        #[expect(clippy::if_not_else)]
+        if !element.lone_surrogates {
+            element.value.serialize(serializer);
+        } else {
+            // String contains lone surrogates
+            self.serialize_lone_surrogates(serializer);
+        }
+    }
+}
+
+impl TemplateElementValue<'_, '_> {
+    #[cold]
+    #[inline(never)]
+    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
+        let value = &self.0.value;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("raw", &value.raw);
+
+        let cooked = value.cooked.as_ref().map(|cooked| LoneSurrogatesString(cooked.as_str()));
+        state.serialize_field("cooked", &cooked);
+
+        state.end();
+    }
+}
+
 // --------------------
 // Various
 // --------------------
