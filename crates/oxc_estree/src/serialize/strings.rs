@@ -142,22 +142,24 @@ fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
                 let (_, &hex2) = iter.next().unwrap();
                 let (_, &hex3) = iter.next().unwrap();
                 let (_, &hex4) = iter.next().unwrap();
+                let hex = [hex1, hex2, hex3, hex4];
 
                 // Print the chunk upto before the lossy replacement character.
                 // SAFETY: 0xEF is always the start of a 3-byte unicode character.
                 // Therefore `index` must be on a UTF-8 character boundary.
                 unsafe { buffer.print_bytes_unchecked(&bytes[start..index]) };
 
-                if [hex1, hex2, hex3, hex4] == *b"fffd" {
+                if hex == *b"fffd" {
                     // This is an actual lossy replacement character (not an escaped lone surrogate)
                     buffer.print_str("\u{FFFD}");
                 } else {
                     // This is an escaped lone surrogate.
                     // Print `\uXXXX` where `XXXX` is hex characters. e.g. `\ud800`.
-                    assert!((hex1 | hex2 | hex3 | hex3).is_ascii());
                     buffer.print_str("\\u");
+                    // Check all 4 hex bytes are ASCII
+                    assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
                     // SAFETY: Just checked all 4 bytes are ASCII
-                    unsafe { buffer.print_bytes_unchecked(&[hex1, hex2, hex3, hex4]) };
+                    unsafe { buffer.print_bytes_unchecked(&hex) };
                 }
 
                 // Skip the 3 bytes of the lossy replacement character + 4 hex bytes.
