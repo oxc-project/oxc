@@ -757,6 +757,7 @@ function deserializeBindingProperty(pos) {
     key: deserializePropertyKey(pos + 8),
     value: deserializeBindingPattern(pos + 24),
     kind: 'init',
+    optional: false,
   };
 }
 

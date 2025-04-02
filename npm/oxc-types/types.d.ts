@@ -534,6 +534,7 @@ export interface BindingProperty extends Span {
   key: PropertyKey;
   value: BindingPattern;
   kind: 'init';
+  optional?: false;
 }
 
 export interface ArrayPattern extends Span {

@@ -1583,8 +1583,8 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(method = False, kind = Init),
-    field_order(span, method, shorthand, computed, key, value, kind),
+    add_fields(method = False, kind = Init, optional = TsFalse),
+    field_order(span, method, shorthand, computed, key, value, kind, optional),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
