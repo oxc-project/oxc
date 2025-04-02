@@ -118,18 +118,24 @@ impl<'a> PeepholeOptimizations {
         }
         let Expression::StringLiteral(s) = object else { return None };
         let search_value = match args.first() {
-            Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_string_value(&ctx)?)
+            }
             None => None,
-            _ => return None,
         };
         let search_start_index = match args.get(1) {
-            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
             None => None,
-            _ => return None,
         };
         let result = match name {
-            "indexOf" => s.value.as_str().index_of(search_value, search_start_index),
-            "lastIndexOf" => s.value.as_str().last_index_of(search_value, search_start_index),
+            "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
+            "lastIndexOf" => {
+                s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+            }
             _ => unreachable!(),
         };
         #[expect(clippy::cast_precision_loss)]
@@ -1024,32 +1030,32 @@ mod test {
         test("x = 'abcdefbe'.indexOf('b', 2)", "x = 6");
         test("x = 'abcdef'.indexOf('bcd')", "x = 1");
         test("x = 'abcdefsdfasdfbcdassd'.indexOf('bcd', 4)", "x = 13");
+        test_same("x = 'abcdef'.indexOf(...a, 1)");
+        test_same("x = 'abcdef'.indexOf('b', ...a)");
+        test_same("x = 'abcdef'.indexOf(a, 1)");
+        test_same("x = 'abcdef'.indexOf('b', a)");
 
         test("x = 'abcdef'.lastIndexOf('b')", "x = 1");
         test("x = 'abcdefbe'.lastIndexOf('b')", "x = 6");
         test("x = 'abcdefbe'.lastIndexOf('b', 5)", "x = 1");
 
-        // Both elements must be strings. Don't do anything if either one is not
-        // string.
-        // TODO: cast first arg to a string, and fold if possible.
-        // test("x = 'abc1def'.indexOf(1)", "x = 3");
-        // test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
-        // test("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
-        // test("x = 'abcnulldef'.indexOf(null)", "x = 3");
-        // test("x = 'abctruedef'.indexOf(true)", "x = 3");
+        test("x = 'abc1def'.indexOf(1)", "x = 3");
+        test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
+        test("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
+        test("x = 'abcnulldef'.indexOf(null)", "x = 3");
+        test("x = 'abctruedef'.indexOf(true)", "x = 3");
 
-        // The following test case fails with JSC_PARSE_ERROR. Hence omitted.
-        // test_same("x = 1.indexOf('bcd');");
+        test_same("x = 1 .indexOf('bcd');");
         test_same("x = NaN.indexOf('bcd')");
         test("x = undefined.indexOf('bcd')", "x = (void 0).indexOf('bcd')");
         test_same("x = null.indexOf('bcd')");
         test_same("x = (!0).indexOf('bcd')");
         test_same("x = (!1).indexOf('bcd')");
 
-        // Avoid dealing with regex or other types.
-        test_same("x = 'abcdef'.indexOf(/b./)");
-        test_same("x = 'abcdef'.indexOf({a:2})");
-        test_same("x = 'abcdef'.indexOf([1,2])");
+        // dealing with regex or other types.
+        test("x = 'abcdef/b./'.indexOf(/b./)", "x = 6");
+        test("x = 'abcdef[object Object]'.indexOf({a:2})", "x = 6");
+        test("x = 'abcdef1,2'.indexOf([1,2])", "x = 6");
 
         // Template Strings
         test("x = `abcdef`.indexOf('b')", "x = 1");
