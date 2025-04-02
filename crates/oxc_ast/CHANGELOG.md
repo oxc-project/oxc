@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+- 45015ee ast: [**BREAKING**] Remove unused `Function::symbol_id` method (#10061) (Dunqing)
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
+### Bug Fixes
+
+- 95e69f6 ast/estree: Fix `StringLiteral`s containing lone surrogates (#10036) (overlookmotel)
+- 8408606 ast/estree: Fix `TSMethodSignature` (#10032) (therewillbecode)
+- 1a0bd7c ast/estree: Fix `TSPropertySignature` (#10031) (therewillbecode)
+- 707a776 ast/estree: Fix TS type defs for `TSIndexSignature` and `TSIndexSignatureName` (#10003) (overlookmotel)
+- c98d3f4 ast/estree: Add custom serializer for extends field of TSInterfaceDeclaration (#9996) (therewillbecode)
+- f0e1510 parser: Store lone surrogates as escape sequence (#10041) (overlookmotel)
+
+### Refactor
+
+- a2b03d3 ast: Methods for fieldless enums take `self` not `&self` + remove unnecessary `matches!` (#10013) (overlookmotel)
+- 5f45005 ast: `AstBuilder::move_*` methods use `TakeIn` (#10001) (overlookmotel)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
 ## [0.61.2] - 2025-03-23
 
 ### Bug Fixes

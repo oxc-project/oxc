@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+- 4077868 ecmascript: [**BREAKING**] Introduce MayHaveSideEffectsContext (#10126) (sapphi-red)
+
+### Features
+
+- 11ddda6 ecmascript: Add `unknown_global_side_effects` to `MayHaveSideEffectsContext` (#10130) (sapphi-red)
+- ef3451c ecmascript: Add `property_read_side_effects` to `MayHaveSideEffectsContext` (#10129) (sapphi-red)
+- ac2ecbb ecmascript: Add `is_pure_call` to `MayHaveSideEffectsContext` (#10128) (sapphi-red)
+- e004a3f ecmascript: Add `respect_annotations` to `MayHaveSideEffectsContext` (#10127) (sapphi-red)
+
+### Refactor
+
+
 ## [0.57.0] - 2025-03-11
 
 ### Features
