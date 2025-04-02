@@ -215,7 +215,7 @@ macro_rules! composite {
                 // SAFETY: Caller guarantees `n` is in legal range
                 let (high, low) = unsafe {
                     let high = $high::from_usize_unchecked(n >> $low::BITS);
-                    let low = $low::from_usize_unchecked(n & ((1 << $low::BITS) - 1));
+                    let low = $low::from_usize_unchecked(n & $low::MAX);
                     (high, low)
                 };
                 Self { align: [], low, high }
