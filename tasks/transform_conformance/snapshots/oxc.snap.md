@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 141/233
+Passed: 143/235
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -43,7 +43,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (2/15)
+# babel-plugin-transform-typescript (4/17)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
