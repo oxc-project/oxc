@@ -1739,7 +1739,9 @@ dependencies = [
 name = "oxc_data_structures"
 version = "0.62.0"
 dependencies = [
+ "paste",
  "ropey",
+ "seq-macro",
 ]
 
 [[package]]
@@ -2313,6 +2315,12 @@ dependencies = [
  "smallvec",
  "windows-targets",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "percent-encoding"

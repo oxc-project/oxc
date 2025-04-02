@@ -16,3 +16,6 @@ pub mod rope;
 
 #[cfg(feature = "stack")]
 pub mod stack;
+
+#[cfg(feature = "integers")]
+pub mod integers;
