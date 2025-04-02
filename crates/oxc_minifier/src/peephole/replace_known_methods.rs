@@ -146,14 +146,20 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let start_idx = args.first().and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => arg.to_expression().get_side_free_number_value(&ctx),
-        });
-        let end_idx = args.get(1).and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => arg.to_expression().get_side_free_number_value(&ctx),
-        });
+        let start_idx = match args.first() {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
+        };
+        let end_idx = match args.get(1) {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
+        };
         #[expect(clippy::cast_precision_loss)]
         if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
             || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
@@ -1184,6 +1190,10 @@ mod test {
         test("x = 'abcde'.substring(0,2)", "x = 'ab'");
         test("x = 'abcde'.substring(1,2)", "x = 'b'");
         test("x = 'abcde'.substring(2)", "x = 'cde'");
+        test_same("x = 'abcde'.substring(...a, 1)");
+        test_same("x = 'abcde'.substring(1, ...a)");
+        test_same("x = 'abcde'.substring(a, 1)");
+        test_same("x = 'abcde'.substring(1, a)");
 
         // we should be leaving negative, out-of-bound, and inverted indices alone for now
         test_same("x = 'abcde'.substring(-1)");
