@@ -189,7 +189,7 @@ impl<'a> Lexer<'a> {
         str
     }
 
-    /// Process template literal after `\n` or `\` found.
+    /// Process template literal after `\r` or `\` found.
     ///
     /// # SAFETY
     /// `chunk_start` must not be after `pos`.
