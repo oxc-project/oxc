@@ -734,6 +734,7 @@ function deserializeObjectPattern(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     properties,
+    decorators: [],
   };
 }
 
@@ -956,6 +957,10 @@ function deserializeAccessorProperty(pos) {
     definite: deserializeBool(pos + 82),
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 88),
     accessibility: deserializeOptionTSAccessibility(pos + 96),
+    optional: false,
+    override: false,
+    readonly: false,
+    declare: false,
   };
 }
 

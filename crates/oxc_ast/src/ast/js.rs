@@ -1561,6 +1561,7 @@ pub struct AssignmentPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(decorators = TsEmptyArray))]
 pub struct ObjectPattern<'a> {
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
@@ -2282,10 +2283,12 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[rustfmt::skip]
-#[estree(field_order(
-    r#type, span, key, value, computed, r#static,
-    decorators, definite, type_annotation, accessibility,
-))]
+#[estree(
+    add_fields(declare = TsFalse, optional = TsFalse, r#override = TsFalse, readonly = TsFalse),
+    field_order(
+      r#type, span, key, value, computed, r#static, decorators, definite, type_annotation,
+      accessibility, optional, r#override, readonly, declare)
+)]
 pub struct AccessorProperty<'a> {
     pub span: Span,
     pub r#type: AccessorPropertyType,

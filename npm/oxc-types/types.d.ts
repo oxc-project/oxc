@@ -523,6 +523,7 @@ export interface AssignmentPattern extends Span {
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
   properties: Array<BindingProperty | BindingRestElement>;
+  decorators?: [];
 }
 
 export interface BindingProperty extends Span {
@@ -692,6 +693,10 @@ export interface AccessorProperty extends Span {
   definite?: boolean;
   typeAnnotation?: TSTypeAnnotation | null;
   accessibility?: TSAccessibility | null;
+  optional?: false;
+  override?: false;
+  readonly?: false;
+  declare?: false;
 }
 
 export interface ImportExpression extends Span {
