@@ -21,7 +21,7 @@ use crate::assert_unchecked;
 /// * primitive value: u8
 macro_rules! primitive_wrapper {
     ($name:ident, $bits:literal, $primitive:ident) => {
-        #[doc = concat!(" Type representing a ", $bits, " bit unsigned integer.")]
+        #[doc = concat!(" ", $bits, "-bit unsigned integer.")]
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
         #[repr(transparent)]
         pub struct $name($primitive);
@@ -88,7 +88,7 @@ macro_rules! niched {
                         )*
                     }
 
-                    #[doc = concat!(" Type representing a ", $bits, " bit unsigned integer.")]
+                    #[doc = concat!(" ", $bits, "-bit unsigned integer.")]
                     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
                     #[repr(transparent)]
                     pub struct $name(Inner);
@@ -186,7 +186,7 @@ niched_u16!(D8, 8, 255);
 /// `U23` combines a `U16` as low bits and `D7` as high bits.
 macro_rules! composite {
     ($name:ident, $low:ident, $high:ident, $primitive:ident, $bits: literal) => {
-        #[doc = concat!(" Type representing a ", $bits, " bit unsigned integer.")]
+        #[doc = concat!(" ", $bits, "-bit unsigned integer.")]
         #[derive(Clone, Copy)]
         #[repr(C)]
         pub struct $name {
