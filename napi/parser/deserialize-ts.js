@@ -133,6 +133,7 @@ function deserializeObjectProperty(pos) {
     key: deserializePropertyKey(pos + 16),
     value: deserializeExpression(pos + 32),
     kind: deserializePropertyKind(pos + 8),
+    optional: false,
   };
 }
 
