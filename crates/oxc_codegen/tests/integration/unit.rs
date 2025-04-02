@@ -500,12 +500,47 @@ fn getter_setter() {
 
 #[test]
 fn string() {
+    // `${` only escaped when quote is backtick
     test("let x = \"${}\";", "let x = \"${}\";\n");
     test_minify("let x = \"${}\";", "let x=\"${}\";");
     test("let x = '\"\"${}';", "let x = \"\\\"\\\"${}\";\n");
     test_minify("let x = '\"\"${}';", "let x='\"\"${}';");
     test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"''${}\";\n");
     test_minify("let x = '\"\"\\'\\'${}';", "let x=`\"\"''\\${}`;");
+    test_minify("let x = '\\'\\'\\'\"\"\"${}';", "let x=`'''\"\"\"\\${}`;");
+
+    // Lossy replacement character
+    test("let x = \"�\";", "let x = \"�\";\n");
+    test_minify("let x = \"�\";", "let x=`�`;");
+    test("let x = \"� ��� �\";", "let x = \"� ��� �\";\n");
+    test_minify("let x = \"� ��� �\";", "let x=`� ��� �`;");
+    // Lone surrogates
+    test(
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
+        "let x = \"\\ud800 \\udbff \\udc00 \\udfff\";\n",
+    );
+    test_minify(
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
+        "let x=`\\ud800 \\udbff \\udc00 \\udfff`;",
+    );
+    // Invalid pairs
+    test(
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
+        "let x = \"\\ud800\\udbff \\udc00\\udfff\";\n",
+    );
+    test_minify(
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
+        "let x=`\\ud800\\udbff \\udc00\\udfff`;",
+    );
+    // Lone surrogates and lossy replacement characters
+    test(
+        "let x = \"���\\uD800\\uDBFF���\\uDC00\\uDFFF���\";",
+        "let x = \"���\\ud800\\udbff���\\udc00\\udfff���\";\n",
+    );
+    test_minify(
+        "let x = \"���\\uD800\\uDBFF���\\uDC00\\uDFFF���\";",
+        "let x=`���\\ud800\\udbff���\\udc00\\udfff���`;",
+    );
 
     test_minify(
         r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
