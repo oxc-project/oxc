@@ -308,9 +308,7 @@ impl ConfigStoreBuilder {
         // to be taken out.
         let plugins = self.plugins();
         let mut rules = if self.cache.is_stale() {
-            self.rules.into_iter().filter(|r| {
-                plugins.contains(r.plugin_name().into())
-            }).collect()
+            self.rules.into_iter().filter(|r| plugins.contains(r.plugin_name().into())).collect()
         } else {
             self.rules.into_iter().collect::<Vec<_>>()
         };
