@@ -180,6 +180,62 @@ describe('parse', () => {
     });
   });
 
+  describe('`StringLiteral`', () => {
+    it('lone surrogates', () => {
+      const ret = parseSync('test.js', ';"\\uD800\\uDBFF";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 16,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 15,
+          value: '\ud800\udbff',
+          raw: '"\\uD800\\uDBFF"',
+        },
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', ';"�\\u{FFFD}";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 13,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 12,
+          value: '��',
+          raw: '"�\\u{FFFD}"',
+        },
+      });
+    });
+
+    it('lone surrogates and lossy replacement characters', () => {
+      const ret = parseSync('test.js', ';"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 34,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 33,
+          value: '��\ud800\udbff��',
+          raw: '"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}"',
+        },
+      });
+    });
+  });
+
   describe('`RegExpLiteral`', () => {
     it('has `value` as `RegExp` when valid regexp', () => {
       const ret = parseSync('test.js', '/abc/gu');

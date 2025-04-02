@@ -65,38 +65,6 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   test262FixturePaths.push(path);
 }
 
-// Test raw transfer output matches standard (via JSON) output for some large files
-describe('fixtures', () => {
-  it.each(benchFixtures)('%s', (filename, sourceText) => {
-    const retStandard = parseSync(filename, sourceText);
-    const { program: programStandard, comments: commentsStandard, module: moduleStandard, errors: errorsStandard } =
-      retStandard;
-
-    // @ts-ignore
-    const retRaw = parseSync(filename, sourceText, { experimentalRawTransfer: true });
-    const { program: programRaw, comments: commentsRaw } = retRaw;
-    // Remove `null` values, to match what NAPI-RS does
-    const moduleRaw = clean(retRaw.module);
-    const errorsRaw = clean(retRaw.errors);
-
-    // Compare as objects
-    expect(programRaw).toEqual(programStandard);
-    expect(commentsRaw).toEqual(commentsStandard);
-    expect(moduleRaw).toEqual(moduleStandard);
-    expect(errorsRaw).toEqual(errorsStandard);
-
-    // Compare as JSON (to ensure same field order)
-    const jsonStandard = stringify({
-      program: programStandard,
-      comments: commentsStandard,
-      module: moduleStandard,
-      errors: errorsStandard,
-    });
-    const jsonRaw = stringify({ program: programRaw, comments: commentsRaw, module: moduleRaw, errors: errorsRaw });
-    expect(jsonRaw).toEqual(jsonStandard);
-  });
-});
-
 // Test raw transfer output matches standard (via JSON) output for Test262 test cases
 describe('test262', () => {
   it.each(test262FixturePaths)('%s', async (path) => {
@@ -121,6 +89,54 @@ describe('test262', () => {
     expect(json).toEqual(acornJson);
   });
 });
+
+// Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
+describe('edge cases', () => {
+  it.each([
+    // `StringLiteral`s containing lone surrogates and/or lossy replacement characters
+    ';"\\uD800\\uDBFF";',
+    ';"�\\u{FFFD}";',
+    ';"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}";',
+  ])('%s', (sourceText) => {
+    assertRawAndStandardMatch('dummy.js', sourceText);
+  });
+});
+
+// Test raw transfer output matches standard (via JSON) output for some large files
+describe('fixtures', () => {
+  it.each(benchFixtures)('%s', (filename, sourceText) => {
+    assertRawAndStandardMatch(filename, sourceText);
+  });
+});
+
+function assertRawAndStandardMatch(filename, sourceText) {
+  const retStandard = parseSync(filename, sourceText);
+  const { program: programStandard, comments: commentsStandard, module: moduleStandard, errors: errorsStandard } =
+    retStandard;
+
+  // @ts-ignore
+  const retRaw = parseSync(filename, sourceText, { experimentalRawTransfer: true });
+  const { program: programRaw, comments: commentsRaw } = retRaw;
+  // Remove `null` values, to match what NAPI-RS does
+  const moduleRaw = clean(retRaw.module);
+  const errorsRaw = clean(retRaw.errors);
+
+  // Compare as objects
+  expect(programRaw).toEqual(programStandard);
+  expect(commentsRaw).toEqual(commentsStandard);
+  expect(moduleRaw).toEqual(moduleStandard);
+  expect(errorsRaw).toEqual(errorsStandard);
+
+  // Compare as JSON (to ensure same field order)
+  const jsonStandard = stringify({
+    program: programStandard,
+    comments: commentsStandard,
+    module: moduleStandard,
+    errors: errorsStandard,
+  });
+  const jsonRaw = stringify({ program: programRaw, comments: commentsRaw, module: moduleRaw, errors: errorsRaw });
+  expect(jsonRaw).toEqual(jsonStandard);
+}
 
 // Stringify to JSON, removing values which are invalid in JSON
 function stringify(obj) {
