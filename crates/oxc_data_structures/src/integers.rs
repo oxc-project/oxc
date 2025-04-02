@@ -4,6 +4,7 @@
 
 use std::{
     cmp::Ordering,
+    error::Error,
     fmt::{self, Debug, Display},
     hash::{Hash, Hasher},
 };
@@ -12,6 +13,23 @@ use paste::paste;
 use seq_macro::seq;
 
 use crate::assert_unchecked;
+
+/// Error type for failed conversions.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct TryFromIntError(());
+
+impl Display for TryFromIntError {
+    #[expect(deprecated)]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self.description(), f)
+    }
+}
+
+impl Error for TryFromIntError {
+    fn description(&self) -> &'static str {
+        "out of range integral type conversion attempted"
+    }
+}
 
 /// Macro to define an unsigned integer type which wraps a primitive.
 ///
@@ -27,11 +45,23 @@ macro_rules! primitive_wrapper {
         pub struct $name($primitive);
 
         impl $name {
-            #[doc = concat!(" Maximum value for [`", stringify!($name), "`].")]
-            pub const MAX: usize = $primitive::MAX as usize;
+            #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `", stringify!($primitive), "`.")]
+            pub const MAX_PRIMITIVE: $primitive = $primitive::MAX;
+
+            #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `usize`.")]
+            pub const MAX_USIZE: usize = $primitive::MAX as usize;
 
             #[doc = concat!(" Number of bits required to represent a [`", stringify!($name), "`].")]
             pub const BITS: usize = $bits;
+
+            #[doc = concat!(" Convert `", stringify!($primitive), "` to [`", stringify!($name), "`], without checks.")]
+            #[doc = ""]
+            #[doc = " # SAFETY"]
+            #[doc = " This method actually is safe to use for this type."]
+            #[inline(always)]
+            pub const unsafe fn from_primitive_unchecked(n: $primitive) -> Self {
+                Self(n)
+            }
 
             #[doc = concat!(" Convert `usize` to [`", stringify!($name), "`], without checks.")]
             #[doc = ""]
@@ -40,7 +70,7 @@ macro_rules! primitive_wrapper {
             #[inline(always)]
             pub const unsafe fn from_usize_unchecked(n: usize) -> Self {
                 // SAFETY: Caller guarantees `n` is in range
-                unsafe { assert_unchecked!(n <= Self::MAX) };
+                unsafe { assert_unchecked!(n <= Self::MAX_USIZE) };
                 #[expect(clippy::cast_possible_truncation)]
                 Self(n as $primitive)
             }
@@ -48,13 +78,27 @@ macro_rules! primitive_wrapper {
             #[doc = concat!(" Convert [`", stringify!($name), "`] to `", stringify!($primitive), "`.")]
             #[inline(always)]
             pub const fn to_primitive(self) -> $primitive {
-                self.0 as $primitive
+                self.0
             }
 
             #[doc = concat!(" Convert [`", stringify!($name), "`] to `usize`.")]
             #[inline(always)]
             pub const fn to_usize(self) -> usize {
                 self.0 as usize
+            }
+        }
+
+        impl From<$name> for $primitive {
+            #[inline(always)]
+            fn from(n: $name) -> $primitive {
+                n.0
+            }
+        }
+
+        impl From<$primitive> for $name {
+            #[inline(always)]
+            fn from(n: $primitive) -> Self {
+                Self(n)
             }
         }
     };
@@ -79,6 +123,8 @@ macro_rules! niched {
             seq!(N in 0..=$max {
                 #[allow(non_snake_case, dead_code, clippy::allow_attributes)]
                 mod [<__ $name>] {
+                    use super::TryFromIntError;
+
                     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
                     #[repr($primitive)]
                     enum Inner {
@@ -94,13 +140,26 @@ macro_rules! niched {
                     pub struct $name(Inner);
 
                     impl $name {
-                        #[doc = concat!(" Maximum value for [`", stringify!($name), "`].")]
-                        pub const MAX: usize = $max;
+                        #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `", stringify!($primitive), "`.")]
+                        pub const MAX_PRIMITIVE: $primitive = $max;
+
+                        #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `usize`.")]
+                        pub const MAX_USIZE: usize = $max;
 
                         #[doc = concat!(" Number of bits required to represent a [`", stringify!($name), "`].")]
                         pub const BITS: usize = $bits;
 
                         #[doc = concat!(" Convert `usize` to [`", stringify!($name), "`], without checks.")]
+                        #[doc = ""]
+                        #[doc = " # SAFETY"]
+                        #[doc = concat!(" `n` must be less than or equal to ", $max, ".")]
+                        #[inline(always)]
+                        pub const unsafe fn from_primitive_unchecked(n: $primitive) -> Self {
+                            // SAFETY: Caller guarantees `n` is in range
+                            unsafe { Self::from_usize_unchecked(n as usize) }
+                        }
+
+                        #[doc = concat!(" Convert `", stringify!($primitive), "` to [`", stringify!($name), "`], without checks.")]
                         #[doc = ""]
                         #[doc = " # SAFETY"]
                         #[doc = concat!(" `n` must be less than or equal to ", $max, ".")]
@@ -127,6 +186,27 @@ macro_rules! niched {
                         #[inline(always)]
                         pub const fn to_usize(self) -> usize {
                             self.0 as usize
+                        }
+                    }
+
+                    impl From<$name> for $primitive {
+                        #[inline(always)]
+                        fn from(n: $name) -> $primitive {
+                            n.to_primitive()
+                        }
+                    }
+
+                    impl TryFrom<$primitive> for $name {
+                        type Error = TryFromIntError;
+
+                        #[inline(always)]
+                        fn try_from(n: $primitive) -> Result<Self, TryFromIntError> {
+                            if n <= Self::MAX_PRIMITIVE {
+                                // SAFETY: We just checked `n` is in range
+                                Ok(unsafe { Self::from_primitive_unchecked(n) })
+                            } else {
+                                Err(TryFromIntError(()))
+                            }
                         }
                     }
                 }
@@ -199,11 +279,25 @@ macro_rules! composite {
         }
 
         impl $name {
-            #[doc = concat!(" Maximum value for [`", stringify!($name), "`].")]
-            pub const MAX: usize = (1 << $bits) - 1;
+            #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `", stringify!($primitive), "`.")]
+            pub const MAX_PRIMITIVE: $primitive = (1 << $bits) - 1;
+
+            #[doc = concat!(" Maximum value for [`", stringify!($name), "`] as `usize`.")]
+            pub const MAX_USIZE: usize = (1 << $bits) - 1;
 
             #[doc = concat!(" Number of bits required to represent a [`", stringify!($name), "`].")]
             pub const BITS: usize = $bits;
+
+            #[doc = concat!(" Convert `", stringify!($primitive), "` to [`", stringify!($name), "`], without checks.")]
+            #[doc = ""]
+            #[doc = " # SAFETY"]
+            #[doc = concat!(" `n` must be less than or equal to `(1 << ", $bits, ") - 1`.")]
+            #[cfg_attr(target_endian = "big", expect(clippy::inconsistent_struct_constructor))]
+            #[inline(always)]
+            pub const unsafe fn from_primitive_unchecked(n: $primitive) -> Self {
+                // SAFETY: Caller guarantees `n` is in legal range
+                unsafe { Self::from_usize_unchecked(n as usize) }
+            }
 
             #[doc = concat!(" Convert `usize` to [`", stringify!($name), "`], without checks.")]
             #[doc = ""]
@@ -215,7 +309,7 @@ macro_rules! composite {
                 // SAFETY: Caller guarantees `n` is in legal range
                 let (high, low) = unsafe {
                     let high = $high::from_usize_unchecked(n >> $low::BITS);
-                    let low = $low::from_usize_unchecked(n & $low::MAX);
+                    let low = $low::from_usize_unchecked(n & $low::MAX_USIZE);
                     (high, low)
                 };
                 Self { align: [], low, high }
@@ -231,6 +325,27 @@ macro_rules! composite {
             #[inline(always)]
             pub const fn to_usize(self) -> usize {
                 self.to_primitive() as usize
+            }
+        }
+
+        impl From<$name> for $primitive {
+            #[inline(always)]
+            fn from(n: $name) -> $primitive {
+                n.to_primitive()
+            }
+        }
+
+        impl TryFrom<$primitive> for $name {
+            type Error = TryFromIntError;
+
+            #[inline(always)]
+            fn try_from(n: $primitive) -> Result<Self, TryFromIntError> {
+                if n <= Self::MAX_PRIMITIVE {
+                    // SAFETY: We just checked `n` is in range
+                    Ok(unsafe { Self::from_primitive_unchecked(n) })
+                } else {
+                    Err(TryFromIntError(()))
+                }
             }
         }
 
