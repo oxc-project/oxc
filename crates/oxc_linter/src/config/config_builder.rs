@@ -147,9 +147,16 @@ impl ConfigStoreBuilder {
                             // Use `ConfigStoreBuilder` to load extended config files and then apply rules from those
                             let mut extended_config_store =
                                 ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
+
+                            // First apply the plugins from the extended config
+                            // This needs to happen before adding the rules to ensure
+                            // that plugins required by the rules are available
+                            builder = builder.and_plugins(extended_config_store.plugins(), true);
+
+                            // Now get the rules from the extended config
                             let rules = std::mem::take(&mut extended_config_store.rules);
                             builder = builder.with_rules(rules);
-                            builder = builder.and_plugins(extended_config_store.plugins(), true);
+
                             if !extended_config_store.overrides.is_empty() {
                                 let overrides =
                                     std::mem::take(&mut extended_config_store.overrides);
@@ -301,7 +308,9 @@ impl ConfigStoreBuilder {
         // to be taken out.
         let plugins = self.plugins();
         let mut rules = if self.cache.is_stale() {
-            self.rules.into_iter().filter(|r| plugins.contains(r.plugin_name().into())).collect()
+            // Restore the rule filtering based on enabled plugins
+            // This ensures rules are only included if their plugin is enabled
+            self.rules.into_iter().filter(|r| plugins.contains(r.rule.plugin_name().into())).collect()
         } else {
             self.rules.into_iter().collect::<Vec<_>>()
         };
@@ -977,6 +986,67 @@ mod test {
         );
         assert_eq!(config.plugins(), LintPlugins::default());
         assert!(config.rules().is_empty());
+    }
+
+    #[test]
+    fn test_extends_config_inherits_plugins() {
+        // This test specifically validates the fix for issue #10173 where
+        // extended configs do not inherit plugins
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        let base_config_path = temp_dir.path().join("base.json");
+        let base_config_content = r#"{
+            "plugins": ["vitest"]
+        }"#;
+        std::fs::write(&base_config_path, base_config_content).unwrap();
+
+        let extends_config_path = temp_dir.path().join("extends.json");
+        let extends_config_content = format!(
+            r#"{{
+                "extends": ["{}"]
+            }}"#,
+            base_config_path.to_str().unwrap().replace('\\', "/")
+        );
+        std::fs::write(&extends_config_path, extends_config_content).unwrap();
+
+        let base_oxlintrc = Oxlintrc::from_file(&base_config_path).unwrap();
+        let base_config_store = ConfigStoreBuilder::from_oxlintrc(true, base_oxlintrc).unwrap().build().unwrap();
+
+        let extends_oxlintrc = Oxlintrc::from_file(&extends_config_path).unwrap();
+        let extends_config_store = ConfigStoreBuilder::from_oxlintrc(true, extends_oxlintrc).unwrap().build().unwrap();
+
+        assert!(base_config_store.plugins().contains(LintPlugins::VITEST),
+                "Base config should have vitest plugin");
+
+        // Verify the extending config inherits the vitest plugin
+        // even though it doesn't explicitly specify it
+        assert!(extends_config_store.plugins().contains(LintPlugins::VITEST),
+                "Extended config should inherit the vitest plugin from base config");
+
+        // Verify that extending a config with empty plugins array still inherits plugins
+        // Matches ESLint behavior
+        let base2_config_path = temp_dir.path().join("base2.json");
+        let base2_config_content = r#"{
+            "plugins": ["vitest"]
+        }"#;
+        std::fs::write(&base2_config_path, base2_config_content).unwrap();
+
+        let extends2_config_path = temp_dir.path().join("extends2.json");
+        let extends2_config_content = format!(
+            r#"{{
+                "extends": ["{}"],
+                "plugins": []
+            }}"#,
+            base2_config_path.to_str().unwrap().replace('\\', "/")
+        );
+        std::fs::write(&extends2_config_path, extends2_config_content).unwrap();
+
+        let extends2_oxlintrc = Oxlintrc::from_file(&extends2_config_path).unwrap();
+        let extends2_config_store = ConfigStoreBuilder::from_oxlintrc(true, extends2_oxlintrc).unwrap().build().unwrap();
+
+        assert!(extends2_config_store.plugins().contains(LintPlugins::VITEST),
+                "Extended config with empty plugins array should still inherit plugins");
     }
 
     fn config_store_from_path(path: &str) -> ConfigStore {
