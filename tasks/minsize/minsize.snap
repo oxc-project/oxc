@@ -13,7 +13,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 555.77 kB  | 270.84 kB  | 270.13 kB  | 88.26 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 440.17 kB  | 458.89 kB  | 122.38 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 440.17 kB  | 458.89 kB  | 122.37 kB  | 126.71 kB  | bundle.min.js
 
 1.25 MB    | 647.00 kB  | 646.76 kB  | 160.28 kB  | 163.73 kB  | three.js  
 

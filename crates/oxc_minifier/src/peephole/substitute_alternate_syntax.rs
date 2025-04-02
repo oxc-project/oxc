@@ -1324,9 +1324,9 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("v = x == true", "v = x == !0");
-        test("v = x == false", "v = x == !1");
-        test("v = x != true", "v = x != !0");
+        test("v = x == true", "v = x == 1");
+        test("v = x == false", "v = x == 0");
+        test("v = x != true", "v = x != 1");
         test("v = x < true", "v = x < !0");
         test("v = x <= true", "v = x <= !0");
         test("v = x > true", "v = x > !0");
