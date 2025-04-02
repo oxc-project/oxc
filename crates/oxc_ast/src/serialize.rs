@@ -532,6 +532,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("optional", &rest.argument.optional);
+        state.serialize_ts_field("decorators", &TsEmptyArray(self));
+        state.serialize_ts_field("value", &TsNull(self));
         state.end();
     }
 }
