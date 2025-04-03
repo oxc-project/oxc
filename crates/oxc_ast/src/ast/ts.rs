@@ -1302,6 +1302,7 @@ pub struct TSImportType<'a> {
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` for `typeof import("foo")`
+    #[estree(skip)]
     pub is_type_of: bool,
 }
 
