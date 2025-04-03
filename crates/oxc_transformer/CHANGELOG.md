@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+
+### Bug Fixes
+
+- e4ab61b transformer: `TransformOptions::enable_all` enable decorator transform (#9946) (overlookmotel)
+- 5ed31e0 transformer: Correct function symbol flags to `SymbolFlags::Function` (#10008) (Dunqing)
+- 44efec7 transformer/legacy-decorator: Do not emit decorator metadata if the class is not decorated or it is typescript syntax (#10154) (Dunqing)
+- 2c53a72 transformer/using: Correctly reparent scopes in for of stmt (#9960) (camc314)
+
+### Refactor
+
+- a2b03d3 ast: Methods for fieldless enums take `self` not `&self` + remove unnecessary `matches!` (#10013) (overlookmotel)
+- 2720204 transformer: Use `FormalParameter::has_modifier` to detect parameter properties (#10099) (Ulrich Stark 🦀)
+- e4029b8 transformer/legacy-decorator: Split the transforming decorated class into two parts and run them in `exit_class` and `exit_statement` respectively (#10153) (Dunqing)
+- c99a317 transformer/using: Use `current_scope_id` consistently (#9966) (camc314)
+
 ## [0.61.2] - 2025-03-23
 
 ### Features

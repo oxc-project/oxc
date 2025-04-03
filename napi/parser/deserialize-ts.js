@@ -133,6 +133,7 @@ function deserializeObjectProperty(pos) {
     key: deserializePropertyKey(pos + 16),
     value: deserializeExpression(pos + 32),
     kind: deserializePropertyKind(pos + 8),
+    optional: false,
   };
 }
 
@@ -158,11 +159,16 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
+  let value = deserializeTemplateElementValue(pos + 8);
+  if (value.cooked !== null && deserializeBool(pos + 41)) {
+    value.cooked = value.cooked
+      .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+  }
   return {
     type: 'TemplateElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeTemplateElementValue(pos + 8),
+    value,
     tail: deserializeBool(pos + 40),
   };
 }
@@ -733,6 +739,7 @@ function deserializeObjectPattern(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     properties,
+    decorators: [],
   };
 }
 
@@ -955,6 +962,10 @@ function deserializeAccessorProperty(pos) {
     definite: deserializeBool(pos + 82),
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 88),
     accessibility: deserializeOptionTSAccessibility(pos + 96),
+    optional: false,
+    override: false,
+    readonly: false,
+    declare: false,
   };
 }
 
@@ -1053,6 +1064,7 @@ function deserializeExportDefaultDeclaration(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     declaration: deserializeExportDefaultDeclarationKind(pos + 64),
+    exportKind: 'value',
   };
 }
 

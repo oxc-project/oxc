@@ -1,7 +1,9 @@
 let _default = class {
-  #prop = 0;
+  constructor() {
+    babelHelpers.defineProperty(this, "prop", 0);
+  }
   meth() {
-    return this.#prop;
+    return this.prop;
   }
 };
 _default = babelHelpers.decorate([dec], _default);

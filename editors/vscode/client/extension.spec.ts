@@ -1,17 +1,15 @@
 import { deepStrictEqual, notEqual, strictEqual } from 'assert';
 import { readFile } from 'fs/promises';
-import { commands, extensions, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import { commands, DiagnosticSeverity, languages, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import { activateExtension, sleep, WORKSPACE_DIR } from './test-helpers';
+import assert = require('assert');
 
-const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
 const filePath = WORKSPACE_DIR + '/debugger.js';
 const fileUri = Uri.parse(filePath);
 
-const sleep = (time: number) => new Promise((r) => setTimeout(r, time));
-
 suite('commands', () => {
   setup(async () => {
-    const ext = extensions.getExtension('oxc.oxc-vscode')!;
-    await ext.activate();
+    await activateExtension();
   });
 
   suiteTeardown(async () => {
@@ -76,5 +74,40 @@ suite('commands', () => {
     });
 
     strictEqual(content, '/* 😊 */');
+  });
+});
+
+suite('E2E Diagnostics', () => {
+  setup(async () => {
+    await activateExtension();
+  });
+
+  suiteTeardown(async () => {
+    const edit = new WorkspaceEdit();
+    edit.deleteFile(fileUri, {
+      ignoreIfNotExists: true,
+    });
+    await workspace.applyEdit(edit);
+  });
+
+  test('simple debugger statement', async () => {
+    const edit = new WorkspaceEdit();
+    edit.createFile(fileUri, {
+      contents: Buffer.from('/* 😊 */debugger;'),
+    });
+
+    await workspace.applyEdit(edit);
+    await window.showTextDocument(fileUri);
+    const diagnostics = languages.getDiagnostics(fileUri);
+
+    strictEqual(diagnostics.length, 1);
+    assert(typeof diagnostics[0].code == 'object');
+    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Delete this code.');
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
+    strictEqual(diagnostics[0].range.start.line, 0);
+    strictEqual(diagnostics[0].range.start.character, 8);
+    strictEqual(diagnostics[0].range.end.line, 0);
+    strictEqual(diagnostics[0].range.end.character, 17);
   });
 });

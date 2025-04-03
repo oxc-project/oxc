@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
+### Refactor
+
+- dc3602c semantic: Align handling of declaring symbol for `class` with TypeScript (#10094) (Dunqing)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
 ## [0.61.2] - 2025-03-23
 
 ### Refactor

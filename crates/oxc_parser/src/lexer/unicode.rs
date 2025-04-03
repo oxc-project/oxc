@@ -134,7 +134,16 @@ impl<'a> Lexer<'a> {
 
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
-            UnicodeEscape::CodePoint(ch) | UnicodeEscape::SurrogatePair(ch) => {
+            UnicodeEscape::CodePoint(ch) => {
+                if ch == '\u{FFFD}' && self.token.lone_surrogates {
+                    // Lossy replacement character is being used as an escape marker. Escape it.
+                    text.push_str("\u{FFFD}fffd");
+                } else {
+                    text.push(ch);
+                }
+            }
+            UnicodeEscape::SurrogatePair(ch) => {
+                // Surrogate pair is always >= 0x10000, so cannot be 0xFFFD
                 text.push(ch);
             }
             UnicodeEscape::LoneSurrogate(code_point) => {
@@ -276,22 +285,23 @@ impl<'a> Lexer<'a> {
             self.source.next_byte_unchecked();
         }
 
-        let low = self.hex_4_digits()?;
-
         // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF,
         // and is called a low surrogate or a trail surrogate.
-        // If this isn't a valid pair, rewind to before the 2nd, and return the first only.
-        // The 2nd could be the first part of a valid pair.
-        if !(MIN_LOW..=MAX_LOW).contains(&low) {
-            self.source.set_position(before_second);
-            return Some(UnicodeEscape::LoneSurrogate(high));
+        if let Some(low) = self.hex_4_digits() {
+            if (MIN_LOW..=MAX_LOW).contains(&low) {
+                let code_point = pair_to_code_point(high, low);
+                // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
+                // which is a valid `char`
+                let ch = unsafe { char::from_u32_unchecked(code_point) };
+                return Some(UnicodeEscape::SurrogatePair(ch));
+            }
         }
 
-        let code_point = pair_to_code_point(high, low);
-        // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
-        // which is a valid `char`
-        let ch = unsafe { char::from_u32_unchecked(code_point) };
-        Some(UnicodeEscape::SurrogatePair(ch))
+        // Not a valid surrogate pair.
+        // Rewind to before the 2nd, and return the first only.
+        // The 2nd could be the first part of a valid pair, or a `\u{...}` escape.
+        self.source.set_position(before_second);
+        Some(UnicodeEscape::LoneSurrogate(high))
     }
 
     // EscapeSequence ::

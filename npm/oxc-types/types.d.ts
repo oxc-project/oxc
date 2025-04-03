@@ -106,6 +106,7 @@ export interface ObjectProperty extends Span {
   key: PropertyKey;
   value: Expression;
   kind: PropertyKind;
+  optional?: false;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
@@ -522,6 +523,7 @@ export interface AssignmentPattern extends Span {
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
   properties: Array<BindingProperty | BindingRestElement>;
+  decorators?: [];
 }
 
 export interface BindingProperty extends Span {
@@ -691,6 +693,10 @@ export interface AccessorProperty extends Span {
   definite?: boolean;
   typeAnnotation?: TSTypeAnnotation | null;
   accessibility?: TSAccessibility | null;
+  optional?: false;
+  override?: false;
+  readonly?: false;
+  declare?: false;
 }
 
 export interface ImportExpression extends Span {
@@ -748,6 +754,7 @@ export interface ExportNamedDeclaration extends Span {
 export interface ExportDefaultDeclaration extends Span {
   type: 'ExportDefaultDeclaration';
   declaration: ExportDefaultDeclarationKind;
+  exportKind?: 'value';
 }
 
 export interface ExportAllDeclaration extends Span {

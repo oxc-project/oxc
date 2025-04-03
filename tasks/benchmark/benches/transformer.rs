@@ -24,8 +24,6 @@ fn bench_transformer(criterion: &mut Criterion) {
         // Even the plugins are unfinished, we still want to enable all of them
         // to track the performance changes during the development.
         transform_options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
-        transform_options.decorator.legacy = true;
-        transform_options.decorator.emit_decorator_metadata = true;
 
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {

@@ -1,7 +1,15 @@
 parser_misc Summary:
-AST Parsed     : 33/33 (100.00%)
-Positive Passed: 33/33 (100.00%)
-Negative Passed: 30/30 (100.00%)
+AST Parsed     : 34/34 (100.00%)
+Positive Passed: 34/34 (100.00%)
+Negative Passed: 31/31 (100.00%)
+
+  × Identifier `b` has already been declared
+   ╭─[misc/fail/oxc-10159.js:1:22]
+ 1 │ function a() { class b { }; function b() { } }
+   ·                      ┬               ┬
+   ·                      │               ╰── It can not be redeclared here
+   ·                      ╰── `b` has already been declared here
+   ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]

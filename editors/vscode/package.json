@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -95,7 +95,10 @@
           "description": "Traces the communication between VS Code and the language server."
         },
         "oxc.configPath": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "scope": "window",
           "default": null,
           "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
