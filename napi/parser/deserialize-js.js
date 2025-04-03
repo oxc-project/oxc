@@ -1175,13 +1175,7 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  return {
-    type: 'JSXOpeningFragment',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    attributes: [],
-    selfClosing: false,
-  };
+  return todo;
 }
 
 function deserializeJSXClosingFragment(pos) {

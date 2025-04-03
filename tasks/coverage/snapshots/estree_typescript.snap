@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10618/10725 (99.00%)
-Positive Passed: 7087/10725 (66.08%)
+Positive Passed: 7102/10725 (66.22%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_compile.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_linter.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_parseConfig.ts
@@ -1408,15 +1408,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxElementTypeLiteralWi
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressionNotCountedAsChild.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressionNotCountedAsChild2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxExcessPropsAndAssignability.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryNull.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragReactReferenceErrors.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentAndFactoryUsedOnFragmentUse.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentFactoryNoUnusedLocals.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentFactoryReference.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentWrongType.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxHasLiteralType.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxImportForSideEffectsNonExtantNoError.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxImportSourceNonPragmaComment.tsx
@@ -3551,7 +3545,6 @@ tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefMultipleTypeParam
 Unexpected estree file content error: 1 != 2
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenCanBeTupleType.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty14.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxGenericTagHasCorrectInferences.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxSubtleSkipContextSensitiveBug.tsx
@@ -3561,10 +3554,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAli
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences3.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences4.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragma.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryDeclarationsLocalTypes.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryWithFragmentIsError.tsx
 tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
 Unexpected estree file content error: 1 != 2
 
@@ -3574,7 +3564,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactT
 JSX expressions may not use the comma operator
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformChildren.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformCustomImport.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformCustomImportPragma.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformKeyProp.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformKeyPropCustomImport.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformNestedSelfClosingChild.tsx
@@ -3584,8 +3573,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeReso
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution15.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxCorrectlyParseLessThanComparison1.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentReactEmit.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxLibraryManagedAttributes.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxOpeningClosingNames.tsx
@@ -3599,7 +3586,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttribu
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload5.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType1.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType3.tsx
@@ -4444,7 +4430,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationsh
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferences.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceLowerPriorityThanReturn.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/noInfer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/unionAndIntersectionInference3.ts
