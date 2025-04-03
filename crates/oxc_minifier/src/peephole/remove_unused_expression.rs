@@ -194,7 +194,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };
-        if array_expr.elements.len() == 0 {
+        if array_expr.elements.is_empty() {
             return true;
         }
 
@@ -211,7 +211,7 @@ impl<'a> PeepholeOptimizations {
             state.changed = true;
         }
 
-        if array_expr.elements.len() == 0 {
+        if array_expr.elements.is_empty() {
             return true;
         }
 
@@ -332,7 +332,7 @@ impl<'a> PeepholeOptimizations {
             if e.to_primitive(&ctx).is_symbol() != Some(false) {
                 pending_to_string_required_exprs.push(e);
             } else if !self.remove_unused_expression(&mut e, state, ctx) {
-                if pending_to_string_required_exprs.len() > 0 {
+                if !pending_to_string_required_exprs.is_empty() {
                     // flush pending to string required expressions
                     let expressions =
                         ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
@@ -360,7 +360,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if pending_to_string_required_exprs.len() > 0 {
+        if !pending_to_string_required_exprs.is_empty() {
             let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
             let mut quasis = ctx.ast.vec_from_iter(
                 iter::repeat_with(|| {
@@ -419,7 +419,7 @@ impl<'a> PeepholeOptimizations {
                     pending_spread_elements.push(prop);
                 }
                 ObjectPropertyKind::ObjectProperty(prop) => {
-                    if pending_spread_elements.len() > 0 {
+                    if !pending_spread_elements.is_empty() {
                         // flush pending spread elements
                         transformed_elements.push(ctx.ast.expression_object(
                             prop.span(),
@@ -449,7 +449,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if pending_spread_elements.len() > 0 {
+        if !pending_spread_elements.is_empty() {
             transformed_elements.push(ctx.ast.expression_object(
                 object_expr.span,
                 pending_spread_elements,

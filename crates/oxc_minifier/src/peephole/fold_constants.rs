@@ -431,7 +431,7 @@ impl<'a> PeepholeOptimizations {
                     None
                 };
                 left_last_quasi.value.cooked = new_cooked;
-                if right.quasis.len() > 0 {
+                if !right.quasis.is_empty() {
                     left_last_quasi.tail = false;
                 }
                 left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled

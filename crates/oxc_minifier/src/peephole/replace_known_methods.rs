@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if args.len() >= 1 {
+        if !args.is_empty() {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
