@@ -1302,6 +1302,7 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &crate::serialize::Init(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
