@@ -581,7 +581,7 @@ fn clean_interned(
                             most_flat.iter().rev().for_each(|element| element_stack.push(element));
                         }
                         element => cleaned.push(element.clone()),
-                    };
+                    }
                 }
 
                 Interned::new(cleaned)

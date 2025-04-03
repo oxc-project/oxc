@@ -361,7 +361,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
                 *element_name = JSXElementName::IdentifierReference(ident);
             }
-        };
+        }
     }
 
     fn enter_jsx_member_expression_object(
@@ -921,7 +921,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 param_binding.create_read_expression(ctx),
                 false,
             ));
-        };
+        }
 
         // Create a parameter for the value if it's an assignment.
         if is_assignment {

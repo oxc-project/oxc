@@ -89,7 +89,7 @@ impl StringLiteral<'_> {
                     if (0xd800..=0xdfff).contains(&hex) {
                         return false;
                     }
-                };
+                }
             }
         }
         true

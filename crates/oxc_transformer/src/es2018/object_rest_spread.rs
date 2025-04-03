@@ -195,7 +195,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         // Allow `{...x} = {}` and `[{...x}] = []`.
         if !Self::has_nested_target_rest(&assign_expr.left) {
             return;
-        };
+        }
 
         // If not an top `({ ...y })`, walk the pattern and create references for all the objects with a rest.
         if !matches!(&assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(t) if t.rest.is_some())

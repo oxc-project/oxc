@@ -51,7 +51,7 @@ impl<'a> PeepholeOptimizations {
             } {
                 *expr = folded_expr;
                 local_change = true;
-            };
+            }
             if local_change {
                 changed = true;
             } else {

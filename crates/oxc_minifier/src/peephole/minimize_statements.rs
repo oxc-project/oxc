@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                 .is_break()
             {
                 break;
-            };
+            }
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             result.push(stmt);

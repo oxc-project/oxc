@@ -205,7 +205,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 }
             } else {
                 keep_var.visit_statement(&if_stmt.consequent);
-            };
+            }
             let var_stmt = keep_var.get_variable_declaration_statement();
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {

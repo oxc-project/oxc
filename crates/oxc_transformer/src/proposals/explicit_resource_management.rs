@@ -133,7 +133,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
-        };
+        }
     }
 
     /// Transform class static block.
@@ -519,7 +519,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
                 ) {
                     continue;
-                };
+                }
                 needs_await = needs_await || var_decl.kind == VariableDeclarationKind::AwaitUsing;
 
                 var_decl.kind = VariableDeclarationKind::Const;
@@ -642,7 +642,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ) && !self.top_level_using.contains_key(&address)
             {
                 continue;
-            };
+            }
             let is_await_using = variable_declaration.kind == VariableDeclarationKind::AwaitUsing
                 || self.top_level_using.get(&address).copied().unwrap_or(false);
             needs_await = needs_await || is_await_using;

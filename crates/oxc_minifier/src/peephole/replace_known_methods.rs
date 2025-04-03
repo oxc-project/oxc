@@ -176,7 +176,7 @@ impl<'a> PeepholeOptimizations {
             if start > end {
                 return None;
             }
-        };
+        }
         Some(ctx.ast.expression_string_literal(
             span,
             s.value.as_str().substring(start_idx, end_idx),

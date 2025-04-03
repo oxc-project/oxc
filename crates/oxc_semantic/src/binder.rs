@@ -188,7 +188,7 @@ impl<'a> Binder<'a> for Function<'a> {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
-            };
+            }
         }
 
         // Save `@__NO_SIDE_EFFECTS__`

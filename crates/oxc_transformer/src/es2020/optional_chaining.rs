@@ -101,7 +101,7 @@ impl<'a> Traverse<'a> for OptionalChaining<'a, '_> {
                 self.transform_update_expression(expr, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     // `#[inline]` because this is a hot path
@@ -335,14 +335,14 @@ impl<'a> OptionalChaining<'a, '_> {
         //                              ^^^^^^ ^^^^^^^^ Here we will wrap the right part with a `delete` unary expression
         if is_delete {
             chain_expr = ctx.ast.expression_unary(SPAN, UnaryOperator::Delete, chain_expr);
-        };
+        }
 
         // If this chain expression is a callee of a CallExpression, we need to transform it to accept a proper context
         // `(Foo?.["m"])();` -> `(...  _Foo["m"].bind(_Foo))();`
         //                                       ^^^^^^^^^^^ Here we will handle the `right` part to bind a proper context
         if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
             chain_expr = self.transform_expression_to_bind_context(chain_expr, ctx);
-        };
+        }
         // Clear states
         self.temp_binding = None;
         self.call_context = CallContext::None;

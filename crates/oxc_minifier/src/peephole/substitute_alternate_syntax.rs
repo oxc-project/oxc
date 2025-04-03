@@ -923,7 +923,7 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             return;
-        };
+        }
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
         if is_identifier_name(value) {
@@ -1177,7 +1177,7 @@ impl<'a> LatePeepholeOptimizations {
                     {
                         catch.param = None;
                     }
-                };
+                }
             }
         }
     }

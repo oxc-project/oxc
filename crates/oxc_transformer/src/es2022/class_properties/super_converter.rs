@@ -113,7 +113,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 self.transform_call_expression_for_super_computed_member_expr(call_expr, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     fn transform_call_expression_for_super_static_member_expr(
@@ -182,7 +182,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 self.transform_assignment_expression_for_super_computed_member_expr(expr, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     /// Transform assignment expression where the left-hand side is a static member expression
@@ -320,7 +320,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 self.transform_update_expression_for_super_computed_member_expr(expr, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     /// Transform update expression (`++` or `--`) where argument is a static member expression

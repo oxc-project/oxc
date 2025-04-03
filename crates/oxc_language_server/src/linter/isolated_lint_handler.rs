@@ -133,7 +133,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
@@ -151,7 +151,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);

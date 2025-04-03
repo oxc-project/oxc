@@ -42,7 +42,7 @@ impl<'a> PeepholeOptimizations {
         } {
             *expr = folded_expr;
             state.changed = true;
-        };
+        }
     }
 
     #[expect(clippy::float_cmp)]

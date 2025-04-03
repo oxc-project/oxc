@@ -116,7 +116,7 @@ impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     #[inline]
@@ -340,7 +340,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 has_private_in_expression_in_decorator,
                 ctx,
             );
-        };
+        }
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If

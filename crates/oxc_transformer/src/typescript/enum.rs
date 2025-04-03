@@ -567,7 +567,7 @@ impl IdentifierReferenceRename<'_, '_> {
         // Don't need to rename the identifier if it's not a member of the enum,
         if !self.previous_enum_members.contains_key(&ident.name) {
             return false;
-        };
+        }
 
         let scoping = self.ctx.scoping.scoping();
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
@@ -625,6 +625,6 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
             _ => {
                 walk_mut::walk_expression(self, expr);
             }
-        };
+        }
     }
 }

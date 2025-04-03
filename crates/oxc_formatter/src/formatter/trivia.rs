@@ -65,26 +65,24 @@ impl Format<'_> for FormatLeadingComments<'_> {
             write!(f, [comment])?;
 
             match comment.kind() {
-                CommentKind::Block | CommentKind::InlineBlock => {
-                    match comment.lines_after() {
-                        0 => {
-                            let should_nestle =
-                                leading_comments_iter.peek().is_some_and(|next_comment| {
-                                    should_nestle_adjacent_doc_comments(comment, next_comment)
-                                });
+                CommentKind::Block | CommentKind::InlineBlock => match comment.lines_after() {
+                    0 => {
+                        let should_nestle =
+                            leading_comments_iter.peek().is_some_and(|next_comment| {
+                                should_nestle_adjacent_doc_comments(comment, next_comment)
+                            });
 
-                            write!(f, [maybe_space(!should_nestle)])?;
+                        write!(f, [maybe_space(!should_nestle)])?;
+                    }
+                    1 => {
+                        if comment.lines_before() == 0 {
+                            write!(f, [soft_line_break_or_space()])?;
+                        } else {
+                            write!(f, [hard_line_break()])?;
                         }
-                        1 => {
-                            if comment.lines_before() == 0 {
-                                write!(f, [soft_line_break_or_space()])?;
-                            } else {
-                                write!(f, [hard_line_break()])?;
-                            }
-                        }
-                        _ => write!(f, [empty_line()])?,
-                    };
-                }
+                    }
+                    _ => write!(f, [empty_line()])?,
+                },
                 CommentKind::Line => match comment.lines_after() {
                     0 | 1 => write!(f, [hard_line_break()])?,
                     _ => write!(f, [empty_line()])?,
@@ -165,7 +163,7 @@ impl Format<'_> for FormatTrailingComments<'_> {
                                 }
                                 1 => write!(f, [hard_line_break()])?,
                                 _ => write!(f, [empty_line()])?,
-                            };
+                            }
 
                             write!(f, [comment])
                         })),

@@ -131,7 +131,7 @@ impl Info {
 
                         if let Some(name) = span_content.name() {
                             filename = name.to_string();
-                        };
+                        }
                         if matches!(diagnostic.severity(), Some(Severity::Error)) {
                             severity = Severity::Error;
                         }

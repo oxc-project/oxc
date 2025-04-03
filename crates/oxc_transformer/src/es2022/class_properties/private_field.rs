@@ -247,7 +247,7 @@ impl<'a> ClassProperties<'a, '_> {
         let Expression::CallExpression(call_expr) = expr else { unreachable!() };
         if matches!(&call_expr.callee, Expression::PrivateFieldExpression(_)) {
             self.transform_call_expression_impl(call_expr, ctx);
-        };
+        }
     }
 
     fn transform_call_expression_impl(
@@ -466,7 +466,7 @@ impl<'a> ClassProperties<'a, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
             self.transform_assignment_expression_impl(expr, ctx);
-        };
+        }
     }
 
     fn transform_assignment_expression_impl(
@@ -906,7 +906,7 @@ impl<'a> ClassProperties<'a, '_> {
         let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
         if matches!(&update_expr.argument, SimpleAssignmentTarget::PrivateFieldExpression(_)) {
             self.transform_update_expression_impl(expr, ctx);
-        };
+        }
     }
 
     // TODO: Split up this function into 2 halves for static and instance props
