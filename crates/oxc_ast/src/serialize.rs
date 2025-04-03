@@ -136,9 +136,9 @@ impl ESTree for ProgramConverter<'_, '_> {
 /// Serialized as `null`.
 #[ast_meta]
 #[estree(ts_type = "null", raw_deser = "null")]
-pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct Null<T>(pub T);
 
-impl<T> ESTree for Null<'_, T> {
+impl<T> ESTree for Null<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
     }
@@ -147,9 +147,9 @@ impl<T> ESTree for Null<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "null", raw_deser = "null")]
 #[ts]
-pub struct TsNull<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsNull<T>(pub T);
 
-impl<T> ESTree for TsNull<'_, T> {
+impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
     }
@@ -158,9 +158,9 @@ impl<T> ESTree for TsNull<'_, T> {
 /// Serialized as `true`.
 #[ast_meta]
 #[estree(ts_type = "true", raw_deser = "true")]
-pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct True<T>(pub T);
 
-impl<T> ESTree for True<'_, T> {
+impl<T> ESTree for True<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         true.serialize(serializer);
     }
@@ -169,9 +169,9 @@ impl<T> ESTree for True<'_, T> {
 /// Serialized as `false`.
 #[ast_meta]
 #[estree(ts_type = "false", raw_deser = "false")]
-pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct False<T>(pub T);
 
-impl<T> ESTree for False<'_, T> {
+impl<T> ESTree for False<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
     }
@@ -180,9 +180,9 @@ impl<T> ESTree for False<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "false", raw_deser = "false")]
 #[ts]
-pub struct TsFalse<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsFalse<T>(pub T);
 
-impl<T> ESTree for TsFalse<'_, T> {
+impl<T> ESTree for TsFalse<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
     }
@@ -192,9 +192,9 @@ impl<T> ESTree for TsFalse<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "'value'", raw_deser = "'value'")]
 #[ts]
-pub struct TsValue<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsValue<T>(pub T);
 
-impl<T> ESTree for TsValue<'_, T> {
+impl<T> ESTree for TsValue<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("value").serialize(serializer);
     }
@@ -203,9 +203,9 @@ impl<T> ESTree for TsValue<'_, T> {
 /// Serialized as `"in"`.
 #[ast_meta]
 #[estree(ts_type = "'in'", raw_deser = "'in'")]
-pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct In<T>(pub T);
 
-impl<T> ESTree for In<'_, T> {
+impl<T> ESTree for In<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("in").serialize(serializer);
     }
@@ -214,9 +214,9 @@ impl<T> ESTree for In<'_, T> {
 /// Serialized as `"init"`.
 #[ast_meta]
 #[estree(ts_type = "'init'", raw_deser = "'init'")]
-pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct Init<T>(pub T);
 
-impl<T> ESTree for Init<'_, T> {
+impl<T> ESTree for Init<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("init").serialize(serializer);
     }
@@ -225,9 +225,9 @@ impl<T> ESTree for Init<'_, T> {
 /// Serialized as `"this"`.
 #[ast_meta]
 #[estree(ts_type = "'this'", raw_deser = "'this'")]
-pub struct This<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct This<T>(pub T);
 
-impl<T> ESTree for This<'_, T> {
+impl<T> ESTree for This<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("this").serialize(serializer);
     }
@@ -236,9 +236,9 @@ impl<T> ESTree for This<'_, T> {
 /// Serialized as `[]`.
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
-pub struct EmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct EmptyArray<T>(pub T);
 
-impl<T> ESTree for EmptyArray<'_, T> {
+impl<T> ESTree for EmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
     }
@@ -247,9 +247,9 @@ impl<T> ESTree for EmptyArray<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
 #[ts]
-pub struct TsEmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsEmptyArray<T>(pub T);
 
-impl<T> ESTree for TsEmptyArray<'_, T> {
+impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
     }
@@ -532,8 +532,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("optional", &rest.argument.optional);
-        state.serialize_ts_field("decorators", &EmptyArray(&()));
-        state.serialize_ts_field("value", &Null(&()));
+        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("value", &Null(()));
         state.end();
     }
 }
