@@ -1175,7 +1175,7 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  return todo;
+  return 'TODO';
 }
 
 function deserializeJSXClosingFragment(pos) {
