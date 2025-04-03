@@ -7,7 +7,8 @@ use itertools::Itertools;
 use crate::{
     Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
     derives::estree::{
-        get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
+        get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
+        should_skip_enum_variant, should_skip_field,
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
@@ -319,6 +320,7 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
     let mut variant_type_names = enum_def
         .variants
         .iter()
+        .filter(|variant| !should_skip_enum_variant(variant))
         .map(|variant| {
             if let Some(variant_type) = variant.field_type(schema) {
                 if let Some(converter_name) = &variant.estree.via {
