@@ -68,10 +68,17 @@ pub struct TSThisParameter<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_ts_def = "
+    interface TSEnumBody extends Span {
+        type: 'TSEnumBody';
+        members: TSEnumMember[];
+    }
+")]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
+    #[estree(rename = "body", via = TSEnumDeclarationBody)]
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// `true` for const enums
     pub r#const: bool,

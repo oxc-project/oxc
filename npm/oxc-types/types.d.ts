@@ -935,9 +935,14 @@ export interface TSThisParameter extends Span {
 export interface TSEnumDeclaration extends Span {
   type: 'TSEnumDeclaration';
   id: BindingIdentifier;
-  members: Array<TSEnumMember>;
+  body: TSEnumBody;
   const: boolean;
   declare: boolean;
+}
+
+export interface TSEnumBody extends Span {
+  type: 'TSEnumBody';
+  members: TSEnumMember[];
 }
 
 export interface TSEnumMember extends Span {

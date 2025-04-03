@@ -823,6 +823,41 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     }
 }
 
+/// Serializer for `body` field of `TSEnumDeclaration`.
+/// This field is derived from `members` field.
+///
+/// `Span` indicates within braces `{ ... }`.
+/// ```ignore
+/// enum Foo { ... }
+/// |              | TSEnumDeclaration.span
+///          |     | TSEnumBody.span
+///        ^^ id_end + 1 for space
+/// ```
+/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
+/// We may need to reconsider adding `TSEnumBody` as Rust AST.
+#[ast_meta]
+#[estree(
+    ts_type = "TSEnumBody",
+    raw_deser = "
+        const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
+        const bodyStart = THIS.id.end + 1;
+        {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
+    "
+)]
+pub struct TSEnumDeclarationBody<'a, 'b>(pub &'b TSEnumDeclaration<'a>);
+
+impl ESTree for TSEnumDeclarationBody<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
+        let body_start = self.0.id.span.end + 1;
+        state.serialize_field("start", &body_start);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("members", &self.0.members);
+        state.end();
+    }
+}
+
 // --------------------
 // Comments
 // --------------------
