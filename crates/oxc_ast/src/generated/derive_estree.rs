@@ -3117,7 +3117,6 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
     }
 }

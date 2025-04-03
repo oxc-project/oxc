@@ -1321,7 +1321,6 @@ export interface TSImportType extends Span {
   options: ObjectExpression | null;
   qualifier: TSTypeName | null;
   typeArguments: TSTypeParameterInstantiation | null;
-  isTypeOf: boolean;
 }
 
 export interface TSFunctionType extends Span {

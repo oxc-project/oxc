@@ -1885,7 +1885,6 @@ function deserializeTSImportType(pos) {
     options: deserializeOptionBoxObjectExpression(pos + 24),
     qualifier: deserializeOptionTSTypeName(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
-    isTypeOf: deserializeBool(pos + 56),
   };
 }
 
