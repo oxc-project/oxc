@@ -119,7 +119,7 @@ impl Rule for PreferMockPromiseShorthand {
                     Self::report(is_once, property_span, Some(func_expr.span), arg_expr, ctx);
                 }
                 _ => (),
-            };
+            }
         }
     }
 }

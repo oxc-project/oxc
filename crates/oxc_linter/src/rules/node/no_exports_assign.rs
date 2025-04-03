@@ -90,7 +90,7 @@ impl Rule for NoExportsAssign {
         if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right {
             if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
                 return;
-            };
+            }
         }
 
         if let Some(AstKind::AssignmentExpression(assign_expr)) = ctx.nodes().parent_kind(node.id())

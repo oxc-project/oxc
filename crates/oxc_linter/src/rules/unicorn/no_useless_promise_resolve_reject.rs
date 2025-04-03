@@ -319,9 +319,9 @@ fn generate_fix<'a>(
                     ) {
                         return fixer.noop();
                     }
-                };
-            };
-        };
+                }
+            }
+        }
     }
 
     let node = get_parenthesized_node(node, ctx);

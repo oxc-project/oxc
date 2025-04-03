@@ -63,7 +63,7 @@ pub fn is_prototype_property(
                 return true;
             }
         }
-    };
+    }
 
     match object {
         // `[].method`

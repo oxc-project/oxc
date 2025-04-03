@@ -109,7 +109,7 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
 
             if let Some(asd) = var_decl.id.type_annotation.as_ref() {
                 return is_invalid_type(&asd.type_annotation);
-            };
+            }
 
             is_invalid_expression(var_decl.init.as_ref(), ctx)
         }

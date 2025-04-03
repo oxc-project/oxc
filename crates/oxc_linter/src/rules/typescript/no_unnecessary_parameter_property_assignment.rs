@@ -92,7 +92,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             for assignment in assignments {
                 if let Some(this_property_name) = get_property_name(&assignment.left) {
                     assigned_before_constructor.insert(this_property_name);
-                };
+                }
             }
         }
 
@@ -214,7 +214,7 @@ fn get_assignments_inside_expression<'a>(
             assignments.push(assignment);
         }
         _ => (),
-    };
+    }
 
     assignments
 }

@@ -241,7 +241,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                 fixer.noop()
             }
         });
-    };
+    }
 }
 
 // `[].concat(maybeArray)`

@@ -634,7 +634,7 @@ fn is_cap_allowed_expression(
 
     if let Some(pattern) = &patterns {
         return pattern.find(name).is_some();
-    };
+    }
 
     false
 }

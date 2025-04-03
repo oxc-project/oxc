@@ -79,7 +79,7 @@ impl Rule for NoCaseDeclarations {
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     _ => {}
-                };
+                }
             }
         }
     }

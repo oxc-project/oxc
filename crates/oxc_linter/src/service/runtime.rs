@@ -668,7 +668,7 @@ impl Runtime {
 
         if !ret.errors.is_empty() {
             return Err(if ret.is_flow_language { vec![] } else { ret.errors });
-        };
+        }
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
@@ -679,7 +679,7 @@ impl Runtime {
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
-        };
+        }
 
         let mut semantic = semantic_ret.semantic;
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);

@@ -155,20 +155,18 @@ fn check_interface_declaration(
 ) {
     if matches!(allow_interfaces, AllowInterfaces::Always) {
         return;
-    };
+    }
     if interface.id.name.as_str() == allow_with_name {
         return;
     }
     match interface.extends.as_ref() {
-        Some(extends) if extends.len() == 1 => {
-            match allow_interfaces {
-                AllowInterfaces::WithSingleExtends => (),
-                _ => ctx.diagnostic(no_empty_object_type_diagnostic(
-                    interface.body.span,
-                    "Do not use an empty interface declaration.",
-                )),
-            };
-        }
+        Some(extends) if extends.len() == 1 => match allow_interfaces {
+            AllowInterfaces::WithSingleExtends => (),
+            _ => ctx.diagnostic(no_empty_object_type_diagnostic(
+                interface.body.span,
+                "Do not use an empty interface declaration.",
+            )),
+        },
         Some(extends) if extends.len() == 0 => {
             ctx.diagnostic(no_empty_object_type_diagnostic(
                 interface.body.span,
@@ -192,7 +190,7 @@ fn check_type_literal(
 ) {
     if matches!(allow_object_types, AllowObjectTypes::Always) {
         return;
-    };
+    }
     let Some(parent_node) = ctx.nodes().parent_node(node_id) else {
         return;
     };

@@ -191,7 +191,7 @@ impl<'de> Deserialize<'de> for LintPlugins {
                             }
                             Ok(None) | Err(_) => break,
                         },
-                    };
+                    }
                 }
 
                 Ok(plugins)

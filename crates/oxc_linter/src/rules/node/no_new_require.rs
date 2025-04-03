@@ -49,7 +49,7 @@ impl Rule for NoNewRequire {
 
         if !new_expression.callee.is_specific_id("require") {
             return;
-        };
+        }
 
         ctx.diagnostic(no_new_require(new_expression.span));
     }
