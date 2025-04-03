@@ -116,6 +116,7 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
+        param_kind: FormalParameterKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let ctx = self.ctx;
@@ -123,8 +124,7 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
-        let (this_param, params) =
-            self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
+        let (this_param, params) = self.parse_formal_parameters(param_kind)?;
 
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true)?;
@@ -217,7 +217,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
-        self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())
+        self.parse_function(
+            span,
+            id,
+            r#async,
+            generator,
+            func_kind,
+            FormalParameterKind::FormalParameter,
+            &Modifiers::empty(),
+        )
     }
 
     /// Parse function implementation in Typescript, cursor
@@ -232,7 +240,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
-        self.parse_function(start_span, id, r#async, generator, func_kind, modifiers)
+        self.parse_function(
+            start_span,
+            id,
+            r#async,
+            generator,
+            func_kind,
+            FormalParameterKind::FormalParameter,
+            modifiers,
+        )
     }
 
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
@@ -246,8 +262,15 @@ impl<'a> ParserImpl<'a> {
 
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
-        let function =
-            self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
+        let function = self.parse_function(
+            span,
+            id,
+            r#async,
+            generator,
+            func_kind,
+            FormalParameterKind::FormalParameter,
+            &Modifiers::empty(),
+        )?;
         Ok(Expression::FunctionExpression(function))
     }
 
@@ -271,6 +294,7 @@ impl<'a> ParserImpl<'a> {
             r#async,
             generator,
             FunctionKind::Expression,
+            FormalParameterKind::UniqueFormalParameters,
             &Modifiers::empty(),
         )
     }

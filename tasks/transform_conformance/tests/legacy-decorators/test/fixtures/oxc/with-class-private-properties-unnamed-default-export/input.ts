@@ -1,7 +1,7 @@
 @dec
 export default class {
-  #prop = 0;
+  prop = 0;
   meth() {
-    return this.#prop;
+    return this.prop;
   }
 }

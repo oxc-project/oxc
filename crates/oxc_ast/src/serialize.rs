@@ -128,6 +128,18 @@ impl<T> ESTree for TsFalse<'_, T> {
     }
 }
 
+/// Serialized as `"value"`.
+#[ast_meta]
+#[estree(ts_type = "'value'", raw_deser = "'value'")]
+#[ts]
+pub struct TsValue<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsValue<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("value").serialize(serializer);
+    }
+}
+
 /// Serialized as `"in"`.
 #[ast_meta]
 #[estree(ts_type = "'in'", raw_deser = "'in'")]
@@ -227,7 +239,7 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `value` field of `StringLiteral`.
 ///
-/// Handle when `lossy` flag is set, indicating the string contains lone surrogates.
+/// Handle when `lone_surrogates` flag is set, indicating the string contains lone surrogates.
 #[ast_meta]
 #[estree(
     ts_type = "string",
@@ -342,6 +354,52 @@ pub struct RegExpFlagsConverter<'b>(pub &'b RegExpFlags);
 impl ESTree for RegExpFlagsConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString(self.0.to_inline_string().as_str()).serialize(serializer);
+    }
+}
+
+/// Serializer for `value` field of `TemplateElement`.
+///
+/// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
+#[ast_meta]
+#[estree(
+    ts_type = "TemplateElementValue",
+    raw_deser = r#"
+        let value = DESER[TemplateElementValue](POS_OFFSET.value);
+        if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
+            value.cooked = value.cooked
+                .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+        }
+        value
+    "#
+)]
+pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
+
+impl ESTree for TemplateElementValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        #[expect(clippy::if_not_else)]
+        if !element.lone_surrogates {
+            element.value.serialize(serializer);
+        } else {
+            // String contains lone surrogates
+            self.serialize_lone_surrogates(serializer);
+        }
+    }
+}
+
+impl TemplateElementValue<'_, '_> {
+    #[cold]
+    #[inline(never)]
+    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
+        let value = &self.0.value;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("raw", &value.raw);
+
+        let cooked = value.cooked.as_ref().map(|cooked| LoneSurrogatesString(cooked.as_str()));
+        state.serialize_field("cooked", &cooked);
+
+        state.end();
     }
 }
 
@@ -762,6 +820,41 @@ pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         self.0.kind.is_global().serialize(serializer);
+    }
+}
+
+/// Serializer for `body` field of `TSEnumDeclaration`.
+/// This field is derived from `members` field.
+///
+/// `Span` indicates within braces `{ ... }`.
+/// ```ignore
+/// enum Foo { ... }
+/// |              | TSEnumDeclaration.span
+///          |     | TSEnumBody.span
+///        ^^ id_end + 1 for space
+/// ```
+/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
+/// We may need to reconsider adding `TSEnumBody` as Rust AST.
+#[ast_meta]
+#[estree(
+    ts_type = "TSEnumBody",
+    raw_deser = "
+        const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
+        const bodyStart = THIS.id.end + 1;
+        {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
+    "
+)]
+pub struct TSEnumDeclarationBody<'a, 'b>(pub &'b TSEnumDeclaration<'a>);
+
+impl ESTree for TSEnumDeclarationBody<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
+        let body_start = self.0.id.span.end + 1;
+        state.serialize_field("start", &body_start);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("members", &self.0.members);
+        state.end();
     }
 }
 

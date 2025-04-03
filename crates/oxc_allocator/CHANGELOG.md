@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+- 6a8c2fd allocator/vec2: Align the `retain` method with the standard implementation (#9752) (Dunqing)
+
+### Refactor
+
+- c971328 allocator/vec2: Rename parameters and method name to align with `std` (#9858) (Dunqing)
+
 ## [0.61.1] - 2025-03-21
 
 ### Features

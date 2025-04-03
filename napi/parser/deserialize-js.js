@@ -148,11 +148,16 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
+  let value = deserializeTemplateElementValue(pos + 8);
+  if (value.cooked !== null && deserializeBool(pos + 41)) {
+    value.cooked = value.cooked
+      .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+  }
   return {
     type: 'TemplateElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeTemplateElementValue(pos + 8),
+    value,
     tail: deserializeBool(pos + 40),
   };
 }
@@ -1282,12 +1287,16 @@ function deserializeTSThisParameter(pos) {
 }
 
 function deserializeTSEnumDeclaration(pos) {
+  const end = deserializeU32(pos + 4),
+    id = deserializeBindingIdentifier(pos + 8);
+  const tsEnumDeclMembers = deserializeVecTSEnumMember(pos + 40);
+  const bodyStart = id.end + 1;
   return {
     type: 'TSEnumDeclaration',
     start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    id: deserializeBindingIdentifier(pos + 8),
-    members: deserializeVecTSEnumMember(pos + 40),
+    end,
+    id,
+    body: { type: 'TSEnumBody', start: bodyStart, end: end, members: tsEnumDeclMembers },
     const: deserializeBool(pos + 72),
     declare: deserializeBool(pos + 73),
   };

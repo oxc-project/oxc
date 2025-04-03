@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Bug Fixes
+
+- 9b6e344 codegen: Do not escape `$` in strings unless using backtick as quote (#10103) (overlookmotel)
+- c903e42 codegen: Prevent arithmetic overflow calculating quote for `StringLiteral`s (#10102) (overlookmotel)
+- 418cfaf parser: Handle asi for `declare module "foo";` (#10010) (Boshen)
+- f0e1510 parser: Store lone surrogates as escape sequence (#10041) (overlookmotel)
+
+### Performance
+
+- d190466 codegen: Faster printing quotes (#10080) (overlookmotel)
+
+### Refactor
+
+- 719742b codegen: Print string literals containing lone surrogates without reference to `raw` (#10044) (overlookmotel)
+
 ## [0.61.2] - 2025-03-23
 
 ### Bug Fixes

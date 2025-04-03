@@ -164,10 +164,19 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-next-line`
                 else if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
-                    let stop = source_text[comment_span.end as usize..]
-                        .lines()
-                        .take(2)
-                        .fold(comment_span.end, |acc, line| acc + line.len() as u32);
+                    let mut stop = comment_span.end;
+                    let mut lines_after_comment_end =
+                        source_text[comment_span.end as usize..].split_inclusive('\n');
+
+                    if let Some(rest_of_line) = lines_after_comment_end.next() {
+                        stop += rest_of_line.len() as u32;
+                    }
+
+                    if let Some(next_line) = lines_after_comment_end.next() {
+                        let next_line_trimmed = next_line.trim_end_matches(['\n', '\r']);
+                        stop += next_line_trimmed.len() as u32;
+                    }
+
                     if text.trim().is_empty() {
                         self.add_interval(
                             comment_span.end,
@@ -695,7 +704,7 @@ semi*/
 }
 
 #[cfg(test)]
-mod test_unused_directives {
+mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::Comment;
     use oxc_parser::Parser;
@@ -724,6 +733,17 @@ mod test_unused_directives {
                 DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
             test(comments, directives);
         }
+    }
+
+    fn test_directive_span(source_text: &str, expected_start: u32, expected_stop: u32) {
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let interval = &directives.intervals.intervals[0];
+
+        assert_eq!(interval.start, expected_start);
+        assert_eq!(interval.stop, expected_stop);
     }
 
     #[test]
@@ -889,5 +909,18 @@ mod test_unused_directives {
                 assert!(directives.collect_unused_disable_comments().is_empty());
             },
         );
+    }
+
+    #[test]
+    fn next_line_span_of_line_comment() {
+        test_directive_span("// eslint-disable-next-line max-params", 38, 38);
+        test_directive_span("// eslint-disable-next-line max-params\n", 38, 39);
+        test_directive_span("// eslint-disable-next-line max-params\r\n", 38, 40);
+        test_directive_span("// eslint-disable-next-line max-params    \n", 42, 43);
+        test_directive_span("// eslint-disable-next-line max-params    \r\n", 42, 44);
+        test_directive_span("// eslint-disable-next-line max-params    \n ABC", 42, 47);
+        test_directive_span("// eslint-disable-next-line max-params    \r\n ABC", 42, 48);
+        test_directive_span("// eslint-disable-next-line max-params    \n ABC \n", 42, 48);
+        test_directive_span("// eslint-disable-next-line max-params    \r\n ABC \r\n", 42, 49);
     }
 }

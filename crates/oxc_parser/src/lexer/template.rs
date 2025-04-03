@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::{cmp::max, str};
 
 use oxc_allocator::String;
 
@@ -11,8 +11,25 @@ use super::{
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 
+/// Convert `char` to UTF-8 bytes array.
+const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    let mut bytes = [0u8; N];
+    ch.encode_utf8(&mut bytes);
+    bytes
+}
+
+/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
+const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
+const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
+
 static TEMPLATE_LITERAL_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'$' | b'`' | b'\r' | b'\\'));
+
+// Same as above, but with 1st byte of lossy replacement character added
+static TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(
+    |b| matches!(b, b'$' | b'`' | b'\r' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE)
+);
 
 /// 12.8.6 Template Literal Lexical Components
 impl<'a> Lexer<'a> {
@@ -189,7 +206,7 @@ impl<'a> Lexer<'a> {
         str
     }
 
-    /// Process template literal after `\n` or `\` found.
+    /// Process template literal after `\r` or `\` found.
     ///
     /// # SAFETY
     /// `chunk_start` must not be after `pos`.
@@ -206,7 +223,7 @@ impl<'a> Lexer<'a> {
 
         byte_search! {
             lexer: self,
-            table: TEMPLATE_LITERAL_TABLE,
+            table: TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE,
             start: pos,
             continue_if: (next_byte, pos) {
                 if next_byte == b'$' {
@@ -238,7 +255,8 @@ impl<'a> Lexer<'a> {
                         cold_branch(|| true)
                     }
                 } else {
-                    // Next byte is '`', `\r` or `\`. Add chunk up to before this char to `str`.
+                    // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
+                    // Add chunk up to before this char to `str`.
                     // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
                     // this function. `pos` only increases during searching.
                     // Where `chunk_start` is updated, it's always before or equal to `pos`.
@@ -293,10 +311,7 @@ impl<'a> Lexer<'a> {
                             // Continue searching
                             true
                         }
-                        _ => {
-                            // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
-                            debug_assert!(next_byte == b'\\');
-
+                        b'\\' => {
                             // Decode escape sequence into `str`.
                             // `read_string_escape_sequence` expects `self.source` to be positioned after `\`.
                             // SAFETY: Next byte is `\`, which is ASCII, so `pos + 1` is UTF-8 char boundary.
@@ -314,6 +329,43 @@ impl<'a> Lexer<'a> {
                             // SAFETY: Added 1 to `pos` above, and checked `chunk_start` hasn't moved
                             // backwards from that, so subtracting 1 again is within bounds.
                             pos = unsafe {chunk_start.sub(1)};
+
+                            // Continue searching
+                            true
+                        }
+                        _ => {
+                            // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
+                            // or first byte of lossy replacement character
+                            debug_assert!(next_byte == LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+
+                            // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
+                            // so there must be 2 more bytes to read
+                            let next2 = unsafe { pos.add(1).read2() };
+                            if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
+                                && self.token.lone_surrogates
+                            {
+                                str.push_str("\u{FFFD}fffd");
+                            } else {
+                                let bytes = [LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]];
+                                // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
+                                // so these 3 bytes must comprise a valid UTF-8 string
+                                let s = unsafe { str::from_utf8_unchecked(&bytes) };
+                                str.push_str(s);
+                            }
+
+                            // Advance past this character.
+                            // SAFETY: Character is 3 bytes, so `pos + 2` is in bounds.
+                            // Note: `byte_search!` macro already advances `pos` by 1, so only
+                            // advance by 2 here, so that in total we skip 3 bytes.
+                            pos = unsafe { pos.add(2) };
+
+                            // Set next chunk to start after this character.
+                            // SAFETY: It's a 3 byte character, and we added 2 to `pos` above,
+                            // so `pos + 1` must be a UTF-8 char boundary.
+                            // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
+                            // increments `pos` when return `true` from `continue_if`, so `pos` will be
+                            // brought up to `chunk_start` again.
+                            chunk_start = unsafe { pos.add(1) };
 
                             // Continue searching
                             true

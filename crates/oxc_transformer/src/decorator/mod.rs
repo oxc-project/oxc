@@ -40,6 +40,13 @@ impl<'a> Traverse<'a> for Decorator<'a, '_> {
     }
 
     #[inline]
+    fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_class(node, ctx);
+        }
+    }
+
+    #[inline]
     fn enter_method_definition(
         &mut self,
         node: &mut MethodDefinition<'a>,

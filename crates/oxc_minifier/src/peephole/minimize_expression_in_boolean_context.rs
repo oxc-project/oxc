@@ -112,6 +112,11 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
             }
+            Expression::SequenceExpression(seq_expr) => {
+                if let Some(last) = seq_expr.expressions.last_mut() {
+                    return self.try_fold_expr_in_boolean_context(last, ctx);
+                }
+            }
             _ => {}
         }
         false
@@ -143,5 +148,6 @@ mod test {
         test("if (anything1 ? anything2 : (0, false));", "anything1 && anything2");
         test("if(!![]);", "");
         test("if (+a === 0) { b } else { c }", "+a == 0 ? b : c"); // should not be folded to `a ? b : c` (`+a` might be NaN)
+        test("if (foo, !!bar) { let baz }", "if (foo, bar) { let baz }");
     }
 }

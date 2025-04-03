@@ -5,7 +5,7 @@ use crate::{
     to_primitive::ToPrimitive,
 };
 
-use super::context::MayHaveSideEffectsContext;
+use super::{PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
 /// Returns true if subtree changes application state.
 ///
@@ -75,7 +75,7 @@ impl MayHaveSideEffects for IdentifierReference<'_> {
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
-            _ => ctx.is_global_reference(self) != Some(false),
+            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self) != Some(false),
         }
     }
 }
@@ -398,7 +398,9 @@ impl MayHaveSideEffects for MemberExpression<'_> {
         match self {
             MemberExpression::ComputedMemberExpression(e) => e.may_have_side_effects(ctx),
             MemberExpression::StaticMemberExpression(e) => e.may_have_side_effects(ctx),
-            MemberExpression::PrivateFieldExpression(_) => true,
+            MemberExpression::PrivateFieldExpression(_) => {
+                ctx.property_read_side_effects() != PropertyReadSideEffects::None
+            }
         }
     }
 }
@@ -446,6 +448,9 @@ fn property_access_may_have_side_effects(
     if object.may_have_side_effects(ctx) {
         return true;
     }
+    if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+        return false;
+    }
 
     match property {
         "length" => {
@@ -463,6 +468,9 @@ fn integer_index_property_access_may_have_side_effects(
 ) -> bool {
     if object.may_have_side_effects(ctx) {
         return true;
+    }
+    if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+        return false;
     }
     match object {
         Expression::StringLiteral(s) => property as usize >= s.value.encode_utf16().count(),

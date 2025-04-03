@@ -51,7 +51,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
         AstKind::LabeledStatement(stmt) => {
             js::check_labeled_statement(stmt, node, ctx);
-            js::check_function_declaration(&stmt.body, true, ctx);
+            js::check_function_declaration_in_labeled_statement(&stmt.body, node, ctx);
         }
         AstKind::ForInStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
