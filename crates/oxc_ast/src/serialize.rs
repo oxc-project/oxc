@@ -918,7 +918,6 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
         state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
         state.serialize_field("start", &self.0.span.start);
         state.serialize_field("end", &self.0.span.end);
-
         if !S::INCLUDE_TS_FIELDS {
             state.serialize_field("attributes", &EmptyArray(()));
             state.serialize_field("selfClosing", &False(()));
