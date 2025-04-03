@@ -185,7 +185,7 @@ impl Rule for NoUselessUndefined {
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
-                                    .last()
+                                    .next_back()
                                 {
                                     Span::new(comment.span.end, undefined_literal.span.end)
                                 } else {
