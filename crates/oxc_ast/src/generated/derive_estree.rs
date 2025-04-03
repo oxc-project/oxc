@@ -16,17 +16,7 @@ use crate::ast::ts::*;
 
 impl ESTree for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("Program"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &self.directives, after: &self.body },
-        );
-        self.source_type.serialize(FlatStructSerializer(&mut state));
-        state.serialize_field("hashbang", &self.hashbang);
-        state.end();
+        crate::serialize::ProgramConverter(self).serialize(serializer)
     }
 }
 

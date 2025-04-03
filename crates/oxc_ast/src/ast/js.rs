@@ -30,7 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, directives, source_type, hashbang))]
+#[estree(field_order(span, directives, source_type, hashbang), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,

@@ -5,6 +5,7 @@ use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
     PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
+    ser::AppendToConcat,
 };
 use oxc_span::GetSpan;
 
@@ -37,16 +38,7 @@ const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
 
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
-    pub fn to_estree_ts_json(&mut self) -> String {
-        // Set start span to first token of first directive or statement. This is required because
-        // unlike Acorn, TS-ESLint excludes whitespace and comments from the `Program` start span.
-        // See https://github.com/oxc-project/oxc/pull/10134 for more info.
-        if let Some(first_directive) = self.directives.first() {
-            self.span.start = first_directive.span.start;
-        } else if let Some(first_stmt) = self.body.first() {
-            self.span.start = first_stmt.span().start;
-        }
-
+    pub fn to_estree_ts_json(&self) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let mut serializer = CompactTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
@@ -62,16 +54,7 @@ impl Program<'_> {
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
-    pub fn to_pretty_estree_ts_json(&mut self) -> String {
-        // Set start span to first token of first directive or statement. This is required because
-        // unlike Acorn, TS-ESLint excludes whitespace and comments from the `Program` start span.
-        // See https://github.com/oxc-project/oxc/pull/10134 for more info.
-        if let Some(first_directive) = self.directives.first() {
-            self.span.start = first_directive.span.start;
-        } else if let Some(first_stmt) = self.body.first() {
-            self.span.start = first_stmt.span().start;
-        }
-
+    pub fn to_pretty_estree_ts_json(&self) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let mut serializer = PrettyTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
@@ -84,6 +67,65 @@ impl Program<'_> {
         let mut serializer = PrettyJSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
+    }
+}
+
+// --------------------
+// Program
+// --------------------
+
+/// Serializer for `Program`.
+///
+/// In TS AST, set start span to start of first directive or statement.
+/// This is required because unlike Acorn, TS-ESLint excludes whitespace and comments
+/// from the `Program` start span.
+/// See <https://github.com/oxc-project/oxc/pull/10134> for more info.
+#[ast_meta]
+#[estree(raw_deser = "
+    const body = DESER[Vec<Directive>](POS_OFFSET.directives);
+    body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
+    let start = DESER[u32](POS_OFFSET.span.start);
+    /* IF_TS */
+    if (body.length > 0) start = body[0].start;
+    /* END_IF_TS */
+    const program = {
+        type: 'Program',
+        start,
+        end: DESER[u32](POS_OFFSET.span.end),
+        body,
+        sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
+    };
+    program
+")]
+pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
+
+impl ESTree for ProgramConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let program = self.0;
+        let span_start = if S::INCLUDE_TS_FIELDS {
+            if let Some(first_directive) = program.directives.first() {
+                first_directive.span.start
+            } else if let Some(first_stmt) = program.body.first() {
+                first_stmt.span().start
+            } else {
+                program.span.start
+            }
+        } else {
+            program.span.start
+        };
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Program"));
+        state.serialize_field("start", &span_start);
+        state.serialize_field("end", &program.span.end);
+        state.serialize_field(
+            "body",
+            &AppendToConcat { array: &program.directives, after: &program.body },
+        );
+        state.serialize_field("sourceType", &program.source_type.module_kind());
+        state.serialize_field("hashbang", &program.hashbang);
+        state.end();
     }
 }
 

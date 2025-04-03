@@ -37,14 +37,17 @@ function deserialize(buffer, sourceTextInput, sourceLenInput) {
 function deserializeProgram(pos) {
   const body = deserializeVecDirective(pos + 88);
   body.push(...deserializeVecStatement(pos + 120));
-  return {
+  let start = deserializeU32(pos);
+  if (body.length > 0) start = body[0].start;
+  const program = {
     type: 'Program',
-    start: deserializeU32(pos),
+    start,
     end: deserializeU32(pos + 4),
     body,
     sourceType: deserializeModuleKind(pos + 9),
     hashbang: deserializeOptionHashbang(pos + 64),
   };
+  return program;
 }
 
 function deserializeIdentifierName(pos) {
