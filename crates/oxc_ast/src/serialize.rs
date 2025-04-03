@@ -909,12 +909,21 @@ impl ESTree for JSXElementThisExpression<'_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
-pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+#[estree(ts_type = "JSXOpeningFragment", raw_deser = "todo")]
+pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
 
-impl ESTree for JSXOpeningFragmentAttributes<'_> {
+impl ESTree for JSXOpeningFragmentConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
+        state.serialize_field("start", &self.0.span.start);
+        state.serialize_field("end", &self.0.span.end);
+
+        if !S::INCLUDE_TS_FIELDS {
+            state.serialize_field("attributes", &EmptyArray(()));
+            state.serialize_field("selfClosing", &False(()));
+        }
+        state.end();
     }
 }
 
