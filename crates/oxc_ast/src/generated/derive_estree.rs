@@ -2309,6 +2309,7 @@ impl ESTree for TSEnumMember<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
         state.serialize_field("initializer", &self.initializer);
+        state.serialize_field("computed", &crate::serialize::False(self));
         state.end();
     }
 }

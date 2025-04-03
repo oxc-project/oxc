@@ -950,6 +950,7 @@ export interface TSEnumMember extends Span {
   type: 'TSEnumMember';
   id: TSEnumMemberName;
   initializer: Expression | null;
+  computed: false;
 }
 
 export type TSEnumMemberName = IdentifierName | StringLiteral;

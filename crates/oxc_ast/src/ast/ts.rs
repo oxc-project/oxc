@@ -106,6 +106,7 @@ pub struct TSEnumDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(computed = False))]
 pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
