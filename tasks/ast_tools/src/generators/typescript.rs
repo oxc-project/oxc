@@ -72,7 +72,7 @@ fn generate_ts_type_def(
         if let Some(ts_def) = ts_def {
             write_it!(code, "{ts_def};\n\n");
         }
-    };
+    }
 
     // Add additional custom TS def if provided via `#[estree(add_ts_def = "...")]` attribute
     let add_ts_def = match type_def {
