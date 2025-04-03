@@ -58,6 +58,7 @@ pub enum ModuleKind {
     /// Note2: Dynamic import expression is not ESM syntax.
     ///
     /// See <https://babel.dev/docs/options#misc-options>
+    #[estree(skip)]
     Unambiguous = 2,
 }
 

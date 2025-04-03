@@ -1484,7 +1484,7 @@ export interface Span {
   end: number;
 }
 
-export type ModuleKind = 'script' | 'module' | 'unambiguous';
+export type ModuleKind = 'script' | 'module';
 
 export interface Pattern extends Span {
   type: 'Pattern';
