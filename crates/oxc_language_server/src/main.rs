@@ -74,7 +74,7 @@ impl LanguageServer for Backend {
         });
 
         if let Some(value) = options {
-            info!("initialize: {:?}", value);
+            info!("initialize: {value:?}");
             info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
             *self.options.lock().await = value;
         }
@@ -146,7 +146,7 @@ impl LanguageServer for Backend {
                     return;
                 };
                 let Some(file_name) = file_path.file_name() else {
-                    info!("Unable to retrieve file name from {:?}", file_path);
+                    info!("Unable to retrieve file name from {file_path:?}");
                     return;
                 };
 
@@ -155,7 +155,7 @@ impl LanguageServer for Backend {
                 }
 
                 let Some(dir_path) = file_path.parent() else {
-                    info!("Unable to retrieve parent from {:?}", file_path);
+                    info!("Unable to retrieve parent from {file_path:?}");
                     return;
                 };
 

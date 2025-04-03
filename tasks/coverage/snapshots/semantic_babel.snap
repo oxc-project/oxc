@@ -2,7 +2,7 @@ commit: 578ac4df
 
 semantic_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1904/2322 (82.00%)
+Positive Passed: 1900/2322 (81.83%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -10,6 +10,28 @@ rebuilt        : SymbolId(0): ScopeId(4294967294)
 Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(0): Span { start: 65, end: 66 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
+Symbol flags mismatch for "_default":
+after transform: SymbolId(3): SymbolFlags(Class)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-before-export/input.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(0): Span { start: 65, end: 66 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
+Symbol flags mismatch for "_default":
+after transform: SymbolId(3): SymbolFlags(Class)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
@@ -596,6 +618,22 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/var/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["x"]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments/input.ts
+semantic error: Symbol span mismatch for "Test":
+after transform: SymbolId(0): Span { start: 27, end: 31 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Test":
+after transform: SymbolId(1): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 27, end: 31 }
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-babel-7/input.ts
+semantic error: Symbol span mismatch for "Test":
+after transform: SymbolId(0): Span { start: 27, end: 31 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Test":
+after transform: SymbolId(1): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 27, end: 31 }
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/input.ts
 semantic error: Scope flags mismatch:

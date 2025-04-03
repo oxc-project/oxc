@@ -4,7 +4,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
     ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
 use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_traverse::TraverseCtx;
 
@@ -32,6 +32,14 @@ impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
 
     fn is_pure_call(&self, _callee: &Expression) -> bool {
         false
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        PropertyReadSideEffects::All
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
     }
 }
 

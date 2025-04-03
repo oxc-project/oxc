@@ -691,11 +691,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         self.visit_decorators(&class.decorators);
+        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
 
-        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
         if class.is_expression() {
             // We need to bind class expression in the class scope
             class.bind(self);

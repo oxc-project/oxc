@@ -47,17 +47,18 @@ mod metadata;
 
 use std::mem;
 
-use metadata::LegacyDecoratorMetadata;
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::{Helper, TransformCtx, utils::ast_builder::create_prototype_member};
+use metadata::LegacyDecoratorMetadata;
 
+#[derive(Default)]
 struct ClassDecoratorInfo {
     /// `@dec class C {}` or `class C { constructor(@dec p) {} }`
     class_or_constructor_parameter_is_decorated: bool,
@@ -67,15 +68,38 @@ struct ClassDecoratorInfo {
     has_private_in_expression_in_decorator: bool,
 }
 
+struct ClassDecoratedData<'a> {
+    // Class binding. When a class is without binding, it will be `_default`,
+    binding: BoundIdentifier<'a>,
+    // Alias binding exist when the class body contains a reference that refers to class itself.
+    alias_binding: Option<BoundIdentifier<'a>>,
+    // Decorators that have been transformed.
+    decorations: ArenaVec<'a, Statement<'a>>,
+}
+
 pub struct LegacyDecorator<'a, 'ctx> {
     emit_decorator_metadata: bool,
     metadata: LegacyDecoratorMetadata<'a, 'ctx>,
+    /// Decorated class data exists when a class or constructor is decorated.
+    ///
+    /// The data assigned in [`Self::transform_class`] and used in places where statements contain
+    /// a decorated class declaration because decorated class needs to transform into `let c = class c {}`.
+    /// The reason we why don't transform class in [`Self::exit_statement`] is the decorator transform
+    /// must run first. Since the `class-properties` plugin transforms class in `exit_class`, so that
+    /// we have to transforms decorators to `exit_class` otherwise after class is being transformed by
+    /// `class-properties` plugin, the decorators' nodes might be lost.
+    class_decorated_data: Option<ClassDecoratedData<'a>>,
     ctx: &'ctx TransformCtx<'a>,
 }
 
 impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
     pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { emit_decorator_metadata, metadata: LegacyDecoratorMetadata::new(ctx), ctx }
+        Self {
+            emit_decorator_metadata,
+            metadata: LegacyDecoratorMetadata::new(ctx),
+            class_decorated_data: None,
+            ctx,
+        }
     }
 }
 
@@ -84,7 +108,7 @@ impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::ClassDeclaration(_) => self.transform_class(stmt, ctx),
+            Statement::ClassDeclaration(_) => self.transform_class_statement(stmt, ctx),
             Statement::ExportNamedDeclaration(_) => {
                 self.transform_export_named_class(stmt, ctx);
             }
@@ -93,6 +117,11 @@ impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
             }
             _ => {}
         };
+    }
+
+    #[inline]
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class(class, ctx);
     }
 
     #[inline]
@@ -164,13 +193,21 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ClassDeclaration`.
     #[inline]
-    fn transform_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_class_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
-        let stmt_address = class.address();
-        if let Some((_, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx) {
-            *stmt = new_stmt;
-        }
+        let Some(ClassDecoratedData { binding, alias_binding, decorations: decorator_stmts }) =
+            self.class_decorated_data.take()
+        else {
+            return;
+        };
+
+        let new_stmt =
+            Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
+
+        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
+        self.ctx.statement_injector.insert_many_after(&new_stmt, decorator_stmts);
+        *stmt = new_stmt;
     }
 
     /// Transforms a statement that is a export default class declaration
@@ -201,23 +238,33 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ExportDefaultDeclaration`.
     #[inline]
-    fn transform_export_default_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_export_default_class(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let Statement::ExportDefaultDeclaration(export) = stmt else { unreachable!() };
-        let stmt_address = export.address();
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
-
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx)
+        let Some(ClassDecoratedData { binding, alias_binding, decorations }) =
+            self.class_decorated_data.take()
         else {
             return;
         };
-        *stmt = new_stmt;
+
+        let new_stmt =
+            Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
         // `export default Class`
         let export_default_class_reference =
-            Self::create_export_default_class_reference(&class_binding, ctx);
-        self.ctx.statement_injector.insert_after(stmt, export_default_class_reference);
+            Self::create_export_default_class_reference(&binding, ctx);
+        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
+        self.ctx.statement_injector.insert_many_after(
+            &new_stmt,
+            decorations.into_iter().chain([export_default_class_reference]),
+        );
+        *stmt = new_stmt;
     }
 
     /// Transforms a statement that is a export named class declaration
@@ -248,28 +295,33 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ExportNamedDeclaration`.
     #[inline]
-    fn transform_export_named_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_export_named_class(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
-        let stmt_address = export.address();
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx)
+        let Some(ClassDecoratedData { binding, alias_binding, decorations }) =
+            self.class_decorated_data.take()
         else {
             return;
         };
-        *stmt = new_stmt;
+
+        let new_stmt =
+            Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
         // `export { Class }`
-        let export_class_reference = Self::create_export_named_class_reference(&class_binding, ctx);
-        self.ctx.statement_injector.insert_after(stmt, export_class_reference);
+        let export_class_reference = Self::create_export_named_class_reference(&binding, ctx);
+        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
+        self.ctx
+            .statement_injector
+            .insert_many_after(&new_stmt, decorations.into_iter().chain([export_class_reference]));
+        *stmt = new_stmt;
     }
 
-    fn transform_class_impl(
-        &self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<(BoundIdentifier<'a>, Statement<'a>)> {
+    fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         let ClassDecoratorInfo {
             class_or_constructor_parameter_is_decorated,
             class_element_is_decorated,
@@ -277,34 +329,28 @@ impl<'a> LegacyDecorator<'a, '_> {
         } = Self::check_class_has_decorated(class);
 
         if class_or_constructor_parameter_is_decorated {
-            return Some(self.transform_class_declaration_with_class_decorators(
+            self.transform_class_declaration_with_class_decorators(
                 class,
-                stmt_address,
-                has_private_in_expression_in_decorator,
-                ctx,
-            ));
-        } else if class_element_is_decorated {
-            self.transform_class_declaration_without_class_decorators(
-                class,
-                stmt_address,
                 has_private_in_expression_in_decorator,
                 ctx,
             );
-        }
-
-        // No decorators found
-        None
+        } else if class_element_is_decorated {
+            self.transform_class_declaration_without_class_decorators(
+                class,
+                has_private_in_expression_in_decorator,
+                ctx,
+            );
+        };
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If
     /// the class requires an alias to avoid issues with double-binding, the alias is returned.
     fn transform_class_declaration_with_class_decorators(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
-        stmt_address: Address,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
-    ) -> (BoundIdentifier<'a>, Statement<'a>) {
+    ) {
         // When we emit an ES6 class that has a class decorator, we must tailor the
         // emit to certain specific cases.
         //
@@ -391,7 +437,6 @@ impl<'a> LegacyDecorator<'a, '_> {
         //  ---------------------------------------------------------------------
         //
 
-        let span = class.span;
         // TODO(improve-on-typescript): we can take the class id without keeping it as-is.
         // Now: `class C {}` -> `let C = class C {}`
         // After: `class C {}` -> `let C = class {}`
@@ -424,21 +469,37 @@ impl<'a> LegacyDecorator<'a, '_> {
         if has_private_in_expression_in_decorator {
             let stmts = mem::replace(&mut decoration_stmts, ctx.ast.vec());
             Self::insert_decorations_into_class_static_block(class, stmts, ctx);
+        } else {
+            decoration_stmts.push(constructor_decoration);
+            self.class_decorated_data = Some(ClassDecoratedData {
+                binding: class_binding,
+                alias_binding: class_alias_binding,
+                decorations: decoration_stmts,
+            });
         }
+    }
 
-        decoration_stmts.push(constructor_decoration);
-
-        // `class C {}` -> `let C = class {}`
+    /// Transform class to a [`VariableDeclarator`], whose binding name is the same as class.
+    ///
+    /// * `alias_binding` is `None`: `class C {}` -> `let C = class C {}`
+    /// * `alias_binding` is `Some`: `class C {}` -> `let C = _C = class C {}`
+    fn transform_class_decorated(
+        class: &mut Class<'a>,
+        binding: &BoundIdentifier<'a>,
+        alias_binding: Option<&BoundIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
             Expression::ClassExpression(ctx.ast.alloc(ctx.ast.move_class(class))),
-            class_alias_binding.as_ref(),
+            alias_binding,
             ctx,
         );
         let declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Let,
-            class_binding.create_binding_pattern(ctx),
+            binding.create_binding_pattern(ctx),
             Some(initializer),
             false,
         );
@@ -448,20 +509,13 @@ impl<'a> LegacyDecorator<'a, '_> {
             ctx.ast.vec1(declarator),
             false,
         );
-        let statement = Statement::from(var_declaration);
-
-        // Move any insertions attached to the old statement to the new one
-        self.ctx.statement_injector.move_insertions(&stmt_address, &statement);
-        self.ctx.statement_injector.insert_many_after(&statement, decoration_stmts);
-
-        (class_binding, statement)
+        Statement::from(var_declaration)
     }
 
     /// Transforms a non-decorated class declaration.
     fn transform_class_declaration_without_class_decorators(
         &self,
         class: &mut Class<'a>,
-        stmt_address: Address,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -480,6 +534,12 @@ impl<'a> LegacyDecorator<'a, '_> {
         if has_private_in_expression_in_decorator {
             Self::insert_decorations_into_class_static_block(class, decoration_stmts, ctx);
         } else {
+            let stmt_address = match ctx.parent() {
+                parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+                | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+                // `Class` is always stored in a `Box`, so has a stable memory location
+                _ => Address::from_ptr(class),
+            };
             self.ctx.statement_injector.insert_many_after(&stmt_address, decoration_stmts);
         }
     }
@@ -496,7 +556,7 @@ impl<'a> LegacyDecorator<'a, '_> {
 
         for element in &mut class.body.body {
             let (is_static, key, descriptor, decorations) = match element {
-                ClassElement::MethodDefinition(method) => {
+                ClassElement::MethodDefinition(method) if !method.value.is_typescript_syntax() => {
                     let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx)
                     else {
                         continue;
@@ -747,6 +807,11 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     /// Check if a class or its elements have decorators.
     fn check_class_has_decorated(class: &Class<'a>) -> ClassDecoratorInfo {
+        // Legacy decorator does not allow in class expression.
+        if class.is_expression() || class.is_typescript_syntax() {
+            return ClassDecoratorInfo::default();
+        }
+
         let mut class_or_constructor_parameter_is_decorated = !class.decorators.is_empty();
         let mut class_element_is_decorated = false;
         let mut has_private_in_expression_in_decorator = false;
@@ -764,7 +829,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                             PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
                     }
                 }
-                ClassElement::MethodDefinition(method) => {
+                ClassElement::MethodDefinition(method) if !method.value.is_typescript_syntax() => {
                     class_element_is_decorated |= !method.decorators.is_empty()
                         || Self::class_method_parameter_is_decorated(&method.value);
 
@@ -773,7 +838,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                             PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
                     }
                 }
-                ClassElement::PropertyDefinition(prop) => {
+                ClassElement::PropertyDefinition(prop) if !prop.declare => {
                     class_element_is_decorated |= !prop.decorators.is_empty();
 
                     if class_element_is_decorated && !has_private_in_expression_in_decorator {

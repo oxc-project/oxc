@@ -3,17 +3,13 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1551/1673 (92.71%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
+Negative Passed: 1555/1673 (92.95%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/object/disallow-duplicate-method-params/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/335/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/async-await-as-arrow-binding-identifier/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js
@@ -729,6 +725,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  32 │ }
     ╰────
 
+  × Invalid function declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js:1:11]
+ 1 │ if (0) x: function f() {}
+   ·           ───────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
   × Identifier `f` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.4-var-redeclaration-catch-binding/input.js:2:17]
  1 │ try {} catch (e) { var e; }
@@ -799,6 +802,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-inside-loop/input.js:1:11]
  1 │ while (1) function foo(){}
    ·           ────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
+  × Invalid function declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js:1:18]
+ 1 │ if (1) foo: bar: function foo(){}
+   ·                  ────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
+  × Invalid function declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js:1:21]
+ 1 │ while (1) foo: bar: function foo(){}
+   ·                     ────────────────
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
@@ -3770,6 +3787,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─┬─
    ·      ╰── `,` expected
  4 │ })
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/disallow-duplicate-method-params/input.js:2:9]
+ 1 │ ({
+ 2 │     bar(a, a) {}
+   ·         ┬  ┬
+   ·         │  ╰── It can not be redeclared here
+   ·         ╰── `a` has already been declared here
+ 3 │ })
    ╰────
 
   × Expected `,` but found `*`

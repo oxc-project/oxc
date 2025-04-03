@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.4] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- 06e3db9 linter: Support `multipleFileExtensions` option for `unicorn/filename-case` (#10118) (shulaoda)
+- dbe0e46 linter: Support `ignore` option for `unicorn/filename-case` (#10107) (shulaoda)
+- 84a3490 semantic: Add `symbol_id` for declare function binding (#10078) (Dunqing)
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+
+### Bug Fixes
+
+- aba3654 linter: Span disable directive correctly on next line (#10141) (Ulrich Stark 🦀)
+
+### Performance
+
+- 566be59 linter: Replace `phf_set` with `array` in `eslint/func-names` (#10119) (shulaoda)
+- 5e14fe9 linter: Inline `PRE_DEFINE_VAR` and use `array` format (#10079) (shulaoda)
+
+### Refactor
+
+- 09c0ac6 linter: Improve `unicorn/filename-case` (#10117) (shulaoda)
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+- b3ec235 linter: Use items of `oxc_ast::ast` module directly (#10100) (Ulrich Stark 🦀)
+- 93e6c0b linter: Use `FormalParameter::has_modifier` to detect parameter properties (#10097) (Ulrich Stark 🦀)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+
 ## [0.16.3] - 2025-03-25
 
 ### Features

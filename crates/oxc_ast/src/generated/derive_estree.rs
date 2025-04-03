@@ -244,6 +244,7 @@ impl ESTree for ObjectProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -341,7 +342,7 @@ impl ESTree for TemplateElement<'_> {
         state.serialize_field("type", &JsonSafeString("TemplateElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("value", &self.value);
+        state.serialize_field("value", &crate::serialize::TemplateElementValue(self));
         state.serialize_field("tail", &self.tail);
         state.end();
     }
@@ -1294,6 +1295,7 @@ impl ESTree for ObjectPattern<'_> {
             "properties",
             &AppendTo { array: &self.properties, after: &self.rest },
         );
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.end();
     }
 }
@@ -1634,6 +1636,10 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("override", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("readonly", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("declare", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -1776,6 +1782,7 @@ impl ESTree for ExportDefaultDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declaration", &self.declaration);
+        state.serialize_ts_field("exportKind", &crate::serialize::TsValue(self));
         state.end();
     }
 }

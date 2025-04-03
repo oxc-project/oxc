@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.4] - 2025-04-01
+
+### Features
+
+- 370266c semantic: Check redeclaration of variable declaration and function declaration in the block scope (#10074) (Dunqing)
+
+### Bug Fixes
+
+- 2c80858 linter: Enable multi-file analysis for nested configs (#10089) (camchenry)
+
+### Refactor
+
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+
 ## [0.16.3] - 2025-03-25
 
 ### Refactor
