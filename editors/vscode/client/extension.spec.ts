@@ -1,6 +1,16 @@
 import { deepStrictEqual, notEqual, strictEqual } from 'assert';
 import { readFile } from 'fs/promises';
-import { commands, DiagnosticSeverity, languages, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import {
+  CodeAction,
+  commands,
+  DiagnosticSeverity,
+  languages,
+  ProviderResult,
+  Uri,
+  window,
+  workspace,
+  WorkspaceEdit,
+} from 'vscode';
 import { activateExtension, sleep, WORKSPACE_DIR } from './test-helpers';
 import assert = require('assert');
 
@@ -109,5 +119,49 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].range.start.character, 8);
     strictEqual(diagnostics[0].range.end.line, 0);
     strictEqual(diagnostics[0].range.end.character, 17);
+  });
+
+  test('code actions', async () => {
+    const edit = new WorkspaceEdit();
+    edit.createFile(fileUri, {
+      contents: Buffer.from('debugger;'),
+    });
+
+    await workspace.applyEdit(edit);
+    await window.showTextDocument(fileUri);
+
+    const codeActions: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
+      'vscode.executeCodeActionProvider',
+      fileUri,
+      {
+        start: { line: 0, character: 8 },
+        end: { line: 0, character: 9 },
+      },
+    );
+
+    assert(Array.isArray(codeActions));
+    const quickFixes = codeActions.filter(
+      (action) => action.kind?.value === 'quickfix',
+    );
+    strictEqual(quickFixes.length, 3);
+    deepStrictEqual(
+      quickFixes.map(({ edit: _edit, kind: _kind, ...fix }) => ({
+        ...fix,
+      })),
+      [
+        {
+          isPreferred: true,
+          title: 'Fix this `debugger` statement is not allowed\nhelp problem',
+        },
+        {
+          isPreferred: false,
+          title: 'Disable no-debugger for this line',
+        },
+        {
+          isPreferred: false,
+          title: 'Disable no-debugger for this file',
+        },
+      ],
+    );
   });
 });
