@@ -856,6 +856,10 @@ export interface JSXFragment extends Span {
   children: Array<JSXChild>;
 }
 
+export interface JSXOpeningFragment extends Span {
+  type: 'JSXOpeningFragment';
+}
+
 export interface JSXClosingFragment extends Span {
   type: 'JSXClosingFragment';
 }
@@ -1742,6 +1746,7 @@ export type Node =
   | JSXOpeningElement
   | JSXClosingElement
   | JSXFragment
+  | JSXOpeningFragment
   | JSXClosingFragment
   | JSXNamespacedName
   | JSXMemberExpression

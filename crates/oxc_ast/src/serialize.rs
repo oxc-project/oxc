@@ -909,7 +909,7 @@ impl ESTree for JSXElementThisExpression<'_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "JSXOpeningFragment", raw_deser = "todo")]
+#[estree(raw_deser = "'TODO'")]
 pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
 
 impl ESTree for JSXOpeningFragmentConverter<'_> {
