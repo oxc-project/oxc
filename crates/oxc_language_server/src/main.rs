@@ -1,13 +1,17 @@
-use std::{fmt::Debug, path::PathBuf, str::FromStr};
-
 use commands::LSP_COMMANDS;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
+use linter::config_walker::ConfigWalker;
 use log::{debug, error, info};
 use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     Client, LanguageServer, LspService, Server,
@@ -79,6 +83,7 @@ impl LanguageServer for Backend {
             *self.options.lock().await = value;
         }
 
+        self.init_nested_configs().await;
         let oxlintrc = self.init_linter_config().await;
         self.init_ignore_glob(oxlintrc).await;
         Ok(InitializeResult {
@@ -121,8 +126,9 @@ impl LanguageServer for Backend {
         "
         );
 
-        if changed_options.disable_nested_configs() {
+        if changed_options.disable_nested_configs() != current_option.disable_nested_configs() {
             self.nested_configs.pin().clear();
+            self.init_nested_configs().await;
         }
 
         *self.options.lock().await = changed_options.clone();
@@ -499,6 +505,38 @@ impl Backend {
             self.handle_file_update(url, None, None)
         }))
         .await;
+    }
+
+    /// Searches inside root_uri recursively for the default oxlint config files
+    /// and insert them inside the nested configuration
+    async fn init_nested_configs(&self) {
+        let Some(Some(uri)) = self.root_uri.get() else {
+            return;
+        };
+        let Ok(root_path) = uri.to_file_path() else {
+            return;
+        };
+
+        // nested config is disabled, no need to search for configs
+        if self.options.lock().await.disable_nested_configs() {
+            return;
+        }
+
+        let paths = ConfigWalker::new(&root_path).paths();
+        let nested_configs = self.nested_configs.pin();
+
+        for path in paths {
+            let file_path = Path::new(&path);
+            let Some(dir_path) = file_path.parent() else {
+                continue;
+            };
+
+            let oxlintrc = Oxlintrc::from_file(file_path).expect("Failed to parse config file");
+            let config_store_builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
+                .expect("Failed to create config store builder");
+            let config_store = config_store_builder.build().expect("Failed to build config store");
+            nested_configs.insert(dir_path.to_path_buf(), config_store);
+        }
     }
 
     async fn init_linter_config(&self) -> Option<Oxlintrc> {
