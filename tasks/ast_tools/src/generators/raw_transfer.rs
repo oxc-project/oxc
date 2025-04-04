@@ -362,6 +362,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         let raw_deser = converter.estree.raw_deser.as_deref()?;
 
         let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));
+        let value = IF_JS_REGEX.replace_all(&value, IfJsReplacer::new(self.is_ts));
         let value = THIS_REGEX.replace_all(&value, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
@@ -790,6 +791,27 @@ impl Replacer for IfTsReplacer {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
         assert_eq!(caps.len(), 2);
         if self.is_ts {
+            dst.push_str(caps.get(1).unwrap().as_str());
+        }
+    }
+}
+
+static IF_JS_REGEX: Lazy<Regex> = lazy_regex!(r"/\* IF_JS \*/\s*([\s\S]*?)/\* END_IF_JS \*/\s*");
+
+struct IfJsReplacer {
+    is_ts: bool,
+}
+
+impl IfJsReplacer {
+    fn new(is_ts: bool) -> Self {
+        Self { is_ts }
+    }
+}
+
+impl Replacer for IfJsReplacer {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
+        assert_eq!(caps.len(), 2);
+        if !self.is_ts {
             dst.push_str(caps.get(1).unwrap().as_str());
         }
     }
