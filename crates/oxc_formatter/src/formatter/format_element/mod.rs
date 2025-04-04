@@ -68,9 +68,9 @@ pub enum FormatElement {
 impl std::fmt::Debug for FormatElement {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            FormatElement::Space | FormatElement::HardSpace => write!(fmt, "Space"),
+            FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
-            FormatElement::ExpandParent => write!(fmt, "ExpandParent"),
+            FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::StaticText { text } => {
                 fmt.debug_tuple("StaticText").field(text).finish()
             }
@@ -80,7 +80,7 @@ impl std::fmt::Debug for FormatElement {
             FormatElement::LocatedTokenText { slice, .. } => {
                 fmt.debug_tuple("LocatedTokenText").field(slice).finish()
             }
-            FormatElement::LineSuffixBoundary => write!(fmt, "LineSuffixBoundary"),
+            FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
             }
