@@ -394,8 +394,12 @@ impl Display for ConfigBuilderError {
         match self {
             ConfigBuilderError::UnknownRules { rules } => {
                 f.write_str("unknown rules: ")?;
-                for rule in rules {
-                    Display::fmt(&rule.full_name(), f)?;
+                for (i, rule) in rules.iter().enumerate() {
+                    if i == 0 {
+                        Display::fmt(&rule.full_name(), f)?;
+                    } else {
+                        write!(f, ", {}", rule.full_name())?;
+                    }
                 }
                 Ok(())
             }
