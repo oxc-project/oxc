@@ -910,7 +910,9 @@ impl Rule for NoRestrictedImports {
                         Value::Object(obj) => {
                             if let Some(paths_value) = obj.get("paths") {
                                 add_configuration_path_from_object(&mut paths, paths_value);
-                            } else if let Some(patterns_value) = obj.get("patterns") {
+                            }
+
+                            if let Some(patterns_value) = obj.get("patterns") {
                                 add_configuration_patterns_from_object(
                                     &mut patterns,
                                     patterns_value,
@@ -931,7 +933,8 @@ impl Rule for NoRestrictedImports {
             Value::Object(obj) => {
                 if let Some(paths_value) = obj.get("paths") {
                     add_configuration_path_from_object(&mut paths, paths_value);
-                } else if let Some(patterns_value) = obj.get("patterns") {
+                }
+                if let Some(patterns_value) = obj.get("patterns") {
                     add_configuration_patterns_from_object(&mut patterns, patterns_value);
                 } else if let Ok(path) =
                     serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
@@ -3017,24 +3020,24 @@ fn test() {
             "export { foo } from 'import1';",
             Some(serde_json::json!([{ "paths": ["import1", "import2"] }])),
         ),
-        // (
-        //     "import foo from 'import1/private/foo';",
-        //     Some(serde_json::json!([
-        //         {
-        //             "paths": ["import1", "import2"],
-        //             "patterns": ["import1/private/*", "import2/*", "!import2/good"],
-        //         },
-        //     ])),
-        // ),
-        // (
-        //     "export { foo } from 'import1/private/foo';",
-        //     Some(serde_json::json!([
-        //         {
-        //             "paths": ["import1", "import2"],
-        //             "patterns": ["import1/private/*", "import2/*", "!import2/good"],
-        //         },
-        //     ])),
-        // ),
+        (
+            "import foo from 'import1/private/foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'import1/private/foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
         (
             "import foo from 'import-foo';",
             Some(serde_json::json!([
