@@ -156,7 +156,7 @@ impl<'de> Deserialize<'de> for LintPlugins {
             type Value = LintPlugins;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(formatter, "a list of plugin names")
+                formatter.write_str("a list of plugin names")
             }
 
             fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {

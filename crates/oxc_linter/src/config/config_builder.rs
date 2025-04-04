@@ -1,6 +1,6 @@
 use std::{
     cell::{Ref, RefCell},
-    fmt,
+    fmt::{self, Debug, Display},
 };
 
 use itertools::Itertools;
@@ -371,7 +371,7 @@ impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
     }
 }
 
-impl fmt::Debug for ConfigStoreBuilder {
+impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
             .field("rules", &self.rules)
@@ -389,13 +389,13 @@ pub enum ConfigBuilderError {
     InvalidConfigFile { file: String, reason: String },
 }
 
-impl std::fmt::Display for ConfigBuilderError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ConfigBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConfigBuilderError::UnknownRules { rules } => {
-                write!(f, "unknown rules: ")?;
+                f.write_str("unknown rules: ")?;
                 for rule in rules {
-                    write!(f, "{}", rule.full_name())?;
+                    Display::fmt(&rule.full_name(), f)?;
                 }
                 Ok(())
             }
