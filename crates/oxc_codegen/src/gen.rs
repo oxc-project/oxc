@@ -3757,13 +3757,30 @@ impl Gen for TSEnumMember<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
+            TSEnumMemberName::String(decl) => {
+                if self.computed {
+                    p.print_ascii_byte(b'[');
+                }
+                p.print_string_literal(decl, false);
+                if self.computed {
+                    p.print_ascii_byte(b']');
+                }
+            }
             TSEnumMemberName::TemplateString(decl) => {
+                if self.computed {
+                    p.print_ascii_byte(b'[');
+                }
                 let quasi = decl.quasis.first().unwrap();
                 p.add_source_mapping(quasi.span);
+                p.print_ascii_byte(b'`');
                 p.print_str(quasi.value.raw.as_str());
+                p.print_ascii_byte(b'`');
+                if self.computed {
+                    p.print_ascii_byte(b']');
+                }
             }
         }
+
         if let Some(init) = &self.initializer {
             p.print_soft_space();
             p.print_equal();
