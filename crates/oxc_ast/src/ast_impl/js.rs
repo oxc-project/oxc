@@ -1,5 +1,8 @@
 #![warn(missing_docs)]
-use std::{borrow::Cow, fmt};
+use std::{
+    borrow::Cow,
+    fmt::{self, Display},
+};
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
@@ -370,20 +373,20 @@ impl<'a> Expression<'a> {
     }
 }
 
-impl fmt::Display for IdentifierName<'_> {
+impl Display for IdentifierName<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl fmt::Display for IdentifierReference<'_> {
+impl Display for IdentifierReference<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl fmt::Display for BindingIdentifier<'_> {
+impl Display for BindingIdentifier<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
@@ -1099,10 +1102,9 @@ impl VariableDeclarationKind {
     }
 }
 
-impl fmt::Display for VariableDeclarationKind {
+impl Display for VariableDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self.as_str();
-        write!(f, "{s}")
+        self.as_str().fmt(f)
     }
 }
 
@@ -1846,14 +1848,13 @@ impl ExportDefaultDeclarationKind<'_> {
     }
 }
 
-impl fmt::Display for ModuleExportName<'_> {
+impl Display for ModuleExportName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::IdentifierName(identifier) => identifier.name.to_string(),
-            Self::IdentifierReference(identifier) => identifier.name.to_string(),
-            Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
-        };
-        write!(f, "{s}")
+        match self {
+            Self::IdentifierName(identifier) => identifier.name.fmt(f),
+            Self::IdentifierReference(identifier) => identifier.name.fmt(f),
+            Self::StringLiteral(literal) => write!(f, r#""{}""#, literal.value),
+        }
     }
 }
 
