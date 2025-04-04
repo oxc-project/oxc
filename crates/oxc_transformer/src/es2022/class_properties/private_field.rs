@@ -1542,16 +1542,17 @@ impl<'a> ClassProperties<'a, '_> {
     ///
     /// * Callee without a private field:
     ///  `Foo?.bar()?.zoo?.().#x;`
-    ///    -> `(_Foo$bar$zoo = (_Foo$bar = Foo?.bar())?.zoo) === null || _Foo$bar$zoo === void 0 ? void 0
-    ///   : babelHelpers.assertClassBrand(Foo, _Foo$bar$zoo.call(_Foo$bar), _x)._;`
+    ///  ->
+    ///  `(_Foo$bar$zoo = (_Foo$bar = Foo?.bar())?.zoo) === null || _Foo$bar$zoo === void 0 ? void 0
+    ///  : babelHelpers.assertClassBrand(Foo, _Foo$bar$zoo.call(_Foo$bar), _x)._;`
     ///
     /// * Callee has a private field:
     ///  `o?.Foo.#self.getSelf?.().#m?.();`
-    ///    -> `(_ref = o === null || o === void 0 ? void 0 : (_babelHelpers$assertC =
-    ///       babelHelpers.assertClassBrand(Foo, o.Foo, _self)._).getSelf) === null ||
-    ///       _ref === void 0 ? void 0 : babelHelpers.assertClassBrand(Foo, _ref$call
-    ///       = _ref.call(_babelHelpers$assertC), _m)._?.call(_ref$call);`
-    ///
+    ///   ->
+    ///   `(_ref = o === null || o === void 0 ? void 0 : (_babelHelpers$assertC =
+    ///   babelHelpers.assertClassBrand(Foo, o.Foo, _self)._).getSelf) === null ||
+    ///   _ref === void 0 ? void 0 : babelHelpers.assertClassBrand(Foo, _ref$call
+    ///   = _ref.call(_babelHelpers$assertC), _m)._?.call(_ref$call);`
     fn transform_call_expression_to_bind_proper_context(
         &mut self,
         expr: &mut Expression<'a>,

@@ -32,8 +32,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
     /// Use the specific functions (e.g. [`ConstantEvaluation::evaluate_value_to_boolean`], [`ConstantEvaluation::evaluate_value`]).
     ///
     /// - target_ty: How the result will be used.
-    ///              For example, if the result will be converted to a boolean,
-    ///              passing `Some(ValueType::Boolean)` will allow to utilize that information.
+    ///   For example, if the result will be converted to a boolean,
+    ///   passing `Some(ValueType::Boolean)` will allow to utilize that information.
     fn evaluate_value_to(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,

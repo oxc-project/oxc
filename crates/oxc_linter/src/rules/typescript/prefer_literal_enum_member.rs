@@ -71,7 +71,7 @@ impl Rule for PreferLiteralEnumMember {
         }
 
         if let Expression::TemplateLiteral(template) = initializer {
-            if template.expressions.len() == 0 {
+            if template.expressions.is_empty() {
                 return;
             }
         }

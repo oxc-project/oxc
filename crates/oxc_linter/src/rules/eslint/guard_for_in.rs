@@ -76,7 +76,7 @@ impl Rule for GuardForIn {
                 {
                     return;
                 }
-                Statement::BlockStatement(block_body) if block_body.body.len() >= 1 => {
+                Statement::BlockStatement(block_body) if !block_body.body.is_empty() => {
                     let block_statement = &block_body.body[0];
                     if let Statement::IfStatement(i) = block_statement {
                         if let Statement::ContinueStatement(_) = &i.consequent {

@@ -81,7 +81,6 @@ impl Codegen<'_> {
             }
             if Self::should_keep_leading_comment(&comment) {
                 leading_comments.push(comment);
-                continue;
             }
         }
 

@@ -121,7 +121,7 @@ impl Rule for NoEmptyObjectType {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSInterfaceDeclaration(interface) if interface.body.body.len() == 0 => {
+            AstKind::TSInterfaceDeclaration(interface) if interface.body.body.is_empty() => {
                 check_interface_declaration(
                     ctx,
                     interface,
@@ -129,7 +129,7 @@ impl Rule for NoEmptyObjectType {
                     &self.allow_with_name,
                 );
             }
-            AstKind::TSTypeLiteral(typeliteral) if typeliteral.members.len() == 0 => {
+            AstKind::TSTypeLiteral(typeliteral) if typeliteral.members.is_empty() => {
                 check_type_literal(
                     ctx,
                     typeliteral,
@@ -167,7 +167,7 @@ fn check_interface_declaration(
                 "Do not use an empty interface declaration.",
             )),
         },
-        Some(extends) if extends.len() == 0 => {
+        Some(extends) if extends.is_empty() => {
             ctx.diagnostic(no_empty_object_type_diagnostic(
                 interface.body.span,
                 "Do not use an empty interface declaration.",

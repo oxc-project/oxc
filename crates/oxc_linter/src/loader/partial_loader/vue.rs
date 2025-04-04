@@ -35,7 +35,7 @@ impl<'a> VuePartialLoader<'a> {
         let script_start_finder = Finder::new(SCRIPT_START);
 
         // find opening "<script"
-        let offset = script_start_finder.find(self.source_text[*pointer..].as_bytes())?;
+        let offset = script_start_finder.find(&self.source_text.as_bytes()[*pointer..])?;
         *pointer += offset + SCRIPT_START.len();
 
         // skip `<script-`
@@ -56,7 +56,7 @@ impl<'a> VuePartialLoader<'a> {
 
         // find "</script>"
         let script_end_finder = Finder::new(SCRIPT_END);
-        let offset = script_end_finder.find(self.source_text[*pointer..].as_bytes())?;
+        let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
         let js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
 

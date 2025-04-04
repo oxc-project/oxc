@@ -74,6 +74,8 @@ similar_names = "allow"
 fn_params_excessive_bools = "allow"
 complexity = { level = "warn", priority = -1 }
 too_many_arguments = "allow"
+non_std_lazy_statics = "allow"
+needless_continue = "allow" # FIXME
 # nursery
 nursery = { level = "warn", priority = -1 }
 # `const` functions do not make sense for our project because this is not a `const` library.

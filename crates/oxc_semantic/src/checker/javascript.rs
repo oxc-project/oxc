@@ -446,7 +446,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
                 match kind {
                     // Nested labeled statement
-                    AstKind::LabeledStatement(_) => continue,
+                    AstKind::LabeledStatement(_) => {}
                     AstKind::ForOfStatement(_)
                     | AstKind::ForInStatement(_)
                     | AstKind::ForStatement(_)

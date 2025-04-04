@@ -24,7 +24,7 @@ impl<'a> SveltePartialLoader<'a> {
         let mut pointer = 0;
 
         // find opening "<script"
-        let offset = script_start_finder.find(self.source_text[pointer..].as_bytes())?;
+        let offset = script_start_finder.find(&self.source_text.as_bytes()[pointer..])?;
         pointer += offset + SCRIPT_START.len();
 
         // find closing ">"
@@ -38,7 +38,7 @@ impl<'a> SveltePartialLoader<'a> {
         let js_start = pointer;
 
         // find "</script>"
-        let offset = script_end_finder.find(self.source_text[pointer..].as_bytes())?;
+        let offset = script_end_finder.find(&self.source_text.as_bytes()[pointer..])?;
         let js_end = pointer + offset;
 
         let source_text = &self.source_text[js_start..js_end];

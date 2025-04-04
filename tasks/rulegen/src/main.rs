@@ -292,9 +292,9 @@ impl<'a> Visit<'a> for TestCase {
                             json::convert_config_to_json_literal(language_options);
                         self.language_options = Some(language_options);
                     }
-                    _ => continue,
+                    _ => {}
                 },
-                ObjectPropertyKind::SpreadProperty(_) => continue,
+                ObjectPropertyKind::SpreadProperty(_) => {}
             }
         }
     }
