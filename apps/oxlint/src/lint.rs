@@ -69,8 +69,8 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        let filter = match Self::get_filters(filter) {
-            Ok(filter) => filter,
+        let filters = match Self::get_filters(filter) {
+            Ok(filters) => filters,
             Err((result, message)) => {
                 stdout.write_all(message.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
                 stdout.flush().unwrap();
@@ -215,8 +215,8 @@ impl Runner for LintRunner {
                         return CliRunResult::InvalidOptionConfig;
                     }
                 }
-                // TODO(perf): figure out if we can avoid cloning `filter`
-                .with_filters(filter.clone());
+                .with_filters(&filters);
+
                 match builder.build() {
                     Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
                     Err(diagnostic) => {
@@ -259,7 +259,7 @@ impl Runner for LintRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
-        .with_filters(filter);
+        .with_filters(&filters);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
