@@ -11,7 +11,7 @@ use crate::{
 
 impl Display for Pattern<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.body)
+        self.body.fmt(f)
     }
 }
 
@@ -45,36 +45,37 @@ impl Display for Alternative<'_> {
 impl Display for Term<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::BoundaryAssertion(it) => write!(f, "{}", it.as_ref()),
-            Self::LookAroundAssertion(it) => write!(f, "{}", it.as_ref()),
-            Self::Quantifier(it) => write!(f, "{}", it.as_ref()),
-            Self::Character(it) => write!(f, "{}", it.as_ref()),
-            Self::Dot(it) => write!(f, "{it}"),
-            Self::CharacterClassEscape(it) => write!(f, "{}", it.as_ref()),
-            Self::UnicodePropertyEscape(it) => write!(f, "{}", it.as_ref()),
-            Self::CharacterClass(it) => write!(f, "{}", it.as_ref()),
-            Self::CapturingGroup(it) => write!(f, "{}", it.as_ref()),
-            Self::IgnoreGroup(it) => write!(f, "{}", it.as_ref()),
-            Self::IndexedReference(it) => write!(f, "{}", it.as_ref()),
-            Self::NamedReference(it) => write!(f, "{}", it.as_ref()),
+            Self::BoundaryAssertion(it) => it.fmt(f),
+            Self::LookAroundAssertion(it) => it.fmt(f),
+            Self::Quantifier(it) => it.fmt(f),
+            Self::Character(it) => it.fmt(f),
+            Self::Dot(it) => it.fmt(f),
+            Self::CharacterClassEscape(it) => it.fmt(f),
+            Self::UnicodePropertyEscape(it) => it.fmt(f),
+            Self::CharacterClass(it) => it.fmt(f),
+            Self::CapturingGroup(it) => it.fmt(f),
+            Self::IgnoreGroup(it) => it.fmt(f),
+            Self::IndexedReference(it) => it.fmt(f),
+            Self::NamedReference(it) => it.fmt(f),
         }
     }
 }
 
 impl Display for BoundaryAssertion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.kind)
+        self.kind.fmt(f)
     }
 }
 
 impl Display for BoundaryAssertionKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Start => write!(f, "^"),
-            Self::End => write!(f, "$"),
-            Self::Boundary => write!(f, r"\b"),
-            Self::NegativeBoundary => write!(f, r"\B"),
-        }
+        let s = match self {
+            Self::Start => "^",
+            Self::End => "$",
+            Self::Boundary => r"\b",
+            Self::NegativeBoundary => r"\B",
+        };
+        f.write_str(s)
     }
 }
 
@@ -86,23 +87,24 @@ impl Display for LookAroundAssertion<'_> {
 
 impl Display for LookAroundAssertionKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Lookahead => write!(f, "?="),
-            Self::NegativeLookahead => write!(f, "?!"),
-            Self::Lookbehind => write!(f, "?<="),
-            Self::NegativeLookbehind => write!(f, "?<!"),
-        }
+        let s = match self {
+            Self::Lookahead => "?=",
+            Self::NegativeLookahead => "?!",
+            Self::Lookbehind => "?<=",
+            Self::NegativeLookbehind => "?<!",
+        };
+        f.write_str(s)
     }
 }
 
 impl Display for Quantifier<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.body)?;
+        self.body.fmt(f)?;
 
         match (self.min, self.max) {
-            (0, None) => write!(f, "*")?,
-            (1, None) => write!(f, "+")?,
-            (0, Some(1)) => write!(f, "?")?,
+            (0, None) => f.write_str("*")?,
+            (1, None) => f.write_str("+")?,
+            (0, Some(1)) => f.write_str("?")?,
             (min, Some(max)) if min == max => write!(f, "{{{min}}}",)?,
             (min, Some(max)) => {
                 write!(f, "{{{min},{max}}}",)?;
@@ -113,7 +115,7 @@ impl Display for Quantifier<'_> {
         }
 
         if !self.greedy {
-            write!(f, "?")?;
+            f.write_str("?")?;
         }
 
         Ok(())
@@ -123,50 +125,45 @@ impl Display for Quantifier<'_> {
 impl Display for Character {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (string, _) = character_to_string(self, None);
-        write!(f, "{string}")
+        string.fmt(f)
     }
 }
 
 impl Display for Dot {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, ".")
+        f.write_str(".")
     }
 }
 
 impl Display for CharacterClassEscape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.kind)
+        self.kind.fmt(f)
     }
 }
 
 impl Display for CharacterClassEscapeKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::D => write!(f, r"\d"),
-            Self::NegativeD => write!(f, r"\D"),
-            Self::S => write!(f, r"\s"),
-            Self::NegativeS => write!(f, r"\S"),
-            Self::W => write!(f, r"\w"),
-            Self::NegativeW => write!(f, r"\W"),
-        }
+        let escape = match self {
+            Self::D => r"\d",
+            Self::NegativeD => r"\D",
+            Self::S => r"\s",
+            Self::NegativeS => r"\S",
+            Self::W => r"\w",
+            Self::NegativeW => r"\W",
+        };
+        f.write_str(escape)
     }
 }
 
 impl Display for UnicodePropertyEscape<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.negative {
-            write!(f, r"\P")?;
-        } else {
-            write!(f, r"\p")?;
-        }
-
-        write!(f, r"{{")?;
+        f.write_str(if self.negative { r"\P{" } else { r"\p{" })?;
         match (&self.name, &self.value) {
-            (name, Some(value)) if name == "General_Category" => write!(f, r"{value}")?,
-            (name, Some(value)) => write!(f, r"{name}={value}")?,
-            _ => write!(f, r"{}", self.name)?,
-        }
-        write!(f, r"}}")
+            (name, Some(value)) if name == "General_Category" => value.fmt(f),
+            (name, Some(value)) => write!(f, "{name}={value}"),
+            (name, _) => name.fmt(f),
+        }?;
+        f.write_str("}")
     }
 }
 
@@ -176,9 +173,9 @@ impl Display for CharacterClass<'_> {
             if let CharacterClassContents::Character(ch) = content { Some(ch) } else { None }
         }
 
-        write!(f, "[")?;
+        f.write_str("[")?;
         if self.negative {
-            write!(f, "^")?;
+            f.write_str("^")?;
         }
 
         if !self.body.is_empty() {
@@ -204,19 +201,19 @@ impl Display for CharacterClass<'_> {
             })?;
         }
 
-        write!(f, "]")
+        f.write_str("]")
     }
 }
 
 impl Display for CharacterClassContents<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::CharacterClassRange(it) => write!(f, "{}", it.as_ref()),
-            Self::CharacterClassEscape(it) => write!(f, "{}", it.as_ref()),
-            Self::UnicodePropertyEscape(it) => write!(f, "{}", it.as_ref()),
-            Self::Character(it) => write!(f, "{}", it.as_ref()),
-            Self::NestedCharacterClass(it) => write!(f, "{}", it.as_ref()),
-            Self::ClassStringDisjunction(it) => write!(f, "{}", it.as_ref()),
+            Self::CharacterClassRange(it) => it.fmt(f),
+            Self::CharacterClassEscape(it) => it.fmt(f),
+            Self::UnicodePropertyEscape(it) => it.fmt(f),
+            Self::Character(it) => it.fmt(f),
+            Self::NestedCharacterClass(it) => it.fmt(f),
+            Self::ClassStringDisjunction(it) => it.fmt(f),
         }
     }
 }
@@ -229,9 +226,9 @@ impl Display for CharacterClassRange {
 
 impl Display for ClassStringDisjunction<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, r"\q{{")?;
+        f.write_str(r"\q{")?;
         write_join(f, "|", &self.body)?;
-        write!(f, "}}")
+        f.write_str("}")
     }
 }
 
@@ -243,14 +240,11 @@ impl Display for ClassString<'_> {
 
 impl Display for CapturingGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(")?;
-
+        f.write_str("(")?;
         if let Some(name) = &self.name {
             write!(f, "?<{name}>")?;
         }
-        write!(f, "{}", &self.body)?;
-
-        write!(f, ")")
+        write!(f, "{})", &self.body)
     }
 }
 
@@ -258,25 +252,25 @@ impl Display for IgnoreGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn write_flags(f: &mut fmt::Formatter<'_>, flags: &Modifier) -> fmt::Result {
             if flags.ignore_case {
-                write!(f, "i")?;
+                f.write_str("i")?;
             }
             if flags.multiline {
-                write!(f, "m")?;
+                f.write_str("m")?;
             }
             if flags.sticky {
-                write!(f, "s")?;
+                f.write_str("s")?;
             }
             Ok(())
         }
 
-        write!(f, "(?")?;
+        f.write_str("(?")?;
 
         if let Some(modifiers) = &self.modifiers {
             if let Some(enabling) = &modifiers.enabling {
                 write_flags(f, enabling)?;
             }
             if let Some(disabling) = &modifiers.disabling {
-                write!(f, "-")?;
+                f.write_str("-")?;
                 write_flags(f, disabling)?;
             }
         }
@@ -386,13 +380,13 @@ where
     E: Display,
     I: IntoIterator<Item = E>,
     F: Fn(&mut Peekable<I::IntoIter>) -> Option<D>,
-    D: fmt::Display,
+    D: Display,
 {
     let sep = sep.as_ref();
     let iter = &mut items.into_iter().peekable();
 
     if let Some(first) = next(iter) {
-        write!(f, "{first}")?;
+        first.fmt(f)?;
     }
 
     while let Some(it) = next(iter) {
