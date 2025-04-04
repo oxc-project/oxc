@@ -31,7 +31,7 @@ importers:
         version: 5.8.2
       vitest:
         specifier: 'catalog:'
-        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
 
   editors/vscode:
     dependencies:
@@ -77,7 +77,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 'catalog:'
-        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
 
   napi/parser:
     dependencies:
@@ -102,7 +102,7 @@ importers:
         version: 1.51.1
       vitest:
         specifier: 'catalog:'
-        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
 
   napi/playground:
     dependencies:
@@ -114,7 +114,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 'catalog:'
-        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+        version: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
 
   npm/oxc-types: {}
 
@@ -130,12 +130,21 @@ importers:
 
   tasks/e2e:
     devDependencies:
+      alpinejs:
+        specifier: ^3.14.9
+        version: 3.14.9
       antd:
         specifier: ^5.23.1
         version: 5.24.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       fs-require:
         specifier: ^1.6.0
         version: 1.6.0
+      happy-dom:
+        specifier: ^17.4.4
+        version: 17.4.4
+      lit:
+        specifier: github:lit/dist#v3.2.1
+        version: dist#v3.2.1@https://codeload.github.com/lit/dist/tar.gz/cd86cbd142c5c2f0d6726f893f309e3585bbb74d
       memfs:
         specifier: ^4.17.0
         version: 4.17.0
@@ -145,12 +154,18 @@ importers:
       oxc-transform:
         specifier: workspace:^
         version: link:../../napi/transform
+      preact:
+        specifier: ^10.26.4
+        version: 10.26.4
       react:
         specifier: ^19.0.0
         version: 19.1.0
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
+      solid-js:
+        specifier: ^1.9.5
+        version: 1.9.5
       terser:
         specifier: ^5.37.0
         version: 5.39.0
@@ -285,6 +300,7 @@ packages:
   '@azure/msal-browser@4.9.1':
     resolution: {integrity: sha512-GTKj/2xvgD918xULWRwoJ3kiCCZNzeopxa/nDfMC4o6KzrnuWbT3K1AtIFUxok9yC6VrUOgIZXMygky06xDA1g==}
     engines: {node: '>=0.8.0'}
+    deprecated: A bug was identified in msal-browser v4.9.1 that could be production impacting. Please roll back to v4.8.0 or before until a new release is made with the bug fix.
 
   '@azure/msal-common@15.4.0':
     resolution: {integrity: sha512-reeIUDXt6Xc+FpCBDEbUFQWvJ6SjE0JwsGYIfa3ZCR6Tpzjc9J1v+/InQgfCeJzfTRd7PDJVxI6TSzOmOd7+Ag==}
@@ -1596,6 +1612,9 @@ packages:
   '@vue/compiler-ssr@3.5.13':
     resolution: {integrity: sha512-wMH6vrYHxQl/IybKJagqbquvxpWCuVYpoUJfCqFZwa/JY1GdATAQ+TgVtgrwwMZ0D07QhA99rs/EAAWfvG6KpA==}
 
+  '@vue/reactivity@3.1.5':
+    resolution: {integrity: sha512-1tdfLmNjWG6t/CsPldh+foumYFo3cpyCHgBYQ34ylaMsJ+SNHQ1kApMIa8jN+i593zQuaw3AdWH0nJTARzCFhg==}
+
   '@vue/reactivity@3.5.13':
     resolution: {integrity: sha512-NaCwtw8o48B9I6L1zl2p41OHo/2Z4wqYGGIK1Khu5T7yxrn+ATOixn/Udn2m+6kZKB/J7cuT9DbWWhRxqixACg==}
 
@@ -1610,6 +1629,9 @@ packages:
     peerDependencies:
       vue: 3.5.13
 
+  '@vue/shared@3.1.5':
+    resolution: {integrity: sha512-oJ4F3TnvpXaQwZJNF3ZK+kLPHKarDmJjJ6jyzVNDKH9md1dptjC7lWR//jrGuLdek/U6iltWxqAnYOu8gCiOvA==}
+
   '@vue/shared@3.5.13':
     resolution: {integrity: sha512-/hnE/qP5ZoGpol0a5mDi45bOd7t3tjYJBjsgCsivow7D48cJeV5l05RD82lPqi7gRiphZM37rnhW1l6ZoCNNnQ==}
 
@@ -1621,6 +1643,9 @@ packages:
   agent-base@7.1.3:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
     engines: {node: '>= 14'}
+
+  alpinejs@3.14.9:
+    resolution: {integrity: sha512-gqSOhTEyryU9FhviNqiHBHzgjkvtukq9tevew29fTj+ofZtfsYriw4zPirHHOAy9bw8QoL3WGhyk7QqCh5AYlw==}
 
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
@@ -1967,6 +1992,10 @@ packages:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
 
+  dist#v3.2.1@https://codeload.github.com/lit/dist/tar.gz/cd86cbd142c5c2f0d6726f893f309e3585bbb74d:
+    resolution: {tarball: https://codeload.github.com/lit/dist/tar.gz/cd86cbd142c5c2f0d6726f893f309e3585bbb74d}
+    version: 0.0.0
+
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
@@ -2201,6 +2230,10 @@ packages:
   graphql@16.10.0:
     resolution: {integrity: sha512-AjqGKbDGUFRKIRCP9tCKiIGHyriz2oHEbPIbEtcSLSs4YjReZOIPQQWek4+6hjw62H9QShXHyaGivGiYVLeYFQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+
+  happy-dom@17.4.4:
+    resolution: {integrity: sha512-/Pb0ctk3HTZ5xEL3BZ0hK1AqDSAUuRQitOmROPHhfUYEWpmTImwfD8vFDGADmMAX0JYgbcgxWoLFKtsWhcpuVA==}
+    engines: {node: '>=18.0.0'}
 
   has-flag@3.0.0:
     resolution: {integrity: sha512-sKJf1+ceQBr4SMkvQnBDNDtf4TXpVhVGateu0t918bl30FnbE2m4vNLX+VWe/dpjlb+HugGYzW7uQXH98HPEYw==}
@@ -2727,6 +2760,9 @@ packages:
     resolution: {integrity: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==}
     engines: {node: ^10 || ^12 || >=14}
 
+  preact@10.26.4:
+    resolution: {integrity: sha512-KJhO7LBFTjP71d83trW+Ilnjbo+ySsaAgCfXOXUlmGzJ4ygYPWmysm77yg4emwfmoz3b22yvH5IsVFHbhUaH5w==}
+
   prebuild-install@7.1.3:
     resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
     engines: {node: '>=10'}
@@ -3091,6 +3127,16 @@ packages:
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
 
+  seroval-plugins@1.2.1:
+    resolution: {integrity: sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      seroval: ^1.0
+
+  seroval@1.2.1:
+    resolution: {integrity: sha512-yBxFFs3zmkvKNmR0pFSU//rIsYjuX418TnlDmc2weaq5XFDqDIV/NOMPBoLrbxjLH42p4UzRuXHryXh9dYcKcw==}
+    engines: {node: '>=10'}
+
   setimmediate@1.0.5:
     resolution: {integrity: sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==}
 
@@ -3137,6 +3183,9 @@ packages:
   sirv@3.0.1:
     resolution: {integrity: sha512-FoqMu0NCGBLCcAkS1qA+XJIQTR6/JHfQXl+uGteNCQ76T91DMUjPa9xfmeqMY3z80nLSg9yQmNjK0Px6RWsH/A==}
     engines: {node: '>=18'}
+
+  solid-js@1.9.5:
+    resolution: {integrity: sha512-ogI3DaFcyn6UhYhrgcyRAMbu/buBJitYQASZz5WzfQVPP10RD2AbCoRZ517psnezrasyCbWzIxZ6kVqet768xw==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -3476,9 +3525,17 @@ packages:
   wasm-sjlj@1.0.6:
     resolution: {integrity: sha512-pjaKtLJejlWm6+okPV2X1A6nIsRDD4qeK97eCh8DP8KXi3Nzn/HY01vpHhZHlhDri12eZqipjm8HhdTVw+ATxw==}
 
+  webidl-conversions@7.0.0:
+    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
+    engines: {node: '>=12'}
+
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+
+  whatwg-mimetype@3.0.0:
+    resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
+    engines: {node: '>=12'}
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -4017,7 +4074,7 @@ snapshots:
     dependencies:
       '@codspeed/core': 4.0.1
       vite: 6.2.3(@types/node@22.13.14)(terser@5.39.0)
-      vitest: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+      vitest: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
     transitivePeerDependencies:
       - debug
 
@@ -4806,7 +4863,7 @@ snapshots:
       msw: 2.7.3(@types/node@22.13.14)(typescript@5.8.2)
       sirv: 3.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
+      vitest: 3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0)
       ws: 8.18.1
     optionalDependencies:
       playwright: 1.51.1
@@ -4980,6 +5037,10 @@ snapshots:
       '@vue/compiler-dom': 3.5.13
       '@vue/shared': 3.5.13
 
+  '@vue/reactivity@3.1.5':
+    dependencies:
+      '@vue/shared': 3.1.5
+
   '@vue/reactivity@3.5.13':
     dependencies:
       '@vue/shared': 3.5.13
@@ -5002,11 +5063,17 @@ snapshots:
       '@vue/shared': 3.5.13
       vue: 3.5.13(typescript@5.8.2)
 
+  '@vue/shared@3.1.5': {}
+
   '@vue/shared@3.5.13': {}
 
   acorn@8.14.1: {}
 
   agent-base@7.1.3: {}
+
+  alpinejs@3.14.9:
+    dependencies:
+      '@vue/reactivity': 3.1.5
 
   ansi-colors@4.1.3: {}
 
@@ -5405,6 +5472,8 @@ snapshots:
 
   diff@5.2.0: {}
 
+  dist#v3.2.1@https://codeload.github.com/lit/dist/tar.gz/cd86cbd142c5c2f0d6726f893f309e3585bbb74d: {}
+
   dom-accessibility-api@0.5.16: {}
 
   dom-serializer@2.0.0:
@@ -5656,6 +5725,11 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphql@16.10.0: {}
+
+  happy-dom@17.4.4:
+    dependencies:
+      webidl-conversions: 7.0.0
+      whatwg-mimetype: 3.0.0
 
   has-flag@3.0.0: {}
 
@@ -6198,6 +6272,8 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  preact@10.26.4: {}
+
   prebuild-install@7.1.3:
     dependencies:
       detect-libc: 2.0.3
@@ -6677,6 +6753,12 @@ snapshots:
     dependencies:
       randombytes: 2.1.0
 
+  seroval-plugins@1.2.1(seroval@1.2.1):
+    dependencies:
+      seroval: 1.2.1
+
+  seroval@1.2.1: {}
+
   setimmediate@1.0.5: {}
 
   shebang-command@2.0.0:
@@ -6734,6 +6816,12 @@ snapshots:
       '@polka/url': 1.0.0-next.28
       mrmime: 2.0.1
       totalist: 3.0.1
+
+  solid-js@1.9.5:
+    dependencies:
+      csstype: 3.1.3
+      seroval: 1.2.1
+      seroval-plugins: 1.2.1(seroval@1.2.1)
 
   source-map-js@1.2.1: {}
 
@@ -6979,7 +7067,7 @@ snapshots:
       fsevents: 2.3.3
       terser: 5.39.0
 
-  vitest@3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0):
+  vitest@3.0.9(@types/node@22.13.14)(@vitest/browser@3.0.9)(happy-dom@17.4.4)(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(terser@5.39.0):
     dependencies:
       '@vitest/expect': 3.0.9
       '@vitest/mocker': 3.0.9(msw@2.7.3(@types/node@22.13.14)(typescript@5.8.2))(vite@6.2.3(@types/node@22.13.14)(terser@5.39.0))
@@ -7004,6 +7092,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.14
       '@vitest/browser': 3.0.9(@types/node@22.13.14)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.3(@types/node@22.13.14)(terser@5.39.0))(vitest@3.0.9)
+      happy-dom: 17.4.4
     transitivePeerDependencies:
       - jiti
       - less
@@ -7045,9 +7134,13 @@ snapshots:
 
   wasm-sjlj@1.0.6: {}
 
+  webidl-conversions@7.0.0: {}
+
   whatwg-encoding@3.1.1:
     dependencies:
       iconv-lite: 0.6.3
+
+  whatwg-mimetype@3.0.0: {}
 
   whatwg-mimetype@4.0.0: {}
 
