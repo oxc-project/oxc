@@ -270,7 +270,7 @@ impl TryFrom<u8> for RegExpFlags {
 
 impl Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.to_inline_string().as_str())
+        self.to_inline_string().as_str().fmt(f)
     }
 }
 
