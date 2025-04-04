@@ -1405,8 +1405,7 @@ mod test {
     #[test]
     fn test_fold_subtraction_assignment() {
         test("x -= 1", "--x");
-        // FIXME
-        // test("x -= -1", "++x");
+        test("x -= -1", "++x");
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
