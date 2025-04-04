@@ -178,7 +178,7 @@ impl Rule for Namespace {
                                 Some(AstKind::SimpleAssignmentTarget(_))
                             ) {
                                 ctx.diagnostic(assignment(member.span(), name));
-                            };
+                            }
 
                             if !self.allow_computed && member.is_computed() {
                                 return ctx.diagnostic(computed_reference(member.span(), name));
@@ -257,7 +257,7 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
         })
     {
         return entry.module_request.as_ref().map(|name| name.name().to_string());
-    };
+    }
 
     module_record
         .import_entries

@@ -92,7 +92,7 @@ impl CompilerInterface for Driver {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }
-        };
+        }
         self.check_regular_expressions(&ret.semantic);
         ControlFlow::Continue(())
     }
@@ -189,7 +189,7 @@ impl Driver {
                         literal.span.source_text(semantic.source_text()),
                     )));
                 }
-            };
+            }
         }
     }
 }

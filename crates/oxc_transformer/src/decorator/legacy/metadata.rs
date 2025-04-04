@@ -457,7 +457,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     return Self::global_object(ctx);
                 }
                 _ => {}
-            };
+            }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
             if matches!(&serialized_constituent, Expression::Identifier(ident) if ident.name == "Object")

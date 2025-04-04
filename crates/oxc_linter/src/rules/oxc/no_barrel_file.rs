@@ -103,7 +103,7 @@ impl Rule for NoBarrelFile {
                     total += count;
                     labels.push(module_request.span().label(format!("{count} modules")));
                 }
-            };
+            }
         }
 
         let threshold = self.threshold;

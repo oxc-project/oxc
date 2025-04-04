@@ -175,7 +175,7 @@ impl Rule for JsxNoTargetBlank {
                                 if let Some(val) = attribute.value.as_ref() {
                                     rel_valid_tuple = check_rel(val, self.allow_referrer);
                                 }
-                            };
+                            }
                         }
                     }
                     JSXAttributeItem::SpreadAttribute(_) => {
@@ -186,7 +186,7 @@ impl Rule for JsxNoTargetBlank {
                             rel_valid_tuple = (false, "", false, false);
                             is_href_valid = false;
                             has_href_value = true;
-                        };
+                        }
                     }
                 });
 
@@ -291,7 +291,7 @@ fn check_href(
             }
         }
         _ => {}
-    };
+    }
     if is_enforce_dynamic_links_never {
         // correct:
         // 1. <a target="_blank" href="./link.js"></a>

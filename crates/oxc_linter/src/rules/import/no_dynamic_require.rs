@@ -83,7 +83,7 @@ impl Rule for NoDynamicRequire {
                 }
             }
             _ => {}
-        };
+        }
     }
 }
 

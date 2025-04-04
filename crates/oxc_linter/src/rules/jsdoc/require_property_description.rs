@@ -68,7 +68,7 @@ impl Rule for RequirePropertyDescription {
                 let (_, _, comment_part) = tag.type_name_comment();
                 if !comment_part.parsed().is_empty() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(require_property_description_diagnostic(tag_name.span));
             }

@@ -919,10 +919,10 @@ impl Rule for NoRestrictedImports {
                                 serde_json::Value::Object(obj.clone()),
                             ) {
                                 paths.push(path);
-                            };
+                            }
                         }
                         _ => (),
-                    };
+                    }
                 }
             }
             Value::String(module_name) => {
@@ -1049,7 +1049,7 @@ impl NoRestrictedImports {
                     found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
-            };
+            }
 
             if pattern.get_regex_result(entry.module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
@@ -1125,7 +1125,7 @@ impl NoRestrictedImports {
                     found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
-            };
+            }
 
             if pattern.get_regex_result(&reference.expression.value) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
@@ -1198,7 +1198,7 @@ impl NoRestrictedImports {
                     found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
-            };
+            }
 
             if pattern.get_regex_result(module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(

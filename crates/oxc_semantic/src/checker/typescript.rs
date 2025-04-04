@@ -372,7 +372,7 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                         ctx.error(constructor_implementation_missing(a.key.span()));
                     } else {
                         ctx.error(function_implementation_missing(a.key.span()));
-                    };
+                    }
                 }
             }
         }

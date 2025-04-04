@@ -100,7 +100,7 @@ impl Rule for NoLonelyIf {
 
         if b.body.len() != 1 {
             return;
-        };
+        }
 
         let Some(only_stmt) = b.body.first() else {
             return;
@@ -108,17 +108,17 @@ impl Rule for NoLonelyIf {
 
         if let Some(AstKind::IfStatement(_)) = ctx.nodes().parent_kind(node.id()) {
             return;
-        };
+        }
 
         if let Statement::BlockStatement(inner_block) = only_stmt {
             if inner_block.body.len() == 1 {
                 if let Some(Statement::IfStatement(lonely_if)) = inner_block.body.first() {
                     ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
-                };
+                }
             }
         } else if let Statement::IfStatement(lonely_if) = only_stmt {
             ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
-        };
+        }
     }
 }
 

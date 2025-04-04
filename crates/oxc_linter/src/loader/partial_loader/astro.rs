@@ -65,14 +65,14 @@ impl<'a> AstroPartialLoader<'a> {
                 pointer += offset + SCRIPT_START.len();
             } else {
                 break;
-            };
+            }
             // find closing ">"
             if let Some(offset) = self.source_text[pointer..].find('>') {
                 pointer += offset + 1;
                 js_start = pointer;
             } else {
                 break;
-            };
+            }
             // check for the / of a self closing script tag
             if self.source_text.chars().nth(js_start - 2) == Some('/') {
                 js_end = pointer;
@@ -84,7 +84,7 @@ impl<'a> AstroPartialLoader<'a> {
                 pointer += offset + SCRIPT_END.len();
             } else {
                 break;
-            };
+            }
 
             // NOTE: loader checked that source_text.len() is less than u32::MAX
             #[expect(clippy::cast_possible_truncation)]

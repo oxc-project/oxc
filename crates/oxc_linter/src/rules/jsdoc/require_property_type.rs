@@ -68,7 +68,7 @@ impl Rule for RequirePropertyType {
                 let (type_part, _, _) = tag.type_name_comment();
                 if type_part.is_some() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(require_property_type_diagnostic(tag_name.span));
             }

@@ -121,7 +121,7 @@ fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) 
         ) {
             is_multiple = true;
             break;
-        };
+        }
     }
     is_multiple
 }

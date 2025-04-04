@@ -160,7 +160,7 @@ impl Rule for NoUselessLengthCheck {
                     ctx.diagnostic(diag);
                 }
             }
-        };
+        }
     }
 }
 
@@ -177,7 +177,7 @@ fn make_flat_logical_expression<'a>(
             }
         }
         _ => result.push(&node.left),
-    };
+    }
 
     match &node.right.without_parentheses() {
         Expression::LogicalExpression(le) => {
@@ -188,7 +188,7 @@ fn make_flat_logical_expression<'a>(
             }
         }
         _ => result.push(&node.right),
-    };
+    }
 }
 
 #[test]

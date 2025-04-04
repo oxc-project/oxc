@@ -96,14 +96,14 @@ impl Rule for NoThenable {
                                 if bind.name == "then" {
                                     ctx.diagnostic(export(bind.span));
                                 }
-                            };
+                            }
                         }
                         Declaration::ClassDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
                                     ctx.diagnostic(export(bind.span));
                                 }
-                            };
+                            }
                         }
                         _ => {}
                     }

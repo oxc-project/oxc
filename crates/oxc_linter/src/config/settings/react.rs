@@ -109,7 +109,7 @@ fn get_component_attrs_by_name<'c>(
                 return Some(Cow::Borrowed(attributes));
             }
             _ => {}
-        };
+        }
     }
 
     None

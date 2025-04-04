@@ -222,7 +222,7 @@ fn is_invalid_fetch_options<'a>(
                     }
                 }
                 _ => continue,
-            };
+            }
         }
     }
 

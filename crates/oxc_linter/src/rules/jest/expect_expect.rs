@@ -259,7 +259,7 @@ fn check_assert_function_used<'a>(
             return check_assert_function_used(&expr.argument, assert_function_names, visited, ctx);
         }
         _ => {}
-    };
+    }
 
     false
 }

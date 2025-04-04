@@ -179,14 +179,14 @@ impl Rule for NoCommonjs {
                             ));
                         } else {
                             return;
-                        };
+                        }
                     } else {
                         ctx.diagnostic(no_commonjs_diagnostic(
                             member_expr.span(),
                             "export",
                             property_name,
                         ));
-                    };
+                    }
                     return;
                 }
 
@@ -222,7 +222,7 @@ impl Rule for NoCommonjs {
                     if template_literal.expressions.len() != 0 {
                         return;
                     }
-                };
+                }
 
                 if self.allow_require {
                     return;

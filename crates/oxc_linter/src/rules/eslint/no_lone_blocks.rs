@@ -125,7 +125,7 @@ fn report(ctx: &LintContext, node: &AstNode, parent_node: &AstNode) {
             ctx.diagnostic(no_nested_lone_blocks_diagnostic(node.span()));
         }
         _ => ctx.diagnostic(no_lone_blocks_diagnostic(node.span())),
-    };
+    }
 }
 
 fn is_lone_block(node: &AstNode, parent_node: &AstNode) -> bool {

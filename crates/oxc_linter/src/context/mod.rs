@@ -190,7 +190,7 @@ impl<'a> LintContext<'a> {
             if let Some(env) = GLOBALS.get(env) {
                 if let Some(value) = env.get(var) {
                     return Some(GlobalValue::from(*value));
-                };
+                }
             }
         }
 

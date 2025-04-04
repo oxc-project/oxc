@@ -178,7 +178,7 @@ fn uses_closest_cb_vars(closest_cb_scope_id: ScopeId, cb_span: Span, ctx: &LintC
                 // defined in the parent promise callback scope. Unnesting would result in
                 // reference to an undefined variable.
                 return true;
-            };
+            }
         }
     }
 
@@ -195,7 +195,7 @@ impl Rule for NoNesting {
             .is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
         {
             return;
-        };
+        }
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
@@ -207,7 +207,7 @@ impl Rule for NoNesting {
                 }
                 None => ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span())),
             }
-        };
+        }
     }
 }
 

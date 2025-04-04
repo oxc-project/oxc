@@ -165,7 +165,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                     rule_fixes
                 },
             );
-        };
+        }
     }
 }
 

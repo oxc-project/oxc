@@ -131,7 +131,7 @@ impl Rule for NoExtraneousClass {
                     ctx.diagnostic(only_static_no_extraneous_class_diagnostic(span));
                 }
             }
-        };
+        }
     }
 }
 

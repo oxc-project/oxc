@@ -534,7 +534,7 @@ impl<'a> ParserImpl<'a> {
     fn flow_error(&mut self) -> Option<OxcDiagnostic> {
         if !self.source_type.is_javascript() {
             return None;
-        };
+        }
         let span = self.lexer.trivia_builder.comments.first()?.span;
         if span.source_text(self.source_text).contains("@flow") {
             self.errors.clear();

@@ -67,7 +67,7 @@ impl Rule for SortVars {
 
         if var_decl.declarations.len() <= 1 {
             return;
-        };
+        }
 
         let mut previous: Option<&VariableDeclarator> = None;
         for current in var_decl

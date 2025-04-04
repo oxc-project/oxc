@@ -17,7 +17,7 @@ impl<'a> ClassTester<'a> {
 
             if class.id.clone().is_some_and(|id| id.name == name) {
                 return Some(class_id);
-            };
+            }
 
             None
         });

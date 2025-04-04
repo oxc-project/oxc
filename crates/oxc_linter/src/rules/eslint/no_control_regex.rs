@@ -119,7 +119,7 @@ impl Rule for NoControlRegex {
             }
 
             _ => {}
-        };
+        }
     }
 }
 

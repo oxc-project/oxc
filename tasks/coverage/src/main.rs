@@ -33,5 +33,5 @@ fn main() {
             args.run_runtime();
         }
         _ => args.run_default(),
-    };
+    }
 }

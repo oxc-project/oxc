@@ -107,7 +107,7 @@ impl<'a> ClassTable<'a> {
         let class_id = self.declarations.push(node_id);
         if let Some(parent_id) = parent_id {
             self.parent_ids.insert(class_id, parent_id);
-        };
+        }
         self.elements.push(IndexVec::default());
         self.private_identifier_references.push(Vec::new());
         class_id

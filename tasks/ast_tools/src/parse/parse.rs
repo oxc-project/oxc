@@ -812,7 +812,7 @@ fn process_attr(
                             AttrPart::List(&part_name, list),
                         )?;
                     }
-                };
+                }
             }
             Ok(())
         }

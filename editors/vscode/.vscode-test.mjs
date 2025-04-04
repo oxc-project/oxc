@@ -19,5 +19,8 @@ export default defineConfig({
     env: {
       SERVER_PATH_DEV: path.resolve(import.meta.dirname, `./target/debug/oxc_language_server${ext}`),
     },
+    mocha: {
+      timeout: 10_000,
+    },
   }],
 });

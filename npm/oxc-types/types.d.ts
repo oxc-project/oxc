@@ -534,6 +534,7 @@ export interface BindingProperty extends Span {
   key: PropertyKey;
   value: BindingPattern;
   kind: 'init';
+  optional?: false;
 }
 
 export interface ArrayPattern extends Span {
@@ -1321,7 +1322,6 @@ export interface TSImportType extends Span {
   options: ObjectExpression | null;
   qualifier: TSTypeName | null;
   typeArguments: TSTypeParameterInstantiation | null;
-  isTypeOf: boolean;
 }
 
 export interface TSFunctionType extends Span {
@@ -1485,7 +1485,7 @@ export interface Span {
   end: number;
 }
 
-export type ModuleKind = 'script' | 'module' | 'unambiguous';
+export type ModuleKind = 'script' | 'module';
 
 export interface Pattern extends Span {
   type: 'Pattern';

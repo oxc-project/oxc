@@ -995,7 +995,7 @@ impl Gen for ImportAttribute<'_> {
             ImportAttributeKey::StringLiteral(literal) => {
                 p.print_string_literal(literal, false);
             }
-        };
+        }
         p.print_colon();
         p.print_soft_space();
         p.print_string_literal(&self.value, false);
@@ -1105,7 +1105,7 @@ impl Gen for ModuleExportName<'_> {
             Self::IdentifierName(ident) => ident.print(p, ctx),
             Self::IdentifierReference(ident) => ident.print(p, ctx),
             Self::StringLiteral(literal) => p.print_string_literal(literal, false),
-        };
+        }
     }
 }
 

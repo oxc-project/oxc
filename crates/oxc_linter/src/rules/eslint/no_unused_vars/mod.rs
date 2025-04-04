@@ -278,7 +278,7 @@ impl NoUnusedVars {
             AstKind::VariableDeclarator(decl) => {
                 if self.is_allowed_variable_declaration(symbol, decl) {
                     return;
-                };
+                }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
                     Some(last_write) => {
                         // ahg
@@ -333,7 +333,7 @@ impl NoUnusedVars {
                 ctx.diagnostic(diagnostic::declared(symbol, &self.caught_errors_ignore_pattern));
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None)),
-        };
+        }
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {

@@ -563,7 +563,7 @@ fn recurse_extend_node_chain<'a>(
             });
         }
         _ => {}
-    };
+    }
 }
 
 // sorted list for binary search.

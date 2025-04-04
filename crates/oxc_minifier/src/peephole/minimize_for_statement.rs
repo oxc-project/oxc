@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
             } else {
                 return;
             }
-        };
+        }
 
         let Statement::IfStatement(if_stmt) = first else {
             return;

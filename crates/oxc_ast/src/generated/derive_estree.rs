@@ -16,17 +16,7 @@ use crate::ast::ts::*;
 
 impl ESTree for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("Program"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &self.directives, after: &self.body },
-        );
-        self.source_type.serialize(FlatStructSerializer(&mut state));
-        state.serialize_field("hashbang", &self.hashbang);
-        state.end();
+        crate::serialize::ProgramConverter(self).serialize(serializer)
     }
 }
 
@@ -1312,6 +1302,7 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &crate::serialize::Init(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -3128,7 +3119,6 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
     }
 }

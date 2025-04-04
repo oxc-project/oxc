@@ -153,7 +153,7 @@ impl Rule for NoObjCalls {
             _ => {
                 // noop
             }
-        };
+        }
     }
 }
 

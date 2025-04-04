@@ -10,7 +10,8 @@ use crate::{
     Generator, RAW_TRANSFER_JS_DESERIALIZER_PATH, RAW_TRANSFER_TS_DESERIALIZER_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
-        get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
+        get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
+        should_skip_enum_variant, should_skip_field,
     },
     output::Output,
     schema::{
@@ -400,7 +401,10 @@ fn generate_enum(
     };
 
     let body = body.unwrap_or_else(|| {
-        let mut variants = enum_def.all_variants(schema).collect::<Vec<_>>();
+        let mut variants = enum_def
+            .all_variants(schema)
+            .filter(|variant| !should_skip_enum_variant(variant))
+            .collect::<Vec<_>>();
         variants.sort_by_key(|variant| variant.discriminant);
 
         let switch_cases = variants.into_iter().fold(String::new(), |mut s, variant| {

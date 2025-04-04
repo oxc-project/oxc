@@ -37,14 +37,16 @@ function deserialize(buffer, sourceTextInput, sourceLenInput) {
 function deserializeProgram(pos) {
   const body = deserializeVecDirective(pos + 88);
   body.push(...deserializeVecStatement(pos + 120));
-  return {
+  let start = deserializeU32(pos);
+  const program = {
     type: 'Program',
-    start: deserializeU32(pos),
+    start,
     end: deserializeU32(pos + 4),
     body,
     sourceType: deserializeModuleKind(pos + 9),
     hashbang: deserializeOptionHashbang(pos + 64),
   };
+  return program;
 }
 
 function deserializeIdentifierName(pos) {
@@ -1809,7 +1811,6 @@ function deserializeTSImportType(pos) {
     options: deserializeOptionBoxObjectExpression(pos + 24),
     qualifier: deserializeOptionTSTypeName(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
-    isTypeOf: deserializeBool(pos + 56),
   };
 }
 
@@ -4124,8 +4125,6 @@ function deserializeModuleKind(pos) {
       return 'script';
     case 1:
       return 'module';
-    case 2:
-      return 'unambiguous';
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
   }

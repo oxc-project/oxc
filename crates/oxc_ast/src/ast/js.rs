@@ -30,7 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, directives, source_type, hashbang))]
+#[estree(field_order(span, directives, source_type, hashbang), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -1583,8 +1583,8 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(method = False, kind = Init),
-    field_order(span, method, shorthand, computed, key, value, kind),
+    add_fields(method = False, kind = Init, optional = TsFalse),
+    field_order(span, method, shorthand, computed, key, value, kind, optional),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,

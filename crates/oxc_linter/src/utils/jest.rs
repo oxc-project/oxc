@@ -293,7 +293,7 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
             chain.extend(get_node_name_vec(&new_expr.callee));
         }
         _ => {}
-    };
+    }
 
     chain
 }

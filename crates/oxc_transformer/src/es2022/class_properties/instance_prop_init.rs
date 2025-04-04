@@ -35,7 +35,7 @@ impl<'a> ClassProperties<'a, '_> {
             // No symbol clashes possible. Just re-parent first-level scopes (faster).
             let mut updater = FastInstanceInitializerVisitor::new(self, ctx);
             updater.visit_expression(value);
-        };
+        }
     }
 }
 

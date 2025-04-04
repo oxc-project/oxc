@@ -793,7 +793,7 @@ impl VisitBuilder<'_> {
 
             if extra_params.is_empty() {
                 return visit;
-            };
+            }
 
             // Wrap a visit call with `let` statements for visit args.
             // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,

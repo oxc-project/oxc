@@ -333,7 +333,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                     _ => continue,
-                };
+                }
             }
         }
 

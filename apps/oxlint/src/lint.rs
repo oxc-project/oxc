@@ -156,7 +156,7 @@ impl Runner for LintRunner {
                 }) {
                     stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
                     stdout.flush().unwrap();
-                };
+                }
 
                 return CliRunResult::LintNoFilesFound;
             }
@@ -391,7 +391,7 @@ impl Runner for LintRunner {
         }) {
             stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
             stdout.flush().unwrap();
-        };
+        }
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors

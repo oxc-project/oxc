@@ -93,7 +93,7 @@ impl Rule for NoAnonymousDefaultExport {
 
         if let Some((span, error_kind)) = result {
             ctx.diagnostic(no_anonymous_default_export_diagnostic(span, error_kind));
-        };
+        }
     }
 }
 
@@ -121,7 +121,7 @@ fn is_common_js_export(expr: &AssignmentExpression) -> bool {
 fn is_top_expr(ctx: &LintContext, node: &AstNode) -> bool {
     if !ctx.scoping().scope_flags(node.scope_id()).is_top() {
         return false;
-    };
+    }
 
     let parent = ast_util::iter_outer_expressions(ctx, node.id()).next();
     matches!(parent, Some(AstKind::ExpressionStatement(_)))

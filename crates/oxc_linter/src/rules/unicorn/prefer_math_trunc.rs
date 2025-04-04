@@ -59,7 +59,7 @@ impl Rule for PreferMathTrunc {
                 };
                 if !matches!(inner_unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
-                };
+                }
 
                 if let Expression::UnaryExpression(inner_inner_unary_expr) =
                     &inner_unary_expr.argument

@@ -34,7 +34,7 @@ impl DisplayDot for ControlFlowGraph {
                         attrs += ("style", "dotted");
                     } else if matches!(weight, EdgeType::Error(_)) {
                         attrs += ("color", "red");
-                    };
+                    }
 
                     format!("{attrs:?}")
                 },
