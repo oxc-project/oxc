@@ -1,13 +1,9 @@
-use oxc_ast::{ast::VariableDeclarationKind, AstKind};
+use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 // use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 // use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 // fn block_scoped_var_diagnostic(span: Span) -> OxcDiagnostic {
 //     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -22,13 +18,13 @@ pub struct BlockScopedVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Generates warnings when variables are used outside of the block in which they were defined. 
+    /// Generates warnings when variables are used outside of the block in which they were defined.
     /// This emulates C-style block scope.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule aims to reduce the usage of variables outside of their binding context 
-    /// and emulate traditional block scope from other languages. 
+    /// This rule aims to reduce the usage of variables outside of their binding context
+    /// and emulate traditional block scope from other languages.
     /// This is to help newcomers to the language avoid difficult bugs with variable hoisting.
     ///
     /// ### Examples
@@ -52,7 +48,7 @@ declare_oxc_lint!(
     ///    }
     ///     console.log(build);
     /// }
-    /// 
+    ///
     /// ```
     BlockScopedVar,
     eslint,
@@ -71,7 +67,9 @@ impl Rule for BlockScopedVar {
         for item in declarations {
             let id = &item.id;
             for ident in id.get_binding_identifiers() {
-                let Some(symbol_id) = ctx.scoping().find_binding(node.scope_id(), &ident.name.as_str()) else {
+                let Some(symbol_id) =
+                    ctx.scoping().find_binding(node.scope_id(), &ident.name.as_str())
+                else {
                     continue;
                 };
                 let bind_scope_id = ctx.symbol_scope(symbol_id);
@@ -99,7 +97,7 @@ fn test() {
             console.log(build);
             let t = build;
             
-        "
+        ",
     ];
 
     Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail).test_and_snapshot();
