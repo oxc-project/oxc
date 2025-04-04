@@ -469,13 +469,15 @@ impl<'a> Codegen<'a> {
     // But it turned out this was actually a bit slower.
     // <https://github.com/oxc-project/oxc/pull/5221>
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-                self.print_soft_space();
-            }
+        let Some((last, rest)) = items.split_last() else {
+            return;
+        };
+        for item in rest {
             item.print(self, ctx);
+            self.print_comma();
+            self.print_soft_space();
         }
+        last.print(self, ctx);
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
