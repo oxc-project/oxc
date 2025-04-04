@@ -188,6 +188,7 @@ declare_oxc_lint!(
     ///     }, [props]);
     ///     return <div />;
     /// }
+    /// ```
     ExhaustiveDeps,
     react,
     nursery
