@@ -110,7 +110,7 @@ interface A{a:string;"b":number;"c"():void;}
 ########## 25
 enum A { a, 'b' }
 ----------
-enum A {a,"b",}
+enum A {a,"b"}
 ########## 26
 module 'a'
 ----------
