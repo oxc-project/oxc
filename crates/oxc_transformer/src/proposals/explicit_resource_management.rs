@@ -158,10 +158,27 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     /// ```
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = block.scope_id();
-        if let Some(replacement) =
-            self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block.body, scope_id, ctx)
         {
-            block.body = ctx.ast.vec1(replacement);
+            let static_block_new_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::ClassStaticBlock,
+            );
+
+            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, static_block_new_scope_id);
+            ctx.scoping_mut().move_binding(scope_id, static_block_new_scope_id, &using_ctx.name);
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
+
+            block.set_scope_id(static_block_new_scope_id);
+            block.body = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+                &using_ctx,
+                static_block_new_scope_id,
+                needs_await,
+                ctx,
+            ));
         }
     }
 
@@ -186,14 +203,23 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     /// }
     /// ```
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(replacement) = self.transform_statements(
-            &mut body.statements,
-            None,
-            ctx.current_hoist_scope_id(),
-            ctx.current_hoist_scope_id(),
-            ctx,
-        ) {
-            body.statements = ctx.ast.vec1(replacement);
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut body.statements, ctx.current_hoist_scope_id(), ctx)
+        {
+            // FIXME: this creates the scopes in the correct place, however we never move the bindings contained
+            // within `new_stmts` to the new scope.
+            let block_stmt_scope_id =
+                ctx.insert_scope_below_statements(&new_stmts, ScopeFlags::empty());
+
+            let current_scope_id = ctx.current_scope_id();
+
+            body.statements = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
+                &using_ctx,
+                current_scope_id,
+                needs_await,
+                ctx,
+            ));
         }
     }
 
@@ -461,15 +487,18 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::BlockStatement(block_stmt) = stmt else { unreachable!() };
 
-        let scope_id = block_stmt.scope_id();
-        if let Some(replacement) = self.transform_statements(
-            &mut block_stmt.body,
-            Some(scope_id),
-            ctx.current_scope_id(),
-            ctx.current_hoist_scope_id(),
-            ctx,
-        ) {
-            *stmt = replacement;
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block_stmt.body, ctx.current_hoist_scope_id(), ctx)
+        {
+            let current_scope_id = ctx.current_scope_id();
+
+            *stmt = Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt.scope_id()),
+                &using_ctx,
+                current_scope_id,
+                needs_await,
+                ctx,
+            );
         }
     }
 
@@ -596,8 +625,6 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
     /// Transforms:
     ///  - `node` - the statements to transform
-    ///  - `scope_id` - if provided, it will be used as the scope_id for the new block.
-    ///  - `parent_scope_id` - the parent scope
     ///  - `hoist_scope_id` - the hoist scope, used for generating new var bindings
     ///  - `ctx` - the traverse context
     ///
@@ -624,11 +651,9 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     fn transform_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        scope_id: Option<ScopeId>,
-        parent_scope_id: ScopeId,
         hoist_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    ) -> Option<(ArenaVec<'a, Statement<'a>>, bool, BoundIdentifier<'a>)> {
         let mut needs_await = false;
 
         let mut using_ctx = None;
@@ -700,21 +725,19 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         );
         stmts.insert(0, Statement::from(helper));
 
-        let scope_id_children_to_move = scope_id.unwrap_or(parent_scope_id);
+        Some((stmts, needs_await, using_ctx))
+    }
 
-        let scope_id = scope_id
-            .unwrap_or_else(|| ctx.create_child_scope(parent_scope_id, ScopeFlags::empty()));
-        let block = ctx.ast.block_statement_with_scope_id(SPAN, stmts, scope_id);
-
-        let child_ids = ctx.scoping_mut().get_scope_child_ids(scope_id_children_to_move).to_vec();
-        for id in child_ids.iter().filter(|id| *id != &scope_id) {
-            ctx.scoping_mut().change_scope_parent_id(*id, Some(scope_id));
-        }
-
-        let catch = Self::create_catch_clause(&using_ctx, parent_scope_id, ctx);
-        let finally = Self::create_finally_block(&using_ctx, parent_scope_id, needs_await, ctx);
-
-        Some(ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally)))
+    fn create_try_stmt(
+        body: BlockStatement<'a>,
+        using_ctx: &BoundIdentifier<'a>,
+        parent_scope_id: ScopeId,
+        needs_await: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
+        let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
+        ctx.ast.statement_try(SPAN, body, Some(catch), Some(finally))
     }
 
     /// `catch (_) { _usingCtx.e = _; }`
