@@ -60,6 +60,13 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
+    es2017::ES2017Options,
+    es2018::ES2018Options,
+    es2019::ES2019Options,
+    es2020::ES2020Options,
+    es2021::ES2021Options,
+    es2022::{ClassPropertiesOptions, ES2022Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
