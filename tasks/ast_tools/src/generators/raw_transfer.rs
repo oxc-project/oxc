@@ -170,19 +170,19 @@ fn generate_struct(
 
         for (field_name, value) in generator.fields {
             if value.starts_with("...") {
-                write_it!(&mut fields_str, "{value},");
+                write_it!(fields_str, "{value},");
             } else if generator.dependent_field_names.contains(&field_name) {
                 if preamble_str.is_empty() {
                     preamble_str.push_str("const ");
                 } else {
                     preamble_str.push_str(",\n");
                 }
-                write_it!(&mut preamble_str, "{field_name} = {value}");
-                write_it!(&mut fields_str, "{field_name},");
+                write_it!(preamble_str, "{field_name} = {value}");
+                write_it!(fields_str, "{field_name},");
             } else if value == field_name {
-                write_it!(&mut fields_str, "{field_name},");
+                write_it!(fields_str, "{field_name},");
             } else {
-                write_it!(&mut fields_str, "{field_name}: {value},");
+                write_it!(fields_str, "{field_name}: {value},");
             }
         }
 
