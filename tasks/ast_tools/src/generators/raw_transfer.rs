@@ -407,22 +407,25 @@ fn generate_enum(
             .collect::<Vec<_>>();
         variants.sort_by_key(|variant| variant.discriminant);
 
-        let switch_cases = variants.into_iter().fold(String::new(), |mut s, variant| {
-            let discriminant = variant.discriminant;
+        let mut switch_cases = String::new();
+        for variant in variants {
+            write_it!(switch_cases, "case {}: ", variant.discriminant);
 
-            let ret = if let Some(converter_name) = &variant.estree.via {
-                apply_converter_for_enum(converter_name, payload_offset, schema).unwrap()
+            if let Some(converter_name) = &variant.estree.via {
+                let ret = apply_converter_for_enum(converter_name, payload_offset, schema).unwrap();
+                switch_cases.push_str(&ret);
             } else if let Some(variant_type) = variant.field_type(schema) {
                 let variant_fn_name = variant_type.deser_name(schema);
                 let payload_pos = pos_offset(payload_offset);
-                format!("return {variant_fn_name}({payload_pos});")
+                write_it!(switch_cases, "return {variant_fn_name}({payload_pos});");
             } else {
-                format!("return '{}';", get_fieldless_variant_value(enum_def, variant))
-            };
-
-            write_it!(s, "case {discriminant}: {ret}");
-            s
-        });
+                write_it!(
+                    switch_cases,
+                    "return '{}';",
+                    get_fieldless_variant_value(enum_def, variant)
+                );
+            }
+        }
 
         format!(
             "
