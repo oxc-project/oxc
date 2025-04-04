@@ -240,6 +240,55 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
+    /// Transform try statement.
+    ///
+    /// ```js
+    /// try {
+    ///   using x = y();
+    /// } catch (err) { }
+    /// ```
+    /// ->
+    /// ```js
+    /// try {
+    ///   try {
+    ///     var _usingCtx = babelHelpers.usingCtx();
+    ///     const x = _usingCtx.u(y());
+    ///   } catch (_) {
+    ///     _usingCtx.e = _;
+    ///   } finally {
+    ///     _usingCtx.d();
+    ///   }
+    /// } catch (err) { }
+    /// ```
+    fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let scope_id = node.block.scope_id();
+
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut node.block.body, scope_id, ctx)
+        {
+            let block_stmt_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::empty(),
+            );
+
+            node.block.body = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+                &using_ctx,
+                block_stmt_scope_id,
+                needs_await,
+                ctx,
+            ));
+
+            let current_hoist_scope_id = ctx.current_hoist_scope_id();
+            node.block.set_scope_id(block_stmt_scope_id);
+            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, current_hoist_scope_id);
+            ctx.scoping_mut().move_binding(scope_id, current_hoist_scope_id, &using_ctx.name);
+
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        }
+    }
+
     /// Move any top level `using` declarations within a block statement,
     /// allowing `enter_statement` to transform them.
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

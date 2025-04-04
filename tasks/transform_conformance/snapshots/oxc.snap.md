@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 140/232
+Passed: 141/233
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -347,7 +347,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (1/3)
+# babel-plugin-proposal-explicit-resource-management (2/4)
 * export-class-name/input.js
 x Output mismatch
 
