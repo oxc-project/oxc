@@ -97,9 +97,7 @@ impl TraverseScoping {
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn insert_scope_below_statement(&mut self, stmt: &Statement, flags: ScopeFlags) -> ScopeId {
-        let mut collector = ChildScopeCollector::new();
-        collector.visit_statement(stmt);
-        self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
+        self.insert_scope_below_statement_from_scope_id(stmt, self.current_scope_id, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
