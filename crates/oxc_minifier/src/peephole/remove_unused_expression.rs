@@ -1,6 +1,6 @@
 use std::iter;
 
-use oxc_allocator::Vec;
+use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToPrimitive,
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                *e = unary_expr.argument.take_in(ctx.ast.allocator);
                 state.changed = true;
                 self.remove_unused_expression(e, state, ctx)
             }
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                    *e = unary_expr.argument.take_in(ctx.ast.allocator);
                     state.changed = true;
                     self.remove_unused_expression(e, state, ctx)
                 }
@@ -94,7 +94,7 @@ impl<'a> PeepholeOptimizations {
         }
         if self.remove_unused_expression(&mut logical_expr.right, state, ctx) {
             self.remove_unused_expression(&mut logical_expr.left, state, ctx);
-            *e = ctx.ast.move_expression(&mut logical_expr.left);
+            *e = logical_expr.left.take_in(ctx.ast.allocator);
             state.changed = true;
             return false;
         }
@@ -129,7 +129,7 @@ impl<'a> PeepholeOptimizations {
                                 logical_right,
                                 ctx,
                             ) {
-                                *e = ctx.ast.move_expression(logical_right);
+                                *e = logical_right.take_in(ctx.ast.allocator);
                                 state.changed = true;
                                 return false;
                             }
@@ -160,7 +160,7 @@ impl<'a> PeepholeOptimizations {
                                 {
                                     assignment_expr.span = *logical_span;
                                     assignment_expr.operator = AssignmentOperator::LogicalNullish;
-                                    *e = ctx.ast.move_expression(logical_right);
+                                    *e = logical_right.take_in(ctx.ast.allocator);
                                     state.changed = true;
                                     return false;
                                 }
@@ -168,9 +168,9 @@ impl<'a> PeepholeOptimizations {
 
                             *e = ctx.ast.expression_logical(
                                 *logical_span,
-                                ctx.ast.move_expression(new_left_hand_expr),
+                                new_left_hand_expr.take_in(ctx.ast.allocator),
                                 LogicalOperator::Coalesce,
-                                ctx.ast.move_expression(logical_right),
+                                logical_right.take_in(ctx.ast.allocator),
                             );
                             state.changed = true;
                             return false;
@@ -490,7 +490,7 @@ impl<'a> PeepholeOptimizations {
             if test {
                 return true;
             }
-            *e = ctx.ast.move_expression(&mut conditional_expr.test);
+            *e = conditional_expr.test.take_in(ctx.ast.allocator);
             state.changed = true;
             return false;
         }
@@ -500,8 +500,8 @@ impl<'a> PeepholeOptimizations {
             *e = self.join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::Or,
-                ctx.ast.move_expression(&mut conditional_expr.test),
-                ctx.ast.move_expression(&mut conditional_expr.alternate),
+                conditional_expr.test.take_in(ctx.ast.allocator),
+                conditional_expr.alternate.take_in(ctx.ast.allocator),
                 ctx,
             );
             state.changed = true;
@@ -513,8 +513,8 @@ impl<'a> PeepholeOptimizations {
             *e = self.join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::And,
-                ctx.ast.move_expression(&mut conditional_expr.test),
-                ctx.ast.move_expression(&mut conditional_expr.consequent),
+                conditional_expr.test.take_in(ctx.ast.allocator),
+                conditional_expr.consequent.take_in(ctx.ast.allocator),
                 ctx,
             );
             state.changed = true;
@@ -548,12 +548,12 @@ impl<'a> PeepholeOptimizations {
                 match (left, right) {
                     (true, true) => true,
                     (true, false) => {
-                        *e = ctx.ast.move_expression(&mut binary_expr.right);
+                        *e = binary_expr.right.take_in(ctx.ast.allocator);
                         state.changed = true;
                         false
                     }
                     (false, true) => {
-                        *e = ctx.ast.move_expression(&mut binary_expr.left);
+                        *e = binary_expr.left.take_in(ctx.ast.allocator);
                         state.changed = true;
                         false
                     }
@@ -561,8 +561,8 @@ impl<'a> PeepholeOptimizations {
                         *e = ctx.ast.expression_sequence(
                             binary_expr.span,
                             ctx.ast.vec_from_array([
-                                ctx.ast.move_expression(&mut binary_expr.left),
-                                ctx.ast.move_expression(&mut binary_expr.right),
+                                binary_expr.left.take_in(ctx.ast.allocator),
+                                binary_expr.right.take_in(ctx.ast.allocator),
                             ]),
                         );
                         state.changed = true;
@@ -605,7 +605,7 @@ impl<'a> PeepholeOptimizations {
             if right_as_primitive.is_symbol() == Some(false)
                 && !binary_expr.right.may_have_side_effects(&ctx)
             {
-                *e = ctx.ast.move_expression(&mut binary_expr.left);
+                *e = binary_expr.left.take_in(ctx.ast.allocator);
                 state.changed = true;
                 return true;
             }
@@ -666,19 +666,19 @@ impl<'a> PeepholeOptimizations {
                     if f.expression {
                         // Replace "(() => foo())()" with "foo()"
                         let expr = f.get_expression_mut().unwrap();
-                        *e = ctx.ast.move_expression(expr);
+                        *e = expr.take_in(ctx.ast.allocator);
                         return self.remove_unused_expression(e, state, ctx);
                     }
                     match &mut f.body.statements[0] {
                         Statement::ExpressionStatement(expr_stmt) => {
                             // Replace "(() => { foo() })" with "foo()"
-                            *e = ctx.ast.move_expression(&mut expr_stmt.expression);
+                            *e = expr_stmt.expression.take_in(ctx.ast.allocator);
                             return self.remove_unused_expression(e, state, ctx);
                         }
                         Statement::ReturnStatement(ret_stmt) => {
                             if let Some(argument) = &mut ret_stmt.argument {
                                 // Replace "(() => { return foo() })" with "foo()"
-                                *e = ctx.ast.move_expression(argument);
+                                *e = argument.take_in(ctx.ast.allocator);
                                 return self.remove_unused_expression(e, state, ctx);
                             }
                             // Replace "(() => { return })" with ""

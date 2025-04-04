@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
@@ -224,19 +224,24 @@ impl<'a, 'b> PeepholeOptimizations {
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
-                return Some(ctx.ast.statement_if(
-                    if_stmt.span,
-                    ctx.ast.move_expression(&mut if_stmt.test),
-                    ctx.ast.move_statement(&mut if_stmt.consequent),
-                    if_stmt.alternate.as_mut().map(|alternate| ctx.ast.move_statement(alternate)),
-                ));
+                return Some(
+                    ctx.ast.statement_if(
+                        if_stmt.span,
+                        if_stmt.test.take_in(ctx.ast.allocator),
+                        if_stmt.consequent.take_in(ctx.ast.allocator),
+                        if_stmt
+                            .alternate
+                            .as_mut()
+                            .map(|alternate| alternate.take_in(ctx.ast.allocator)),
+                    ),
+                );
             }
             return Some(if boolean {
-                ctx.ast.move_statement(&mut if_stmt.consequent)
+                if_stmt.consequent.take_in(ctx.ast.allocator)
             } else {
                 if_stmt.alternate.as_mut().map_or_else(
                     || ctx.ast.statement_empty(if_stmt.span),
-                    |alternate| ctx.ast.move_statement(alternate),
+                    |alternate| alternate.take_in(ctx.ast.allocator),
                 )
             });
         }
@@ -279,10 +284,9 @@ impl<'a, 'b> PeepholeOptimizations {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
                                 .declarations
-                                .splice(0..0, ctx.ast.move_vec(&mut var_init.declarations));
+                                .splice(0..0, var_init.declarations.take_in(ctx.ast.allocator));
                         } else {
-                            var_decl =
-                                Some(ctx.ast.alloc(ctx.ast.move_variable_declaration(var_init)));
+                            var_decl = Some(var_init.take_in_box(ctx.ast.allocator));
                         }
                     }
                     Some(var_decl.map_or_else(
@@ -400,23 +404,23 @@ impl<'a, 'b> PeepholeOptimizations {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_array([
                     {
-                        let mut test = ctx.ast.move_expression(&mut expr.test);
+                        let mut test = expr.test.take_in(ctx.ast.allocator);
                         self.remove_unused_expression(&mut test, state, ctx);
                         test
                     },
-                    ctx.ast.move_expression(if v {
-                        &mut expr.consequent
+                    if v {
+                        expr.consequent.take_in(ctx.ast.allocator)
                     } else {
-                        &mut expr.alternate
-                    }),
+                        expr.alternate.take_in(ctx.ast.allocator)
+                    },
                 ]);
                 ctx.ast.expression_sequence(expr.span, exprs)
             } else {
-                let result_expr = ctx.ast.move_expression(if v {
-                    &mut expr.consequent
+                let result_expr = if v {
+                    expr.consequent.take_in(ctx.ast.allocator)
                 } else {
-                    &mut expr.alternate
-                });
+                    expr.alternate.take_in(ctx.ast.allocator)
+                };
 
                 let should_keep_as_sequence_expr =
                     Self::should_keep_indirect_access(&result_expr, ctx);

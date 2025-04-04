@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::Box;
+use oxc_allocator::{Box, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 #[cfg(feature = "regular_expression")]
@@ -651,7 +651,7 @@ impl<'a> ParserImpl<'a> {
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
             expr.expression = self.map_to_chain_expression(
                 expr.expression.span(),
-                self.ast.move_expression(&mut expr.expression),
+                expr.expression.take_in(self.ast.allocator),
             );
             Ok(Expression::TSInstantiationExpression(expr))
         } else {

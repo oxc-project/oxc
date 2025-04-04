@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -228,7 +228,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.move_expression(initializer);
+                        let mut new_initializer = initializer.take_in(ast.allocator);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,

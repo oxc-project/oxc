@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
@@ -531,7 +531,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

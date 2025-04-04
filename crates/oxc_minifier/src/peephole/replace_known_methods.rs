@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use std::borrow::Cow;
 
-use oxc_allocator::IntoIn;
+use oxc_allocator::{IntoIn, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -403,12 +403,12 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(&ctx).is_number() {
-                ctx.ast.move_expression(expr)
+                expr.take_in(ctx.ast.allocator)
             } else {
                 ctx.ast.expression_unary(
                     SPAN,
                     UnaryOperator::UnaryPlus,
-                    ctx.ast.move_expression(expr),
+                    expr.take_in(ctx.ast.allocator),
                 )
             }
         };
@@ -416,7 +416,7 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            ctx.ast.move_expression(first_arg),
+            first_arg.take_in(ctx.ast.allocator),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -626,10 +626,13 @@ impl<'a> PeepholeOptimizations {
 
         *node = ctx.ast.expression_call(
             original_span,
-            ctx.ast.move_expression(new_root_callee),
+            new_root_callee.take_in(ctx.ast.allocator),
             Option::<TSTypeParameterInstantiation>::None,
             ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.move_vec(arg)),
+                collected_arguments
+                    .into_iter()
+                    .rev()
+                    .flat_map(|arg| arg.take_in(ctx.ast.allocator)),
             ),
             false,
         );
@@ -691,13 +694,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(ctx.ast.move_expression(object))
+                    Some(object.take_in(ctx.ast.allocator))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        ctx.ast.move_expression(callee),
+                        callee.take_in(ctx.ast.allocator),
                         Option::<TSTypeParameterInstantiation>::None,
-                        ctx.ast.move_vec(args),
+                        args.take_in(ctx.ast.allocator),
                         false,
                     ))
                 } else {
@@ -974,7 +977,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.atom(&c.to_string());
                     s.raw = None;
-                    Some(ctx.ast.move_expression(object))
+                    Some(object.take_in(ctx.ast.allocator))
                 } else {
                     None
                 }

@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToInt32,
@@ -93,9 +94,9 @@ impl<'a> PeepholeOptimizations {
         loop {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
-                    let right = ctx.ast.move_expression(&mut logical_expr.left);
+                    let right = logical_expr.left.take_in(ctx.ast.allocator);
                     a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = ctx.ast.move_expression(&mut logical_expr.right);
+                    b = logical_expr.right.take_in(ctx.ast.allocator);
                     continue;
                 }
             }
@@ -152,9 +153,9 @@ impl<'a> PeepholeOptimizations {
                     _ => return None,
                 }
                 Some(if b.value {
-                    ctx.ast.move_expression(&mut e.left)
+                    e.left.take_in(ctx.ast.allocator)
                 } else {
-                    let argument = ctx.ast.move_expression(&mut e.left);
+                    let argument = e.left.take_in(ctx.ast.allocator);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
             }
@@ -249,7 +250,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
+        expr.right = logical_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
@@ -271,7 +272,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        expr.right = binary_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
