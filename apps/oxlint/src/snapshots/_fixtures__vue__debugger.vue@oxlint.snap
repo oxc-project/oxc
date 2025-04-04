@@ -13,7 +13,7 @@ working directory:
    :     ^^^^^^^^
  7 | </script>
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
     ,-[fixtures/vue/debugger.vue:11:5]
@@ -22,7 +22,7 @@ working directory:
     :     ^^^^^^^^^
  12 | </script>
     `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 99 rules using 1 threads.

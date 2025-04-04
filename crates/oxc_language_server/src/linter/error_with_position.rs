@@ -40,6 +40,7 @@ pub struct ErrorReport {
 
 #[derive(Debug, Clone)]
 pub struct FixedContent {
+    pub message: Option<String>,
     pub code: String,
     pub range: Range,
 }
