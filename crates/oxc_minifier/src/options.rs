@@ -26,10 +26,14 @@ pub struct CompressOptions {
     pub drop_console: bool,
 }
 
-#[expect(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { drop_console: false, ..Self::smallest() }
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::default(),
+            drop_debugger: true,
+            drop_console: false,
+        }
     }
 }
 

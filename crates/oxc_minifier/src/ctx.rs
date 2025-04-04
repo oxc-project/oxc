@@ -44,24 +44,29 @@ impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
 }
 
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
+    #[inline]
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
     }
 }
 
+#[inline]
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
 }
 
 impl<'a> Ctx<'a, '_> {
+    #[inline]
     fn scoping(&self) -> &Scoping {
         self.0.scoping()
     }
 
+    #[inline]
     pub fn is_global_reference(self, ident: &IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.0.scoping())
     }
 
+    #[inline]
     pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
         if e.may_have_side_effects(&self) {
             None

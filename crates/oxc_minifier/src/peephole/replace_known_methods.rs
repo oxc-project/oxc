@@ -791,7 +791,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
-        if s.contains(['\\', '`', '$', '\r']) {
+        if memchr::memchr3(b'\\', b'`', b'$', s.as_bytes()).is_some()
+            || memchr::memchr(b'\r', s.as_bytes()).is_some()
+        {
             Cow::Owned(
                 s.cow_replace("\\", "\\\\")
                     .cow_replace("`", "\\`")

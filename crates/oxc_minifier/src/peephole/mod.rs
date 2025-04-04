@@ -45,6 +45,7 @@ pub struct PeepholeOptimizations {
     /// in top level and each function. No minification code are run if the function is not changed
     /// in the previous walk.
     iteration: u8,
+    max_iterations: u8,
     prev_functions_changed: FxHashSet<ScopeId>,
     functions_changed: FxHashSet<ScopeId>,
     /// Track the current function as a stack.
@@ -58,6 +59,7 @@ impl<'a> PeepholeOptimizations {
             target,
             keep_names,
             iteration: 0,
+            max_iterations: 10,
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
             current_function: NonEmptyStack::new((ScopeId::new(0), true, false)),
@@ -69,18 +71,35 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn run_in_loop(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        // First iteration
+        self.build(program, ctx);
+
+        // Early exit if no changes were made in the first iteration
+        if self.functions_changed.is_empty() {
+            return;
+        }
+
+        self.prev_functions_changed.clear();
+        std::mem::swap(&mut self.prev_functions_changed, &mut self.functions_changed);
+        self.iteration = 1;
+
         loop {
             self.build(program, ctx);
+
+            // Exit if no more changes
             if self.functions_changed.is_empty() {
                 break;
             }
+
             self.prev_functions_changed.clear();
             std::mem::swap(&mut self.prev_functions_changed, &mut self.functions_changed);
-            if self.iteration > 10 {
-                debug_assert!(false, "Ran loop more than 10 times.");
+            self.iteration += 1;
+
+            // Check iteration limit
+            if self.iteration >= self.max_iterations {
+                debug_assert!(false, "Ran loop more than {} times.", self.max_iterations);
                 break;
             }
-            self.iteration += 1;
         }
     }
 
@@ -110,6 +129,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    #[inline]
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -119,41 +139,46 @@ impl<'a> PeepholeOptimizations {
         F: Fn(&'x A) -> Option<RetF>,
         G: Fn(&'x A) -> Option<RetG>,
     {
-        match check_a(pair.0) {
-            Some(a) => {
-                if let Some(b) = check_b(pair.1) {
-                    return Some((a, b));
-                }
-            }
-            _ => {
-                if let Some(a) = check_a(pair.1) {
-                    if let Some(b) = check_b(pair.0) {
-                        return Some((a, b));
-                    }
-                }
+        // First try left first
+        if let Some(a) = check_a(pair.0) {
+            if let Some(b) = check_b(pair.1) {
+                return Some((a, b));
             }
         }
+
+        // Then try right first
+        if let Some(a) = check_a(pair.1) {
+            if let Some(b) = check_b(pair.0) {
+                return Some((a, b));
+            }
+        }
+
         None
     }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
+    #[inline]
     fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.enter_program_or_function(program.scope_id());
     }
 
+    #[inline]
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.exit_program_or_function();
     }
 
+    #[inline]
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.enter_program_or_function(func.scope_id());
     }
 
+    #[inline]
     fn exit_function(&mut self, _: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.exit_program_or_function();
     }
 
+    #[inline]
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;
@@ -166,6 +191,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
     }
 
+    #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;
@@ -431,6 +457,7 @@ pub struct DeadCodeElimination {
 }
 
 impl<'a> DeadCodeElimination {
+    #[inline]
     pub fn new() -> Self {
         Self {
             inner: PeepholeOptimizations::new(
@@ -440,23 +467,27 @@ impl<'a> DeadCodeElimination {
         }
     }
 
+    #[inline]
     pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
 impl<'a> Traverse<'a> for DeadCodeElimination {
+    #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
         self.inner.remove_dead_code_exit_statement(stmt, &mut state, Ctx(ctx));
     }
 
+    #[inline]
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
         self.inner.remove_dead_code_exit_statements(stmts, &mut state, Ctx(ctx));
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
         self.inner.fold_constants_exit_expression(expr, &mut state, Ctx(ctx));

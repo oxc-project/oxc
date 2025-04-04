@@ -259,6 +259,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    #[inline]
     fn extract_numeric_values(e: &BinaryExpression<'a>) -> Option<(f64, f64)> {
         if let (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) =
             (&e.left, &e.right)
@@ -354,6 +355,7 @@ impl<'a> PeepholeOptimizations {
     // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1128
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     #[must_use]
+    #[inline]
     fn approximate_printed_int_char_count(value: f64) -> usize {
         let mut count = if value.is_infinite() {
             "Infinity".len()
@@ -368,6 +370,7 @@ impl<'a> PeepholeOptimizations {
         count
     }
 
+    #[inline]
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(&ctx) {
@@ -407,6 +410,7 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    #[inline]
     fn try_fold_add_op(
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
@@ -469,7 +473,7 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = first_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
+                    .map(|cooked| ctx.ast.atom(&(left_str.to_string() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast.allocator));
             }
@@ -487,6 +491,7 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    #[inline]
     fn evaluates_to_empty_string(e: &Expression<'a>) -> bool {
         match e {
             Expression::StringLiteral(s) => s.value.is_empty(),
@@ -512,21 +517,25 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        let (v, expr_to_move);
         if let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right) {
-            (v, expr_to_move) = (result, &mut left.right);
+            let expr_from_right = left.right.take_in(ctx.ast.allocator);
+            return Some(ctx.ast.expression_binary(
+                e.span,
+                expr_from_right,
+                op,
+                ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), result),
+            ));
         } else if let Some(result) = ctx.eval_binary_operation(op, &left.right, &e.right) {
-            (v, expr_to_move) = (result, &mut left.left);
-        } else {
-            return None;
+            let expr_from_left = left.left.take_in(ctx.ast.allocator);
+            return Some(ctx.ast.expression_binary(
+                e.span,
+                expr_from_left,
+                op,
+                ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), result),
+            ));
         }
 
-        Some(ctx.ast.expression_binary(
-            e.span,
-            expr_to_move.take_in(ctx.ast.allocator),
-            op,
-            ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
-        ))
+        None
     }
 
     fn try_fold_number_constructor(

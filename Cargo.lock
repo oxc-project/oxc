@@ -1921,6 +1921,7 @@ version = "0.62.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "memchr",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
