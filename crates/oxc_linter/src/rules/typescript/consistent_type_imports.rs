@@ -285,9 +285,9 @@ fn format_word_list<'a>(words: &[Cow<'a, str>]) -> Cow<'a, str> {
             let mut result = String::with_capacity(words.len() * 2);
             for (i, word) in words.iter().enumerate() {
                 if i == words.len() - 1 {
-                    let _ = write!(result, "and {word}");
+                    write!(result, "and {word}").unwrap();
                 } else {
-                    let _ = write!(result, "{word}, ");
+                    write!(result, "{word}, ").unwrap();
                 }
             }
             Cow::Owned(result)

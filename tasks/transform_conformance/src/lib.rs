@@ -155,9 +155,7 @@ impl TestRunner {
             if failed.is_empty() {
                 all_passed.push(case);
             } else {
-                snapshot.push_str("# ");
-                snapshot.push_str(&case);
-                let _ = writeln!(snapshot, " ({}/{})", passed.len(), num_of_tests);
+                writeln!(snapshot, "# {case} ({}/{})", passed.len(), num_of_tests).unwrap();
                 for test_case in failed {
                     if self.options.r#override {
                         test_case.write_override_output();

@@ -68,7 +68,7 @@ pub fn run() -> Result<(), io::Error> {
     let mut out = String::new();
 
     let width = 10;
-    let _ = writeln!(
+    writeln!(
         out,
         "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
         "",
@@ -77,8 +77,9 @@ pub fn run() -> Result<(), io::Error> {
         "Oxc",
         "ESBuild",
         width = width,
-    );
-    let _ = writeln!(
+    )
+    .unwrap();
+    writeln!(
         out,
         "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture",
         "Original",
@@ -87,7 +88,8 @@ pub fn run() -> Result<(), io::Error> {
         "gzip",
         "gzip",
         width = width,
-    );
+    )
+    .unwrap();
 
     let fixture_width = files
         .files()
