@@ -708,6 +708,17 @@ impl Scoping {
         });
     }
 
+    /// Remove a child scope from a parent scope.
+    /// # Panics
+    /// Panics if the child scope is not a child of the parent scope.
+    pub fn remove_child_scope(&mut self, scope_id: ScopeId, child_scope_id: ScopeId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let child_ids = &mut cell.scope_child_ids[scope_id.index()];
+            let index = child_ids.iter().position(|&scope_id| scope_id == child_scope_id).unwrap();
+            child_ids.swap_remove(index);
+        });
+    }
+
     /// Create a scope.
     #[inline]
     pub fn add_scope(

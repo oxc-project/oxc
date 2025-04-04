@@ -269,7 +269,6 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
             AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
                 // export namespace N {}
                 // We need to check the parent of the parent
-                continue;
             }
             _ => {
                 ctx.error(not_allowed_namespace_declaration(decl.span));
@@ -372,7 +371,7 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                         ctx.error(constructor_implementation_missing(a.key.span()));
                     } else {
                         ctx.error(function_implementation_missing(a.key.span()));
-                    };
+                    }
                 }
             }
         }

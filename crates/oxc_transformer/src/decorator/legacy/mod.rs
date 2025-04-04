@@ -47,7 +47,7 @@ mod metadata;
 
 use std::mem;
 
-use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
@@ -116,7 +116,7 @@ impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     #[inline]
@@ -340,7 +340,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 has_private_in_expression_in_decorator,
                 ctx,
             );
-        };
+        }
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If
@@ -492,7 +492,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(ctx.ast.alloc(ctx.ast.move_class(class))),
+            Expression::ClassExpression(class.take_in_box(ctx.ast.allocator)),
             alias_binding,
             ctx,
         );
@@ -938,7 +938,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
-                let right = ctx.ast.move_expression(key.to_expression_mut());
+                let right = key.to_expression_mut().take_in(ctx.ast.allocator);
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)

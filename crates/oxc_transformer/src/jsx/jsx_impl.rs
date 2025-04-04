@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, SPAN, Span};
@@ -190,7 +190,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
             let id = self.add_require_statement(var_name, self.jsx_runtime_importer, false, ctx);
             self.require_jsx = Some(id);
-        };
+        }
         self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
     }
 
@@ -261,7 +261,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsx = Some(self.add_jsx_import_statement("jsx", ctx));
-            };
+            }
         }
         self.import_jsx.as_ref().unwrap().create_read_reference(ctx)
     }
@@ -272,7 +272,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsxs = Some(self.add_jsx_import_statement("jsxs", ctx));
-            };
+            }
         }
         self.import_jsxs.as_ref().unwrap().create_read_reference(ctx)
     }
@@ -499,7 +499,7 @@ impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
         if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
             return;
         }
-        *expr = match ctx.ast.move_expression(expr) {
+        *expr = match expr.take_in(ctx.ast.allocator) {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),

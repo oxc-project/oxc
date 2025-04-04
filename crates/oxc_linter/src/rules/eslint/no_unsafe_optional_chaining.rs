@@ -183,16 +183,14 @@ impl NoUnsafeOptionalChaining {
                     Self::check_undefined_short_circuit(expr, error_type, ctx);
                 }
             }
-            Expression::ChainExpression(expr) => {
-                match error_type {
-                    ErrorType::Usage => {
-                        ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(expr.span));
-                    }
-                    ErrorType::Arithmetic => {
-                        ctx.diagnostic(no_unsafe_arithmetic_diagnostic(expr.span));
-                    }
-                };
-            }
+            Expression::ChainExpression(expr) => match error_type {
+                ErrorType::Usage => {
+                    ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(expr.span));
+                }
+                ErrorType::Arithmetic => {
+                    ctx.diagnostic(no_unsafe_arithmetic_diagnostic(expr.span));
+                }
+            },
             _ => {}
         }
     }

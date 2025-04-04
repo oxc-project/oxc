@@ -11,25 +11,26 @@ mod r#gen;
 mod operator;
 mod options;
 mod sourcemap_builder;
+mod str;
 
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
     Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
-    Statement, StringLiteral,
+    Statement,
 };
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
+    identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
 
 use crate::{
     binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    sourcemap_builder::SourcemapBuilder, str::Quote,
 };
 pub use crate::{
     context::Context,
@@ -240,12 +241,6 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.print_str(s);
-    }
-
-    /// Push `char` into the buffer.
-    #[inline]
-    pub fn print_char(&mut self, ch: char) {
-        self.code.print_char(ch);
     }
 
     /// Print a single [`Expression`], adding it to the code generator's
@@ -582,129 +577,6 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
-        self.add_source_mapping(s.span);
-
-        let quote = if self.options.minify {
-            // String length is max `u32::MAX`, so use `i64` to make overflow impossible
-            let mut single_cost: i64 = 0;
-            let mut double_cost: i64 = 0;
-            let mut backtick_cost: i64 = 0;
-            let mut bytes = s.value.as_bytes().iter().peekable();
-            while let Some(b) = bytes.next() {
-                match b {
-                    b'\n' => backtick_cost -= 1,
-                    b'\'' => single_cost += 1,
-                    b'"' => double_cost += 1,
-                    b'`' => backtick_cost += 1,
-                    b'$' => {
-                        if bytes.peek() == Some(&&b'{') {
-                            backtick_cost += 1;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            let mut quote = Quote::Double;
-            if allow_backtick && double_cost >= backtick_cost {
-                quote = Quote::Backtick;
-                if backtick_cost > single_cost {
-                    quote = Quote::Single;
-                }
-            } else if double_cost > single_cost {
-                quote = Quote::Single;
-            }
-            quote
-        } else {
-            self.quote
-        };
-
-        quote.print(self);
-        self.print_unquoted_utf16(s, quote);
-        quote.print(self);
-    }
-
-    fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: Quote) {
-        let mut chars = s.value.chars().peekable();
-
-        while let Some(c) = chars.next() {
-            match c {
-                '\x00' => {
-                    if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
-                        self.print_str("\\x00");
-                    } else {
-                        self.print_str("\\0");
-                    }
-                }
-                '\x07' => self.print_str("\\x07"),
-                '\u{8}' => self.print_str("\\b"), // \b
-                '\u{b}' => self.print_str("\\v"), // \v
-                '\u{c}' => self.print_str("\\f"), // \f
-                '\n' => {
-                    if quote == Quote::Backtick {
-                        self.print_ascii_byte(b'\n');
-                    } else {
-                        self.print_str("\\n");
-                    }
-                }
-                '\r' => self.print_str("\\r"),
-                '\x1B' => self.print_str("\\x1B"),
-                '\\' => self.print_str("\\\\"),
-                // Allow `U+2028` and `U+2029` in string literals
-                // <https://tc39.es/proposal-json-superset>
-                // <https://github.com/tc39/proposal-json-superset>
-                LS => self.print_str("\\u2028"),
-                PS => self.print_str("\\u2029"),
-                '\u{a0}' => self.print_str("\\xA0"),
-                '\'' => {
-                    if quote == Quote::Single {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'\'');
-                }
-                '\"' => {
-                    if quote == Quote::Double {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'"');
-                }
-                '`' => {
-                    if quote == Quote::Backtick {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'`');
-                }
-                '$' => {
-                    if quote == Quote::Backtick && chars.peek() == Some(&'{') {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'$');
-                }
-                '\u{FFFD}' if s.lone_surrogates => {
-                    // If `lone_surrogates` is set, string contains lone surrogates which are escaped
-                    // using the lossy replacement character (U+FFFD) as an escape marker.
-                    // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-                    let hex1 = chars.next().unwrap();
-                    let hex2 = chars.next().unwrap();
-                    let hex3 = chars.next().unwrap();
-                    let hex4 = chars.next().unwrap();
-                    if [hex1, hex2, hex3, hex4] == ['f', 'f', 'f', 'd'] {
-                        // Actual lossy replacement character
-                        self.print_char('\u{FFFD}');
-                    } else {
-                        // Lossy replacement character representing a lone surrogate
-                        self.print_str("\\u");
-                        self.print_char(hex1);
-                        self.print_char(hex2);
-                        self.print_char(hex3);
-                        self.print_char(hex4);
-                    }
-                }
-                _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
-            }
-        }
-    }
-
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
@@ -784,22 +656,5 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
-    }
-}
-
-/// Quote character.
-#[derive(Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-enum Quote {
-    Single = b'\'',
-    Double = b'"',
-    Backtick = b'`',
-}
-
-impl Quote {
-    #[inline]
-    fn print(self, codegen: &mut Codegen<'_>) {
-        // SAFETY: All variants of `Quote` are ASCII bytes
-        unsafe { codegen.code.print_byte_unchecked(self as u8) };
     }
 }

@@ -13,7 +13,7 @@ working directory:
    :     ^^^^^^^^^
  3 | 
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
 Found 1 warning and 0 errors.
 Finished in <variable>ms on 1 file with 99 rules using 1 threads.

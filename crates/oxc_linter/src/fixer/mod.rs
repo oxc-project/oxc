@@ -304,7 +304,7 @@ impl<'a> Fixer<'a> {
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
         for mut m in self.messages {
-            let Some(Fix { content, span }) = m.fix.as_ref() else {
+            let Some(Fix { content, span, .. }) = m.fix.as_ref() else {
                 filtered_messages.push(m);
                 continue;
             };
@@ -399,16 +399,23 @@ mod test {
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
-    const INSERT_AT_END: Fix = Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end") };
-    const INSERT_AT_START: Fix = Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start") };
-    const INSERT_AT_MIDDLE: Fix = Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *") };
-    const REPLACE_ID: Fix = Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo") };
-    const REPLACE_VAR: Fix = Fix { span: Span::new(0, 3), content: Cow::Borrowed("let") };
-    const REPLACE_NUM: Fix = Fix { span: Span::new(13, 14), content: Cow::Borrowed("5") };
+    const INSERT_AT_END: Fix =
+        Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end"), message: None };
+    const INSERT_AT_START: Fix =
+        Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start"), message: None };
+    const INSERT_AT_MIDDLE: Fix =
+        Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *"), message: None };
+    const REPLACE_ID: Fix =
+        Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo"), message: None };
+    const REPLACE_VAR: Fix =
+        Fix { span: Span::new(0, 3), content: Cow::Borrowed("let"), message: None };
+    const REPLACE_NUM: Fix =
+        Fix { span: Span::new(13, 14), content: Cow::Borrowed("5"), message: None };
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix = Fix { span: Span::new(3, 0), content: Cow::Borrowed(" ") };
+    const REVERSE_RANGE: Fix =
+        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult {
         Fixer::new(TEST_CODE, messages).fix()

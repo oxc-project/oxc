@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
@@ -72,7 +72,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
-            *expr = ctx.ast.move_expression(&mut paren_expr.expression);
+            *expr = paren_expr.expression.take_in(ctx.ast.allocator);
         }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
@@ -143,7 +143,7 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = ctx.ast.move_statement(stmt) else { return };
+        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx.ast.allocator) else { return };
         let while_stmt = while_stmt.unbox();
         let for_stmt = ctx.ast.alloc_for_statement_with_scope_id(
             while_stmt.span,

@@ -429,7 +429,7 @@ pub fn check_function_declaration<'a>(
         } else if !is_if_stmt_or_labeled_stmt {
             ctx.error(function_declaration_non_strict(decl.span));
         }
-    };
+    }
 }
 
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
@@ -446,7 +446,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
                 match kind {
                     // Nested labeled statement
-                    AstKind::LabeledStatement(_) => continue,
+                    AstKind::LabeledStatement(_) => {}
                     AstKind::ForOfStatement(_)
                     | AstKind::ForInStatement(_)
                     | AstKind::ForStatement(_)
@@ -460,7 +460,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             }
             ctx.error(function_declaration_non_strict(decl.span));
         }
-    };
+    }
 }
 
 // It is a Syntax Error if any element of the LexicallyDeclaredNames of
@@ -890,7 +890,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
                     ctx.error(unexpected_super_call(super_call_span));
                 }
                 return;
-            };
+            }
         }
 
         // ModuleBody : ModuleItemList

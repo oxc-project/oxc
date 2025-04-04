@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString};
+use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -176,7 +176,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
             Some(ctx.ast.expression_yield(
                 SPAN,
                 false,
-                Some(ctx.ast.move_expression(&mut expr.argument)),
+                Some(expr.argument.take_in(ctx.ast.allocator)),
             ))
         } else {
             None
@@ -302,7 +302,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
-        let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut wrapper_function.params));
+        let params = wrapper_function.params.take_in_box(ctx.ast.allocator);
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -390,7 +390,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         // Construct the IIFE
         let callee =
-            Expression::FunctionExpression(ctx.alloc(ctx.ast.move_function(wrapper_function)));
+            Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast.allocator));
         ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -465,30 +465,25 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = ctx.ast.move_function_body(&mut arrow.body);
+        let mut body = arrow.body.take_in_box(ctx.ast.allocator);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => ctx.ast.move_expression(&mut es.expression),
+                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast.allocator),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut arrow.params));
+        let params = arrow.params.take_in_box(ctx.ast.allocator);
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
 
         if function_name.is_none() && !Self::is_function_length_affected(&params) {
-            return self.create_async_to_generator_call(
-                params,
-                ctx.alloc(body),
-                generator_function_id,
-                ctx,
-            );
+            return self.create_async_to_generator_call(params, body, generator_function_id, ctx);
         }
 
         let wrapper_scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -523,7 +518,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let statement = self.create_async_to_generator_declaration(
                 &bound_ident,
                 params,
-                ctx.alloc(body),
+                body,
                 generator_function_id,
                 ctx,
             );

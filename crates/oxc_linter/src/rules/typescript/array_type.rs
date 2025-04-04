@@ -316,7 +316,7 @@ fn check_and_report_error_array(
     let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
     let type_params = &ts_type_reference.type_arguments;
 
-    if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
+    if type_params.is_none() || type_params.as_ref().unwrap().params.is_empty() {
         let diagnostic = match config {
             ArrayOption::Array => array(readonly_prefix, class_name, "any", ts_type_reference.span),
             _ => array_simple(

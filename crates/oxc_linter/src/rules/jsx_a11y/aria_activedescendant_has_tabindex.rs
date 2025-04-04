@@ -63,13 +63,13 @@ impl Rule for AriaActivedescendantHasTabindex {
 
         if has_jsx_prop_ignore_case(jsx_opening_el, "aria-activedescendant").is_none() {
             return;
-        };
+        }
 
         let element_type = get_element_type(ctx, jsx_opening_el);
 
         if !HTML_TAG.contains(&element_type) {
             return;
-        };
+        }
 
         if let Some(JSXAttributeItem::Attribute(tab_index_attr)) =
             has_jsx_prop_ignore_case(jsx_opening_el, "tabIndex")

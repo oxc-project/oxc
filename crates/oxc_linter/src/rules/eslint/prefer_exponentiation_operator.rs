@@ -43,7 +43,7 @@ impl Rule for PreferExponentiationOperator {
 
         if !is_method_call(call_expr, None, Some(&["pow"]), Some(2), Some(2)) {
             return;
-        };
+        }
 
         let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
@@ -75,7 +75,7 @@ impl Rule for PreferExponentiationOperator {
                 }
             }
             _ => {}
-        };
+        }
     }
 }
 

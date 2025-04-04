@@ -546,23 +546,18 @@ fn clean_interned(
                     match element {
                         FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
                             condition_content_stack.push(condition.clone());
-                            continue;
                         }
                         FormatElement::Tag(Tag::EndConditionalContent) => {
                             condition_content_stack.pop();
-                            continue;
                         }
                         // All content within an expanded conditional gets dropped. If there's a
                         // matching flat variant, that will still get kept.
                         _ if condition_content_stack
                             .iter()
                             .last()
-                            .is_some_and(|condition| condition.mode == PrintMode::Expanded) =>
-                        {
-                            continue;
-                        }
+                            .is_some_and(|condition| condition.mode == PrintMode::Expanded) => {}
 
-                        FormatElement::Line(LineMode::Soft) => continue,
+                        FormatElement::Line(LineMode::Soft) => {}
                         FormatElement::Line(LineMode::SoftOrSpace) => {
                             cleaned.push(FormatElement::Space);
                         }
@@ -581,7 +576,7 @@ fn clean_interned(
                             most_flat.iter().rev().for_each(|element| element_stack.push(element));
                         }
                         element => cleaned.push(element.clone()),
-                    };
+                    }
                 }
 
                 Interned::new(cleaned)
@@ -610,9 +605,9 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
                 }
                 // All content within an expanded conditional gets dropped. If there's a
                 // matching flat variant, that will still get kept.
-                _ if self.is_in_expanded_conditional_content() => continue,
+                _ if self.is_in_expanded_conditional_content() => {}
 
-                FormatElement::Line(LineMode::Soft) => continue,
+                FormatElement::Line(LineMode::Soft) => {}
                 FormatElement::Line(LineMode::SoftOrSpace) => {
                     self.inner.write_element(FormatElement::Space)?;
                 }

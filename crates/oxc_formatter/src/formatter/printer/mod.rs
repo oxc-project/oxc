@@ -203,7 +203,7 @@ impl<'a> Printer<'a> {
                 match mode {
                     DedentMode::Level => indent_stack.start_dedent(),
                     DedentMode::Root => indent_stack.reset_indent(),
-                };
+                }
                 stack.push(TagKind::Dedent, args);
             }
 
@@ -281,10 +281,10 @@ impl<'a> Printer<'a> {
                 match mode {
                     DedentMode::Level => indent_stack.end_dedent(),
                     DedentMode::Root => indent_stack.pop(),
-                };
+                }
                 stack.pop(tag.kind())?;
             }
-        };
+        }
 
         Ok(())
     }
@@ -930,8 +930,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     if predicate.is_end(element)? {
                         break;
                     }
-
-                    continue;
                 }
             }
         }
@@ -1102,7 +1100,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 match mode {
                     DedentMode::Level => self.indent_stack.start_dedent(),
                     DedentMode::Root => self.indent_stack.reset_indent(),
-                };
+                }
                 self.stack.push(TagKind::Dedent, args);
             }
 

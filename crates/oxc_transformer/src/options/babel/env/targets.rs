@@ -48,7 +48,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     // TODO: Implement `Version::from_number`
                     if matches!(value, BabelTargetsValue::Int(_) | BabelTargetsValue::Float(_)) {
                         continue;
-                    };
+                    }
                     let BabelTargetsValue::String(v) = value else {
                         return Err(format!("{value:?} is not a string for {key}."));
                     };

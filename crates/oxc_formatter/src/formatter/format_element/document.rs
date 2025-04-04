@@ -596,7 +596,7 @@ impl FormatElements for [FormatElement] {
                 element if ignore_depth == 0 && element.will_break() => {
                     return true;
                 }
-                _ => continue,
+                _ => {}
             }
         }
 
@@ -628,7 +628,7 @@ impl FormatElements for [FormatElement] {
                 element if ignore_depth == 0 && element.may_directly_break() => {
                     return true;
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

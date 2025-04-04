@@ -169,7 +169,7 @@ fn get_accessible_text<'a, 'b>(
     if let Some(aria_label) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "aria-label") {
         if let Some(label_text) = get_string_literal_prop_value(aria_label) {
             return Some(Cow::Borrowed(label_text));
-        };
+        }
     }
 
     let name = get_element_type(ctx, &jsx_el.opening_element);
@@ -177,8 +177,8 @@ fn get_accessible_text<'a, 'b>(
         if let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt") {
             if let Some(text) = get_string_literal_prop_value(alt_text) {
                 return Some(Cow::Borrowed(text));
-            };
-        };
+            }
+        }
     }
 
     if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {

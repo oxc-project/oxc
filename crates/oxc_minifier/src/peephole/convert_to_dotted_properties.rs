@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
 
@@ -18,10 +19,13 @@ impl<'a> LatePeepholeOptimizations {
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
-            let object = ctx.ast.move_expression(&mut e.object);
-            *expr = MemberExpression::StaticMemberExpression(
-                ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
-            );
+            *expr =
+                MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                    e.span,
+                    e.object.take_in(ctx.ast.allocator),
+                    property,
+                    e.optional,
+                ));
             return;
         }
         let v = s.value.as_str();

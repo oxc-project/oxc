@@ -106,6 +106,7 @@ export interface ObjectProperty extends Span {
   key: PropertyKey;
   value: Expression;
   kind: PropertyKind;
+  optional?: false;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
@@ -522,6 +523,7 @@ export interface AssignmentPattern extends Span {
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
   properties: Array<BindingProperty | BindingRestElement>;
+  decorators?: [];
 }
 
 export interface BindingProperty extends Span {
@@ -532,6 +534,7 @@ export interface BindingProperty extends Span {
   key: PropertyKey;
   value: BindingPattern;
   kind: 'init';
+  optional?: false;
 }
 
 export interface ArrayPattern extends Span {
@@ -691,6 +694,10 @@ export interface AccessorProperty extends Span {
   definite?: boolean;
   typeAnnotation?: TSTypeAnnotation | null;
   accessibility?: TSAccessibility | null;
+  optional?: false;
+  override?: false;
+  readonly?: false;
+  declare?: false;
 }
 
 export interface ImportExpression extends Span {
@@ -748,6 +755,7 @@ export interface ExportNamedDeclaration extends Span {
 export interface ExportDefaultDeclaration extends Span {
   type: 'ExportDefaultDeclaration';
   declaration: ExportDefaultDeclarationKind;
+  exportKind?: 'value';
 }
 
 export interface ExportAllDeclaration extends Span {
@@ -928,9 +936,14 @@ export interface TSThisParameter extends Span {
 export interface TSEnumDeclaration extends Span {
   type: 'TSEnumDeclaration';
   id: BindingIdentifier;
-  members: Array<TSEnumMember>;
+  body: TSEnumBody;
   const: boolean;
   declare: boolean;
+}
+
+export interface TSEnumBody extends Span {
+  type: 'TSEnumBody';
+  members: TSEnumMember[];
 }
 
 export interface TSEnumMember extends Span {
@@ -1308,7 +1321,6 @@ export interface TSImportType extends Span {
   options: ObjectExpression | null;
   qualifier: TSTypeName | null;
   typeArguments: TSTypeParameterInstantiation | null;
-  isTypeOf: boolean;
 }
 
 export interface TSFunctionType extends Span {
@@ -1472,7 +1484,7 @@ export interface Span {
   end: number;
 }
 
-export type ModuleKind = 'script' | 'module' | 'unambiguous';
+export type ModuleKind = 'script' | 'module';
 
 export interface Pattern extends Span {
   type: 'Pattern';

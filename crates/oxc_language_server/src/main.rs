@@ -264,11 +264,21 @@ impl LanguageServer for Backend {
                 }
 
                 if let Some(fixed_content) = &report.fixed_content {
+                    // 1) Use `fixed_content.message` if it exists
+                    // 2) Try to parse the report diagnostic message
+                    // 3) Fallback to "Fix this problem"
+                    let title = match fixed_content.message.clone() {
+                        Some(msg) => msg,
+                        None => {
+                            if let Some(code) = report.diagnostic.message.split(':').next() {
+                                format!("Fix this {code} problem")
+                            } else {
+                                "Fix this problem".to_string()
+                            }
+                        }
+                    };
                     code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                        title: report.diagnostic.message.split(':').next().map_or_else(
-                            || "Fix this problem".into(),
-                            |s| format!("Fix this {s} problem"),
-                        ),
+                        title,
                         kind: Some(if is_source_fix_all_oxc {
                             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
                         } else {

@@ -101,6 +101,7 @@
 
 use std::iter;
 
+use oxc_allocator::TakeIn;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
@@ -589,7 +590,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = ctx.ast.move_expression(expr);
+        let super_call = expr.take_in(ctx.ast.allocator);
         *expr = ctx.ast.expression_call(
             span,
             Expression::from(ctx.ast.member_expression_static(

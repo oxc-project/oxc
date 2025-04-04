@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsInt32OrUint32};
 use oxc_span::GetSpan;
@@ -34,7 +35,7 @@ impl<'a> PeepholeOptimizations {
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
                 if let Expression::UnaryExpression(u2) = &mut u1.argument {
                     if u2.operator.is_not() {
-                        let mut e = ctx.ast.move_expression(&mut u2.argument);
+                        let mut e = u2.argument.take_in(ctx.ast.allocator);
                         self.try_fold_expr_in_boolean_context(&mut e, ctx);
                         *expr = e;
                         return true;
@@ -46,7 +47,7 @@ impl<'a> PeepholeOptimizations {
                     && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
                     && e.left.is_int32_or_uint32(&ctx) =>
             {
-                let argument = ctx.ast.move_expression(&mut e.left);
+                let argument = e.left.take_in(ctx.ast.allocator);
                 *expr = if matches!(
                     e.operator,
                     BinaryOperator::StrictInequality | BinaryOperator::Inequality
@@ -65,7 +66,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(&ctx) == Some(true) {
-                    *expr = ctx.ast.move_expression(&mut e.left);
+                    *expr = e.left.take_in(ctx.ast.allocator);
                     return true;
                 }
             }
@@ -75,7 +76,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(&ctx) == Some(false) {
-                    *expr = ctx.ast.move_expression(&mut e.left);
+                    *expr = e.left.take_in(ctx.ast.allocator);
                     return true;
                 }
             }
@@ -84,8 +85,8 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
                 if let Some(boolean) = e.consequent.get_side_free_boolean_value(&ctx) {
-                    let right = ctx.ast.move_expression(&mut e.alternate);
-                    let left = ctx.ast.move_expression(&mut e.test);
+                    let right = e.alternate.take_in(ctx.ast.allocator);
+                    let left = e.test.take_in(ctx.ast.allocator);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
@@ -98,8 +99,8 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(&ctx) {
-                    let left = ctx.ast.move_expression(&mut e.test);
-                    let right = ctx.ast.move_expression(&mut e.consequent);
+                    let left = e.test.take_in(ctx.ast.allocator);
+                    let right = e.consequent.take_in(ctx.ast.allocator);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"

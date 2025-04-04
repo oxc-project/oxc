@@ -791,7 +791,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         }
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+            if template.expressions.is_empty() && template.quasis.len() == 1 {
                 if let Some(cooked) = &template.quasis[0].value.cooked {
                     return Some(Cow::Borrowed(cooked.as_str()));
                 }

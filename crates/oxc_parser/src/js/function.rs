@@ -146,14 +146,14 @@ impl<'a> ParserImpl<'a> {
                     FunctionType::FunctionDeclaration
                 }
             }
-            FunctionKind::Expression { .. } => {
+            FunctionKind::Expression => {
                 if body.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
                     FunctionType::FunctionExpression
                 }
             }
-            FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
+            FunctionKind::TSDeclaration => FunctionType::TSDeclareFunction,
         };
 
         if FunctionType::TSDeclareFunction == function_type

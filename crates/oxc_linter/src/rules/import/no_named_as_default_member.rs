@@ -107,7 +107,7 @@ impl Rule for NoNamedAsDefaultMember {
 
         if has_members_map.is_empty() {
             return;
-        };
+        }
         let get_external_module_name_if_has_entry =
             |ident: &IdentifierReference, entry_name: &str| {
                 get_symbol_id_from_ident(ctx, ident)
@@ -139,7 +139,7 @@ impl Rule for NoNamedAsDefaultMember {
                     prop_str,
                     module_name.name(),
                 ));
-            };
+            }
         };
 
         for item in ctx.nodes() {

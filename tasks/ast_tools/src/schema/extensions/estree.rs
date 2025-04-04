@@ -63,6 +63,7 @@ pub struct ESTreeStructField {
 /// Configuration for ESTree generator on an enum variant.
 #[derive(Default, Debug)]
 pub struct ESTreeEnumVariant {
+    pub skip: bool,
     pub rename: Option<String>,
     pub via: Option<String>,
     pub is_ts: bool,

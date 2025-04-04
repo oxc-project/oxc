@@ -63,7 +63,7 @@ impl Rule for NoZeroFractions {
         };
         if fmt == raw {
             return;
-        };
+        }
 
         ctx.diagnostic_with_fix(
             if is_dangling_dot {

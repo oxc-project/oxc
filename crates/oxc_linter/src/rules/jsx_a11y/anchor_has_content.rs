@@ -79,7 +79,7 @@ impl Rule for AnchorHasContent {
                 for attr in ["title", "aria-label"] {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, attr).is_some() {
                         return;
-                    };
+                    }
                 }
 
                 let diagnostic = missing_content(jsx_el.span);

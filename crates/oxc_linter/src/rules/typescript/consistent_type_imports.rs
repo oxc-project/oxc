@@ -1,4 +1,4 @@
-use std::{borrow::Cow, error::Error, ops::Deref};
+use std::{borrow::Cow, error::Error, fmt::Write, ops::Deref};
 
 use itertools::Itertools;
 use oxc_ast::{
@@ -285,9 +285,9 @@ fn format_word_list<'a>(words: &[Cow<'a, str>]) -> Cow<'a, str> {
             let mut result = String::with_capacity(words.len() * 2);
             for (i, word) in words.iter().enumerate() {
                 if i == words.len() - 1 {
-                    result.push_str(&format!("and {word}"));
+                    let _ = write!(result, "and {word}");
                 } else {
-                    result.push_str(&format!("{word}, "));
+                    let _ = write!(result, "{word}, ");
                 }
             }
             Cow::Owned(result)

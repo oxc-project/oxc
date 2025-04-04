@@ -20,7 +20,7 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     );
     if result != TestResult::Passed {
         return result;
-    };
+    }
 
     let result = Driver { codegen: true, remove_whitespace: true, ..Driver::default() }
         .idempotency("Minify", source_text, source_type);

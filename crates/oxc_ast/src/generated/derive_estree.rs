@@ -16,17 +16,7 @@ use crate::ast::ts::*;
 
 impl ESTree for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("Program"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &self.directives, after: &self.body },
-        );
-        self.source_type.serialize(FlatStructSerializer(&mut state));
-        state.serialize_field("hashbang", &self.hashbang);
-        state.end();
+        crate::serialize::ProgramConverter(self).serialize(serializer)
     }
 }
 
@@ -244,6 +234,7 @@ impl ESTree for ObjectProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -341,7 +332,7 @@ impl ESTree for TemplateElement<'_> {
         state.serialize_field("type", &JsonSafeString("TemplateElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("value", &self.value);
+        state.serialize_field("value", &crate::serialize::TemplateElementValue(self));
         state.serialize_field("tail", &self.tail);
         state.end();
     }
@@ -1294,6 +1285,7 @@ impl ESTree for ObjectPattern<'_> {
             "properties",
             &AppendTo { array: &self.properties, after: &self.rest },
         );
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.end();
     }
 }
@@ -1310,6 +1302,7 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &crate::serialize::Init(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -1634,6 +1627,10 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("override", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("readonly", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("declare", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -1776,6 +1773,7 @@ impl ESTree for ExportDefaultDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declaration", &self.declaration);
+        state.serialize_ts_field("exportKind", &crate::serialize::TsValue(self));
         state.end();
     }
 }
@@ -2296,7 +2294,7 @@ impl ESTree for TSEnumDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("members", &self.members);
+        state.serialize_field("body", &crate::serialize::TSEnumDeclarationBody(self));
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
         state.end();
@@ -3119,7 +3117,6 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
     }
 }

@@ -87,7 +87,7 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
@@ -381,7 +381,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = ctx.ast.move_expression(&mut logical.right);
+                    let right = logical.right.take_in(ctx.ast.allocator);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,
@@ -457,7 +457,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     return Self::global_object(ctx);
                 }
                 _ => {}
-            };
+            }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
             if matches!(&serialized_constituent, Expression::Identifier(ident) if ident.name == "Object")

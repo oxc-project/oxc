@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, TakeIn, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -100,86 +100,6 @@ impl<'a> AstBuilder<'a> {
             Cow::Owned(s) => self.atom(s),
         }
     }
-
-    /// Replace [`Expression`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
-        expr.take_in(self.allocator)
-    }
-
-    /// Replace [`Statement`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
-        stmt.take_in(self.allocator)
-    }
-
-    /// Replace [`AssignmentTarget`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        target.take_in(self.allocator)
-    }
-
-    /// Replace [`PropertyKey`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_property_key(self, key: &mut PropertyKey<'a>) -> PropertyKey<'a> {
-        key.take_in(self.allocator)
-    }
-
-    /// Replace [`Declaration`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_declaration(self, decl: &mut Declaration<'a>) -> Declaration<'a> {
-        decl.take_in(self.allocator)
-    }
-
-    /// Replace [`VariableDeclaration`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_variable_declaration(
-        self,
-        decl: &mut VariableDeclaration<'a>,
-    ) -> VariableDeclaration<'a> {
-        decl.take_in(self.allocator)
-    }
-
-    /// Replace [`FormalParameters`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
-        params.take_in(self.allocator)
-    }
-
-    /// Replace [`FunctionBody`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
-        body.take_in(self.allocator)
-    }
-
-    /// Replace [`Function`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
-        function.take_in(self.allocator)
-    }
-
-    /// Replace [`Class`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_class(self, class: &mut Class<'a>) -> Class<'a> {
-        class.take_in(self.allocator)
-    }
-
-    /// Replace [`ArrayExpressionElement`] with a dummy node, and return the original.
-    #[inline]
-    pub fn move_array_expression_element(
-        self,
-        element: &mut ArrayExpressionElement<'a>,
-    ) -> ArrayExpressionElement<'a> {
-        element.take_in(self.allocator)
-    }
-
-    /// Replace [`Vec`] with an empty [`Vec`], and return the original.
-    #[inline]
-    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
-        vec.take_in(self.allocator)
-    }
-
-    /* ---------- Constructors ---------- */
 
     /// `0`
     #[inline]

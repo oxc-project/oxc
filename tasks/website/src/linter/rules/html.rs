@@ -61,8 +61,7 @@ impl HtmlWriter {
     ///
     /// - `tag`:   The HTML tag name
     /// - `attrs`: Raw `attr="value"` string to insert into the opening tag
-    /// - `inner`: A closure that produces content to render in between the opening and closing
-    ///            tags
+    /// - `inner`: A closure that produces content to render in between the opening and closing tags
     pub fn html<F>(&self, tag: &'static str, attrs: &str, inner: F) -> fmt::Result
     where
         F: FnOnce(&Self) -> fmt::Result,

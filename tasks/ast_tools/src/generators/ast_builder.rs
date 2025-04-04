@@ -295,7 +295,7 @@ fn get_struct_params<'s>(
             };
             if is_default {
                 has_default_fields = true;
-            };
+            }
 
             let generic_ident = match type_def {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {

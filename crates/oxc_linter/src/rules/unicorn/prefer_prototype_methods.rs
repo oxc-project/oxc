@@ -68,7 +68,7 @@ impl Rule for PreferPrototypeMethods {
             Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
             Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
             _ => return,
-        };
+        }
 
         let mut method_expr: Option<&Expression> = None;
 

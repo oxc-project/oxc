@@ -108,7 +108,7 @@ pub struct ScientificNotation<'a> {
 impl PartialEq for ScientificNotation<'_> {
     fn eq(&self, other: &Self) -> bool {
         if self.int == other.int && self.frac == other.frac {
-            if self.int == "0" && self.frac == "" {
+            if self.int == "0" && self.frac.is_empty() {
                 return true;
             }
             return self.exp == other.exp;

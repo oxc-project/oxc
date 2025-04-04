@@ -181,6 +181,9 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         },
         // `#[estree]` attr on enum variant
         AttrLocation::EnumVariant(enum_def, variant_index) => match part {
+            AttrPart::Tag("skip") => {
+                enum_def.variants[variant_index].estree.skip = true;
+            }
             AttrPart::String("rename", value) => {
                 enum_def.variants[variant_index].estree.rename = Some(value);
             }
@@ -504,6 +507,13 @@ impl<'s> StructSerializerGenerator<'s> {
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let match_branches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
+
+        if should_skip_enum_variant(variant) {
+            return quote! {
+                Self::#variant_ident => { unreachable!("This enum variant is skipped.") }
+            };
+        }
+
         if variant.is_fieldless() {
             let value = get_fieldless_variant_value(enum_def, variant);
             let value = string_to_tokens(value.as_ref(), false);
@@ -561,6 +571,15 @@ pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
             _ => false,
         }
     }
+}
+
+/// Get if an enum variant should be skipped when serializing.
+///
+/// Returns `true` if the variant has an `#[estree(skip)]` attr on it.
+///
+/// This function also used by Typescript and raw transfer generators.
+pub fn should_skip_enum_variant(variant: &VariantDef) -> bool {
+    variant.estree.skip
 }
 
 /// Get if should flatten a struct field.
