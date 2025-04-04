@@ -66,10 +66,10 @@ impl Rule for NoStaticOnlyClass {
         if class.super_class.is_some() {
             return;
         }
-        if class.decorators.len() > 0 {
+        if !class.decorators.is_empty() {
             return;
         }
-        if class.body.body.len() == 0 {
+        if class.body.body.is_empty() {
             return;
         }
         if class.body.body.iter().any(|node| {

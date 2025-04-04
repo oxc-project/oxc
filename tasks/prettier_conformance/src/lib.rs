@@ -4,7 +4,10 @@ mod ignore_list;
 pub mod options;
 mod spec;
 
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Write,
+    path::{Path, PathBuf},
+};
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
@@ -86,13 +89,14 @@ impl TestRunner {
             total_failed_file_count += failed_test_files.len();
 
             for (path, (failed, passed, ratio)) in failed_test_files {
-                failed_reports.push_str(&format!(
-                    "| {} | {}{} | {:.2}% |\n",
+                let _ = writeln!(
+                    failed_reports,
+                    "| {} | {}{} | {:.2}% |",
                     path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
                     "💥".repeat(failed),
                     "✨".repeat(passed),
                     ratio * 100.0
-                ));
+                );
             }
         }
 

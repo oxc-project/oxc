@@ -61,7 +61,8 @@ impl<'a> AstroPartialLoader<'a> {
             let js_start;
             let js_end;
             // find opening "<script"
-            if let Some(offset) = script_start_finder.find(self.source_text[pointer..].as_bytes()) {
+            if let Some(offset) = script_start_finder.find(&self.source_text.as_bytes()[pointer..])
+            {
                 pointer += offset + SCRIPT_START.len();
             } else {
                 break;
@@ -78,7 +79,7 @@ impl<'a> AstroPartialLoader<'a> {
                 js_end = pointer;
             // find "</script>" if no self closing tag was found
             } else if let Some(offset) =
-                script_end_finder.find(self.source_text[pointer..].as_bytes())
+                script_end_finder.find(&self.source_text.as_bytes()[pointer..])
             {
                 js_end = pointer + offset;
                 pointer += offset + SCRIPT_END.len();

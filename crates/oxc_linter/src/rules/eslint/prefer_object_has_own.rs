@@ -105,7 +105,7 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
     let object = node.object().get_inner_expression();
 
     if let Expression::ObjectExpression(object_expr) = object {
-        return object_expr.properties.len() == 0;
+        return object_expr.properties.is_empty();
     }
 
     let object_node_to_check = match object.get_member_expr() {

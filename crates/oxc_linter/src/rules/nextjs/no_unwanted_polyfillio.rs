@@ -128,7 +128,7 @@ impl Rule for NoUnwantedPolyfillio {
             }
         }
 
-        if jsx_el.attributes.len() == 0 {
+        if jsx_el.attributes.is_empty() {
             return;
         }
 

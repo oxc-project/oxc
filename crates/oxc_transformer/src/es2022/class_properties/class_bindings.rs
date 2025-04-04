@@ -15,11 +15,11 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 ///   e.g. `C = class { static x = 1; }`
 /// * Class declaration has static properties and one of the static prop's initializers contains:
 ///   a. `this`
-///      e.g. `class C { static x = this; }`
+///   e.g. `class C { static x = this; }`
 ///   b. Reference to class name
-///      e.g. `class C { static x = C; }`
+///   e.g. `class C { static x = C; }`
 ///   c. A private field referring to one of the class's static private props.
-///      e.g. `class C { static #x; static y = obj.#x; }`
+///   e.g. `class C { static #x; static y = obj.#x; }`
 ///
 /// The logic for when transpiled private fields use a reference to class name or class temp var
 /// is unfortunately rather complicated.

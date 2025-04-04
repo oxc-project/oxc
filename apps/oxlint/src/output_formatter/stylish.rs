@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -70,7 +72,7 @@ fn format_stylish(diagnostics: &[Error]) -> String {
             .max()
             .unwrap_or(0);
 
-        output.push_str(&format!("\n\u{1b}[4m{filename}\u{1b}[0m\n"));
+        let _ = write!(output, "\n\u{1b}[4m{filename}\u{1b}[0m\n");
 
         for diagnostic in diagnostics {
             match diagnostic.severity() {
@@ -87,8 +89,9 @@ fn format_stylish(diagnostics: &[Error]) -> String {
             let info = Info::new(diagnostic);
             let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
             let position = format!("{}:{}", info.start.line, info.start.column);
-            output.push_str(
-                &format!("  \u{1b}[2m{position:max_len_width$}\u{1b}[0m  {severity_str}  {diagnostic}  \u{1b}[2m{rule}\u{1b}[0m\n"),
+            let _ = writeln!(
+                output,
+                "  \u{1b}[2m{position:max_len_width$}\u{1b}[0m  {severity_str}  {diagnostic}  \u{1b}[2m{rule}\u{1b}[0m"
             );
         }
     }
@@ -96,12 +99,13 @@ fn format_stylish(diagnostics: &[Error]) -> String {
     let total = total_errors + total_warnings;
     if total > 0 {
         let summary_color = if total_errors > 0 { "\u{1b}[31m" } else { "\u{1b}[33m" };
-        output.push_str(&format!(
-            "\n{summary_color}✖ {total} problem{} ({total_errors} error{}, {total_warnings} warning{})\u{1b}[0m\n",
+        let _ = writeln!(
+            output,
+            "\n{summary_color}✖ {total} problem{} ({total_errors} error{}, {total_warnings} warning{})\u{1b}[0m",
             if total == 1 { "" } else { "s" },
             if total_errors == 1 { "" } else { "s" },
             if total_warnings == 1 { "" } else { "s" }
-        ));
+        );
     }
 
     output

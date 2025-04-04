@@ -162,6 +162,7 @@ impl IsolatedLintHandler {
                 .into_iter()
                 .map(|msg| {
                     let fixed_content = msg.fix.map(|f| FixedContent {
+                        message: f.message.map(|m| m.to_string()),
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(

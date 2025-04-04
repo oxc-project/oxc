@@ -121,7 +121,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics.length, 1);
     assert(typeof diagnostics[0].code == 'object');
     strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Delete this code.');
+    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Remove the debugger statement');
     strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
     strictEqual(diagnostics[0].range.start.line, 0);
     strictEqual(diagnostics[0].range.start.character, 8);
@@ -159,7 +159,7 @@ suite('E2E Diagnostics', () => {
       [
         {
           isPreferred: true,
-          title: 'Fix this `debugger` statement is not allowed\nhelp problem',
+          title: 'Remove the debugger statement',
         },
         {
           isPreferred: false,
@@ -189,7 +189,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics.length, 1);
     assert(typeof diagnostics[0].code == 'object');
     strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Delete this code.');
+    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Remove the debugger statement');
     strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
     strictEqual(diagnostics[0].range.start.line, 0);
     strictEqual(diagnostics[0].range.start.character, 8);

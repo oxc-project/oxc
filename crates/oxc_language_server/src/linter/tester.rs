@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use oxc_linter::Linter;
 use tower_lsp::lsp_types::{CodeDescription, NumberOrString, Url};
 
@@ -29,10 +31,8 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                 .enumerate()
                 .map(|(i, info)| {
                     let mut result = String::new();
-                    result.push_str(&format!(
-                        "related_information[{}].message: {:?}",
-                        i, info.message
-                    ));
+                    let _ =
+                        write!(result, "related_information[{}].message: {:?}", i, info.message);
                     // replace everything between `file://` and `oxc_language_server` with `<variable>`, to avoid
                     // the absolute path causing snapshot test failures in different environments
                     let mut location = info.location.uri.to_string();
@@ -46,13 +46,13 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                         "<variable>",
                     );
 
-                    result.push_str(&format!(
-                        "\nrelated_information[{i}].location.uri: {location:?}",
-                    ));
-                    result.push_str(&format!(
+                    let _ =
+                        write!(result, "\nrelated_information[{i}].location.uri: {location:?}",);
+                    let _ = write!(
+                        result,
                         "\nrelated_information[{}].location.range: {:?}",
                         i, info.location.range
-                    ));
+                    );
                     result
                 })
                 .collect::<Vec<_>>()

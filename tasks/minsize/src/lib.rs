@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 use std::{
+    fmt::Write as _,
     fs::{self, File},
     io::{self, Write},
     path::Path,
@@ -67,24 +68,26 @@ pub fn run() -> Result<(), io::Error> {
     let mut out = String::new();
 
     let width = 10;
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |\n",
+    let _ = writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
         "",
         "Oxc",
         "ESBuild",
         "Oxc",
         "ESBuild",
         width = width,
-    ));
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture\n",
+    );
+    let _ = writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture",
         "Original",
         "minified",
         "minified",
         "gzip",
         "gzip",
         width = width,
-    ));
+    );
 
     let fixture_width = files
         .files()

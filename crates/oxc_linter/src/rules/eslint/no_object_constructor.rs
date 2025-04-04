@@ -64,7 +64,7 @@ impl Rule for NoObjectConstructor {
 
         if ident.name == "Object"
             && ctx.is_reference_to_global_variable(ident)
-            && arguments.len() == 0
+            && arguments.is_empty()
             && type_parameters.is_none()
         {
             ctx.diagnostic(no_object_constructor_diagnostic(span));

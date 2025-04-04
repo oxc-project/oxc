@@ -100,7 +100,7 @@ impl Rule for InlineScriptId {
                 continue;
             }
 
-            if jsx_element.children.len() > 0
+            if !jsx_element.children.is_empty()
                 || prop_names_hash_set.contains("dangerouslySetInnerHTML")
             {
                 ctx.diagnostic(inline_script_id_diagnostic(jsx_opening_element.name.span()));

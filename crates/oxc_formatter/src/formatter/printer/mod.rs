@@ -930,8 +930,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     if predicate.is_end(element)? {
                         break;
                     }
-
-                    continue;
                 }
             }
         }

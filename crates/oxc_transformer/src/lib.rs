@@ -630,6 +630,12 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         self.x2_es2018.enter_for_in_statement(stmt, ctx);
     }
 
+    fn enter_try_statement(&mut self, stmt: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_try_statement(stmt, ctx);
+        }
+    }
+
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2019.enter_catch_clause(clause, ctx);
         self.x2_es2018.enter_catch_clause(clause, ctx);

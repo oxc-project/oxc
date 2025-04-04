@@ -11,7 +11,7 @@ working directory: fixtures/auto_config_detection
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file using 1 threads.

@@ -269,7 +269,6 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
             AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
                 // export namespace N {}
                 // We need to check the parent of the parent
-                continue;
             }
             _ => {
                 ctx.error(not_allowed_namespace_declaration(decl.span));

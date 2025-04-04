@@ -176,6 +176,46 @@ impl TraverseScoping {
         new_scope_id
     }
 
+    /// Insert a scope between a parent and a child scope.
+    ///
+    /// For example, given the following scopes
+    /// ```ts
+    /// parentScope1: {
+    ///     childScope: { }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// and calling this function with `parentScope1` and `childScope`,
+    /// the resulting scopes will be:
+    /// ```ts
+    /// parentScope1: {
+    ///     newScope: {   
+    ///         childScope: { }
+    ///     }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    pub fn insert_scope_between(
+        &mut self,
+        parent_id: ScopeId,
+        child_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let scope_id = self.create_child_scope(parent_id, flags);
+
+        debug_assert_eq!(
+            self.scoping.scope_parent_id(child_id),
+            Some(parent_id),
+            "Child scope must be a child of parent scope"
+        );
+
+        if self.scoping.has_scope_child_ids() {
+            self.scoping.remove_child_scope(parent_id, child_id);
+        }
+        self.scoping.set_scope_parent_id(child_id, Some(scope_id));
+        scope_id
+    }
+
     /// Remove scope for an expression from the scope chain.
     ///
     /// Delete the scope and set parent of its child scopes to its parent scope.

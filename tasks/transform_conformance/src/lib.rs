@@ -6,6 +6,7 @@ mod exec;
 mod test_case;
 
 use std::{
+    fmt::Write,
     fs,
     path::{Path, PathBuf},
 };
@@ -156,7 +157,7 @@ impl TestRunner {
             } else {
                 snapshot.push_str("# ");
                 snapshot.push_str(&case);
-                snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
+                let _ = writeln!(snapshot, " ({}/{})", passed.len(), num_of_tests);
                 for test_case in failed {
                     if self.options.r#override {
                         test_case.write_override_output();
