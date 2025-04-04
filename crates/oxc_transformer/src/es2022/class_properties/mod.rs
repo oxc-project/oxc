@@ -228,7 +228,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClassPropertiesOptions {
-    pub(crate) loose: bool,
+    pub loose: bool,
 }
 
 /// Class properties transform.
