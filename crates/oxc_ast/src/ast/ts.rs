@@ -1597,6 +1597,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 pub struct TSInstantiationExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
+    #[estree(rename = "typeArguments")]
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
