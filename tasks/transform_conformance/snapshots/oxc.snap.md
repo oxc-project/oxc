@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 140/229
+Passed: 141/233
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -43,7 +43,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (2/14)
+# babel-plugin-transform-typescript (2/15)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -257,6 +257,38 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(5): [ReferenceId(2)]
 rebuilt        : SymbolId(7): []
 
+* namespace/redeclaration-with-enum/input.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["x", "y"]
+rebuilt        : ScopeId(2): ["x"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "x":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "x":
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
+rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "y":
+after transform: SymbolId(2): SymbolFlags(RegularEnum | NameSpaceModule)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "y":
+after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
+rebuilt        : SymbolId(3): []
+
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(1): [ReferenceId(1)]
@@ -315,7 +347,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (1/3)
+# babel-plugin-proposal-explicit-resource-management (2/4)
 * export-class-name/input.js
 x Output mismatch
 
@@ -323,21 +355,9 @@ x Output mismatch
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
 rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(5), ScopeId(6), ScopeId(8)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(5))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(5))
-rebuilt        : ScopeId(3): Some(ScopeId(1))
 Bindings mismatch:
 after transform: ScopeId(5): []
 rebuilt        : ScopeId(4): ["x", "y"]
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(3): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(4)
@@ -346,7 +366,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/68)
+# legacy-decorators (2/70)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -357,6 +377,20 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/typescript-syntax/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "B"]
+rebuilt        : ScopeId(0): ["B"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Unresolved references mismatch:
+after transform: ["dec", "m"]
+rebuilt        : []
 
 * oxc/metadata/unbound-type-reference/input.ts
 Symbol span mismatch for "Example":
@@ -369,25 +403,33 @@ Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(4), ReferenceId(5)]
 
+* oxc/metadata/without-decorator/input.ts
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 106, end: 107 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 106, end: 107 }
+
 * oxc/with-class-private-properties/input.ts
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 11, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
+after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 11, end: 12 }
 Symbol span mismatch for "D":
-after transform: SymbolId(1): Span { start: 87, end: 88 }
+after transform: SymbolId(1): Span { start: 85, end: 86 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "D":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 87, end: 88 }
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 85, end: 86 }
 Symbol span mismatch for "E":
-after transform: SymbolId(2): Span { start: 171, end: 172 }
+after transform: SymbolId(2): Span { start: 167, end: 168 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol span mismatch for "E":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(5): Span { start: 171, end: 172 }
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 167, end: 168 }
 
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
 Symbol flags mismatch for "_default":

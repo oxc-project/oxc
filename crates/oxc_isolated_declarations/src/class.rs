@@ -332,8 +332,8 @@ impl<'a> IsolatedDeclarations<'a> {
                             method_annotations.insert(name, annotation);
                         }
                     }
-                    _ => continue,
-                };
+                    _ => {}
+                }
             }
         }
 

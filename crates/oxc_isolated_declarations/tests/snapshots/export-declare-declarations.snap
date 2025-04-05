@@ -12,6 +12,6 @@ declare const variable: number;
 declare enum Enum {
 	A = 0,
 	B = 1,
-	C = 2,
+	C = 2
 }
 export { Class, Function, variable, Enum };

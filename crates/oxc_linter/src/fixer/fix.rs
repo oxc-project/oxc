@@ -121,8 +121,6 @@ impl FixKind {
 pub struct RuleFix<'a> {
     kind: FixKind,
     /// A suggestion message. Will be shown in editors via code actions.
-    ///
-    /// NOTE: code actions aren't implemented yet.
     message: Option<Cow<'a, str>>,
     /// The actual that will be applied to the source code.
     ///
@@ -239,7 +237,9 @@ impl<'a> RuleFix<'a> {
 
     #[inline]
     pub fn into_fix(self, source_text: &str) -> Fix<'a> {
-        self.fix.normalize_fixes(source_text)
+        let mut fix = self.fix.normalize_fixes(source_text);
+        fix.message = self.message;
+        fix
     }
 
     #[inline]
@@ -275,6 +275,9 @@ impl<'a> Deref for RuleFix<'a> {
 #[non_exhaustive]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
+    /// A brief suggestion message describing the fix. Will be shown in
+    /// editors via code actions.
+    pub message: Option<Cow<'a, str>>,
     pub span: Span,
 }
 
@@ -288,6 +291,10 @@ impl<'new> CloneIn<'new> for Fix<'_> {
                 Cow::Owned(s) => Cow::Owned(s.clone()),
             },
             span: self.span,
+            message: self.message.as_ref().map(|s| match s {
+                Cow::Borrowed(s) => Cow::Borrowed(allocator.alloc_str(s)),
+                Cow::Owned(s) => Cow::Owned(s.clone()),
+            }),
         }
     }
 }
@@ -300,17 +307,17 @@ impl Default for Fix<'_> {
 
 impl<'a> Fix<'a> {
     pub const fn delete(span: Span) -> Self {
-        Self { content: Cow::Borrowed(""), span }
+        Self { content: Cow::Borrowed(""), message: None, span }
     }
 
     pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
-        Self { content: content.into(), span }
+        Self { content: content.into(), message: None, span }
     }
 
     /// Creates a [`Fix`] that doesn't change the source code.
     #[inline]
     pub const fn empty() -> Self {
-        Self { content: Cow::Borrowed(""), span: SPAN }
+        Self { content: Cow::Borrowed(""), message: None, span: SPAN }
     }
 }
 
@@ -506,7 +513,7 @@ impl<'a> CompositeFix<'a> {
         let mut output = String::new();
 
         for fix in fixes {
-            let Fix { content, span } = fix;
+            let Fix { content, span, .. } = fix;
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");

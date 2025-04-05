@@ -281,7 +281,7 @@ impl Rule for ExplicitLengthCheck {
                     }
                     _ => {}
                 }
-            };
+            }
         }
     }
 

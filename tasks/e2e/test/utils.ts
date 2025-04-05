@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import url from 'node:url';
 
 import { createFsRequire } from 'fs-require';
 import { Volume } from 'memfs';
 import { minify as oxcMinify } from 'oxc-minify';
 import { transform as oxcTransform } from 'oxc-transform';
 
-const nodeModulesPath = new URL('../node_modules', import.meta.url).pathname;
+const nodeModulesPath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../node_modules');
 
 const minifyOptions: any[] = [
   { compress: true, mangle: true, codegen: { whitespace: true } },

@@ -63,7 +63,7 @@ pub fn is_prototype_property(
                 return true;
             }
         }
-    };
+    }
 
     match object {
         // `[].method`
@@ -72,7 +72,7 @@ pub fn is_prototype_property(
         // `{}.method`
         Some("Object") => {
             if let Expression::ObjectExpression(obj_expr) = member_expr.object() {
-                obj_expr.properties.len() == 0
+                obj_expr.properties.is_empty()
             } else {
                 false
             }
@@ -83,7 +83,7 @@ pub fn is_prototype_property(
 
 pub fn is_empty_array_expression(expr: &Expression) -> bool {
     if let Expression::ArrayExpression(array_expr) = expr {
-        array_expr.elements.len() == 0
+        array_expr.elements.is_empty()
     } else {
         false
     }
@@ -91,7 +91,7 @@ pub fn is_empty_array_expression(expr: &Expression) -> bool {
 
 pub fn is_empty_object_expression(expr: &Expression) -> bool {
     if let Expression::ObjectExpression(object_expr) = expr {
-        object_expr.properties.len() == 0
+        object_expr.properties.is_empty()
     } else {
         false
     }

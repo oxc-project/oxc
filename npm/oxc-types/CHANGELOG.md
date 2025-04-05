@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Bug Fixes
+
+- 8408606 ast/estree: Fix `TSMethodSignature` (#10032) (therewillbecode)
+- 1a0bd7c ast/estree: Fix `TSPropertySignature` (#10031) (therewillbecode)
+- 707a776 ast/estree: Fix TS type defs for `TSIndexSignature` and `TSIndexSignatureName` (#10003) (overlookmotel)
+- c98d3f4 ast/estree: Add custom serializer for extends field of TSInterfaceDeclaration (#9996) (therewillbecode)
+
 ## [0.61.2] - 2025-03-23
 
 ### Bug Fixes

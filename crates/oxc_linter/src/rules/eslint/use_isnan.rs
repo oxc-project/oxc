@@ -117,7 +117,7 @@ impl Rule for UseIsnan {
                 // do this check first b/c it's cheaper than is_target_callee
                 if call.arguments.len() != 1 {
                     return;
-                };
+                }
                 // Match target array prototype methods whose only argument is
                 // NaN
                 let Some(method) = is_target_callee(&call.callee) else { return };

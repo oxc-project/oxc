@@ -10,6 +10,13 @@ pub trait TakeIn<'a>: Dummy<'a> {
         let dummy = Dummy::dummy(allocator);
         mem::replace(self, dummy)
     }
+
+    /// Replace node with a boxed dummy.
+    #[must_use]
+    fn take_in_box(&mut self, allocator: &'a Allocator) -> Box<'a, Self> {
+        let dummy = Dummy::dummy(allocator);
+        Box::new_in(mem::replace(self, dummy), allocator)
+    }
 }
 
 impl<'a, T> TakeIn<'a> for Vec<'a, T> {}

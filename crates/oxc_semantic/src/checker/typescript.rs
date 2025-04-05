@@ -165,18 +165,18 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
         !params.kind.is_signature() && ctx.current_scope_flags().is_constructor();
     let mut has_optional = false;
 
-    for item in &params.items {
+    for param in &params.items {
         // function a(optional?: number, required: number) { }
-        if has_optional && !item.pattern.optional && !item.pattern.kind.is_assignment_pattern() {
-            ctx.error(required_parameter_after_optional_parameter(item.span));
+        if has_optional && !param.pattern.optional && !param.pattern.kind.is_assignment_pattern() {
+            ctx.error(required_parameter_after_optional_parameter(param.span));
         }
-        if item.pattern.optional {
+        if param.pattern.optional {
             has_optional = true;
         }
 
         // function a(public x: number) { }
-        if !is_inside_constructor && item.accessibility.is_some() {
-            ctx.error(parameter_property_outside_constructor(item.span));
+        if !is_inside_constructor && param.has_modifier() {
+            ctx.error(parameter_property_outside_constructor(param.span));
         }
     }
 }
@@ -269,7 +269,6 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
             AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
                 // export namespace N {}
                 // We need to check the parent of the parent
-                continue;
             }
             _ => {
                 ctx.error(not_allowed_namespace_declaration(decl.span));
@@ -372,7 +371,7 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                         ctx.error(constructor_implementation_missing(a.key.span()));
                     } else {
                         ctx.error(function_implementation_missing(a.key.span()));
-                    };
+                    }
                 }
             }
         }
@@ -487,7 +486,7 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     // Illegal to have `constructor(public foo);`
     if method.kind.is_constructor() && is_empty_body {
         for param in &method.value.params.items {
-            if param.accessibility.is_some() {
+            if param.has_modifier() {
                 ctx.error(parameter_property_only_in_constructor_impl(param.span));
             }
         }

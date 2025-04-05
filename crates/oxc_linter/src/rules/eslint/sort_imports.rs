@@ -437,12 +437,13 @@ impl FromStr for ImportKind {
 
 impl Display for ImportKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ImportKind::None => write!(f, "None"),
-            ImportKind::All => write!(f, "All"),
-            ImportKind::Multiple => write!(f, "Multiple"),
-            ImportKind::Single => write!(f, "Single"),
-        }
+        let kind_name = match self {
+            ImportKind::None => "None",
+            ImportKind::All => "All",
+            ImportKind::Multiple => "Multiple",
+            ImportKind::Single => "Single",
+        };
+        f.write_str(kind_name)
     }
 }
 

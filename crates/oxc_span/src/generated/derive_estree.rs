@@ -33,7 +33,7 @@ impl ESTree for ModuleKind {
         match self {
             Self::Script => JsonSafeString("script").serialize(serializer),
             Self::Module => JsonSafeString("module").serialize(serializer),
-            Self::Unambiguous => JsonSafeString("unambiguous").serialize(serializer),
+            Self::Unambiguous => unreachable!("This enum variant is skipped."),
         }
     }
 }

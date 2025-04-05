@@ -188,6 +188,7 @@ declare_oxc_lint!(
     ///     }, [props]);
     ///     return <div />;
     /// }
+    /// ```
     ExhaustiveDeps,
     react,
     nursery
@@ -505,7 +506,7 @@ impl Rule for ExhaustiveDeps {
 
             if !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id) {
                 return false;
-            };
+            }
             true
         });
 
@@ -720,7 +721,7 @@ fn chain_contains(a: &[Atom<'_>], b: &[Atom<'_>]) -> bool {
         let Some(other) = a.get(index) else { return false };
         if other != part {
             return false;
-        };
+        }
     }
 
     true
@@ -877,7 +878,7 @@ fn is_stable_value<'a, 'b>(
                 ))
             {
                 return true;
-            };
+            }
 
             let Expression::CallExpression(init_expr) = &init else {
                 return false;

@@ -117,7 +117,7 @@ impl Rule for SelfClosingComp {
         if !is_comp {
             if let Some(tag_name) = jsx_el.opening_element.name.get_identifier_name() {
                 is_dom_comp = HTML_TAG.contains(&tag_name);
-            };
+            }
         }
 
         if self.html && is_dom_comp || self.component && !is_dom_comp {

@@ -1,6 +1,6 @@
 use std::{
     cell::{Ref, RefCell},
-    fmt,
+    fmt::{self, Debug, Display},
 };
 
 use itertools::Itertools;
@@ -109,8 +109,8 @@ impl ConfigStoreBuilder {
         let cache = RulesCache::new(config.plugins);
         let mut builder = Self { rules, config, overrides, cache };
 
-        if !categories.is_empty() {
-            builder = builder.with_filters(categories.filters());
+        for filter in categories.filters() {
+            builder = builder.with_filter(&filter);
         }
 
         {
@@ -227,20 +227,20 @@ impl ConfigStoreBuilder {
         self
     }
 
-    pub fn with_filters<I: IntoIterator<Item = LintFilter>>(mut self, filters: I) -> Self {
+    pub fn with_filters<'a, I: IntoIterator<Item = &'a LintFilter>>(mut self, filters: I) -> Self {
         for filter in filters {
             self = self.with_filter(filter);
         }
         self
     }
 
-    pub fn with_filter(mut self, filter: LintFilter) -> Self {
+    pub fn with_filter(mut self, filter: &LintFilter) -> Self {
         let (severity, filter) = filter.into();
 
         match severity {
             AllowWarnDeny::Deny | AllowWarnDeny::Warn => match filter {
                 LintFilterKind::Category(category) => {
-                    self.upsert_where(severity, |r| r.category() == category);
+                    self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(_, name) => self.upsert_where(severity, |r| r.name() == name),
                 LintFilterKind::Generic(name_or_category) => {
@@ -253,7 +253,7 @@ impl ConfigStoreBuilder {
             },
             AllowWarnDeny::Allow => match filter {
                 LintFilterKind::Category(category) => {
-                    self.rules.retain(|rule| rule.category() != category);
+                    self.rules.retain(|rule| rule.category() != *category);
                 }
                 LintFilterKind::Rule(_, name) => {
                     self.rules.retain(|rule| rule.name() != name);
@@ -371,7 +371,7 @@ impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
     }
 }
 
-impl fmt::Debug for ConfigStoreBuilder {
+impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
             .field("rules", &self.rules)
@@ -389,13 +389,17 @@ pub enum ConfigBuilderError {
     InvalidConfigFile { file: String, reason: String },
 }
 
-impl std::fmt::Display for ConfigBuilderError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ConfigBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConfigBuilderError::UnknownRules { rules } => {
-                write!(f, "unknown rules: ")?;
-                for rule in rules {
-                    write!(f, "{}", rule.full_name())?;
+                f.write_str("unknown rules: ")?;
+                for (i, rule) in rules.iter().enumerate() {
+                    if i == 0 {
+                        Display::fmt(&rule.full_name(), f)?;
+                    } else {
+                        write!(f, ", {}", rule.full_name())?;
+                    }
                 }
                 Ok(())
             }
@@ -533,7 +537,7 @@ mod test {
         let builder = ConfigStoreBuilder::default();
         let initial_rule_count = builder.rules.len();
 
-        let builder = builder.with_filters([LintFilter::deny(RuleCategory::Correctness)]);
+        let builder = builder.with_filter(&LintFilter::deny(RuleCategory::Correctness));
         let rule_count_after_deny = builder.rules.len();
 
         // By default, all correctness rules are set to warn. the above filter should only
@@ -562,8 +566,7 @@ mod test {
             let initial_rule_count = builder.rules.len();
 
             let builder =
-                builder
-                    .with_filters([LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap()]);
+                builder.with_filter(&LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap());
             let rule_count_after_deny = builder.rules.len();
             assert_eq!(
                 initial_rule_count, rule_count_after_deny,
@@ -587,7 +590,7 @@ mod test {
             let builder = ConfigStoreBuilder::default();
             // sanity check: not already turned on
             assert!(!builder.rules.iter().any(|r| r.name() == "no-console"));
-            let builder = builder.with_filter(filter);
+            let builder = builder.with_filter(&filter);
             let no_console = builder
                 .rules
                 .iter()
@@ -600,14 +603,11 @@ mod test {
 
     #[test]
     fn test_filter_allow_all_then_warn() {
-        let builder = ConfigStoreBuilder::default().with_filters([LintFilter::new(
-            AllowWarnDeny::Allow,
-            "all",
-        )
-        .unwrap()]);
+        let builder = ConfigStoreBuilder::default()
+            .with_filter(&LintFilter::new(AllowWarnDeny::Allow, "all").unwrap());
         assert!(builder.rules.is_empty(), "Allowing all rules should empty out the rules list");
 
-        let builder = builder.with_filters([LintFilter::warn(RuleCategory::Correctness)]);
+        let builder = builder.with_filter(&LintFilter::warn(RuleCategory::Correctness));
         assert!(
             !builder.rules.is_empty(),
             "warning on categories after allowing all rules should populate the rules set"

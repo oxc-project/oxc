@@ -1,13 +1,17 @@
-use std::{fmt::Debug, path::PathBuf, str::FromStr};
-
 use commands::LSP_COMMANDS;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
+use linter::config_walker::ConfigWalker;
 use log::{debug, error, info};
 use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     Client, LanguageServer, LspService, Server,
@@ -62,6 +66,21 @@ impl Options {
     fn disable_nested_configs(&self) -> bool {
         self.flags.contains_key("disable_nested_config")
     }
+
+    fn fix_kind(&self) -> FixKind {
+        self.flags.get("fix_kind").map_or(FixKind::SafeFix, |kind| match kind.as_str() {
+            "safe_fix" => FixKind::SafeFix,
+            "safe_fix_or_suggestion" => FixKind::SafeFixOrSuggestion,
+            "dangerous_fix" => FixKind::DangerousFix,
+            "dangerous_fix_or_suggestion" => FixKind::DangerousFixOrSuggestion,
+            "none" => FixKind::None,
+            "all" => FixKind::All,
+            _ => {
+                info!("invalid fix_kind flag `{kind}`, fallback to `safe_fix`");
+                FixKind::SafeFix
+            }
+        })
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -74,11 +93,12 @@ impl LanguageServer for Backend {
         });
 
         if let Some(value) = options {
-            info!("initialize: {:?}", value);
+            info!("initialize: {value:?}");
             info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
             *self.options.lock().await = value;
         }
 
+        self.init_nested_configs().await;
         let oxlintrc = self.init_linter_config().await;
         self.init_ignore_glob(oxlintrc).await;
         Ok(InitializeResult {
@@ -121,11 +141,17 @@ impl LanguageServer for Backend {
         "
         );
 
-        if changed_options.disable_nested_configs() {
+        *self.options.lock().await = changed_options.clone();
+
+        if changed_options.disable_nested_configs() != current_option.disable_nested_configs() {
             self.nested_configs.pin().clear();
+            self.init_nested_configs().await;
         }
 
-        *self.options.lock().await = changed_options.clone();
+        if changed_options.fix_kind() != changed_options.fix_kind() {
+            self.init_linter_config().await;
+            self.revalidate_open_files().await;
+        }
 
         // revalidate the config and all open files
         if changed_options.config_path != current_option.config_path {
@@ -146,7 +172,7 @@ impl LanguageServer for Backend {
                     return;
                 };
                 let Some(file_name) = file_path.file_name() else {
-                    info!("Unable to retrieve file name from {:?}", file_path);
+                    info!("Unable to retrieve file name from {file_path:?}");
                     return;
                 };
 
@@ -155,7 +181,7 @@ impl LanguageServer for Backend {
                 }
 
                 let Some(dir_path) = file_path.parent() else {
-                    info!("Unable to retrieve parent from {:?}", file_path);
+                    info!("Unable to retrieve parent from {file_path:?}");
                     return;
                 };
 
@@ -264,11 +290,21 @@ impl LanguageServer for Backend {
                 }
 
                 if let Some(fixed_content) = &report.fixed_content {
+                    // 1) Use `fixed_content.message` if it exists
+                    // 2) Try to parse the report diagnostic message
+                    // 3) Fallback to "Fix this problem"
+                    let title = match fixed_content.message.clone() {
+                        Some(msg) => msg,
+                        None => {
+                            if let Some(code) = report.diagnostic.message.split(':').next() {
+                                format!("Fix this {code} problem")
+                            } else {
+                                "Fix this problem".to_string()
+                            }
+                        }
+                    };
                     code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                        title: report.diagnostic.message.split(':').next().map_or_else(
-                            || "Fix this problem".into(),
-                            |s| format!("Fix this {s} problem"),
-                        ),
+                        title,
                         kind: Some(if is_source_fix_all_oxc {
                             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
                         } else {
@@ -491,6 +527,38 @@ impl Backend {
         .await;
     }
 
+    /// Searches inside root_uri recursively for the default oxlint config files
+    /// and insert them inside the nested configuration
+    async fn init_nested_configs(&self) {
+        let Some(Some(uri)) = self.root_uri.get() else {
+            return;
+        };
+        let Ok(root_path) = uri.to_file_path() else {
+            return;
+        };
+
+        // nested config is disabled, no need to search for configs
+        if self.options.lock().await.disable_nested_configs() {
+            return;
+        }
+
+        let paths = ConfigWalker::new(&root_path).paths();
+        let nested_configs = self.nested_configs.pin();
+
+        for path in paths {
+            let file_path = Path::new(&path);
+            let Some(dir_path) = file_path.parent() else {
+                continue;
+            };
+
+            let oxlintrc = Oxlintrc::from_file(file_path).expect("Failed to parse config file");
+            let config_store_builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
+                .expect("Failed to create config store builder");
+            let config_store = config_store_builder.build().expect("Failed to build config store");
+            nested_configs.insert(dir_path.to_path_buf(), config_store);
+        }
+    }
+
     async fn init_linter_config(&self) -> Option<Oxlintrc> {
         let Some(Some(uri)) = self.root_uri.get() else {
             return None;
@@ -512,7 +580,8 @@ impl Backend {
             .build()
             .expect("failed to build config");
 
-        let lint_options = LintOptions { fix: FixKind::SafeFix, ..Default::default() };
+        let lint_options =
+            LintOptions { fix: self.options.lock().await.fix_kind(), ..Default::default() };
 
         let linter = if self.options.lock().await.disable_nested_configs() {
             Linter::new(lint_options, config_store)

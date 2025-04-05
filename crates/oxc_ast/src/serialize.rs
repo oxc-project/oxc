@@ -1,12 +1,13 @@
 use cow_utils::CowUtils;
 
+use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
     PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
+    ser::AppendToConcat,
 };
-
-use crate::ast::*;
+use oxc_span::GetSpan;
 
 /// Main serialization methods for `Program`.
 ///
@@ -70,15 +71,74 @@ impl Program<'_> {
 }
 
 // --------------------
+// Program
+// --------------------
+
+/// Serializer for `Program`.
+///
+/// In TS AST, set start span to start of first directive or statement.
+/// This is required because unlike Acorn, TS-ESLint excludes whitespace and comments
+/// from the `Program` start span.
+/// See <https://github.com/oxc-project/oxc/pull/10134> for more info.
+#[ast_meta]
+#[estree(raw_deser = "
+    const body = DESER[Vec<Directive>](POS_OFFSET.directives);
+    body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
+    let start = DESER[u32](POS_OFFSET.span.start);
+    /* IF_TS */
+    if (body.length > 0) start = body[0].start;
+    /* END_IF_TS */
+    const program = {
+        type: 'Program',
+        start,
+        end: DESER[u32](POS_OFFSET.span.end),
+        body,
+        sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
+    };
+    program
+")]
+pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
+
+impl ESTree for ProgramConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let program = self.0;
+        let span_start = if S::INCLUDE_TS_FIELDS {
+            if let Some(first_directive) = program.directives.first() {
+                first_directive.span.start
+            } else if let Some(first_stmt) = program.body.first() {
+                first_stmt.span().start
+            } else {
+                program.span.start
+            }
+        } else {
+            program.span.start
+        };
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Program"));
+        state.serialize_field("start", &span_start);
+        state.serialize_field("end", &program.span.end);
+        state.serialize_field(
+            "body",
+            &AppendToConcat { array: &program.directives, after: &program.body },
+        );
+        state.serialize_field("sourceType", &program.source_type.module_kind());
+        state.serialize_field("hashbang", &program.hashbang);
+        state.end();
+    }
+}
+
+// --------------------
 // Basic types
 // --------------------
 
 /// Serialized as `null`.
 #[ast_meta]
 #[estree(ts_type = "null", raw_deser = "null")]
-pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct Null<T>(pub T);
 
-impl<T> ESTree for Null<'_, T> {
+impl<T> ESTree for Null<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
     }
@@ -87,9 +147,9 @@ impl<T> ESTree for Null<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "null", raw_deser = "null")]
 #[ts]
-pub struct TsNull<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsNull<T>(pub T);
 
-impl<T> ESTree for TsNull<'_, T> {
+impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
     }
@@ -98,9 +158,9 @@ impl<T> ESTree for TsNull<'_, T> {
 /// Serialized as `true`.
 #[ast_meta]
 #[estree(ts_type = "true", raw_deser = "true")]
-pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct True<T>(pub T);
 
-impl<T> ESTree for True<'_, T> {
+impl<T> ESTree for True<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         true.serialize(serializer);
     }
@@ -109,9 +169,9 @@ impl<T> ESTree for True<'_, T> {
 /// Serialized as `false`.
 #[ast_meta]
 #[estree(ts_type = "false", raw_deser = "false")]
-pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct False<T>(pub T);
 
-impl<T> ESTree for False<'_, T> {
+impl<T> ESTree for False<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
     }
@@ -120,20 +180,32 @@ impl<T> ESTree for False<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "false", raw_deser = "false")]
 #[ts]
-pub struct TsFalse<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsFalse<T>(pub T);
 
-impl<T> ESTree for TsFalse<'_, T> {
+impl<T> ESTree for TsFalse<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
+    }
+}
+
+/// Serialized as `"value"`.
+#[ast_meta]
+#[estree(ts_type = "'value'", raw_deser = "'value'")]
+#[ts]
+pub struct TsValue<T>(pub T);
+
+impl<T> ESTree for TsValue<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("value").serialize(serializer);
     }
 }
 
 /// Serialized as `"in"`.
 #[ast_meta]
 #[estree(ts_type = "'in'", raw_deser = "'in'")]
-pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct In<T>(pub T);
 
-impl<T> ESTree for In<'_, T> {
+impl<T> ESTree for In<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("in").serialize(serializer);
     }
@@ -142,9 +214,9 @@ impl<T> ESTree for In<'_, T> {
 /// Serialized as `"init"`.
 #[ast_meta]
 #[estree(ts_type = "'init'", raw_deser = "'init'")]
-pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct Init<T>(pub T);
 
-impl<T> ESTree for Init<'_, T> {
+impl<T> ESTree for Init<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("init").serialize(serializer);
     }
@@ -153,9 +225,9 @@ impl<T> ESTree for Init<'_, T> {
 /// Serialized as `"this"`.
 #[ast_meta]
 #[estree(ts_type = "'this'", raw_deser = "'this'")]
-pub struct This<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct This<T>(pub T);
 
-impl<T> ESTree for This<'_, T> {
+impl<T> ESTree for This<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("this").serialize(serializer);
     }
@@ -164,9 +236,9 @@ impl<T> ESTree for This<'_, T> {
 /// Serialized as `[]`.
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
-pub struct EmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct EmptyArray<T>(pub T);
 
-impl<T> ESTree for EmptyArray<'_, T> {
+impl<T> ESTree for EmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
     }
@@ -175,9 +247,9 @@ impl<T> ESTree for EmptyArray<'_, T> {
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]
 #[ts]
-pub struct TsEmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+pub struct TsEmptyArray<T>(pub T);
 
-impl<T> ESTree for TsEmptyArray<'_, T> {
+impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
     }
@@ -227,7 +299,7 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `value` field of `StringLiteral`.
 ///
-/// Handle when `lossy` flag is set, indicating the string contains lone surrogates.
+/// Handle when `lone_surrogates` flag is set, indicating the string contains lone surrogates.
 #[ast_meta]
 #[estree(
     ts_type = "string",
@@ -345,6 +417,52 @@ impl ESTree for RegExpFlagsConverter<'_> {
     }
 }
 
+/// Serializer for `value` field of `TemplateElement`.
+///
+/// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
+#[ast_meta]
+#[estree(
+    ts_type = "TemplateElementValue",
+    raw_deser = r#"
+        let value = DESER[TemplateElementValue](POS_OFFSET.value);
+        if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
+            value.cooked = value.cooked
+                .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+        }
+        value
+    "#
+)]
+pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
+
+impl ESTree for TemplateElementValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        #[expect(clippy::if_not_else)]
+        if !element.lone_surrogates {
+            element.value.serialize(serializer);
+        } else {
+            // String contains lone surrogates
+            self.serialize_lone_surrogates(serializer);
+        }
+    }
+}
+
+impl TemplateElementValue<'_, '_> {
+    #[cold]
+    #[inline(never)]
+    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
+        let value = &self.0.value;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("raw", &value.raw);
+
+        let cooked = value.cooked.as_ref().map(|cooked| LoneSurrogatesString(cooked.as_str()));
+        state.serialize_field("cooked", &cooked);
+
+        state.end();
+    }
+}
+
 // --------------------
 // Various
 // --------------------
@@ -414,6 +532,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("optional", &rest.argument.optional);
+        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("value", &Null(()));
         state.end();
     }
 }
@@ -762,6 +882,41 @@ pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         self.0.kind.is_global().serialize(serializer);
+    }
+}
+
+/// Serializer for `body` field of `TSEnumDeclaration`.
+/// This field is derived from `members` field.
+///
+/// `Span` indicates within braces `{ ... }`.
+/// ```ignore
+/// enum Foo { ... }
+/// |              | TSEnumDeclaration.span
+///          |     | TSEnumBody.span
+///        ^^ id_end + 1 for space
+/// ```
+/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
+/// We may need to reconsider adding `TSEnumBody` as Rust AST.
+#[ast_meta]
+#[estree(
+    ts_type = "TSEnumBody",
+    raw_deser = "
+        const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
+        const bodyStart = THIS.id.end + 1;
+        {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
+    "
+)]
+pub struct TSEnumDeclarationBody<'a, 'b>(pub &'b TSEnumDeclaration<'a>);
+
+impl ESTree for TSEnumDeclarationBody<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
+        let body_start = self.0.id.span.end + 1;
+        state.serialize_field("start", &body_start);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("members", &self.0.members);
+        state.end();
     }
 }
 

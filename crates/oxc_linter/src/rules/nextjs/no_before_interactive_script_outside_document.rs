@@ -49,7 +49,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
             let Some(tag_name) = jsx_el.name.get_identifier_name() else {
                 return;
             };
-            if jsx_el.attributes.len() == 0 {
+            if jsx_el.attributes.is_empty() {
                 return;
             }
 

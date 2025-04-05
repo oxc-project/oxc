@@ -29,7 +29,7 @@ working directory: fixtures/report_unused_directives
     : ^^^^^^^^^
  11 | 
     `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! Unused eslint-enable directive (no matching eslint-disable directives were found).
     ,-[test.js:22:3]

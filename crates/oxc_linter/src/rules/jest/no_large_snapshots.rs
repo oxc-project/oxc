@@ -191,7 +191,7 @@ impl NoLargeSnapshots {
             return;
         };
 
-        if jest_fn_call.args.len() > 0
+        if !jest_fn_call.args.is_empty()
             && jest_fn_call.members.iter().any(|member| {
                 member.is_name_equal("toMatchInlineSnapshot")
                     || member.is_name_equal("toThrowErrorMatchingInlineSnapshot")

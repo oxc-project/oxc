@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
@@ -64,7 +65,7 @@ impl<'a> PeepholeOptimizations {
         .map(|new_expr| {
             ctx.ast.expression_logical(
                 expr.span,
-                ctx.ast.move_expression(&mut left.left),
+                left.left.take_in(ctx.ast.allocator),
                 expr.operator,
                 new_expr,
             )
@@ -141,7 +142,7 @@ impl<'a> PeepholeOptimizations {
         };
         Some(ctx.ast.expression_binary(
             span,
-            ctx.ast.move_expression(left_non_value_expr),
+            left_non_value_expr.take_in(ctx.ast.allocator),
             replace_op,
             ctx.ast.expression_null_literal(null_expr_span),
         ))
@@ -225,6 +226,6 @@ impl<'a> PeepholeOptimizations {
         }
         assignment_expr.span = expr.span;
         assignment_expr.operator = new_op;
-        Some(ctx.ast.move_expression(&mut expr.right))
+        Some(expr.right.take_in(ctx.ast.allocator))
     }
 }

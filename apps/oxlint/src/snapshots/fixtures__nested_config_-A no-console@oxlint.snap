@@ -11,21 +11,21 @@ working directory: fixtures/nested_config
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[package1-empty-config/debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[package2-no-config/debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
 Found 1 warning and 2 errors.
 Finished in <variable>ms on 7 files using 1 threads.

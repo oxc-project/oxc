@@ -66,8 +66,8 @@ impl LoadError {
 impl fmt::Display for LoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TooLarge => write!(f, "file is too large. Only files up to 4GB are supported."),
-            Self::NoExtension => write!(f, "no extension"),
+            Self::TooLarge => f.write_str("file is too large. Only files up to 4GB are supported."),
+            Self::NoExtension => f.write_str("no extension"),
             Self::UnsupportedFileType(ext) => write!(f, "unsupported file type: {ext}"),
         }
     }

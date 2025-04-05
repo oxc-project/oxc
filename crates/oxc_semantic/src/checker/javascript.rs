@@ -429,7 +429,38 @@ pub fn check_function_declaration<'a>(
         } else if !is_if_stmt_or_labeled_stmt {
             ctx.error(function_declaration_non_strict(decl.span));
         }
-    };
+    }
+}
+
+// It is a Syntax Error if IsLabelledFunction(Statement) is true.
+pub fn check_function_declaration_in_labeled_statement<'a>(
+    body: &Statement<'a>,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    if let Statement::FunctionDeclaration(decl) = body {
+        if ctx.strict_mode() {
+            ctx.error(function_declaration_strict(decl.span));
+        } else {
+            // skip(1) for `LabeledStatement`
+            for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
+                match kind {
+                    // Nested labeled statement
+                    AstKind::LabeledStatement(_) => {}
+                    AstKind::ForOfStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+                    | AstKind::WithStatement(_)
+                    | AstKind::IfStatement(_) => break,
+
+                    _ => return,
+                }
+            }
+            ctx.error(function_declaration_non_strict(decl.span));
+        }
+    }
 }
 
 // It is a Syntax Error if any element of the LexicallyDeclaredNames of
@@ -438,7 +469,10 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var || ctx.current_scope_flags().is_top() {
+    if decl.kind != VariableDeclarationKind::Var
+        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    {
+        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
         return;
     }
 
@@ -474,18 +508,22 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     }
 
     let current_scope_flags = ctx.current_scope_flags();
-    if !current_scope_flags.is_strict_mode() {
-        if current_scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
-            && prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
-        {
-            // `function a() {}; function a() {}` and `var a; function a() {}` is invalid in non-strict mode
+    if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+        && (current_scope_flags.is_function()
+            || (ctx.source_type.is_script() && current_scope_flags.is_top()))
+    {
+        // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+        // `function a() {}; function a() {}` and `var a; function a() {}` are
+        // still valid in script code, and should not be valid for module code.
+        //
+        // `function a() { var b; function b() { } }` valid in any mode.
+        return;
+    } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
+        // `class a {}; function a() {}` and `async function a() {} function a () {}` are
+        // invalid in both strict and non-strict mode.
+        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
+        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
             return;
-        } else if !(func.r#async || func.generator) {
-            // `{ var a; function a() {} }` is invalid in both strict and non-strict mode
-            let prev_function = ctx.nodes.kind(prev.declaration).as_function();
-            if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
-                return;
-            }
         }
     }
 
@@ -852,7 +890,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
                     ctx.error(unexpected_super_call(super_call_span));
                 }
                 return;
-            };
+            }
         }
 
         // ModuleBody : ModuleItemList

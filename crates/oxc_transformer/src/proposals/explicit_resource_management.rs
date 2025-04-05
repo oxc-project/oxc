@@ -37,7 +37,7 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, Box as ArenaBox, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -129,11 +129,11 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
-            let old_body = ctx.ast.move_statement(&mut for_of_stmt.body);
+            let old_body = for_of_stmt.body.take_in(ctx.ast.allocator);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
-        };
+        }
     }
 
     /// Transform class static block.
@@ -158,10 +158,27 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     /// ```
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = block.scope_id();
-        if let Some(replacement) =
-            self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block.body, scope_id, ctx)
         {
-            block.body = ctx.ast.vec1(replacement);
+            let static_block_new_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::ClassStaticBlock,
+            );
+
+            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, static_block_new_scope_id);
+            ctx.scoping_mut().move_binding(scope_id, static_block_new_scope_id, &using_ctx.name);
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
+
+            block.set_scope_id(static_block_new_scope_id);
+            block.body = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+                &using_ctx,
+                static_block_new_scope_id,
+                needs_await,
+                ctx,
+            ));
         }
     }
 
@@ -186,14 +203,23 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     /// }
     /// ```
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(replacement) = self.transform_statements(
-            &mut body.statements,
-            None,
-            ctx.current_hoist_scope_id(),
-            ctx.current_hoist_scope_id(),
-            ctx,
-        ) {
-            body.statements = ctx.ast.vec1(replacement);
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut body.statements, ctx.current_hoist_scope_id(), ctx)
+        {
+            // FIXME: this creates the scopes in the correct place, however we never move the bindings contained
+            // within `new_stmts` to the new scope.
+            let block_stmt_scope_id =
+                ctx.insert_scope_below_statements(&new_stmts, ScopeFlags::empty());
+
+            let current_scope_id = ctx.current_scope_id();
+
+            body.statements = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
+                &using_ctx,
+                current_scope_id,
+                needs_await,
+                ctx,
+            ));
         }
     }
 
@@ -214,6 +240,55 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
+    /// Transform try statement.
+    ///
+    /// ```js
+    /// try {
+    ///   using x = y();
+    /// } catch (err) { }
+    /// ```
+    /// ->
+    /// ```js
+    /// try {
+    ///   try {
+    ///     var _usingCtx = babelHelpers.usingCtx();
+    ///     const x = _usingCtx.u(y());
+    ///   } catch (_) {
+    ///     _usingCtx.e = _;
+    ///   } finally {
+    ///     _usingCtx.d();
+    ///   }
+    /// } catch (err) { }
+    /// ```
+    fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let scope_id = node.block.scope_id();
+
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut node.block.body, scope_id, ctx)
+        {
+            let block_stmt_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::empty(),
+            );
+
+            node.block.body = ctx.ast.vec1(Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+                &using_ctx,
+                block_stmt_scope_id,
+                needs_await,
+                ctx,
+            ));
+
+            let current_hoist_scope_id = ctx.current_hoist_scope_id();
+            node.block.set_scope_id(block_stmt_scope_id);
+            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, current_hoist_scope_id);
+            ctx.scoping_mut().move_binding(scope_id, current_hoist_scope_id, &using_ctx.name);
+
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        }
+    }
+
     /// Move any top level `using` declarations within a block statement,
     /// allowing `enter_statement` to transform them.
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -228,7 +303,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             return;
         }
 
-        let program_body = ctx.ast.move_vec(&mut program.body);
+        let program_body = program.body.take_in(ctx.ast.allocator);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -337,9 +412,8 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
                             return (program_body, inner_block);
                         }
-                        let decl = ctx.ast.move_declaration(decl);
 
-                        let export_specifiers = match decl {
+                        let export_specifiers = match decl.take_in(ctx.ast.allocator) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
@@ -461,15 +535,18 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::BlockStatement(block_stmt) = stmt else { unreachable!() };
 
-        let scope_id = block_stmt.scope_id();
-        if let Some(replacement) = self.transform_statements(
-            &mut block_stmt.body,
-            Some(scope_id),
-            ctx.current_scope_id(),
-            ctx.current_hoist_scope_id(),
-            ctx,
-        ) {
-            *stmt = replacement;
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block_stmt.body, ctx.current_hoist_scope_id(), ctx)
+        {
+            let current_scope_id = ctx.current_scope_id();
+
+            *stmt = Self::create_try_stmt(
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt.scope_id()),
+                &using_ctx,
+                current_scope_id,
+                needs_await,
+                ctx,
+            );
         }
     }
 
@@ -519,7 +596,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
                 ) {
                     continue;
-                };
+                }
                 needs_await = needs_await || var_decl.kind == VariableDeclarationKind::AwaitUsing;
 
                 var_decl.kind = VariableDeclarationKind::Const;
@@ -583,7 +660,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     )),
                     false,
                 )),
-                ctx.ast.move_statement(stmt),
+                stmt.take_in(ctx.ast.allocator),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -596,8 +673,6 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
     /// Transforms:
     ///  - `node` - the statements to transform
-    ///  - `scope_id` - if provided, it will be used as the scope_id for the new block.
-    ///  - `parent_scope_id` - the parent scope
     ///  - `hoist_scope_id` - the hoist scope, used for generating new var bindings
     ///  - `ctx` - the traverse context
     ///
@@ -624,11 +699,9 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     fn transform_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        scope_id: Option<ScopeId>,
-        parent_scope_id: ScopeId,
         hoist_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    ) -> Option<(ArenaVec<'a, Statement<'a>>, bool, BoundIdentifier<'a>)> {
         let mut needs_await = false;
 
         let mut using_ctx = None;
@@ -642,7 +715,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ) && !self.top_level_using.contains_key(&address)
             {
                 continue;
-            };
+            }
             let is_await_using = variable_declaration.kind == VariableDeclarationKind::AwaitUsing
                 || self.top_level_using.get(&address).copied().unwrap_or(false);
             needs_await = needs_await || is_await_using;
@@ -682,7 +755,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = ctx.ast.move_vec(stmts);
+        let mut stmts = stmts.take_in(ctx.ast.allocator);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
@@ -700,21 +773,19 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         );
         stmts.insert(0, Statement::from(helper));
 
-        let scope_id_children_to_move = scope_id.unwrap_or(parent_scope_id);
+        Some((stmts, needs_await, using_ctx))
+    }
 
-        let scope_id = scope_id
-            .unwrap_or_else(|| ctx.create_child_scope(parent_scope_id, ScopeFlags::empty()));
-        let block = ctx.ast.block_statement_with_scope_id(SPAN, stmts, scope_id);
-
-        let child_ids = ctx.scoping_mut().get_scope_child_ids(scope_id_children_to_move).to_vec();
-        for id in child_ids.iter().filter(|id| *id != &scope_id) {
-            ctx.scoping_mut().change_scope_parent_id(*id, Some(scope_id));
-        }
-
-        let catch = Self::create_catch_clause(&using_ctx, parent_scope_id, ctx);
-        let finally = Self::create_finally_block(&using_ctx, parent_scope_id, needs_await, ctx);
-
-        Some(ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally)))
+    fn create_try_stmt(
+        body: BlockStatement<'a>,
+        using_ctx: &BoundIdentifier<'a>,
+        parent_scope_id: ScopeId,
+        needs_await: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
+        let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
+        ctx.ast.statement_try(SPAN, body, Some(catch), Some(finally))
     }
 
     /// `catch (_) { _usingCtx.e = _; }`

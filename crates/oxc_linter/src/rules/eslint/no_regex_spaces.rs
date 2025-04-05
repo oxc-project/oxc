@@ -111,11 +111,11 @@ impl NoRegexSpaces {
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
-        expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
+        expr.callee.is_specific_id("RegExp") && !expr.arguments.is_empty()
     }
 
     fn is_regexp_call_expression(expr: &CallExpression<'_>) -> bool {
-        expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
+        expr.callee.is_specific_id("RegExp") && !expr.arguments.is_empty()
     }
 
     // For skipping if there aren't any consecutive spaces in the source, to avoid reporting cases

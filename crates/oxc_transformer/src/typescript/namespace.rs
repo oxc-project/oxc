@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Reference;
@@ -49,7 +49,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in ctx.ast.move_vec(&mut program.body) {
+        for stmt in program.body.take_in(ctx.ast.allocator) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -430,7 +430,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 false,
                             ))
                             .into(),
-                            ctx.ast.move_expression(init),
+                            init.take_in(ctx.ast.allocator),
                         ),
                     );
                 }

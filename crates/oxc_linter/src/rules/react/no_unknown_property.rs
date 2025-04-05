@@ -517,7 +517,7 @@ impl Rule for NoUnknownProperty {
                 let actual_name = get_jsx_attribute_name(&attr.name);
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
-                };
+                }
                 if is_valid_data_attr(&actual_name) {
                     if self.0.require_data_lowercase && has_uppercase(&actual_name) {
                         ctx.diagnostic(data_lowercase_required(
@@ -526,10 +526,10 @@ impl Rule for NoUnknownProperty {
                         ));
                     }
                     return;
-                };
+                }
                 if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
                     return;
-                };
+                }
                 let name = normalize_attribute_case(&actual_name);
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {

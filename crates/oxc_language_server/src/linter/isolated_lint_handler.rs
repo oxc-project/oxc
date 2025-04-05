@@ -133,7 +133,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
@@ -151,7 +151,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
@@ -162,6 +162,7 @@ impl IsolatedLintHandler {
                 .into_iter()
                 .map(|msg| {
                     let fixed_content = msg.fix.map(|f| FixedContent {
+                        message: f.message.map(|m| m.to_string()),
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(

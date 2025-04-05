@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
@@ -60,6 +60,13 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
+    es2017::ES2017Options,
+    es2018::ES2018Options,
+    es2019::ES2019Options,
+    es2020::ES2020Options,
+    es2021::ES2021Options,
+    es2022::{ClassPropertiesOptions, ES2022Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
@@ -268,6 +275,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.exit_class(class, ctx);
         self.x2_es2022.exit_class(class, ctx);
     }
 
@@ -530,7 +538,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }
@@ -627,6 +635,12 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_for_in_statement(stmt, ctx);
         }
         self.x2_es2018.enter_for_in_statement(stmt, ctx);
+    }
+
+    fn enter_try_statement(&mut self, stmt: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
+            explicit_resource_management.enter_try_statement(stmt, ctx);
+        }
     }
 
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {

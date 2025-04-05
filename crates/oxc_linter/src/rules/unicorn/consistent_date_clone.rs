@@ -66,7 +66,7 @@ impl Rule for ConsistentDateClone {
         };
 
         if callee.property.name.as_str() == "getTime"
-            && expr.arguments.len() == 0
+            && expr.arguments.is_empty()
             && !expr.optional
             && !callee.optional
         {

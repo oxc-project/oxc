@@ -136,7 +136,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
         }
         // `array.toSpliced()`
         "toSpliced" => {
-            if call_expr.arguments.len() != 0 {
+            if !call_expr.arguments.is_empty() {
                 return;
             }
 
@@ -160,7 +160,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             };
 
-            if string_lit.value != "" {
+            if !string_lit.value.is_empty() {
                 return;
             }
 
