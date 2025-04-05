@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 714/1191
+Passed: 716/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2779,29 +2779,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (21/24)
-* transform-sync/function-body/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "x"]
-rebuilt        : ScopeId(1): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/multiple-nested/input.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_usingCtx3", "z"]
-rebuilt        : ScopeId(3): ["_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(10): []
-rebuilt        : ScopeId(4): ["z"]
-Symbol scope ID mismatch for "z":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(4)
-
+# babel-plugin-proposal-explicit-resource-management (23/24)
 * transform-top-level/hoisting-default-class/input.mjs
 Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 37, end: 38 }

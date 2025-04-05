@@ -206,12 +206,53 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         if let Some((new_stmts, needs_await, using_ctx)) =
             self.transform_statements(&mut body.statements, ctx.current_hoist_scope_id(), ctx)
         {
-            // FIXME: this creates the scopes in the correct place, however we never move the bindings contained
-            // within `new_stmts` to the new scope.
             let block_stmt_scope_id =
                 ctx.insert_scope_below_statements(&new_stmts, ScopeFlags::empty());
 
             let current_scope_id = ctx.current_scope_id();
+            // TODO: make this less hacky
+            for stmt in &new_stmts {
+                match stmt {
+                    Statement::VariableDeclaration(var_decl) => {
+                        if var_decl.kind != VariableDeclarationKind::Var {
+                            for decl in &var_decl.declarations {
+                                decl.id.bound_names(&mut |id| {
+                                    ctx.scoping_mut()
+                                        .set_symbol_scope_id(id.symbol_id(), block_stmt_scope_id);
+                                    ctx.scoping_mut().move_binding(
+                                        current_scope_id,
+                                        block_stmt_scope_id,
+                                        &id.name,
+                                    );
+                                });
+                            }
+                        }
+                    }
+                    Statement::FunctionDeclaration(func_decl) => {
+                        ctx.scoping_mut().set_symbol_scope_id(
+                            func_decl.id.as_ref().unwrap().symbol_id(),
+                            block_stmt_scope_id,
+                        );
+                        ctx.scoping_mut().move_binding(
+                            current_scope_id,
+                            block_stmt_scope_id,
+                            &func_decl.id.as_ref().unwrap().name,
+                        );
+                    }
+                    Statement::ClassDeclaration(class_decl) => {
+                        ctx.scoping_mut().set_symbol_scope_id(
+                            class_decl.id.as_ref().unwrap().symbol_id(),
+                            block_stmt_scope_id,
+                        );
+                        ctx.scoping_mut().move_binding(
+                            current_scope_id,
+                            block_stmt_scope_id,
+                            &class_decl.id.as_ref().unwrap().name,
+                        );
+                    }
+                    _ => {}
+                }
+            }
 
             body.statements = ctx.ast.vec1(Self::create_try_stmt(
                 ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
