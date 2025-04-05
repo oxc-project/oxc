@@ -247,7 +247,6 @@ mod test {
             filter.kind(),
             &LintFilterKind::Rule(LintPlugins::from("eslint"), "no-const-assign".into())
         );
-        assert!(matches!(filter.kind(), LintFilterKind::Rule(_, _)));
     }
 
     #[test]
