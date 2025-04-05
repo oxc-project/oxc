@@ -78,8 +78,9 @@ impl<'a> From<&'a LintFilter> for (AllowWarnDeny, &'a LintFilterKind) {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LintFilterKind {
+    /// e.g. `no-const-assign`
     Generic(Cow<'static, str>),
-    /// e.g. `no-const-assign` or `eslint/no-const-assign`
+    /// e.g. `eslint/no-const-assign`
     Rule(LintPlugins, Cow<'static, str>),
     /// e.g. `correctness`
     Category(RuleCategory),
@@ -246,7 +247,6 @@ mod test {
     fn test_parse() {
         #[rustfmt::skip]
         let test_cases: Vec<(&'static str, LintFilterKind)> = vec![
-            ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
             ("eslint/no-const-assign", LintFilterKind::Rule(LintPlugins::ESLINT, "no-const-assign".into())),
             ("import/namespace", LintFilterKind::Rule(LintPlugins::IMPORT, "namespace".into())),
             ("react-hooks/exhaustive-deps", LintFilterKind::Rule(LintPlugins::REACT, "exhaustive-deps".into())),
@@ -255,6 +255,7 @@ mod test {
             ("nursery", LintFilterKind::Category("nursery".try_into().unwrap())),
             ("perf", LintFilterKind::Category("perf".try_into().unwrap())),
             // misc
+            ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
             ("not-a-valid-filter", LintFilterKind::Generic("not-a-valid-filter".into())),
             ("all", LintFilterKind::Generic("all".into())),
         ];
