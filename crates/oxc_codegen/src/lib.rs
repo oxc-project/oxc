@@ -468,6 +468,7 @@ impl<'a> Codegen<'a> {
     // ```
     // But it turned out this was actually a bit slower.
     // <https://github.com/oxc-project/oxc/pull/5221>
+    #[inline]
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         let Some((first, rest)) = items.split_first() else {
             return;
