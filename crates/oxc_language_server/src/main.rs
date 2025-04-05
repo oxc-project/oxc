@@ -66,6 +66,21 @@ impl Options {
     fn disable_nested_configs(&self) -> bool {
         self.flags.contains_key("disable_nested_config")
     }
+
+    fn fix_kind(&self) -> FixKind {
+        self.flags.get("fix_kind").map_or(FixKind::SafeFix, |kind| match kind.as_str() {
+            "safe_fix" => FixKind::SafeFix,
+            "safe_fix_or_suggestion" => FixKind::SafeFixOrSuggestion,
+            "dangerous_fix" => FixKind::DangerousFix,
+            "dangerous_fix_or_suggestion" => FixKind::DangerousFixOrSuggestion,
+            "none" => FixKind::None,
+            "all" => FixKind::All,
+            _ => {
+                info!("invalid fix_kind flag `{kind}`, fallback to `safe_fix`");
+                FixKind::SafeFix
+            }
+        })
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -126,12 +141,17 @@ impl LanguageServer for Backend {
         "
         );
 
+        *self.options.lock().await = changed_options.clone();
+
         if changed_options.disable_nested_configs() != current_option.disable_nested_configs() {
             self.nested_configs.pin().clear();
             self.init_nested_configs().await;
         }
 
-        *self.options.lock().await = changed_options.clone();
+        if changed_options.fix_kind() != changed_options.fix_kind() {
+            self.init_linter_config().await;
+            self.revalidate_open_files().await;
+        }
 
         // revalidate the config and all open files
         if changed_options.config_path != current_option.config_path {
@@ -560,7 +580,8 @@ impl Backend {
             .build()
             .expect("failed to build config");
 
-        let lint_options = LintOptions { fix: FixKind::SafeFix, ..Default::default() };
+        let lint_options =
+            LintOptions { fix: self.options.lock().await.fix_kind(), ..Default::default() };
 
         let linter = if self.options.lock().await.disable_nested_configs() {
             Linter::new(lint_options, config_store)
