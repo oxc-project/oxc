@@ -1,8 +1,8 @@
 use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 use oxc_semantic::{NodeId, Reference, ReferenceFlags, SymbolId};
+use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -12,7 +12,6 @@ fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
         .with_help("Remove the assignment.")
 }
-
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessAssignment;
@@ -62,7 +61,8 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     let references = ctx.semantic().symbol_references(symbol_id).collect::<Vec<_>>();
     // get SymbolId's declaration node
     let declaration_node_id = ctx.semantic().scoping().symbol_declaration(symbol_id);
-    let has_if_else_loop_after_declaration = check_has_if_else_loop_after_declaration(&declaration_node_id, &references, ctx);
+    let has_if_else_loop_after_declaration =
+        check_has_if_else_loop_after_declaration(&declaration_node_id, &references, ctx);
 
     // Create a map to group references by control structure
     let mut reference_group = FxHashMap::default();
@@ -77,7 +77,6 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
             reference_group_without_parent.push(reference);
         }
     }
-
 
     // create a reference for the declaration node
     let dec_control_parent = find_control_parent(declaration_node_id, ctx);
@@ -124,7 +123,7 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
             }
 
             if reference.flags().is_write() {
-               // Count this as an assignment
+                // Count this as an assignment
                 write_count += 1;
                 write_count_total += 1;
             }
@@ -140,12 +139,11 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
             }
         }
 
-
         // if there is only one reference and no if/else/loop statement after it, it's a dead store
-        if has_declaration &&
-            reference_group_value.len() == 1 &&
-            !has_if_else_loop_after_declaration
-            {
+        if has_declaration
+            && reference_group_value.len() == 1
+            && !has_if_else_loop_after_declaration
+        {
             return true;
         }
 
@@ -153,7 +151,10 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
             is_multiple_assignments = true;
         }
 
-        if write_count > 0 && !in_loop_context(reference_group_value[0].node_id(), ctx) && read_count_total > 0 {
+        if write_count > 0
+            && !in_loop_context(reference_group_value[0].node_id(), ctx)
+            && read_count_total > 0
+        {
             return true;
         }
     }
@@ -166,8 +167,11 @@ fn is_dead_store(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     false
 }
 
-
-fn check_has_if_else_loop_after_declaration(dec_node_id: &NodeId, references: &Vec<&Reference>, ctx: &LintContext<'_>) -> bool {
+fn check_has_if_else_loop_after_declaration(
+    dec_node_id: &NodeId,
+    references: &Vec<&Reference>,
+    ctx: &LintContext<'_>,
+) -> bool {
     for reference in references {
         // Find the containing control structure (if statement, for loop, etc.)
         if reference.node_id() > *dec_node_id {
@@ -199,12 +203,12 @@ fn find_control_parent(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId>
 
             if matches!(
                 parent.kind(),
-                AstKind::IfStatement(_) |
-                AstKind::ForStatement(_) |
-                AstKind::ForInStatement(_) |
-                AstKind::ForOfStatement(_) |
-                AstKind::WhileStatement(_) |
-                AstKind::DoWhileStatement(_)
+                AstKind::IfStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForOfStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
             ) {
                 return Some(parent_id);
             }
@@ -244,11 +248,11 @@ fn in_loop_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
 fn has_loop_context(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     matches!(
         ctx.semantic().nodes().get_node(node_id).kind(),
-        AstKind::ForStatement(_) |
-        AstKind::ForInStatement(_) |
-        AstKind::ForOfStatement(_) |
-        AstKind::WhileStatement(_) |
-        AstKind::DoWhileStatement(_)
+        AstKind::ForStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
     )
 }
 
@@ -310,7 +314,7 @@ fn test() {
                 v = 'unused-2'
                 doSomething();
             }
-        "
+        ",
     ];
 
     let fail = vec![
@@ -321,7 +325,6 @@ fn test() {
                 v = 'unused';
             }
         ",
-
         "
             function fn2() {
             let v = 'used';
@@ -331,7 +334,6 @@ fn test() {
             }
             doSomething(v);
         }",
-
         "
         function fn3() {
             let v = 'used';
@@ -360,8 +362,7 @@ fn test() {
                 v = 'unused';
             }
             console.log(v);
-        }"
-        ,
+        }",
         "
             function fn6() {
                 let v = 'used1';
@@ -389,4 +390,3 @@ fn test() {
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
-
