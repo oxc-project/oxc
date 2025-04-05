@@ -78,6 +78,7 @@ impl<'a> From<&'a LintFilter> for (AllowWarnDeny, &'a LintFilterKind) {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LintFilterKind {
+    All,
     /// e.g. `no-const-assign`
     Generic(Cow<'static, str>),
     /// e.g. `eslint/no-const-assign`
@@ -144,7 +145,13 @@ impl LintFilterKind {
         } else {
             match RuleCategory::try_from(filter.as_ref()) {
                 Ok(category) => Ok(LintFilterKind::Category(category)),
-                Err(()) => Ok(LintFilterKind::Generic(filter)),
+                Err(()) => {
+                    if filter == "all" {
+                        Ok(LintFilterKind::All)
+                    } else {
+                        Ok(LintFilterKind::Generic(filter))
+                    }
+                }
             }
         }
     }
@@ -257,7 +264,7 @@ mod test {
             // misc
             ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
             ("not-a-valid-filter", LintFilterKind::Generic("not-a-valid-filter".into())),
-            ("all", LintFilterKind::Generic("all".into())),
+            ("all", LintFilterKind::All),
         ];
 
         for (input, expected) in test_cases {
