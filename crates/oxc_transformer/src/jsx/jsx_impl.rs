@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, SPAN, Span};
@@ -860,7 +860,7 @@ impl<'a> JsxImpl<'a, '_> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
-                let jsx_text = Self::decode_entities(s.value.as_str());
+                let jsx_text = Self::decode_entities(s.value.as_str(), ctx).into_bump_str();
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
             }
             Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
@@ -948,8 +948,8 @@ impl<'a> JsxImpl<'a, '_> {
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value.as_str())
-            .map(|s| ctx.ast.expression_string_literal(text.span, s, None))
+        Self::fixup_whitespace_and_decode_entities(text.value.as_str(), ctx)
+            .map(|s| ctx.ast.expression_string_literal(text.span, s.into_bump_str(), None))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the
@@ -967,14 +967,17 @@ impl<'a> JsxImpl<'a, '_> {
     /// - Remove empty lines and join the rest with " ".
     ///
     /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
-    fn fixup_whitespace_and_decode_entities(text: &str) -> Option<String> {
-        let mut acc: Option<String> = None;
+    fn fixup_whitespace_and_decode_entities(
+        text: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<ArenaString<'a>> {
+        let mut acc: Option<ArenaString<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
         for (index, c) in text.char_indices() {
             if is_line_terminator(c) {
                 if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
-                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..last]));
+                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..last], ctx));
                 }
                 first_non_whitespace = None;
             } else if !is_white_space_single_line(c) {
@@ -985,22 +988,32 @@ impl<'a> JsxImpl<'a, '_> {
             }
         }
         if let Some(first) = first_non_whitespace {
-            Some(Self::add_line_of_jsx_text(acc, &text[first..]))
+            Some(Self::add_line_of_jsx_text(acc, &text[first..], ctx))
         } else {
             acc
         }
     }
 
-    fn add_line_of_jsx_text(acc: Option<String>, trimmed_line: &str) -> String {
-        let decoded = Self::decode_entities(trimmed_line);
-        if let Some(acc) = acc { format!("{acc} {decoded}") } else { decoded }
+    fn add_line_of_jsx_text(
+        acc: Option<ArenaString<'a>>,
+        trimmed_line: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> ArenaString<'a> {
+        let decoded = Self::decode_entities(trimmed_line, ctx);
+        if let Some(mut acc) = acc {
+            acc.push(' ');
+            acc.push_str(&decoded);
+            acc
+        } else {
+            decoded
+        }
     }
 
     /// Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
     /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
-    fn decode_entities(s: &str) -> String {
-        let mut buffer = String::new();
+    fn decode_entities(s: &str, ctx: &TraverseCtx<'a>) -> ArenaString<'a> {
+        let mut buffer = ArenaString::new_in(ctx.ast.allocator);
         let mut chars = s.char_indices();
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
