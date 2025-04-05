@@ -252,8 +252,8 @@ mod test {
             ("react-hooks/exhaustive-deps", LintFilterKind::Rule(LintPlugins::REACT, "exhaustive-deps".into())),
             // categories
             ("correctness", LintFilterKind::Category(RuleCategory::Correctness)),
-            ("nursery", LintFilterKind::Category("nursery".try_into().unwrap())),
-            ("perf", LintFilterKind::Category("perf".try_into().unwrap())),
+            ("nursery", LintFilterKind::Category(RuleCategory::Nursery)),
+            ("perf", LintFilterKind::Category(RuleCategory::Perf)),
             // misc
             ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
             ("not-a-valid-filter", LintFilterKind::Generic("not-a-valid-filter".into())),
