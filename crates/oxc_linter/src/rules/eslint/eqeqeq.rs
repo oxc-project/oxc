@@ -34,6 +34,32 @@ declare_oxc_lint!(
     /// let b = false
     /// a == b
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### null
+    ///
+    /// Allow nullish comparison (`foo == null`). The alternative (`foo === null || foo === undefined`) is verbose and has no other benefit.
+    ///
+    /// Example:
+    ///
+    /// ```json
+    ///   "eslint/eqeqeq": ["error", "always", {"null": "ignore"}]
+    /// ```
+    ///
+    /// #### smart
+    ///
+    /// Allow `==` when comparing:
+    ///
+    /// * the result from `typeof` (`typeof foo == 'undefined'`)
+    /// * literal values (`'foo' == 'bar'`, `42 == 42`)
+    /// * nullish (`foo == null`)
+    ///
+    /// Example:
+    ///
+    /// ```json
+    ///   "eslint/eqeqeq": ["error", "smart"]
+    /// ```
     Eqeqeq,
     eslint,
     pedantic,
