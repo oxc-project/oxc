@@ -32,6 +32,7 @@ mod import {
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_webpack_loader_syntax;
+    pub mod order;
     pub mod unambiguous;
 }
 
@@ -722,6 +723,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     import::no_webpack_loader_syntax,
+    import::order,
     import::unambiguous,
     jest::consistent_test_it,
     jest::expect_expect,
