@@ -23,42 +23,67 @@ pub struct Eqeqeq {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Requires the use of the === and !== operators
+    ///
+    /// Requires the use of the `===` and `!==` operators.
     ///
     /// ### Why is this bad?
+    ///
     /// Using non-strict equality operators leads to hard to track bugs due to type coercion.
     ///
-    /// ### Example
-    /// ```javascript
-    /// let a = []
-    /// let b = false
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```js
+    /// const a = [];
+    /// const b = true;
     /// a == b
     /// ```
+    /// The above will evaluate to `true`, but almost surely not want you want.
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```js
+    /// const a = [];
+    /// const b = true;
+    /// a === b
+    /// ```
+    /// The above will evaluate to `false` (an array is not boolean true).
     ///
     /// ### Options
     ///
     /// #### null
     ///
-    /// Allow nullish comparison (`foo == null`). The alternative (`foo === null || foo === undefined`) is verbose and has no other benefit.
-    ///
-    /// Example:
-    ///
     /// ```json
     ///   "eslint/eqeqeq": ["error", "always", {"null": "ignore"}]
     /// ```
     ///
+    /// Allow nullish comparison (`foo == null`). The alternative (`foo === null || foo === undefined`) is verbose and has no other benefit.
+    ///
     /// #### smart
-    ///
-    /// Allow `==` when comparing:
-    ///
-    /// * the result from `typeof` (`typeof foo == 'undefined'`)
-    /// * literal values (`'foo' == 'bar'`, `42 == 42`)
-    /// * nullish (`foo == null`)
-    ///
-    /// Example:
     ///
     /// ```json
     ///   "eslint/eqeqeq": ["error", "smart"]
+    /// ```
+    ///
+    /// Allow `==` when comparing:
+    ///
+    /// * the result from `typeof`
+    /// * literal values
+    /// * nullish
+    ///
+    /// Examples of **incorrect** code for this option:
+    /// ```js
+    /// a == b
+    /// [] == true
+    /// ```
+    ///
+    /// Examples of **correct** code for this option:
+    /// ```js
+    /// typeof foo == 'undefined'
+    /// 'foo' == 'bar'
+    /// 42 == 42
+    /// foo == null
     /// ```
     Eqeqeq,
     eslint,
