@@ -455,19 +455,6 @@ impl<'a> Codegen<'a> {
         self.needs_semicolon = false;
     }
 
-    // We tried optimizing this to move the `index != 0` check out of the loop:
-    // ```
-    // let mut iter = items.iter();
-    // let Some(item) = iter.next() else { return };
-    // item.print(self, ctx);
-    // for item in iter {
-    //     self.print_comma();
-    //     self.print_soft_space();
-    //     item.print(self, ctx);
-    // }
-    // ```
-    // But it turned out this was actually a bit slower.
-    // <https://github.com/oxc-project/oxc/pull/5221>
     #[inline]
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         let Some((first, rest)) = items.split_first() else {
