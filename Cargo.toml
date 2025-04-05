@@ -235,6 +235,8 @@ ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "laz
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
 debug = true
+strip = false
+panic = "unwind"
 
 [profile.dev.package]
 # Compile macros with some optimizations to make consuming crates build faster

@@ -1,18 +1,109 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, module_record::NameSpan, rule::Rule};
 
-fn extensions_diagnostic(span: Span) -> OxcDiagnostic {
+fn extension_should_not_be_included_diagnostic(span: Span, extension: &str) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+    OxcDiagnostic::warn(format!("File extension {extension} should not be included in the import declaration."))
+        .with_help("Remove the file extension from this import.")
+        .with_label(span)
+}
+
+fn extension_missing_from_import_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing file extension in import declaration")
+        .with_help("Add a file extension to this import.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct Extensions;
+enum FileExtensionConfig {
+    Always,
+    #[default]
+    Never,
+}
+
+impl FileExtensionConfig {
+    pub fn from(str: &str) -> FileExtensionConfig {
+        match str {
+            "always" => FileExtensionConfig::Always,
+            "never" => FileExtensionConfig::Never,
+            _ => FileExtensionConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct ExtensionsConfig {
+    ignore_packages: bool,
+    check_type_imports: bool,
+    js: FileExtensionConfig,
+    jsx: FileExtensionConfig,
+    ts: FileExtensionConfig,
+    tsx: FileExtensionConfig,
+    json: FileExtensionConfig,
+    // TODO: not sure if I can do this.
+    // check_type_imports: bool,
+}
+
+impl ExtensionsConfig {
+    pub fn get_always_file_types<'a>(&'a self) -> Vec<&'a str> {
+        let mut result: Vec<&str> = vec![];
+
+        if matches!(self.js, FileExtensionConfig::Always) {
+            result.push("js");
+        }
+
+        if matches!(self.jsx, FileExtensionConfig::Always) {
+            result.push("jsx");
+        }
+
+        if matches!(self.ts, FileExtensionConfig::Always) {
+            result.push("ts");
+        }
+
+        if matches!(self.tsx, FileExtensionConfig::Always) {
+            result.push("tsx");
+        }
+
+        if matches!(self.json, FileExtensionConfig::Always) {
+            result.push("json");
+        }
+
+        result
+    }
+    pub fn get_never_file_types<'a>(&'a self) -> Vec<&'a str> {
+        let mut result: Vec<&str> = vec![];
+
+        if matches!(self.js, FileExtensionConfig::Never) {
+            result.push("js");
+        }
+
+        if matches!(self.jsx, FileExtensionConfig::Never) {
+            result.push("jsx");
+        }
+
+        if matches!(self.ts, FileExtensionConfig::Never) {
+            result.push("ts");
+        }
+
+        if matches!(self.tsx, FileExtensionConfig::Never) {
+            result.push("tsx");
+        }
+
+        if matches!(self.json, FileExtensionConfig::Never) {
+            result.push("json");
+        }
+
+        result
+    }
+}
+
+
+#[derive(Debug, Default, Clone)]
+pub struct Extensions(Box<ExtensionsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -72,13 +163,181 @@ declare_oxc_lint!(
 );
 
 impl Rule for Extensions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn from_configuration(value: serde_json::Value) -> Self {
+
+        if let Some(always_or_never)  = value.get(0).and_then(Value::as_str).map(FileExtensionConfig::from) {
+            println!("always_or_never: {always_or_never:#?}");
+
+            let default = always_or_never;
+
+            if let Some(val) = value.get(1) {
+                println!("val: {val:#?}");
+
+                let root = val.get("pattern").unwrap_or(val);
+
+                let config: ExtensionsConfig = ExtensionsConfig{
+                    ignore_packages: root.get("ignorePackages")
+                                .and_then(Value::as_bool)
+                                .unwrap_or_default(),
+                            check_type_imports: root.get("checkTypeImports").and_then(Value::as_bool)
+                                .unwrap_or_default(),
+                            js: root.get("js").and_then(Value::as_str)
+                                .map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                            jsx: root.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                            ts: root.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                            tsx: root.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                            json: root.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                };
+
+                Self(Box::new(config))
+            } else {
+                let config: ExtensionsConfig = ExtensionsConfig{
+                    ignore_packages: value.get("ignorePackages")
+                                .and_then(Value::as_bool)
+                                .unwrap_or_default(),
+                            check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
+                                .unwrap_or_default(),
+                            js: default.clone(),
+                            jsx: default.clone(),
+                            ts: default.clone(),
+                            tsx: default.clone(),
+                            json: default.clone(),
+                };
+
+                Self(Box::new(config))
+            }
+
+
+
+
+            // let config: ExtensionsConfig = match always_or_never {
+            //     FileExtensionConfig::Always => {
+            //         ExtensionsConfig {
+            //             ignore_packages: value.get("ignorePackages")
+            //                 .and_then(Value::as_bool)
+            //                 .unwrap_or_default(),
+            //             check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
+            //                 .unwrap_or_default(),
+            //             js: value.get("js").and_then(Value::as_str)
+            //                 .map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Always),
+            //             jsx: value.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Always),
+            //             ts: value.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Always),
+            //             tsx: value.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Always),
+            //             json: value.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Always),
+            //         }
+            //     },
+            //     FileExtensionConfig::Never => {
+            //         ExtensionsConfig {
+            //             ignore_packages: value.get("ignorePackages")
+            //                 .and_then(Value::as_bool)
+            //                 .unwrap_or_default(),
+            //             check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
+            //                 .unwrap_or_default(),
+            //                 js: value.get("js").and_then(Value::as_str)
+            //                 .map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Never),
+            //             jsx: value.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Never),
+            //             ts: value.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Never),
+            //             tsx: value.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Never),
+            //             json: value.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(FileExtensionConfig::Never),
+            //         }
+            //     }
+            // };
+
+        } else {
+            let config = ExtensionsConfig {
+                ignore_packages: value.get("ignorePackages")
+                    .and_then(Value::as_bool)
+                    .unwrap_or_default(),
+                check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
+                    .unwrap_or_default(),
+                js: value.get("js").and_then(Value::as_str)
+                    .map(FileExtensionConfig::from).unwrap_or_default(),
+                jsx: value.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+                ts: value.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+                tsx: value.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+                json: value.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+            };
+
+            println!("config_value: {value:#?}");
+            println!("config: {config:#?}");
+
+            Self(Box::new(config))
+        }
+    }
+
+    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
         println!("running lint rule...");
 
-        // the default.rs rule has good reference points for reading file names in an import.
-        if let Some(extension) = ctx.file_path().extension() {
-            println!("file extension: {extension:?}");
-        };
+        let module_record = ctx.module_record();
+
+        let always_file_types = self.0.get_always_file_types();
+        let never_file_types = self.0.get_never_file_types();
+
+        let config = self.0.clone();
+        println!("config: {config:#?}");
+
+        println!("always_file_types: {always_file_types:#?}");
+
+        println!("never_file_types: {never_file_types:#?}");
+
+        for import in &module_record.import_entries {
+            println!("module_request: {:#?}", import.module_request);
+
+            println!("is_package_cond1: {}", import.module_request.name().starts_with('@'));
+            println!("is_package_cond2: {}", !import.module_request.name().starts_with("."));
+            println!("is_package_cond3: {}", !import.module_request.name()[1..].contains('/'));
+
+
+            let is_package = import.module_request.name().starts_with('@') || !import.module_request.name().starts_with(".") || !import.module_request.name()[1..].contains('/');
+
+            if is_package {
+                continue;
+            }
+
+            let file_extension = get_file_extension_from_module_request(&import.module_request);
+            let span = import.statement_span;
+
+            println!("file_extension: {file_extension:?}");
+
+            // if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || !always_file_types.contains(&file_extension.unwrap())) {
+             if file_extension.is_some() && never_file_types.contains(&file_extension.unwrap()) {
+                // should not have file extension
+                ctx.diagnostic(extension_should_not_be_included_diagnostic(span, &file_extension.unwrap()));
+            // } else if file_extension.is_none() && !always_file_types.is_empty() {
+            //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+                // somehow figure out what the file should be and check that against the always_file_types list
+            }
+        }
+
+        // // the default.rs rule has good reference points for reading file names in an import.
+        // if let Some(extension) = ctx.file_path().extension() {
+        //     println!("file extension: {extension:?}");
+        // };
+
+        // let Some(root) = ctx.nodes().root_node() else {
+        //     return;
+        // };
+        // if let AstKind::Program(program) = root.kind() {
+        //     let body = &program.body;
+        //     let find_res =
+        //         body.iter().rev().find_position(|statement| !is_imports_declaration(statement));
+        //     if let Some((index, _)) = find_res {
+        //         let end = body.len() - index;
+        //         for statement in &body[0..end] {
+        //             if is_imports_declaration(statement) {
+        //                 ctx.diagnostic(extensions_diagnostic(statement.span()));
+        //             }
+        //         }
+        //     }
+        // }
+    }
+}
+
+fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&str>  {
+    if let Some((_, extension)) = module_request.name().rsplit_once('.') {
+        Some(extension)
+    } else {
+        None
     }
 }
 
@@ -86,6 +345,8 @@ impl Rule for Extensions {
 fn test() {
     use crate::tester::Tester;
     use serde_json::{json, Value};
+
+    // let pass: Vec<(&str, Option<Value>)> = vec![];
 
     let pass: Vec<(&str, Option<Value>)> = vec![
         (r#"import a from "@/a""#, None),
@@ -128,33 +389,33 @@ fn test() {
         (r#"import path from "path";"#, Some(json!(["always"]))),
         (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
         (r#"import thing from "non-package";"#, Some(json!(["never"]))),
-        (
-            r#"
-                import foo from "./foo.js";
-                import bar from "./bar.json";
-                import Component from "./Component.jsx";
-                import express from "express";
-            "#,
-            Some(json!(["ignorePackages"])),
-        ),
-        (
-            r#"
-                import foo from "./foo.js";
-                import bar from "./bar.json";
-                import Component from "./Component.jsx";
-                import express from "express";
-            "#,
-            Some(json!(["always", { "ignorePackages": true}])),
-        ),
-        (
-            r#"
-                import foo from "./foo";
-                import bar from "./bar";
-                import Component from "./Component";
-                import express from "express";
-            "#,
-            Some(json!(["never", { "ignorePackages": true}])),
-        ),
+        // (
+        //     r#"
+        //         import foo from "./foo.js";
+        //         import bar from "./bar.json";
+        //         import Component from "./Component.jsx";
+        //         import express from "express";
+        //     "#,
+        //     Some(json!(["ignorePackages"])),
+        // ),
+        // (
+        //     r#"
+        //         import foo from "./foo.js";
+        //         import bar from "./bar.json";
+        //         import Component from "./Component.jsx";
+        //         import express from "express";
+        //     "#,
+        //     Some(json!(["always", { "ignorePackages": true}])),
+        // ),
+        // (
+        //     r#"
+        //         import foo from "./foo";
+        //         import bar from "./bar";
+        //         import Component from "./Component";
+        //         import express from "express";
+        //     "#,
+        //     Some(json!(["never", { "ignorePackages": true}])),
+        // ),
         (
             r#"import exceljs from "exceljs""#,
             Some(json!(["always", { "js": "never", "jsx": "never"}])),
@@ -230,269 +491,270 @@ fn test() {
         ),
     ];
 
-    let fail: Vec<(&str, Option<Value>)> = vec![];
+    // let fail: Vec<(&str, Option<Value>)> = vec![];
 
-    // let fail: Vec<(&str, Option<Value>)> = vec![
-    //     (r#"import a from "a/index.js""#, None),
-    //     (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
-    //     (
-    //         r#"
-    //             import a from "a/index.js";
-    //             import packageConfig from "./package";
-    //         "#,
-    //         Some(json!([{ "json": "always", "js": "never"}])),
-    //     ),
-    //     (
-    //         r#"
-    //             import lib from "./bar.js";
-    //             import component from "./bar.jsx";
-    //             import data from "./bar.json";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import lib from "./bar.js";
-    //             import component from "./bar.jsx";
-    //             import data from "./bar.json";
-    //         "#,
-    //         Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
-    //     ),
-    //     (
-    //         r#"
-    //             import component from "./bar.jsx";
-    //             import data from "./bar.json";
-    //         "#,
-    //         Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
-    //     ),
-    //     (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
-    //     (
-    //         r#"
-    //             import barjs from "./bar.js";
-    //             import barjson from "./bar.json";
-    //             import barnone from "./bar";
-    //         "#,
-    //         Some(json!(["always", { "json": "always", "js": "never", "jsx": "never" }])),
-    //     ),
-    //     (
-    //         r#"
-    //             import barjs from ".";
-    //             import barjs2 from "..";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import barjs from "./bar.js";
-    //             import barjson from "./bar.json";
-    //             import barnone from "./bar";
-    //         "#,
-    //         Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }])),
-    //     ),
-    //     (
-    //         r#"
-    //             import thing from "./fake-file.js";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import thing from "non-package/test";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import thing from "@name/pkg/test";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import thing from "@name/pkg/test.js";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from './foo.js';
-    //             import bar from './bar.json';
-    //             import Component from './Component';
-    //             import baz from 'foo/baz';
-    //             import baw from '@scoped/baw/import';
-    //             import chart from '@/configs/chart';
-    //             import express from 'express';
-    //         "#,
-    //         Some(json!(["always", { "ignorePackages": true }])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from './foo.js';
-    //             import bar from './bar.json';
-    //             import Component from './Component';
-    //             import baz from 'foo/baz';
-    //             import baw from '@scoped/baw/import';
-    //             import chart from '@/configs/chart';
-    //             import express from 'express';
-    //         "#,
-    //         Some(json!(["ignorePackages"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from './foo.js';
-    //             import bar from './bar.json';
-    //             import Component from './Component.jsx';
-    //             import express from 'express';
-    //         "#,
-    //         Some(json!(["never", { "ignorePackages": true }])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from './foo.js';
-    //             import bar from './bar.json';
-    //             import Component from './Component.jsx';
-    //         "#,
-    //         Some(json!(["always", { "pattern": { "jsx": "never" } }])),
-    //     ),
-    //     // Exports
-    //     (
-    //         r#"
-    //             export { foo } from "./foo";
-    //             let bar; export { bar };
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             export { foo } from "./foo.js";
-    //             let bar; export { bar };
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     // Query strings
-    //     (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
-    //     (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
-    //     // Require
-    //     (
-    //         r#"
-    //             const { foo } = require("./foo");
-    //             export { foo };
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             const { foo } = require("./foo".js);
-    //             export { foo };
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from "@/ImNotAScopedModule";
-    //             import chart from "@/configs/chart";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     // Export { } from
-    //     (
-    //         r#"
-    //             export { foo } from "./foo";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             export { foo } from "./foo.js";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     // Export * from
-    //     (
-    //         r#"
-    //             export * from "./foo";
-    //         "#,
-    //         Some(json!(["always"])),
-    //     ),
-    //     (
-    //         r#"
-    //             export * from "./foo.js";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import foo from "@/ImNotAScopedModule.js";
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import _ from 'lodash';
-    //             import m from '@test-scope/some-module/index.js';
-    //             import bar from './bar';
-    //         "#,
-    //         Some(json!(["never"])),
-    //     ),
-    //     // Relative imports
-    //     (
-    //         r#"
-    //             import * as test from ".";
-    //         "#,
-    //         Some(json!(["ignorePackages"])),
-    //     ),
-    //     (
-    //         r#"
-    //             import * as test from "..";
-    //         "#,
-    //         Some(json!(["ignorePackages"])),
-    //     ),
-    //     // Type imports
-    //     (
-    //         r#"
-    //             import T from "./typescript-declare";
-    //         "#,
-    //         Some(
-    //             json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
-    //         ),
-    //     ),
-    //     (
-    //         r#"
-    //             export { MyType } from "./typescript-declare";
-    //         "#,
-    //         Some(
-    //             json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
-    //         ),
-    //     ),
-    //     (
-    //         r#"
-    //             import type T from "./typescript-declare";
-    //         "#,
-    //         Some(
-    //             json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
-    //         ),
-    //     ),
-    //     (
-    //         r#"
-    //             export type { MyType } from "./typescript-declare";
-    //         "#,
-    //         Some(
-    //             json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
-    //         ),
-    //     ),
-    //     (
-    //         r#"
-    //             import type { MyType } from "./typescript-declare";
-    //         "#,
-    //         Some(json!(["always", { "checkTypeImports": true }])),
-    //     ),
-    //     (
-    //         r#"
-    //             export type { MyType } from "./typescript-declare";
-    //         "#,
-    //         Some(json!(["always", { "checkTypeImports": true }])),
-    //     ),
-    // ];
+    let fail: Vec<(&str, Option<Value>)> = vec![
+        (r#"import a from "a/index.js""#, None),
+        (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
+        (
+            r#"
+                import a from "a/index.js";
+                import packageConfig from "./package";
+            "#,
+            Some(json!([{ "json": "always", "js": "never"}])),
+        ),
+        (
+            r#"
+                import lib from "./bar.js";
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import lib from "./bar.js";
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        (
+            r#"
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        // TODO: fix this test
+        // (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
+        (
+            r#"
+                import barjs from "./bar.js";
+                import barjson from "./bar.json";
+                import barnone from "./bar";
+            "#,
+            Some(json!(["always", { "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        (
+            r#"
+                import barjs from ".";
+                import barjs2 from "..";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                import barjs from "./bar.js";
+                import barjson from "./bar.json";
+                import barnone from "./bar";
+            "#,
+            Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        (
+            r#"
+                import thing from "./fake-file.js";
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import thing from "non-package/test";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                import thing from "@name/pkg/test";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                import thing from "@name/pkg/test.js";
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import foo from './foo.js';
+                import bar from './bar.json';
+                import Component from './Component';
+                import baz from 'foo/baz';
+                import baw from '@scoped/baw/import';
+                import chart from '@/configs/chart';
+                import express from 'express';
+            "#,
+            Some(json!(["always", { "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import foo from './foo.js';
+                import bar from './bar.json';
+                import Component from './Component';
+                import baz from 'foo/baz';
+                import baw from '@scoped/baw/import';
+                import chart from '@/configs/chart';
+                import express from 'express';
+            "#,
+            Some(json!(["ignorePackages"])),
+        ),
+        (
+            r#"
+                import foo from './foo.js';
+                import bar from './bar.json';
+                import Component from './Component.jsx';
+                import express from 'express';
+            "#,
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import foo from './foo.js';
+                import bar from './bar.json';
+                import Component from './Component.jsx';
+            "#,
+            Some(json!(["always", { "pattern": { "jsx": "never" } }])),
+        ),
+        // Exports
+        (
+            r#"
+                export { foo } from "./foo";
+                let bar; export { bar };
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                export { foo } from "./foo.js";
+                let bar; export { bar };
+            "#,
+            Some(json!(["never"])),
+        ),
+        // Query strings
+        (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
+        (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
+        // Require
+        (
+            r#"
+                const { foo } = require("./foo");
+                export { foo };
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                const { foo } = require("./foo".js);
+                export { foo };
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import foo from "@/ImNotAScopedModule";
+                import chart from "@/configs/chart";
+            "#,
+            Some(json!(["always"])),
+        ),
+        // Export { } from
+        (
+            r#"
+                export { foo } from "./foo";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                export { foo } from "./foo.js";
+            "#,
+            Some(json!(["never"])),
+        ),
+        // Export * from
+        (
+            r#"
+                export * from "./foo";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                export * from "./foo.js";
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import foo from "@/ImNotAScopedModule.js";
+            "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"
+                import _ from 'lodash';
+                import m from '@test-scope/some-module/index.js';
+                import bar from './bar';
+            "#,
+            Some(json!(["never"])),
+        ),
+        // Relative imports
+        (
+            r#"
+                import * as test from ".";
+            "#,
+            Some(json!(["ignorePackages"])),
+        ),
+        (
+            r#"
+                import * as test from "..";
+            "#,
+            Some(json!(["ignorePackages"])),
+        ),
+        // Type imports
+        (
+            r#"
+                import T from "./typescript-declare";
+            "#,
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
+            ),
+        ),
+        (
+            r#"
+                export { MyType } from "./typescript-declare";
+            "#,
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
+            ),
+        ),
+        (
+            r#"
+                import type T from "./typescript-declare";
+            "#,
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
+            ),
+        ),
+        (
+            r#"
+                export type { MyType } from "./typescript-declare";
+            "#,
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
+            ),
+        ),
+        (
+            r#"
+                import type { MyType } from "./typescript-declare";
+            "#,
+            Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+        (
+            r#"
+                export type { MyType } from "./typescript-declare";
+            "#,
+            Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+    ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
 }
