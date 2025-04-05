@@ -106,13 +106,13 @@
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
-          "description": "Path to Oxc language server binary."
+          "description": "Path to Oxc language server binary. Mostly for testing the language server."
         },
         "oxc.flags": {
           "type": "object",
           "scope": "window",
           "default": {},
-          "description": "Oxc options that would normally be passed when executing on the command line."
+          "description": "Specific Oxlint flags to pass to the language server."
         }
       }
     },
