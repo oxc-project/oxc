@@ -228,11 +228,7 @@ mod test {
     fn test_from_category() {
         let correctness: LintFilter = LintFilter::new(AllowWarnDeny::Warn, "correctness").unwrap();
         assert_eq!(correctness.severity(), AllowWarnDeny::Warn);
-        assert!(
-            matches!(correctness.kind(), LintFilterKind::Category(RuleCategory::Correctness)),
-            "{:?}",
-            correctness.kind()
-        );
+        assert_eq!(correctness.kind(), &LintFilterKind::Category(RuleCategory::Correctness));
     }
 
     #[test]
