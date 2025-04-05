@@ -936,7 +936,8 @@ mod test {
                 "plugins": ["react", "typescript"]
             }
             "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Create child config with no plugins that extends parent
         fs::write(
@@ -949,7 +950,8 @@ mod test {
                 "#,
                 parent_path.to_str().unwrap()
             ),
-        ).unwrap();
+        )
+        .unwrap();
 
         // Create child config with plugins that extends parent
         fs::write(
@@ -963,7 +965,8 @@ mod test {
                 "#,
                 parent_path.to_str().unwrap()
             ),
-        ).unwrap();
+        )
+        .unwrap();
 
         // Test 1: Default plugins when none are specified
         let default_config = config_store_from_str(
@@ -974,10 +977,7 @@ mod test {
             "#,
         );
         // Check that default plugins are correctly set
-        assert_eq!(
-            default_config.plugins(),
-            LintPlugins::default()
-        );
+        assert_eq!(default_config.plugins(), LintPlugins::default());
 
         // Test 2: Parent config with explicitly specified plugins
         let parent_config = config_store_from_str(
@@ -987,22 +987,18 @@ mod test {
             }
             "#,
         );
-        assert_eq!(
-            parent_config.plugins(),
-            LintPlugins::REACT | LintPlugins::TYPESCRIPT
-        );
+        assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 3: Child config that extends parent without specifying plugins
         // Should inherit parent's plugins
-        let child_no_plugins_config = config_store_from_path(child_no_plugins_path.to_str().unwrap());
-        assert_eq!(
-            child_no_plugins_config.plugins(),
-            LintPlugins::REACT | LintPlugins::TYPESCRIPT
-        );
+        let child_no_plugins_config =
+            config_store_from_path(child_no_plugins_path.to_str().unwrap());
+        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
-        let child_with_plugins_config = config_store_from_path(child_with_plugins_path.to_str().unwrap());
+        let child_with_plugins_config =
+            config_store_from_path(child_with_plugins_path.to_str().unwrap());
         assert_eq!(
             child_with_plugins_config.plugins(),
             LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::JEST
@@ -1016,10 +1012,7 @@ mod test {
             }
             "#,
         );
-        assert_eq!(
-            empty_plugins_config.plugins(),
-            LintPlugins::empty()
-        );
+        assert_eq!(empty_plugins_config.plugins(), LintPlugins::empty());
 
         // Test 6: Extending multiple config files with plugins
         let config = config_store_from_str(
