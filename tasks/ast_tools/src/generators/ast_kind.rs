@@ -6,7 +6,10 @@
 //! * `AstKind::as_*` methods.
 //! * `GetSpan` impl for `AstKind`.
 //!
-//! Variants of `AstKind` and `AstType` are not created for types listed in `BLACK_LIST` below.
+//! Variants of `AstKind` and `AstType` are created for:
+//!
+//! * All structs which are visited, and are not listed in `STRUCTS_BLACK_LIST` below.
+//! * Enums listed in `ENUMS_WHITE_LIST` below.
 
 use quote::{format_ident, quote};
 
@@ -19,71 +22,64 @@ use crate::{
 
 use super::define_generator;
 
-/// Types to omit creating an `AstKind` for.
+/// Structs to omit creating an `AstKind` for.
 ///
-/// Apart from this list every type with `#[ast(visit)]` attr gets an `AstKind`.
-const BLACK_LIST: [&str; 61] = [
-    "Span",
-    "Expression",
-    "ObjectPropertyKind",
+/// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
+const STRUCTS_BLACK_LIST: &[&str] = &[
     "TemplateElement",
     "ComputedMemberExpression",
     "StaticMemberExpression",
     "PrivateFieldExpression",
     "AssignmentTargetRest",
-    "AssignmentTargetMaybeDefault",
-    "AssignmentTargetProperty",
     "AssignmentTargetPropertyIdentifier",
     "AssignmentTargetPropertyProperty",
-    "ChainElement",
-    "Statement",
-    "Declaration",
-    "ForStatementLeft",
     "BindingPattern",
-    "BindingPatternKind",
     "BindingProperty",
-    "ClassElement",
     "AccessorProperty",
-    "ImportDeclarationSpecifier",
     "WithClause",
     "ImportAttribute",
-    "ImportAttributeKey",
-    "ExportDefaultDeclarationKind",
-    "ModuleExportName",
     "JSXOpeningFragment",
     "JSXClosingFragment",
-    "TSEnumMemberName",
-    "TSLiteral",
-    "TSType",
+    "JSXEmptyExpression",
+    "JSXAttribute",
+    "JSXSpreadChild",
     "TSTypeOperator",
     "TSArrayType",
     "TSTupleType",
     "TSOptionalType",
     "TSRestType",
-    "TSTupleElement",
     "TSInterfaceBody",
-    "TSSignature",
     "TSIndexSignature",
     "TSCallSignatureDeclaration",
     "TSIndexSignatureName",
     "TSTypePredicate",
-    "TSTypePredicateName",
-    "TSModuleDeclarationName",
-    "TSModuleDeclarationBody",
-    "TSTypeQueryExprName",
     "TSFunctionType",
     "TSConstructorType",
     "TSNamespaceExportDeclaration",
     "JSDocNullableType",
     "JSDocNonNullableType",
     "JSDocUnknownType",
-    "JSXExpression",
-    "JSXEmptyExpression",
-    "JSXAttribute",
-    "JSXAttributeName",
-    "JSXAttributeValue",
-    "JSXChild",
-    "JSXSpreadChild",
+    "Span",
+];
+
+/// Enums to create an `AstKind` for.
+///
+/// Apart from this list, enums don't have `AstKind`s.
+const ENUMS_WHITE_LIST: &[&str] = &[
+    "ArrayExpressionElement",
+    "PropertyKey",
+    "MemberExpression",
+    "Argument",
+    "AssignmentTarget",
+    "SimpleAssignmentTarget",
+    "AssignmentTargetPattern",
+    "ForStatementInit",
+    "ModuleDeclaration",
+    "JSXElementName",
+    "JSXMemberExpressionObject",
+    "JSXAttributeItem",
+    "TSTypeName",
+    "TSModuleReference",
 ];
 
 /// Generator for `AstKind`, `AstType`, and related code.
@@ -92,32 +88,44 @@ pub struct AstKindGenerator;
 define_generator!(AstKindGenerator);
 
 impl Generator for AstKindGenerator {
-    /// Set `has_kind` for structs and enums which are visited, and not on blacklist.
+    /// Set `has_kind` for structs and enums.
+    ///
+    /// All visited structs have an `AstKind`, unless included in `STRUCTS_BLACK_LIST`.
+    /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
-        // Set `has_kind` to `true` for all visited types
+        // Set `has_kind = true` for all visited structs
         for type_def in &mut schema.types {
-            match type_def {
-                TypeDef::Struct(struct_def) => {
-                    struct_def.kind.has_kind = struct_def.visit.has_visitor();
-                }
-                TypeDef::Enum(enum_def) => {
-                    enum_def.kind.has_kind = enum_def.visit.has_visitor();
-                }
-                _ => {}
+            if let TypeDef::Struct(struct_def) = type_def {
+                struct_def.kind.has_kind = struct_def.visit.has_visitor();
             }
         }
 
-        // Set `has_kind` to `false` for types on blacklist
-        for type_name in BLACK_LIST {
+        // Set `has_kind = false` for structs in black list
+        for &type_name in STRUCTS_BLACK_LIST {
             let type_def = schema.type_by_name_mut(type_name);
-            match type_def {
-                TypeDef::Struct(struct_def) => struct_def.kind.has_kind = false,
-                TypeDef::Enum(enum_def) => enum_def.kind.has_kind = false,
-                _ => panic!(
-                    "Type which is not a struct or enum on `AstKind` blacklist: `{}`",
-                    type_def.name()
-                ),
-            }
+            let TypeDef::Struct(struct_def) = type_def else {
+                panic!("Type which isn't a struct `{}` in `STRUCTS_BLACK_LIST`", type_def.name());
+            };
+            assert!(
+                struct_def.kind.has_kind,
+                "`{}` struct is not visited - doesn't need to be in `STRUCTS_BLACK_LIST`",
+                struct_def.name()
+            );
+            struct_def.kind.has_kind = false;
+        }
+
+        // Set `has_kind = true` for enums in white list
+        for &type_name in ENUMS_WHITE_LIST {
+            let type_def = schema.type_by_name_mut(type_name);
+            let TypeDef::Enum(enum_def) = type_def else {
+                panic!("Type which isn't an enum `{}` in `ENUMS_WHITE_LIST`", type_def.name());
+            };
+            assert!(
+                enum_def.visit.has_visitor(),
+                "Enum `{}` is not visited, cannot have an `AstKind`",
+                enum_def.name()
+            );
+            enum_def.kind.has_kind = true;
         }
     }
 
