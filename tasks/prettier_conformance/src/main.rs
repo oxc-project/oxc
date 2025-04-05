@@ -10,8 +10,12 @@ use oxc_prettier_conformance::{
 /// - `cargo run -- --filter <filter>`: Debug a specific test, not generating coverage reports
 fn main() {
     let mut args = Arguments::from_env();
-    let filter = args.opt_value_from_str("--filter").unwrap();
+    let options = TestRunnerOptions {
+        language: TestLanguage::Js,
+        debug: args.contains("--debug"),
+        filter: args.opt_value_from_str("--filter").unwrap(),
+    };
 
-    TestRunner::new(TestRunnerOptions { filter: filter.clone(), language: TestLanguage::Js }).run();
-    TestRunner::new(TestRunnerOptions { filter, language: TestLanguage::Ts }).run();
+    TestRunner::new(options.clone()).run();
+    TestRunner::new(TestRunnerOptions { language: TestLanguage::Ts, ..options }).run();
 }

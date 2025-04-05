@@ -105,9 +105,9 @@ impl fmt::Display for FormatOptions {
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum IndentStyle {
     /// Tab
-    #[default]
     Tab,
     /// Space
+    #[default]
     Space,
 }
 
