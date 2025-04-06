@@ -284,11 +284,9 @@ impl Rule for Extensions {
             println!("module_request: {:#?}", import.module_request);
 
             println!("is_package_cond1: {}", import.module_request.name().starts_with('@'));
-            println!("is_package_cond2: {}", !import.module_request.name().starts_with("."));
-            println!("is_package_cond3: {}", !import.module_request.name()[1..].contains('/'));
+            println!("is_package_cond2: {}", !import.module_request.name().starts_with(".") && !import.module_request.name()[1..].contains('/'));
 
-
-            let is_package = import.module_request.name().starts_with('@') || !import.module_request.name().starts_with(".") || !import.module_request.name()[1..].contains('/');
+            let is_package = import.module_request.name().starts_with('@') || (!import.module_request.name().starts_with(".") && !import.module_request.name()[1..].contains('/'));
 
             if is_package {
                 continue;
@@ -300,7 +298,7 @@ impl Rule for Extensions {
             println!("file_extension: {file_extension:?}");
 
             // if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || !always_file_types.contains(&file_extension.unwrap())) {
-             if file_extension.is_some() && never_file_types.contains(&file_extension.unwrap()) {
+             if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
                 // should not have file extension
                 ctx.diagnostic(extension_should_not_be_included_diagnostic(span, &file_extension.unwrap()));
             // } else if file_extension.is_none() && !always_file_types.is_empty() {
@@ -335,7 +333,11 @@ impl Rule for Extensions {
 
 fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&str>  {
     if let Some((_, extension)) = module_request.name().rsplit_once('.') {
-        Some(extension)
+        if extension.starts_with('/') {
+            None
+        } else {
+            Some(extension)
+        }
     } else {
         None
     }
