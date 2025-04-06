@@ -105,8 +105,8 @@ jobs:
         env:
           CC: clang # for mimalloc
         run: |
-          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
-          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+          cross build --release -p oxlint --bin oxlint --features allocator --target=${{ matrix.target }}
+          cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
