@@ -2,7 +2,7 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 code: "eslint(no-extra-boolean-cast)"
-code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
 message: "Redundant double negation\nhelp: Remove the double negation as it will already be coerced to a boolean"
 range: Range { start: Position { line: 3, character: 14 }, end: Position { line: 3, character: 17 } }
 related_information[0].message: ""
@@ -14,7 +14,7 @@ tags: None
             
 
 code: "typescript-eslint(no-non-null-asserted-optional-chain)"
-code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript_eslint/no-non-null-asserted-optional-chain"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
 range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
 related_information[0].message: "non-null assertion made after optional chain"

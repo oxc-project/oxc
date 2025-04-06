@@ -16,6 +16,10 @@ description.workspace = true
 [features]
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
+language_server = [
+  "dep:oxc_data_structures",
+  "oxc_data_structures/rope",
+] # Enables the `rope` feature for conditional compilation
 
 [lints]
 workspace = true
@@ -29,6 +33,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_data_structures = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }

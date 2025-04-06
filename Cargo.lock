@@ -1813,7 +1813,6 @@ dependencies = [
 name = "oxc_language_server"
 version = "0.16.5"
 dependencies = [
- "cow-utils",
  "env_logger",
  "futures",
  "globset",
@@ -1821,11 +1820,8 @@ dependencies = [
  "insta",
  "log",
  "oxc_allocator",
- "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_linter",
- "oxc_parser",
- "oxc_semantic",
  "papaya",
  "rustc-hash",
  "serde",
@@ -1861,6 +1857,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_index",
