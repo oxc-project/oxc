@@ -7,10 +7,9 @@ use std::{
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-    ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-    PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-    TemplateLiteral,
+    Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
+    ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement,
+    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
@@ -435,8 +434,10 @@ impl<'a> Visit<'a> for State<'a> {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
             Statement::ExportDefaultDeclaration(export_decl) => {
-                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-                    &export_decl.declaration
+                if let Some(Expression::ObjectExpression(obj_expr)) = &export_decl
+                    .declaration
+                    .as_expression()
+                    .map(oxc_ast::ast::Expression::get_inner_expression)
                 {
                     self.visit_object_expression(obj_expr);
                 }
