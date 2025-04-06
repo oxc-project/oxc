@@ -1327,6 +1327,7 @@ pub enum ForStatementLeft<'a> {
     @inherit AssignmentTarget
 }
 }
+
 /// For-Of Statement
 #[ast(visit)]
 #[scope]
