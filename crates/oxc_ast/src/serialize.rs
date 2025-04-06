@@ -909,7 +909,18 @@ impl ESTree for JSXElementThisExpression<'_> {
 }
 
 #[ast_meta]
-#[estree(raw_deser = "'TODO'")]
+#[estree(raw_deser = "
+    const node = {
+        type: 'JSXOpeningFragment',
+        start: DESER[u32](POS_OFFSET.span.start),
+        end: DESER[u32](POS_OFFSET.span.end),
+        /* IF_JS */
+        attributes: [],
+        selfClosing: false,
+        /* END_IF_JS */
+    };
+    node
+")]
 pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
 
 impl ESTree for JSXOpeningFragmentConverter<'_> {
