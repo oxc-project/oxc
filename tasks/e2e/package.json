@@ -9,11 +9,12 @@
     "antd": "^5.23.1",
     "fs-require": "^1.6.0",
     "memfs": "^4.17.0",
-    "oxc-minify": "workspace:^",
-    "oxc-transform": "workspace:^",
+    "oxc-minify": "link:../../napi/minify",
+    "oxc-transform": "link:../../napi/transform",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "terser": "^5.37.0",
+    "vitest": "^3.1.1",
     "vue": "^3.5.13"
   }
 }

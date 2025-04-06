@@ -150,11 +150,19 @@ jobs:
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
+        name: Run tests in workspace
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build
           pnpm run test
-          pnpm --filter e2e run test
+      - if: steps.filter.outputs.src == 'true'
+        name: Run e2e tests
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test
+        working-directory: tasks/e2e
+      - if: steps.filter.outputs.src == 'true'
+        run: |
           git diff --exit-code # Must commit everything
 
   typos:
