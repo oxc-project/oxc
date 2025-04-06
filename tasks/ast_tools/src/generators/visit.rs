@@ -785,28 +785,35 @@ impl VisitBuilder<'_> {
         let arg_params = visit_args.iter().map(|(arg_name, _)| create_ident(arg_name));
         let extra_params = quote!( #(, #arg_params)* );
 
+        // Create `let` statements for visit args.
+        // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
+        // then generate `let x = something; let y = something_else;`.
+        let let_args = visit_args
+            .iter()
+            .map(|(arg_name, arg_value)| {
+                let arg_ident = create_ident(arg_name);
+                let arg_value = parse_str::<Expr>(&arg_value.cow_replace("self", "it")).unwrap();
+                quote!( let #arg_ident = #arg_value; )
+            })
+            .collect::<TokenStream>();
+
         let gen_visit = |target| {
             let mut visit = quote!( visitor.#visit_fn_ident(#target #extra_params) );
             if trailing_semicolon {
                 visit.extend(quote!(;));
             }
 
-            if extra_params.is_empty() {
-                return visit;
+            if let_args.is_empty() {
+                visit
+            } else {
+                // Wrap a visit call with `let` statements for visit args.
+                // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
+                // then output `{ let x = something; let y = something_else; visitor.visit_thing(it, x, y) }`.
+                quote! {{
+                    #let_args
+                    #visit
+                }}
             }
-
-            // Wrap a visit call with `let` statements for visit args.
-            // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
-            // then output `{ let x = something; let y = something_else; visitor.visit_thing(it, x, y) }`.
-            let let_args = visit_args.iter().map(|(arg_name, arg_value)| {
-                let arg_ident = create_ident(arg_name);
-                let arg_value = parse_str::<Expr>(&arg_value.cow_replace("self", "it")).unwrap();
-                quote!( let #arg_ident = #arg_value; )
-            });
-            quote! {{
-                #(#let_args)*
-                #visit
-            }}
         };
         (gen_visit(target_ref), gen_visit(target_mut))
     }
