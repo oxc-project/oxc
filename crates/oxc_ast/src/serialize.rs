@@ -908,6 +908,12 @@ impl ESTree for JSXElementThisExpression<'_> {
     }
 }
 
+/// Serializer for `JSXOpeningFragment`.
+///
+/// Add `attributes` and `selfClosing` fields in JS AST, but not in TS AST.
+/// Acorn-JSX has these fields, but TS-ESLint parser does not.
+//
+// TODO: Find a better way to do this.
 #[ast_meta]
 #[estree(raw_deser = "
     const node = {
