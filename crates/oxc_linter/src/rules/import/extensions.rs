@@ -274,6 +274,8 @@ impl Rule for Extensions {
         let never_file_types = self.0.get_never_file_types();
 
         let config = self.0.clone();
+
+        println!("module_record: {:#?}", module_record);
         println!("config: {config:#?}");
 
         println!("always_file_types: {always_file_types:#?}");
@@ -293,6 +295,9 @@ impl Rule for Extensions {
             }
 
             let file_extension = get_file_extension_from_module_request(&import.module_request);
+
+
+
             let span = import.statement_span;
 
             println!("file_extension: {file_extension:?}");
@@ -342,6 +347,10 @@ fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&
         None
     }
 }
+
+// fn can_file_be_resolved_without_extension() -> bool {
+
+// }
 
 #[test]
 fn test() {
