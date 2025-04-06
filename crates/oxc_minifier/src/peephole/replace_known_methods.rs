@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let replacement = match name {
-            "toLowerCase" | "toUpperCase" | "trim" => {
+            "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
                 Self::try_fold_string_casing(*span, arguments, name, object, ctx)
             }
             "substring" | "slice" => {
@@ -101,6 +101,8 @@ impl<'a> PeepholeOptimizations {
             "toLowerCase" => s.value.cow_to_lowercase(),
             "toUpperCase" => s.value.cow_to_uppercase(),
             "trim" => Cow::Borrowed(s.value.trim()),
+            "trimStart" => Cow::Borrowed(s.value.trim_start()),
+            "trimEnd" => Cow::Borrowed(s.value.trim_end()),
             _ => return None,
         };
         Some(ctx.ast.expression_string_literal(span, value, None))
@@ -1435,6 +1437,21 @@ mod test {
         test("x = 'SS'.toLowerCase()", "x = 'ss'");
         test("x = 'Σ'.toLowerCase()", "x = 'σ'");
         test("x = 'ΣΣ'.toLowerCase()", "x = 'σς'");
+    }
+
+    #[test]
+    fn test_fold_string_trim() {
+        test("x = '  abc  '.trim()", "x = 'abc'");
+        test("x = 'abc'.trim()", "x = 'abc'");
+        test_same("x = 'abc'.trim(1)");
+
+        test("x = '  abc  '.trimStart()", "x = 'abc  '");
+        test("x = 'abc'.trimStart()", "x = 'abc'");
+        test_same("x = 'abc'.trimStart(1)");
+
+        test("x = '  abc  '.trimEnd()", "x = '  abc'");
+        test("x = 'abc'.trimEnd()", "x = 'abc'");
+        test_same("x = 'abc'.trimEnd(1)");
     }
 
     #[test]
