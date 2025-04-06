@@ -1157,6 +1157,9 @@ mod test {
         test("x = 'ca'.replace('c','xxx')", "x = 'xxxa'");
         test_same("x = 'c'.replace((foo(), 'c'), 'b')");
 
+        test_same("x = '[object Object]'.replace({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replace({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
+
         // only one instance replaced
         test("x = 'acaca'.replace('c','x')", "x = 'axaca'");
         test("x = 'ab'.replace('','x')", "x = 'xab'");
@@ -1184,6 +1187,9 @@ mod test {
 
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
         test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
+
+        test_same("x = '[object Object]'.replaceAll({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replaceAll({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
 
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props
