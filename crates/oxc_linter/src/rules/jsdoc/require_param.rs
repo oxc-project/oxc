@@ -298,7 +298,7 @@ fn is_name_equal(a: &str, b: &str) -> bool {
 
     loop {
         match (a_chars.next(), b_chars.next()) {
-            (Some(ac), Some(bc)) if ac == bc => continue,
+            (Some(ac), Some(bc)) if ac == bc => {}
             (None, None) => return true, // Both done
             _ => return false,           // Either one is done, or not equal
         }

@@ -103,7 +103,7 @@ impl Rule for ParamNames {
                 Expression::FunctionExpression(func_expr) => {
                     self.check_parameter_names(&func_expr.params, ctx);
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }

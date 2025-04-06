@@ -99,14 +99,11 @@ impl<'a> ClassProperties<'a, '_> {
                     } else {
                         instance_prop_count += 1;
                     }
-
-                    continue;
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
                     if self.transform_static_blocks {
                         has_static_private_method_or_static_block = true;
-                        continue;
                     }
                 }
                 ClassElement::MethodDefinition(method) => {

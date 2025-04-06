@@ -129,7 +129,7 @@ impl Rule for OnlyUsedInRecursion {
                         }
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }

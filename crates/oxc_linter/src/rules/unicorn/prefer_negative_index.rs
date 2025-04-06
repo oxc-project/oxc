@@ -151,7 +151,7 @@ impl Rule for PreferNegativeIndex {
                         }
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

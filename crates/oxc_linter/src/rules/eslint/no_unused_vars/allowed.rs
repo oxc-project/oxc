@@ -43,7 +43,7 @@ impl Symbol<'_, '_> {
                 | AstKind::VariableDeclaration(_)
                 | AstKind::BindingIdentifier(_)
                 | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => continue,
+                | AstKind::AssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
