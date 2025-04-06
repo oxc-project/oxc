@@ -215,15 +215,14 @@ fn generate_builder_methods_for_struct_impl(
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(
-        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
-    );
+    let fn_doc2 = " If you want the built node to be allocated in the memory arena,";
+    let fn_doc3 = format!(" use [`AstBuilder::{alloc_fn_name}`] instead.");
     let alloc_doc1 = format!(
         " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
     );
-    let alloc_doc2 = format!(
-        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
-    );
+    let alloc_doc2 = " Returns a [`Box`] containing the newly-allocated node.";
+    let alloc_doc3 =
+        format!(" If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
     let params_docs = generate_doc_comment_for_params(params);
 
     quote! {
@@ -231,6 +230,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #fn_doc1]
         #[doc = ""]
         #[doc = #fn_doc2]
+        #[doc = #fn_doc3]
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
@@ -241,6 +241,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #alloc_doc1]
         #[doc = ""]
         #[doc = #alloc_doc2]
+        #[doc = #alloc_doc3]
         #params_docs
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
