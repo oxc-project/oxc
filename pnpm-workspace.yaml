@@ -7,6 +7,6 @@ packages:
   - 'tasks/compat_data'
 
 catalog:
-  "@napi-rs/cli": 3.0.0-alpha.76
-  "vitest": 3.0.9
-  "typescript": 5.8.2
+  "@napi-rs/cli": 3.0.0-alpha.77
+  "vitest": 3.1.1
+  "typescript": 5.8.3
