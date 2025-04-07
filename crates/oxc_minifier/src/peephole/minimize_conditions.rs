@@ -274,6 +274,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
+    #[expect(clippy::float_cmp)]
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -292,7 +293,7 @@ impl<'a> PeepholeOptimizations {
         } else {
             return None;
         };
-        let target = target.take_in(&ctx.ast.allocator);
+        let target = target.take_in(ctx.ast.allocator);
         Some(ctx.ast.expression_update(expr.span, operator, true, target))
     }
 }
