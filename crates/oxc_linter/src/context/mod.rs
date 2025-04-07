@@ -353,6 +353,19 @@ impl<'a> LintContext<'a> {
         };
         if self.parent.fix.can_apply(rule_fix.kind()) && !rule_fix.is_empty() {
             let fix = rule_fix.into_fix(self.source_text());
+            #[cfg(debug_assertions)]
+            {
+                if fix.span.size() > 1 {
+                    assert!(
+                        fix.message.as_ref().is_some_and(|msg| !msg.is_empty()),
+                        "Rule `{}/{}` fix should have a message for a complex fix. Did you forget to add a message?\n   Source text: {:?}\n    Fixed text: {:?}\nhelp: You can add a message to a fix with `RuleFix.with_message()`",
+                        self.current_plugin_name,
+                        self.current_rule_name,
+                        self.source_range(fix.span),
+                        fix.content
+                    );
+                }
+            }
             self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {
             self.diagnostic(diagnostic);
