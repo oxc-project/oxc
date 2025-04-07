@@ -121,12 +121,20 @@ impl<'a> Transformer<'a> {
 
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
-        jsx::update_options_with_comments(
-            &program.comments,
-            &mut self.typescript,
-            &mut self.jsx,
-            &self.ctx,
-        );
+
+        // Update options from comments when source type is JSX or TypeScript which has enabled `only_remove_type_imports`.
+        // Because if `only_remove_type_imports` is enabled, no imports will be removed, so that we don't care about
+        // TypeScript's `jsx_pragma` and `jsx_pragma_frag` options.
+        if program.source_type.is_jsx()
+            && (!program.source_type.is_typescript() || !self.typescript.only_remove_type_imports)
+        {
+            jsx::update_options_with_comments(
+                &program.comments,
+                &mut self.typescript,
+                &mut self.jsx,
+                &self.ctx,
+            );
+        }
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
