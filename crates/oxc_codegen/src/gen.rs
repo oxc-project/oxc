@@ -3087,16 +3087,14 @@ impl Gen for TSTupleType<'_> {
 
 impl Gen for TSUnionType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.types.len() == 1 {
-            self.types[0].print(p, ctx);
+        let Some((first, rest)) = self.types.split_first() else {
             return;
-        }
-        for (index, item) in self.types.iter().enumerate() {
-            if index != 0 {
-                p.print_soft_space();
-                p.print_str("|");
-                p.print_soft_space();
-            }
+        };
+        first.print(p, ctx);
+        for item in rest {
+            p.print_soft_space();
+            p.print_str("|");
+            p.print_soft_space();
             item.print(p, ctx);
         }
     }
@@ -3112,16 +3110,14 @@ impl Gen for TSParenthesizedType<'_> {
 
 impl Gen for TSIntersectionType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.types.len() == 1 {
-            self.types[0].print(p, ctx);
+        let Some((first, rest)) = self.types.split_first() else {
             return;
-        }
-        for (index, item) in self.types.iter().enumerate() {
-            if index != 0 {
-                p.print_soft_space();
-                p.print_str("&");
-                p.print_soft_space();
-            }
+        };
+        first.print(p, ctx);
+        for item in rest {
+            p.print_soft_space();
+            p.print_str("&");
+            p.print_soft_space();
             item.print(p, ctx);
         }
     }
@@ -3219,17 +3215,8 @@ impl Gen for TSQualifiedName<'_> {
 
 impl Gen for TSTypeOperator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self.operator {
-            TSTypeOperatorOperator::Keyof => {
-                p.print_str("keyof ");
-            }
-            TSTypeOperatorOperator::Unique => {
-                p.print_str("unique ");
-            }
-            TSTypeOperatorOperator::Readonly => {
-                p.print_str("readonly ");
-            }
-        }
+        p.print_str(self.operator.to_str());
+        p.print_hard_space();
         self.type_annotation.print(p, ctx);
     }
 }
