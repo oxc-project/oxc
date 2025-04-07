@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
@@ -62,7 +61,7 @@ declare_oxc_lint!(
     restriction
 );
 
-const EMPTY_TAGS: phf::Set<&'static str> = phf_set! {
+const EMPTY_TAGS: [&str; 18] = [
     "abstract",
     "async",
     "generator",
@@ -81,7 +80,7 @@ const EMPTY_TAGS: phf::Set<&'static str> = phf_set! {
     "protected",
     "public",
     "static",
-};
+];
 
 #[derive(Debug, Default, Clone, Deserialize)]
 struct EmptyTagsConfig {
@@ -102,7 +101,7 @@ impl Rule for EmptyTags {
         let settings = &ctx.settings().jsdoc;
 
         let is_empty_tag_kind = |tag_name: &str| {
-            if EMPTY_TAGS.contains(tag_name) {
+            if EMPTY_TAGS.contains(&tag_name) {
                 return true;
             }
             if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {
