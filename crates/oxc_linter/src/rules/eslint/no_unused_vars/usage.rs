@@ -184,7 +184,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::ParenthesizedExpression(_)
                 | AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => continue,
+                | AstKind::AssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
@@ -227,7 +227,7 @@ impl<'a> Symbol<'_, 'a> {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => continue,
+                | AstKind::AssignmentTarget(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
                     return options.is_ignored_assignment_target(self, &assignment.left);
                 }
@@ -240,14 +240,14 @@ impl<'a> Symbol<'_, 'a> {
                     match options.search_obj_assignment_target(self, obj) {
                         FoundStatus::Ignored => return true,
                         FoundStatus::NotIgnored => return false,
-                        FoundStatus::NotFound => continue,
+                        FoundStatus::NotFound => {}
                     }
                 }
                 AstKind::ArrayAssignmentTarget(arr) => {
                     match options.search_array_assignment_target(self, arr) {
                         FoundStatus::Ignored => return true,
                         FoundStatus::NotIgnored => return false,
-                        FoundStatus::NotFound => continue,
+                        FoundStatus::NotFound => {}
                     }
                 }
                 _ => {
@@ -318,7 +318,7 @@ impl<'a> Symbol<'_, 'a> {
                         && class.id.as_ref().is_some_and(|id| self == id);
                 }
 
-                _ => continue,
+                _ => {},
             }
         }
         false
@@ -480,8 +480,8 @@ impl<'a> Symbol<'_, 'a> {
         for parent in self.iter_relevant_parents_of(node_id).map(AstNode::kind) {
             match parent {
                 AstKind::ReturnStatement(_) => return true,
-                AstKind::ExpressionStatement(_) => continue,
-                AstKind::Function(f) if f.is_expression() => continue,
+                AstKind::ExpressionStatement(_) => {}
+                AstKind::Function(f) if f.is_expression() => {}
                 // note: intentionally not using
                 // ArrowFunctionExpression::get_expression since it returns
                 // `Some` even if
@@ -494,7 +494,7 @@ impl<'a> Symbol<'_, 'a> {
                     return true;
                 }
                 x if x.is_statement() => return false,
-                _ => continue,
+                _ => {}
             }
         }
         false
@@ -577,7 +577,6 @@ impl<'a> Symbol<'_, 'a> {
                     {
                         return false;
                     }
-                    continue;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
                     debug_assert!(
@@ -594,7 +593,7 @@ impl<'a> Symbol<'_, 'a> {
                         return true;
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 
@@ -735,7 +734,6 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 AstKind::ArrowFunctionExpression(_) => {
                     needs_variable_identifier = true;
-                    continue;
                 }
                 AstKind::VariableDeclarator(decl) if needs_variable_identifier => {
                     return decl.id.get_binding_identifier().map(BindingIdentifier::symbol_id);
@@ -751,7 +749,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::Program(_) => {
                     return None;
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

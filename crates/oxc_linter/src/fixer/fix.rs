@@ -237,8 +237,15 @@ impl<'a> RuleFix<'a> {
 
     #[inline]
     pub fn into_fix(self, source_text: &str) -> Fix<'a> {
+        // If there is only one fix, use the message from that fix.
+        let message = match &self.fix {
+            CompositeFix::Single(fix) if fix.message.as_ref().is_some_and(|m| !m.is_empty()) => {
+                fix.message.clone()
+            }
+            _ => self.message,
+        };
         let mut fix = self.fix.normalize_fixes(source_text);
-        fix.message = self.message;
+        fix.message = message;
         fix
     }
 
@@ -318,6 +325,11 @@ impl<'a> Fix<'a> {
     #[inline]
     pub const fn empty() -> Self {
         Self { content: Cow::Borrowed(""), message: None, span: SPAN }
+    }
+
+    pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
+        self.message = Some(message.into());
+        self
     }
 }
 

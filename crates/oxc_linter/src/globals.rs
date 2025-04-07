@@ -1,11 +1,16 @@
 use phf::phf_set;
 
-pub const GLOBAL_OBJECT_NAMES: phf::Set<&'static str> = phf_set! {
-    "global",
-    "globalThis",
-    "self",
-    "window",
-};
+pub const GLOBAL_OBJECT_NAMES: [&str; 4] = ["global", "globalThis", "self", "window"];
+
+/// set of reserved HTML tag names definition
+/// if it's not reserved, then it can have aria-* roles, states, and properties
+/// Reference: <https://github.com/GoogleChrome/accessibility-developer-tools/wiki/Audit-Rules#ax_aria_12>
+/// Reference: <https://www.w3.org/TR/html-aria/#rules-wd>
+/// Reference: <https://github.com/A11yance/aria-query/blob/v5.3.2/src/domMap.js>
+pub const RESERVED_HTML_TAG: [&str; 16] = [
+    "base", "col", "colgroup", "head", "html", "link", "meta", "noembed", "noscript", "param",
+    "picture", "script", "source", "style", "title", "track",
+];
 
 /// set of valid ARIA properties from the WAI-ARIA 1.1 specifications.
 /// Reference: <https://www.w3.org/TR/wai-aria/#state_prop_def>
@@ -341,28 +346,4 @@ pub const HTML_TAG: phf::Set<&'static str> = phf_set! {
     "video",
     "wbr",
     "xmp",
-};
-
-/// set of reserved HTML tag names definition
-/// if it's not reserved, then it can have aria-* roles, states, and properties
-/// Reference: <https://github.com/GoogleChrome/accessibility-developer-tools/wiki/Audit-Rules#ax_aria_12>
-/// Reference: <https://www.w3.org/TR/html-aria/#rules-wd>
-/// Reference: <https://github.com/A11yance/aria-query/blob/v5.3.2/src/domMap.js>
-pub const RESERVED_HTML_TAG: phf::Set<&'static str> = phf_set! {
-    "base",
-    "col",
-    "colgroup",
-    "head",
-    "html",
-    "link",
-    "meta",
-    "noembed",
-    "noscript",
-    "param",
-    "picture",
-    "script",
-    "source",
-    "style",
-    "title",
-    "track",
 };

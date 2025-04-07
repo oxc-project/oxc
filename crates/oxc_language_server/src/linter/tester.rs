@@ -31,8 +31,8 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                 .enumerate()
                 .map(|(i, info)| {
                     let mut result = String::new();
-                    let _ =
-                        write!(result, "related_information[{}].message: {:?}", i, info.message);
+                    write!(result, "related_information[{}].message: {:?}", i, info.message)
+                        .unwrap();
                     // replace everything between `file://` and `oxc_language_server` with `<variable>`, to avoid
                     // the absolute path causing snapshot test failures in different environments
                     let mut location = info.location.uri.to_string();
@@ -46,13 +46,14 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                         "<variable>",
                     );
 
-                    let _ =
-                        write!(result, "\nrelated_information[{i}].location.uri: {location:?}",);
-                    let _ = write!(
+                    write!(result, "\nrelated_information[{i}].location.uri: {location:?}",)
+                        .unwrap();
+                    write!(
                         result,
                         "\nrelated_information[{}].location.range: {:?}",
                         i, info.location.range
-                    );
+                    )
+                    .unwrap();
                     result
                 })
                 .collect::<Vec<_>>()

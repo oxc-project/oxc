@@ -231,4 +231,54 @@ suite('E2E Diagnostics', () => {
     await workspace.saveAll();
     await resolve;
   });
+
+  // We can check the changed with kind with `vscode.executeCodeActionProvider`
+  // but to be safe that everything works, we will check the applied changes.
+  // This way we can be sure that everything works as expected.
+  test('auto detect changing `fix_kind` flag with fixAll command', async () => {
+    const originalContent = 'if (foo == null) { bar();}';
+
+    await createOxlintConfiguration({
+      rules: {
+        'no-eq-null': 'error',
+      },
+    });
+
+    const edit = new WorkspaceEdit();
+
+    edit.createFile(fileUri, {
+      contents: Buffer.from(originalContent),
+      overwrite: true,
+    });
+
+    await workspace.applyEdit(edit);
+    await window.showTextDocument(fileUri);
+    await commands.executeCommand('oxc.fixAll', {
+      uri: fileUri.toString(),
+    });
+    await workspace.saveAll();
+
+    const content = await readFile(fileUri.fsPath, {
+      encoding: 'utf8',
+    });
+
+    strictEqual(content, originalContent);
+
+    await workspace.getConfiguration('oxc').update('flags', {
+      fix_kind: 'all',
+    });
+    // wait for server to update the internal linter
+    await sleep(500);
+    await workspace.saveAll();
+
+    await commands.executeCommand('oxc.fixAll', {
+      uri: fileUri.toString(),
+    });
+    await workspace.saveAll();
+    const contentWithFixAll = await readFile(fileUri.fsPath, {
+      encoding: 'utf8',
+    });
+
+    strictEqual(contentWithFixAll, 'if (foo === null) { bar();}');
+  });
 });

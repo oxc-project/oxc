@@ -361,7 +361,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
             AstKind::ParenthesizedExpression(_)
             | AstKind::TSAsExpression(_)
             | AstKind::TSNonNullExpression(_)
-            | AstKind::TSSatisfiesExpression(_) => continue,
+            | AstKind::TSSatisfiesExpression(_) => {}
             AstKind::AssignmentExpression(assign) => {
                 return assign.left.get_identifier_name().map(Cow::Borrowed);
             }

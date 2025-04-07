@@ -140,10 +140,11 @@ impl FromStr for IndentStyle {
 
 impl fmt::Display for IndentStyle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            IndentStyle::Tab => std::write!(f, "Tab"),
-            IndentStyle::Space => std::write!(f, "Space"),
-        }
+        let s = match self {
+            IndentStyle::Tab => "Tab",
+            IndentStyle::Space => "Space",
+        };
+        f.write_str(s)
     }
 }
 
@@ -201,11 +202,12 @@ impl FromStr for LineEnding {
 
 impl fmt::Display for LineEnding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LineEnding::Lf => std::write!(f, "LF"),
-            LineEnding::Crlf => std::write!(f, "CRLF"),
-            LineEnding::Cr => std::write!(f, "CR"),
-        }
+        let s = match self {
+            LineEnding::Lf => "LF",
+            LineEnding::Crlf => "CRLF",
+            LineEnding::Cr => "CR",
+        };
+        f.write_str(s)
     }
 }
 
@@ -456,10 +458,11 @@ impl FromStr for QuoteStyle {
 
 impl fmt::Display for QuoteStyle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            QuoteStyle::Double => std::write!(f, "Double Quotes"),
-            QuoteStyle::Single => std::write!(f, "Single Quotes"),
-        }
+        let s = match self {
+            QuoteStyle::Double => "Double Quotes",
+            QuoteStyle::Single => "Single Quotes",
+        };
+        f.write_str(s)
     }
 }
 
@@ -508,10 +511,11 @@ impl FromStr for QuoteProperties {
 
 impl fmt::Display for QuoteProperties {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            QuoteProperties::AsNeeded => std::write!(f, "As needed"),
-            QuoteProperties::Preserve => std::write!(f, "Preserve"),
-        }
+        let s = match self {
+            QuoteProperties::AsNeeded => "As needed",
+            QuoteProperties::Preserve => "Preserve",
+        };
+        f.write_str(s)
     }
 }
 
@@ -548,10 +552,11 @@ impl FromStr for Semicolons {
 
 impl fmt::Display for Semicolons {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Semicolons::AsNeeded => std::write!(f, "As needed"),
-            Semicolons::Always => std::write!(f, "Always"),
-        }
+        let s = match self {
+            Semicolons::AsNeeded => "As needed",
+            Semicolons::Always => "Always",
+        };
+        f.write_str(s)
     }
 }
 
@@ -588,10 +593,11 @@ impl FromStr for ArrowParentheses {
 
 impl fmt::Display for ArrowParentheses {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ArrowParentheses::AsNeeded => std::write!(f, "As needed"),
-            ArrowParentheses::Always => std::write!(f, "Always"),
-        }
+        let s = match self {
+            ArrowParentheses::AsNeeded => "As needed",
+            ArrowParentheses::Always => "Always",
+        };
+        f.write_str(s)
     }
 }
 
@@ -697,11 +703,12 @@ impl FromStr for TrailingCommas {
 
 impl fmt::Display for TrailingCommas {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TrailingCommas::Es5 => std::write!(f, "ES5"),
-            TrailingCommas::All => std::write!(f, "All"),
-            TrailingCommas::None => std::write!(f, "None"),
-        }
+        let s = match self {
+            TrailingCommas::Es5 => "ES5",
+            TrailingCommas::All => "All",
+            TrailingCommas::None => "None",
+        };
+        f.write_str(s)
     }
 }
 
@@ -714,10 +721,11 @@ pub enum AttributePosition {
 
 impl fmt::Display for AttributePosition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AttributePosition::Auto => std::write!(f, "Auto"),
-            AttributePosition::Multiline => std::write!(f, "Multiline"),
-        }
+        let s = match self {
+            AttributePosition::Auto => "Auto",
+            AttributePosition::Multiline => "Multiline",
+        };
+        f.write_str(s)
     }
 }
 
@@ -759,7 +767,7 @@ impl From<bool> for BracketSpacing {
 
 impl fmt::Display for BracketSpacing {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "{:?}", self.value())
+        fmt::Display::fmt(&self.value(), f)
     }
 }
 
@@ -797,7 +805,7 @@ impl From<bool> for BracketSameLine {
 
 impl fmt::Display for BracketSameLine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "{}", self.value())
+        fmt::Display::fmt(&self.value(), f)
     }
 }
 
@@ -841,10 +849,11 @@ impl FromStr for Expand {
 
 impl fmt::Display for Expand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Expand::Auto => std::write!(f, "Auto"),
-            Expand::Always => std::write!(f, "Always"),
-            Expand::Never => std::write!(f, "Never"),
-        }
+        let s = match self {
+            Expand::Auto => "Auto",
+            Expand::Always => "Always",
+            Expand::Never => "Never",
+        };
+        f.write_str(s)
     }
 }

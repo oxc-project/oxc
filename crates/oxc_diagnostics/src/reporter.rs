@@ -91,6 +91,7 @@ impl DiagnosticResult {
     }
 }
 
+#[derive(Debug)]
 pub struct Info {
     pub start: InfoPosition,
     pub end: InfoPosition,
@@ -100,6 +101,7 @@ pub struct Info {
     pub rule_id: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct InfoPosition {
     pub line: usize,
     pub column: usize,
@@ -112,7 +114,8 @@ impl Info {
         let mut filename = String::new();
         let mut message = String::new();
         let mut severity = Severity::Warning;
-        let mut rule_id = None;
+        let rule_id = diagnostic.code().map(|code| code.to_string());
+
         if let Some(mut labels) = diagnostic.labels() {
             if let Some(source) = diagnostic.source_code() {
                 if let Some(label) = labels.next() {
@@ -136,11 +139,11 @@ impl Info {
                             severity = Severity::Error;
                         }
                         let msg = diagnostic.to_string();
+
                         // Our messages usually comes with `eslint(rule): message`
-                        (rule_id, message) = msg.split_once(':').map_or_else(
-                            || (None, msg.to_string()),
-                            |(id, msg)| (Some(id.to_string()), msg.trim().to_string()),
-                        );
+                        message = msg
+                            .split_once(':')
+                            .map_or_else(|| msg.to_string(), |(_, msg)| msg.trim().to_string());
                     }
                 }
             }

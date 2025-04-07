@@ -89,14 +89,15 @@ impl TestRunner {
             total_failed_file_count += failed_test_files.len();
 
             for (path, (failed, passed, ratio)) in failed_test_files {
-                let _ = writeln!(
+                writeln!(
                     failed_reports,
                     "| {} | {}{} | {:.2}% |",
                     path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
                     "💥".repeat(failed),
                     "✨".repeat(passed),
                     ratio * 100.0
-                );
+                )
+                .unwrap();
             }
         }
 

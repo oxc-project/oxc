@@ -289,7 +289,7 @@ where
         for (byte_index, byte) in chunk.into_iter().enumerate() {
             match byte {
                 _ if accept(byte) => return Some(chunk_index * 8 + byte_index),
-                _ if skip(byte) => continue,
+                _ if skip(byte) => {}
                 _ => return None,
             }
         }
@@ -301,7 +301,7 @@ where
         match byte {
             _ if !byte.is_ascii() => return cold_branch(|| find_unicode(str)),
             _ if accept(byte) => return Some(chunk_start + byte_index),
-            _ if skip(byte) => continue,
+            _ if skip(byte) => {}
             _ => return None,
         }
     }

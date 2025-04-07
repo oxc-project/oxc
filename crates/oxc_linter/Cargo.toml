@@ -14,6 +14,7 @@ rust-version.workspace = true
 description.workspace = true
 
 [features]
+default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 
 [lints]

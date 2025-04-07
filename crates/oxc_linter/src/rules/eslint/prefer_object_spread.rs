@@ -214,7 +214,7 @@ impl Rule for PreferObjectSpread {
                     }
                 }
 
-                rule_fixes
+                rule_fixes.with_message("Replace with object spread")
             },
         );
     }

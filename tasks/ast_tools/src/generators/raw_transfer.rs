@@ -170,19 +170,19 @@ fn generate_struct(
 
         for (field_name, value) in generator.fields {
             if value.starts_with("...") {
-                write_it!(&mut fields_str, "{value},");
+                write_it!(fields_str, "{value},");
             } else if generator.dependent_field_names.contains(&field_name) {
                 if preamble_str.is_empty() {
                     preamble_str.push_str("const ");
                 } else {
                     preamble_str.push_str(",\n");
                 }
-                write_it!(&mut preamble_str, "{field_name} = {value}");
-                write_it!(&mut fields_str, "{field_name},");
+                write_it!(preamble_str, "{field_name} = {value}");
+                write_it!(fields_str, "{field_name},");
             } else if value == field_name {
-                write_it!(&mut fields_str, "{field_name},");
+                write_it!(fields_str, "{field_name},");
             } else {
-                write_it!(&mut fields_str, "{field_name}: {value},");
+                write_it!(fields_str, "{field_name}: {value},");
             }
         }
 
@@ -362,6 +362,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         let raw_deser = converter.estree.raw_deser.as_deref()?;
 
         let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));
+        let value = IF_JS_REGEX.replace_all(&value, IfJsReplacer::new(self.is_ts));
         let value = THIS_REGEX.replace_all(&value, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
@@ -407,22 +408,25 @@ fn generate_enum(
             .collect::<Vec<_>>();
         variants.sort_by_key(|variant| variant.discriminant);
 
-        let switch_cases = variants.into_iter().fold(String::new(), |mut s, variant| {
-            let discriminant = variant.discriminant;
+        let mut switch_cases = String::new();
+        for variant in variants {
+            write_it!(switch_cases, "case {}: ", variant.discriminant);
 
-            let ret = if let Some(converter_name) = &variant.estree.via {
-                apply_converter_for_enum(converter_name, payload_offset, schema).unwrap()
+            if let Some(converter_name) = &variant.estree.via {
+                let ret = apply_converter_for_enum(converter_name, payload_offset, schema).unwrap();
+                switch_cases.push_str(&ret);
             } else if let Some(variant_type) = variant.field_type(schema) {
                 let variant_fn_name = variant_type.deser_name(schema);
                 let payload_pos = pos_offset(payload_offset);
-                format!("return {variant_fn_name}({payload_pos});")
+                write_it!(switch_cases, "return {variant_fn_name}({payload_pos});");
             } else {
-                format!("return '{}';", get_fieldless_variant_value(enum_def, variant))
-            };
-
-            write_it!(s, "case {discriminant}: {ret}");
-            s
-        });
+                write_it!(
+                    switch_cases,
+                    "return '{}';",
+                    get_fieldless_variant_value(enum_def, variant)
+                );
+            }
+        }
 
         format!(
             "
@@ -787,6 +791,27 @@ impl Replacer for IfTsReplacer {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
         assert_eq!(caps.len(), 2);
         if self.is_ts {
+            dst.push_str(caps.get(1).unwrap().as_str());
+        }
+    }
+}
+
+static IF_JS_REGEX: Lazy<Regex> = lazy_regex!(r"/\* IF_JS \*/\s*([\s\S]*?)/\* END_IF_JS \*/\s*");
+
+struct IfJsReplacer {
+    is_ts: bool,
+}
+
+impl IfJsReplacer {
+    fn new(is_ts: bool) -> Self {
+        Self { is_ts }
+    }
+}
+
+impl Replacer for IfJsReplacer {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
+        assert_eq!(caps.len(), 2);
+        if !self.is_ts {
             dst.push_str(caps.get(1).unwrap().as_str());
         }
     }

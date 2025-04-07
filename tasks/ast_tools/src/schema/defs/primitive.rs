@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
+use super::{Containers, Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
 
 /// Type definition for a primitive type.
 ///
@@ -12,13 +12,19 @@ use super::{Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
 pub struct PrimitiveDef {
     pub id: TypeId,
     pub name: &'static str,
+    pub containers: Containers,
     pub layout: Layout,
 }
 
 impl PrimitiveDef {
     /// Create new [`PrimitiveDef`].
     pub fn new(name: &'static str) -> Self {
-        Self { id: TypeId::DUMMY, name, layout: Layout::default() }
+        Self {
+            id: TypeId::DUMMY,
+            name,
+            containers: Containers::default(),
+            layout: Layout::default(),
+        }
     }
 }
 

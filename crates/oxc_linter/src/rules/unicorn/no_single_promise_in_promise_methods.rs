@@ -136,8 +136,8 @@ fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
             | AstKind::VariableDeclarator(_)
             | AstKind::AssignmentExpression(_)
             | AstKind::ReturnStatement(_) => return false,
-            AstKind::AwaitExpression(_) => continue,
-            kind if is_ignorable_kind(&kind) => continue,
+            AstKind::AwaitExpression(_) => {}
+            kind if is_ignorable_kind(&kind) => {}
             _ => return true,
         }
     }

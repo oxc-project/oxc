@@ -81,7 +81,7 @@ impl HtmlWriter {
         // Write the opening tag
         write!(s, "<{tag}")?;
         if attrs.is_empty() {
-            writeln!(s, ">")?;
+            s.write_str(">\n")?;
         } else {
             writeln!(s, " {attrs}>")?;
         }

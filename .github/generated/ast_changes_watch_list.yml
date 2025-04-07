@@ -51,6 +51,7 @@ src:
   - 'crates/oxc_syntax/src/scope.rs'
   - 'crates/oxc_syntax/src/serialize.rs'
   - 'crates/oxc_syntax/src/symbol.rs'
+  - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
   - 'napi/parser/deserialize-js.js'
   - 'napi/parser/deserialize-ts.js'
   - 'napi/parser/src/generated/assert_layouts.rs'

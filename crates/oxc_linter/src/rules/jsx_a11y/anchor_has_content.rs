@@ -87,7 +87,7 @@ impl Rule for AnchorHasContent {
                     let child = &jsx_el.children[0];
                     if let JSXChild::Element(child) = child {
                         ctx.diagnostic_with_suggestion(diagnostic, |_fixer| {
-                            remove_hidden_attributes(child)
+                            remove_hidden_attributes(child).with_message("Remove hidden attribute")
                         });
                         return;
                     }

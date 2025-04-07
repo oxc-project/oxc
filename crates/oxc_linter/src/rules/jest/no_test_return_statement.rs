@@ -88,7 +88,7 @@ fn check_call_expression<'a>(
                 };
                 check_test_return_statement(func_body, ctx);
             }
-            _ => continue,
+            _ => {}
         }
     }
 }

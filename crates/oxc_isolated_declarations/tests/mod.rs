@@ -28,10 +28,11 @@ fn transform(path: &Path, source_text: &str) -> String {
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
             .fold(String::new(), |s, error| s + &format!("{error:?}"));
 
-        let _ = write!(
+        write!(
             snapshot,
             "==================== Errors ====================\n{error_messages}\n\n```"
-        );
+        )
+        .unwrap();
     }
 
     snapshot

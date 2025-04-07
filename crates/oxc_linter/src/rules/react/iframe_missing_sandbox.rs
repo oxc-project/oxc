@@ -1,5 +1,3 @@
-use phf::{Set, phf_set};
-
 use oxc_ast::{
     AstKind,
     ast::{
@@ -37,7 +35,7 @@ fn invalid_sandbox_combination_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const ALLOWED_VALUES: Set<&'static str> = phf_set! {
+const ALLOWED_VALUES: [&str; 15] = [
     "",
     "allow-downloads-without-user-activation",
     "allow-downloads",
@@ -52,8 +50,8 @@ const ALLOWED_VALUES: Set<&'static str> = phf_set! {
     "allow-scripts",
     "allow-storage-access-by-user-activation",
     "allow-top-navigation",
-    "allow-top-navigation-by-user-activation"
-};
+    "allow-top-navigation-by-user-activation",
+];
 
 #[derive(Debug, Default, Clone)]
 pub struct IframeMissingSandbox;
@@ -177,7 +175,7 @@ fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {
-        if !ALLOWED_VALUES.contains(trimmed_atr) {
+        if !ALLOWED_VALUES.contains(&trimmed_atr) {
             ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
         }
         if trimmed_atr == "allow-scripts" {

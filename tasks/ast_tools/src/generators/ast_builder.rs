@@ -209,37 +209,56 @@ fn generate_builder_methods_for_struct_impl(
         fn_name_base.push_str(fn_name_postfix);
     }
     let fn_name = struct_builder_name(&fn_name_base, false);
-    let alloc_fn_name = struct_builder_name(&fn_name_base, true);
 
-    // Generate doc comments
+    // Only generate an `alloc_*` method if `Box<T>` exists in AST
+    let alloc_fn_name = if struct_def.containers.box_id.is_some() {
+        Some(struct_builder_name(&fn_name_base, true))
+    } else {
+        None
+    };
+
+    // Generate main builder method
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(
-        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
-    );
-    let alloc_doc1 = format!(
-        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
-    );
-    let alloc_doc2 = format!(
-        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
-    );
+    let mut fn_docs = quote!( #[doc = #fn_doc1] );
+    if let Some(alloc_fn_name) = &alloc_fn_name {
+        let fn_doc2 = format!(" use [`AstBuilder::{alloc_fn_name}`] instead.");
+        fn_docs.extend(quote! {
+            #[doc = ""]
+            #[doc = " If you want the built node to be allocated in the memory arena,"]
+            #[doc = #fn_doc2]
+        });
+    }
+
     let params_docs = generate_doc_comment_for_params(params);
 
-    quote! {
+    let method = quote! {
         ///@@line_break
-        #[doc = #fn_doc1]
-        #[doc = ""]
-        #[doc = #fn_doc2]
+        #fn_docs
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
         }
+    };
+
+    let Some(alloc_fn_name) = alloc_fn_name else { return method };
+
+    // Generate `alloc_*` builder method, if required
+    let alloc_doc1 = format!(
+        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
+    );
+    let alloc_doc2 =
+        format!(" If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
+
+    quote! {
+        #method
 
         ///@@line_break
         #[doc = #alloc_doc1]
         #[doc = ""]
+        #[doc = " Returns a [`Box`] containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]

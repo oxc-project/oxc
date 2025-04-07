@@ -168,7 +168,7 @@ impl Rule for RequireReturns {
                         }
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 
@@ -318,7 +318,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                             AstKind::Argument(_) => {
                                 return Some(true);
                             }
-                            _ => continue,
+                            _ => {}
                         }
                     }
                     None

@@ -1,6 +1,6 @@
 //! Generator for TypeScript type definitions for all AST types.
 
-use std::{borrow::Cow, fmt::Write};
+use std::borrow::Cow;
 
 use itertools::Itertools;
 
@@ -117,7 +117,7 @@ fn generate_ts_type_def_for_struct(
 
     if should_add_type_field_to_struct(struct_def) {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
-        let _ = write!(fields_str, "\n\ttype: '{type_name}';");
+        write_it!(fields_str, "\n\ttype: '{type_name}';");
     }
 
     if !struct_def.estree.no_type {
@@ -272,7 +272,7 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
 
     let field_camel_name = get_struct_field_name(field);
     let question_mark = if field.estree.is_ts { "?" } else { "" };
-    let _ = write!(fields_str, "\n\t{field_camel_name}{question_mark}: {field_type_name};");
+    write_it!(fields_str, "\n\t{field_camel_name}{question_mark}: {field_type_name};");
 }
 
 /// Generate Typescript type definition for an extra struct field
@@ -288,7 +288,7 @@ fn generate_ts_type_def_for_added_struct_field(
         panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
     };
     let question_mark = if converter.estree.is_ts { "?" } else { "" };
-    let _ = write!(fields_str, "\n\t{field_name}{question_mark}: {ts_type};");
+    write_it!(fields_str, "\n\t{field_name}{question_mark}: {ts_type};");
 }
 
 /// Get the TS type definition for a converter.

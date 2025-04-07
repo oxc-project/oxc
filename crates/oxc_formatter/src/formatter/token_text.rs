@@ -1,4 +1,7 @@
-use std::{fmt, ops::Deref};
+use std::{
+    fmt::{self, Debug, Display},
+    ops::Deref,
+};
 
 use super::TextRange;
 
@@ -30,14 +33,14 @@ impl Deref for TokenText {
     }
 }
 
-impl fmt::Display for TokenText {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.text())
+impl Display for TokenText {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self.text(), f)
     }
 }
 
-impl fmt::Debug for TokenText {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.text())
+impl Debug for TokenText {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self.text(), f)
     }
 }

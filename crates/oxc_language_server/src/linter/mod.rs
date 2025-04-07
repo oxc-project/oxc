@@ -1,6 +1,7 @@
 use oxc_data_structures::rope::{Rope, get_line_column};
 use tower_lsp::lsp_types::Position;
 
+pub mod config_walker;
 pub mod error_with_position;
 mod isolated_lint_handler;
 pub mod server_linter;

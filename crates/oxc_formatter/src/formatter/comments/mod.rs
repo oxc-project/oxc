@@ -79,7 +79,11 @@ mod map;
 
 #[cfg(debug_assertions)]
 use std::cell::{Cell, RefCell};
-use std::{marker::PhantomData, rc::Rc};
+use std::{
+    fmt::{self, Debug},
+    marker::PhantomData,
+    rc::Rc,
+};
 
 use oxc_ast::Comment;
 use oxc_span::Span;
@@ -1040,9 +1044,9 @@ struct CommentsData {
     checked_suppressions: RefCell<FxHashSet<SyntaxNode>>,
 }
 
-impl std::fmt::Debug for CommentsData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.comments)
+impl Debug for CommentsData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(&self.comments, f)
         // let mut comments = Vec::new();
 
         // if let Some(root) = &self.root {
@@ -1085,8 +1089,8 @@ impl DebugComment<'_> {
     }
 }
 
-impl std::fmt::Debug for DebugComment<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for DebugComment<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             DebugComment::Leading { node, comment } => {
                 f.debug_struct("Leading").field("node", node).field("comment", comment).finish()

@@ -47,7 +47,7 @@ mod test {
     #[test]
     fn test_no_console() {
         let config_store = ConfigStoreBuilder::default()
-            .with_filter(LintFilter::deny(LintFilterKind::parse("no-console".into()).unwrap()))
+            .with_filter(&LintFilter::deny(LintFilterKind::parse("no-console".into()).unwrap()))
             .build()
             .unwrap();
         let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);

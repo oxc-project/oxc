@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_index::IndexVec;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
@@ -90,17 +92,23 @@ impl<'c> Parser<'c> {
         skeletons: IndexVec<TypeId, Skeleton>,
         meta_skeletons: IndexVec<MetaId, Skeleton>,
     ) -> Schema {
+        // Parse `#[ast_meta]` types from `Skeleton` to `MetaType`
         let metas = meta_skeletons
             .into_iter_enumerated()
             .map(|(meta_id, skeleton)| self.parse_meta_type(meta_id, skeleton))
             .collect::<IndexVec<_, _>>();
 
+        // Parse `#[ast]` types from `Skeleton` to `TypeDef`
         let mut types = skeletons
             .into_iter_enumerated()
             .map(|(type_id, skeleton)| self.parse_type(type_id, skeleton))
             .collect::<IndexVec<_, _>>();
-        types.extend(self.extra_types);
+        types.extend(mem::take(&mut self.extra_types));
 
+        // Set container IDs on type defs
+        self.set_container_ids(&mut types);
+
+        // Generate `HashMap` mapping name of `#[ast_meta]` type to its `MetaId`
         let meta_names = self
             .meta_names
             .into_iter()
@@ -108,6 +116,7 @@ impl<'c> Parser<'c> {
             .map(|(meta_id, meta_name)| (meta_name, MetaId::from_usize(meta_id)))
             .collect();
 
+        // Generate `HashMap` mapping name of `#[ast]` type to its `TypeId`
         let type_names = self
             .type_names
             .into_iter()
@@ -116,6 +125,62 @@ impl<'c> Parser<'c> {
             .collect();
 
         Schema { types, type_names, metas, meta_names, files: self.files }
+    }
+
+    /// Set container IDs on type defs.
+    ///
+    /// i.e. if `Option<Expression>` exists in AST, set `option_id` on type def for `Expression`
+    /// to the `TypeId` of `Option<Expression>`.
+    ///
+    /// Same for `Box`, `Vec` and `Cell`.
+    fn set_container_ids(&self, types: &mut IndexVec<TypeId, TypeDef>) {
+        for (&inner_type_id, &option_id) in &self.options {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Enum(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Primitive(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Option(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Box(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Vec(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Cell(def) => def.containers.option_id = Some(option_id),
+            }
+        }
+
+        for (&inner_type_id, &box_id) in &self.boxes {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Enum(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Primitive(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Option(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Box(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Vec(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Cell(def) => def.containers.box_id = Some(box_id),
+            }
+        }
+
+        for (&inner_type_id, &vec_id) in &self.vecs {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Enum(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Primitive(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Option(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Box(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Vec(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Cell(def) => def.containers.vec_id = Some(vec_id),
+            }
+        }
+
+        for (&inner_type_id, &cell_id) in &self.cells {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Enum(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Primitive(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Option(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Box(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Vec(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Cell(def) => def.containers.cell_id = Some(cell_id),
+            }
+        }
     }
 
     /// Get [`TypeId`] for type name.
