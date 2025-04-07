@@ -119,6 +119,9 @@ impl ESTree for LabelIdentifier<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }

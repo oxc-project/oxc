@@ -279,7 +279,10 @@ pub struct BindingIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+)]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
     #[estree(json_safe)]
