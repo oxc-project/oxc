@@ -920,54 +920,6 @@ mod test {
 
     #[test]
     fn test_extends_plugins() {
-        use std::fs;
-
-        // Create a temporary directory for test files
-        let temp_dir = tempfile::tempdir().unwrap();
-        let parent_path = temp_dir.path().join("parent.json");
-        let child_no_plugins_path = temp_dir.path().join("child_no_plugins.json");
-        let child_with_plugins_path = temp_dir.path().join("child_with_plugins.json");
-
-        // Create parent config file with explicitly specified plugins
-        fs::write(
-            &parent_path,
-            r#"
-            {
-                "plugins": ["react", "typescript"]
-            }
-            "#,
-        )
-        .unwrap();
-
-        // Create child config with no plugins that extends parent
-        fs::write(
-            &child_no_plugins_path,
-            &format!(
-                r#"
-                {{
-                    "extends": ["{}"]
-                }}
-                "#,
-                parent_path.to_str().unwrap()
-            ),
-        )
-        .unwrap();
-
-        // Create child config with plugins that extends parent
-        fs::write(
-            &child_with_plugins_path,
-            &format!(
-                r#"
-                {{
-                    "extends": ["{}"],
-                    "plugins": ["jest"]
-                }}
-                "#,
-                parent_path.to_str().unwrap()
-            ),
-        )
-        .unwrap();
-
         // Test 1: Default plugins when none are specified
         let default_config = config_store_from_str(
             r#"
@@ -991,14 +943,12 @@ mod test {
 
         // Test 3: Child config that extends parent without specifying plugins
         // Should inherit parent's plugins
-        let child_no_plugins_config =
-            config_store_from_path(child_no_plugins_path.to_str().unwrap());
+        let child_no_plugins_config = config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
         assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
-        let child_with_plugins_config =
-            config_store_from_path(child_with_plugins_path.to_str().unwrap());
+        let child_with_plugins_config = config_store_from_path("fixtures/extends_config/plugins/child_with_plugins.json");
         assert_eq!(
             child_with_plugins_config.plugins(),
             LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::JEST
