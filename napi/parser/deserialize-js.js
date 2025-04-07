@@ -1133,12 +1133,15 @@ function deserializeRegExpFlags(pos) {
 }
 
 function deserializeJSXElement(pos) {
+  const closingElement = deserializeOptionBoxJSXClosingElement(pos + 16);
+  const openingElement = deserializeBoxJSXOpeningElement(pos + 8);
+  if (closingElement === null) openingElement.selfClosing = true;
   return {
     type: 'JSXElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    openingElement: deserializeBoxJSXOpeningElement(pos + 8),
-    closingElement: deserializeOptionBoxJSXClosingElement(pos + 16),
+    openingElement,
+    closingElement,
     children: deserializeVecJSXChild(pos + 24),
   };
 }
@@ -1148,9 +1151,9 @@ function deserializeJSXOpeningElement(pos) {
     type: 'JSXOpeningElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    attributes: deserializeVecJSXAttributeItem(pos + 32),
-    name: deserializeJSXElementName(pos + 16),
-    selfClosing: deserializeBool(pos + 8),
+    attributes: deserializeVecJSXAttributeItem(pos + 24),
+    name: deserializeJSXElementName(pos + 8),
+    selfClosing: false,
   };
 }
 

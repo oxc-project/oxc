@@ -84,7 +84,7 @@ impl Rule for SelfClosingComp {
             return;
         };
 
-        if jsx_el.opening_element.self_closing {
+        if jsx_el.closing_element.is_none() {
             return;
         }
 

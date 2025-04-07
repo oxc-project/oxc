@@ -10559,8 +10559,6 @@ impl<'a, 't> GetAddress for JSXElementWithoutChildren<'a, 't> {
 }
 
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_SPAN: usize = offset_of!(JSXOpeningElement, span);
-pub(crate) const OFFSET_JSX_OPENING_ELEMENT_SELF_CLOSING: usize =
-    offset_of!(JSXOpeningElement, self_closing);
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_NAME: usize = offset_of!(JSXOpeningElement, name);
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES: usize =
     offset_of!(JSXOpeningElement, attributes);
@@ -10578,13 +10576,6 @@ impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn self_closing(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SELF_CLOSING) as *const bool)
-        }
     }
 
     #[inline]
@@ -10625,13 +10616,6 @@ impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
     }
 
     #[inline]
-    pub fn self_closing(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SELF_CLOSING) as *const bool)
-        }
-    }
-
-    #[inline]
     pub fn name(self) -> &'t JSXElementName<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
@@ -10666,13 +10650,6 @@ impl<'a, 't> JSXOpeningElementWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn self_closing(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SELF_CLOSING) as *const bool)
-        }
     }
 
     #[inline]
