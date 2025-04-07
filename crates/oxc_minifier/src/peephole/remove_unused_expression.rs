@@ -538,11 +538,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality
-            | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan => {
+            | BinaryOperator::StrictInequality => {
                 let left = self.remove_unused_expression(&mut binary_expr.left, state, ctx);
                 let right = self.remove_unused_expression(&mut binary_expr.right, state, ctx);
                 match (left, right) {
@@ -574,6 +570,30 @@ impl<'a> PeepholeOptimizations {
                 Self::fold_string_addition_chain(e, state, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
+            BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan
+            | BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::Exponential
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::BitwiseXOR => {
+                let left = self.fold_expression_in_mathematical_operation(
+                    &mut binary_expr.left,
+                    state,
+                    ctx,
+                );
+                let right = self.fold_expression_in_mathematical_operation(
+                    &mut binary_expr.right,
+                    state,
+                    ctx,
+                );
+                left && right
+            }
             _ => !e.may_have_side_effects(&ctx),
         }
     }
@@ -592,6 +612,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let left_is_string = Self::fold_string_addition_chain(&mut binary_expr.left, state, ctx);
+        let mut left_may_have_side_effects = true;
         if left_is_string {
             if !binary_expr.left.may_have_side_effects(&ctx)
                 && !binary_expr.left.is_specific_string_literal("")
@@ -599,6 +620,7 @@ impl<'a> PeepholeOptimizations {
                 binary_expr.left =
                     ctx.ast.expression_string_literal(binary_expr.left.span(), "", None);
                 state.changed = true;
+                left_may_have_side_effects = false;
             }
 
             let right_as_primitive = binary_expr.right.to_primitive(&ctx);
@@ -607,7 +629,9 @@ impl<'a> PeepholeOptimizations {
             {
                 *e = binary_expr.left.take_in(ctx.ast.allocator);
                 state.changed = true;
-                return true;
+            } else if !left_may_have_side_effects {
+                *e = binary_expr.right.take_in(ctx.ast.allocator);
+                state.changed = true;
             }
             return true;
         }
@@ -624,6 +648,31 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
         false
+    }
+
+    fn fold_expression_in_mathematical_operation(
+        &self,
+        e: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) -> bool {
+        match e {
+            Expression::UnaryExpression(unary_expr) => {
+                if unary_expr.operator.is_arithmetic() {
+                    *e = unary_expr.argument.take_in(ctx.ast.allocator);
+                    state.changed = true;
+                }
+            }
+            Expression::StringLiteral(literal) => {
+                if literal.value.is_empty() {
+                    *e = ctx.ast.number_0();
+                    state.changed = true;
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        self.remove_unused_expression(e, state, ctx)
     }
 
     fn fold_call_expression(
@@ -910,12 +959,15 @@ mod test {
         test("var a, b; a >= b", "var a, b;");
 
         test_same("var a, b; a + b");
-        test("var a, b; 'a' + b", "var a, b; '' + b");
+        test("var a, b; 'a' + b", "var a, b;");
         test_same("var a, b; a + '' + b");
         test("var a, b, c; 'a' + (b === c)", "var a, b, c;");
-        test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
+        test("var a, b; 'a' + +b", "var a, b; +b");
         test_same("var a, b; a + ('' + b)");
         test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
+        test("Math.floor(+d / 1000)", "Math.floor(d / 1000)");
+        test("2 - +this._x.call(null, node.data)", "2 - this._x.call(null, node.data)");
+        test("!function fn() {} /42/i;", "!1 / 42 / i");
     }
 
     #[test]

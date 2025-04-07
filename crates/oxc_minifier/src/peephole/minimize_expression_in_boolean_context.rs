@@ -137,8 +137,8 @@ mod test {
         test("!!a ? b : c", "a ? b : c");
         test("if (!!!a);", "a");
         test("Boolean(!!a)", "a");
-        test("if ((a | +b) !== 0);", "a | +b");
-        test("if ((a | +b) === 0);", "a | +b");
+        test("if ((a | +b) !== 0);", "a | b");
+        test("if ((a | +b) === 0);", "a | b");
         test("if (!!a && !!b);", "a && b");
         test("if (!!a || !!b);", "a || b");
         test("if (anything || (0, false));", "anything");
