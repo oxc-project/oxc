@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 141/233
+Passed: 142/233
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -347,23 +347,9 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (2/4)
+# babel-plugin-proposal-explicit-resource-management (3/4)
 * export-class-name/input.js
 x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 
 # legacy-decorators (2/70)
