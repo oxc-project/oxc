@@ -28,20 +28,27 @@ const transformOptions: any[] = [
   { target: 'es2015' },
 ].map((o) => ({ type: 'transform', ...o }));
 
-export function getModules(dir: string, fileName: string) {
+export async function getModules(dir: string, fileName: string, isEsm: boolean) {
   const p = path.join(nodeModulesPath, dir + fileName);
   const code = fs.readFileSync(p, 'utf8');
-  return minifyOptions.concat(transformOptions)
-    .map(({ type, ...options }) => {
-      const modifiedCode = {
-        minify: oxcMinify,
-        transform: oxcTransform,
-      }[type](fileName, code).code;
-      return { module: fsRequire(modifiedCode), type, options };
-    });
+  return Promise.all(
+    minifyOptions.concat(transformOptions)
+      .map(async ({ type, ...options }) => {
+        const modifiedCode = {
+          minify: oxcMinify,
+          transform: oxcTransform,
+        }[type](fileName, code).code;
+        return { module: await fsRequire(modifiedCode, isEsm), type, options };
+      }),
+  );
 }
 
-function fsRequire(code: string) {
+async function fsRequire(code: string, isEsm: boolean) {
+  if (isEsm) {
+    const url = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+    return import(url);
+  }
+
   const vol = Volume.fromJSON({ '/index.js': code });
   const fsRequire = createFsRequire(vol);
   return fsRequire('/index.js');

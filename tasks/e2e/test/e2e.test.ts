@@ -6,22 +6,36 @@ import { getModules } from './utils';
 
 const info = '$type $options';
 
-describe('react', () => {
-  const modules = getModules('react/cjs/', 'react.development.js');
+describe('react', async () => {
+  const modules = await getModules('react/cjs/', 'react.development.js', false);
   test.each(modules)(info, ({ module: React }) => {
     expect(React.createElement('div', null, 'rendered').type).toBe('div');
   });
 });
 
-describe('vue', () => {
-  const modules = getModules('vue/dist/', 'vue.cjs.js');
+describe('vue', async () => {
+  const modules = await getModules('vue/dist/', 'vue.cjs.js', false);
   test.each(modules)(info, ({ module: Vue }) => {
     expect(Vue.createApp()).toBeDefined();
   });
 });
 
-describe('antd', () => {
-  const modules = getModules('antd/dist/', 'antd.js');
+describe('preact', async () => {
+  const modules = await getModules('preact/dist/', 'preact.js', false);
+  test.each(modules)(info, ({ module: Preact }) => {
+    expect(Preact.h('div', null, 'rendered').type).toBe('div');
+  });
+});
+
+describe('solid', async () => {
+  const modules = await getModules('solid-js/dist/', 'solid.cjs', false);
+  test.each(modules)(info, ({ module: Solid }) => {
+    expect(Solid.createSignal(1)[0]()).toBe(1);
+  });
+});
+
+describe('antd', async () => {
+  const modules = await getModules('antd/dist/', 'antd.js', false);
   test.each(modules)(info, ({ module: Antd }) => {
     const components = [
       'Affix',

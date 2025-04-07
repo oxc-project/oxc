@@ -6,13 +6,18 @@
     "test": "vitest run ./test"
   },
   "devDependencies": {
+    "alpinejs": "^3.14.9",
     "antd": "^5.23.1",
     "fs-require": "^1.6.0",
+    "happy-dom": "^17.4.4",
+    "lit": "github:lit/dist#v3.2.1",
     "memfs": "^4.17.0",
     "oxc-minify": "link:../../napi/minify",
     "oxc-transform": "link:../../napi/transform",
+    "preact": "^10.26.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "solid-js": "^1.9.5",
     "terser": "^5.37.0",
     "vitest": "^3.1.1",
     "vue": "^3.5.13"
