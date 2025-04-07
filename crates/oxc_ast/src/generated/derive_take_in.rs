@@ -310,6 +310,8 @@ impl<'a> TakeIn<'a> for TSThisParameter<'a> {}
 
 impl<'a> TakeIn<'a> for TSEnumDeclaration<'a> {}
 
+impl<'a> TakeIn<'a> for TSEnumBody<'a> {}
+
 impl<'a> TakeIn<'a> for TSEnumMember<'a> {}
 
 impl<'a> TakeIn<'a> for TSEnumMemberName<'a> {}

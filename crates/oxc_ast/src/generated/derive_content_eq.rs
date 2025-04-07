@@ -1730,9 +1730,15 @@ impl ContentEq for TSThisParameter<'_> {
 impl ContentEq for TSEnumDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
-            && ContentEq::content_eq(&self.members, &other.members)
+            && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#const, &other.r#const)
             && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for TSEnumBody<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.members, &other.members)
     }
 }
 

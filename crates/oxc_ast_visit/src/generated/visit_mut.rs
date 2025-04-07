@@ -773,6 +773,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_enum_body(&mut self, it: &mut TSEnumBody<'a>) {
+        walk_ts_enum_body(self, it);
+    }
+
+    #[inline]
     fn visit_ts_enum_member(&mut self, it: &mut TSEnumMember<'a>) {
         walk_ts_enum_member(self, it);
     }
@@ -3329,8 +3334,17 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_ts_enum_members(&mut it.members);
+        visitor.visit_ts_enum_body(&mut it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_enum_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSEnumBody<'a>) {
+        let kind = AstType::TSEnumBody;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_enum_members(&mut it.members);
         visitor.leave_node(kind);
     }
 

@@ -1488,6 +1488,13 @@ impl GetSpanMut for TSEnumDeclaration<'_> {
     }
 }
 
+impl GetSpanMut for TSEnumBody<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for TSEnumMember<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

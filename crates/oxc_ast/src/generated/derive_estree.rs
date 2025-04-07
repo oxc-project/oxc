@@ -2285,9 +2285,20 @@ impl ESTree for TSEnumDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("body", &crate::serialize::TSEnumDeclarationBody(self));
+        state.serialize_field("body", &self.body);
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for TSEnumBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("members", &self.members);
         state.end();
     }
 }

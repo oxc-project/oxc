@@ -674,6 +674,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_ts_enum_body(&mut self, it: &mut TSEnumBody<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_enum_body(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_ts_enum_member(&mut self, it: &mut TSEnumMember<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_enum_member(self, it);

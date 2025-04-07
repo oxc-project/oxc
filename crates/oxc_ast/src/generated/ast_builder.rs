@@ -4225,7 +4225,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -4233,12 +4233,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
-            self.alloc_ts_enum_declaration(span, id, members, r#const, declare),
+            self.alloc_ts_enum_declaration(span, id, body, r#const, declare),
         )
     }
 
@@ -4249,7 +4249,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -4258,14 +4258,14 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
             self.alloc_ts_enum_declaration_with_scope_id(
-                span, id, members, r#const, declare, scope_id,
+                span, id, body, r#const, declare, scope_id,
             ),
         )
     }
@@ -9642,7 +9642,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -9650,11 +9650,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() }
+        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Default::default() }
     }
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
@@ -9665,7 +9665,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -9673,11 +9673,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> Box<'a, TSEnumDeclaration<'a>> {
-        Box::new_in(self.ts_enum_declaration(span, id, members, r#const, declare), self.allocator)
+        Box::new_in(self.ts_enum_declaration(span, id, body, r#const, declare), self.allocator)
     }
 
     /// Build a [`TSEnumDeclaration`] with `scope_id`.
@@ -9688,7 +9688,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -9697,19 +9697,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration {
-            span,
-            id,
-            members,
-            r#const,
-            declare,
-            scope_id: Cell::new(Some(scope_id)),
-        }
+        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Cell::new(Some(scope_id)) }
     }
 
     /// Build a [`TSEnumDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -9720,7 +9713,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -9729,15 +9722,25 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Box<'a, TSEnumDeclaration<'a>> {
         Box::new_in(
-            self.ts_enum_declaration_with_scope_id(span, id, members, r#const, declare, scope_id),
+            self.ts_enum_declaration_with_scope_id(span, id, body, r#const, declare, scope_id),
             self.allocator,
         )
+    }
+
+    /// Build a [`TSEnumBody`].
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `members`
+    #[inline]
+    pub fn ts_enum_body(self, span: Span, members: Vec<'a, TSEnumMember<'a>>) -> TSEnumBody<'a> {
+        TSEnumBody { span, members }
     }
 
     /// Build a [`TSEnumMember`].
