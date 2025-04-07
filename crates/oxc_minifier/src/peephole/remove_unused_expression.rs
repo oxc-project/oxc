@@ -665,6 +665,8 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::StringLiteral(literal) => {
                 if literal.value.is_empty() {
+                    // NOTE: this changes the result value, but it's fine because the return value is not used
+                    // (example case: `"" > "-1"`)
                     *e = ctx.ast.number_0();
                     state.changed = true;
                     return true;
