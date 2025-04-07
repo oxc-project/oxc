@@ -105,8 +105,12 @@ impl<'a> TypeScriptEnum<'a> {
             )
         });
 
-        let statements =
-            self.transform_ts_enum_members(decl.scope_id(), &mut decl.body.members, &param_binding, ctx);
+        let statements = self.transform_ts_enum_members(
+            decl.scope_id(),
+            &mut decl.body.members,
+            &param_binding,
+            ctx,
+        );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
