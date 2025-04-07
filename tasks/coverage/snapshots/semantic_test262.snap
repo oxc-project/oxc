@@ -2,7 +2,7 @@ commit: bc5c1417
 
 semantic_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 42483/44293 (95.91%)
+Positive Passed: 42481/44293 (95.91%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -8401,6 +8401,53 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
+tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(3): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(7): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(8): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(12): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(13): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(17): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["x"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(22): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(23): []
+rebuilt        : ScopeId(23): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(9): ScopeId(13)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(18)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(6)
+rebuilt        : SymbolId(16): ScopeId(23)
+
 tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -15655,4 +15702,51 @@ rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["a", "b", "rest"]
+
+tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(2): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(6): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(7): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(11): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(12): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(16): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(17): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(21): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(22): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(12)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(17)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(22)
 

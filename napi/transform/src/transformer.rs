@@ -174,7 +174,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions { explicit_resource_management: false },
+            proposals: ProposalOptions { explicit_resource_management: true },
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
