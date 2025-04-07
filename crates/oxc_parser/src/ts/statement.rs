@@ -25,14 +25,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier()?;
-        self.expect(Kind::LCurly)?;
-        let members = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_enum_member,
-        )?;
-        self.expect(Kind::RCurly)?;
+        let body = self.parse_ts_enum_body()?;
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
@@ -42,10 +35,23 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_enum(
             span,
             id,
-            members,
+            body,
             modifiers.contains_const(),
             modifiers.contains_declare(),
         ))
+    }
+
+    pub(crate) fn parse_ts_enum_body(&mut self) -> Result<TSEnumBody<'a>> {
+        let span = self.start_span();
+        self.expect(Kind::LCurly)?;
+        let members = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_enum_member,
+        )?;
+        self.expect(Kind::RCurly)?;
+        Ok(self.ast.ts_enum_body(self.end_span(span), members))
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {

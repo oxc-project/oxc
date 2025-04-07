@@ -68,27 +68,40 @@ pub struct TSThisParameter<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_ts_def = "
-    interface TSEnumBody extends Span {
-        type: 'TSEnumBody';
-        members: TSEnumMember[];
-    }
-")]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    #[estree(rename = "body", via = TSEnumDeclarationBody)]
-    pub members: Vec<'a, TSEnumMember<'a>>,
+    pub body: TSEnumBody<'a>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+/// Enum Body
+///
+/// The body of a [`TSEnumDeclaration`].
+///
+/// ## Example
+/// ```ts
+/// enum Foo { A }
+///          ^^^^^
+/// enum Bar
+///   { B }
+///   ^^^^^
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+pub struct TSEnumBody<'a> {
+    pub span: Span,
+    pub members: Vec<'a, TSEnumMember<'a>>,
+}
+
 /// Enum Member
 ///
-/// A member property in a [`TSEnumDeclaration`].
+/// A member property in a [`TSEnumBody`].
 ///
 /// ## Example
 /// ```ts

@@ -3733,12 +3733,12 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_str("enum ");
         self.id.print(p, ctx);
         p.print_space_before_identifier();
-        p.print_curly_braces(self.span, self.members.is_empty(), |p| {
-            for (index, member) in self.members.iter().enumerate() {
+        p.print_curly_braces(self.span, self.body.members.is_empty(), |p| {
+            for (index, member) in self.body.members.iter().enumerate() {
                 p.print_leading_comments(member.span().start);
                 p.print_indent();
                 member.print(p, ctx);
-                if index != self.members.len() - 1 {
+                if index != self.body.members.len() - 1 {
                     p.print_comma();
                 }
                 p.print_soft_newline();

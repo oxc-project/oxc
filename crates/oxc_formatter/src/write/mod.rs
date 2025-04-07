@@ -925,6 +925,12 @@ impl<'a> FormatWrite<'a> for TSEnumDeclaration<'a> {
     }
 }
 
+impl<'a> FormatWrite<'a> for TSEnumBody<'a> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        Ok(())
+    }
+}
+
 impl<'a> FormatWrite<'a> for TSEnumMember<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
