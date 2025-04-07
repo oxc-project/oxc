@@ -8,6 +8,7 @@
   "devDependencies": {
     "alpinejs": "^3.14.9",
     "antd": "^5.23.1",
+    "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "es-toolkit": "^1.34.1",
@@ -20,6 +21,7 @@
     "luxon": "^3.6.1",
     "memfs": "^4.17.0",
     "moment": "^2.30.1",
+    "motion": "^12.6.2",
     "oxc-minify": "link:../../napi/minify",
     "oxc-transform": "link:../../napi/transform",
     "preact": "^10.26.4",

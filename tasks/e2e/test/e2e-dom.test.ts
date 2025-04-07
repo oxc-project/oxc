@@ -25,3 +25,18 @@ describe('jquery', async () => {
     expect(jQuery('<div>rendered</div>').text()).toBe('rendered');
   });
 });
+
+describe('d3', async () => {
+  const modules = await getModules('d3/dist/', 'd3.js', 'cjs');
+  test.each(modules)(info, ({ module: D3 }) => {
+    expect(D3.select('body').append('div').text('rendered').text()).toBe('rendered');
+  });
+});
+
+describe('motion', async () => {
+  const modules = await getModules('motion/dist/', 'motion.dev.js', 'cjs');
+  test.each(modules)(info, ({ module: Motion }) => {
+    const element = document.createElement('div');
+    expect(() => Motion.animate(element, { rotate: 360, duration: 0.1 })).not.toThrow();
+  });
+});
