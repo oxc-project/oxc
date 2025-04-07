@@ -173,7 +173,7 @@ impl Rule for PreferNegativeIndex {
                     }
                 }
 
-                fixes
+                fixes.with_message("Replace length expression with negative index")
             });
         }
     }

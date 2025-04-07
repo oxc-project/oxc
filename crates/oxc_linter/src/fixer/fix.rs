@@ -319,6 +319,11 @@ impl<'a> Fix<'a> {
     pub const fn empty() -> Self {
         Self { content: Cow::Borrowed(""), message: None, span: SPAN }
     }
+
+    pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
 }
 
 // NOTE (@DonIsaac): having these variants is effectively the same as interning

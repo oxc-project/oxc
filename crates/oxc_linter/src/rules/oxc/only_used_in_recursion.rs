@@ -189,7 +189,7 @@ fn create_diagnostic(
                 }
             }
 
-            fix
+            fix.with_message("Remove unused argument")
         },
     );
 }
@@ -250,7 +250,7 @@ fn create_diagnostic_jsx(
                 fix.push(Fix::delete(attr.span()));
             }
 
-            fix
+            fix.with_message("Remove unused property")
         },
     );
 }

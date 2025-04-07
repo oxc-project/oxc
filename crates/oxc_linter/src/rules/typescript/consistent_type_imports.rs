@@ -509,7 +509,8 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
     Ok(rule_fixes
         .extend(fixes_named_specifiers.remove_type_name_specifiers)
         .extend(fixes_remove_type_namespace_specifier)
-        .extend(after_fixes))
+        .extend(after_fixes)
+        .with_message("Mark all type-only imports with the type specifier"))
 }
 
 fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
@@ -753,7 +754,7 @@ fn fix_inline_type_import_declaration<'a>(
         }
     }
 
-    Ok(rule_fixes)
+    Ok(rule_fixes.with_message("Add type specifier to imported types"))
 }
 
 fn fix_insert_type_specifier_for_import_declaration<'a>(
@@ -825,7 +826,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
         }
     }
 
-    Ok(rule_fixes)
+    Ok(rule_fixes.with_message("Add type specifier to this import declaration"))
 }
 
 struct GroupedSpecifiers<'a, 'b> {

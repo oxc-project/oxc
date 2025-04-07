@@ -169,7 +169,7 @@ impl Rule for PreferRegexpTest {
                 fixer.source_range(call_expr.arguments[0].span()),
             ));
 
-            fix
+            fix.with_message("Replace with `RegExp.test()`")
         });
     }
 }
