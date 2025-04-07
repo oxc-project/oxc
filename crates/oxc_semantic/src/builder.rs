@@ -25,7 +25,7 @@ use oxc_syntax::{
 
 use crate::{
     JSDocFinder, Semantic,
-    binder::{Binder, is_function_redeclared_not_allowed},
+    binder::Binder,
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
@@ -387,8 +387,8 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+            self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
-            self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
 
@@ -425,43 +425,32 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
-        if report_error {
-            self.check_and_report_redeclaration(name, span, symbol_id, excludes);
-        }
-        Some(symbol_id)
-    }
 
-    /// Check if a symbol with the same name has already been declared but
-    /// it actually is not allowed to be redeclared.
-    fn check_and_report_redeclaration(
-        &self,
-        name: &str,
-        span: Span,
-        symbol_id: SymbolId,
-        excludes: SymbolFlags,
-    ) {
-        let flags = self.scoping.symbol_flags(symbol_id);
-        let function_kind = if flags.is_function() {
-            self.nodes.kind(self.scoping.symbol_declaration(symbol_id)).as_function()
-        } else {
-            None
-        };
-
-        if (
-            flags.intersects(excludes)
-            // `function n() { let n; }`
-            //                     ^ is not a redeclaration
-            && !function_kind.is_some_and(Function::is_expression))
-            // Needs to further check if the previous declaration is a function and the function
-            // is not allowed to be redeclared.
-            // For example: `async function goo(); var goo;`
-            //                                         ^^^ Redeclare
-            || (excludes == SymbolFlags::FunctionScopedVariableExcludes &&
-                 function_kind.is_some_and(|func| is_function_redeclared_not_allowed(func, self)))
+        // `(function n(n) {})()`
+        //              ^ is not a redeclaration
+        // Since we put the function expression binding 'n' Symbol into the function itself scope,
+        // then defining a variable with the same name as the function name will be considered
+        // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
+        // is a function expression, then return None to tell the caller that it's not a redeclaration.
+        if self.scoping.symbol_flags(symbol_id).is_function()
+            && self
+                .nodes
+                .kind(self.scoping.symbol_declaration(symbol_id))
+                .as_function()
+                .is_some_and(Function::is_expression)
         {
-            let symbol_span = self.scoping.symbol_span(symbol_id);
-            self.error(redeclaration(name, symbol_span, span));
+            return None;
         }
+
+        if report_error {
+            let flags = self.scoping.symbol_flags(symbol_id);
+            if flags.intersects(excludes) {
+                let symbol_span = self.scoping.symbol_span(symbol_id);
+                self.error(redeclaration(name, symbol_span, span));
+            }
+        }
+
+        Some(symbol_id)
     }
 
     /// Declare an unresolved reference in the current scope.
@@ -561,8 +550,13 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.scoping.add_symbol_redeclaration(symbol_id, span);
+    pub(crate) fn add_redeclare_variable(
+        &mut self,
+        symbol_id: SymbolId,
+        flags: SymbolFlags,
+        span: Span,
+    ) {
+        self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
     }
 }
 
@@ -697,11 +691,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         self.visit_decorators(&class.decorators);
+        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
 
-        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
         if class.is_expression() {
             // We need to bind class expression in the class scope
             class.bind(self);

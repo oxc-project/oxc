@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Bug Fixes
+
+- 418cfaf parser: Handle asi for `declare module "foo";` (#10010) (Boshen)
+- f0e1510 parser: Store lone surrogates as escape sequence (#10041) (overlookmotel)
+
+### Performance
+
+- 59b855f lexer: Faster decoding unicode escape sequences (#10073) (overlookmotel)
+
+### Refactor
+
+- 630e189 lexer: Shorten code for parsing hex digit (#10072) (overlookmotel)
+- a24cceb lexer: Remove unnecessary line (#10042) (overlookmotel)
+- c7079b5 lexer: Clarify and reformat comments (#10040) (overlookmotel)
+- 326b4df lexer: Simplify macros for string parsing + correct comment (#10039) (overlookmotel)
+- b93c394 parser: Rename var (#10012) (overlookmotel)
+
 ## [0.61.2] - 2025-03-23
 
 ### Bug Fixes

@@ -95,7 +95,7 @@ impl Rule for RequireParamDescription {
                 // If description exists, skip
                 if !comment_part.parsed().is_empty() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
             }

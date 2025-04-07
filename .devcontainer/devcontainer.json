@@ -21,7 +21,9 @@
         "rust-lang.rust-analyzer",
         "EditorConfig.EditorConfig",
         "tamasfe.even-better-toml",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "nefrob.vscode-just-syntax",
+        "tekumara.typos-vscode"
       ]
     }
   },

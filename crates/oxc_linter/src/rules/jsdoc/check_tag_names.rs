@@ -275,7 +275,6 @@ impl Rule for CheckTagNames {
                         tag.kind.span,
                         &format!("`@{tag_name}` is invalid tag name."),
                     ));
-                    continue;
                 }
             }
         }

@@ -74,7 +74,7 @@ impl Rule for BadCharAtComparison {
                 | BinaryOperator::StrictInequality
         ) {
             return;
-        };
+        }
 
         let comparison_with = if binary_expr.left.span() == call_expr.span {
             &binary_expr.right

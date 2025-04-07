@@ -11,7 +11,7 @@
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
       "env": {
-        "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_language_server",
+        "SERVER_PATH_DEV": "${workspaceRoot}/editors/vscode/target/debug/oxc_language_server",
         "RUST_LOG": "debug"
       }
     },

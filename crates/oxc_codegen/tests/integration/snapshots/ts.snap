@@ -169,18 +169,18 @@ enum A { a, 'b' }
 ----------
 enum A {
 	a,
-	'b',
+	'b'
 }
 
 ########## 26
 module 'a'
 ----------
-module 'a'
+module 'a';
 
 ########## 27
 declare module 'a'
 ----------
-declare module 'a'
+declare module 'a';
 
 ########## 28
 a = x!;

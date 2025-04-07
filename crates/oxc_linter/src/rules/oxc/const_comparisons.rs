@@ -386,12 +386,13 @@ enum CmpOp {
 
 impl std::fmt::Display for CmpOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Lt => write!(f, "<"),
-            Self::Le => write!(f, "<="),
-            Self::Ge => write!(f, ">="),
-            Self::Gt => write!(f, ">"),
-        }
+        let op = match self {
+            Self::Lt => "<",
+            Self::Le => "<=",
+            Self::Ge => ">=",
+            Self::Gt => ">",
+        };
+        f.write_str(op)
     }
 }
 

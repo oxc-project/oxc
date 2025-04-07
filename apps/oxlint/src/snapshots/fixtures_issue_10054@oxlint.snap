@@ -1,0 +1,33 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: issue_10054
+working directory: fixtures
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+   ,-[issue_10054/a.ts:1:19]
+ 1 | import { b } from "./b";
+   :                   ^^^^^
+ 2 | 
+   `----
+  help: These paths form a cycle:
+        -> ./b - fixtures/issue_10054/b.ts
+        -> ./a - fixtures/issue_10054/a.ts
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+   ,-[issue_10054/b.ts:1:8]
+ 1 | import "./a";
+   :        ^^^^^
+ 2 | 
+   `----
+  help: These paths form a cycle:
+        -> ./a - fixtures/issue_10054/a.ts
+        -> ./b - fixtures/issue_10054/b.ts
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

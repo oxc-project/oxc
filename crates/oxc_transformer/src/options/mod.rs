@@ -82,14 +82,14 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            decorator: DecoratorOptions::default(),
+            decorator: DecoratorOptions { legacy: true, emit_decorator_metadata: true },
             jsx: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
                 ..JsxOptions::default()
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
-            proposals: ProposalOptions::default(),
+            proposals: ProposalOptions { explicit_resource_management: true },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()

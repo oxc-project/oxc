@@ -35,7 +35,11 @@ const isMuslFromFilesystem = () => {
 }
 
 const isMuslFromReport = () => {
-  const report = typeof process.report.getReport === 'function' ? process.report.getReport() : null
+  let report = null
+  if (typeof process.report?.getReport === 'function') {
+    process.report.excludeNetwork = true
+    report = process.report.getReport()
+  }
   if (!report) {
     return null
   }
@@ -356,6 +360,14 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
         loadErrors.push(err)
       }
     }
+  }
+}
+
+if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
+  try {
+    nativeBinding = require('./webcontainer-fallback.js');
+  } catch (err) {
+    loadErrors.push(err)
   }
 }
 

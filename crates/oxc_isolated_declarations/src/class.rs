@@ -264,7 +264,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaVec<'a, ClassElement<'a>> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() || param.readonly {
+            if param.has_modifier() {
                 let type_annotation =
                     if param.accessibility.is_some_and(TSAccessibility::is_private) {
                         None
@@ -332,8 +332,8 @@ impl<'a> IsolatedDeclarations<'a> {
                             method_annotations.insert(name, annotation);
                         }
                     }
-                    _ => continue,
-                };
+                    _ => {}
+                }
             }
         }
 

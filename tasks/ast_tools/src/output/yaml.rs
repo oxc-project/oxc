@@ -23,7 +23,7 @@ impl Output {
 
         let mut code = "src:\n".to_string();
         for path in paths {
-            writeln!(&mut code, "  - '{path}'").unwrap();
+            writeln!(code, "  - '{path}'").unwrap();
         }
 
         Self::Yaml { path: watch_list_path.to_string(), code }

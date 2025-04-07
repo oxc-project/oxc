@@ -68,10 +68,17 @@ pub struct TSThisParameter<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_ts_def = "
+    interface TSEnumBody extends Span {
+        type: 'TSEnumBody';
+        members: TSEnumMember[];
+    }
+")]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
+    #[estree(rename = "body", via = TSEnumDeclarationBody)]
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// `true` for const enums
     pub r#const: bool,
@@ -287,9 +294,7 @@ pub use match_ts_type;
 /// ## Reference
 /// * [TypeScript Handbook - Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html)
 #[ast(visit)]
-#[scope(
-    flags = ScopeFlags::TsConditional,
-)]
+#[scope(flags = ScopeFlags::TsConditional)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {
@@ -1295,6 +1300,7 @@ pub struct TSImportType<'a> {
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` for `typeof import("foo")`
+    #[estree(skip)]
     pub is_type_of: bool,
 }
 

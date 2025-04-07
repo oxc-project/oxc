@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::Box;
+use oxc_allocator::{Box, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 #[cfg(feature = "regular_expression")]
@@ -406,7 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
-        let lossy = self.cur_token().lossy;
+        let lone_surrogates = self.cur_token().lone_surrogates;
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -414,9 +414,7 @@ impl<'a> ParserImpl<'a> {
         let raw = Atom::from(unsafe {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
-        let mut string_literal = self.ast.string_literal(span, value, Some(raw));
-        string_literal.lossy = lossy;
-        Ok(string_literal)
+        Ok(self.ast.string_literal_with_lone_surrogates(span, value, Some(raw), lone_surrogates))
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -542,6 +540,7 @@ impl<'a> ParserImpl<'a> {
         // `cooked = None` when template literal has invalid escape sequence
         // This is matched by `is_valid_escape_sequence` in `Lexer::read_template_literal`
         let cooked = self.cur_template_string();
+        let lone_surrogates = self.cur_token().lone_surrogates;
 
         let cur_src = self.cur_src();
         let raw = &cur_src[1..cur_src.len() - end_offset as usize];
@@ -562,10 +561,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
-        self.ast.template_element(
+        self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
             tail,
+            lone_surrogates,
         )
     }
 
@@ -651,7 +651,7 @@ impl<'a> ParserImpl<'a> {
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
             expr.expression = self.map_to_chain_expression(
                 expr.expression.span(),
-                self.ast.move_expression(&mut expr.expression),
+                expr.expression.take_in(self.ast.allocator),
             );
             Ok(Expression::TSInstantiationExpression(expr))
         } else {

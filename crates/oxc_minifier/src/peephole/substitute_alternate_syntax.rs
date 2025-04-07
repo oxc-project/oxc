@@ -1,6 +1,6 @@
 use std::iter::repeat_with;
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(body) = arrow_expr.body.statements.first_mut() {
                 if let Statement::ReturnStatement(ret_stmt) = body {
                     let return_stmt_arg =
-                        ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
+                        ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx.ast.allocator));
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
@@ -288,14 +288,13 @@ impl<'a> PeepholeOptimizations {
         };
         if let Expression::Identifier(ident) = &unary_expr.argument {
             if ctx.is_global_reference(ident) {
-                let left = ctx.ast.move_expression(&mut expr.left);
+                let left = expr.left.take_in(ctx.ast.allocator);
                 let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
                 return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
             }
         }
 
-        let Expression::UnaryExpression(unary_expr) = ctx.ast.move_expression(&mut expr.left)
-        else {
+        let Expression::UnaryExpression(unary_expr) = expr.left.take_in(ctx.ast.allocator) else {
             unreachable!()
         };
         let right = ctx.ast.void_0(expr.right.span());
@@ -330,7 +329,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        Some(ctx.ast.move_expression(&mut expr.argument))
+        Some(expr.argument.take_in(ctx.ast.allocator))
     }
 
     /// For `+a - n` => `a - n` (assuming n is a number)
@@ -386,9 +385,9 @@ impl<'a> PeepholeOptimizations {
 
         let mut new_left = ctx.ast.expression_logical(
             expr.span,
-            ctx.ast.move_expression(&mut expr.left),
+            expr.left.take_in(ctx.ast.allocator),
             expr.operator,
-            ctx.ast.move_expression(&mut right.left),
+            right.left.take_in(ctx.ast.allocator),
         );
 
         {
@@ -402,7 +401,7 @@ impl<'a> PeepholeOptimizations {
             expr.span,
             new_left,
             expr.operator,
-            ctx.ast.move_expression(&mut right.right),
+            right.right.take_in(ctx.ast.allocator),
         ))
     }
 
@@ -458,7 +457,7 @@ impl<'a> PeepholeOptimizations {
         .map(|new_expr| {
             ctx.ast.expression_logical(
                 expr.span,
-                ctx.ast.move_expression(&mut left.left),
+                left.left.take_in(ctx.ast.allocator),
                 expr.operator,
                 new_expr,
             )
@@ -578,15 +577,9 @@ impl<'a> PeepholeOptimizations {
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
             let (left, right) = if ctx.is_expression_undefined(&e.right) {
-                (
-                    ctx.ast.move_expression(&mut e.left),
-                    ctx.ast.expression_null_literal(e.right.span()),
-                )
+                (e.left.take_in(ctx.ast.allocator), ctx.ast.expression_null_literal(e.right.span()))
             } else if ctx.is_expression_undefined(&e.left) {
-                (
-                    ctx.ast.move_expression(&mut e.right),
-                    ctx.ast.expression_null_literal(e.left.span()),
-                )
+                (e.right.take_in(ctx.ast.allocator), ctx.ast.expression_null_literal(e.left.span()))
             } else {
                 return None;
             };
@@ -688,7 +681,7 @@ impl<'a> PeepholeOptimizations {
             "Boolean" => match arg {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
-                    let mut arg = ctx.ast.move_expression(arg);
+                    let mut arg = arg.take_in(ctx.ast.allocator);
                     self.try_fold_expr_in_boolean_context(&mut arg, ctx);
                     let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
                     Some(self.minimize_not(span, arg, ctx))
@@ -707,7 +700,7 @@ impl<'a> PeepholeOptimizations {
                             span,
                             ctx.ast.expression_string_literal(call_expr.span, "", None),
                             BinaryOperator::Addition,
-                            ctx.ast.move_expression(arg),
+                            arg.take_in(ctx.ast.allocator),
                         ))
                     }
                 }
@@ -725,7 +718,7 @@ impl<'a> PeepholeOptimizations {
             "BigInt" => match arg {
                 None => None,
                 Some(arg) => matches!(arg, Expression::BigIntLiteral(_))
-                    .then(|| ctx.ast.move_expression(arg)),
+                    .then(|| arg.take_in(ctx.ast.allocator)),
             },
             _ => None,
         }
@@ -797,28 +790,28 @@ impl<'a> PeepholeOptimizations {
                             }
                         }
                         let callee = ctx.ast.expression_identifier(n.span, "Array");
-                        let args = ctx.ast.move_vec(args);
+                        let args = args.take_in(ctx.ast.allocator);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                         let elements = ctx
                             .ast
-                            .vec1(ArrayExpressionElement::from(ctx.ast.move_expression(arg)));
+                            .vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator)));
                         Some(ctx.ast.expression_array(span, elements, None))
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
                         let callee = ctx.ast.expression_identifier(span, "Array");
-                        let args = ctx.ast.move_vec(args);
+                        let args = args.take_in(ctx.ast.allocator);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
                 } else {
                     // // `new Array(1, 2, 3)` -> `[1, 2, 3]`
                     let elements = ctx.ast.vec_from_iter(
-                        args.iter_mut()
-                            .filter_map(|arg| arg.as_expression_mut())
-                            .map(|arg| ArrayExpressionElement::from(ctx.ast.move_expression(arg))),
+                        args.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(|arg| {
+                            ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator))
+                        }),
                     );
                     Some(ctx.ast.expression_array(span, elements, None))
                 }
@@ -861,9 +854,9 @@ impl<'a> PeepholeOptimizations {
         } {
             Some(ctx.ast.expression_call(
                 e.span,
-                ctx.ast.move_expression(&mut e.callee),
+                e.callee.take_in(ctx.ast.allocator),
                 NONE,
-                ctx.ast.move_vec(&mut e.arguments),
+                e.arguments.take_in(ctx.ast.allocator),
                 false,
             ))
         } else {
@@ -923,7 +916,7 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             return;
-        };
+        }
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
         if is_identifier_name(value) {
@@ -988,7 +981,7 @@ impl<'a> PeepholeOptimizations {
                             ArrayExpressionElement::SpreadElement(spread_el) => {
                                 new_args.push(ctx.ast.argument_spread_element(
                                     spread_el.span,
-                                    ctx.ast.move_expression(&mut spread_el.argument),
+                                    spread_el.argument.take_in(ctx.ast.allocator),
                                 ));
                             }
                             ArrayExpressionElement::Elision(elision) => {
@@ -996,14 +989,14 @@ impl<'a> PeepholeOptimizations {
                             }
                             match_expression!(ArrayExpressionElement) => {
                                 new_args
-                                    .push(ctx.ast.move_expression(el.to_expression_mut()).into());
+                                    .push(el.to_expression_mut().take_in(ctx.ast.allocator).into());
                             }
                         }
                     }
                 } else {
                     new_args.push(ctx.ast.argument_spread_element(
                         spread_el.span,
-                        ctx.ast.move_expression(&mut spread_el.argument),
+                        spread_el.argument.take_in(ctx.ast.allocator),
                     ));
                 }
             } else {
@@ -1177,7 +1170,7 @@ impl<'a> LatePeepholeOptimizations {
                     {
                         catch.param = None;
                     }
-                };
+                }
             }
         }
     }
@@ -1324,9 +1317,9 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("v = x == true", "v = x == !0");
-        test("v = x == false", "v = x == !1");
-        test("v = x != true", "v = x != !0");
+        test("v = x == true", "v = x == 1");
+        test("v = x == false", "v = x == 0");
+        test("v = x != true", "v = x != 1");
         test("v = x < true", "v = x < !0");
         test("v = x <= true", "v = x <= !0");
         test("v = x > true", "v = x > !0");
@@ -1412,8 +1405,7 @@ mod test {
     #[test]
     fn test_fold_subtraction_assignment() {
         test("x -= 1", "--x");
-        // FIXME
-        // test("x -= -1", "++x");
+        test("x -= -1", "++x");
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");

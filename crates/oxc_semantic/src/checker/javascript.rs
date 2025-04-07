@@ -3,12 +3,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_ecmascript::{IsSimpleParameterList, PropName};
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     scope::ScopeFlags,
+    symbol::SymbolFlags,
 };
 
 use crate::{AstNode, builder::SemanticBuilder, diagnostics::redeclaration};
@@ -428,7 +429,120 @@ pub fn check_function_declaration<'a>(
         } else if !is_if_stmt_or_labeled_stmt {
             ctx.error(function_declaration_non_strict(decl.span));
         }
+    }
+}
+
+// It is a Syntax Error if IsLabelledFunction(Statement) is true.
+pub fn check_function_declaration_in_labeled_statement<'a>(
+    body: &Statement<'a>,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    if let Statement::FunctionDeclaration(decl) = body {
+        if ctx.strict_mode() {
+            ctx.error(function_declaration_strict(decl.span));
+        } else {
+            // skip(1) for `LabeledStatement`
+            for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
+                match kind {
+                    // Nested labeled statement
+                    AstKind::LabeledStatement(_) => {}
+                    AstKind::ForOfStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+                    | AstKind::WithStatement(_)
+                    | AstKind::IfStatement(_) => break,
+
+                    _ => return,
+                }
+            }
+            ctx.error(function_declaration_non_strict(decl.span));
+        }
+    }
+}
+
+// It is a Syntax Error if any element of the LexicallyDeclaredNames of
+// StatementList also occurs in the VarDeclaredNames of StatementList.
+pub fn check_variable_declarator_redeclaration(
+    decl: &VariableDeclarator,
+    ctx: &SemanticBuilder<'_>,
+) {
+    if decl.kind != VariableDeclarationKind::Var
+        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    {
+        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
+        return;
+    }
+
+    decl.id.bound_names(&mut |ident| {
+        let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
+        let Some(rd) = redeclarations.iter().nth_back(1) else { return };
+
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        if rd.flags.is_function() {
+            ctx.error(redeclaration(&ident.name, rd.span, decl.span));
+        }
+    });
+}
+
+// It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
+// unless the source text matched by this production is not strict mode code
+// and the duplicate entries are only bound by FunctionDeclarations.
+// https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
+pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &func.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
     };
+
+    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
+    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
+        return;
+    }
+
+    let current_scope_flags = ctx.current_scope_flags();
+    if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
+        && (current_scope_flags.is_function()
+            || (ctx.source_type.is_script() && current_scope_flags.is_top()))
+    {
+        // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
+        // `function a() {}; function a() {}` and `var a; function a() {}` are
+        // still valid in script code, and should not be valid for module code.
+        //
+        // `function a() { var b; function b() { } }` valid in any mode.
+        return;
+    } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
+        // `class a {}; function a() {}` and `async function a() {} function a () {}` are
+        // invalid in both strict and non-strict mode.
+        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
+        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+            return;
+        }
+    }
+
+    ctx.error(redeclaration(&id.name, prev.span, id.span));
+}
+
+pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+    let Some(id) = &class.id else { return };
+    let symbol_id = id.symbol_id();
+
+    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+    let Some(prev) = redeclarations.iter().nth_back(1) else {
+        // No redeclarations
+        return;
+    };
+
+    if prev.flags.contains(SymbolFlags::Function) {
+        ctx.error(redeclaration(&id.name, prev.span, id.span));
+    }
 }
 
 fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
@@ -776,7 +890,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
                     ctx.error(unexpected_super_call(super_call_span));
                 }
                 return;
-            };
+            }
         }
 
         // ModuleBody : ModuleItemList

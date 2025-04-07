@@ -95,7 +95,7 @@ impl Rule for RequireParamType {
                 // If type exists, skip
                 if type_part.is_some() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
             }

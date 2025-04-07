@@ -108,7 +108,7 @@ fn is_expr_global_builtin<'a, 'b>(
             return None;
         };
 
-        if !GLOBAL_OBJECT_NAMES.contains(&ident.name) {
+        if !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str()) {
             return None;
         }
 

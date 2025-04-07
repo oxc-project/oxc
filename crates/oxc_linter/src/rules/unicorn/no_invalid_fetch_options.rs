@@ -182,7 +182,6 @@ fn is_invalid_fetch_options<'a>(
                             }
                             _ => {
                                 method_name = UNKNOWN_METHOD_NAME;
-                                continue;
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
@@ -218,11 +217,11 @@ fn is_invalid_fetch_options<'a>(
                                 }
                             }
                         }
-                        _ => continue,
+                        _ => {}
                     }
                 }
-                _ => continue,
-            };
+                _ => {}
+            }
         }
     }
 

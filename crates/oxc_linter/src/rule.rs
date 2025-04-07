@@ -148,15 +148,16 @@ impl TryFrom<&str> for RuleCategory {
 
 impl fmt::Display for RuleCategory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Correctness => write!(f, "Correctness"),
-            Self::Suspicious => write!(f, "Suspicious"),
-            Self::Pedantic => write!(f, "Pedantic"),
-            Self::Perf => write!(f, "Perf"),
-            Self::Style => write!(f, "Style"),
-            Self::Restriction => write!(f, "Restriction"),
-            Self::Nursery => write!(f, "Nursery"),
-        }
+        let category_name = match self {
+            Self::Correctness => "Correctness",
+            Self::Suspicious => "Suspicious",
+            Self::Pedantic => "Pedantic",
+            Self::Perf => "Perf",
+            Self::Style => "Style",
+            Self::Restriction => "Restriction",
+            Self::Nursery => "Nursery",
+        };
+        f.write_str(category_name)
     }
 }
 

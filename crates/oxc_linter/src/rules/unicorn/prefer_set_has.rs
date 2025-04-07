@@ -121,7 +121,7 @@ fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) 
         ) {
             is_multiple = true;
             break;
-        };
+        }
     }
     is_multiple
 }
@@ -283,7 +283,9 @@ impl Rule for PreferSetHas {
                 };
                 references_fix.push(fixer.replace(property_info.0, "has"));
             }
-            declaration_fix.extend(references_fix)
+            declaration_fix
+                .extend(references_fix)
+                .with_message("Switch expression to Set and update call to Set.has")
         });
     }
 }

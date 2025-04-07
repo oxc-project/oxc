@@ -97,9 +97,7 @@ impl TraverseScoping {
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn insert_scope_below_statement(&mut self, stmt: &Statement, flags: ScopeFlags) -> ScopeId {
-        let mut collector = ChildScopeCollector::new();
-        collector.visit_statement(stmt);
-        self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
+        self.insert_scope_below_statement_from_scope_id(stmt, self.current_scope_id, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -174,6 +172,46 @@ impl TraverseScoping {
         }
 
         new_scope_id
+    }
+
+    /// Insert a scope between a parent and a child scope.
+    ///
+    /// For example, given the following scopes
+    /// ```ts
+    /// parentScope1: {
+    ///     childScope: { }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// and calling this function with `parentScope1` and `childScope`,
+    /// the resulting scopes will be:
+    /// ```ts
+    /// parentScope1: {
+    ///     newScope: {   
+    ///         childScope: { }
+    ///     }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    pub fn insert_scope_between(
+        &mut self,
+        parent_id: ScopeId,
+        child_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let scope_id = self.create_child_scope(parent_id, flags);
+
+        debug_assert_eq!(
+            self.scoping.scope_parent_id(child_id),
+            Some(parent_id),
+            "Child scope must be a child of parent scope"
+        );
+
+        if self.scoping.has_scope_child_ids() {
+            self.scoping.remove_child_scope(parent_id, child_id);
+        }
+        self.scoping.set_scope_parent_id(child_id, Some(scope_id));
+        scope_id
     }
 
     /// Remove scope for an expression from the scope chain.

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "0.16.3"
+version = "0.16.5"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,7 +28,6 @@ oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
-oxc_span = { workspace = true }
 
 cow-utils = { workspace = true }
 env_logger = { workspace = true, features = ["humantime"] }

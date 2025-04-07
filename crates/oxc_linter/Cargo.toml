@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.16.3"
+version = "0.16.5"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -14,6 +14,7 @@ rust-version.workspace = true
 description.workspace = true
 
 [features]
+default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 
 [lints]
@@ -41,6 +42,7 @@ oxc_syntax = { workspace = true, features = ["serialize"] }
 
 #
 bitflags = { workspace = true }
+constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }

@@ -22,22 +22,28 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 Returns the [Server Capabilities](#server-capabilities).\
 Initialization Options:
 
-| Option Key   | Value(s)               | Default          | Description                                                                                          |
-| ------------ | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `run`        | `"onSave" \| "onType"` | `"onType"`       | Should the server lint the files when the user is typing or saving                                   |
-| `enable`     | `true \| false`        | `true`           | Should the server lint files                                                                         |
-| `configPath` | `<string>`             | `.oxlintrc.json` | Path to a oxlint configuration file, pass '' to enable nested configuration                          |
-| `flags`      | `Map<string, string>`  | `<empty>`        | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
+| Option Key   | Value(s)               | Default    | Description                                                                                          |
+| ------------ | ---------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `run`        | `"onSave" \| "onType"` | `"onType"` | Should the server lint the files when the user is typing or saving                                   |
+| `configPath` | `<string>` \| `null`   | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration              |
+| `flags`      | `Map<string, string>`  | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
+
+#### Flags
+
+- `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
+- `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
 
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 
 ### [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)
 
+The server will reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
+
 ### Workspace
 
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
-The server expects this request when settings like `run`, `enable`, `flags` or `configPath` are changed.
+The server expects this request when settings like `run`, `flags` or `configPath` are changed.
 The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)

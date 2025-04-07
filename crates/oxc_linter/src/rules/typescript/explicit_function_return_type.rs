@@ -463,7 +463,7 @@ impl ExplicitFunctionReturnType {
         if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() {
             if let Some(func_body_expr) = arrow_func_expr.get_expression() {
                 return is_function(func_body_expr);
-            };
+            }
         }
         all_return_statements_are_functions(node)
     }

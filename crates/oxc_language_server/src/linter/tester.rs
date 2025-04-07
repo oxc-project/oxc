@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use oxc_linter::Linter;
 use tower_lsp::lsp_types::{CodeDescription, NumberOrString, Url};
 
@@ -29,10 +31,8 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                 .enumerate()
                 .map(|(i, info)| {
                     let mut result = String::new();
-                    result.push_str(&format!(
-                        "related_information[{}].message: {:?}",
-                        i, info.message
-                    ));
+                    write!(result, "related_information[{}].message: {:?}", i, info.message)
+                        .unwrap();
                     // replace everything between `file://` and `oxc_language_server` with `<variable>`, to avoid
                     // the absolute path causing snapshot test failures in different environments
                     let mut location = info.location.uri.to_string();
@@ -46,13 +46,14 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
                         "<variable>",
                     );
 
-                    result.push_str(&format!(
-                        "\nrelated_information[{i}].location.uri: {location:?}",
-                    ));
-                    result.push_str(&format!(
+                    write!(result, "\nrelated_information[{i}].location.uri: {location:?}",)
+                        .unwrap();
+                    write!(
+                        result,
                         "\nrelated_information[{}].location.range: {:?}",
                         i, info.location.range
-                    ));
+                    )
+                    .unwrap();
                     result
                 })
                 .collect::<Vec<_>>()
@@ -102,8 +103,10 @@ impl Tester<'_> {
     #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
         let uri = get_file_uri(relative_file_path);
-        let content = std::fs::read_to_string(uri.to_file_path().unwrap())
-            .expect("could not read fixture file");
+        let content = match std::fs::read_to_string(uri.to_file_path().unwrap()) {
+            Ok(content) => content,
+            Err(err) => panic!("could not read fixture file: {err}: {relative_file_path}"),
+        };
         let reports = self.server_linter.run_single(&uri, Some(content)).unwrap();
         let snapshot = if reports.is_empty() {
             "No diagnostic reports".to_string()

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -100,7 +103,7 @@ impl Rule for RequireArrayJoinSeparator {
             if is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
                 && !member_expr.optional()
                 && !call_expr.optional
-                && !call_expr.arguments.iter().any(oxc_ast::ast::Argument::is_spread)
+                && !call_expr.arguments.iter().any(Argument::is_spread)
                 && is_array_prototype_property(member_expr_obj, "join")
             {
                 ctx.diagnostic_with_fix(

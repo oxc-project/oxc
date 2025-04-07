@@ -11,28 +11,28 @@ working directory:
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[fixtures/overrides/lib/tests/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[fixtures/overrides/src/oxlint.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[fixtures/overrides/src/tests/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
 Finished in <variable>ms on 7 files with 98 rules using 1 threads.

@@ -84,11 +84,8 @@ fn get_function_name_and_kind<'a>(
                     let kind = if f.generator { "generator function" } else { "function" };
                     return (kind, Some(name.into()));
                 }
-                continue;
             }
-            AstKind::ArrowFunctionExpression(_) => {
-                continue;
-            }
+            AstKind::ArrowFunctionExpression(_) => {}
             AstKind::IdentifierName(IdentifierName { name, .. })
             | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
                 return ("function", Some(Cow::Borrowed(name.as_str())));

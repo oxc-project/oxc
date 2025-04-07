@@ -817,6 +817,18 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'import1/private/foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import foo from 'import1/private/foo';
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'import1/private/foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export { foo } from 'import1/private/foo';
+   · ──────────────────────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'import-foo' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import-foo';

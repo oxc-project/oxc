@@ -231,7 +231,6 @@ impl TestCase {
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
-        options.proposals.explicit_resource_management = true;
         let cwd_path = self
             .options
             .cwd

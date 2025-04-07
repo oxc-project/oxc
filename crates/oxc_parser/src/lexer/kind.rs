@@ -1,6 +1,6 @@
 //! ECMAScript Token Kinds
 
-use std::fmt;
+use std::fmt::{self, Display};
 
 /// Lexer token kind
 ///
@@ -693,8 +693,8 @@ impl Kind {
     }
 }
 
-impl fmt::Display for Kind {
+impl Display for Kind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
+        self.to_str().fmt(f)
     }
 }

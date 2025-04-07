@@ -74,7 +74,7 @@ impl Rule for NoReturnInFinally {
                     };
                     find_return_statement(func_body, ctx);
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }

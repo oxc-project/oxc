@@ -4,7 +4,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::symbol::SymbolId;
 
-use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
+
+const PRE_DEFINE_VAR: [&str; 5] = ["undefined", "Infinity", "NaN", "eval", "arguments"];
 
 fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
@@ -79,7 +81,7 @@ impl Rule for NoShadowRestrictedNames {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let name = ctx.scoping().symbol_name(symbol_id);
 
-        if !PRE_DEFINE_VAR.contains_key(name) {
+        if !PRE_DEFINE_VAR.contains(&name) {
             return;
         }
 
@@ -98,11 +100,14 @@ impl Rule for NoShadowRestrictedNames {
             }
         }
 
-        let span = ctx.scoping().symbol_span(symbol_id);
-        ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
-
-        for &span in ctx.scoping().symbol_redeclarations(symbol_id) {
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if redeclarations.is_empty() {
+            let span = ctx.scoping().symbol_span(symbol_id);
             ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
+        } else {
+            for rd in redeclarations {
+                ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, rd.span));
+            }
         }
     }
 }

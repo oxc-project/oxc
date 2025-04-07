@@ -8,7 +8,7 @@ use syn::Ident;
 use crate::utils::{create_ident, pluralize};
 
 use super::{
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
+    Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
         ast_builder::AstBuilderType,
         clone_in::CloneInType,
@@ -33,6 +33,7 @@ pub struct EnumDef {
     #[expect(unused)]
     pub is_foreign: bool,
     pub file_id: FileId,
+    pub containers: Containers,
     #[expect(unused)]
     pub visibility: Visibility,
     pub generated_derives: Derives,
@@ -70,6 +71,7 @@ impl EnumDef {
             has_lifetime,
             is_foreign,
             file_id,
+            containers: Containers::default(),
             visibility,
             generated_derives,
             variants,

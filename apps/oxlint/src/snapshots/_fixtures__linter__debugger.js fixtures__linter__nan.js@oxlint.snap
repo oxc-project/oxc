@@ -11,7 +11,7 @@ working directory:
  1 | debugger;
    : ^^^^^^^^^
    `----
-  help: Delete this code.
+  help: Remove the debugger statement
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/use-isnan.html\eslint(use-isnan)]8;;\: Requires calls to isNaN() when checking for NaN
    ,-[fixtures/linter/nan.js:1:8]

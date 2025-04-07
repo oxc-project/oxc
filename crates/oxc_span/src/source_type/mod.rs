@@ -58,6 +58,7 @@ pub enum ModuleKind {
     /// Note2: Dynamic import expression is not ESM syntax.
     ///
     /// See <https://babel.dev/docs/options#misc-options>
+    #[estree(skip)]
     Unambiguous = 2,
 }
 
@@ -97,7 +98,7 @@ impl ContentEq for SourceType {
 }
 
 /// Valid file extensions
-pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
     /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.

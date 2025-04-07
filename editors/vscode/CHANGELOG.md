@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 32b9d1e language_server: Add `fix_kind` flag (#10226) (Sysix)
+- dab1bd8 language_server: Search for nested configurations by initialization (#10120) (Sysix)
+
+### Documentation
+
+- f115f71 editor: Add readme block for possible configurations (#10243) (Sysix)
+
+### Testing
+
+- 297d07f editor: Add e2e tests for creating oxlint configurations on the fly (#10138) (Sysix)
+- 29be469 editor: Add test for code actions (#10168) (camchenry)
+- ba817a9 editor: Add E2E Diagnostics test (#10133) (Sysix)
+
+## [0.16.4] - 2025-04-01
+
+- da6336c language_server: [**BREAKING**] Remove `enable` configuration, the client should shutdown the server instead (#9990) (Sysix)
+
+### Bug Fixes
+
+- 0a33e27 editor: Update `initializationOptions` for a possible restart (#10121) (Sysix)
+- ac780a2 editor: Repair filewatchers when no custom config provided (#10104) (Sysix)
+- 4303ace editor: Dont send `didChangeConfiguration` request to the server when it is shutdown (#10084) (Sysix)
+
+### Refactor
+
+- 327be53 editor: `LanguageClient` can be undefined (#10112) (Sysix)
+- 5ec477c editor: Make `onConfigChange` async (#10110) (Sysix)
+- a278d73 editor: Use warning background when the plugin is deactived (#10085) (Sysix)
+- c0e5251 language_server: Set `null` as a default value for `configPath` (#10047) (Sysix)
+
+### Testing
+
+- 410b8d6 editor: Use debug build of the language server (#10083) (Sysix)
+- 500add0 editor: Add test for `oxc.fixAll` command (#10045) (Sysix)
+
 ## [0.16.3] - 2025-03-25
 
 ### Testing

@@ -244,7 +244,7 @@ impl Rule for LabelHasAssociatedControl {
                     return;
                 }
             }
-        };
+        }
 
         ctx.diagnostic(label_has_associated_control_diagnostic(element.opening_element.span));
     }

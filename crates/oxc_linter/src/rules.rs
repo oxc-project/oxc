@@ -337,6 +337,7 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_for_each;
     pub mod no_array_reduce;
@@ -974,6 +975,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_accessor_recursion,
     unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_anonymous_default_export,

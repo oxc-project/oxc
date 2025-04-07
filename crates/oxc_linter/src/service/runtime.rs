@@ -25,7 +25,7 @@ use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 use super::LintServiceOptions;
 use crate::{
     Fixer, Linter, Message,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, PartialLoader},
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,
 };
@@ -175,7 +175,7 @@ impl Runtime {
     ) -> Option<Result<(SourceType, String), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
-            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
+            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -668,7 +668,7 @@ impl Runtime {
 
         if !ret.errors.is_empty() {
             return Err(if ret.is_flow_language { vec![] } else { ret.errors });
-        };
+        }
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
@@ -679,7 +679,7 @@ impl Runtime {
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
-        };
+        }
 
         let mut semantic = semantic_ret.semantic;
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);

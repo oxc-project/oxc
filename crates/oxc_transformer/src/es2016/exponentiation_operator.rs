@@ -32,7 +32,7 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{CloneIn, Vec as ArenaVec};
+use oxc_allocator::{CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
@@ -106,7 +106,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     // `#[inline]` so compiler knows `expr` is a `BinaryExpression`
     #[inline]
     fn convert_binary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let binary_expr = match ctx.ast.move_expression(expr) {
+        let binary_expr = match expr.take_in(ctx.ast.allocator) {
             Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
             _ => unreachable!(),
         };
@@ -258,7 +258,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let replacement_left =
             AssignmentTarget::ComputedMemberExpression(ctx.ast.alloc_computed_member_expression(
                 member_expr.span,
-                ctx.ast.move_expression(&mut member_expr.object),
+                member_expr.object.take_in(ctx.ast.allocator),
                 ctx.ast.expression_string_literal(prop_span, prop_name, None),
                 false,
             ));
@@ -337,7 +337,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let prop = if prop.is_literal() {
             prop.clone_in(ctx.ast.allocator)
         } else {
-            let owned_prop = ctx.ast.move_expression(prop);
+            let owned_prop = prop.take_in(ctx.ast.allocator);
             let binding = self.create_temp_var(owned_prop, &mut temp_var_inits, ctx);
             *prop = binding.create_read_expression(ctx);
             binding.create_read_expression(ctx)
@@ -498,7 +498,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
             }
         }
 
-        let binding = self.create_temp_var(ctx.ast.move_expression(obj), temp_var_inits, ctx);
+        let binding = self.create_temp_var(obj.take_in(ctx.ast.allocator), temp_var_inits, ctx);
         *obj = binding.create_read_expression(ctx);
         binding.create_read_expression(ctx)
     }
@@ -509,7 +509,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         pow_left: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let pow_right = ctx.ast.move_expression(&mut assign_expr.right);
+        let pow_right = assign_expr.right.take_in(ctx.ast.allocator);
         assign_expr.right = Self::math_pow(pow_left, pow_right, ctx);
         assign_expr.operator = AssignmentOperator::Assign;
     }
@@ -522,7 +522,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     ) {
         if !temp_var_inits.is_empty() {
             temp_var_inits.reserve_exact(1);
-            temp_var_inits.push(ctx.ast.move_expression(expr));
+            temp_var_inits.push(expr.take_in(ctx.ast.allocator));
             *expr = ctx.ast.expression_sequence(SPAN, temp_var_inits);
         }
     }

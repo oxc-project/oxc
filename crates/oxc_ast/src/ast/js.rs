@@ -30,7 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, directives, source_type, hashbang))]
+#[estree(field_order(span, directives, source_type, hashbang), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -379,7 +379,11 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Property", field_order(span, method, shorthand, computed, key, value, kind))]
+#[estree(
+    rename = "Property",
+    add_fields(optional = TsFalse),
+    field_order(span, method, shorthand, computed, key, value, kind, optional),
+)]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -457,8 +461,17 @@ pub struct TaggedTemplateExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateElement<'a> {
     pub span: Span,
+    #[estree(via = TemplateElementValue)]
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
+    /// The template element contains lone surrogates.
+    ///
+    /// `value.cooked` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
+    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
+    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
+    #[builder(default)]
+    #[estree(skip)]
+    pub lone_surrogates: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
@@ -1314,6 +1327,7 @@ pub enum ForStatementLeft<'a> {
     @inherit AssignmentTarget
 }
 }
+
 /// For-Of Statement
 #[ast(visit)]
 #[scope]
@@ -1557,6 +1571,7 @@ pub struct AssignmentPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(decorators = TsEmptyArray))]
 pub struct ObjectPattern<'a> {
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
@@ -1569,8 +1584,8 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(method = False, kind = Init),
-    field_order(span, method, shorthand, computed, key, value, kind),
+    add_fields(method = False, kind = Init, optional = TsFalse),
+    field_order(span, method, shorthand, computed, key, value, kind, optional),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -2278,10 +2293,12 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[rustfmt::skip]
-#[estree(field_order(
-    r#type, span, key, value, computed, r#static,
-    decorators, definite, type_annotation, accessibility,
-))]
+#[estree(
+    add_fields(declare = TsFalse, optional = TsFalse, r#override = TsFalse, readonly = TsFalse),
+    field_order(
+      r#type, span, key, value, computed, r#static, decorators, definite, type_annotation,
+      accessibility, optional, r#override, readonly, declare)
+)]
 pub struct AccessorProperty<'a> {
     pub span: Span,
     pub r#type: AccessorPropertyType,
@@ -2501,6 +2518,7 @@ pub struct ExportNamedDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(exportKind = TsValue))]
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
     #[estree(skip)]

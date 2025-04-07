@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use super::{
-    Def, Derives, Schema, TypeDef, TypeId,
+    Containers, Def, Derives, Schema, TypeDef, TypeId,
     extensions::{layout::Layout, visit::VisitVec},
 };
 
@@ -12,6 +12,7 @@ pub struct VecDef {
     pub id: TypeId,
     pub name: String,
     pub inner_type_id: TypeId,
+    pub containers: Containers,
     pub visit: VisitVec,
     pub layout: Layout,
 }
@@ -23,6 +24,7 @@ impl VecDef {
             id: TypeId::DUMMY,
             name,
             inner_type_id,
+            containers: Containers::default(),
             visit: VisitVec::default(),
             layout: Layout::default(),
         }

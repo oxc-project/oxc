@@ -384,7 +384,7 @@ impl NoFallthrough {
             let comment = semantic
                 .comments_range(range)
                 .map(|comment| ctx.source_range(comment.content_span()))
-                .last()
+                .next_back()
                 .map(str::trim);
 
             comment.is_some_and(|comment| self.is_comment_fall_through(comment))

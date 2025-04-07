@@ -162,10 +162,10 @@ impl Rule for ConsistentExistenceIndexCheck {
                     rule_fixes.push(fixer.replace(operator_span, operator_replacement_text));
                     rule_fixes.push(fixer.replace(right.span(), replacement.replacement_value));
 
-                    rule_fixes
+                    rule_fixes.with_message("Replace index check with strict equality check")
                 },
             );
-        };
+        }
     }
 }
 

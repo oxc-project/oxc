@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+
+### Bug Fixes
+
+- f2eff56 linter: Fix `rule_id` for some diagnostics formats (#10251) (Alexander S.)
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.16.4] - 2025-04-01
+
+### Features
+
+- 370266c semantic: Check redeclaration of variable declaration and function declaration in the block scope (#10074) (Dunqing)
+
+### Bug Fixes
+
+- 2c80858 linter: Enable multi-file analysis for nested configs (#10089) (camchenry)
+
+### Refactor
+
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+
 ## [0.16.3] - 2025-03-25
 
 ### Refactor

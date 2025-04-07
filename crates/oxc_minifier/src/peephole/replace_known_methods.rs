@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use std::borrow::Cow;
 
-use oxc_allocator::IntoIn;
+use oxc_allocator::{IntoIn, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let replacement = match name {
-            "toLowerCase" | "toUpperCase" | "trim" => {
+            "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
                 Self::try_fold_string_casing(*span, arguments, name, object, ctx)
             }
             "substring" | "slice" => {
@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if args.len() >= 1 {
+        if !args.is_empty() {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
@@ -101,6 +101,8 @@ impl<'a> PeepholeOptimizations {
             "toLowerCase" => s.value.cow_to_lowercase(),
             "toUpperCase" => s.value.cow_to_uppercase(),
             "trim" => Cow::Borrowed(s.value.trim()),
+            "trimStart" => Cow::Borrowed(s.value.trim_start()),
+            "trimEnd" => Cow::Borrowed(s.value.trim_end()),
             _ => return None,
         };
         Some(ctx.ast.expression_string_literal(span, value, None))
@@ -118,18 +120,24 @@ impl<'a> PeepholeOptimizations {
         }
         let Expression::StringLiteral(s) = object else { return None };
         let search_value = match args.first() {
-            Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_string_value(&ctx)?)
+            }
             None => None,
-            _ => return None,
         };
         let search_start_index = match args.get(1) {
-            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
             None => None,
-            _ => return None,
         };
         let result = match name {
-            "indexOf" => s.value.as_str().index_of(search_value, search_start_index),
-            "lastIndexOf" => s.value.as_str().last_index_of(search_value, search_start_index),
+            "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
+            "lastIndexOf" => {
+                s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+            }
             _ => unreachable!(),
         };
         #[expect(clippy::cast_precision_loss)]
@@ -146,14 +154,20 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let start_idx = args.first().and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => arg.to_expression().get_side_free_number_value(&ctx),
-        });
-        let end_idx = args.get(1).and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => arg.to_expression().get_side_free_number_value(&ctx),
-        });
+        let start_idx = match args.first() {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
+        };
+        let end_idx = match args.get(1) {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
+        };
         #[expect(clippy::cast_precision_loss)]
         if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
             || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
@@ -164,7 +178,7 @@ impl<'a> PeepholeOptimizations {
             if start > end {
                 return None;
             }
-        };
+        }
         Some(ctx.ast.expression_string_literal(
             span,
             s.value.as_str().substring(start_idx, end_idx),
@@ -231,7 +245,11 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                search_value.to_expression().evaluate_value(&ctx)?.into_string()?
+                let value = search_value.to_expression();
+                if value.may_have_side_effects(&ctx) {
+                    return None;
+                }
+                value.evaluate_value(&ctx)?.into_string()?
             }
         };
         let replace_value = args.get(1).unwrap();
@@ -387,12 +405,12 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(&ctx).is_number() {
-                ctx.ast.move_expression(expr)
+                expr.take_in(ctx.ast.allocator)
             } else {
                 ctx.ast.expression_unary(
                     SPAN,
                     UnaryOperator::UnaryPlus,
-                    ctx.ast.move_expression(expr),
+                    expr.take_in(ctx.ast.allocator),
                 )
             }
         };
@@ -400,7 +418,7 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            ctx.ast.move_expression(first_arg),
+            first_arg.take_in(ctx.ast.allocator),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -610,10 +628,13 @@ impl<'a> PeepholeOptimizations {
 
         *node = ctx.ast.expression_call(
             original_span,
-            ctx.ast.move_expression(new_root_callee),
+            new_root_callee.take_in(ctx.ast.allocator),
             Option::<TSTypeParameterInstantiation>::None,
             ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.move_vec(arg)),
+                collected_arguments
+                    .into_iter()
+                    .rev()
+                    .flat_map(|arg| arg.take_in(ctx.ast.allocator)),
             ),
             false,
         );
@@ -675,13 +696,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(ctx.ast.move_expression(object))
+                    Some(object.take_in(ctx.ast.allocator))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        ctx.ast.move_expression(callee),
+                        callee.take_in(ctx.ast.allocator),
                         Option::<TSTypeParameterInstantiation>::None,
-                        ctx.ast.move_vec(args),
+                        args.take_in(ctx.ast.allocator),
                         false,
                     ))
                 } else {
@@ -746,7 +767,10 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = s.clone().into_in(ctx.ast.allocator);
+                    let cooked = match &s {
+                        Cow::Owned(s) => ctx.ast.atom(s),
+                        Cow::Borrowed(s) => Atom::from(*s),
+                    };
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
@@ -955,7 +979,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.atom(&c.to_string());
                     s.raw = None;
-                    Some(ctx.ast.move_expression(object))
+                    Some(object.take_in(ctx.ast.allocator))
                 } else {
                     None
                 }
@@ -1011,32 +1035,32 @@ mod test {
         test("x = 'abcdefbe'.indexOf('b', 2)", "x = 6");
         test("x = 'abcdef'.indexOf('bcd')", "x = 1");
         test("x = 'abcdefsdfasdfbcdassd'.indexOf('bcd', 4)", "x = 13");
+        test_same("x = 'abcdef'.indexOf(...a, 1)");
+        test_same("x = 'abcdef'.indexOf('b', ...a)");
+        test_same("x = 'abcdef'.indexOf(a, 1)");
+        test_same("x = 'abcdef'.indexOf('b', a)");
 
         test("x = 'abcdef'.lastIndexOf('b')", "x = 1");
         test("x = 'abcdefbe'.lastIndexOf('b')", "x = 6");
         test("x = 'abcdefbe'.lastIndexOf('b', 5)", "x = 1");
 
-        // Both elements must be strings. Don't do anything if either one is not
-        // string.
-        // TODO: cast first arg to a string, and fold if possible.
-        // test("x = 'abc1def'.indexOf(1)", "x = 3");
-        // test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
-        // test("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
-        // test("x = 'abcnulldef'.indexOf(null)", "x = 3");
-        // test("x = 'abctruedef'.indexOf(true)", "x = 3");
+        test("x = 'abc1def'.indexOf(1)", "x = 3");
+        test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
+        test("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
+        test("x = 'abcnulldef'.indexOf(null)", "x = 3");
+        test("x = 'abctruedef'.indexOf(true)", "x = 3");
 
-        // The following test case fails with JSC_PARSE_ERROR. Hence omitted.
-        // test_same("x = 1.indexOf('bcd');");
+        test_same("x = 1 .indexOf('bcd');");
         test_same("x = NaN.indexOf('bcd')");
         test("x = undefined.indexOf('bcd')", "x = (void 0).indexOf('bcd')");
         test_same("x = null.indexOf('bcd')");
         test_same("x = (!0).indexOf('bcd')");
         test_same("x = (!1).indexOf('bcd')");
 
-        // Avoid dealing with regex or other types.
-        test_same("x = 'abcdef'.indexOf(/b./)");
-        test_same("x = 'abcdef'.indexOf({a:2})");
-        test_same("x = 'abcdef'.indexOf([1,2])");
+        // dealing with regex or other types.
+        test("x = 'abcdef/b./'.indexOf(/b./)", "x = 6");
+        test("x = 'abcdef[object Object]'.indexOf({a:2})", "x = 6");
+        test("x = 'abcdef1,2'.indexOf([1,2])", "x = 6");
 
         // Template Strings
         test("x = `abcdef`.indexOf('b')", "x = 1");
@@ -1133,6 +1157,10 @@ mod test {
         test("x = 'ca'.replace('c','x')", "x = 'xa'");
         test("x = 'ac'.replace('c','xxx')", "x = 'axxx'");
         test("x = 'ca'.replace('c','xxx')", "x = 'xxxa'");
+        test_same("x = 'c'.replace((foo(), 'c'), 'b')");
+
+        test_same("x = '[object Object]'.replace({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replace({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
 
         // only one instance replaced
         test("x = 'acaca'.replace('c','x')", "x = 'axaca'");
@@ -1162,6 +1190,9 @@ mod test {
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
         test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
 
+        test_same("x = '[object Object]'.replaceAll({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replaceAll({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
+
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props
 
@@ -1181,6 +1212,10 @@ mod test {
         test("x = 'abcde'.substring(0,2)", "x = 'ab'");
         test("x = 'abcde'.substring(1,2)", "x = 'b'");
         test("x = 'abcde'.substring(2)", "x = 'cde'");
+        test_same("x = 'abcde'.substring(...a, 1)");
+        test_same("x = 'abcde'.substring(1, ...a)");
+        test_same("x = 'abcde'.substring(a, 1)");
+        test_same("x = 'abcde'.substring(1, a)");
 
         // we should be leaving negative, out-of-bound, and inverted indices alone for now
         test_same("x = 'abcde'.substring(-1)");
@@ -1402,6 +1437,21 @@ mod test {
         test("x = 'SS'.toLowerCase()", "x = 'ss'");
         test("x = 'Σ'.toLowerCase()", "x = 'σ'");
         test("x = 'ΣΣ'.toLowerCase()", "x = 'σς'");
+    }
+
+    #[test]
+    fn test_fold_string_trim() {
+        test("x = '  abc  '.trim()", "x = 'abc'");
+        test("x = 'abc'.trim()", "x = 'abc'");
+        test_same("x = 'abc'.trim(1)");
+
+        test("x = '  abc  '.trimStart()", "x = 'abc  '");
+        test("x = 'abc'.trimStart()", "x = 'abc'");
+        test_same("x = 'abc'.trimStart(1)");
+
+        test("x = '  abc  '.trimEnd()", "x = '  abc'");
+        test("x = 'abc'.trimEnd()", "x = 'abc'");
+        test_same("x = 'abc'.trimEnd(1)");
     }
 
     #[test]

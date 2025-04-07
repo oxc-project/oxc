@@ -1,11 +1,12 @@
 {
   "name": "oxc-parser",
-  "version": "0.61.2",
+  "version": "0.62.0",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
     "build": "pnpm run build-dev --features allocator --release",
+    "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
     "build-browser-bundle": "node build-browser-bundle.mjs",
@@ -41,6 +42,7 @@
     "wrap.mjs",
     "wasm.mjs",
     "bindings.js",
+    "webcontainer-fallback.js",
     "deserialize-js.js",
     "deserialize-ts.js"
   ],
@@ -54,7 +56,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "^0.2.7",
-    "@vitest/browser": "3.0.9",
+    "@vitest/browser": "3.1.1",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
     "vitest": "catalog:"

@@ -57,14 +57,14 @@ impl Rule for ClickEventsHaveKeyEvents {
 
         if has_jsx_prop(jsx_opening_el, "onClick").is_none() {
             return;
-        };
+        }
 
         // Check only native DOM elements or custom component via settings
         let element_type = get_element_type(ctx, jsx_opening_el);
 
         if !HTML_TAG.contains(&element_type) {
             return;
-        };
+        }
 
         if is_hidden_from_screen_reader(ctx, jsx_opening_el) || is_presentation_role(jsx_opening_el)
         {

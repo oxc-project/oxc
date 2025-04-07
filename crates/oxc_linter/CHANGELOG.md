@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 794b180 linter: Add messages for complex fixes (#10279) (camchenry)
+- bde73b5 linter: Add unicorn/no-accessor-recursion rule (#9971) (yefan)
+
+### Bug Fixes
+
+- 03ba760 linter: `jsdoc/require-param`: skip rule if any doc has `@type` tag (#10282) (Cam McHenry)
+- 7c54ea1 linter: Rule `no-restricted-imports` allow combination of `paths` and `patterns` (#10224) (Sysix)
+- 6174129 linter: Run `react/no-children-props` only when react framework is found (#10225) (Sysix)
+- cc1267e linter: Fix `Display` impl for `ConfigBuilderError` (#10239) (overlookmotel)
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- 5d40676 linter: Replace `phf_set` with `array` in `react/iframe-missing-sandbox` (#10281) (shulaoda)
+- 0b2f22d linter: Replace `phf_set` with `array` in `globals` (#10274) (shulaoda)
+- 3dfa876 linter: Replace `phf_set` with `array` in `eslint/no-import-assign` (#10271) (shulaoda)
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+- be048d2 linter: Remove `write!` macro where unnecessary (#10232) (overlookmotel)
+
+### Documentation
+
+- 3d4ed3e linter: Rule `eslint/eqeqeq` add "null" & "smart" options (#10258) (Jacob Smith)
+- ec34ef3 rules/react: Adding missing code block ending (#10218) (Cannonbark)
+
+### Styling
+
+- fba11d2 linter: Remove unnecessary semi-colons (#10207) (camc314)
+
+### Testing
+
+- 72238fc linter: Ensure complex fixes have messages (#10280) (camchenry)
+
+## [0.16.4] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- 06e3db9 linter: Support `multipleFileExtensions` option for `unicorn/filename-case` (#10118) (shulaoda)
+- dbe0e46 linter: Support `ignore` option for `unicorn/filename-case` (#10107) (shulaoda)
+- 84a3490 semantic: Add `symbol_id` for declare function binding (#10078) (Dunqing)
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+
+### Bug Fixes
+
+- aba3654 linter: Span disable directive correctly on next line (#10141) (Ulrich Stark 🦀)
+
+### Performance
+
+- 566be59 linter: Replace `phf_set` with `array` in `eslint/func-names` (#10119) (shulaoda)
+- 5e14fe9 linter: Inline `PRE_DEFINE_VAR` and use `array` format (#10079) (shulaoda)
+
+### Refactor
+
+- 09c0ac6 linter: Improve `unicorn/filename-case` (#10117) (shulaoda)
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+- b3ec235 linter: Use items of `oxc_ast::ast` module directly (#10100) (Ulrich Stark 🦀)
+- 93e6c0b linter: Use `FormalParameter::has_modifier` to detect parameter properties (#10097) (Ulrich Stark 🦀)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+
 ## [0.16.3] - 2025-03-25
 
 ### Features

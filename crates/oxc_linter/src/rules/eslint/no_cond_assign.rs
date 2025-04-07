@@ -106,7 +106,7 @@ impl Rule for NoCondAssign {
                             break;
                         }
                         _ => {}
-                    };
+                    }
                 }
 
                 // Only report the diagnostic if the assignment is in a span where it should not be.

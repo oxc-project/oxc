@@ -69,7 +69,7 @@ impl Rule for PreferEventTarget {
                 }
             }
             _ => return,
-        };
+        }
 
         ctx.diagnostic(prefer_event_target_diagnostic(ident.span));
     }

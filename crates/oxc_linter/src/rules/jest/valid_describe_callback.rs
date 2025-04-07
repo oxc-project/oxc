@@ -148,7 +148,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
             }
 
-            if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
+            if arrow_expr.expression && !arrow_expr.body.statements.is_empty() {
                 let stmt = &arrow_expr.body.statements[0];
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     return;

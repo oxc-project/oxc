@@ -127,7 +127,7 @@ impl<'a> ParserImpl<'a> {
         } else if self.at(Kind::LCurly) {
             let mut import_specifiers = self.parse_import_specifiers()?;
             specifiers.append(&mut import_specifiers);
-        };
+        }
 
         self.expect(Kind::From)?;
         Ok(specifiers)
@@ -503,9 +503,9 @@ impl<'a> ParserImpl<'a> {
                 let literal = self.parse_literal_string()?;
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if literal.lossy || !literal.is_string_well_formed_unicode() {
+                if literal.lone_surrogates || !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
-                };
+                }
                 Ok(ModuleExportName::StringLiteral(literal))
             }
             _ => Ok(ModuleExportName::IdentifierName(self.parse_identifier_name()?)),

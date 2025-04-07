@@ -1,4 +1,7 @@
-use std::{borrow::Cow, fmt};
+use std::{
+    borrow::Cow,
+    fmt::{self, Debug, Display},
+};
 
 use itertools::Itertools as _;
 use petgraph::{
@@ -34,7 +37,7 @@ impl DisplayDot for ControlFlowGraph {
                         attrs += ("style", "dotted");
                     } else if matches!(weight, EdgeType::Error(_)) {
                         attrs += ("color", "red");
-                    };
+                    }
 
                     format!("{attrs:?}")
                 },
@@ -104,12 +107,12 @@ impl<'a> Attr<'a> {
     }
 }
 
-impl fmt::Debug for Attr<'_> {
+impl Debug for Attr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Int(i) => write!(f, "{i}"),
-            Self::String(s) => write!(f, "{s:?}"),
-            Self::Identifier(ident) => write!(f, "{ident}"), // display instead of debug
+            Self::Int(i) => Display::fmt(i, f),
+            Self::String(s) => Debug::fmt(s, f),
+            Self::Identifier(ident) => Display::fmt(ident, f), // Display instead of Debug
         }
     }
 }
@@ -167,17 +170,17 @@ where
     }
 }
 
-impl fmt::Debug for Attrs<'_> {
+impl Debug for Attrs<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0.is_empty() {
             return Ok(());
         }
 
-        let l = self.0.len();
         for (i, (k, v)) in self.0.iter().enumerate() {
-            write!(f, "{k}={v:?}")?;
-            if i < l - 1 {
-                write!(f, ", ")?;
+            if i == 0 {
+                write!(f, "{k}={v:?}")?;
+            } else {
+                write!(f, ", {k}={v:?}")?;
             }
         }
 

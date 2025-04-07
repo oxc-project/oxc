@@ -57,7 +57,6 @@ impl NoUnusedVars {
         let declared_binding = symbol.name();
         match symbol.declaration().kind() {
             AstKind::BindingRestElement(_)
-            | AstKind::Function(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_)
             | AstKind::ImportSpecifier(_)
@@ -69,9 +68,13 @@ impl NoUnusedVars {
             | AstKind::TSModuleDeclaration(_)
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
+            AstKind::Function(func) => {
+                func.r#type.is_typescript_syntax() || self.is_ignored_var(declared_binding)
+            }
             AstKind::Class(class) => {
-                if self.ignore_class_with_static_init_block
-                    && class.body.body.iter().any(ClassElement::is_static_block)
+                if class.declare
+                    || self.ignore_class_with_static_init_block
+                        && class.body.body.iter().any(ClassElement::is_static_block)
                 {
                     return true;
                 }
@@ -170,9 +173,7 @@ impl NoUnusedVars {
                             return status;
                         }
                         // target not found, keep looking
-                        Some(_) | None => {
-                            continue;
-                        }
+                        Some(_) | None => {}
                     }
                 }
 
@@ -198,9 +199,7 @@ impl NoUnusedVars {
                         }
                         // el is a simple pattern for a different symbol, or is
                         // a destructuring pattern that doesn't contain the target. Keep looking
-                        Some(_) | None => {
-                            continue;
-                        }
+                        Some(_) | None => {}
                     }
                 }
 

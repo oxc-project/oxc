@@ -26,8 +26,8 @@ pub struct Token {
     /// [Lexer::escaped_templates]: [super::Lexer::escaped_templates]
     pub escaped: bool,
 
-    /// True if a string contains lossy replacement character (U+FFFD).
-    pub lossy: bool,
+    /// True if a string contains lone surrogates.
+    pub lone_surrogates: bool,
 
     /// True if for numeric literal tokens that contain separator characters (`_`).
     ///

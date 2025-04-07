@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
@@ -73,7 +74,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
-        let right = ctx.ast.move_expression(&mut export_assignment.expression);
+        let right = export_assignment.expression.take_in(ctx.ast.allocator);
         let assignment_expr =
             ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, assignment_expr)

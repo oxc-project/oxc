@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- f6d181f semantic: Add `symbol_id` for `declare class` binding (#10095) (Dunqing)
+- 9b92919 semantic: Check redeclaration of function declaration and class declaration (#10093) (Dunqing)
+- 84a3490 semantic: Add `symbol_id` for declare function binding (#10078) (Dunqing)
+- 370266c semantic: Check redeclaration of variable declaration and function declaration in the block scope (#10074) (Dunqing)
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+- 528469e semantic/scoping: Add `declaration` and `flags` fields for Redeclaraion (#10060) (Dunqing)
+
+### Bug Fixes
+
+- 765ef4c semantic: Function declaration is not allowed in `LabeledStatement` (#10149) (Dunqing)
+- be08766 semantic: False positive checking redeclaration of function in script code (#10148) (Dunqing)
+- bcd9a03 semantic: Use `FormalParameter::has_modifier` to detect parameter properties (#10096) (Ulrich Stark 🦀)
+- 6687f5b semantic: Define a variable in a function expression whose name is the same as the function name which is considered a redeclaration (#10077) (Dunqing)
+
+### Performance
+
+- 84e167e semantic: Use `FxHashMap` to replace `IndexVec` for `symbol_redeclarations` (#10058) (Dunqing)
+
+### Documentation
+
+- 5983760 semantic: Fix instructions for running semantic example (#10016) (overlookmotel)
+
+### Refactor
+
+- dc3602c semantic: Align handling of declaring symbol for `class` with TypeScript (#10094) (Dunqing)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
 ## [0.61.2] - 2025-03-23
 
 ### Features

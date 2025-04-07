@@ -1,6 +1,6 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -118,7 +118,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
-                let target = ctx.ast.move_assignment_target(left.to_assignment_target_mut());
+                let target = left.to_assignment_target_mut().take_in(ctx.ast.allocator);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -139,13 +139,13 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // instead, we need to remove the useless scope.
                     ctx.scoping_mut().delete_scope(block.scope_id());
                 } else {
-                    statements.push(ctx.ast.move_statement(stmt_body));
+                    statements.push(stmt_body.take_in(ctx.ast.allocator));
                 }
             }
             statements
         };
 
-        let iterator = ctx.ast.move_expression(&mut stmt.right);
+        let iterator = stmt.right.take_in(ctx.ast.allocator);
         let iterator = self.ctx.helper_call_expr(
             Helper::AsyncIterator,
             SPAN,

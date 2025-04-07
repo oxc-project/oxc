@@ -2,7 +2,7 @@ commit: bc5c1417
 
 semantic_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 42487/44293 (95.92%)
+Positive Passed: 42481/44293 (95.91%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -8401,6 +8401,53 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
+tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(3): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(7): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(8): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(12): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(13): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(17): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["x"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(22): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(23): []
+rebuilt        : ScopeId(23): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(9): ScopeId(13)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(18)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(6)
+rebuilt        : SymbolId(16): ScopeId(23)
+
 tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -8521,79 +8568,69 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
 
-tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js
-semantic error: Symbol reference IDs mismatch for "$":
-after transform: SymbolId(1): [ReferenceId(7), ReferenceId(14), ReferenceId(21), ReferenceId(28)]
-rebuilt        : SymbolId(2): [ReferenceId(9), ReferenceId(16)]
-Symbol reference IDs mismatch for "_":
-after transform: SymbolId(2): [ReferenceId(8), ReferenceId(15), ReferenceId(22), ReferenceId(29)]
-rebuilt        : SymbolId(3): [ReferenceId(10), ReferenceId(17)]
-Symbol reference IDs mismatch for "o":
-after transform: SymbolId(3): [ReferenceId(9), ReferenceId(16), ReferenceId(23), ReferenceId(30)]
-rebuilt        : SymbolId(4): [ReferenceId(11), ReferenceId(18)]
-Symbol reference IDs mismatch for "℘":
-after transform: SymbolId(4): [ReferenceId(10), ReferenceId(17), ReferenceId(24), ReferenceId(31)]
-rebuilt        : SymbolId(5): [ReferenceId(12), ReferenceId(19)]
-Symbol reference IDs mismatch for "ZW_\u{200c}_NJ":
-after transform: SymbolId(5): [ReferenceId(11), ReferenceId(18), ReferenceId(25), ReferenceId(32)]
-rebuilt        : SymbolId(6): [ReferenceId(13), ReferenceId(20)]
-Symbol reference IDs mismatch for "ZW_\u{200d}_J":
-after transform: SymbolId(6): [ReferenceId(12), ReferenceId(19), ReferenceId(26), ReferenceId(33)]
-rebuilt        : SymbolId(7): [ReferenceId(14), ReferenceId(21)]
-Symbol reference IDs mismatch for "await":
-after transform: SymbolId(7): [ReferenceId(13), ReferenceId(20), ReferenceId(27), ReferenceId(34)]
-rebuilt        : SymbolId(8): [ReferenceId(15), ReferenceId(22)]
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
+semantic error: Symbol span mismatch for "D":
+after transform: SymbolId(1): Span { start: 1551, end: 1552 }
+rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
+Symbol span mismatch for "D":
+after transform: SymbolId(10): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(11): Span { start: 1551, end: 1552 }
 
-tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js
-semantic error: Symbol reference IDs mismatch for "ns":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17)]
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 1436, end: 1437 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 1436, end: 1437 }
 
-tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js
-semantic error: Symbol reference IDs mismatch for "$":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7), ReferenceId(14), ReferenceId(21)]
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(9)]
-Symbol reference IDs mismatch for "_":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(8), ReferenceId(15), ReferenceId(22)]
-rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(10)]
-Symbol reference IDs mismatch for "o":
-after transform: SymbolId(2): [ReferenceId(2), ReferenceId(9), ReferenceId(16), ReferenceId(23)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(11)]
-Symbol reference IDs mismatch for "℘":
-after transform: SymbolId(3): [ReferenceId(3), ReferenceId(10), ReferenceId(17), ReferenceId(24)]
-rebuilt        : SymbolId(4): [ReferenceId(5), ReferenceId(12)]
-Symbol reference IDs mismatch for "ZW_\u{200c}_NJ":
-after transform: SymbolId(4): [ReferenceId(4), ReferenceId(11), ReferenceId(18), ReferenceId(25)]
-rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(13)]
-Symbol reference IDs mismatch for "ZW_\u{200d}_J":
-after transform: SymbolId(5): [ReferenceId(5), ReferenceId(12), ReferenceId(19), ReferenceId(26)]
-rebuilt        : SymbolId(6): [ReferenceId(7), ReferenceId(14)]
-Symbol reference IDs mismatch for "await":
-after transform: SymbolId(6): [ReferenceId(6), ReferenceId(13), ReferenceId(20), ReferenceId(27)]
-rebuilt        : SymbolId(7): [ReferenceId(8), ReferenceId(15)]
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 1654, end: 1655 }
+rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(9): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(10): Span { start: 1654, end: 1655 }
 
-tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js
-semantic error: Symbol reference IDs mismatch for "$":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7), ReferenceId(14), ReferenceId(21)]
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(9)]
-Symbol reference IDs mismatch for "_":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(8), ReferenceId(15), ReferenceId(22)]
-rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(10)]
-Symbol reference IDs mismatch for "o":
-after transform: SymbolId(2): [ReferenceId(2), ReferenceId(9), ReferenceId(16), ReferenceId(23)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(11)]
-Symbol reference IDs mismatch for "℘":
-after transform: SymbolId(3): [ReferenceId(3), ReferenceId(10), ReferenceId(17), ReferenceId(24)]
-rebuilt        : SymbolId(4): [ReferenceId(5), ReferenceId(12)]
-Symbol reference IDs mismatch for "ZW_\u{200c}_NJ":
-after transform: SymbolId(4): [ReferenceId(4), ReferenceId(11), ReferenceId(18), ReferenceId(25)]
-rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(13)]
-Symbol reference IDs mismatch for "ZW_\u{200d}_J":
-after transform: SymbolId(5): [ReferenceId(5), ReferenceId(12), ReferenceId(19), ReferenceId(26)]
-rebuilt        : SymbolId(6): [ReferenceId(7), ReferenceId(14)]
-Symbol reference IDs mismatch for "await":
-after transform: SymbolId(6): [ReferenceId(6), ReferenceId(13), ReferenceId(20), ReferenceId(27)]
-rebuilt        : SymbolId(7): [ReferenceId(8), ReferenceId(15)]
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 1377, end: 1378 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 1377, end: 1378 }
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 1050, end: 1051 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 1050, end: 1051 }
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 1238, end: 1239 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 1238, end: 1239 }
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 1639, end: 1640 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 1639, end: 1640 }
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
+semantic error: Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 1739, end: 1740 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(8): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(9): Span { start: 1739, end: 1740 }
 
 tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
 semantic error: Scope children mismatch:
@@ -15665,4 +15702,51 @@ rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["a", "b", "rest"]
+
+tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(2): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(6): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(7): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(11): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(12): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(16): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(17): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(21): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(22): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(12)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(17)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(22)
 

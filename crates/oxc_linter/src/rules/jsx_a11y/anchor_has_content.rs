@@ -79,7 +79,7 @@ impl Rule for AnchorHasContent {
                 for attr in ["title", "aria-label"] {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, attr).is_some() {
                         return;
-                    };
+                    }
                 }
 
                 let diagnostic = missing_content(jsx_el.span);
@@ -87,7 +87,7 @@ impl Rule for AnchorHasContent {
                     let child = &jsx_el.children[0];
                     if let JSXChild::Element(child) = child {
                         ctx.diagnostic_with_suggestion(diagnostic, |_fixer| {
-                            remove_hidden_attributes(child)
+                            remove_hidden_attributes(child).with_message("Remove hidden attribute")
                         });
                         return;
                     }

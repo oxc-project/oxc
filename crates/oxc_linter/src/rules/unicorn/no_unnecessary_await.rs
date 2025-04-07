@@ -70,7 +70,7 @@ impl Rule for NoUnnecessaryAwait {
                     )),
                     |fixer| fixer.replace(expr.span, fixer.source_range(expr.argument.span())),
                 );
-            };
+            }
         }
     }
 }

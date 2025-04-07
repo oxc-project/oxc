@@ -4,7 +4,10 @@ mod ignore_list;
 pub mod options;
 mod spec;
 
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Write,
+    path::{Path, PathBuf},
+};
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
@@ -12,8 +15,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
+use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 
 use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
@@ -86,13 +89,15 @@ impl TestRunner {
             total_failed_file_count += failed_test_files.len();
 
             for (path, (failed, passed, ratio)) in failed_test_files {
-                failed_reports.push_str(&format!(
-                    "| {} | {}{} | {:.2}% |\n",
+                writeln!(
+                    failed_reports,
+                    "| {} | {}{} | {:.2}% |",
                     path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
                     "💥".repeat(failed),
                     "✨".repeat(passed),
                     ratio * 100.0
-                ));
+                )
+                .unwrap();
             }
         }
 
@@ -182,7 +187,7 @@ fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
     test_files
 }
 
-/// Run `oxc_prettier` and compare the output with the Prettier's snapshot
+/// Run `oxc_formatter` and compare the output with the Prettier's snapshot
 fn test_snapshots(
     dir: &Path,
     test_files: &Vec<PathBuf>,
@@ -208,21 +213,21 @@ fn test_snapshots(
         let mut failed_count = 0;
         let mut total_diff_ratio = 0.0;
         // Check every combination of options!
-        for (prettier_options, snapshot_options) in &spec_calls {
+        for (format_options, snapshot_options) in &spec_calls {
             // Single snapshot file contains multiple test cases, so need to find the right one
             let expected = find_output_from_snapshots(
                 &snapshots,
                 path.file_name().unwrap().to_string_lossy().as_ref(),
                 snapshot_options,
-                prettier_options.print_width,
+                format_options.line_width.value() as usize,
             )
             .unwrap();
 
             let actual = replace_escape_and_eol(
-                &run_oxc_prettier(
+                &run_oxc_formatter(
                     &source_text,
                     SourceType::from_path(path).unwrap(),
-                    *prettier_options,
+                    format_options.clone(),
                 ),
                 expected.contains("LF>") || expected.contains("<CR"),
             );
@@ -237,7 +242,7 @@ fn test_snapshots(
 
             if has_debug_filter {
                 let print_with_border = |title: &str| {
-                    let w = prettier_options.print_width;
+                    let w = format_options.line_width.value() as usize;
                     println!("--- {title} {}", "-".repeat(w - title.len() - 5));
                 };
 
@@ -380,10 +385,10 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
     input
 }
 
-fn run_oxc_prettier(
+fn run_oxc_formatter(
     source_text: &str,
     source_type: SourceType,
-    prettier_options: PrettierOptions,
+    formatter_options: FormatOptions,
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
@@ -393,5 +398,5 @@ fn run_oxc_prettier(
             ..ParseOptions::default()
         })
         .parse();
-    Prettier::new(&allocator, prettier_options).build(&ret.program)
+    Formatter::new(&allocator, formatter_options).build(&ret.program)
 }

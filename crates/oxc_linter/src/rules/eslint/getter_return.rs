@@ -196,7 +196,7 @@ impl GetterReturn {
                     _ => {
                         return Some(false);
                     }
-                };
+                }
             }
             _ => {}
         }

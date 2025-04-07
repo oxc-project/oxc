@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -98,9 +98,6 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
         );
 
-        // Foo[Foo["X"] = 0] = "X";
-        let is_already_declared = self.enums.contains_key(&enum_name);
-
         let has_potential_side_effect = decl.members.iter().any(|member| {
             matches!(
                 member.initializer,
@@ -127,7 +124,13 @@ impl<'a> TypeScriptEnum<'a> {
             false,
         );
 
-        let var_symbol_id = decl.id.symbol_id();
+        let enum_symbol_id = decl.id.symbol_id();
+
+        // Foo[Foo["X"] = 0] = "X";
+        let redeclarations = ctx.scoping().symbol_redeclarations(enum_symbol_id);
+        let is_already_declared =
+            redeclarations.first().map_or_else(|| false, |rd| rd.span != decl.id.span);
+
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = ast.expression_object(SPAN, ast.vec(), None);
@@ -138,7 +141,7 @@ impl<'a> TypeScriptEnum<'a> {
             let left = ctx.create_bound_ident_expr(
                 decl.id.span,
                 enum_name,
-                var_symbol_id,
+                enum_symbol_id,
                 ReferenceFlags::Read,
             );
             let right = ast.expression_object(SPAN, ast.vec(), None);
@@ -160,7 +163,7 @@ impl<'a> TypeScriptEnum<'a> {
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
                 enum_name,
-                var_symbol_id,
+                enum_symbol_id,
                 ReferenceFlags::Write,
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
@@ -225,7 +228,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.move_expression(initializer);
+                        let mut new_initializer = initializer.take_in(ast.allocator);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,
@@ -564,7 +567,7 @@ impl IdentifierReferenceRename<'_, '_> {
         // Don't need to rename the identifier if it's not a member of the enum,
         if !self.previous_enum_members.contains_key(&ident.name) {
             return false;
-        };
+        }
 
         let scoping = self.ctx.scoping.scoping();
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
@@ -622,6 +625,6 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
             _ => {
                 walk_mut::walk_expression(self, expr);
             }
-        };
+        }
     }
 }

@@ -11,25 +11,26 @@ mod r#gen;
 mod operator;
 mod options;
 mod sourcemap_builder;
+mod str;
 
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
     Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
-    Statement, StringLiteral,
+    Statement,
 };
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
+    identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
 
 use crate::{
     binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    sourcemap_builder::SourcemapBuilder, str::Quote,
 };
 pub use crate::{
     context::Context,
@@ -107,7 +108,7 @@ pub struct Codegen<'a> {
     indent: u32,
 
     /// Fast path for [CodegenOptions::single_quote]
-    quote: u8,
+    quote: Quote,
     /// Fast path for if print comments
     print_comments: bool,
 
@@ -163,7 +164,7 @@ impl<'a> Codegen<'a> {
             start_of_default_export: 0,
             is_jsx: false,
             indent: 0,
-            quote: b'"',
+            quote: Quote::Double,
             print_comments,
             comments: CommentsMap::default(),
             legal_comments: vec![],
@@ -174,7 +175,7 @@ impl<'a> Codegen<'a> {
     /// Pass options to the code generator.
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
-        self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
         self.print_comments = options.print_comments();
         self.options = options;
         self
@@ -194,7 +195,7 @@ impl<'a> Codegen<'a> {
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
-        self.quote = if self.options.single_quote { b'\'' } else { b'"' };
+        self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
         if self.print_comments {
@@ -454,34 +455,32 @@ impl<'a> Codegen<'a> {
         self.needs_semicolon = false;
     }
 
-    // We tried optimizing this to move the `index != 0` check out of the loop:
-    // ```
-    // let mut iter = items.iter();
-    // let Some(item) = iter.next() else { return };
-    // item.print(self, ctx);
-    // for item in iter {
-    //     self.print_comma();
-    //     self.print_soft_space();
-    //     item.print(self, ctx);
-    // }
-    // ```
-    // But it turned out this was actually a bit slower.
-    // <https://github.com/oxc-project/oxc/pull/5221>
+    #[inline]
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-                self.print_soft_space();
-            }
+        let Some((first, rest)) = items.split_first() else {
+            return;
+        };
+        first.print(self, ctx);
+        for item in rest {
+            self.print_comma();
+            self.print_soft_space();
             item.print(self, ctx);
         }
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-            }
+        let Some((first, rest)) = items.split_first() else {
+            return;
+        };
+        if self.print_expr_comments(first.span().start) {
+            self.print_indent();
+        } else {
+            self.print_soft_newline();
+            self.print_indent();
+        }
+        first.print(self, ctx);
+        for item in rest {
+            self.print_comma();
             if self.print_expr_comments(item.span().start) {
                 self.print_indent();
             } else {
@@ -492,12 +491,15 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[inline]
     fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-                self.print_soft_space();
-            }
+        let Some((first, rest)) = items.split_first() else {
+            return;
+        };
+        first.print_expr(self, precedence, ctx);
+        for item in rest {
+            self.print_comma();
+            self.print_soft_space();
             item.print_expr(self, precedence, ctx);
         }
     }
@@ -572,115 +574,6 @@ impl<'a> Codegen<'a> {
             self.print_str(&s);
             if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
                 self.need_space_before_dot = self.code_len();
-            }
-        }
-    }
-
-    fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
-        self.add_source_mapping(s.span);
-        if s.lossy {
-            self.print_str(s.raw.unwrap().as_str());
-            return;
-        }
-        self.print_quoted_utf16(s, allow_backtick);
-    }
-
-    fn print_quoted_utf16(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
-        let quote = if self.options.minify {
-            let mut single_cost: i32 = 0;
-            let mut double_cost: i32 = 0;
-            let mut backtick_cost: i32 = 0;
-            let mut bytes = s.value.as_bytes().iter().peekable();
-            while let Some(b) = bytes.next() {
-                match b {
-                    b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
-                    b'\'' => single_cost += 1,
-                    b'"' => double_cost += 1,
-                    b'`' => backtick_cost += 1,
-                    b'$' => {
-                        if bytes.peek() == Some(&&b'{') {
-                            backtick_cost += 1;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            let mut quote = b'"';
-            if allow_backtick && double_cost >= backtick_cost {
-                quote = b'`';
-                if backtick_cost > single_cost {
-                    quote = b'\'';
-                }
-            } else if double_cost > single_cost {
-                quote = b'\'';
-            }
-            quote
-        } else {
-            self.quote
-        };
-
-        self.print_ascii_byte(quote);
-        self.print_unquoted_utf16(s, quote);
-        self.print_ascii_byte(quote);
-    }
-
-    fn print_unquoted_utf16(&mut self, s: &StringLiteral<'_>, quote: u8) {
-        let mut chars = s.value.chars().peekable();
-
-        while let Some(c) = chars.next() {
-            match c {
-                '\x00' => {
-                    if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
-                        self.print_str("\\x00");
-                    } else {
-                        self.print_str("\\0");
-                    }
-                }
-                '\x07' => self.print_str("\\x07"),
-                '\u{8}' => self.print_str("\\b"), // \b
-                '\u{b}' => self.print_str("\\v"), // \v
-                '\u{c}' => self.print_str("\\f"), // \f
-                '\n' => {
-                    if quote == b'`' {
-                        self.print_ascii_byte(b'\n');
-                    } else {
-                        self.print_str("\\n");
-                    }
-                }
-                '\r' => self.print_str("\\r"),
-                '\x1B' => self.print_str("\\x1B"),
-                '\\' => self.print_str("\\\\"),
-                // Allow `U+2028` and `U+2029` in string literals
-                // <https://tc39.es/proposal-json-superset>
-                // <https://github.com/tc39/proposal-json-superset>
-                LS => self.print_str("\\u2028"),
-                PS => self.print_str("\\u2029"),
-                '\u{a0}' => self.print_str("\\xA0"),
-                '\'' => {
-                    if quote == b'\'' {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'\'');
-                }
-                '\"' => {
-                    if quote == b'"' {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'"');
-                }
-                '`' => {
-                    if quote == b'`' {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'`');
-                }
-                '$' => {
-                    if chars.peek() == Some(&'{') {
-                        self.print_ascii_byte(b'\\');
-                    }
-                    self.print_ascii_byte(b'$');
-                }
-                _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
             }
         }
     }

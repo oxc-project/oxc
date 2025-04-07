@@ -451,3 +451,12 @@ fn test_class_merging() {
     .contains_flags(SymbolFlags::Interface)
     .test();
 }
+
+#[test]
+fn test_redeclaration() {
+    SemanticTester::js("(function n(n) { console.log (n) }) ()")
+        .has_symbol("n") // the first `n` is the function expression
+        .equal_flags(SymbolFlags::Function) // param `n` is a SymbolFlags::FunctionScopedVariable
+        .has_number_of_references(0) // no references to the function
+        .test();
+}

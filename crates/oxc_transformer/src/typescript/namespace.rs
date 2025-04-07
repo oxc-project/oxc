@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Reference;
@@ -49,7 +49,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in ctx.ast.move_vec(&mut program.body) {
+        for stmt in program.body.take_in(ctx.ast.allocator) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -430,7 +430,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 false,
                             ))
                             .into(),
-                            ctx.ast.move_expression(init),
+                            init.take_in(ctx.ast.allocator),
                         ),
                     );
                 }
@@ -458,18 +458,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     /// Check the namespace binding identifier if it is a redeclaration
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
-        // Only `enum`, `class`, `function` and `namespace` can be re-declared in same scope
-        ctx.scoping()
-            .symbol_flags(symbol_id)
-            .intersects(SymbolFlags::RegularEnum | SymbolFlags::Class | SymbolFlags::Function)
-            || {
-                // ```
-                // namespace Foo {}
-                // namespace Foo {} // is redeclaration
-                // ```
-                let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-                !redeclarations.is_empty() && redeclarations.contains(&id.span)
-            }
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        redeclarations.first().map_or_else(|| false, |rd| rd.span != id.span)
     }
 }
 

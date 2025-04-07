@@ -127,7 +127,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                     if let Some(params) = &decl.type_parameters {
                         name_span_end = &params.span.end;
-                    };
+                    }
 
                     let name =
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
@@ -164,7 +164,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                     if let Some(params) = &decl.type_parameters {
                         name_span_end = &params.span.end;
-                    };
+                    }
 
                     let name =
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
@@ -228,7 +228,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                 if let Some(params) = &decl.type_parameters {
                     name_span_end = &params.span.end;
-                };
+                }
 
                 let name = &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
 

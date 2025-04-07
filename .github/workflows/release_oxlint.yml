@@ -88,7 +88,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@a433d87f121760c7447ab86390794f9a2dce31cf # v2.49.33
+        uses: taiki-e/install-action@d4635f2de61c8b8104d59cd4aede2060638378cc # v2.49.45
         with:
           tool: cross
 
@@ -105,8 +105,8 @@ jobs:
         env:
           CC: clang # for mimalloc
         run: |
-          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
-          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+          cross build --release -p oxlint --bin oxlint --features allocator --target=${{ matrix.target }}
+          cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries

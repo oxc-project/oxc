@@ -232,7 +232,7 @@ fn check_string(string: &str) -> Vec<usize> {
     }
 
     let quote_char = string.chars().next().unwrap();
-    let bytes = &string[1..string.len() - 1].as_bytes();
+    let bytes = &string.as_bytes()[1..string.len() - 1];
     let escapes = memmem::find_iter(bytes, "\\").collect::<Vec<_>>();
 
     if escapes.is_empty() {

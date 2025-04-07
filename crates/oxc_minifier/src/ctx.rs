@@ -4,7 +4,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
     ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
 use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_traverse::TraverseCtx;
 
@@ -22,6 +22,24 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
 impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(ident.is_global_reference(self.0.scoping()))
+    }
+}
+
+impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
+    fn respect_annotations(&self) -> bool {
+        true
+    }
+
+    fn is_pure_call(&self, _callee: &Expression) -> bool {
+        false
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        PropertyReadSideEffects::All
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
     }
 }
 

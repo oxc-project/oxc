@@ -129,7 +129,7 @@ impl PreferToBe {
             }
         }
 
-        if !is_equality_matcher(matcher) || jest_expect_fn_call.args.len() == 0 {
+        if !is_equality_matcher(matcher) || jest_expect_fn_call.args.is_empty() {
             return;
         }
 

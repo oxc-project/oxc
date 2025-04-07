@@ -565,7 +565,7 @@ fn has_adjacent_jsx_expression_containers<'a>(
         .into_iter()
         // [prev id, next id] -> [prev node, next node], removing out-of-bounds indices
         .filter_map(|idx| idx.and_then(|idx| children.get(idx)))
-        .any(oxc_ast::ast::JSXChild::is_expression_container)
+        .any(JSXChild::is_expression_container)
 }
 
 #[test]

@@ -1,5 +1,6 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{ToInt32, constant_evaluation::DetermineValueType};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -22,7 +23,12 @@ impl<'a> PeepholeOptimizations {
             let mut local_change = false;
             if let Some(folded_expr) = match expr {
                 Expression::UnaryExpression(e) => self.try_minimize_not(e, ctx),
-                Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
+                Expression::BinaryExpression(e) => {
+                    if Self::try_compress_is_loose_boolean(e, ctx) {
+                        local_change = true;
+                    }
+                    Self::try_minimize_binary(e, ctx)
+                }
                 Expression::LogicalExpression(e) => self.minimize_logical_expression(e, ctx),
                 Expression::ConditionalExpression(logical_expr) => {
                     if self.try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx) {
@@ -43,7 +49,7 @@ impl<'a> PeepholeOptimizations {
             } {
                 *expr = folded_expr;
                 local_change = true;
-            };
+            }
             if local_change {
                 changed = true;
             } else {
@@ -85,9 +91,9 @@ impl<'a> PeepholeOptimizations {
         loop {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
-                    let right = ctx.ast.move_expression(&mut logical_expr.left);
+                    let right = logical_expr.left.take_in(ctx.ast.allocator);
                     a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = ctx.ast.move_expression(&mut logical_expr.right);
+                    b = logical_expr.right.take_in(ctx.ast.allocator);
                     continue;
                 }
             }
@@ -144,14 +150,47 @@ impl<'a> PeepholeOptimizations {
                     _ => return None,
                 }
                 Some(if b.value {
-                    ctx.ast.move_expression(&mut e.left)
+                    e.left.take_in(ctx.ast.allocator)
                 } else {
-                    let argument = ctx.ast.move_expression(&mut e.left);
+                    let argument = e.left.take_in(ctx.ast.allocator);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
             }
             _ => None,
         }
+    }
+
+    /// Compress `foo == true` into `foo == 1`.
+    ///
+    /// - `foo == true` => `foo == 1`
+    /// - `foo != false` => `foo != 0`
+    ///
+    /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
+    /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
+    fn try_compress_is_loose_boolean(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
+            return false;
+        }
+
+        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(&ctx) {
+            e.left = ctx.ast.expression_numeric_literal(
+                e.left.span(),
+                if left_bool { 1.0 } else { 0.0 },
+                None,
+                NumberBase::Decimal,
+            );
+            return true;
+        }
+        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(&ctx) {
+            e.right = ctx.ast.expression_numeric_literal(
+                e.right.span(),
+                if right_bool { 1.0 } else { 0.0 },
+                None,
+                NumberBase::Decimal,
+            );
+            return true;
+        }
+        false
     }
 
     /// Returns the identifier or the assignment target's identifier of the given expression.
@@ -208,7 +247,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
+        expr.right = logical_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
@@ -230,47 +269,32 @@ impl<'a> PeepholeOptimizations {
         }
 
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        expr.right = binary_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
-    /// Compress `a = a + b` to `a += b`
+    /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
+    #[expect(clippy::float_cmp)]
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let target = expr.left.as_simple_assignment_target_mut()?;
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {
             return None;
         }
-        match &expr.right {
-            Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
-                // The `_` will not be placed to the target code.
-                let target = std::mem::replace(
-                    target,
-                    ctx.ast
-                        .simple_assignment_target_assignment_target_identifier(target.span(), "_"),
-                );
-                Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
-            }
-            Expression::UnaryExpression(un)
-                if matches!(un.operator, UnaryOperator::UnaryNegation) =>
-            {
-                let Expression::NumericLiteral(num) = &un.argument else { return None };
-                (num.value.to_int_32() == 1).then(|| {
-                    // The `_` will not be placed to the target code.
-                    let target = std::mem::replace(
-                        target,
-                        ctx.ast.simple_assignment_target_assignment_target_identifier(
-                            target.span(),
-                            "_",
-                        ),
-                    );
-                    ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
-                })
-            }
-            _ => None,
-        }
+        let Expression::NumericLiteral(num) = &expr.right else {
+            return None;
+        };
+        let target = expr.left.as_simple_assignment_target_mut()?;
+        let operator = if num.value == 1.0 {
+            UpdateOperator::Decrement
+        } else if num.value == -1.0 {
+            UpdateOperator::Increment
+        } else {
+            return None;
+        };
+        let target = target.take_in(ctx.ast.allocator);
+        Some(ctx.ast.expression_update(expr.span, operator, true, target))
     }
 }
 
@@ -1437,5 +1461,17 @@ mod test {
             run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
             run(code, None)
         );
+    }
+
+    #[test]
+    fn test_compress_is_loose_boolean() {
+        test("v = x == true", "v = x == 1");
+        test("v = x != true", "v = x != 1");
+        test("v = x == false", "v = x == 0");
+        test("v = x != false", "v = x != 0");
+        test("v = x == !0", "v = x == 1");
+        test("v = x != !0", "v = x != 1");
+        test("v = x == !1", "v = x == 0");
+        test("v = x != !1", "v = x != 0");
     }
 }

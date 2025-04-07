@@ -12,12 +12,11 @@ use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverit
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    Linter, ModuleRecord,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, Loader},
+    LINTABLE_EXTENSIONS, Linter, ModuleRecord,
+    loader::{JavaScriptSource, Loader},
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::VALID_EXTENSIONS;
 
 use crate::DiagnosticReport;
 use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
@@ -134,7 +133,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
@@ -152,7 +151,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
@@ -163,6 +162,7 @@ impl IsolatedLintHandler {
                 .into_iter()
                 .map(|msg| {
                     let fixed_content = msg.fix.map(|f| FixedContent {
+                        message: f.message.map(|m| m.to_string()),
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(
@@ -187,9 +187,8 @@ impl IsolatedLintHandler {
 
     fn should_lint_path(path: &Path) -> bool {
         static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
-        let wanted_exts = WANTED_EXTENSIONS.get_or_init(|| {
-            VALID_EXTENSIONS.iter().chain(LINT_PARTIAL_LOADER_EXT.iter()).copied().collect()
-        });
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
         path.extension()
             .and_then(std::ffi::OsStr::to_str)

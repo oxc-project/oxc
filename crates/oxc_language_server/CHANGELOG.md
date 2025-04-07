@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 32b9d1e language_server: Add `fix_kind` flag (#10226) (Sysix)
+- dab1bd8 language_server: Search for nested configurations by initialization (#10120) (Sysix)
+
+### Bug Fixes
+
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.16.4] - 2025-04-01
+
+- da6336c language_server: [**BREAKING**] Remove `enable` configuration, the client should shutdown the server instead (#9990) (Sysix)
+
+### Bug Fixes
+
+- 07f2a25 editor: Enable regex parsing in language server (#10035) (camchenry)
+- fcf7702 language_server: Start from a default oxlint configuration + SafeFix for nested configuration (#10043) (Sysix)
+
+### Refactor
+
+- c0e5251 language_server: Set `null` as a default value for `configPath` (#10047) (Sysix)
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+
 ## [0.16.3] - 2025-03-25
 
 ### Bug Fixes
