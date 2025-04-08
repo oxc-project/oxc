@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+- 5ad41c9 ast: [**BREAKING**] Remove unnecessary `AstBuilder::alloc_*` methods (#10267) (overlookmotel)
+
+- 14ff99c ast: [**BREAKING**] Remove all `AstBuilder::move_xxxx` methods (#10171) (Dunqing)
+
+### Features
+
+- 8bbaedc ast_tools: Derive `Hash` for `AstType` (#10212) (lazytype)
+
+### Bug Fixes
+
+- 08a0d5e ast: Fix `Display` impl for `RegExpFlags` (#10235) (overlookmotel)
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- db0b2eb ast/estree: Add ts-estree fields to `FormalParametersRest` custom serializer (#10192) (therewillbecode)
+- abc9ea4 ast/estree: Better align program span start (#10134) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+
+### Performance
+
+- 5b4c2ae ast: Remove `write!` macro where unnecessary (#10234) (overlookmotel)
+
+### Documentation
+
+- 4d33af7 ast: Correct comment (#10176) (overlookmotel)
+
+### Refactor
+
+- 5525206 ast/estree: Simplify static converters (#10197) (overlookmotel)
+- b662df4 ast/estree: Alter `Program` start span with converter (#10195) (overlookmotel)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+- 2dde8be ast: Reformat AST types (#10278) (overlookmotel)
+- c290faa ast: Reformat `AstBuilder` doc comments (#10263) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 - 45015ee ast: [**BREAKING**] Remove unused `Function::symbol_id` method (#10061) (Dunqing)

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+
+### Performance
+
+- 6c9b094 codegen: Optimize `Codegen::print_list` method (#10242) (Dunqing)
+- 775abac codegen: Speed up printing `StringLiteral`s (#10046) (overlookmotel)
+
+### Refactor
+
+- f7ff816 codegen: Improve code with `split_first` (#10285) (Boshen)
+- ca8f174 codegen: Do not print useless comma for TSEnumMember (#10213) (Yuji Sugiura)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+### Testing
+
+- 7672620 parser: Tests for lone surrogates and lossy escape characters (#10175) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 - cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
