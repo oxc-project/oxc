@@ -1,9 +1,7 @@
 use std::fmt::Write;
 
-use oxc_diagnostics::{
-    Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
-};
+use oxc_diagnostics::{Error, Severity};
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
 use rustc_hash::FxHashMap;
 
 use crate::output_formatter::InternalFormatter;
@@ -114,7 +112,8 @@ fn format_stylish(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::DiagnosticResult;
     use oxc_span::Span;
 
     #[test]

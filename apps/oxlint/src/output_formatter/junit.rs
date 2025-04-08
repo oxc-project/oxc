@@ -1,7 +1,6 @@
-use oxc_diagnostics::{
-    Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
-};
+use oxc_diagnostics::{Error, Severity};
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
+
 use rustc_hash::FxHashMap;
 
 use super::{InternalFormatter, xml_utils::xml_escape};
@@ -99,7 +98,8 @@ fn format_junit(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::DiagnosticResult;
     use oxc_span::Span;
 
     #[test]

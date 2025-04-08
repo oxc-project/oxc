@@ -1,8 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use miette::SourceSpan;
-
-use crate::{Error, Severity};
+use oxc_diagnostics::{Error, Severity, SourceSpan};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
 /// form of output stream.
@@ -12,7 +10,8 @@ use crate::{Error, Severity};
 ///
 /// ## Example
 /// ```
-/// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
+/// use oxc_diagnostics::{Error, Severity};
+/// use oxc_linter::{DiagnosticReporter, DiagnosticResult};
 ///
 /// #[derive(Default)]
 /// pub struct BufferedReporter;
@@ -20,7 +19,7 @@ use crate::{Error, Severity};
 /// impl DiagnosticReporter for BufferedReporter {
 ///     // render the finished output, some reporters will store the errors in memory
 ///     // to output all diagnostics at the end
-///     fn finish(&mut self) -> Option<String> {
+///     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
 ///         None
 ///     }
 ///

@@ -2,12 +2,9 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::{
-    Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
-};
-
 use crate::output_formatter::{InternalFormatter, xml_utils::xml_escape};
+use oxc_diagnostics::{Error, Severity};
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
 
 #[derive(Debug, Default)]
 pub struct CheckStyleOutputFormatter;
@@ -68,10 +65,8 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{
-        NamedSource, OxcDiagnostic,
-        reporter::{DiagnosticReporter, DiagnosticResult},
-    };
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult};
     use oxc_span::Span;
 
     use super::CheckstyleReporter;

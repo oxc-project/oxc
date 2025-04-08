@@ -1746,7 +1746,6 @@ dependencies = [
 name = "oxc_diagnostics"
 version = "0.62.0"
 dependencies = [
- "cow-utils",
  "oxc-miette",
 ]
 

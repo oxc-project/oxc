@@ -7,10 +7,10 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, DiagnosticService, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;

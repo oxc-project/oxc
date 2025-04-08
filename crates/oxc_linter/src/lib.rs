@@ -43,7 +43,10 @@ pub use crate::{
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
-    service::{LintService, LintServiceOptions},
+    service::{
+        DiagnosticReporter, DiagnosticResult, DiagnosticService, Info, LintService,
+        LintServiceOptions,
+    },
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},

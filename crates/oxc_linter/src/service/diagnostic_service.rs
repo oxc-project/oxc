@@ -5,12 +5,10 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use miette::LabeledSpan;
 
-use crate::{
-    Error, NamedSource, OxcDiagnostic, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult},
-};
+use oxc_diagnostics::{Error, LabeledSpan, NamedSource, OxcDiagnostic, Severity};
+
+use super::{DiagnosticReporter, DiagnosticResult};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -26,10 +24,34 @@ pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 /// # Example
 /// ```rust
 /// use std::thread;
-/// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService};
+/// use oxc_diagnostics::{Error, OxcDiagnostic, GraphicalReportHandler};
+/// use oxc_linter::{DiagnosticService, DiagnosticResult, DiagnosticReporter};
+/// use std::path::PathBuf;
+///
+/// struct GraphicalReporter {
+///     handler: GraphicalReportHandler,
+/// }
+///
+/// impl Default for GraphicalReporter {
+///     fn default() -> Self {
+///         Self { handler: GraphicalReportHandler::new() }
+///     }
+/// }
+///
+/// impl DiagnosticReporter for GraphicalReporter {
+///     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+///         None
+///     }
+///
+///     fn render_error(&mut self, error: Error) -> Option<String> {
+///         let mut output = String::new();
+///         self.handler.render_report(&mut output, error.as_ref()).unwrap();
+///         Some(output)
+///     }
+/// }
 ///
 /// // By default, services will pretty-print diagnostics to the console
-/// let mut service = DiagnosticService::default();
+/// let mut service = DiagnosticService::new(Box::new(GraphicalReporter::default()));
 /// // Get a clone of the sender to send diagnostics to the service
 /// let mut sender = service.sender().clone();
 ///
@@ -45,8 +67,9 @@ pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 ///     sender.send(None);
 /// });
 ///
-/// // Listen for and process messages
-/// service.run()
+/// // Process messages and report a statistic about the number of errors/warnings.
+/// let mut output = std::io::stdout();
+/// let result: DiagnosticResult = service.run(&mut output);
 /// ```
 pub struct DiagnosticService {
     reporter: Box<dyn DiagnosticReporter>,

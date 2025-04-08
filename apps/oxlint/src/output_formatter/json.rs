@@ -1,8 +1,5 @@
-use oxc_diagnostics::{
-    Error,
-    reporter::{DiagnosticReporter, DiagnosticResult},
-};
-use oxc_linter::{RuleCategory, rules::RULES};
+use oxc_diagnostics::Error;
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, RuleCategory, rules::RULES};
 
 use miette::JSONReportHandler;
 
@@ -76,10 +73,8 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{
-        NamedSource, OxcDiagnostic,
-        reporter::{DiagnosticReporter, DiagnosticResult},
-    };
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult};
     use oxc_span::Span;
 
     use super::JsonReporter;

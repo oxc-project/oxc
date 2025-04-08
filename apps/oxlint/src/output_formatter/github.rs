@@ -1,9 +1,7 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::{
-    Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
-};
+use oxc_diagnostics::{Error, Severity};
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
 
 use crate::output_formatter::InternalFormatter;
 
@@ -81,10 +79,9 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{
-        NamedSource, OxcDiagnostic,
-        reporter::{DiagnosticReporter, DiagnosticResult},
-    };
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult};
+
     use oxc_span::Span;
 
     use super::GithubReporter;

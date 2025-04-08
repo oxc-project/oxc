@@ -14,11 +14,6 @@
 //!
 //! See the [miette] documentation for more information on how to interact with diagnostics.
 //!
-//! ## Reporting
-//! If you are writing your own tools that may produce their own errors, you can use
-//! [`DiagnosticService`] to format and render them to a string or a stream. It can receive
-//! [`Error`]s over a multi-producer, single consumer
-//!
 //! ```
 //! use std::{sync::Arc, thread};
 //! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic};
@@ -48,17 +43,11 @@
 //! service.run();
 //! ```
 
-mod service;
-
 use std::{
     borrow::Cow,
     fmt::{self, Display},
     ops::{Deref, DerefMut},
 };
-
-pub mod reporter;
-
-pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -66,7 +55,7 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource, SourceSpan};
 
 /// Describes an error or warning that occurred.
 ///

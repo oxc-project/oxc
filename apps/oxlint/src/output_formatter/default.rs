@@ -1,11 +1,8 @@
 use std::time::Duration;
 
 use crate::output_formatter::InternalFormatter;
-use oxc_diagnostics::{
-    Error, GraphicalReportHandler,
-    reporter::{DiagnosticReporter, DiagnosticResult},
-};
-use oxc_linter::table::RuleTable;
+use oxc_diagnostics::{Error, GraphicalReportHandler};
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, table::RuleTable};
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
@@ -115,10 +112,8 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
 
 #[cfg(test)]
 mod test_implementation {
-    use oxc_diagnostics::{
-        Error, GraphicalReportHandler, GraphicalTheme,
-        reporter::{DiagnosticReporter, DiagnosticResult, Info},
-    };
+    use oxc_diagnostics::{Error, GraphicalReportHandler, GraphicalTheme};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
 
     use crate::output_formatter::default::get_diagnostic_result_output;
 
@@ -159,7 +154,7 @@ mod test {
         InternalFormatter, LintCommandInfo,
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
-    use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult};
 
     #[test]
     fn all_rules() {

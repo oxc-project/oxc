@@ -16,7 +16,7 @@ use junit::JUnitOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
-use oxc_diagnostics::reporter::DiagnosticReporter;
+use oxc_linter::DiagnosticReporter;
 
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 

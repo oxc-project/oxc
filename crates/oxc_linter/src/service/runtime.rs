@@ -16,15 +16,15 @@ use self_cell::self_cell;
 use smallvec::SmallVec;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-use super::LintServiceOptions;
+use super::{DiagnosticSender, LintServiceOptions};
 use crate::{
-    Fixer, Linter, Message,
+    DiagnosticService, Fixer, Linter, Message,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,

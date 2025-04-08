@@ -1,11 +1,9 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::{
-    Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
-};
+use oxc_diagnostics::{Error, Severity};
 
 use crate::output_formatter::InternalFormatter;
+use oxc_linter::{DiagnosticReporter, DiagnosticResult, Info};
 
 #[derive(Debug, Default)]
 pub struct UnixOutputFormatter;
@@ -53,10 +51,8 @@ fn format_unix(diagnostic: &Error) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{
-        NamedSource, OxcDiagnostic,
-        reporter::{DiagnosticReporter, DiagnosticResult},
-    };
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_linter::{DiagnosticReporter, DiagnosticResult};
     use oxc_span::Span;
 
     use super::UnixReporter;
