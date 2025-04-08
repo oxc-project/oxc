@@ -943,12 +943,14 @@ mod test {
 
         // Test 3: Child config that extends parent without specifying plugins
         // Should inherit parent's plugins
-        let child_no_plugins_config = config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
+        let child_no_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
         assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
-        let child_with_plugins_config = config_store_from_path("fixtures/extends_config/plugins/child_with_plugins.json");
+        let child_with_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_with_plugins.json");
         assert_eq!(
             child_with_plugins_config.plugins(),
             LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::JEST
