@@ -417,20 +417,61 @@ impl ESTree for RegExpFlagsConverter<'_> {
     }
 }
 
+/// Converter for `TemplateElement`.
+///
+/// Decode `cooked` if it contains lone surrogates.
+///
+/// Also adjust span in TS AST.
+/// TS-ESLint produces a different span from Acorn:
+/// ```js
+/// const template = `abc${x}def${x}ghi`;
+/// // Acorn:         ^^^    ^^^    ^^^
+/// // TS-ESLint:    ^^^^^^ ^^^^^^ ^^^^^
+/// ```
+// TODO: Raise an issue on TS-ESLint and see if they'll change span to match Acorn.
+#[ast_meta]
+#[estree(raw_deser = r#"
+    const tail = DESER[bool](POS_OFFSET.tail),
+        start = DESER[u32](POS_OFFSET.span.start) /* IF_TS */ - 1 /* END_IF_TS */,
+        end = DESER[u32](POS_OFFSET.span.end) /* IF_TS */ + 2 - tail /* END_IF_TS */,
+        value = DESER[TemplateElementValue](POS_OFFSET.value);
+    if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
+        value.cooked = value.cooked
+            .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+    }
+    { type: 'TemplateElement', start, end, value, tail }
+"#)]
+pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
+
+impl ESTree for TemplateElementConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateElement"));
+
+        let mut span = element.span;
+        if S::INCLUDE_TS_FIELDS {
+            span.start -= 1;
+            span.end += if element.tail { 1 } else { 2 };
+        }
+        state.serialize_field("start", &span.start);
+        state.serialize_field("end", &span.end);
+
+        state.serialize_field("value", &TemplateElementValue(element));
+        state.serialize_field("tail", &element.tail);
+        state.end();
+    }
+}
+
 /// Serializer for `value` field of `TemplateElement`.
 ///
 /// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
+///
+/// Implementation for `raw_deser` is included in `TemplateElementConverter` above.
 #[ast_meta]
 #[estree(
     ts_type = "TemplateElementValue",
-    raw_deser = r#"
-        let value = DESER[TemplateElementValue](POS_OFFSET.value);
-        if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
-            value.cooked = value.cooked
-                .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-        }
-        value
-    "#
+    raw_deser = "(() => { throw new Error('Should not appear in deserializer code'); })()"
 )]
 pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
 

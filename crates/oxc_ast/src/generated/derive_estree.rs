@@ -331,13 +331,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
 
 impl ESTree for TemplateElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TemplateElement"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("value", &crate::serialize::TemplateElementValue(self));
-        state.serialize_field("tail", &self.tail);
-        state.end();
+        crate::serialize::TemplateElementConverter(self).serialize(serializer)
     }
 }
 

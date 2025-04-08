@@ -165,18 +165,15 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
-  let value = deserializeTemplateElementValue(pos + 8);
+  const tail = deserializeBool(pos + 40),
+    start = deserializeU32(pos) - 1,
+    end = deserializeU32(pos + 4) + 2 - tail,
+    value = deserializeTemplateElementValue(pos + 8);
   if (value.cooked !== null && deserializeBool(pos + 41)) {
     value.cooked = value.cooked
       .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
   }
-  return {
-    type: 'TemplateElement',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    value,
-    tail: deserializeBool(pos + 40),
-  };
+  return { type: 'TemplateElement', start, end, value, tail };
 }
 
 function deserializeTemplateElementValue(pos) {

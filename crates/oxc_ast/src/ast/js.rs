@@ -462,9 +462,9 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TemplateElementConverter)]
 pub struct TemplateElement<'a> {
     pub span: Span,
-    #[estree(via = TemplateElementValue)]
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
     /// The template element contains lone surrogates.
