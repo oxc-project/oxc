@@ -870,17 +870,6 @@ impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
     }
 }
 
-#[ast_meta]
-#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
-#[ts]
-pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
-
-impl ESTree for JSXOpeningFragmentAttributes<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
-    }
-}
-
 /// Serializer for `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
 ///
 /// Convert to `JSXIdentifier`.
@@ -919,10 +908,14 @@ impl ESTree for JSXElementThisExpression<'_> {
     }
 }
 
-/// Serializer for `JSXOpeningFragment`.
+/// Converter for `JSXOpeningFragment`.
 ///
 /// Add `attributes` and `selfClosing` fields in JS AST, but not in TS AST.
 /// Acorn-JSX has these fields, but TS-ESLint parser does not.
+///
+/// The extra fields are added to the type as `TsEmptyArray` and `TsFalse`,
+/// which are incorrect, as these fields appear only in the *JS* AST, not the TS one.
+/// But that results in the fields being optional in TS type definition.
 //
 // TODO: Find a better way to do this.
 #[ast_meta]

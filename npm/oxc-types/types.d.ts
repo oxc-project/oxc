@@ -858,7 +858,7 @@ export interface JSXFragment extends Span {
 
 export interface JSXOpeningFragment extends Span {
   type: 'JSXOpeningFragment';
-  attributes?: Array<JSXAttributeItem>;
+  attributes?: [];
   selfClosing?: false;
 }
 
