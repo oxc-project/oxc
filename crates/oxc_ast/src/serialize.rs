@@ -870,6 +870,17 @@ impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
+#[ts]
+pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+
+impl ESTree for JSXOpeningFragmentAttributes<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
+    }
+}
+
 /// Serializer for `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
 ///
 /// Convert to `JSXIdentifier`.
