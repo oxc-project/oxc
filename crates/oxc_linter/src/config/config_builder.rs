@@ -243,28 +243,18 @@ impl ConfigStoreBuilder {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(_, name) => self.upsert_where(severity, |r| r.name() == name),
-                LintFilterKind::Generic(name_or_category) => {
-                    if name_or_category == "all" {
-                        self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
-                    } else {
-                        self.upsert_where(severity, |r| r.name() == name_or_category);
-                    }
+                LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
+                LintFilterKind::All => {
+                    self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
                 }
             },
             AllowWarnDeny::Allow => match filter {
                 LintFilterKind::Category(category) => {
                     self.rules.retain(|rule| rule.category() != *category);
                 }
-                LintFilterKind::Rule(_, name) => {
-                    self.rules.retain(|rule| rule.name() != name);
-                }
-                LintFilterKind::Generic(name_or_category) => {
-                    if name_or_category == "all" {
-                        self.rules.clear();
-                    } else {
-                        self.rules.retain(|rule| rule.name() != name_or_category);
-                    }
-                }
+                LintFilterKind::Rule(_, name) => self.rules.retain(|rule| rule.name() != name),
+                LintFilterKind::Generic(name) => self.rules.retain(|rule| rule.name() != name),
+                LintFilterKind::All => self.rules.clear(),
             },
         }
 
