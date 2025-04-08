@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 78f1b3a transformer: Enable `using` by default (#10286) (Boshen)
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+- d0001eb transformer/typescript: Redeclaration of `namespace` with `enum` causes syntax error (#10172) (Dunqing)
+- 778b044 transformer/using: Transform using declarations in try block (#10211) (camc314)
+
+### Performance
+
+- f5b53d4 transformer: Do not update options from comments when `only_remove_type_imports` is enabled (#10167) (Dunqing)
+
+### Refactor
+
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 - cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+
+### Performance
+
+- fa0e455 cfg, diagnostics, lexer, syntax, tasks: Remove `write!` macro where unnecessary (#10236) (overlookmotel)
+
+### Documentation
+
+- d8bbe2a lexer: Fix doc comment (#10181) (overlookmotel)
+
+### Refactor
+
+- ec10d94 parser: Use `AstBuilder::string_literal_with_lone_surrogates` (#10178) (overlookmotel)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes

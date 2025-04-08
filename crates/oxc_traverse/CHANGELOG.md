@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+
+### Refactor
+
+- d43e864 ast_tools: Generate `ChildScopesCollector` in `oxc_ast_tools` (#10248) (overlookmotel)
+- e53708e traverse: Remove repeated code (#10245) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes
