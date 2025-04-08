@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10618/10725 (99.00%)
-Positive Passed: 8024/10725 (74.82%)
+Positive Passed: 8047/10725 (75.03%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
@@ -689,7 +689,6 @@ Unexpected estree file content error: 1 != 2
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsAndConditionalInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericIndexedAccessMethodIntersectionCanBeAccessed.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericInferenceDefaultTypeParameterJsxReact.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericInstanceOf.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericIsNeverEmptyObject.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericMappedTypeAsClause.ts
@@ -978,18 +977,8 @@ Unexpected estree file content error: 1 != 2
 tasks/coverage/typescript/tests/cases/compiler/jsdocReferenceGlobalTypeInCommonJs.ts
 Unexpected estree file content error: 2 != 3
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenIndividualErrorElaborations.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxElementTypeLiteralWithGeneric.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryNull.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragReactReferenceErrors.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentAndFactoryUsedOnFragmentUse.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentFactoryNoUnusedLocals.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentFactoryReference.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentWrongType.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromConfigPickedOverGlobalOne.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
@@ -1542,7 +1531,6 @@ Unexpected estree file content error: 1 != 3
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsxDefaultImports.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsxNotUsingApparentTypeOfSFC.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/tupleTypeInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/twiceNestedKeyofIndexInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeConstraintsWithConstructSignatures.ts
@@ -2743,17 +2731,13 @@ Unexpected estree file content error: 1 != 5
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefMultipleTypeParameters.ts
 Unexpected estree file content error: 1 != 2
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty14.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences1.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences3.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences4.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragma.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryDeclarationsLocalTypes.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryWithFragmentIsError.tsx
 tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
 Unexpected estree file content error: 1 != 2
 
@@ -2761,21 +2745,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsin
 JSX expressions may not use the comma operator
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 JSX expressions may not use the comma operator
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformCustomImport.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformCustomImportPragma.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformSubstitutesNamesFragment.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution14.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution15.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxCorrectlyParseLessThanComparison1.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentReactEmit.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxLibraryManagedAttributes.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxOpeningClosingNames.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType1.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType3.tsx
@@ -3511,7 +3489,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationsh
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferences.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceLowerPriorityThanReturn.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/noInfer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/unionTypeInference.ts

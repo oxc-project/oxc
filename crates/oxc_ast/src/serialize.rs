@@ -870,6 +870,17 @@ impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
+#[ts]
+pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+
+impl ESTree for JSXOpeningFragmentAttributes<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
+    }
+}
+
 /// Serializer for `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
 ///
 /// Convert to `JSXIdentifier`.
@@ -908,13 +919,38 @@ impl ESTree for JSXElementThisExpression<'_> {
     }
 }
 
+/// Serializer for `JSXOpeningFragment`.
+///
+/// Add `attributes` and `selfClosing` fields in JS AST, but not in TS AST.
+/// Acorn-JSX has these fields, but TS-ESLint parser does not.
+//
+// TODO: Find a better way to do this.
 #[ast_meta]
-#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
-pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+#[estree(raw_deser = "
+    const node = {
+        type: 'JSXOpeningFragment',
+        start: DESER[u32](POS_OFFSET.span.start),
+        end: DESER[u32](POS_OFFSET.span.end),
+        /* IF_JS */
+        attributes: [],
+        selfClosing: false,
+        /* END_IF_JS */
+    };
+    node
+")]
+pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
 
-impl ESTree for JSXOpeningFragmentAttributes<'_> {
+impl ESTree for JSXOpeningFragmentConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
+        state.serialize_field("start", &self.0.span.start);
+        state.serialize_field("end", &self.0.span.end);
+        if !S::INCLUDE_TS_FIELDS {
+            state.serialize_field("attributes", &EmptyArray(()));
+            state.serialize_field("selfClosing", &False(()));
+        }
+        state.end();
     }
 }
 
