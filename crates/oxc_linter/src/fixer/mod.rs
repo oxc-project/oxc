@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_diagnostics::OxcDiagnostic;
+pub use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
@@ -96,7 +96,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         // use an inner function to avoid megamorphic bloat
         fn inner<'a>(fixer: &RuleFixer<'_, 'a>, target: Span, replacement: Span) -> RuleFix<'a> {
             let replacement_text = fixer.ctx.source_range(replacement);
-            let fix = Fix::new(replacement_text, target);
+            let fix = Fix::new(replacement_text.into(), target);
             let message = fixer.auto_message.then(|| {
                 let target_text = fixer.possibly_truncate_range(target);
                 let borrowed_replacement = Cow::Borrowed(replacement_text);
@@ -399,29 +399,22 @@ mod test {
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
-    const INSERT_AT_END: Fix =
-        Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end"), message: None };
-    const INSERT_AT_START: Fix =
-        Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start"), message: None };
-    const INSERT_AT_MIDDLE: Fix =
-        Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *"), message: None };
-    const REPLACE_ID: Fix =
-        Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo"), message: None };
-    const REPLACE_VAR: Fix =
-        Fix { span: Span::new(0, 3), content: Cow::Borrowed("let"), message: None };
-    const REPLACE_NUM: Fix =
-        Fix { span: Span::new(13, 14), content: Cow::Borrowed("5"), message: None };
+    const INSERT_AT_END: Fix = Fix::new(Cow::Borrowed("// end"), Span::new(19, 19));
+    const INSERT_AT_START: Fix = Fix::new(Cow::Borrowed("// start"), Span::new(0, 0));
+    const INSERT_AT_MIDDLE: Fix = Fix::new(Cow::Borrowed("5 *"), Span::new(13, 13));
+    const REPLACE_ID: Fix = Fix::new(Cow::Borrowed("foo"), Span::new(4, 10));
+    const REPLACE_VAR: Fix = Fix::new(Cow::Borrowed("let"), Span::new(0, 3));
+    const REPLACE_NUM: Fix = Fix::new(Cow::Borrowed("5"), Span::new(13, 14));
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix =
-        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
+    const REVERSE_RANGE: Fix = Fix::new(Cow::Borrowed(" "), Span::new(3, 0));
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult {
         Fixer::new(TEST_CODE, messages).fix()
     }
 
-    fn create_message(error: OxcDiagnostic, fix: Option<Fix>) -> Message {
+    fn create_message<'a>(error: OxcDiagnostic, fix: Option<Fix<'a>>) -> Message<'a> {
         Message::new(error, fix)
     }
 
@@ -638,7 +631,8 @@ mod test {
     #[test]
     fn merge_fixes_in_composite_fix() {
         let source_text = "foo bar baz";
-        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
+        let fixes =
+            vec![Fix::new("quux".into(), Span::new(0, 3)), Fix::new("qux".into(), Span::new(4, 7))];
         let composite_fix = CompositeFix::Multiple(fixes);
         assert_fixed_corrected(source_text, "quux qux baz", composite_fix);
     }
@@ -646,7 +640,7 @@ mod test {
     #[test]
     fn one_fix_in_composite_fix() {
         let source_text = "foo bar baz";
-        let fix = Fix::new("quxx", Span::new(4, 7));
+        let fix = Fix::new("quxx".into(), Span::new(4, 7));
         let composite_fix = CompositeFix::Single(fix.clone());
         assert_fixed_corrected(source_text, "foo quxx baz", composite_fix);
 
@@ -665,7 +659,8 @@ mod test {
     #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
     fn overlapping_ranges_in_composite_fix() {
         let source_text = "foo bar baz";
-        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(2, 5))];
+        let fixes =
+            vec![Fix::new("quux".into(), Span::new(0, 3)), Fix::new("qux".into(), Span::new(2, 5))];
         let composite_fix = CompositeFix::Multiple(fixes);
         assert_fixed_corrected(source_text, source_text, composite_fix);
     }
@@ -674,7 +669,8 @@ mod test {
     #[should_panic(expected = "Negative range is invalid: Span { start: 5, end: 2 }")]
     fn negative_ranges_in_composite_fix() {
         let source_text = "foo bar baz";
-        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(5, 2))];
+        let fixes =
+            vec![Fix::new("quux".into(), Span::new(0, 3)), Fix::new("qux".into(), Span::new(5, 2))];
         let composite_fix = CompositeFix::Multiple(fixes);
         assert_fixed_corrected(source_text, source_text, composite_fix);
     }
@@ -692,25 +688,26 @@ mod test {
     #[test]
     fn merge_fixes_into_one() {
         let source_text = "foo\nbar";
-        let fixes = vec![Fix::new("foo", Span::new(1, 2)), Fix::new("bar", Span::new(4, 5))];
-        assert_fixes_merged(fixes, &Fix::new("fooo\nbar", Span::new(1, 5)), source_text);
+        let fixes =
+            vec![Fix::new("foo".into(), Span::new(1, 2)), Fix::new("bar".into(), Span::new(4, 5))];
+        assert_fixes_merged(fixes, &Fix::new("fooo\nbar".into(), Span::new(1, 5)), source_text);
     }
 
     #[test]
     fn respect_ranges_of_empty_insertions() {
         let source_text = "foo\nbar";
         let fixes = vec![
-            Fix::new("cd", Span::new(4, 5)),
-            Fix::new("", Span::new(2, 2)),
-            Fix::new("", Span::new(7, 7)),
+            Fix::new("cd".into(), Span::new(4, 5)),
+            Fix::new("".into(), Span::new(2, 2)),
+            Fix::new("".into(), Span::new(7, 7)),
         ];
-        assert_fixes_merged(fixes, &Fix::new("o\ncdar", Span::new(2, 7)), source_text);
+        assert_fixes_merged(fixes, &Fix::new("o\ncdar".into(), Span::new(2, 7)), source_text);
     }
 
     #[test]
     fn pass_through_fixes_if_only_one_present() {
         let source_text = "foo\nbar";
-        let fix = Fix::new("foo", Span::new(1, 2));
+        let fix = Fix::new("foo".into(), Span::new(1, 2));
         assert_fixes_merged(vec![fix.clone()], &fix, source_text);
     }
 
@@ -718,7 +715,8 @@ mod test {
     #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
     fn throw_error_when_ranges_overlap() {
         let source_text = "foo\nbar";
-        let fixes = vec![Fix::new("foo", Span::new(0, 3)), Fix::new("x", Span::new(2, 5))];
+        let fixes =
+            vec![Fix::new("foo".into(), Span::new(0, 3)), Fix::new("x".into(), Span::new(2, 5))];
         assert_fixes_merged(fixes, &Fix::default(), source_text);
     }
 
@@ -726,7 +724,7 @@ mod test {
     #[test]
     fn return_new_fix_when_fixes_is_one() {
         let source_text = "foo\nbar";
-        let fix = Fix::new("baz", Span::new(0, 3));
+        let fix = Fix::new("baz".into(), Span::new(0, 3));
         let fixes = vec![fix.clone()];
 
         assert_fixes_merged(fixes, &fix, source_text);
@@ -735,8 +733,9 @@ mod test {
     #[test]
     fn create_new_fix_with_new_range_when_fixes_is_multiple() {
         let source_text = "foo\nbar";
-        let fixes = vec![Fix::new("baz", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
+        let fixes =
+            vec![Fix::new("baz".into(), Span::new(0, 3)), Fix::new("qux".into(), Span::new(4, 7))];
 
-        assert_fixes_merged(fixes, &Fix::new("baz\nqux", Span::new(0, 7)), source_text);
+        assert_fixes_merged(fixes, &Fix::new("baz\nqux".into(), Span::new(0, 7)), source_text);
     }
 }

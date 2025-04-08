@@ -60,7 +60,7 @@ pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSourc
 /// Describes an error or warning that occurred.
 ///
 /// Used by all oxc tools.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[must_use]
 pub struct OxcDiagnostic {
     // `Box` the data to make `OxcDiagnostic` 8 bytes so that `Result` is small.
@@ -105,7 +105,7 @@ impl Display for OxcCode {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,

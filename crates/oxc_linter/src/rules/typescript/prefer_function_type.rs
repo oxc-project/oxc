@@ -202,7 +202,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 },
                                                 &interface_decl.id.name,
                                                 &suggestion
-                                            ),
+                                            )
+                                            .into(),
                                             Span::new(node_start, node_end),
                                         );
                                     }
@@ -213,7 +214,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             if is_parent_exported { "export type" } else { "type" },
                                             &interface_decl.id.name,
                                             &suggestion
-                                        ),
+                                        )
+                                        .into(),
                                         Span::new(node_start, node_end),
                                     )
                                 },

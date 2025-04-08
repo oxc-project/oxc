@@ -104,7 +104,7 @@ impl Rule for NoImportTypeSideEffects {
                 //        ^^^^ add
                 if raw.starts_with("import") {
                     fixes.push(Fix::new(
-                        "import type",
+                        "import type".into(),
                         Span::new(import_decl.span.start, import_decl.span.start + 6),
                     ));
                 }

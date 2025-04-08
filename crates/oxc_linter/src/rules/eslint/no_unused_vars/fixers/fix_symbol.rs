@@ -1,5 +1,7 @@
+use std::borrow::Cow;
+
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
@@ -52,7 +54,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         fixer.delete(&delete_range)
     }
 
-    pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix<'a> {
+    pub(super) fn rename(&self, new_name: &Cow<'a, str>) -> RuleFix<'a> {
         let mut fixes: Vec<Fix<'a>> = vec![];
         let decl_span = self.span();
         fixes.push(Fix::new(new_name.clone(), decl_span));

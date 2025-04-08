@@ -1,9 +1,10 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::CompactStr;
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
@@ -115,7 +116,7 @@ impl NoUnusedVars {
         fixer.noop()
     }
 
-    fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
+    fn get_unused_var_name<'a>(&self, symbol: &Symbol<'_, 'a>) -> Option<Cow<'a, str>> {
         let ignored_name: String = match self.vars_ignore_pattern.as_ref() {
             // TODO: support more patterns
             IgnorePattern::Default => {

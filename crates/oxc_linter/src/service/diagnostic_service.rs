@@ -1,16 +1,56 @@
 use std::{
-    io::{ErrorKind, Write},
-    path::{Path, PathBuf},
-    sync::{Arc, mpsc},
+    borrow::Cow, io::{ErrorKind, Write}, path::{Path, PathBuf}, sync::mpsc
 };
 
-use cow_utils::CowUtils;
+use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic, Severity};
+use oxc_span::Span;
 
-use oxc_diagnostics::{Error, LabeledSpan, NamedSource, OxcDiagnostic, Severity};
+use crate::fixer::Message;
 
 use super::{DiagnosticReporter, DiagnosticResult};
 
-pub type DiagnosticTuple = (PathBuf, Vec<Error>);
+pub struct Fix {
+    pub content: Cow<'static, str>,
+    /// A brief suggestion message describing the fix. Will be shown in
+    /// editors via code actions.
+    pub message: Option<Cow<'static, str>>,
+    pub span: Span,
+}
+pub struct DiagnosticMessage {
+    pub error: OxcDiagnostic,
+    pub fix: Option<Fix>,
+}
+
+impl From<DiagnosticMessage> for OxcDiagnostic {
+    #[inline]
+    fn from(message: DiagnosticMessage) -> Self {
+        message.error
+    }
+}
+
+impl<'a> From<Message<'_>> for DiagnosticMessage {
+    #[inline]
+    fn from(message: Message<'_>) -> Self {
+        Self {
+            error: message.error.clone(),
+            fix: message.fix.map(|fix| Fix {
+                content: Cow::Owned(fix.content.to_string()),
+                message: fix.message.map(|m| Cow::Owned(m.to_string())),
+                span: fix.span,
+            }),
+        }
+    }
+}
+
+impl DiagnosticMessage {
+    pub fn new(error: OxcDiagnostic, fix: Option<Fix>) -> Self {
+        Self { error, fix }
+    }
+}
+
+
+
+pub type DiagnosticTuple = (PathBuf, Vec<DiagnosticMessage>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
@@ -153,26 +193,20 @@ impl DiagnosticService {
     /// [diagnostics]: OxcDiagnostic
     pub fn wrap_diagnostics<P: AsRef<Path>>(
         path: P,
-        source_text: &str,
         source_start: u32,
-        diagnostics: Vec<OxcDiagnostic>,
-    ) -> (PathBuf, Vec<Error>) {
+        messages: Vec<DiagnosticMessage>,
+    ) -> (PathBuf, Vec<DiagnosticMessage>) {
         let path = path.as_ref();
-        let path_display = path.to_string_lossy();
-        // replace windows \ path separator with posix style one
-        // reflects what eslint is outputting
-        let path_display = path_display.cow_replace('\\', "/");
 
-        let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
-        let diagnostics = diagnostics
+        let messages = messages
             .into_iter()
-            .map(|diagnostic| {
+            .map(|mut message| {
                 if source_start == 0 {
-                    return diagnostic.with_source_code(Arc::clone(&source));
+                    return message;
                 }
 
-                match &diagnostic.labels {
-                    None => diagnostic.with_source_code(Arc::clone(&source)),
+                match &message.error.labels {
+                    None => message,
                     Some(labels) => {
                         let new_labels = labels
                             .iter()
@@ -185,12 +219,14 @@ impl DiagnosticService {
                             })
                             .collect::<Vec<_>>();
 
-                        diagnostic.with_labels(new_labels).with_source_code(Arc::clone(&source))
+                        message.error.labels = Some(new_labels);
+
+                        message
                     }
                 }
             })
             .collect();
-        (path.to_path_buf(), diagnostics)
+        (path.to_path_buf(), messages)
     }
 
     /// # Panics
@@ -206,11 +242,12 @@ impl DiagnosticService {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
-        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
-            for diagnostic in diagnostics {
-                let severity = diagnostic.severity();
-                let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity == Some(Severity::Error) || severity.is_none();
+        while let Ok(Some((path, messages))) = self.receiver.recv() {
+            for message in messages {
+                let diagnostic: OxcDiagnostic = message.into();
+                let severity = diagnostic.severity;
+                let is_warning = severity == Severity::Warning;
+                let is_error = severity == Severity::Error;
                 if is_warning || is_error {
                     if is_warning {
                         warnings_count += 1;
@@ -229,7 +266,7 @@ impl DiagnosticService {
                     continue;
                 }
 
-                if let Some(err_str) = self.reporter.render_error(diagnostic) {
+                if let Some(err_str) = self.reporter.render_error(diagnostic.into()) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if err_str.lines().any(|line| line.len() >= 1200) {

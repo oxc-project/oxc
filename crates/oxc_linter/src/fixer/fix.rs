@@ -281,6 +281,12 @@ pub struct Fix<'a> {
     pub span: Span,
 }
 
+impl PartialEq for Fix<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.span == other.span && self.content == other.content
+    }
+}
+
 impl<'new> CloneIn<'new> for Fix<'_> {
     type Cloned = Fix<'new>;
 
@@ -310,8 +316,8 @@ impl<'a> Fix<'a> {
         Self { content: Cow::Borrowed(""), message: None, span }
     }
 
-    pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
-        Self { content: content.into(), message: None, span }
+    pub const fn new(content: Cow<'a, str>, span: Span) -> Self {
+        Self { content, message: None, span }
     }
 
     /// Creates a [`Fix`] that doesn't change the source code.
@@ -546,19 +552,13 @@ impl<'a> CompositeFix<'a> {
 
         output.push_str(after);
         output.shrink_to_fit();
-        Fix::new(output, Span::new(start, end))
+        Fix::new(output.into(), Span::new(start, end))
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl PartialEq for Fix<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            self.span == other.span && self.content == other.content
-        }
-    }
 
     impl Clone for CompositeFix<'_> {
         fn clone(&self) -> Self {
@@ -617,7 +617,7 @@ mod test {
 
     #[test]
     fn test_composite_push_on_none() {
-        let f: CompositeFix = Fix::new("foo", Span::empty(4)).into();
+        let f: CompositeFix = Fix::new("foo".into(), Span::empty(4)).into();
 
         let mut none = CompositeFix::None;
         none.push(CompositeFix::None);
@@ -635,9 +635,9 @@ mod test {
 
     #[test]
     fn test_composite_push_on_single() {
-        let f1 = Fix::new("foo", Span::empty(4));
-        let f2 = Fix::new("bar", Span::empty(5));
-        let f3 = Fix::new("baz", Span::empty(6));
+        let f1 = Fix::new("foo".into(), Span::empty(4));
+        let f2 = Fix::new("bar".into(), Span::empty(5));
+        let f3 = Fix::new("baz".into(), Span::empty(6));
         let single = || CompositeFix::Single(f1.clone());
 
         // None.push(single) == single
@@ -650,8 +650,8 @@ mod test {
         assert_eq!(
             f,
             CompositeFix::Multiple(vec![
-                Fix::new("foo", Span::empty(4)),
-                Fix::new("bar", Span::empty(5))
+                Fix::new("foo".into(), Span::empty(4)),
+                Fix::new("bar".into(), Span::empty(5))
             ])
         );
 
@@ -664,9 +664,9 @@ mod test {
 
     #[test]
     fn test_composite_push_on_multiple() {
-        let f1 = Fix::new("foo", Span::empty(4));
-        let f2 = Fix::new("bar", Span::empty(5));
-        let f3 = Fix::new("baz", Span::empty(6));
+        let f1 = Fix::new("foo".into(), Span::empty(4));
+        let f2 = Fix::new("bar".into(), Span::empty(5));
+        let f3 = Fix::new("baz".into(), Span::empty(6));
         let multiple = || CompositeFix::Multiple(vec![f1.clone(), f2.clone()]);
 
         // None.push(multiple) == multiple

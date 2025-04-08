@@ -86,7 +86,7 @@ impl Rule for PreferSetSize {
                 // remove everything after the end of the spread element (including the `]` )
                 Fix::delete(Span::new(spread_element.span.end, array_expr.span.end)),
                 // replace .length with .size
-                Fix::new("size", span),
+                Fix::new("size".into(), span),
             ]
         });
     }

@@ -83,7 +83,7 @@ impl Rule for PreferArrayFlatMap {
             let replace_end = call_expr.callee.span().end;
             let replace_start = replace_end - 3;
             let replace_span = Span::new(replace_start, replace_end);
-            fixes.push(Fix::new("flatMap", replace_span));
+            fixes.push(Fix::new("flatMap".into(), replace_span));
             fixes
         });
     }

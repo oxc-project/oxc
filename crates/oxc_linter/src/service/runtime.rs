@@ -22,12 +22,9 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-use super::{DiagnosticSender, LintServiceOptions};
+use super::{diagnostic_service::DiagnosticMessage, DiagnosticSender, LintServiceOptions};
 use crate::{
-    DiagnosticService, Fixer, Linter, Message,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
-    module_record::ModuleRecord,
-    utils::read_to_string,
+    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXTENSIONS}, module_record::ModuleRecord, utils::read_to_string, DiagnosticService, Fixer, Linter, Message
 };
 
 pub struct Runtime {
@@ -486,7 +483,6 @@ impl Runtime {
                             let path = path.strip_prefix(&me.cwd).unwrap_or(path);
                             let diagnostics = DiagnosticService::wrap_diagnostics(
                                 path,
-                                &owner.source_text,
                                 section.source.start,
                                 errors,
                             );
@@ -562,7 +558,11 @@ impl Runtime {
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
-                tx_error.send(Some((Path::new(&path).to_path_buf(), vec![e]))).unwrap();
+                // ToDo: make this better
+                let diagnostic =
+                    OxcDiagnostic::error("Failed to open file {path:?} with error \"{e}\"");
+                let message = DiagnosticMessage::new(diagnostic, None);
+                tx_error.send(Some((Path::new(&path).to_path_buf(), vec![message]))).unwrap();
                 return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
             }
         };
