@@ -568,8 +568,20 @@ impl Backend {
         let relative_config_path = self.options.lock().await.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
             let config = root_path.join(relative_config_path.unwrap());
-            config.try_exists().expect("Invalid config file path");
-            Oxlintrc::from_file(&config).expect("Failed to initialize oxlintrc config")
+            if config.try_exists().expect("Could not get fs metadata for config") {
+                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                    oxlintrc
+                } else {
+                    error!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    Oxlintrc::default()
+                }
+            } else {
+                error!(
+                    "Config file not found: {}, fallback to default config",
+                    config.to_string_lossy()
+                );
+                Oxlintrc::default()
+            }
         } else {
             Oxlintrc::default()
         };
