@@ -176,15 +176,19 @@ impl Runner for LintRunner {
 
         if use_nested_config {
             // get all of the unique directories among the paths to use for search for
-            // oxlint config files in those directories
-            // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
+            // oxlint config files in those directories and their ancestors
+            // e.g. `/some/file.js` will check `/some` and `/`
+            //      `/some/other/file.js` will check `/some/other`, `/some`, and `/`
             let mut directories = FxHashSet::default();
             for path in &paths {
                 let path = Path::new(path);
-                if let Some(directory) = path.parent() {
+                // Start from the file's parent directory and walk up the tree
+                let mut current = path.parent();
+                while let Some(dir) = current {
                     // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
                     // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
-                    directories.insert(directory);
+                    directories.insert(dir);
+                    current = dir.parent();
                 }
             }
             for directory in directories {
@@ -1007,6 +1011,14 @@ mod test {
 
         let args = &["--disable-nested-config"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_subdirectory() {
+        // This tests the specific scenario from issue #10156
+        // where a file is located in a subdirectory of a directory with a config file
+        let args = &["package3-deep-config"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 
     #[test]
