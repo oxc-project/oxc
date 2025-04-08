@@ -1022,22 +1022,22 @@ impl<'a> JsxImpl<'a, '_> {
                             if let Some(c) =
                                 u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
                             {
-                                // &x0123;
+                                // `&#x0123;`
                                 buffer.push(c);
                                 continue;
                             }
                         } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32)
                         {
-                            // &#0123;
+                            // `&#0123;`
                             buffer.push(c);
                             continue;
                         }
                     } else if let Some(c) = XML_ENTITIES.get(word) {
-                        // &quote;
+                        // e.g. `&quote;`, `&amp;`
                         buffer.push(*c);
                         continue;
                     }
-                    // fallback
+                    // Fallback
                     buffer.push('&');
                     buffer.push_str(word);
                     buffer.push(';');
