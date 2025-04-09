@@ -1011,6 +1011,10 @@ fn test_jsx_single_line() {
 fn test_avoid_slash_script() {
     // Positive cases
     test("x = '</script'", "x = \"<\\/script\";\n");
+    test("x = '</SCRIPT'", "x = \"<\\/SCRIPT\";\n");
+    test("x = '</ScRiPt'", "x = \"<\\/ScRiPt\";\n");
+    test("x = 'abc </script def'", "x = \"abc <\\/script def\";\n");
+    test("x = 'abc </ScRiPt def'", "x = \"abc <\\/ScRiPt def\";\n");
     test("x = `</script`", "x = `<\\/script`;\n");
     test("x = `</SCRIPT`", "x = `<\\/SCRIPT`;\n");
     test("x = `</ScRiPt`", "x = `<\\/ScRiPt`;\n");
