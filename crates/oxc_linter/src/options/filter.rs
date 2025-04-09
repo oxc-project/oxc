@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt};
 
-use crate::{LintPlugins, RuleCategory};
+use crate::RuleCategory;
 
 use super::AllowWarnDeny;
 
@@ -82,7 +82,7 @@ pub enum LintFilterKind {
     /// e.g. `no-const-assign`
     Generic(Cow<'static, str>),
     /// e.g. `eslint/no-const-assign`
-    Rule(LintPlugins, Cow<'static, str>),
+    Rule(Cow<'static, str>, Cow<'static, str>),
     /// e.g. `correctness`
     Category(RuleCategory),
     // TODO: plugin + category? e.g `-A react:correctness`
@@ -119,7 +119,7 @@ impl LintFilterKind {
                         return Err(InvalidFilterKind::RuleMissing(Cow::Borrowed(filter)));
                     }
 
-                    (LintPlugins::from(plugin), Cow::Borrowed(rule))
+                    (Cow::Borrowed(plugin), Cow::Borrowed(rule))
                 }
                 Cow::Owned(filter) => {
                     let mut parts = filter.splitn(2, '/');
@@ -138,7 +138,7 @@ impl LintFilterKind {
                         return Err(InvalidFilterKind::RuleMissing(filter.into()));
                     }
 
-                    (LintPlugins::from(plugin), Cow::Owned(rule.to_string()))
+                    (Cow::Owned(plugin.to_string()), Cow::Owned(rule.to_string()))
                 }
             };
             Ok(LintFilterKind::Rule(plugin, rule))
@@ -239,19 +239,16 @@ mod test {
 
         let filter = LintFilter::deny(LintFilterKind::try_from("eslint/no-const-assign").unwrap());
         assert_eq!(filter.severity(), AllowWarnDeny::Deny);
-        assert_eq!(
-            filter.kind(),
-            &LintFilterKind::Rule(LintPlugins::from("eslint"), "no-const-assign".into())
-        );
+        assert_eq!(filter.kind(), &LintFilterKind::Rule("eslint".into(), "no-const-assign".into()));
     }
 
     #[test]
     fn test_parse() {
         #[rustfmt::skip]
         let test_cases: Vec<(&'static str, LintFilterKind)> = vec![
-            ("eslint/no-const-assign", LintFilterKind::Rule(LintPlugins::ESLINT, "no-const-assign".into())),
-            ("import/namespace", LintFilterKind::Rule(LintPlugins::IMPORT, "namespace".into())),
-            ("react-hooks/exhaustive-deps", LintFilterKind::Rule(LintPlugins::REACT, "exhaustive-deps".into())),
+            ("eslint/no-const-assign", LintFilterKind::Rule("eslint".into(), "no-const-assign".into())),
+            ("import/namespace", LintFilterKind::Rule("import".into(), "namespace".into())),
+            ("react-hooks/exhaustive-deps", LintFilterKind::Rule("react-hooks".into(), "exhaustive-deps".into())),
             // categories
             ("correctness", LintFilterKind::Category(RuleCategory::Correctness)),
             ("nursery", LintFilterKind::Category(RuleCategory::Nursery)),
