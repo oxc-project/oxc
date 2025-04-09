@@ -98,15 +98,19 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
         );
 
-        let has_potential_side_effect = decl.members.iter().any(|member| {
+        let has_potential_side_effect = decl.body.members.iter().any(|member| {
             matches!(
                 member.initializer,
                 Some(Expression::NewExpression(_) | Expression::CallExpression(_))
             )
         });
 
-        let statements =
-            self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
+        let statements = self.transform_ts_enum_members(
+            decl.scope_id(),
+            &mut decl.body.members,
+            &param_binding,
+            ctx,
+        );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,

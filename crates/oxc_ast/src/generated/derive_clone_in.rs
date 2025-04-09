@@ -5702,7 +5702,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'_> {
         TSEnumDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
-            members: CloneIn::clone_in(&self.members, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
             r#const: CloneIn::clone_in(&self.r#const, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
             scope_id: Default::default(),
@@ -5713,10 +5713,28 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'_> {
         TSEnumDeclaration {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             id: CloneIn::clone_in_with_semantic_ids(&self.id, allocator),
-            members: CloneIn::clone_in_with_semantic_ids(&self.members, allocator),
+            body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
             r#const: CloneIn::clone_in_with_semantic_ids(&self.r#const, allocator),
             declare: CloneIn::clone_in_with_semantic_ids(&self.declare, allocator),
             scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSEnumBody<'_> {
+    type Cloned = TSEnumBody<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TSEnumBody {
+            span: CloneIn::clone_in(&self.span, allocator),
+            members: CloneIn::clone_in(&self.members, allocator),
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TSEnumBody {
+            span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            members: CloneIn::clone_in_with_semantic_ids(&self.members, allocator),
         }
     }
 }

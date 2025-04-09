@@ -946,7 +946,7 @@ export interface TSEnumDeclaration extends Span {
 
 export interface TSEnumBody extends Span {
   type: 'TSEnumBody';
-  members: TSEnumMember[];
+  members: Array<TSEnumMember>;
 }
 
 export interface TSEnumMember extends Span {
@@ -1761,6 +1761,7 @@ export type Node =
   | JSXText
   | TSThisParameter
   | TSEnumDeclaration
+  | TSEnumBody
   | TSEnumMember
   | TSTypeAnnotation
   | TSLiteralType

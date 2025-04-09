@@ -1488,6 +1488,13 @@ impl GetSpan for TSEnumDeclaration<'_> {
     }
 }
 
+impl GetSpan for TSEnumBody<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for TSEnumMember<'_> {
     #[inline]
     fn span(&self) -> Span {

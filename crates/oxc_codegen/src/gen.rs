@@ -3733,6 +3733,12 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_str("enum ");
         self.id.print(p, ctx);
         p.print_space_before_identifier();
+        self.body.print(p, ctx);
+    }
+}
+
+impl Gen for TSEnumBody<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for (index, member) in self.members.iter().enumerate() {
                 p.print_leading_comments(member.span().start);

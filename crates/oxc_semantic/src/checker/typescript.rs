@@ -284,7 +284,7 @@ fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
 
-    decl.members.iter().for_each(|member| {
+    decl.body.members.iter().for_each(|member| {
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
