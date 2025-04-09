@@ -643,16 +643,7 @@ impl Gen for TryStatement<'_> {
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
         if let Some(handler) = &self.handler {
-            p.print_soft_space();
-            p.print_str("catch");
-            if let Some(param) = &handler.param {
-                p.print_soft_space();
-                p.print_str("(");
-                param.pattern.print(p, ctx);
-                p.print_str(")");
-            }
-            p.print_soft_space();
-            p.print_block_statement(&handler.body, ctx);
+            handler.r#gen(p, ctx);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -661,6 +652,22 @@ impl Gen for TryStatement<'_> {
             p.print_block_statement(finalizer, ctx);
         }
         p.print_soft_newline();
+    }
+}
+
+impl Gen for CatchClause<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_soft_space();
+        p.print_statement_comments(self.span.start);
+        p.print_str("catch");
+        if let Some(param) = &self.param {
+            p.print_soft_space();
+            p.print_str("(");
+            param.pattern.print(p, ctx);
+            p.print_str(")");
+        }
+        p.print_soft_space();
+        p.print_block_statement(&self.body, ctx);
     }
 }
 

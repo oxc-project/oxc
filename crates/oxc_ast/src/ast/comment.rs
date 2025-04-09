@@ -75,6 +75,11 @@ pub enum CommentAnnotation {
     /// e.g. `/* @vite-ignore */`
     /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
     Vite = 6,
+
+    /// Code Coverage Ignore
+    /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
+    /// <https://github.com/oxc-project/oxc/issues/10091>
+    CoverageIgnore = 7,
 }
 
 /// A comment in source code.
@@ -140,33 +145,39 @@ impl Comment {
     }
 
     /// Returns `true` if this is a line comment.
+    #[inline]
     pub fn is_line(self) -> bool {
         self.kind == CommentKind::Line
     }
 
     /// Returns `true` if this is a block comment.
+    #[inline]
     pub fn is_block(self) -> bool {
         self.kind == CommentKind::Block
     }
 
     /// Returns `true` if this comment is before a token.
+    #[inline]
     pub fn is_leading(self) -> bool {
         self.position == CommentPosition::Leading
     }
 
     /// Returns `true` if this comment is after a token.
+    #[inline]
     pub fn is_trailing(self) -> bool {
         self.position == CommentPosition::Trailing
     }
 
     /// Is comment with special meaning.
+    #[inline]
     pub fn is_annotation(self) -> bool {
         self.annotation != CommentAnnotation::None
     }
 
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading` and `is_block`.
+    #[inline]
     pub fn is_jsdoc(self) -> bool {
-        self.is_leading() && self.annotation == CommentAnnotation::Jsdoc
+        self.annotation == CommentAnnotation::Jsdoc && self.is_leading()
     }
 
     /// Legal comments
@@ -175,27 +186,38 @@ impl Comment {
     /// that contains `@license` or `@preserve` or that starts with `//!` or `/*!`.
     ///
     /// <https://esbuild.github.io/api/#legal-comments>
+    #[inline]
     pub fn is_legal(self) -> bool {
-        self.is_leading() && self.annotation == CommentAnnotation::Legal
+        self.annotation == CommentAnnotation::Legal && self.is_leading()
     }
 
     /// Is `/* @__PURE__*/`.
+    #[inline]
     pub fn is_pure(self) -> bool {
         self.annotation == CommentAnnotation::Pure
     }
 
     /// Is `/* @__NO_SIDE_EFFECTS__*/`.
+    #[inline]
     pub fn is_no_side_effects(self) -> bool {
         self.annotation == CommentAnnotation::NoSideEffects
     }
 
     /// Is webpack magic comment.
+    #[inline]
     pub fn is_webpack(self) -> bool {
         self.annotation == CommentAnnotation::Webpack
     }
 
     /// Is vite special comment.
+    #[inline]
     pub fn is_vite(self) -> bool {
         self.annotation == CommentAnnotation::Vite
+    }
+
+    /// Is coverage ignore comment.
+    #[inline]
+    pub fn is_coverage_ignore(self) -> bool {
+        self.annotation == CommentAnnotation::CoverageIgnore && self.is_leading()
     }
 }

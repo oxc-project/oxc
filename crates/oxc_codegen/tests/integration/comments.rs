@@ -1,9 +1,241 @@
-use crate::snapshot;
+pub mod jsdoc {
+    use crate::snapshot;
 
-#[test]
-fn annotate_comment() {
-    let cases = vec![
-        r"
+    #[test]
+    fn comment() {
+        let cases = vec![
+            r"
+/**
+ * Top level
+ *
+ * @module
+ */
+
+/** This is a description of the foo function. */
+function foo() {
+}
+
+/**
+ * Preserve newline
+ */
+
+/**
+ * Represents a book.
+ * @constructor
+ * @param {string} title - The title of the book.
+ * @param {string} author - The author of the book.
+ */
+function Book(title, author) {
+}
+
+/** Class representing a point. */
+class Point {
+    /**
+     * Preserve newline
+     */
+
+    /**
+     * Create a point.
+     * @param {number} x - The x value.
+     * @param {number} y - The y value.
+     */
+    constructor(x, y) {
+    }
+
+    /**
+     * Get the x value.
+     * @return {number} The x value.
+     */
+    getX() {
+    }
+
+    /**
+     * Get the y value.
+     * @return {number} The y value.
+     */
+    getY() {
+    }
+
+    /**
+     * Convert a string containing two comma-separated numbers into a point.
+     * @param {string} str - The string containing two comma-separated numbers.
+     * @return {Point} A Point object.
+     */
+    static fromString(str) {
+    }
+}
+
+/** Class representing a point. */
+const Point = class {
+}
+
+/**
+ * Shirt module.
+ * @module my/shirt
+ */
+
+/** Button the shirt. */
+exports.button = function() {
+};
+
+/** Unbutton the shirt. */
+exports.unbutton = function() {
+};
+
+this.Book = function(title) {
+    /** The title of the book. */
+    this.title = title;
+}
+// https://github.com/oxc-project/oxc/issues/6006
+export enum DefinitionKind {
+  /**
+   * Definition is a referenced variable.
+   *
+   * @example defineSomething(foo)
+   */
+  Reference = 'Reference',
+  /**
+   * Definition is a `ObjectExpression`.
+   *
+   * @example defineSomething({ ... })
+   */
+  Object = 'Object',
+  /**
+   * Definition is TypeScript interface.
+   *
+   * @example defineSomething<{ ... }>()
+   */
+  TS = 'TS',
+}
+export type TSTypeLiteral = {
+    /**
+     * Comment
+     */
+    foo: string
+}
+",
+        ];
+
+        snapshot("jsodc", &cases);
+    }
+}
+
+pub mod coverage {
+    use crate::snapshot;
+
+    #[test]
+    fn comment() {
+        let cases = vec![
+            "/* v8 ignore next */ x",
+            "/* v8 ignore next 2 */ x",
+            "/* v8 ignore start */ x",
+            "/* v8 ignore stop */ x",
+            "/* v8 ignore if */ x",
+            "/* v8 ignore else */ x",
+            "/* v8 ignore file */ x",
+            "/* c8 ignore next */ x",
+            "/* c8 ignore next 2 */x ",
+            "/* c8 ignore start */ x",
+            "/* c8 ignore stop */ x",
+            "/* node:coverage disable */ x",
+            "/* node:coverage enable */ x",
+            "/* node:coverage ignore next */ x",
+            "/* node:coverage ignore next 2 */ x",
+            "/* istanbul ignore if */ x",
+            "/* istanbul ignore else */ x",
+            "/* istanbul ignore next */ x",
+            "/* istanbul ignore file */ x",
+            "try { something(); }
+/* istanbul ignore next */
+catch(e) {
+  // should never happen
+}
+",
+        ];
+
+        snapshot("coverage", &cases);
+    }
+}
+
+pub mod legal {
+    use oxc_codegen::{CodegenOptions, LegalComment};
+
+    use crate::{codegen_options, snapshot, snapshot_options};
+
+    fn cases() -> Vec<&'static str> {
+        vec![
+            "/* @license */\n/* @license */\nfoo;bar;",
+            "/* @license */\n/* @preserve */\nfoo;bar;",
+            "/* @license */\n//! KEEP\nfoo;bar;",
+            "/* @license */\n/*! KEEP */\nfoo;bar;",
+            "/* @license *//*! KEEP */\nfoo;bar;",
+            "function () {
+    /*
+    * @license
+    * Copyright notice 2
+    */
+    bar;
+}",
+            "function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }",
+            "function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */",
+            "/**
+* @preserve
+*/
+",
+        ]
+    }
+
+    #[test]
+    fn legal_inline_comment() {
+        snapshot("legal_inline_comments", &cases());
+    }
+
+    #[test]
+    fn legal_eof_comment() {
+        let options = CodegenOptions { legal_comments: LegalComment::Eof, ..Default::default() };
+        snapshot_options("legal_eof_comments", &cases(), &options);
+    }
+
+    #[test]
+    fn legal_linked_comment() {
+        let options = CodegenOptions {
+            legal_comments: LegalComment::Linked(String::from("test.js")),
+            ..Default::default()
+        };
+        snapshot_options("legal_linked_comments", &cases(), &options);
+    }
+
+    #[test]
+    fn legal_external_comment() {
+        let options =
+            CodegenOptions { legal_comments: LegalComment::External, ..Default::default() };
+        let code = "/* @license */\n/* @preserve */\nfoo;\n";
+        let ret = codegen_options(code, &options);
+        assert_eq!(ret.code, "foo;\n");
+        assert_eq!(ret.legal_comments[0].content_span().source_text(code), " @license ");
+        assert_eq!(ret.legal_comments[1].content_span().source_text(code), " @preserve ");
+    }
+}
+
+pub mod pure {
+    use crate::snapshot;
+
+    #[test]
+    fn annotate_comment() {
+        let cases = vec![
+            r"
 x([
   /* #__NO_SIDE_EFFECTS__ */ function() {},
   /* #__NO_SIDE_EFFECTS__ */ function y() {},
@@ -14,7 +246,7 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async function*() {},
   /* #__NO_SIDE_EFFECTS__ */ async function* y() {},
 ])",
-        r"
+            r"
 x([
   /* #__NO_SIDE_EFFECTS__ */ y => y,
   /* #__NO_SIDE_EFFECTS__ */ () => {},
@@ -23,7 +255,7 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async () => {},
   /* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 ])",
-        r"
+            r"
 x([
   /* #__NO_SIDE_EFFECTS__ */ y => y,
   /* #__NO_SIDE_EFFECTS__ */ () => {},
@@ -32,7 +264,7 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async () => {},
   /* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 ])",
-        r"
+            r"
 // #__NO_SIDE_EFFECTS__
 function a() {}
 // #__NO_SIDE_EFFECTS__
@@ -42,7 +274,7 @@ async function c() {}
 // #__NO_SIDE_EFFECTS__
 async function* d() {}
         ",
-        r"
+            r"
 // #__NO_SIDE_EFFECTS__
 function a() {}
 // #__NO_SIDE_EFFECTS__
@@ -52,20 +284,20 @@ async function c() {}
 // #__NO_SIDE_EFFECTS__
 async function* d() {}
         ",
-        r"
+            r"
 /* @__NO_SIDE_EFFECTS__ */ export function a() {}
 /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}",
-        r"/* @__NO_SIDE_EFFECTS__ */ export function a() {}
+            r"/* @__NO_SIDE_EFFECTS__ */ export function a() {}
 /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
 export default /* @__NO_SIDE_EFFECTS__ */ async function() {}
 export default /* @__NO_SIDE_EFFECTS__ */ function() {}
         ",
-        // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
-        r"
+            // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
+            r"
 /* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {}
 /* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {}
 /* #__NO_SIDE_EFFECTS__ */ export const c0 = function() {}, c1 = function() {}
@@ -73,8 +305,8 @@ export default /* @__NO_SIDE_EFFECTS__ */ function() {}
 /* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {}
 /* #__NO_SIDE_EFFECTS__ */ export const c2 = () => {}, c3 = () => {}
         ",
-        // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
-        r"
+            // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
+            r"
 /* #__NO_SIDE_EFFECTS__ */ var v0 = function() {}, v1 = function() {}
 /* #__NO_SIDE_EFFECTS__ */ let l0 = function() {}, l1 = function() {}
 /* #__NO_SIDE_EFFECTS__ */ const c0 = function() {}, c1 = function() {}
@@ -82,7 +314,7 @@ export default /* @__NO_SIDE_EFFECTS__ */ function() {}
 /* #__NO_SIDE_EFFECTS__ */ let l2 = () => {}, l3 = () => {}
 /* #__NO_SIDE_EFFECTS__ */ const c2 = () => {}, c3 = () => {}
         ",
-        r"
+            r"
 isFunction(options)
 ? // #8326: extend call and options.name access are considered side-effects
   // by Rollup, so we have to wrap it in a pure-annotated IIFE.
@@ -90,9 +322,9 @@ isFunction(options)
     extend({ name: options.name }, extraOptions, { setup: options }))()
 : options
                 ",
-        r"isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+            r"isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
         ",
-        r"
+            r"
 const obj = {
   props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {
     tag: String,
@@ -101,22 +333,22 @@ const obj = {
 };
 const p = /*#__PURE__*/ Promise.resolve();
         ",
-        r"
+            r"
 const staticCacheMap = /*#__PURE__*/ new WeakMap()
         ",
-        r#"
+            r#"
 const builtInSymbols = new Set(
   /*#__PURE__*/
   Object.getOwnPropertyNames(Symbol)
     .filter(key => key !== "arguments" && key !== "caller")
 )
         "#,
-        "(/* @__PURE__ */ new Foo()).bar();\n",
-        "(/* @__PURE__ */ Foo()).bar();\n",
-        "(/* @__PURE__ */ new Foo())['bar']();\n",
-        "(/* @__PURE__ */ Foo())['bar']();\n",
-        // https://github.com/oxc-project/oxc/issues/4843
-        r"
+            "(/* @__PURE__ */ new Foo()).bar();\n",
+            "(/* @__PURE__ */ Foo()).bar();\n",
+            "(/* @__PURE__ */ new Foo())['bar']();\n",
+            "(/* @__PURE__ */ Foo())['bar']();\n",
+            // https://github.com/oxc-project/oxc/issues/4843
+            r"
 /* #__NO_SIDE_EFFECTS__ */
 const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
   options,
@@ -125,18 +357,18 @@ const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
   return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
         ",
-        // Range leading comments
-        r"
+            // Range leading comments
+            r"
 const defineSSRCustomElement = () => {
   return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };
         ",
-        "
+            "
         const Component = // #__PURE__
         React.forwardRef((props, ref) => {});
         ",
-        // Copy from <https://github.com/rolldown-rs/rolldown/blob/v0.14.0/crates/rolldown/tests/esbuild/dce/remove_unused_pure_comment_calls/entry.js>
-        "
+            // Copy from <https://github.com/rolldown-rs/rolldown/blob/v0.14.0/crates/rolldown/tests/esbuild/dce/remove_unused_pure_comment_calls/entry.js>
+            "
         function bar() {}
         let bare = foo(bar);
 
@@ -197,14 +429,15 @@ const defineSSRCustomElement = () => {
         let exp_no = /* @__PURE__ */ foo() ** foo();
         let new_exp_no = /* @__PURE__ */ new foo() ** foo();
         ",
-        "{ /* @__PURE__ */ (function() {})(); }",
-        "{ /* @__PURE__ */ (() => {})(); }",
-        "
+            "{ /* @__PURE__ */ (function() {})(); }",
+            "{ /* @__PURE__ */ (() => {})(); }",
+            "
 void /* @__PURE__ */ function() {}();
 typeof /* @__PURE__ */ function() {}();
 ! /* @__PURE__ */ function() {}();
 delete /* @__PURE__ */ (() => {})();",
-    ];
+        ];
 
-    snapshot("pure_comments", &cases);
+        snapshot("pure_comments", &cases);
+    }
 }
