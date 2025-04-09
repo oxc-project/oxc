@@ -1747,8 +1747,6 @@ name = "oxc_diagnostics"
 version = "0.62.0"
 dependencies = [
  "oxc-miette",
- "oxc_allocator",
- "oxc_span",
 ]
 
 [[package]]
