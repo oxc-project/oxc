@@ -1064,16 +1064,11 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_or_type_predicate(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
-        let type_predicate_variable = if self.cur_kind().is_identifier_name() {
-            self.try_parse(Self::parse_type_predicate_prefix)
-        } else {
-            None
-        };
+        let type_predicate_variable = self.try_parse(Self::parse_type_predicate_prefix);
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;
-        if let Some(id) = type_predicate_variable {
+        if let Some(parameter_name) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
-            let parameter_name = TSTypePredicateName::Identifier(self.alloc(id));
             return Ok(self.ast.ts_type_type_predicate(
                 self.end_span(span),
                 parameter_name,
@@ -1084,12 +1079,17 @@ impl<'a> ParserImpl<'a> {
         Ok(ty)
     }
 
-    fn parse_type_predicate_prefix(&mut self) -> Result<IdentifierName<'a>> {
-        let id = self.parse_identifier_name()?;
+    fn parse_type_predicate_prefix(&mut self) -> Result<TSTypePredicateName<'a>> {
+        let parameter_name = if self.at(Kind::This) {
+            TSTypePredicateName::This(self.parse_this_type_node())
+        } else {
+            let ident_name = self.parse_identifier_name()?;
+            TSTypePredicateName::Identifier(self.alloc(ident_name))
+        };
         let token = self.cur_token();
         if token.kind == Kind::Is && !token.is_on_new_line {
             self.bump_any();
-            return Ok(id);
+            return Ok(parameter_name);
         }
         Err(self.unexpected())
     }
