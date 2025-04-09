@@ -462,12 +462,13 @@ impl VisitBuilder<'_> {
         // Generate `visit_*` method call for struct field
         let field_type = field.type_def(self.schema);
         let field_ident = field.ident();
-        let (mut visit, mut visit_mut) = self.generate_visit_type(
+        let (mut visit, mut visit_mut) = generate_visit_type(
             field_type,
             Target::Property(quote!( it.#field_ident )),
             &field.visit.visit_args,
             &field_ident,
             true,
+            self.schema,
         )?;
 
         // Insert `enter_scope` / `leave_scope` call, if scope needs to be entered/exited before this field.
@@ -531,12 +532,13 @@ impl VisitBuilder<'_> {
             .iter()
             .filter_map(|variant| {
                 let variant_type = variant.field_type(self.schema)?;
-                let (visit, visit_mut) = self.generate_visit_type(
+                let (visit, visit_mut) = generate_visit_type(
                     variant_type,
                     Target::Reference(create_ident_tokens("it")),
                     &variant.visit.visit_args,
                     &create_ident_tokens("it"),
                     false,
+                    self.schema,
                 )?;
 
                 match_arm_count += 1;
@@ -672,273 +674,267 @@ impl VisitBuilder<'_> {
     }
 }
 
-/// Generate visitor calls.
-impl VisitBuilder<'_> {
-    /// Generate visitor calls for a type.
-    ///
-    /// e.g.:
-    /// * `visitor.visit_span(&it.span)`
-    /// * `if let Some(span) = &it.span { visitor.visit_span(span); }`.
-    ///
-    /// Returns `None` if this type is not visited.
-    ///
-    /// * `target` is the expression for the type, represented by a [`Target`].
-    ///   e.g. `it.span` in first example above, or `span` in the 2nd.
-    ///
-    /// * `visit_args` contains details of any extra arguments to be passed to visitor.
-    ///   Parsed from `#[visit(args(flags = ScopeFlags::Function))]` attr on struct field / enum variant.
-    ///
-    /// * `field_ident` is [`Ident`] for the field.
-    ///   Is used in output for `Option`s. e.g. `span` in `if let Some(span) = ...`.
-    ///
-    /// * `trailing_semicolon` indicates if a semicolon postfix is needed.
-    ///   This is `true` for struct fields, `false` for enum variants.
-    ///
-    /// [`Ident`]: struct@Ident
-    fn generate_visit_type(
-        &self,
-        type_def: &TypeDef,
-        target: Target,
-        visit_args: &[(String, String)],
-        field_ident: &TokenStream,
-        trailing_semicolon: bool,
-    ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
-        match type_def {
-            TypeDef::Struct(_) | TypeDef::Enum(_) => Self::generate_visit_struct_or_enum(
-                type_def,
+// Generate visitor calls.
+
+/// Generate visitor calls for a type.
+///
+/// e.g.:
+/// * `visitor.visit_span(&it.span)`
+/// * `if let Some(span) = &it.span { visitor.visit_span(span); }`.
+///
+/// Returns `None` if this type is not visited.
+///
+/// * `target` is the expression for the type, represented by a [`Target`].
+///   e.g. `it.span` in first example above, or `span` in the 2nd.
+///
+/// * `visit_args` contains details of any extra arguments to be passed to visitor.
+///   Parsed from `#[visit(args(flags = ScopeFlags::Function))]` attr on struct field / enum variant.
+///
+/// * `field_ident` is [`Ident`] for the field.
+///   Is used in output for `Option`s. e.g. `span` in `if let Some(span) = ...`.
+///
+/// * `trailing_semicolon` indicates if a semicolon postfix is needed.
+///   This is `true` for struct fields, `false` for enum variants.
+///
+/// [`Ident`]: struct@Ident
+fn generate_visit_type(
+    type_def: &TypeDef,
+    target: Target,
+    visit_args: &[(String, String)],
+    field_ident: &TokenStream,
+    trailing_semicolon: bool,
+    schema: &Schema,
+) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
+    match type_def {
+        TypeDef::Struct(_) | TypeDef::Enum(_) => {
+            generate_visit_struct_or_enum(type_def, target, visit_args, trailing_semicolon)
+        }
+        TypeDef::Option(option_def) => {
+            generate_visit_option(option_def, target, visit_args, field_ident, schema)
+        }
+        TypeDef::Box(box_def) => {
+            // `Box`es can be treated as transparent, as auto-deref handles it
+            generate_visit_type(
+                box_def.inner_type(schema),
                 target,
                 visit_args,
+                field_ident,
                 trailing_semicolon,
-            ),
-            TypeDef::Option(option_def) => {
-                self.generate_visit_option(option_def, target, visit_args, field_ident)
-            }
-            TypeDef::Box(box_def) => {
-                // `Box`es can be treated as transparent, as auto-deref handles it
-                self.generate_visit_type(
-                    box_def.inner_type(self.schema),
-                    target,
-                    visit_args,
-                    field_ident,
-                    trailing_semicolon,
-                )
-            }
-            TypeDef::Vec(vec_def) => {
-                self.generate_visit_vec(vec_def, target, visit_args, trailing_semicolon)
-            }
-            // Primitives and `Cell`s are not visited
-            TypeDef::Primitive(_) | TypeDef::Cell(_) => None,
+                schema,
+            )
         }
+        TypeDef::Vec(vec_def) => {
+            generate_visit_vec(vec_def, target, visit_args, trailing_semicolon, schema)
+        }
+        // Primitives and `Cell`s are not visited
+        TypeDef::Primitive(_) | TypeDef::Cell(_) => None,
     }
+}
 
-    /// Generate visitor calls for a struct or enum.
-    ///
-    /// e.g. `visitor.visit_span(&it.span)`
-    ///
-    /// Returns `None` if this type is not visited.
-    ///
-    /// See comment on [`Self::generate_visit_type`] for details of parameters.
-    fn generate_visit_struct_or_enum(
-        type_def: &TypeDef,
-        target: Target,
-        visit_args: &[(String, String)],
-        trailing_semicolon: bool,
-    ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
-        let visit_fn_ident = match type_def {
-            TypeDef::Struct(struct_def) => struct_def.visit.visitor_ident()?,
-            TypeDef::Enum(enum_def) => enum_def.visit.visitor_ident()?,
-            _ => None?,
-        };
+/// Generate visitor calls for a struct or enum.
+///
+/// e.g. `visitor.visit_span(&it.span)`
+///
+/// Returns `None` if this type is not visited.
+///
+/// See comment on [`generate_visit_type`] for details of parameters.
+fn generate_visit_struct_or_enum(
+    type_def: &TypeDef,
+    target: Target,
+    visit_args: &[(String, String)],
+    trailing_semicolon: bool,
+) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
+    let visit_fn_ident = match type_def {
+        TypeDef::Struct(struct_def) => struct_def.visit.visitor_ident()?,
+        TypeDef::Enum(enum_def) => enum_def.visit.visitor_ident()?,
+        _ => None?,
+    };
 
-        Some(Self::generate_visit_with_visit_args(
+    Some(generate_visit_with_visit_args(&visit_fn_ident, target, visit_args, trailing_semicolon))
+}
+
+/// Generate visitor calls with specified visitor function name.
+///
+/// Usually generates `visitor.visit_whatever(target)`, but also handles additional arguments to visitor.
+/// e.g. if `visit_args` was parsed from `#[visit(args(flags = ScopeFlags::Function))]`, generates:
+///
+/// ```ignore
+/// {
+///     let flags = ScopeFlags::Function;
+///     visitor.visit_whatever(target, flags)
+/// }
+/// ```
+///
+/// See comment on [`generate_visit_type`] for details of other parameters.
+fn generate_visit_with_visit_args(
+    visit_fn_ident: &Ident,
+    target: Target,
+    visit_args: &[(String, String)],
+    trailing_semicolon: bool,
+) -> (/* visit */ TokenStream, /* visit_mut */ TokenStream) {
+    let (target_ref, target_mut) = target.generate_refs();
+
+    // Get extra function params for visit args.
+    // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
+    // `extra_params` is `, x, y`.
+    let arg_params = visit_args.iter().map(|(arg_name, _)| create_ident(arg_name));
+    let extra_params = quote!( #(, #arg_params)* );
+
+    // Create `let` statements for visit args.
+    // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
+    // then generate `let x = something; let y = something_else;`.
+    let let_args = visit_args
+        .iter()
+        .map(|(arg_name, arg_value)| {
+            let arg_ident = create_ident(arg_name);
+            let arg_value = parse_str::<Expr>(&arg_value.cow_replace("self", "it")).unwrap();
+            quote!( let #arg_ident = #arg_value; )
+        })
+        .collect::<TokenStream>();
+
+    let gen_visit = |target| {
+        let mut visit = quote!( visitor.#visit_fn_ident(#target #extra_params) );
+        if trailing_semicolon {
+            visit.extend(quote!(;));
+        }
+
+        if let_args.is_empty() {
+            visit
+        } else {
+            // Wrap a visit call with `let` statements for visit args.
+            // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
+            // then output `{ let x = something; let y = something_else; visitor.visit_thing(it, x, y) }`.
+            quote! {{
+                #let_args
+                #visit
+            }}
+        }
+    };
+    (gen_visit(target_ref), gen_visit(target_mut))
+}
+
+/// Generate visitor calls for an `Option`.
+///
+/// e.g.:
+/// ```ignore
+/// if let Some(span) = &it.span {
+///     visitor.visit_span(span);
+/// }
+/// ```
+///
+/// Returns `None` if inner type is not visited.
+///
+/// See comment on [`generate_visit_type`] for details of parameters.
+fn generate_visit_option(
+    option_def: &OptionDef,
+    target: Target,
+    visit_args: &[(String, String)],
+    field_ident: &TokenStream,
+    schema: &Schema,
+) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
+    let inner_type = option_def.inner_type(schema);
+    let (inner_visit, inner_visit_mut) = generate_visit_type(
+        inner_type,
+        Target::Reference(field_ident.clone()),
+        visit_args,
+        field_ident,
+        true,
+        schema,
+    )?;
+    let (target_ref, target_mut) = target.generate_refs();
+
+    let gen_visit = |inner_visit, target| {
+        quote! {
+            if let Some(#field_ident) = #target {
+                #inner_visit
+            }
+        }
+    };
+    Some((gen_visit(inner_visit, target_ref), gen_visit(inner_visit_mut, target_mut)))
+}
+
+/// Generate visitor calls for a `Vec`.
+///
+/// If `Vec` has its own visitor (it does when inner type is a struct or enum which has a visitor),
+/// generates a call to that visitor e.g. `visitor.visit_statements(&it.statements)`.
+///
+/// Otherwise, generates code to loop through the `Vec`'s elements and call the inner type's visitor:
+///
+/// ```ignore
+/// for statements in it.statements.iter() {
+///     visitor.visit_statement(statements);
+/// }
+/// ```
+///
+/// If inner type is an option, adds `.flatten()`:
+///
+/// ```ignore
+/// for statements in it.statements.iter().flatten() {
+///     visitor.visit_statement(statements);
+/// }
+/// ```
+///
+/// Returns `None` if inner type is not visited.
+///
+/// See comment on [`generate_visit_type`] for details of parameters.
+fn generate_visit_vec(
+    vec_def: &VecDef,
+    target: Target,
+    visit_args: &[(String, String)],
+    trailing_semicolon: bool,
+    schema: &Schema,
+) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
+    if let Some(visit_fn_ident) = vec_def.visit.visitor_ident() {
+        // Inner type is a struct or enum which has a visitor. This `Vec` has its own visitor.
+        return Some(generate_visit_with_visit_args(
             &visit_fn_ident,
             target,
             visit_args,
             trailing_semicolon,
-        ))
+        ));
     }
 
-    /// Generate visitor calls with specified visitor function name.
-    ///
-    /// Usually generates `visitor.visit_whatever(target)`, but also handles additional arguments to visitor.
-    /// e.g. if `visit_args` was parsed from `#[visit(args(flags = ScopeFlags::Function))]`, generates:
-    ///
-    /// ```ignore
-    /// {
-    ///     let flags = ScopeFlags::Function;
-    ///     visitor.visit_whatever(target, flags)
-    /// }
-    /// ```
-    ///
-    /// See comment on [`Self::generate_visit_type`] for details of other parameters.
-    fn generate_visit_with_visit_args(
-        visit_fn_ident: &Ident,
-        target: Target,
-        visit_args: &[(String, String)],
-        trailing_semicolon: bool,
-    ) -> (/* visit */ TokenStream, /* visit_mut */ TokenStream) {
-        let (target_ref, target_mut) = target.generate_refs();
+    // Flatten any `Option`s with `.flatten()` on the iterator.
+    // Treat any `Box`es as transparent - auto-deref means we can ignore them.
+    let mut inner_type = vec_def.inner_type(schema);
 
-        // Get extra function params for visit args.
-        // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
-        // `extra_params` is `, x, y`.
-        let arg_params = visit_args.iter().map(|(arg_name, _)| create_ident(arg_name));
-        let extra_params = quote!( #(, #arg_params)* );
-
-        // Create `let` statements for visit args.
-        // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
-        // then generate `let x = something; let y = something_else;`.
-        let let_args = visit_args
-            .iter()
-            .map(|(arg_name, arg_value)| {
-                let arg_ident = create_ident(arg_name);
-                let arg_value = parse_str::<Expr>(&arg_value.cow_replace("self", "it")).unwrap();
-                quote!( let #arg_ident = #arg_value; )
-            })
-            .collect::<TokenStream>();
-
-        let gen_visit = |target| {
-            let mut visit = quote!( visitor.#visit_fn_ident(#target #extra_params) );
-            if trailing_semicolon {
-                visit.extend(quote!(;));
+    let mut maybe_flatten = quote!();
+    loop {
+        match inner_type {
+            TypeDef::Option(option_def) => {
+                inner_type = option_def.inner_type(schema);
+                maybe_flatten.extend(quote!( .flatten() ));
             }
-
-            if let_args.is_empty() {
-                visit
-            } else {
-                // Wrap a visit call with `let` statements for visit args.
-                // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
-                // then output `{ let x = something; let y = something_else; visitor.visit_thing(it, x, y) }`.
-                quote! {{
-                    #let_args
-                    #visit
-                }}
+            TypeDef::Box(box_def) => {
+                inner_type = box_def.inner_type(schema);
             }
-        };
-        (gen_visit(target_ref), gen_visit(target_mut))
-    }
-
-    /// Generate visitor calls for an `Option`.
-    ///
-    /// e.g.:
-    /// ```ignore
-    /// if let Some(span) = &it.span {
-    ///     visitor.visit_span(span);
-    /// }
-    /// ```
-    ///
-    /// Returns `None` if inner type is not visited.
-    ///
-    /// See comment on [`Self::generate_visit_type`] for details of parameters.
-    fn generate_visit_option(
-        &self,
-        option_def: &OptionDef,
-        target: Target,
-        visit_args: &[(String, String)],
-        field_ident: &TokenStream,
-    ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
-        let inner_type = option_def.inner_type(self.schema);
-        let (inner_visit, inner_visit_mut) = self.generate_visit_type(
-            inner_type,
-            Target::Reference(field_ident.clone()),
-            visit_args,
-            field_ident,
-            true,
-        )?;
-        let (target_ref, target_mut) = target.generate_refs();
-
-        let gen_visit = |inner_visit, target| {
-            quote! {
-                if let Some(#field_ident) = #target {
-                    #inner_visit
-                }
-            }
-        };
-        Some((gen_visit(inner_visit, target_ref), gen_visit(inner_visit_mut, target_mut)))
-    }
-
-    /// Generate visitor calls for a `Vec`.
-    ///
-    /// If `Vec` has its own visitor (it does when inner type is a struct or enum which has a visitor),
-    /// generates a call to that visitor e.g. `visitor.visit_statements(&it.statements)`.
-    ///
-    /// Otherwise, generates code to loop through the `Vec`'s elements and call the inner type's visitor:
-    ///
-    /// ```ignore
-    /// for statements in it.statements.iter() {
-    ///     visitor.visit_statement(statements);
-    /// }
-    /// ```
-    ///
-    /// If inner type is an option, adds `.flatten()`:
-    ///
-    /// ```ignore
-    /// for statements in it.statements.iter().flatten() {
-    ///     visitor.visit_statement(statements);
-    /// }
-    /// ```
-    ///
-    /// Returns `None` if inner type is not visited.
-    ///
-    /// See comment on [`Self::generate_visit_type`] for details of parameters.
-    fn generate_visit_vec(
-        &self,
-        vec_def: &VecDef,
-        target: Target,
-        visit_args: &[(String, String)],
-        trailing_semicolon: bool,
-    ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
-        if let Some(visit_fn_ident) = vec_def.visit.visitor_ident() {
-            // Inner type is a struct or enum which has a visitor. This `Vec` has its own visitor.
-            return Some(Self::generate_visit_with_visit_args(
-                &visit_fn_ident,
-                target,
-                visit_args,
-                trailing_semicolon,
-            ));
+            _ => break,
         }
+    }
 
-        // Flatten any `Option`s with `.flatten()` on the iterator.
-        // Treat any `Box`es as transparent - auto-deref means we can ignore them.
-        let mut inner_type = vec_def.inner_type(self.schema);
+    // This `Vec` does not have it's own visitor. Loop through elements and visit each in turn.
+    let (inner_visit, inner_visit_mut) = generate_visit_type(
+        inner_type,
+        Target::Reference(create_ident_tokens("el")),
+        visit_args,
+        &create_ident_tokens("it"),
+        true,
+        schema,
+    )?;
 
-        let mut maybe_flatten = quote!();
-        loop {
-            match inner_type {
-                TypeDef::Option(option_def) => {
-                    inner_type = option_def.inner_type(self.schema);
-                    maybe_flatten.extend(quote!( .flatten() ));
-                }
-                TypeDef::Box(box_def) => {
-                    inner_type = box_def.inner_type(self.schema);
-                }
-                _ => break,
+    let target = target.into_tokens();
+
+    let gen_visit = |inner_visit, iter_method| {
+        let iter_method_ident = create_safe_ident(iter_method);
+        quote! {
+            for el in #target.#iter_method_ident() #maybe_flatten {
+                #inner_visit
             }
         }
-
-        // This `Vec` does not have it's own visitor. Loop through elements and visit each in turn.
-        let (inner_visit, inner_visit_mut) = self.generate_visit_type(
-            inner_type,
-            Target::Reference(create_ident_tokens("el")),
-            visit_args,
-            &create_ident_tokens("it"),
-            true,
-        )?;
-
-        let target = target.into_tokens();
-
-        let gen_visit = |inner_visit, iter_method| {
-            let iter_method_ident = create_safe_ident(iter_method);
-            quote! {
-                for el in #target.#iter_method_ident() #maybe_flatten {
-                    #inner_visit
-                }
-            }
-        };
-        let visit = gen_visit(inner_visit, "iter");
-        let visit_mut = gen_visit(inner_visit_mut, "iter_mut");
-        Some((visit, visit_mut))
-    }
+    };
+    let visit = gen_visit(inner_visit, "iter");
+    let visit_mut = gen_visit(inner_visit_mut, "iter_mut");
+    Some((visit, visit_mut))
 }
 
 /// Target for a visit function call.
