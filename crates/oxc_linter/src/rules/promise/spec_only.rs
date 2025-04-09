@@ -78,7 +78,7 @@ impl Rule for SpecOnly {
             return;
         };
 
-        if PROMISE_STATIC_METHODS.contains(prop_name) {
+        if PROMISE_STATIC_METHODS.contains(&prop_name) {
             return;
         }
 

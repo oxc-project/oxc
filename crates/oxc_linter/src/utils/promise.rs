@@ -1,16 +1,8 @@
 use oxc_ast::ast::CallExpression;
-use phf::{Set, phf_set};
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-pub const PROMISE_STATIC_METHODS: Set<&'static str> = phf_set! {
-    "resolve",
-    "reject",
-    "all",
-    "allSettled",
-    "race",
-    "any",
-    "withResolvers",
-};
+pub const PROMISE_STATIC_METHODS: [&str; 7] =
+    ["resolve", "reject", "all", "allSettled", "race", "any", "withResolvers"];
 
 pub fn is_promise(call_expr: &CallExpression) -> Option<String> {
     let member_expr = call_expr.callee.get_member_expr()?;
@@ -21,7 +13,7 @@ pub fn is_promise(call_expr: &CallExpression) -> Option<String> {
         return Some(prop_name.into());
     }
 
-    if member_expr.object().is_specific_id("Promise") && PROMISE_STATIC_METHODS.contains(prop_name)
+    if member_expr.object().is_specific_id("Promise") && PROMISE_STATIC_METHODS.contains(&prop_name)
     {
         return Some(prop_name.into());
     }
