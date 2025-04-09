@@ -4084,7 +4084,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
-        visitor.visit_ts_type_parameter_instantiation(&it.type_parameters);
+        visitor.visit_ts_type_parameter_instantiation(&it.type_arguments);
         visitor.leave_node(kind);
     }
 

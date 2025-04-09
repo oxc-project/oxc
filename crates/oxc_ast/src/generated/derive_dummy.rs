@@ -2810,7 +2810,7 @@ impl<'a> Dummy<'a> for TSInstantiationExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
-            type_parameters: Dummy::dummy(allocator),
+            type_arguments: Dummy::dummy(allocator),
         }
     }
 }

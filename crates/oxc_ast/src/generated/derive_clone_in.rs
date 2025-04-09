@@ -7727,7 +7727,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInstantiationExpression<'_> {
         TSInstantiationExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 
@@ -7735,7 +7735,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInstantiationExpression<'_> {
         TSInstantiationExpression {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             expression: CloneIn::clone_in_with_semantic_ids(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in_with_semantic_ids(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
         }
     }
 }
