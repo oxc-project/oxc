@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10618/10725 (99.00%)
-Positive Passed: 8047/10725 (75.03%)
+Positive Passed: 8050/10725 (75.06%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
@@ -819,7 +819,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/initializersInAmbientEn
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/inlineMappedTypeModifierDeclarationEmit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/instanceAndStaticDeclarations1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/instanceofOnInstantiationExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/instantiateContextuallyTypedGenericThis.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/instantiationExpressionErrorNoCrash.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/interfaceAssignmentCompat.ts
@@ -2365,7 +2364,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classEx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.2.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiteralInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals2ES5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals2ES6.ts
@@ -3447,7 +3445,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadic
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/typeAliases.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/constraintSatisfactionWithAny.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/constraintSatisfactionWithEmptyObject.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/instantiationExpressions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/wrappedAndRecursiveConstraints.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersReverseMappedTypes.ts

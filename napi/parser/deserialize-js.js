@@ -1952,7 +1952,7 @@ function deserializeTSInstantiationExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeExpression(pos + 8),
-    typeParameters: deserializeBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 

@@ -1413,7 +1413,7 @@ export interface TSNamespaceExportDeclaration extends Span {
 export interface TSInstantiationExpression extends Span {
   type: 'TSInstantiationExpression';
   expression: Expression;
-  typeParameters: TSTypeParameterInstantiation;
+  typeArguments: TSTypeParameterInstantiation;
 }
 
 export type ImportOrExportKind = 'value' | 'type';
