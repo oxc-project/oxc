@@ -244,7 +244,9 @@ impl<'a> PeepholeOptimizations {
         if let (Expression::CallExpression(consequent), Expression::CallExpression(alternate)) =
             (&mut expr.consequent, &mut expr.alternate)
         {
-            if consequent.arguments.len() == alternate.arguments.len()
+            // `a ? b() : b()` is handled later
+            if !consequent.arguments.is_empty() &&
+                consequent.arguments.len() == alternate.arguments.len()
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
@@ -652,6 +654,7 @@ mod test {
         test("var a, b; a ? b(c, d) : b(e, d)", "var a, b; b(a ? c : e, d)");
         test("var a, b; a ? b(...c) : b(...e)", "var a, b; b(...a ? c : e)");
         test("var a, b; a ? b(c) : b(e)", "var a, b; b(a ? c : e)");
+        test("var a, b; a ? b() : b()", "var a, b; b()");
         test("var a, b; a === 0 ? b(c) : b(e)", "var a, b; b(a === 0 ? c : e)");
         test_same("var a; a === 0 ? b(c) : b(e)"); // accessing global `b` may assign a different value to `a`
         test_same("var b; a === 0 ? b(c) : b(e)"); // accessing global `a` may assign a different value to `b`

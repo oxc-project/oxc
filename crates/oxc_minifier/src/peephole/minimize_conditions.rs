@@ -1,9 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{
-    ToInt32,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -276,43 +273,28 @@ impl<'a> PeepholeOptimizations {
         true
     }
 
-    /// Compress `a = a + b` to `a += b`
+    /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
+    #[expect(clippy::float_cmp)]
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let target = expr.left.as_simple_assignment_target_mut()?;
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {
             return None;
         }
-        match &expr.right {
-            Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
-                // The `_` will not be placed to the target code.
-                let target = std::mem::replace(
-                    target,
-                    ctx.ast
-                        .simple_assignment_target_assignment_target_identifier(target.span(), "_"),
-                );
-                Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
-            }
-            Expression::UnaryExpression(un)
-                if matches!(un.operator, UnaryOperator::UnaryNegation) =>
-            {
-                let Expression::NumericLiteral(num) = &un.argument else { return None };
-                (num.value.to_int_32() == 1).then(|| {
-                    // The `_` will not be placed to the target code.
-                    let target = std::mem::replace(
-                        target,
-                        ctx.ast.simple_assignment_target_assignment_target_identifier(
-                            target.span(),
-                            "_",
-                        ),
-                    );
-                    ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
-                })
-            }
-            _ => None,
-        }
+        let Expression::NumericLiteral(num) = &expr.right else {
+            return None;
+        };
+        let target = expr.left.as_simple_assignment_target_mut()?;
+        let operator = if num.value == 1.0 {
+            UpdateOperator::Decrement
+        } else if num.value == -1.0 {
+            UpdateOperator::Increment
+        } else {
+            return None;
+        };
+        let target = target.take_in(ctx.ast.allocator);
+        Some(ctx.ast.expression_update(expr.span, operator, true, target))
     }
 }
 

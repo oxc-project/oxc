@@ -329,7 +329,7 @@ impl<'a> PeepholeOptimizations {
                 self.handle_for_in_statement(for_in_stmt, result, state, ctx);
             }
             Statement::ForOfStatement(for_of_stmt) => {
-                self.handle_for_of_statement(for_of_stmt, result, state, ctx);
+                self.handle_for_of_statement(for_of_stmt, result, state);
             }
             Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt, state),
             stmt => result.push(stmt),
@@ -642,10 +642,10 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 } else if prev_var_decl.kind.is_var() {
-                    for_stmt.init = Some(ForStatementInit::VariableDeclaration(
-                        prev_var_decl.take_in_box(ctx.ast.allocator),
-                    ));
-                    result.pop();
+                    let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
+                        unreachable!()
+                    };
+                    for_stmt.init = Some(ForStatementInit::VariableDeclaration(prev_var_decl));
                     state.changed = true;
                 }
             }
@@ -709,10 +709,13 @@ impl<'a> PeepholeOptimizations {
                             &prev_var_decl_item.id.kind
                         {
                             if id.name == decl_id.name {
-                                for_in_stmt.left = ForStatementLeft::VariableDeclaration(
-                                    prev_var_decl.take_in_box(ctx.ast.allocator),
-                                );
-                                result.pop();
+                                let Some(Statement::VariableDeclaration(prev_var_decl)) =
+                                    result.pop()
+                                else {
+                                    unreachable!()
+                                };
+                                for_in_stmt.left =
+                                    ForStatementLeft::VariableDeclaration(prev_var_decl);
                                 state.changed = true;
                             }
                         }
@@ -729,7 +732,6 @@ impl<'a> PeepholeOptimizations {
         mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
     ) {
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
@@ -749,10 +751,11 @@ impl<'a> PeepholeOptimizations {
                         &prev_var_decl_item.id.kind
                     {
                         if id.name == decl_id.name {
-                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(
-                                prev_var_decl.take_in_box(ctx.ast.allocator),
-                            );
-                            result.pop();
+                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
+                            else {
+                                unreachable!()
+                            };
+                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
                             state.changed = true;
                         }
                     }

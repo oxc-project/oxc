@@ -148,14 +148,7 @@ impl LanguageServer for Backend {
             self.init_nested_configs().await;
         }
 
-        if changed_options.fix_kind() != changed_options.fix_kind() {
-            self.init_linter_config().await;
-            self.revalidate_open_files().await;
-        }
-
-        // revalidate the config and all open files
-        if changed_options.config_path != current_option.config_path {
-            info!("config path change detected {:?}", &changed_options.config_path);
+        if Self::needs_linter_restart(current_option, &changed_options) {
             self.init_linter_config().await;
             self.revalidate_open_files().await;
         }
@@ -527,6 +520,12 @@ impl Backend {
         .await;
     }
 
+    fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
+        old_options.config_path != new_options.config_path
+            || old_options.disable_nested_configs() != new_options.disable_nested_configs()
+            || old_options.fix_kind() != new_options.fix_kind()
+    }
+
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     async fn init_nested_configs(&self) {
@@ -569,8 +568,20 @@ impl Backend {
         let relative_config_path = self.options.lock().await.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
             let config = root_path.join(relative_config_path.unwrap());
-            config.try_exists().expect("Invalid config file path");
-            Oxlintrc::from_file(&config).expect("Failed to initialize oxlintrc config")
+            if config.try_exists().expect("Could not get fs metadata for config") {
+                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                    oxlintrc
+                } else {
+                    error!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    Oxlintrc::default()
+                }
+            } else {
+                error!(
+                    "Config file not found: {}, fallback to default config",
+                    config.to_string_lossy()
+                );
+                Oxlintrc::default()
+            }
         } else {
             Oxlintrc::default()
         };

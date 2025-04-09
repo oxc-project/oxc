@@ -6,7 +6,6 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::phf_set;
 use serde_json::Value;
 
 use self::return_checker::{StatementReturnStatus, check_function_body};
@@ -136,10 +135,7 @@ impl Rule for ArrayCallbackReturn {
 /// Code ported from [eslint](https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/array-callback-return.js)
 /// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
-pub fn get_array_method_name<'a>(
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<&'static str> {
+pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
     let mut current_node = node;
     while let Some(parent) = ctx.nodes().parent_node(current_node.id()) {
         match parent.kind() {
@@ -198,12 +194,14 @@ pub fn get_array_method_name<'a>(
                 }
 
                 // "methods",
-                let method = callee.static_property_name()?;
-                if let Some(&array_method) = TARGET_METHODS.get_key(method) {
+                let array_method = callee.static_property_name()?;
+
+                if TARGET_METHODS.contains(&array_method)
                     // Check that current node is parent's first argument
-                    if call.arguments.len() == 1 && is_nth_argument(call, current_node_arg, 0) {
-                        return Some(array_method);
-                    }
+                    && call.arguments.len() == 1
+                    && is_nth_argument(call, current_node_arg, 0)
+                {
+                    return Some(array_method);
                 }
 
                 return None;
@@ -216,7 +214,7 @@ pub fn get_array_method_name<'a>(
     None
 }
 
-const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
+const TARGET_METHODS: [&str; 14] = [
     "every",
     "filter",
     "find",
@@ -231,9 +229,9 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "some",
     "sort",
     "toSorted",
-};
+];
 
-fn full_array_method_name(array_method: &'static str) -> Cow<'static, str> {
+fn full_array_method_name(array_method: &str) -> Cow<'static, str> {
     match array_method {
         "from" => Cow::Borrowed("Array.from"),
         s => Cow::Owned(format!("Array.prototype.{s}")),

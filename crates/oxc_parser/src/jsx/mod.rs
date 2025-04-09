@@ -59,10 +59,9 @@ impl<'a> ParserImpl<'a> {
     ///     true when inside jsx element, false when at top level expression
     fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXElement<'a>>> {
         let span = self.start_span();
-        let opening_element = self.parse_jsx_opening_element(span, in_jsx_child)?;
-        let children =
-            if opening_element.self_closing { self.ast.vec() } else { self.parse_jsx_children()? };
-        let closing_element = if opening_element.self_closing {
+        let (opening_element, self_closing) = self.parse_jsx_opening_element(span, in_jsx_child)?;
+        let children = if self_closing { self.ast.vec() } else { self.parse_jsx_children()? };
+        let closing_element = if self_closing {
             None
         } else {
             let closing_element = self.parse_jsx_closing_element(in_jsx_child)?;
@@ -89,7 +88,10 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         in_jsx_child: bool,
-    ) -> Result<Box<'a, JSXOpeningElement<'a>>> {
+    ) -> Result<(
+        Box<'a, JSXOpeningElement<'a>>,
+        bool, // `true` if self-closing
+    )> {
         self.expect(Kind::LAngle)?;
         let name = self.parse_jsx_element_name()?;
         // <Component<TsType> for tsx
@@ -101,13 +103,13 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.expect(Kind::RAngle)?;
         }
-        Ok(self.ast.alloc_jsx_opening_element(
+        let elem = self.ast.alloc_jsx_opening_element(
             self.end_span(span),
-            self_closing,
             name,
             attributes,
             type_parameters,
-        ))
+        );
+        Ok((elem, self_closing))
     }
 
     fn parse_jsx_closing_element(

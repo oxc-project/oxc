@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 32b9d1e language_server: Add `fix_kind` flag (#10226) (Sysix)
+- dab1bd8 language_server: Search for nested configurations by initialization (#10120) (Sysix)
+
+### Documentation
+
+- f115f71 editor: Add readme block for possible configurations (#10243) (Sysix)
+
+### Testing
+
+- 297d07f editor: Add e2e tests for creating oxlint configurations on the fly (#10138) (Sysix)
+- 29be469 editor: Add test for code actions (#10168) (camchenry)
+- ba817a9 editor: Add E2E Diagnostics test (#10133) (Sysix)
+
 ## [0.16.4] - 2025-04-01
 
 - da6336c language_server: [**BREAKING**] Remove `enable` configuration, the client should shutdown the server instead (#9990) (Sysix)

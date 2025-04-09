@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.62.0",
+  "version": "0.63.0",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
@@ -56,7 +56,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "^0.2.7",
-    "@vitest/browser": "3.0.9",
+    "@vitest/browser": "3.1.1",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
     "vitest": "catalog:"

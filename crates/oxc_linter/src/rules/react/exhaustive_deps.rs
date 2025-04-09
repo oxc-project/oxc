@@ -855,14 +855,21 @@ fn is_stable_value<'a, 'b>(
 
             {
                 // if the variables is a function, check whether the function is stable
-                let function_body: Option<&oxc_allocator::Box<'_, FunctionBody<'_>>> =
-                    match init.get_inner_expression() {
-                        Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                        Expression::FunctionExpression(func) => func.body.as_ref(),
-                        _ => None,
-                    };
+                let function_body = match init.get_inner_expression() {
+                    Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
+                    Expression::FunctionExpression(func) => func.body.as_ref(),
+                    _ => None,
+                };
                 if let Some(function_body) = function_body {
-                    return is_function_stable(function_body, ctx, component_scope_id);
+                    return is_function_stable(
+                        function_body,
+                        declaration
+                            .id
+                            .get_binding_identifier()
+                            .map(oxc_ast::ast::BindingIdentifier::symbol_id),
+                        ctx,
+                        component_scope_id,
+                    );
                 }
             }
 
@@ -935,7 +942,7 @@ fn is_stable_value<'a, 'b>(
 
             let Some(function_body) = function_body else { return false };
 
-            is_function_stable(function_body, ctx, component_scope_id)
+            is_function_stable(function_body, None, ctx, component_scope_id)
         }
         _ => false,
     }
@@ -943,6 +950,7 @@ fn is_stable_value<'a, 'b>(
 
 fn is_function_stable<'a, 'b>(
     function_body: &'b FunctionBody<'a>,
+    function_symbol_id: Option<SymbolId>,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
@@ -952,8 +960,10 @@ fn is_function_stable<'a, 'b>(
         collector.found_dependencies
     };
 
-    deps.iter()
-        .all(|dep| !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id))
+    deps.iter().all(|dep| {
+        dep.symbol_id.zip(function_symbol_id).is_none_or(|(l, r)| l != r)
+            && !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id)
+    })
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
@@ -3538,6 +3548,22 @@ fn test() {
           useEffect(() => {
             console.log(foo);
           }, [foo]);
+        }",
+        // https://github.com/oxc-project/oxc/issues/10319
+        r"import { useEffect } from 'react'
+
+        export const Test = () => {
+          const handleFrame = () => {
+            setTimeout(handleFrame)
+          }
+
+          useEffect(() => {
+            setTimeout(handleFrame)
+          }, [])
+
+          return (
+            <></>
+          )
         }",
     ];
 

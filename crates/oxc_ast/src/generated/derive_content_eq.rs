@@ -1505,8 +1505,7 @@ impl ContentEq for JSXElement<'_> {
 
 impl ContentEq for JSXOpeningElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.self_closing, &other.self_closing)
-            && ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.attributes, &other.attributes)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }

@@ -1057,8 +1057,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    /// * `closing_element`: Closing tag of the element.
+    /// * `children`: Children of the element.
     #[inline]
     pub fn expression_jsx_element<T1, T2>(
         self,
@@ -8623,8 +8623,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    /// * `closing_element`: Closing tag of the element.
+    /// * `children`: Children of the element.
     #[inline]
     pub fn jsx_element<T1, T2>(
         self,
@@ -8653,8 +8653,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    /// * `closing_element`: Closing tag of the element.
+    /// * `children`: Children of the element.
     #[inline]
     pub fn alloc_jsx_element<T1, T2>(
         self,
@@ -8680,7 +8680,6 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
-    /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
@@ -8688,7 +8687,6 @@ impl<'a> AstBuilder<'a> {
     pub fn jsx_opening_element<T1>(
         self,
         span: Span,
-        self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
@@ -8698,7 +8696,6 @@ impl<'a> AstBuilder<'a> {
     {
         JSXOpeningElement {
             span,
-            self_closing,
             name,
             attributes,
             type_arguments: type_arguments.into_in(self.allocator),
@@ -8712,7 +8709,6 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
-    /// * `self_closing`: Is this tag self-closing?
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
@@ -8720,7 +8716,6 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_jsx_opening_element<T1>(
         self,
         span: Span,
-        self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
@@ -8729,7 +8724,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.jsx_opening_element(span, self_closing, name, attributes, type_arguments),
+            self.jsx_opening_element(span, name, attributes, type_arguments),
             self.allocator,
         )
     }
@@ -9350,8 +9345,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    /// * `closing_element`: Closing tag of the element.
+    /// * `children`: Children of the element.
     #[inline]
     pub fn jsx_attribute_value_element<T1, T2>(
         self,
@@ -9452,8 +9447,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    /// * `closing_element`: Closing tag of the element.
+    /// * `children`: Children of the element.
     #[inline]
     pub fn jsx_child_element<T1, T2>(
         self,

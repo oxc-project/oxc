@@ -6,7 +6,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
-use phf::phf_set;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -242,11 +241,11 @@ impl Rule for RequireReturns {
     }
 }
 
-const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
-    "abstract", "virtual", "class", "constructor", "type", "interface"
-};
+const CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
+    ["abstract", "virtual", "class", "constructor", "type", "interface"];
+
 fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(tag.kind.parsed()))
+    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
 fn is_missing_returns_tag(jsdoc_tags: &[&JSDocTag], resolved_returns_tag_name: &str) -> bool {

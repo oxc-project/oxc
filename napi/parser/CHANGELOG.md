@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
+### Refactor
+
+- b662df4 ast/estree: Alter `Program` start span with converter (#10195) (overlookmotel)
+
+### Testing
+
+- bdded7e ast/estree: Add tests for JSX via raw transfer (#10241) (overlookmotel)
+
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
+### Refactor
+
+- b662df4 ast/estree: Alter `Program` start span with converter (#10195) (overlookmotel)
+
+### Testing
+
+- bdded7e ast/estree: Add tests for JSX via raw transfer (#10241) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Features

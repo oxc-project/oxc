@@ -89,7 +89,7 @@ impl TransformOptions {
                 ..JsxOptions::default()
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
-            proposals: ProposalOptions::default(),
+            proposals: ProposalOptions { explicit_resource_management: true },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()

@@ -119,6 +119,9 @@ impl ESTree for LabelIdentifier<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -328,13 +331,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
 
 impl ESTree for TemplateElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TemplateElement"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("value", &crate::serialize::TemplateElementValue(self));
-        state.serialize_field("tail", &self.tail);
-        state.end();
+        crate::serialize::TemplateElementConverter(self).serialize(serializer)
     }
 }
 
@@ -1982,7 +1979,7 @@ impl ESTree for JSXElement<'_> {
         state.serialize_field("type", &JsonSafeString("JSXElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("openingElement", &self.opening_element);
+        state.serialize_field("openingElement", &crate::serialize::JSXElementOpening(self));
         state.serialize_field("closingElement", &self.closing_element);
         state.serialize_field("children", &self.children);
         state.end();
@@ -1997,7 +1994,7 @@ impl ESTree for JSXOpeningElement<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("attributes", &self.attributes);
         state.serialize_field("name", &self.name);
-        state.serialize_field("selfClosing", &self.self_closing);
+        state.serialize_field("selfClosing", &crate::serialize::JSXOpeningElementSelfClosing(self));
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
@@ -2029,13 +2026,7 @@ impl ESTree for JSXFragment<'_> {
 
 impl ESTree for JSXOpeningFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributes", &crate::serialize::JSXOpeningFragmentAttributes(self));
-        state.serialize_field("selfClosing", &crate::serialize::False(self));
-        state.end();
+        crate::serialize::JSXOpeningFragmentConverter(self).serialize(serializer)
     }
 }
 

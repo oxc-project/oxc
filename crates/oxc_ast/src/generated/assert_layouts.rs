@@ -809,13 +809,12 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 16);
     assert!(offset_of!(JSXElement, children) == 24);
 
-    assert!(size_of::<JSXOpeningElement>() == 72);
+    assert!(size_of::<JSXOpeningElement>() == 64);
     assert!(align_of::<JSXOpeningElement>() == 8);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
-    assert!(offset_of!(JSXOpeningElement, name) == 16);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 32);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 64);
+    assert!(offset_of!(JSXOpeningElement, name) == 8);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 24);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 56);
 
     assert!(size_of::<JSXClosingElement>() == 24);
     assert!(align_of::<JSXClosingElement>() == 8);
@@ -2201,13 +2200,12 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 12);
     assert!(offset_of!(JSXElement, children) == 16);
 
-    assert!(size_of::<JSXOpeningElement>() == 40);
+    assert!(size_of::<JSXOpeningElement>() == 36);
     assert!(align_of::<JSXOpeningElement>() == 4);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
-    assert!(offset_of!(JSXOpeningElement, name) == 12);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 20);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 36);
+    assert!(offset_of!(JSXOpeningElement, name) == 8);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 16);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 32);
 
     assert!(size_of::<JSXClosingElement>() == 16);
     assert!(align_of::<JSXClosingElement>() == 4);

@@ -1650,7 +1650,7 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
 impl<'a> Dummy<'a> for JSXElement<'a> {
     /// Create a dummy [`JSXElement`].
     ///
-    /// Has cost of making 2 allocations (80 bytes).
+    /// Has cost of making 2 allocations (72 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1668,7 +1668,6 @@ impl<'a> Dummy<'a> for JSXOpeningElement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            self_closing: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
             attributes: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
