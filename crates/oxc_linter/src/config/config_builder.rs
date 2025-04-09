@@ -149,7 +149,19 @@ impl ConfigStoreBuilder {
                                 ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
                             let rules = std::mem::take(&mut extended_config_store.rules);
                             builder = builder.with_rules(rules);
-                            builder = builder.and_plugins(extended_config_store.plugins(), true);
+
+                            // Handle plugin inheritance
+                            let parent_plugins = extended_config_store.plugins();
+                            let child_plugins = builder.plugins();
+
+                            if child_plugins == LintPlugins::default() {
+                                // If child has default plugins, inherit from parent
+                                builder = builder.with_plugins(parent_plugins);
+                            } else if child_plugins != LintPlugins::empty() {
+                                // If child specifies plugins, combine with parent's plugins
+                                builder = builder.with_plugins(child_plugins.union(parent_plugins));
+                            }
+
                             if !extended_config_store.overrides.is_empty() {
                                 let overrides =
                                     std::mem::take(&mut extended_config_store.overrides);
@@ -898,49 +910,94 @@ mod test {
 
     #[test]
     fn test_extends_plugins() {
+        // Test 1: Default plugins when none are specified
+        let default_config = config_store_from_str(
+            r#"
+            {
+                "rules": {}
+            }
+            "#,
+        );
+        // Check that default plugins are correctly set
+        assert_eq!(default_config.plugins(), LintPlugins::default());
+
+        // Test 2: Parent config with explicitly specified plugins
+        let parent_config = config_store_from_str(
+            r#"
+            {
+                "plugins": ["react", "typescript"]
+            }
+            "#,
+        );
+        assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+
+        // Test 3: Child config that extends parent without specifying plugins
+        // Should inherit parent's plugins
+        let child_no_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
+        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+
+        // Test 4: Child config that extends parent and specifies additional plugins
+        // Should have parent's plugins plus its own
+        let child_with_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_with_plugins.json");
+        assert_eq!(
+            child_with_plugins_config.plugins(),
+            LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::JEST
+        );
+
+        // Test 5: Empty plugins array should result in empty plugins
+        let empty_plugins_config = config_store_from_str(
+            r#"
+            {
+                "plugins": []
+            }
+            "#,
+        );
+        assert_eq!(empty_plugins_config.plugins(), LintPlugins::empty());
+
+        // Test 6: Extending multiple config files with plugins
         let config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ]
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ]
+            }
+            "#,
         );
-        assert!(config.plugins().contains(LintPlugins::default()));
         assert!(config.plugins().contains(LintPlugins::JEST));
         assert!(config.plugins().contains(LintPlugins::REACT));
 
-        // Test adding more plugins
+        // Test 7: Adding more plugins to extended configs
         let config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ],
-            "plugins": ["typescript"]
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ],
+                "plugins": ["typescript"]
+            }
+            "#,
         );
         assert_eq!(
             config.plugins(),
             LintPlugins::JEST | LintPlugins::REACT | LintPlugins::TYPESCRIPT
         );
 
-        // Test that extended a config with a plugin is the same as adding it directly
+        // Test 8: Extending a config with a plugin is the same as adding it directly
         let plugin_config = config_store_from_str(r#"{ "plugins": ["jest", "react"] }"#);
         let extends_plugin_config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ],
-            "plugins": []
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ]
+            }
+            "#,
         );
         assert_eq!(
             plugin_config.plugins(),
