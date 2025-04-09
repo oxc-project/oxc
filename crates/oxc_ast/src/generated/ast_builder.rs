@@ -1181,13 +1181,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_ts_instantiation<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1195,7 +1195,7 @@ impl<'a> AstBuilder<'a> {
         Expression::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
             span,
             expression,
-            type_parameters,
+            type_arguments,
         ))
     }
 
@@ -14345,13 +14345,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_instantiation_expression<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSInstantiationExpression<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -14359,7 +14359,7 @@ impl<'a> AstBuilder<'a> {
         TSInstantiationExpression {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -14371,19 +14371,19 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_instantiation_expression<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSInstantiationExpression<'a>>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
         Box::new_in(
-            self.ts_instantiation_expression(span, expression, type_parameters),
+            self.ts_instantiation_expression(span, expression, type_arguments),
             self.allocator,
         )
     }

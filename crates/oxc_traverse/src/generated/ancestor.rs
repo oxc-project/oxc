@@ -311,7 +311,7 @@ pub(crate) enum AncestorType {
     TSExportAssignmentExpression = 288,
     TSNamespaceExportDeclarationId = 289,
     TSInstantiationExpressionExpression = 290,
-    TSInstantiationExpressionTypeParameters = 291,
+    TSInstantiationExpressionTypeArguments = 291,
     JSDocNullableTypeTypeAnnotation = 292,
     JSDocNonNullableTypeTypeAnnotation = 293,
 }
@@ -878,8 +878,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSNamespaceExportDeclarationId as u16,
     TSInstantiationExpressionExpression(TSInstantiationExpressionWithoutExpression<'a, 't>) =
         AncestorType::TSInstantiationExpressionExpression as u16,
-    TSInstantiationExpressionTypeParameters(TSInstantiationExpressionWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSInstantiationExpressionTypeParameters as u16,
+    TSInstantiationExpressionTypeArguments(TSInstantiationExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSInstantiationExpressionTypeArguments as u16,
     JSDocNullableTypeTypeAnnotation(JSDocNullableTypeWithoutTypeAnnotation<'a, 't>) =
         AncestorType::JSDocNullableTypeTypeAnnotation as u16,
     JSDocNonNullableTypeTypeAnnotation(JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't>) =
@@ -1837,7 +1837,7 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::TSInstantiationExpressionExpression(_)
-                | Self::TSInstantiationExpressionTypeParameters(_)
+                | Self::TSInstantiationExpressionTypeArguments(_)
         )
     }
 
@@ -2481,7 +2481,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSExportAssignmentExpression(a) => a.address(),
             Self::TSNamespaceExportDeclarationId(a) => a.address(),
             Self::TSInstantiationExpressionExpression(a) => a.address(),
-            Self::TSInstantiationExpressionTypeParameters(a) => a.address(),
+            Self::TSInstantiationExpressionTypeArguments(a) => a.address(),
             Self::JSDocNullableTypeTypeAnnotation(a) => a.address(),
             Self::JSDocNonNullableTypeTypeAnnotation(a) => a.address(),
         }
@@ -15423,8 +15423,8 @@ pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_SPAN: usize =
     offset_of!(TSInstantiationExpression, span);
 pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION: usize =
     offset_of!(TSInstantiationExpression, expression);
-pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_PARAMETERS: usize =
-    offset_of!(TSInstantiationExpression, type_parameters);
+pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(TSInstantiationExpression, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -15442,9 +15442,9 @@ impl<'a, 't> TSInstantiationExpressionWithoutExpression<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Box<'a, TSTypeParameterInstantiation<'a>> {
+    pub fn type_arguments(self) -> &'t Box<'a, TSTypeParameterInstantiation<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Box<'a, TSTypeParameterInstantiation<'a>>)
         }
     }
@@ -15459,12 +15459,12 @@ impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutExpression<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSInstantiationExpressionWithoutTypeParameters<'a, 't>(
+pub struct TSInstantiationExpressionWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSInstantiationExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSInstantiationExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15481,7 +15481,7 @@ impl<'a, 't> TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

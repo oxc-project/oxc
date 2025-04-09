@@ -2420,7 +2420,7 @@ impl ContentEq for TSNamespaceExportDeclaration<'_> {
 impl ContentEq for TSInstantiationExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 

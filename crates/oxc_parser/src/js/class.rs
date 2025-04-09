@@ -142,7 +142,7 @@ impl<'a> ParserImpl<'a> {
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();
                 extend = expr.expression;
-                type_argument = Some(expr.type_parameters);
+                type_argument = Some(expr.type_arguments);
             } else {
                 type_argument = self.try_parse_type_arguments()?;
             }

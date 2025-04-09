@@ -4308,7 +4308,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
-        visitor.visit_ts_type_parameter_instantiation(&mut it.type_parameters);
+        visitor.visit_ts_type_parameter_instantiation(&mut it.type_arguments);
         visitor.leave_node(kind);
     }
 

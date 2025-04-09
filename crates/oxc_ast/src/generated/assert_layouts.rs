@@ -1357,7 +1357,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 8);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 24);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 24);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);
@@ -2748,7 +2748,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 4);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 16);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 16);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);

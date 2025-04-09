@@ -5519,10 +5519,10 @@ unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
             as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeParameters);
+    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeArguments);
     walk_ts_type_parameter_instantiation(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_PARAMETERS)
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
             as *mut Box<TSTypeParameterInstantiation>)) as *mut _,
         ctx,
     );

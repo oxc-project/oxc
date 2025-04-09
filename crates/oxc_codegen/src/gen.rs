@@ -2273,7 +2273,7 @@ impl GenExpr for TSNonNullExpression<'_> {
 impl GenExpr for TSInstantiationExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.expression.print_expr(p, precedence, ctx);
-        self.type_parameters.print(p, ctx);
+        self.type_arguments.print(p, ctx);
         if p.options.minify {
             p.print_hard_space();
         }

@@ -1595,7 +1595,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 pub struct TSInstantiationExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
-    pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
+    pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)

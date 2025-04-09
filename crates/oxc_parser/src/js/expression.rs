@@ -755,7 +755,7 @@ impl<'a> ParserImpl<'a> {
                     let (expr, type_parameters) =
                         if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
                             let expr = instantiation_expr.unbox();
-                            (expr.expression, Some(expr.type_parameters))
+                            (expr.expression, Some(expr.type_arguments))
                         } else {
                             (lhs, None)
                         };
@@ -844,7 +844,7 @@ impl<'a> ParserImpl<'a> {
         let mut type_parameter = None;
         if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
             let instantiation_expr = instantiation_expr.unbox();
-            type_parameter.replace(instantiation_expr.type_parameters);
+            type_parameter.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
         }
 
@@ -907,7 +907,7 @@ impl<'a> ParserImpl<'a> {
             if type_arguments.is_some() || self.at(Kind::LParen) {
                 if let Expression::TSInstantiationExpression(expr) = lhs {
                     let expr = expr.unbox();
-                    type_arguments.replace(expr.type_parameters);
+                    type_arguments.replace(expr.type_arguments);
                     lhs = expr.expression;
                 }
 
