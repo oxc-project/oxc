@@ -18,8 +18,11 @@ use crate::{
 use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Visitors with less than this number of fields/variants will be marked `#[inline]`.
+///
+/// Also used by generator for `ChildScopeCollector` visitor.
+//
 // TODO: Is this the ideal value?
-const INLINE_LIMIT: usize = 5;
+pub const INLINE_LIMIT: usize = 5;
 
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;
@@ -470,6 +473,7 @@ impl VisitBuilder<'_> {
             &Target::Property(quote!( it.#field_ident )),
             &field.visit.visit_args,
             &field_ident,
+            &quote!(visitor),
             true,
             self.schema,
         )?;
@@ -540,6 +544,7 @@ impl VisitBuilder<'_> {
                     &Target::Reference(create_ident_tokens("it")),
                     &variant.visit.visit_args,
                     &create_ident_tokens("it"),
+                    &quote!(visitor),
                     false,
                     self.schema,
                 )?;
@@ -684,7 +689,8 @@ impl VisitBuilder<'_> {
 /// Trait for set of visitor call outputs.
 ///
 /// Implemented by `VisitAndVisitMut`.
-trait VisitorOutputs {
+/// Also used by generator for `ChildScopeCollector` visitor.
+pub trait VisitorOutputs {
     /// Generate [`TokenStream`] for each output.
     ///
     /// Closure is passed `false` for `Visit` trait, `true` for `VisitMut`.
@@ -699,7 +705,6 @@ trait VisitorOutputs {
 }
 
 /// [`VisitorOutputs`] for generating visitor calls for both `Visit` and `VisitMut` traits.
-#[expect(unused)] // Linter is wrong. This type is constructed.
 struct VisitAndVisitMut {
     visit: TokenStream,
     visit_mut: TokenStream,
@@ -735,24 +740,29 @@ impl VisitorOutputs for VisitAndVisitMut {
 /// * `field_ident` is [`Ident`] for the field.
 ///   Is used in output for `Option`s. e.g. `span` in `if let Some(span) = ...`.
 ///
+/// * `visitor` is identifier for the visitor - `visitor` in walk functions, `self` in visitor methods.
+///
 /// * `trailing_semicolon` indicates if a semicolon postfix is needed.
 ///   This is `true` for struct fields, `false` for enum variants.
 ///
+/// Also used by generator for `ChildScopeCollector` visitor.
+///
 /// [`Ident`]: struct@Ident
-fn generate_visit_type<V: VisitorOutputs>(
+pub fn generate_visit_type<V: VisitorOutputs>(
     type_def: &TypeDef,
     target: &Target,
     visit_args: &[(String, String)],
     field_ident: &TokenStream,
+    visitor: &TokenStream,
     trailing_semicolon: bool,
     schema: &Schema,
 ) -> Option<V> {
     match type_def {
         TypeDef::Struct(_) | TypeDef::Enum(_) => {
-            generate_visit_struct_or_enum(type_def, target, visit_args, trailing_semicolon)
+            generate_visit_struct_or_enum(type_def, target, visit_args, visitor, trailing_semicolon)
         }
         TypeDef::Option(option_def) => {
-            generate_visit_option(option_def, target, visit_args, field_ident, schema)
+            generate_visit_option(option_def, target, visit_args, field_ident, visitor, schema)
         }
         TypeDef::Box(box_def) => {
             // `Box`es can be treated as transparent, as auto-deref handles it
@@ -761,12 +771,13 @@ fn generate_visit_type<V: VisitorOutputs>(
                 target,
                 visit_args,
                 field_ident,
+                visitor,
                 trailing_semicolon,
                 schema,
             )
         }
         TypeDef::Vec(vec_def) => {
-            generate_visit_vec(vec_def, target, visit_args, trailing_semicolon, schema)
+            generate_visit_vec(vec_def, target, visit_args, visitor, trailing_semicolon, schema)
         }
         // Primitives and `Cell`s are not visited
         TypeDef::Primitive(_) | TypeDef::Cell(_) => None,
@@ -784,6 +795,7 @@ fn generate_visit_struct_or_enum<V: VisitorOutputs>(
     type_def: &TypeDef,
     target: &Target,
     visit_args: &[(String, String)],
+    visitor: &TokenStream,
     trailing_semicolon: bool,
 ) -> Option<V> {
     let visit_fn_ident = match type_def {
@@ -792,7 +804,13 @@ fn generate_visit_struct_or_enum<V: VisitorOutputs>(
         _ => None?,
     };
 
-    Some(generate_visit_with_visit_args(&visit_fn_ident, target, visit_args, trailing_semicolon))
+    Some(generate_visit_with_visit_args(
+        &visit_fn_ident,
+        target,
+        visit_args,
+        visitor,
+        trailing_semicolon,
+    ))
 }
 
 /// Generate visitor calls with specified visitor function name.
@@ -812,6 +830,7 @@ fn generate_visit_with_visit_args<V: VisitorOutputs>(
     visit_fn_ident: &Ident,
     target: &Target,
     visit_args: &[(String, String)],
+    visitor: &TokenStream,
     trailing_semicolon: bool,
 ) -> V {
     // Get extra function params for visit args.
@@ -834,7 +853,7 @@ fn generate_visit_with_visit_args<V: VisitorOutputs>(
 
     V::gen_each(|is_mut| {
         let target_ref = target.generate_ref(is_mut);
-        let mut visit = quote!( visitor.#visit_fn_ident(#target_ref #extra_params) );
+        let mut visit = quote!( #visitor.#visit_fn_ident(#target_ref #extra_params) );
         if trailing_semicolon {
             visit.extend(quote!(;));
         }
@@ -870,6 +889,7 @@ fn generate_visit_option<V: VisitorOutputs>(
     target: &Target,
     visit_args: &[(String, String)],
     field_ident: &TokenStream,
+    visitor: &TokenStream,
     schema: &Schema,
 ) -> Option<V> {
     let inner_type = option_def.inner_type(schema);
@@ -878,6 +898,7 @@ fn generate_visit_option<V: VisitorOutputs>(
         &Target::Reference(field_ident.clone()),
         visit_args,
         field_ident,
+        visitor,
         true,
         schema,
     )?;
@@ -921,6 +942,7 @@ fn generate_visit_vec<V: VisitorOutputs>(
     vec_def: &VecDef,
     target: &Target,
     visit_args: &[(String, String)],
+    visitor: &TokenStream,
     trailing_semicolon: bool,
     schema: &Schema,
 ) -> Option<V> {
@@ -930,6 +952,7 @@ fn generate_visit_vec<V: VisitorOutputs>(
             &visit_fn_ident,
             target,
             visit_args,
+            visitor,
             trailing_semicolon,
         ));
     }
@@ -958,6 +981,7 @@ fn generate_visit_vec<V: VisitorOutputs>(
         &Target::Reference(create_ident_tokens("el")),
         visit_args,
         &create_ident_tokens("it"),
+        visitor,
         true,
         schema,
     )?;
@@ -982,7 +1006,9 @@ fn generate_visit_vec<V: VisitorOutputs>(
 ///
 /// * `Target::Property` represents an object property e.g. `it.span`.
 ///   Needs `&` / `&mut` prepended to it when using it in most circumstances.
-enum Target {
+///
+/// Also used by generator for `ChildScopeCollector` visitor.
+pub enum Target {
     Reference(TokenStream),
     Property(TokenStream),
 }
