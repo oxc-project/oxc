@@ -1,7 +1,6 @@
 use std::hash::Hash;
 
 use itertools::Itertools;
-use phf::phf_set;
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
@@ -194,8 +193,7 @@ declare_oxc_lint!(
     nursery
 );
 
-const HOOKS_USELESS_WITHOUT_DEPENDENCIES: phf::Set<&'static str> =
-    phf_set!("useCallback", "useMemo");
+const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,7 +225,7 @@ impl Rule for ExhaustiveDeps {
         let is_effect = hook_name.as_str().contains("Effect");
 
         if dependencies_node.is_none() && !is_effect {
-            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(hook_name.as_str()) {
+            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
                 ctx.diagnostic(dependency_array_required_diagnostic(
                     hook_name.as_str(),
                     call_expr.span(),
