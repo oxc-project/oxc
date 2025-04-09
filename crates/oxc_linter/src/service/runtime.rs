@@ -22,9 +22,12 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-use super::{diagnostic_service::DiagnosticMessage, DiagnosticSender, LintServiceOptions};
+use super::{DiagnosticSender, LintServiceOptions, diagnostic_service::DiagnosticMessage};
 use crate::{
-    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXTENSIONS}, module_record::ModuleRecord, utils::read_to_string, DiagnosticService, Fixer, Linter, Message
+    DiagnosticService, Fixer, Linter, Message,
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
+    module_record::ModuleRecord,
+    utils::read_to_string,
 };
 
 pub struct Runtime {

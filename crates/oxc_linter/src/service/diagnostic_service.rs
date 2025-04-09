@@ -1,5 +1,8 @@
 use std::{
-    borrow::Cow, io::{ErrorKind, Write}, path::{Path, PathBuf}, sync::mpsc
+    borrow::Cow,
+    io::{ErrorKind, Write},
+    path::{Path, PathBuf},
+    sync::mpsc,
 };
 
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic, Severity};
@@ -47,8 +50,6 @@ impl DiagnosticMessage {
         Self { error, fix }
     }
 }
-
-
 
 pub type DiagnosticTuple = (PathBuf, Vec<DiagnosticMessage>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;

@@ -20,6 +20,3 @@ doctest = false
 
 [dependencies]
 miette = { workspace = true }
-
-oxc_allocator = { workspace = true }
-oxc_span = { workspace = true }
