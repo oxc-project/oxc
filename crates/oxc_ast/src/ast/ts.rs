@@ -122,6 +122,7 @@ pub struct TSEnumBody<'a> {
 pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
+    pub computed: bool,
     pub initializer: Option<Expression<'a>>,
 }
 
@@ -132,6 +133,7 @@ pub struct TSEnumMember<'a> {
 pub enum TSEnumMemberName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
     String(Box<'a, StringLiteral<'a>>) = 1,
+    TemplateString(Box<'a, TemplateLiteral<'a>>) = 2,
 }
 
 /// TypeScript Type Annotation
