@@ -10350,7 +10350,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
@@ -10359,7 +10358,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -10371,7 +10369,6 @@ impl<'a> AstBuilder<'a> {
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 
@@ -13518,7 +13515,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
@@ -13527,7 +13523,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -13539,7 +13534,6 @@ impl<'a> AstBuilder<'a> {
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 
@@ -13554,7 +13548,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
@@ -13563,7 +13556,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSImportType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -13575,7 +13567,6 @@ impl<'a> AstBuilder<'a> {
             options: options.into_in(self.allocator),
             qualifier,
             type_arguments: type_arguments.into_in(self.allocator),
-            is_type_of,
         }
     }
 
@@ -13590,7 +13581,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
@@ -13599,14 +13589,13 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
+            self.ts_import_type(span, argument, options, qualifier, type_arguments),
             self.allocator,
         )
     }

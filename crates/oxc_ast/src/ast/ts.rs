@@ -1284,12 +1284,14 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeQueryExprName<'a> {
+    /// `type foo = typeof import('foo')`
     TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
 }
 
+/// `type foo = import('foo')`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1299,9 +1301,6 @@ pub struct TSImportType<'a> {
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    /// `true` for `typeof import("foo")`
-    #[estree(skip)]
-    pub is_type_of: bool,
 }
 
 /// TypeScript Function Type

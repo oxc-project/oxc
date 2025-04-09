@@ -14192,7 +14192,6 @@ pub(crate) const OFFSET_TS_IMPORT_TYPE_OPTIONS: usize = offset_of!(TSImportType,
 pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIER: usize = offset_of!(TSImportType, qualifier);
 pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS: usize =
     offset_of!(TSImportType, type_arguments);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF: usize = offset_of!(TSImportType, is_type_of);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -14229,11 +14228,6 @@ impl<'a, 't> TSImportTypeWithoutArgument<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
     }
 }
 
@@ -14279,11 +14273,6 @@ impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
-
-    #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
-    }
 }
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutOptions<'a, 't> {
@@ -14328,11 +14317,6 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
-
-    #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
-    }
 }
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
@@ -14376,11 +14360,6 @@ impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
                 as *const Option<TSTypeName<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
     }
 }
 

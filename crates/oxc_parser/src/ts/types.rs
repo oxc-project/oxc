@@ -390,11 +390,7 @@ impl<'a> ParserImpl<'a> {
                 Ok(TSType::TSThisType(self.alloc(this_type)))
             }
             Kind::Typeof => {
-                if self.peek_at(Kind::Import) {
-                    self.parse_ts_import_type()
-                } else {
-                    self.parse_type_query()
-                }
+                self.parse_type_query()
             }
             Kind::LCurly => {
                 if self.lookahead(Self::is_start_of_mapped_type) {
@@ -405,7 +401,9 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
-            Kind::Import => self.parse_ts_import_type(),
+            Kind::Import => self.parse_ts_import_type().map(
+                TSType::TSImportType
+            ),
             Kind::Asserts => {
                 let peek_token = self.peek_token();
                 if peek_token.kind.is_identifier_name() && !peek_token.is_on_new_line {
@@ -637,10 +635,19 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_query(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.bump_any(); // `bump `typeof`
-        let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
-        let entity_name = TSTypeQueryExprName::from(entity_name);
-        let type_arguments =
-            if self.cur_token().is_on_new_line { None } else { self.try_parse_type_arguments()? };
+        let (entity_name, type_arguments) = if self.at(Kind::Import) {
+            let entity_name = TSTypeQueryExprName::TSImportType(self.parse_ts_import_type()?);
+            (entity_name, None)
+        } else {
+            let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
+            let entity_name = TSTypeQueryExprName::from(entity_name);
+            let type_arguments = if self.cur_token().is_on_new_line {
+                None
+            } else {
+                self.try_parse_type_arguments()?
+            };
+            (entity_name, type_arguments)
+        };
         Ok(self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments))
     }
 
@@ -975,9 +982,8 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_type_literal_type(span, literal))
     }
 
-    fn parse_ts_import_type(&mut self) -> Result<TSType<'a>> {
+    fn parse_ts_import_type(&mut self) -> Result<Box<'a, TSImportType<'a>>> {
         let span = self.start_span();
-        let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
@@ -986,13 +992,12 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
         let type_arguments = self.parse_type_arguments_of_type_reference()?;
-        Ok(self.ast.ts_type_import_type(
+        Ok(self.ast.alloc_ts_import_type(
             self.end_span(span),
             argument,
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 

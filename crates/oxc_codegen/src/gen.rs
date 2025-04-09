@@ -3527,9 +3527,6 @@ impl Gen for TSTypeQueryExprName<'_> {
 
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.is_type_of {
-            p.print_str("typeof ");
-        }
         p.print_str("import(");
         self.argument.print(p, ctx);
         if let Some(options) = &self.options {

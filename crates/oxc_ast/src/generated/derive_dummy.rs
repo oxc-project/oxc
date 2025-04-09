@@ -2619,7 +2619,6 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
-            is_type_of: Dummy::dummy(allocator),
         }
     }
 }

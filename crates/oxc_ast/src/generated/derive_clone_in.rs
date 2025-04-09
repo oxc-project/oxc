@@ -7385,7 +7385,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
             options: CloneIn::clone_in(&self.options, allocator),
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
-            is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
         }
     }
 
@@ -7396,7 +7395,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
             options: CloneIn::clone_in_with_semantic_ids(&self.options, allocator),
             qualifier: CloneIn::clone_in_with_semantic_ids(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
-            is_type_of: CloneIn::clone_in_with_semantic_ids(&self.is_type_of, allocator),
         }
     }
 }

@@ -2302,7 +2302,6 @@ impl ContentEq for TSImportType<'_> {
             && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
-            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 
