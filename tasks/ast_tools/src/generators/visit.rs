@@ -17,6 +17,10 @@ use crate::{
 
 use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
+/// Visitors with less than this number of fields/variants will be marked `#[inline]`.
+// TODO: Is this the ideal value?
+const INLINE_LIMIT: usize = 5;
+
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;
 
@@ -422,10 +426,9 @@ impl VisitBuilder<'_> {
             field_visits_mut.extend(leave_scope);
         }
 
-        // `#[inline]` if there are 5 or less fields visited
-        // TODO: Is this ideal?
+        // `#[inline]` if there are `INLINE_LIMIT` or less fields visited
         let maybe_inline_attr =
-            if field_visits_count <= 5 { quote!( #[inline] ) } else { quote!() };
+            if field_visits_count <= INLINE_LIMIT { quote!( #[inline] ) } else { quote!() };
 
         self.walk_fns.extend(quote! {
             ///@@line_break
@@ -592,9 +595,9 @@ impl VisitBuilder<'_> {
                 quote!()
             };
 
-        // `#[inline]` if there are 5 or less match cases
-        // TODO: Is this ideal?
-        let maybe_inline_attr = if match_arm_count <= 5 { quote!( #[inline] ) } else { quote!() };
+        // `#[inline]` if there are `INLINE_LIMIT` or less fields visited
+        let maybe_inline_attr =
+            if match_arm_count <= INLINE_LIMIT { quote!( #[inline] ) } else { quote!() };
 
         self.walk_fns.extend(quote! {
             ///@@line_break
