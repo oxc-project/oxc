@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tower_lsp::lsp_types::Url;
+use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
 
@@ -23,7 +23,7 @@ impl ServerLinter {
         Self { linter: Arc::new(linter) }
     }
 
-    pub fn run_single(&self, uri: &Url, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
         IsolatedLintHandler::new(Arc::clone(&self.linter))
             .run_single(&uri.to_file_path().unwrap(), content)
     }

@@ -1,15 +1,18 @@
 use std::fmt::Write;
 
 use oxc_linter::Linter;
-use tower_lsp::lsp_types::{CodeDescription, NumberOrString, Url};
+use tower_lsp_server::{
+    UriExt,
+    lsp_types::{CodeDescription, NumberOrString, Uri},
+};
 
 use super::{error_with_position::DiagnosticReport, server_linter::ServerLinter};
 
 /// Given a file path relative to the crate root directory, return the URI of the file.
-pub fn get_file_uri(relative_file_path: &str) -> Url {
+pub fn get_file_uri(relative_file_path: &str) -> Uri {
     let absolute_file_path =
         std::env::current_dir().expect("could not get current dir").join(relative_file_path);
-    Url::from_file_path(absolute_file_path).expect("failed to convert file path to URL")
+    Uri::from_file_path(absolute_file_path).expect("failed to convert file path to URL")
 }
 
 fn get_snapshot_from_report(report: &DiagnosticReport) -> String {

@@ -7,7 +7,10 @@ use std::{
 
 use log::debug;
 use rustc_hash::FxHashSet;
-use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range};
+use tower_lsp_server::{
+    UriExt,
+    lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range, Uri},
+};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
@@ -55,7 +58,7 @@ impl IsolatedLintHandler {
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {
                     location: lsp_types::Location {
-                        uri: lsp_types::Url::from_file_path(path).unwrap(),
+                        uri: Uri::from_file_path(path).unwrap(),
                         range: d.diagnostic.range,
                     },
                     message: "original diagnostic".to_string(),

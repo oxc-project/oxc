@@ -1,5 +1,5 @@
 use oxc_data_structures::rope::{Rope, get_line_column};
-use tower_lsp::lsp_types::Position;
+use tower_lsp_server::lsp_types::Position;
 
 pub mod config_walker;
 pub mod error_with_position;

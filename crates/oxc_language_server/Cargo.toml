@@ -40,7 +40,7 @@ rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
-tower-lsp = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
 insta = { workspace = true }

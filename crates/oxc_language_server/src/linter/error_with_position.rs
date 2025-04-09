@@ -1,7 +1,10 @@
 use std::{path::PathBuf, str::FromStr};
 
-use tower_lsp::lsp_types::{
-    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Url,
+use tower_lsp_server::{
+    UriExt,
+    lsp_types::{
+        self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
+    },
 };
 
 use cow_utils::CowUtils;
@@ -97,7 +100,7 @@ impl ErrorWithPosition {
                 .iter()
                 .map(|labeled_span| lsp_types::DiagnosticRelatedInformation {
                     location: lsp_types::Location {
-                        uri: lsp_types::Url::from_file_path(path).unwrap(),
+                        uri: lsp_types::Uri::from_file_path(path).unwrap(),
                         range: lsp_types::Range {
                             start: lsp_types::Position {
                                 line: labeled_span.start_pos.line,
@@ -132,7 +135,7 @@ impl ErrorWithPosition {
         let code_description = code.as_ref().and_then(|code| {
             let (scope, number) = parse_diagnostic_code(code)?;
             Some(CodeDescription {
-                href: Url::from_str(&format!(
+                href: Uri::from_str(&format!(
                     "{LINT_DOC_LINK_PREFIX}/{}/{number}",
                     scope.strip_prefix("eslint-plugin-").unwrap_or(scope).cow_replace("-", "_")
                 ))

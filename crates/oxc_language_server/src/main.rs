@@ -13,8 +13,8 @@ use std::{
     str::FromStr,
 };
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
-use tower_lsp::{
-    Client, LanguageServer, LspService, Server,
+use tower_lsp_server::{
+    Client, LanguageServer, LspService, Server, UriExt,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
@@ -22,7 +22,7 @@ use tower_lsp::{
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, ExecuteCommandParams, FileChangeType, InitializeParams,
         InitializeResult, InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit,
-        Url, WorkspaceEdit,
+        Uri, WorkspaceEdit,
     },
 };
 
@@ -40,7 +40,7 @@ const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
 
 struct Backend {
     client: Client,
-    root_uri: OnceCell<Option<Url>>,
+    root_uri: OnceCell<Option<Uri>>,
     server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: ConcurrentHashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
@@ -83,8 +83,8 @@ impl Options {
     }
 }
 
-#[tower_lsp::async_trait]
 impl LanguageServer for Backend {
+    #[expect(deprecated)] // TODO: FIXME
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;
         let options = params.initialization_options.and_then(|mut value| {
@@ -160,7 +160,7 @@ impl LanguageServer for Backend {
             let nested_configs = self.nested_configs.pin();
 
             params.changes.iter().for_each(|x| {
-                let Ok(file_path) = x.uri.to_file_path() else {
+                let Some(file_path) = x.uri.to_file_path() else {
                     info!("Unable to convert {:?} to a file path", x.uri);
                     return;
                 };
@@ -409,16 +409,15 @@ impl LanguageServer for Backend {
         params: ExecuteCommandParams,
     ) -> Result<Option<serde_json::Value>> {
         let command = LSP_COMMANDS.iter().find(|c| c.command_id() == params.command);
-
-        return match command {
+        match command {
             Some(c) => c.execute(self, params.arguments).await,
             None => Err(Error::invalid_request()),
-        };
+        }
     }
 }
 
 impl Backend {
-    fn init(&self, root_uri: Option<Url>) -> Result<()> {
+    fn init(&self, root_uri: Option<Uri>) -> Result<()> {
         self.root_uri.set(root_uri).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => "root uri already initialized".into(),
@@ -445,7 +444,7 @@ impl Backend {
 
         let ignore_file_glob_set = builder.build().unwrap();
 
-        let walk = ignore::WalkBuilder::new(uri.path())
+        let walk = ignore::WalkBuilder::new(uri.to_file_path().unwrap())
             .ignore(true)
             .hidden(false)
             .git_global(false)
@@ -485,35 +484,22 @@ impl Backend {
             .diagnostics_report_map
             .pin()
             .keys()
-            .map(|uri| {
-                (
-                    // should convert successfully, case the key is from `params.document.uri`
-                    Url::from_str(uri)
-                        .ok()
-                        .and_then(|url| url.to_file_path().ok())
-                        .expect("should convert to path"),
-                    vec![],
-                )
-            })
+            .map(|uri| (uri.clone(), vec![]))
             .collect::<Vec<_>>();
         self.publish_all_diagnostics(&cleared_diagnostics).await;
     }
 
     #[expect(clippy::ptr_arg)]
-    async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
+    async fn publish_all_diagnostics(&self, result: &Vec<(String, Vec<Diagnostic>)>) {
         join_all(result.iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(
-                Url::from_file_path(path).unwrap(),
-                diagnostics.clone(),
-                None,
-            )
+            self.client.publish_diagnostics(Uri::from_str(path).unwrap(), diagnostics.clone(), None)
         }))
         .await;
     }
 
     async fn revalidate_open_files(&self) {
         join_all(self.diagnostics_report_map.pin_owned().keys().map(|key| {
-            let url = Url::from_str(key).expect("should convert to path");
+            let url = Uri::from_str(key).expect("should convert to path");
 
             self.handle_file_update(url, None, None)
         }))
@@ -532,7 +518,7 @@ impl Backend {
         let Some(Some(uri)) = self.root_uri.get() else {
             return;
         };
-        let Ok(root_path) = uri.to_file_path() else {
+        let Some(root_path) = uri.to_file_path() else {
             return;
         };
 
@@ -562,9 +548,7 @@ impl Backend {
         let Some(Some(uri)) = self.root_uri.get() else {
             return None;
         };
-        let Ok(root_path) = uri.to_file_path() else {
-            return None;
-        };
+        let root_path = uri.to_file_path()?;
         let relative_config_path = self.options.lock().await.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
             let config = root_path.join(relative_config_path.unwrap());
@@ -611,7 +595,7 @@ impl Backend {
         Some(oxlintrc.clone())
     }
 
-    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
+    async fn handle_file_update(&self, uri: Uri, content: Option<String>, version: Option<i32>) {
         if let Some(Some(_root_uri)) = self.root_uri.get() {
             let diagnostics = self.server_linter.read().await.run_single(&uri, content);
             if let Some(diagnostics) = diagnostics {
@@ -628,23 +612,23 @@ impl Backend {
         }
     }
 
-    async fn is_ignored(&self, uri: &Url) -> bool {
+    async fn is_ignored(&self, uri: &Uri) -> bool {
         let Some(Some(root_uri)) = self.root_uri.get() else {
             return false;
         };
 
         // The file is not under current workspace
-        if !uri.path().starts_with(root_uri.path()) {
+        if !uri.to_file_path().unwrap().starts_with(root_uri.to_file_path().unwrap()) {
             return false;
         }
         let gitignore_globs = &(*self.gitignore_glob.lock().await);
         for gitignore in gitignore_globs {
-            if let Ok(uri_path) = uri.to_file_path() {
+            if let Some(uri_path) = uri.to_file_path() {
                 if !uri_path.starts_with(gitignore.path()) {
                     continue;
                 }
                 if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
-                    debug!("ignored: {uri}");
+                    debug!("ignored: {uri:?}");
                     return true;
                 }
             }
