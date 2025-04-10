@@ -505,10 +505,10 @@ tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
 serde_json::from_str(oxc_json) error: number out of range at line 32 column 27
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-serde_json::from_str(oxc_json) error: number out of range at line 45 column 31
+serde_json::from_str(oxc_json) error: number out of range at line 46 column 31
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-serde_json::from_str(oxc_json) error: number out of range at line 45 column 31
+serde_json::from_str(oxc_json) error: number out of range at line 46 column 31
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fatArrowSelf.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts
