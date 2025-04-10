@@ -25,8 +25,12 @@ use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_s
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
     use crate::options::TestLanguage;
-    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Js }).run();
-    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Ts }).run();
+    TestRunner::new(TestRunnerOptions::default()).run();
+    TestRunner::new(TestRunnerOptions {
+        language: TestLanguage::Ts,
+        ..TestRunnerOptions::default()
+    })
+    .run();
 }
 
 fn root() -> PathBuf {
