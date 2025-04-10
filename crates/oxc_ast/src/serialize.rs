@@ -951,6 +951,24 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 // TS
 // --------------------
 
+/// Serializer for `computed` field of `TSEnumMember`.
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "false"
+)]
+pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
+
+impl ESTree for TSEnumMemberComputed<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        matches!(
+            self.0.id,
+            TSEnumMemberName::ComputedString(_) | TSEnumMemberName::ComputedTemplateString(_)
+        )
+        .serialize(serializer);
+    }
+}
+
 /// Serializer for `directive` field of `ExpressionStatement`.
 /// This field is always `null`, and only appears in the TS AST, not JS ESTree.
 #[ast_meta]

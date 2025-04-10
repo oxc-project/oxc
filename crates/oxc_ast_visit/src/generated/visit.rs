@@ -3211,7 +3211,8 @@ pub mod walk {
         match it {
             TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
-            TSEnumMemberName::TemplateString(it) => visitor.visit_template_literal(it),
+            TSEnumMemberName::ComputedString(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedTemplateString(it) => visitor.visit_template_literal(it),
         }
     }
 

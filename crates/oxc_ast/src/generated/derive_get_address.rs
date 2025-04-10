@@ -605,7 +605,8 @@ impl GetAddress for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetAddress::address(it),
             Self::String(it) => GetAddress::address(it),
-            Self::TemplateString(it) => GetAddress::address(it),
+            Self::ComputedString(it) => GetAddress::address(it),
+            Self::ComputedTemplateString(it) => GetAddress::address(it),
         }
     }
 }

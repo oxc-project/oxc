@@ -1467,11 +1467,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         match it {
-            TSEnumMemberName::TemplateString(it) => self.visit_template_literal(it),
+            TSEnumMemberName::ComputedTemplateString(it) => self.visit_template_literal(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `Identifier`
                 // `String`
+                // `ComputedString`
             }
         }
     }

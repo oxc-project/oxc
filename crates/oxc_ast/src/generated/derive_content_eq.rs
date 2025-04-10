@@ -1745,7 +1745,6 @@ impl ContentEq for TSEnumBody<'_> {
 impl ContentEq for TSEnumMember<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.initializer, &other.initializer)
     }
 }
@@ -1755,7 +1754,8 @@ impl ContentEq for TSEnumMemberName<'_> {
         match (self, other) {
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
             (Self::String(a), Self::String(b)) => a.content_eq(b),
-            (Self::TemplateString(a), Self::TemplateString(b)) => a.content_eq(b),
+            (Self::ComputedString(a), Self::ComputedString(b)) => a.content_eq(b),
+            (Self::ComputedTemplateString(a), Self::ComputedTemplateString(b)) => a.content_eq(b),
             _ => false,
         }
     }

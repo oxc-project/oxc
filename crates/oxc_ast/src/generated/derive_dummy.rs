@@ -1922,7 +1922,6 @@ impl<'a> Dummy<'a> for TSEnumMember<'a> {
         Self {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             initializer: Dummy::dummy(allocator),
         }
     }

@@ -925,12 +925,11 @@ const _: () = {
     assert!(offset_of!(TSEnumBody, span) == 0);
     assert!(offset_of!(TSEnumBody, members) == 8);
 
-    assert!(size_of::<TSEnumMember>() == 48);
+    assert!(size_of::<TSEnumMember>() == 40);
     assert!(align_of::<TSEnumMember>() == 8);
     assert!(offset_of!(TSEnumMember, span) == 0);
     assert!(offset_of!(TSEnumMember, id) == 8);
-    assert!(offset_of!(TSEnumMember, computed) == 24);
-    assert!(offset_of!(TSEnumMember, initializer) == 32);
+    assert!(offset_of!(TSEnumMember, initializer) == 24);
 
     assert!(size_of::<TSEnumMemberName>() == 16);
     assert!(align_of::<TSEnumMemberName>() == 8);
@@ -2321,12 +2320,11 @@ const _: () = {
     assert!(offset_of!(TSEnumBody, span) == 0);
     assert!(offset_of!(TSEnumBody, members) == 8);
 
-    assert!(size_of::<TSEnumMember>() == 28);
+    assert!(size_of::<TSEnumMember>() == 24);
     assert!(align_of::<TSEnumMember>() == 4);
     assert!(offset_of!(TSEnumMember, span) == 0);
     assert!(offset_of!(TSEnumMember, id) == 8);
-    assert!(offset_of!(TSEnumMember, computed) == 16);
-    assert!(offset_of!(TSEnumMember, initializer) == 20);
+    assert!(offset_of!(TSEnumMember, initializer) == 16);
 
     assert!(size_of::<TSEnumMemberName>() == 8);
     assert!(align_of::<TSEnumMemberName>() == 4);
