@@ -952,6 +952,8 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 // --------------------
 
 /// Serializer for `computed` field of `TSEnumMember`.
+///
+/// `true` if `id` field is one of the computed variants of `TSEnumMemberName`.
 #[ast_meta]
 #[estree(ts_type = "boolean", raw_deser = "false")]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
