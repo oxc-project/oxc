@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod exports_last;
+    pub mod group_exports;
     pub mod no_absolute_path;
     pub mod no_anonymous_default_export;
     pub mod no_empty_named_blocks;
@@ -703,6 +704,7 @@ oxc_macros::declare_all_lint_rules! {
     import::export,
     import::exports_last,
     import::first,
+    import::group_exports,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,
