@@ -82,8 +82,12 @@ impl TriviaBuilder {
         if self.processed < len {
             // All unprocessed preceding comments are leading comments attached to this token start.
             for comment in &mut self.comments[self.processed..] {
-                comment.position = CommentPosition::Leading;
                 comment.attached_to = token.start;
+                comment.position = if token.kind == Kind::Eof {
+                    CommentPosition::Trailing
+                } else {
+                    CommentPosition::Leading
+                };
             }
             self.processed = len;
         }

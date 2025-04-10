@@ -13,7 +13,10 @@ use oxc_span::GetSpan;
 
 use crate::{
     format_args,
-    formatter::{Buffer, Format, FormatResult, Formatter, group_id, prelude::*, write},
+    formatter::{
+        Buffer, Format, FormatResult, Formatter, group_id, prelude::*,
+        trivia::format_trailing_comments, write,
+    },
     write,
 };
 
@@ -40,6 +43,7 @@ impl<'a> FormatWrite<'a> for Program<'a> {
                 format_leading_comments(self.span),
                 self.directives,
                 self.body,
+                format_trailing_comments(self.span),
                 hard_line_break()
             ]
         )

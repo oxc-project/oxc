@@ -77,23 +77,25 @@
 
 mod map;
 
-#[cfg(debug_assertions)]
-use std::cell::{Cell, RefCell};
 use std::{
+    cell::{Cell, RefCell},
     fmt::{self, Debug},
     marker::PhantomData,
     rc::Rc,
 };
 
-use oxc_ast::Comment;
+use oxc_ast::{Comment, ast::Program};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use self::map::CommentsMap;
+use crate::{formatter::prelude::dynamic_text, write};
+
 use super::{
     Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize, buffer::Buffer,
     syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
 };
+
+use self::map::CommentsMap;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CommentKind {
@@ -176,7 +178,6 @@ pub struct SourceComment {
     pub(crate) kind: CommentKind,
 
     /// Whether the comment has been formatted or not.
-    #[cfg(debug_assertions)]
     pub(crate) formatted: Cell<bool>,
 }
 
@@ -242,12 +243,7 @@ impl SourceComment {
         self.kind
     }
 
-    #[cfg(not(debug_assertions))]
-    #[inline(always)]
-    pub fn mark_formatted(&self) {}
-
     /// Marks the comment as formatted
-    #[cfg(debug_assertions)]
     pub fn mark_formatted(&self) {
         self.formatted.set(true);
     }
@@ -255,7 +251,7 @@ impl SourceComment {
 
 impl<'a> Format<'a> for SourceComment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, [dynamic_text(self.span.source_text(f.source_text()), self.span.start)])
     }
 }
 
@@ -803,32 +799,45 @@ pub struct Comments {
 }
 
 impl Comments {
-    pub fn from_oxc_comments<'a>(comments: &'a oxc_allocator::Vec<'a, Comment>) -> Self {
+    pub fn from_oxc_comments<'a>(program: &'a Program<'a>) -> Self {
         use oxc_ast::ast;
+        let comments = &program.comments;
+        let source_text = program.source_text;
         let mut map = CommentsMap::new();
         for comment in comments {
             // TODO: Converting to `SourceComment` is incomplete.
             let c = SourceComment {
                 span: comment.span,
-                // FIXME
-                lines_before: 0,
-                // FIXME
-                lines_after: 0,
+                lines_before: source_text[..comment.span.start as usize]
+                    .bytes()
+                    .rev()
+                    .take_while(|&b| b == b'\n')
+                    .count() as u32,
+                lines_after: source_text[comment.span.end as usize..]
+                    .bytes()
+                    .take_while(|&b| b == b'\n')
+                    .count() as u32,
                 // FIXME
                 piece: SyntaxTriviaPieceComments {},
                 kind: match comment.kind {
                     ast::CommentKind::Line => CommentKind::Line,
                     ast::CommentKind::Block => CommentKind::Block, // TODO: missing CommentKind::InlineBlock
                 },
-                #[cfg(debug_assertions)]
                 formatted: Cell::new(false),
             };
             match comment.position {
                 ast::CommentPosition::Leading => {
-                    map.push_leading(comment.span.start, c);
+                    map.push_leading(comment.attached_to, c);
                 }
                 ast::CommentPosition::Trailing => {
-                    map.push_trailing(comment.span.start, c);
+                    // Trailing comments are not attached to anything yet.
+                    let attached_to = comment.span.start
+                        - source_text[..comment.span.start as usize]
+                            .bytes()
+                            .rev()
+                            .take_while(|&b| b == b' ')
+                            .count() as u32;
+                    map.push_trailing(attached_to, c);
                 } // TODO:: missing Comment::Position::Dangling
             }
         }
@@ -879,7 +888,7 @@ impl Comments {
     /// Returns the `node`'s [trailing comments](self#trailing-comments).
     #[inline]
     pub fn trailing_comments(&self, span: Span) -> &[SourceComment] {
-        self.data.comments.trailing(&span.start)
+        self.data.comments.trailing(&span.end)
     }
 
     /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
