@@ -24,7 +24,9 @@ impl Generator for FormatterFormatGenerator {
             .types
             .iter()
             .filter(|type_def| match type_def {
-                TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
+                TypeDef::Struct(struct_def) => {
+                    struct_def.visit.has_visitor() && !struct_def.builder.skip
+                }
                 TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
                 _ => false,
             })
