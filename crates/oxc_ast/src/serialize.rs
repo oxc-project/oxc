@@ -953,10 +953,7 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 
 /// Serializer for `computed` field of `TSEnumMember`.
 #[ast_meta]
-#[estree(
-    ts_type = "boolean",
-    raw_deser = "false"
-)]
+#[estree(ts_type = "boolean", raw_deser = "false")]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
 
 impl ESTree for TSEnumMemberComputed<'_, '_> {
