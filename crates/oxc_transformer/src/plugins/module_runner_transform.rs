@@ -545,9 +545,6 @@ impl<'a> ModuleRunnerTransform<'a> {
     ) {
         let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
         let expr = match declaration {
-            // TODO:
-            // Vite appends `Object.defineProperty("__vite_ssr_exports__", "default", { ..., value: ... })` at the end
-            // https://github.com/vitejs/vite/blob/175a83909f02d3b554452a7bd02b9f340cdfef70/packages/vite/src/node/ssr/ssrTransform.ts#L321
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
