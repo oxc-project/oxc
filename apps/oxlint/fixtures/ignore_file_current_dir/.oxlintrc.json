@@ -1,0 +1,10 @@
+{
+  "ignorePatterns": [
+    "foo.js",
+    "a/bar.js"
+  ],
+  "rules": {
+    "no-debugger": "deny"
+  }
+}
+
