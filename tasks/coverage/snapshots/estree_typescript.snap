@@ -1,7 +1,7 @@
 commit: 15392346
 
 estree_typescript Summary:
-AST Parsed     : 10618/10725 (99.00%)
+AST Parsed     : 10619/10725 (99.01%)
 Positive Passed: 8456/10725 (78.84%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
@@ -495,8 +495,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferenc
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportStarFromEmptyModule.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportedInterfaceInaccessibleInCallbackInModule.ts
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
-Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/extendBaseClassBeforeItsDeclared.ts
 tasks/coverage/typescript/tests/cases/compiler/extendsUntypedModule.ts
 Unexpected estree file content error: 1 != 3
