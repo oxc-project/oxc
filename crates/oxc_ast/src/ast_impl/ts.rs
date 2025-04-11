@@ -17,8 +17,8 @@ impl<'a> TSEnumMemberName<'a> {
     pub fn static_name(&self) -> Atom<'a> {
         match self {
             Self::Identifier(ident) => ident.name,
-            Self::String(lit) => lit.value,
-            Self::TemplateString(template) => template
+            Self::String(lit) | Self::ComputedString(lit) => lit.value,
+            Self::ComputedTemplateString(template) => template
                 .quasi()
                 .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
