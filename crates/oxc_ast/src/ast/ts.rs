@@ -119,21 +119,38 @@ pub struct TSEnumBody<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    add_fields(computed = TSEnumMemberComputed),
+    field_order(span, id, computed, initializer),
+)]
 pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
-    pub computed: bool,
     pub initializer: Option<Expression<'a>>,
 }
 
 /// TS Enum Member Name
+///
+/// ## Example
+/// ```ts
+/// enum ValidEnum {
+///   identifier,
+///   'string',
+///   ['computed-string'],
+///   [`computed-template`],
+///   // These are invalid syntax
+///   // `template`,
+///   // [computedIdentifier],
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSEnumMemberName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
     String(Box<'a, StringLiteral<'a>>) = 1,
-    TemplateString(Box<'a, TemplateLiteral<'a>>) = 2,
+    ComputedString(Box<'a, StringLiteral<'a>>) = 2,
+    ComputedTemplateString(Box<'a, TemplateLiteral<'a>>) = 3,
 }
 
 /// TypeScript Type Annotation

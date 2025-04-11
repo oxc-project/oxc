@@ -951,6 +951,26 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 // TS
 // --------------------
 
+/// Serializer for `computed` field of `TSEnumMember`.
+///
+/// `true` if `id` field is one of the computed variants of `TSEnumMemberName`.
+//
+// TODO: Not ideal to have to include the enum discriminant's value here explicitly.
+// Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
+
+impl ESTree for TSEnumMemberComputed<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        matches!(
+            self.0.id,
+            TSEnumMemberName::ComputedString(_) | TSEnumMemberName::ComputedTemplateString(_)
+        )
+        .serialize(serializer);
+    }
+}
+
 /// Serializer for `directive` field of `ExpressionStatement`.
 /// This field is always `null`, and only appears in the TS AST, not JS ESTree.
 #[ast_meta]

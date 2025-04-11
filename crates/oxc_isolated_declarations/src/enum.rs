@@ -51,7 +51,6 @@ impl<'a> IsolatedDeclarations<'a> {
             let member = self.ast.ts_enum_member(
                 member.span,
                 member.id.clone_in(self.ast.allocator),
-                false,
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;

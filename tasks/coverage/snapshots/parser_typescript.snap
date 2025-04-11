@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1294/5754 (22.49%)
+Negative Passed: 1297/5754 (22.54%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -403,7 +403,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclara
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constEnumBadPropertyNames.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constEnumErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constWithNonNull.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constantEnumAssert.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constraintErrors1.ts
@@ -1438,8 +1437,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleVisibi
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityTest4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleWithNoValuesAsType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleWithValuesAsType.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/module_augmentExistingAmbientVariable.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/module_augmentExistingVariable.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multiLineContextDiagnosticWithPretty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multiLineErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleBaseInterfaesWithIncompatibleProperties.ts
@@ -5576,6 +5573,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  22 │ 
     ╰────
 
+  × Identifier `x6a` has already been declared
+    ╭─[typescript/tests/cases/compiler/augmentedTypesVar.ts:27:5]
+ 26 │ 
+ 27 │ var x6a = 1; // error
+    ·     ─┬─
+    ·      ╰── `x6a` has already been declared here
+ 28 │ module x6a { var y = 2; } // error since instantiated
+    ·        ─┬─
+    ·         ╰── It can not be redeclared here
+ 29 │ 
+    ╰────
+
+  × Identifier `x6b` has already been declared
+    ╭─[typescript/tests/cases/compiler/augmentedTypesVar.ts:30:5]
+ 29 │ 
+ 30 │ var x6b = 1; // error
+    ·     ─┬─
+    ·      ╰── `x6b` has already been declared here
+ 31 │ module x6b { export var y = 2; } // error
+    ·        ─┬─
+    ·         ╰── It can not be redeclared here
+ 32 │ 
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/autoLift2.ts:5:17]
  4 │     constructor() {
@@ -6872,6 +6893,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     · ────
  19 │     const c5 = 0;
     ╰────
+
+  × Identifier `E` has already been declared
+   ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:1:12]
+ 1 │ const enum E {
+   ·            ┬
+   ·            ╰── `E` has already been declared here
+ 2 │     A
+   ╰────
+   ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:5:8]
+ 4 │ 
+ 5 │ module E {
+   ·        ┬
+   ·        ╰── It can not be redeclared here
+ 6 │     var x = 1;
+   ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[typescript/tests/cases/compiler/constInClassExpression.ts:2:11]
@@ -9862,6 +9898,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ 
     ╰────
 
+  × Identifier `console` has already been declared
+   ╭─[typescript/tests/cases/compiler/module_augmentExistingAmbientVariable.ts:1:13]
+ 1 │ declare var console: any;
+   ·             ──────┬─────
+   ·                   ╰── `console` has already been declared here
+ 2 │ 
+ 3 │ module console {
+   ·        ───┬───
+   ·           ╰── It can not be redeclared here
+ 4 │     export var x = 2;
+   ╰────
+
+  × Identifier `console` has already been declared
+   ╭─[typescript/tests/cases/compiler/module_augmentExistingVariable.ts:1:5]
+ 1 │ var console: any;
+   ·     ──────┬─────
+   ·           ╰── `console` has already been declared here
+ 2 │ 
+ 3 │ module console {
+   ·        ───┬───
+   ·           ╰── It can not be redeclared here
+ 4 │     export var x = 2;
+   ╰────
+
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/compiler/multiLinePropertyAccessAndArrowFunctionIndent1.ts:1:1]
  1 │ return this.edit(role)
@@ -9886,6 +9946,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     static static p3;
    ╰────
   help: Remove the duplicate modifier.
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/tests/cases/compiler/nameCollisions.ts:2:9]
+ 1 │ module T {
+ 2 │     var x = 2;
+   ·         ┬
+   ·         ╰── `x` has already been declared here
+ 3 │ 
+ 4 │     module x { // error
+   ·            ┬
+   ·            ╰── It can not be redeclared here
+ 5 │         export class Bar {
+   ╰────
 
   × Identifier `z` has already been declared
     ╭─[typescript/tests/cases/compiler/nameCollisions.ts:10:12]

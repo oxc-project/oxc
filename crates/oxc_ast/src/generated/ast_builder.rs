@@ -9748,17 +9748,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `computed`
     /// * `initializer`
     #[inline]
     pub fn ts_enum_member(
         self,
         span: Span,
         id: TSEnumMemberName<'a>,
-        computed: bool,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
-        TSEnumMember { span, id, computed, initializer }
+        TSEnumMember { span, id, initializer }
     }
 
     /// Build a [`TSEnumMemberName::Identifier`].
@@ -9825,7 +9823,56 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`TSEnumMemberName::TemplateString`].
+    /// Build a [`TSEnumMemberName::ComputedString`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn ts_enum_member_name_computed_string<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedString`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn ts_enum_member_name_computed_string_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedTemplateString`].
     ///
     /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
     ///
@@ -9834,13 +9881,17 @@ impl<'a> AstBuilder<'a> {
     /// * `quasis`
     /// * `expressions`
     #[inline]
-    pub fn ts_enum_member_name_template_string(
+    pub fn ts_enum_member_name_computed_template_string(
         self,
         span: Span,
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::TemplateString(self.alloc_template_literal(span, quasis, expressions))
+        TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(
+            span,
+            quasis,
+            expressions,
+        ))
     }
 
     /// Build a [`TSTypeAnnotation`].

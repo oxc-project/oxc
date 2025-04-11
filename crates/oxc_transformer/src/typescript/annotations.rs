@@ -78,20 +78,20 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                         // Keep the export declaration if there are no export specifiers
                         true
                     } else {
-                        decl.specifiers.retain(|specifier| {
-                            !(specifier.export_kind.is_type()
-                                || self.type_identifier_names.contains(&specifier.exported.name())
-                                || matches!(
-                                    &specifier.local, ModuleExportName::IdentifierReference(ident)
-                                    if ctx.scoping().get_reference(ident.reference_id()).is_type()
-                                ))
-                        });
+                        decl.specifiers
+                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
-                Statement::ExportDefaultDeclaration(decl) => !decl.is_typescript_syntax(),
+                Statement::ExportDefaultDeclaration(decl) => {
+                    !decl.is_typescript_syntax()
+                        && !matches!(
+                            &decl.declaration,
+                            ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
+                        )
+                }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
@@ -121,7 +121,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                                 if self.only_remove_type_imports {
                                     true
                                 } else {
-                                    self.has_value_reference(&id.name, ctx)
+                                    self.has_value_reference(id, ctx)
                                 }
                             });
 
@@ -597,27 +597,46 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
         }
     }
 
-    pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(symbol_id) = ctx.scoping().get_root_binding(name) {
-            // `import T from 'mod'; const T = 1;` The T has a value redeclaration
-            // `import T from 'mod'; type T = number;` The T has a type redeclaration
-            // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
-            // That means the import is shadowed, and we can safely remove the import.
-            let has_value_redeclaration =
-                (ctx.scoping().symbol_flags(symbol_id) - SymbolFlags::Import).is_value();
-            if has_value_redeclaration {
-                return false;
-            }
-            if ctx
-                .scoping()
-                .get_resolved_references(symbol_id)
-                .any(|reference| !reference.is_type())
-            {
-                return true;
-            }
+    fn has_value_reference(&self, id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let symbol_id = id.symbol_id();
+
+        // `import T from 'mod'; const T = 1;` The T has a value redeclaration
+        // `import T from 'mod'; type T = number;` The T has a type redeclaration
+        // If the symbol is still a value symbol after `SymbolFlags::Import` is removed, then it's a value redeclaration.
+        // That means the import is shadowed, and we can safely remove the import.
+        if (ctx.scoping().symbol_flags(symbol_id) - SymbolFlags::Import).is_value() {
+            return false;
         }
 
-        self.is_jsx_imports(name)
+        if ctx.scoping().get_resolved_references(symbol_id).any(|reference| !reference.is_type()) {
+            return true;
+        }
+
+        self.is_jsx_imports(&id.name)
+    }
+
+    fn can_retain_export_specifier(
+        &self,
+        specifier: &ExportSpecifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if specifier.export_kind.is_type()
+            || self.type_identifier_names.contains(&specifier.exported.name())
+        {
+            return false;
+        }
+        !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx))
+    }
+
+    fn is_refers_to_type(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        let reference = scoping.get_reference(ident.reference_id());
+
+        reference.symbol_id().is_some_and(|symbol_id| {
+            reference.is_type()
+                || scoping.symbol_flags(symbol_id).is_ambient()
+                    && scoping.symbol_redeclarations(symbol_id).iter().all(|r| r.flags.is_ambient())
+        })
     }
 }
 

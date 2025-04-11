@@ -858,10 +858,7 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/estree-compat/shorthand-ambient-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["hot-new-module"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -934,7 +931,7 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
 semantic error: Symbol flags mismatch for "N":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(1): Span { start: 37, end: 38 }
@@ -1038,10 +1035,7 @@ after transform: ScopeId(0): ["A", "C", "D", "foo"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/not-top-level/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -1283,7 +1277,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
 semantic error: Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
@@ -1314,26 +1308,17 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/declare-shorthand/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module-babel-7/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -1345,7 +1330,7 @@ semantic error: Ambient modules cannot be nested in other modules or namespaces.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "N", "m"]
+after transform: ScopeId(0): ["M", "N"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
@@ -1353,7 +1338,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare-babel-7/input.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "N", "m"]
+after transform: ScopeId(0): ["M", "N"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
@@ -1473,7 +1458,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | Function)
+after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
@@ -1513,15 +1498,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : <None>
-Reference flags mismatch for "foo":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["foo"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
 semantic error: Bindings mismatch:
@@ -1530,15 +1506,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : <None>
-Reference flags mismatch for "foo":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["foo"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-after/input.ts
 semantic error: Scope flags mismatch:
@@ -1573,10 +1540,7 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m2"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -1584,10 +1548,7 @@ after transform: ["X"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-import-in-declare-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["~popsicle/dist/common"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -1608,9 +1569,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["N"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-type-after/input.ts
 semantic error: Scope children mismatch:
@@ -1646,7 +1604,7 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
+after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -2125,16 +2083,13 @@ after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, e
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["test", "test/submodule"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSONSchema7", "foo", "fooBar", "test/submodule", "test/submodule2"]
+after transform: ScopeId(0): ["JSONSchema7", "foo", "fooBar"]
 rebuilt        : ScopeId(0): ["foo", "fooBar"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -2144,10 +2099,7 @@ after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["test/sub1"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
