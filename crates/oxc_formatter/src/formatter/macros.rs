@@ -71,6 +71,10 @@ macro_rules! write {
     ($dst:expr, [$($arg:expr),+ $(,)?]) => {{
         let result = $dst.write_fmt($crate::format_args!($($arg),+));
         result
+    }};
+    ($dst:expr, $arg:expr) => {{
+        let result = $dst.write_fmt($crate::format_args!($arg));
+        result
     }}
 }
 

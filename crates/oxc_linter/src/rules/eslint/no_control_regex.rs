@@ -143,7 +143,11 @@ fn parse_and_check_regex(ctx: &LintContext, pattern_span: Span, flags_span: Opti
 }
 
 fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
-    let mut finder = ControlCharacterFinder::default();
+    let mut finder = ControlCharacterFinder {
+        control_chars: Vec::new(),
+        num_capture_groups: 0,
+        source_text: context.source_text(),
+    };
     finder.visit_pattern(pattern);
 
     if !finder.control_chars.is_empty() {
@@ -154,12 +158,13 @@ fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
 }
 
 #[derive(Default)]
-struct ControlCharacterFinder {
+struct ControlCharacterFinder<'a> {
     control_chars: Vec<Character>,
     num_capture_groups: u32,
+    source_text: &'a str,
 }
 
-impl<'a> Visit<'a> for ControlCharacterFinder {
+impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
     fn visit_pattern(&mut self, it: &Pattern<'a>) {
         walk::walk_pattern(self, it);
         // \1, \2, etc. are sometimes valid "control" characters as they can be
@@ -185,16 +190,21 @@ impl<'a> Visit<'a> for ControlCharacterFinder {
 
     fn visit_character(&mut self, ch: &Character) {
         // Control characters are in the range 0x00 to 0x1F
-        if ch.value <= 0x1F &&
-            // tab
-            ch.value != 0x09 &&
-            // line feed
-            ch.value != 0x0A &&
-            // carriage return
-            ch.value != 0x0D
-        {
-            // TODO: check if starts with \x or \u when char spans work correctly
-            self.control_chars.push(*ch);
+        if ch.value <= 0x1F {
+            let text: &str = ch.span.source_text(self.source_text);
+            let is_code_point_match = text
+                .trim_start_matches('\\')
+                .chars()
+                .nth(0)
+                .is_some_and(|c| c.to_digit(16) == Some(ch.value));
+            if is_code_point_match
+                || text.starts_with("\\x")
+                || text.starts_with("\\\\x")
+                || text.starts_with("\\u")
+                || text.starts_with("\\\\u")
+            {
+                self.control_chars.push(*ch);
+            }
         }
     }
 
@@ -329,6 +339,8 @@ mod tests {
                 r"/[\n\r\p{Z}\p{P}]/u",
                 r"/[\n\t]+/g",
                 r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
+                r"/\f/",
+                r"/\v/",
             ],
             vec![
                 r"var regex = /\x1f/",
@@ -347,13 +359,12 @@ mod tests {
                 r"new RegExp('\\u{1F}', 'u')",
                 r"new RegExp('\\u{1F}', 'ugi')",
                 // https://github.com/oxc-project/oxc/issues/6136
-                // TODO: uncomment when char spans work correctly
-                // r"/\u{0a}/u",
-                // r"/\x0a/u",
-                // r"/\u{0d}/u",
-                // r"/\x0d/u",
-                // r"/\u{09}/u",
-                // r"/\x09/u",
+                r"/\u{0a}/u",
+                r"/\x0a/u",
+                r"/\u{0d}/u",
+                r"/\x0d/u",
+                r"/\u{09}/u",
+                r"/\x09/u",
             ],
         )
         .test_and_snapshot();

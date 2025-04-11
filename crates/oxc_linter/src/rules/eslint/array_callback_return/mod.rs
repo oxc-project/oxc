@@ -196,7 +196,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                 // "methods",
                 let array_method = callee.static_property_name()?;
 
-                if TARGET_METHODS.contains(&array_method)
+                if TARGET_METHODS.binary_search(&array_method).is_ok()
                     // Check that current node is parent's first argument
                     && call.arguments.len() == 1
                     && is_nth_argument(call, current_node_arg, 0)
