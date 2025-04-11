@@ -150,7 +150,6 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
                 Statement::ExportAllDeclaration(export) => {
                     self.transform_export_all_declaration(
-                        &mut new_stmts,
                         &mut hoist_imports,
                         &mut hoist_exports,
                         export,
@@ -482,7 +481,6 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// ```
     fn transform_export_all_declaration(
         &mut self,
-        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
         hoist_imports: &mut Vec<Statement<'a>>,
         hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportAllDeclaration<'a>>,
@@ -510,9 +508,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
             let export = ctx.ast.statement_expression(span, call);
-            hoist_imports.push(import);
-            // we cannot hoist names from "export *", so keep at the same position
-            new_stmts.push(export);
+            hoist_imports.extend([import, export]);
         }
     }
 
@@ -1089,8 +1085,8 @@ const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: 
             "export * from 'vue'\nexport * from 'react'",
             "
 const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
-const __vite_ssr_import_1__ = await __vite_ssr_import__('react');
 __vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_1__ = await __vite_ssr_import__('react');
 __vite_ssr_exportAll__(__vite_ssr_import_1__);",
         );
     }
@@ -1202,8 +1198,8 @@ const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: 
             "export * from 'vue';import {createApp} from 'vue'",
             "
 const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
-const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
 __vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
 ",
         );
     }
@@ -2072,11 +2068,11 @@ __vite_ssr_dynamic_import__('./bar.json', { with: { type: 'json' } });",
     console.log(foo + 2)",
             "
 const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
 const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
 const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');
-console.log(__vite_ssr_import_1__.foo + 1);
-__vite_ssr_exportAll__(__vite_ssr_import_0__);
 __vite_ssr_exportAll__(__vite_ssr_import_2__);
+console.log(__vite_ssr_import_1__.foo + 1);
 console.log(__vite_ssr_import_1__.foo + 2);",
         );
     }
@@ -2302,9 +2298,9 @@ const c = () => {
         const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
         const __vite_ssr_import_1__ = await __vite_ssr_import__('b', { importedNames: ['b'] });
         const __vite_ssr_import_2__ = await __vite_ssr_import__('c');
+        __vite_ssr_exportAll__(__vite_ssr_import_2__);
         const __vite_ssr_import_3__ = await __vite_ssr_import__('d');
         const __vite_ssr_import_4__ = await __vite_ssr_import__('a');
-        __vite_ssr_exportAll__(__vite_ssr_import_2__);
         __vite_ssr_dynamic_import__('e');
         ";
         test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
