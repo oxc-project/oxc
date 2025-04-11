@@ -508,6 +508,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
             let export = ctx.ast.statement_expression(span, call);
+            // names from `export *` cannot be known before import, so add it right after the import as a best effort.
             hoist_imports.extend([import, export]);
         }
     }
