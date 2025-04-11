@@ -117,7 +117,7 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(&lit.value.as_str()) {
+            if VALID_TYPES.binary_search(&lit.value.as_str()).is_err() {
                 ctx.diagnostic(invalid_value(None, sibling.span()));
             }
             return;
@@ -125,7 +125,10 @@ impl Rule for ValidTypeof {
 
         if let Expression::TemplateLiteral(template) = sibling {
             if template.expressions.is_empty() {
-                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(&value.as_str())) {
+                if template
+                    .quasi()
+                    .is_some_and(|value| VALID_TYPES.binary_search(&value.as_str()).is_err())
+                {
                     ctx.diagnostic(invalid_value(None, sibling.span()));
                 }
                 return;
@@ -174,7 +177,7 @@ impl Rule for ValidTypeof {
 }
 
 const VALID_TYPES: [&str; 8] =
-    ["symbol", "undefined", "object", "boolean", "number", "string", "function", "bigint"];
+    ["bigint", "boolean", "function", "number", "object", "string", "symbol", "undefined"];
 
 #[test]
 fn test() {

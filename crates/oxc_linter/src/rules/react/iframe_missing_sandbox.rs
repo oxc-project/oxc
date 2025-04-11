@@ -175,7 +175,7 @@ fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {
-        if !ALLOWED_VALUES.contains(&trimmed_atr) {
+        if ALLOWED_VALUES.binary_search(&trimmed_atr).is_err() {
             ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
         }
         if trimmed_atr == "allow-scripts" {

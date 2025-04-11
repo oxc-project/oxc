@@ -68,17 +68,17 @@ const EMPTY_TAGS: [&str; 18] = [
     "global",
     "hideconstructor",
     "ignore",
+    "inheritDoc",
     "inner",
     "instance",
-    "override",
-    "readonly",
-    "inheritDoc",
     "internal",
+    "override",
     "overload",
     "package",
     "private",
     "protected",
     "public",
+    "readonly",
     "static",
 ];
 
@@ -101,7 +101,7 @@ impl Rule for EmptyTags {
         let settings = &ctx.settings().jsdoc;
 
         let is_empty_tag_kind = |tag_name: &str| {
-            if EMPTY_TAGS.contains(&tag_name) {
+            if EMPTY_TAGS.binary_search(&tag_name).is_ok() {
                 return true;
             }
             if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {
