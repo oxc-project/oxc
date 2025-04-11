@@ -2040,7 +2040,7 @@ function deserializeTSInstantiationExpression(pos) {
 
 function deserializeJSDocNullableType(pos) {
   return {
-    type: 'JSDocNullableType',
+    type: 'TSJSDocNullableType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeAnnotation: deserializeTSType(pos + 8),
@@ -2050,7 +2050,7 @@ function deserializeJSDocNullableType(pos) {
 
 function deserializeJSDocNonNullableType(pos) {
   return {
-    type: 'JSDocNonNullableType',
+    type: 'TSJSDocNonNullableType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeAnnotation: deserializeTSType(pos + 8),
@@ -2060,7 +2060,7 @@ function deserializeJSDocNonNullableType(pos) {
 
 function deserializeJSDocUnknownType(pos) {
   return {
-    type: 'JSDocUnknownType',
+    type: 'TSJSDocUnknownType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };

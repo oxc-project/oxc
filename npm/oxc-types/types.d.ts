@@ -1420,19 +1420,19 @@ export interface TSInstantiationExpression extends Span {
 export type ImportOrExportKind = 'value' | 'type';
 
 export interface JSDocNullableType extends Span {
-  type: 'JSDocNullableType';
+  type: 'TSJSDocNullableType';
   typeAnnotation: TSType;
   postfix: boolean;
 }
 
 export interface JSDocNonNullableType extends Span {
-  type: 'JSDocNonNullableType';
+  type: 'TSJSDocNonNullableType';
   typeAnnotation: TSType;
   postfix: boolean;
 }
 
 export interface JSDocUnknownType extends Span {
-  type: 'JSDocUnknownType';
+  type: 'TSJSDocUnknownType';
 }
 
 export type AssignmentOperator =
