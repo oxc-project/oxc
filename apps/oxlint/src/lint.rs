@@ -475,7 +475,23 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
         if let Some(config_path) = config {
-            let full_path = cwd.join(config_path);
+            let full_path = match cwd.join(config_path).canonicalize() {
+                Ok(path) => path,
+                Err(e) => {
+                    let handler = GraphicalReportHandler::new();
+                    let mut err = String::new();
+                    handler
+                        .render_report(
+                            &mut err,
+                            &OxcDiagnostic::error(format!(
+                                "Failed to resolve config path {}: {e}",
+                                config_path.display()
+                            )),
+                        )
+                        .unwrap();
+                    return Err(err);
+                }
+            };
             return match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
@@ -1074,5 +1090,34 @@ mod test {
     fn test_nested_config_multi_file_analysis_imports() {
         let args = &["issue_10054"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_config_path_with_parent_references() {
+        let cwd = std::env::current_dir().unwrap();
+
+        // Test case 1: Invalid path that should fail
+        let invalid_config = PathBuf::from("child/../../fixtures/linter/eslintrc.json");
+        let result = LintRunner::find_oxlint_config(&cwd, Some(&invalid_config));
+        assert!(result.is_err(), "Expected config lookup to fail with invalid path");
+
+        // Test case 2: Valid path that should pass
+        let valid_config = PathBuf::from("fixtures/linter/eslintrc.json");
+        let result = LintRunner::find_oxlint_config(&cwd, Some(&valid_config));
+        assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
+
+        // Test case 3: Valid path using parent directory (..) syntax that should pass
+        let valid_parent_config = PathBuf::from("fixtures/linter/../linter/eslintrc.json");
+        let result = LintRunner::find_oxlint_config(&cwd, Some(&valid_parent_config));
+        assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
+
+        // Verify the resolved path is correct
+        if let Ok(config) = result {
+            assert_eq!(
+                config.path.file_name().unwrap().to_str().unwrap(),
+                "eslintrc.json",
+                "Config file name should be preserved after path resolution"
+            );
+        }
     }
 }
