@@ -423,11 +423,6 @@ fn test_module_like_declarations() {
         .contains_flags(SymbolFlags::NameSpaceModule)
         .test();
 
-    SemanticTester::ts(r#"module "A" { export const x = 1; }"#)
-        .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
-        .test();
-
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");
     let semantic = test.build();
     let global = semantic.scoping().symbol_names().find(|name| *name == "global");

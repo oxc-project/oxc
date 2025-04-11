@@ -467,26 +467,17 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleReopen.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["fs"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithInternalImportDeclaration.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithoutInternalImportDeclaration.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -1084,10 +1075,7 @@ tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["file1", "x"]
-rebuilt        : ScopeId(0): ["x"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -1095,16 +1083,13 @@ tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["file1", "x"]
-rebuilt        : ScopeId(0): ["x"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["e", "express"]
+after transform: ScopeId(0): ["e"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -1114,10 +1099,7 @@ tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["file1"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -5992,10 +5974,7 @@ after transform: SymbolId(8): [ReferenceId(10)]
 rebuilt        : SymbolId(6): []
 
 tasks/coverage/typescript/tests/cases/compiler/cyclicModuleImport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MainModule", "SubModule"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
@@ -6008,18 +5987,12 @@ after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["test"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAmbientExternalModuleWithSingleExportedModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["SubModule"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -6344,10 +6317,7 @@ after transform: ["m2", "module"]
 rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportedTypeUseInTypeArgPosition.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["List", "mod1", "moo"]
-rebuilt        : ScopeId(0): ["List"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "List":
@@ -7553,7 +7523,7 @@ rebuilt        : ScopeId(0): ["a", "getA"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitForModuleImportingModuleAugmentationRetainsImport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./parent", "ParentThing", "child1"]
+after transform: ScopeId(0): ["ParentThing", "child1"]
 rebuilt        : ScopeId(0): ["child1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
@@ -7764,10 +7734,7 @@ after transform: ["const"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitModuleWithScopeMarker.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -8042,10 +8009,7 @@ after transform: ScopeId(0): ["Power", "power"]
 rebuilt        : ScopeId(0): ["power"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitRedundantTripleSlashModuleAugmentation.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
@@ -8378,10 +8342,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMerging2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -8448,10 +8409,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declareExternalModuleWithExportAssignedFundule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["express"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -8498,18 +8456,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declaredExternalModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["connect"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declaredExternalModuleWithExportAssignment.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["connect"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -12379,10 +12331,7 @@ after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "require", "x", "y"]
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultClassDeclaration4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -12392,10 +12341,7 @@ after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), R
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultFunctionDeclaration4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -13185,7 +13131,7 @@ rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultVariable.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["io", "module"]
+after transform: ScopeId(0): ["io"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -13218,10 +13164,7 @@ after transform: [ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["popsicle", "popsicle-proxy-agent", "~popsicle/dist/common", "~popsicle/dist/request"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 
@@ -13395,10 +13338,7 @@ after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 42, en
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndExportedMemberDeclaration.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m2"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -13484,18 +13424,12 @@ after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportsInAmbientModules1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportsInAmbientModules2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -13596,10 +13530,7 @@ after transform: SymbolId(6): [ReferenceId(0)]
 rebuilt        : SymbolId(4): []
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceDoubleUnderscore1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["__timezonecomplete/basics", "timezonecomplete"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
@@ -15902,10 +15833,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -16099,10 +16027,7 @@ after transform: SymbolId(1): Span { start: 38, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/import_unneeded-require-when-referenecing-aliased-type-throug-array.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ITest"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -16161,26 +16086,17 @@ after transform: ["m1"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -19103,10 +19019,7 @@ after transform: ["JSX", "Record"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxNamespacedNameNotComparedToNonMatchingIndexSignature.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_jsx", "_jsxFileName", "react", "tag"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "tag"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -19742,10 +19655,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations6.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a", "A", "B"]
-rebuilt        : ScopeId(0): ["A", "B"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
@@ -20132,10 +20042,7 @@ after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/missingImportAfterModuleImport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["SubModule"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -20484,26 +20391,17 @@ after transform: ["D3"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationCollidingNamesInAugmentation1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDeclarationEmit1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDeclarationEmit2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
@@ -20530,41 +20428,29 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDuringSyntheticDefaultCheck.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_moment", "moment", "moment-timezone"]
+after transform: ScopeId(0): ["_moment"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendAmbientModule1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Observable", "observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendAmbientModule2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Observable", "observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendFileModule1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendFileModule2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
@@ -20599,7 +20485,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B"]
+after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -20607,7 +20493,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "N"]
+after transform: ScopeId(0): ["A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -20618,7 +20504,7 @@ rebuilt        : ["undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "N"]
+after transform: ScopeId(0): ["A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -20629,7 +20515,7 @@ rebuilt        : ["undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "N"]
+after transform: ScopeId(0): ["A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -20659,10 +20545,7 @@ after transform: ScopeId(0): ["Observable", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationNoNewNames.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./observable", "Observable"]
-rebuilt        : ScopeId(0): ["Observable"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
@@ -20681,10 +20564,7 @@ after transform: []
 rebuilt        : ["I"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsBundledOutput1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./m1", "Cls"]
-rebuilt        : ScopeId(0): ["Cls"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
@@ -20695,7 +20575,7 @@ rebuilt        : ScopeId(0): ["a", "b", "c"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a", "A", "Cls"]
+after transform: ScopeId(0): ["A", "Cls"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -20703,7 +20583,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a", "A", "Cls"]
+after transform: ScopeId(0): ["A", "Cls"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -21366,10 +21246,7 @@ after transform: ["M"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
@@ -23957,18 +23834,12 @@ after transform: ["privateModule"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameAccessorDeclFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["GlobalWidgets"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameVarTypeDeclFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["GlobalWidgets"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -24145,18 +24016,12 @@ after transform: SymbolId(43): [ReferenceId(56), ReferenceId(57), ReferenceId(58
 rebuilt        : SymbolId(40): [ReferenceId(46), ReferenceId(47), ReferenceId(48), ReferenceId(49), ReferenceId(50), ReferenceId(51)]
 
 tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameParameterTypeDeclFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["GlobalWidgets"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameReturnTypeDeclFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["GlobalWidgets"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -25892,10 +25757,7 @@ after transform: ["NonNullable", "Parameters", "R", "Record", "ReturnType", "Too
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Any/Cast", "Any/Compute", "Any/Extends", "Any/Implements", "Any/Key", "Any/Kind", "Any/Type", "Any/_Internal", "Any/x", "Boolean/Boolean", "Boolean/Not", "Function/Curry", "Function/Function", "Function/Parameters", "Function/Return", "Iteration/Format", "Iteration/Iteration", "Iteration/IterationOf", "Iteration/Key", "Iteration/Next", "Iteration/Pos", "Iteration/Prev", "Iteration/_Internal", "List/Append", "List/Concat", "List/Drop", "List/Keys", "List/Length", "List/List", "List/NonNullable", "List/ObjectOf", "List/Prepend", "List/Reverse", "List/Tail", "List/_Internal", "Number/Number", "Number/NumberOf", "Number/_Internal", "Object/At", "Object/Keys", "Object/ListOf", "Object/Merge", "Object/NonNullable", "Object/Omit", "Object/Overwrite", "Object/Pick", "Object/_Internal", "Union/Exclude", "Union/Has", "Union/Keys", "Union/NonNullable", "Union/Union"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(9), ScopeId(13), ScopeId(19), ScopeId(21), ScopeId(25), ScopeId(31), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(44), ScopeId(48), ScopeId(51), ScopeId(53), ScopeId(56), ScopeId(62), ScopeId(64), ScopeId(71), ScopeId(73), ScopeId(81), ScopeId(88), ScopeId(92), ScopeId(98), ScopeId(100), ScopeId(103), ScopeId(108), ScopeId(110), ScopeId(115), ScopeId(117), ScopeId(119), ScopeId(124), ScopeId(131), ScopeId(136), ScopeId(145), ScopeId(147), ScopeId(149), ScopeId(152), ScopeId(156), ScopeId(160), ScopeId(162), ScopeId(168), ScopeId(173), ScopeId(177), ScopeId(179), ScopeId(181), ScopeId(183), ScopeId(186), ScopeId(188), ScopeId(190), ScopeId(192), ScopeId(196)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -26701,10 +26563,7 @@ after transform: ["foo"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["punycode"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -30556,10 +30415,7 @@ after transform: ["Function", "m"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/typeAliasExport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -31309,10 +31165,7 @@ after transform: ["Lib"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives9.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./main", "Cls"]
-rebuilt        : ScopeId(0): ["Cls"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
@@ -33004,7 +32857,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarations.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["E1", "E2", "E3", "M1", "cls", "external1", "fn1", "fn10", "fn2", "fn3", "fn4", "fn5", "fn6", "fn7", "fn8", "fn9", "m", "n", "p", "q", "x"]
+after transform: ScopeId(0): ["E1", "E2", "E3", "M1", "cls", "fn1", "fn10", "fn2", "fn3", "fn4", "fn5", "fn6", "fn7", "fn8", "fn9", "m", "n", "p", "q", "x"]
 rebuilt        : ScopeId(0): ["p", "q", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(23)]
@@ -33017,10 +32870,7 @@ after transform: ["M1"]
 rebuilt        : ["E3", "M1"]
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsExternal.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["equ", "equ2"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
@@ -33041,10 +32891,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
@@ -33080,10 +32927,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_declarationEmit.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -45106,10 +44950,7 @@ after transform: ScopeId(0): ["add"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -46926,7 +46767,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution17.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "elements1", "elements2"]
+after transform: ScopeId(0): ["JSX"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6)]
@@ -48221,10 +48062,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -49520,10 +49358,7 @@ after transform: ["AsyncIterable", "Iterable", "Promise", "arguments", "require"
 rebuilt        : ["arguments", "asyncIterable", "iterable", "iterableOfPromise", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeAmbient.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Bar2", "_defineProperty", "foo", "foo2", "shim", "x", "y"]
-rebuilt        : ScopeId(0): ["Bar2", "_defineProperty", "shim", "x", "y"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:

@@ -4,7 +4,6 @@ use std::ptr;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::GetSpan;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -385,23 +384,22 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // do not bind `global` for `declare global { ... }`
-        if self.kind == TSModuleDeclarationKind::Global {
+        if self.kind.is_global() {
             return;
         }
+        let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
 
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
         let symbol_id = builder.declare_symbol(
-            self.id.span(),
-            self.id.name().as_str(),
+            id.span,
+            &id.name,
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );
 
-        if let TSModuleDeclarationName::Identifier(id) = &self.id {
-            id.symbol_id.set(Some(symbol_id));
-        }
+        id.set_symbol_id(symbol_id);
     }
 }
 

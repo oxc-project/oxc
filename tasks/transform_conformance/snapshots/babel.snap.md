@@ -1417,7 +1417,7 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "M", "N", "f", "m", "x"]
+after transform: ScopeId(0): ["C", "E", "M", "N", "f", "x"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
