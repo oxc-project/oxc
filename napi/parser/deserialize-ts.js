@@ -1392,7 +1392,7 @@ function deserializeTSEnumMember(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeTSEnumMemberName(pos + 8),
-    computed: false,
+    computed: deserializeU8(pos + 8) > 1,
     initializer: deserializeOptionExpression(pos + 24),
   };
 }

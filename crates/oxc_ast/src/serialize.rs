@@ -952,8 +952,13 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 // --------------------
 
 /// Serializer for `computed` field of `TSEnumMember`.
+///
+/// `true` if `id` field is one of the computed variants of `TSEnumMemberName`.
+//
+// TODO: Not ideal to have to include the enum discriminant's value here explicitly.
+// Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "false")]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
 
 impl ESTree for TSEnumMemberComputed<'_, '_> {
