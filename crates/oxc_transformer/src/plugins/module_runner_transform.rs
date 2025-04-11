@@ -151,6 +151,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ExportAllDeclaration(export) => {
                     self.transform_export_all_declaration(
                         &mut new_stmts,
+                        &mut hoist_imports,
                         &mut hoist_exports,
                         export,
                         ctx,
@@ -159,6 +160,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ExportNamedDeclaration(export) => {
                     self.transform_export_named_declaration(
                         &mut new_stmts,
+                        &mut hoist_imports,
                         &mut hoist_exports,
                         export,
                         ctx,
@@ -378,6 +380,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn transform_export_named_declaration(
         &mut self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
         hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportNamedDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -433,7 +436,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
                     Self::create_imported_names_object(imported_names, ctx),
                 ]);
-                new_stmts.push(Self::create_import(SPAN, pattern, arguments, ctx));
+                hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
                 binding
             });
 
@@ -480,6 +483,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn transform_export_all_declaration(
         &mut self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
         hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportAllDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -498,7 +502,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             // `export * as foo from 'vue'` ->
             // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
             let export = Self::create_export(span, ident, exported.name(), ctx);
-            new_stmts.push(import);
+            hoist_imports.push(import);
             hoist_exports.push(export);
         } else {
             let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
@@ -506,8 +510,9 @@ impl<'a> ModuleRunnerTransform<'a> {
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
             let export = ctx.ast.statement_expression(span, call);
-            // we cannot hoist this case, so keep at the same position
-            new_stmts.extend([import, export]);
+            hoist_imports.push(import);
+            // we cannot hoist names from "export *", so keep at the same position
+            new_stmts.push(export);
         }
     }
 
@@ -1082,9 +1087,10 @@ const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: 
     fn export_star_from() {
         test_same(
             "export * from 'vue'\nexport * from 'react'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
-__vite_ssr_exportAll__(__vite_ssr_import_0__);
+            "
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
 const __vite_ssr_import_1__ = await __vite_ssr_import__('react');
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
 __vite_ssr_exportAll__(__vite_ssr_import_1__);",
         );
     }
@@ -1195,8 +1201,8 @@ const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: 
         test_same(
             "export * from 'vue';import {createApp} from 'vue'",
             "
-const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
 const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
 __vite_ssr_exportAll__(__vite_ssr_import_0__);
 ",
         );
@@ -2065,10 +2071,12 @@ __vite_ssr_dynamic_import__('./bar.json', { with: { type: 'json' } });",
     export * from './b'
     console.log(foo + 2)",
             "
+const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');
 const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
+const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');
 console.log(__vite_ssr_import_1__.foo + 1);
-const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');__vite_ssr_exportAll__(__vite_ssr_import_0__);
-const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');__vite_ssr_exportAll__(__vite_ssr_import_2__);
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
+__vite_ssr_exportAll__(__vite_ssr_import_2__);
 console.log(__vite_ssr_import_1__.foo + 2);",
         );
     }
@@ -2091,8 +2099,8 @@ Object.defineProperty(__vite_ssr_exports__, 'bar', {
   }
 });
 const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });
-__vite_ssr_exports__.default = (0, __vite_ssr_import_0__.foo)();
 const __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');
+__vite_ssr_exports__.default = (0, __vite_ssr_import_0__.foo)();
 console.log(bar);
 ",
         );
@@ -2294,10 +2302,10 @@ const c = () => {
         const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
         const __vite_ssr_import_1__ = await __vite_ssr_import__('b', { importedNames: ['b'] });
         const __vite_ssr_import_2__ = await __vite_ssr_import__('c');
-        __vite_ssr_exportAll__(__vite_ssr_import_2__);
         const __vite_ssr_import_3__ = await __vite_ssr_import__('d');
-        __vite_ssr_dynamic_import__('e');
         const __vite_ssr_import_4__ = await __vite_ssr_import__('a');
+        __vite_ssr_exportAll__(__vite_ssr_import_2__);
+        __vite_ssr_dynamic_import__('e');
         ";
         test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
     }
