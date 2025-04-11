@@ -1458,7 +1458,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | Function)
+after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 14, end: 15 }

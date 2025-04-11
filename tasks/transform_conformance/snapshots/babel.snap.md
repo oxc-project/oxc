@@ -1705,7 +1705,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol flags mismatch for "Signal":
-after transform: SymbolId(0): SymbolFlags(Class | Function)
+after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Signal":
 after transform: SymbolId(0): Span { start: 14, end: 20 }
@@ -1717,7 +1717,7 @@ Symbol redeclarations mismatch for "Signal":
 after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Signal2":
-after transform: SymbolId(3): SymbolFlags(Class | Function)
+after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(2): SymbolFlags(Function)
 Symbol reference IDs mismatch for "Signal2":
 after transform: SymbolId(3): [ReferenceId(4), ReferenceId(7)]

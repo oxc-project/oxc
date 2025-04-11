@@ -125,7 +125,12 @@ bitflags! {
         const TypeParameter           = 1 << 13;
         const NameSpaceModule         = 1 << 14;
         const ValueModule             = 1 << 15;
-        // In a dts file or there is a declare flag
+        /// Declared with `declare` modifier, like `declare function x() {}`.
+        //
+        // This flag is not part of TypeScript's `SymbolFlags`, it comes from TypeScript's `NodeFlags`. We introduced it into
+        // here because `NodeFlags` is incomplete and we only can access to `NodeFlags` in the Semantic, but we also need to
+        // access it in the Transformer.
+        // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
@@ -243,6 +248,11 @@ impl SymbolFlags {
     #[inline]
     pub fn is_type_import(&self) -> bool {
         self.contains(Self::TypeImport)
+    }
+
+    #[inline]
+    pub fn is_ambient(&self) -> bool {
+        self.contains(Self::Ambient)
     }
 
     /// If true, then the symbol can be referenced by a type reference

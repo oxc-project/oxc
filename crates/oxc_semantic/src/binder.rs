@@ -20,7 +20,12 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let (includes, excludes) = match self.kind {
+        let is_declare = builder
+            .nodes
+            .parent_kind(builder.current_node_id)
+            .is_some_and(|kind| matches!(kind, AstKind::VariableDeclaration(decl) if decl.declare));
+
+        let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const
             | VariableDeclarationKind::Using
             | VariableDeclarationKind::AwaitUsing => (
@@ -34,6 +39,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
+
+        if is_declare {
+            includes |= SymbolFlags::Ambient;
+        }
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
@@ -117,13 +126,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
 impl<'a> Binder<'a> for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let includes = if self.declare {
+            SymbolFlags::Class | SymbolFlags::Ambient
+        } else {
+            SymbolFlags::Class
+        };
         let Some(ident) = &self.id else { return };
-        let symbol_id = builder.declare_symbol(
-            ident.span,
-            &ident.name,
-            SymbolFlags::Class,
-            SymbolFlags::ClassExcludes,
-        );
+        let symbol_id =
+            builder.declare_symbol(ident.span, &ident.name, includes, SymbolFlags::ClassExcludes);
         ident.symbol_id.set(Some(symbol_id));
     }
 }
@@ -152,30 +162,32 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let includes = if self.declare {
+            SymbolFlags::Function | SymbolFlags::Ambient
+        } else {
+            SymbolFlags::Function
+        };
+
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.scoping.create_symbol(
                     ident.span,
                     ident.name.into(),
-                    SymbolFlags::Function,
+                    includes,
                     ScopeId::new(u32::MAX - 1), // Not bound to any scope.
                     builder.current_node_id,
                 );
                 ident.symbol_id.set(Some(symbol_id));
             } else {
-                let symbol_id = builder.declare_symbol(
-                    ident.span,
-                    &ident.name,
-                    SymbolFlags::Function,
-                    if builder.source_type.is_typescript() {
-                        SymbolFlags::FunctionExcludes
-                    } else {
-                        // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
-                        // doesn't care about non-strict mode, so we need to exclude this,
-                        // and further check in checker.
-                        SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
-                    },
-                );
+                let excludes = if builder.source_type.is_typescript() {
+                    SymbolFlags::FunctionExcludes
+                } else {
+                    // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
+                    // doesn't care about non-strict mode, so we need to exclude this,
+                    // and further check in checker.
+                    SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
+                };
+                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             }
         }
@@ -336,10 +348,15 @@ impl<'a> Binder<'a> for TSImportEqualsDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let includes = if self.declare {
+            SymbolFlags::TypeAlias | SymbolFlags::Ambient
+        } else {
+            SymbolFlags::TypeAlias
+        };
         let symbol_id = builder.declare_symbol(
             self.id.span,
             &self.id.name,
-            SymbolFlags::TypeAlias,
+            includes,
             SymbolFlags::TypeAliasExcludes,
         );
         self.id.symbol_id.set(Some(symbol_id));
@@ -348,10 +365,15 @@ impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let includes = if self.declare {
+            SymbolFlags::Interface | SymbolFlags::Ambient
+        } else {
+            SymbolFlags::Interface
+        };
         let symbol_id = builder.declare_symbol(
             self.id.span,
             &self.id.name,
-            SymbolFlags::Interface,
+            includes,
             SymbolFlags::InterfaceExcludes,
         );
         self.id.symbol_id.set(Some(symbol_id));
@@ -361,11 +383,11 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
 impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let is_const = self.r#const;
-        let includes = if is_const { SymbolFlags::ConstEnum } else { SymbolFlags::RegularEnum };
-        let excludes = if is_const {
-            SymbolFlags::ConstEnumExcludes
+        let includes = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::empty() };
+        let (includes, excludes) = if is_const {
+            (SymbolFlags::ConstEnum | includes, SymbolFlags::ConstEnumExcludes)
         } else {
-            SymbolFlags::RegularEnumExcludes
+            (SymbolFlags::RegularEnum | includes, SymbolFlags::RegularEnumExcludes)
         };
         let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
         self.id.symbol_id.set(Some(symbol_id));
@@ -392,16 +414,16 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
         let instantiated =
             get_module_instance_state(builder, self, builder.current_node_id).is_instantiated();
-        let (includes, excludes) = if instantiated {
+        let (mut includes, excludes) = if instantiated {
             (SymbolFlags::ValueModule, SymbolFlags::ValueModuleExcludes)
         } else {
             (SymbolFlags::NameSpaceModule, SymbolFlags::NamespaceModuleExcludes)
         };
 
-        // At declaration time a module has no value declaration it is only when a value declaration
-        // is made inside a the scope of a module that the symbol is modified
-        let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
-        let symbol_id = builder.declare_symbol(id.span, &id.name, includes | ambient, excludes);
+        if self.declare {
+            includes |= SymbolFlags::Ambient;
+        }
+        let symbol_id = builder.declare_symbol(id.span, &id.name, includes, excludes);
 
         id.set_symbol_id(symbol_id);
     }

@@ -379,7 +379,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "D":
-after transform: SymbolId(3): SymbolFlags(Class | ValueModule)
+after transform: SymbolId(3): SymbolFlags(Class | ValueModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "D":
 after transform: SymbolId(3): Span { start: 97, end: 98 }
@@ -398,7 +398,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(Class | Function)
+after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "foo":
 after transform: SymbolId(0): Span { start: 14, end: 17 }
@@ -46653,6 +46653,9 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Child", "Component", "Composite", "Composite2", "Namespace", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "bar", "foo", "hasOwnProperty", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
+Symbol flags mismatch for "x":
+after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "x":
 after transform: SymbolId(9): Span { start: 231, end: 236 }
 rebuilt        : SymbolId(3): Span { start: 537, end: 538 }
