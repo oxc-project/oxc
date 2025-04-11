@@ -1,8 +1,6 @@
 #![expect(clippy::missing_panics_doc, clippy::literal_string_with_formatting_args)]
+pub mod comments;
 pub mod esbuild;
-pub mod jsdoc;
-pub mod legal_comments;
-pub mod pure_comments;
 pub mod tester;
 pub mod ts;
 pub mod unit;

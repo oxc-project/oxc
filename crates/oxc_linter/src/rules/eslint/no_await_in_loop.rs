@@ -66,7 +66,7 @@ impl Rule for NoAwaitInLoop {
             _ => return,
         };
 
-        let nodes = ctx.semantic().nodes();
+        let nodes = ctx.nodes();
         // Perform validation for AwaitExpression and ForOfStatement that contains await
         let mut parent_node = nodes.parent_node(node.id());
         let mut is_in_loop = false;

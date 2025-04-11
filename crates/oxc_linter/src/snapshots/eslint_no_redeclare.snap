@@ -35,12 +35,12 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── `a` has already been declared here
    ╰────
 
-  × Identifier `a` has already been declared
+  ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:10]
  1 │ function a() {} function a() {}
    ·          ┬               ┬
-   ·          │               ╰── It can not be redeclared here
-   ·          ╰── `a` has already been declared here
+   ·          │               ╰── It can not be redeclare here.
+   ·          ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -68,11 +68,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:5]
+   ╭─[no_redeclare.tsx:1:16]
  1 │ var a = 3; var a = 10; var a = 15;
-   ·     ┬                      ┬
-   ·     │                      ╰── It can not be redeclare here.
-   ·     ╰── 'a' is already defined.
+   ·                ┬           ┬
+   ·                │           ╰── It can not be redeclare here.
+   ·                ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -123,6 +123,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ╰── 'a' is already defined.
    ╰────
 
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:5]
+ 1 │ var Object = 0; var Object = 0; var globalThis = 0;
+   ·     ──────
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:21]
+ 1 │ var Object = 0; var Object = 0; var globalThis = 0;
+   ·                     ──────
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:37]
+ 1 │ var Object = 0; var Object = 0; var globalThis = 0;
+   ·                                     ──────────
+   ╰────
+
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:5]
  1 │ var a; var {a = 0, b: Object = 0} = {};
@@ -131,12 +149,24 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is already defined.
    ╰────
 
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:23]
+ 1 │ var a; var {a = 0, b: Object = 0} = {};
+   ·                       ──────
+   ╰────
+
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:5]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclare here.
    ·     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:23]
+ 1 │ var a; var {a = 0, b: globalThis = 0} = {};
+   ·                       ──────────
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -149,10 +179,18 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:12]
- 1 │ function f(a) { var a; }
-   ·            ┬        ┬
-   ·            │        ╰── It can not be redeclare here.
+ 1 │ function f(a, b = 1) { var a; var b;}
+   ·            ┬               ┬
+   ·            │               ╰── It can not be redeclare here.
    ·            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'b' is already defined.
+   ╭─[no_redeclare.tsx:1:15]
+ 1 │ function f(a, b = 1) { var a; var b;}
+   ·               ┬                   ┬
+   ·               │                   ╰── It can not be redeclare here.
+   ·               ╰── 'b' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.

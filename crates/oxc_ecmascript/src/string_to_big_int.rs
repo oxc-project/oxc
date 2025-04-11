@@ -33,7 +33,7 @@ impl StringToBigInt<'_> for &str {
                 return None;
             }
 
-            return BigInt::parse_bytes(s[2..].as_bytes(), radix);
+            return BigInt::parse_bytes(&s.as_bytes()[2..], radix);
         }
 
         BigInt::parse_bytes(s.as_bytes(), 10)

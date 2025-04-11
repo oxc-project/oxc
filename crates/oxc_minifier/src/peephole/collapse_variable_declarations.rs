@@ -191,17 +191,16 @@ mod test {
             );
             test_same("function f(){ for(; a < 2 ; a++) foo() }");
 
-            // TODO
             // Verify destructuring assignments are moved.
-            // test(
-            // "[a, b] = [1, 2]; for (; a < 2; a = b++) foo();",
-            // "for ([a, b] = [1, 2]; a < 2; a = b++) foo();",
-            // );
+            test(
+                "[a, b] = [1, 2]; for (; a < 2; a = b++) foo();",
+                "for ([a, b] = [1, 2]; a < 2; a = b++) foo();",
+            );
 
-            // test(
-            // "var [a, b] = [1, 2]; for (; a < 2; a = b++) foo();",
-            // "var a; var b; for ([a, b] = [1, 2]; a < 2; a = b++) foo();",
-            // );
+            test(
+                "var [a, b] = [1, 2]; for (; a < 2; a = b++) foo();",
+                "for (var [a, b] = [1, 2]; a < 2; a = b++) foo();",
+            );
         }
 
         #[test]

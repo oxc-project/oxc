@@ -4,6 +4,122 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+
+### Bug Fixes
+
+- f2eff56 linter: Fix `rule_id` for some diagnostics formats (#10251) (Alexander S.)
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.16.4] - 2025-04-01
+
+### Features
+
+- 370266c semantic: Check redeclaration of variable declaration and function declaration in the block scope (#10074) (Dunqing)
+
+### Bug Fixes
+
+- 2c80858 linter: Enable multi-file analysis for nested configs (#10089) (camchenry)
+
+### Refactor
+
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+
+## [0.16.3] - 2025-03-25
+
+### Refactor
+
+- 6432707 rust: Use `lazy-regex` (#10004) (Boshen)
+
+## [0.16.2] - 2025-03-21
+
+### Bug Fixes
+
+- f649fb3 linter: Reclassify `unicorn/no-document-cookie` as restriction (#9933) (camchenry)
+
+### Documentation
+
+- 46a12c6 linter: Tell about junit `--format` options (#9931) (Sysix)
+
+## [0.16.1] - 2025-03-20
+
+### Features
+
+- 8e3d9be linter: Support `--report-unused-disable-directive` (#9223) (1zumii)
+
+### Bug Fixes
+
+- e6f7c74 linter: Import and fix tests for typescript::no_unnecessary_parameter_property_assignment (#9720) (Ulrich Stark)
+
+### Performance
+
+- 84fa538 minify: Use mimalloc-safe to replace mimalloc (#9810) (LongYinan)
+
+### Refactor
+
+- b34cf94 oxlint: Remove `jemallocator` (#9823) (Boshen)
+
+## [0.16.0] - 2025-03-16
+
+- 225e266 linter: [**BREAKING**] Enable `--experimental-nested-config` by default and add `--disable-nested-config` option (#9760) (camchenry)
+
+### Features
+
+
+### Bug Fixes
+
+- 22f18ac linter: Improve `jsx-a11y/anchor-ambiguous-text` diagnostic message (#9789) (1zumii)
+
+## [0.15.15] - 2025-03-12
+
+### Features
+
+- 474a57b linter: A new multi-file analysis runtime (#9383) (branchseer)
+
+### Bug Fixes
+
+- ab594f1 linter: Turn oxc/no-redundant-constructor-init into typescript/no-unnecessary-parameter-property-assignment (#9618) (Uli)
+
+## [0.15.14] - 2025-03-11
+
+### Features
+
+- 41f32ea linter: Allow adding more overrides via `extends` configs (#9475) (camchenry)
+- fb7cf10 linter: Allowing `plugins` to be extended with `extends` (#9473) (camchenry)
+- fc74849 linter: Inherit `rules` via the extended config files (#9308) (camchenry)
+
+### Bug Fixes
+
+- 4ca62ab linter: Output right file line and column for `.vue`, `.astro` and `.svelte` files (#9484) (Sysix)
+- 3105159 linter: Do not output number of rules with nested configs (#9476) (camchenry)
+- 5ecda01 linter: Support nested extending (#9472) (camchenry)
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+### Testing
+
+- 934a387 linter: Remove test dependency on oxlint (#9513) (camchenry)
+
+## [0.15.13] - 2025-03-04
+
+### Features
+
+- 4ad328b linter: Add oxc/no-redundant-constructor-init (#9299) (Ben Jones)
+
 ## [0.15.12] - 2025-02-23
 
 ### Features

@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{Set, phf_set};
 
 use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
@@ -67,12 +66,7 @@ impl Rule for PreferJestMocked {
     }
 }
 
-const MOCK_TYPES: Set<&'static str> = phf_set! {
-    "Mock",
-    "MockedFunction",
-    "MockedClass",
-    "MockedObject",
-};
+const MOCK_TYPES: [&str; 4] = ["Mock", "MockedFunction", "MockedClass", "MockedObject"];
 
 impl PreferJestMocked {
     fn check_ts_as_expression<'a>(
@@ -114,7 +108,7 @@ impl PreferJestMocked {
         };
 
         if !&ident.name.eq_ignore_ascii_case("jest")
-            || !MOCK_TYPES.contains(qualified_name.right.name.as_str())
+            || !MOCK_TYPES.contains(&qualified_name.right.name.as_str())
         {
             return;
         }

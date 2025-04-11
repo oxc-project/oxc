@@ -9,6 +9,46 @@ source: crates/oxc_linter/src/tester.rs
  5 │                }
    ╰────
 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:3:22]
+ 2 │             function useHook() {
+ 3 │                 a && useHook1();
+   ·                      ──────────
+ 4 │                 b && useHook2();
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:4:22]
+ 3 │                 a && useHook1();
+ 4 │                 b && useHook2();
+   ·                      ──────────
+ 5 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:21]
+ 4 │                     // This is invalid because the hook is called conditionally
+ 5 │                     useHook();
+   ·                     ─────────
+ 6 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:3:29]
+ 2 │             function Component() {
+ 3 │                 condition ? useHook() : null;
+   ·                             ─────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHasPermission" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:23]
+ 4 │             return null;
+ 5 │           } else if (!useHasPermission()) {
+   ·                       ──────────────────
+ 6 │             return <Foo />
+   ╰────
+
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:2:13]
  1 │ 

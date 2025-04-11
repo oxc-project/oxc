@@ -101,7 +101,7 @@ impl PreferToHaveLength {
                         ctx,
                     ),
                     MemberExpression::PrivateFieldExpression(_) => (),
-                };
+                }
             }
             Expression::CallExpression(expr_call_expr) => {
                 Self::check_and_fix(

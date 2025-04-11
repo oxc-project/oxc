@@ -16,11 +16,17 @@ pub mod operator;
 pub mod precedence;
 pub mod reference;
 pub mod scope;
+#[cfg(feature = "serialize")]
+mod serialize;
 pub mod symbol;
 pub mod xml_entities;
+
 mod generated {
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
     mod derive_clone_in;
     mod derive_content_eq;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
 }

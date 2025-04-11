@@ -415,22 +415,22 @@ fn test_tagged_templates() {
 fn test_module_like_declarations() {
     SemanticTester::ts("namespace A { export const x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::ValueModule)
         .test();
 
     SemanticTester::ts("module A { export const x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::ValueModule)
         .test();
 
-    SemanticTester::ts(r#"module "A" { export const x = 1; }"#)
+    SemanticTester::ts("module A { export type x = 1; }")
         .has_root_symbol("A")
         .contains_flags(SymbolFlags::NameSpaceModule)
         .test();
 
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");
     let semantic = test.build();
-    let global = semantic.symbols().names().find(|name| *name == "global");
+    let global = semantic.scoping().symbol_names().find(|name| *name == "global");
     assert!(
         global.is_none(),
         "A symbol should not be created for global augmentation declarations."
@@ -450,4 +450,13 @@ fn test_class_merging() {
     .contains_flags(SymbolFlags::Class)
     .contains_flags(SymbolFlags::Interface)
     .test();
+}
+
+#[test]
+fn test_redeclaration() {
+    SemanticTester::js("(function n(n) { console.log (n) }) ()")
+        .has_symbol("n") // the first `n` is the function expression
+        .equal_flags(SymbolFlags::Function) // param `n` is a SymbolFlags::FunctionScopedVariable
+        .has_number_of_references(0) // no references to the function
+        .test();
 }

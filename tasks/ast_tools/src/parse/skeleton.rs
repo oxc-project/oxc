@@ -18,6 +18,7 @@ pub enum Skeleton {
 #[derive(Debug)]
 pub struct StructSkeleton {
     pub name: String,
+    pub is_foreign: bool,
     pub file_id: FileId,
     pub item: ItemStruct,
 }
@@ -25,6 +26,7 @@ pub struct StructSkeleton {
 #[derive(Debug)]
 pub struct EnumSkeleton {
     pub name: String,
+    pub is_foreign: bool,
     pub file_id: FileId,
     pub item: ItemEnum,
     pub inherits: Vec<String>,

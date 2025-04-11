@@ -86,7 +86,7 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str()) {
+            if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }

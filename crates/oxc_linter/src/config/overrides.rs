@@ -1,4 +1,8 @@
-use std::{borrow::Cow, ops::Deref, path::Path};
+use std::{
+    borrow::Cow,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
 
 use nonmax::NonMaxU32;
 use schemars::{JsonSchema, r#gen, schema::Schema};
@@ -33,6 +37,21 @@ impl Deref for OxlintOverrides {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for OxlintOverrides {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl IntoIterator for OxlintOverrides {
+    type Item = OxlintOverride;
+    type IntoIter = <IndexVec<OverrideId, OxlintOverride> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 

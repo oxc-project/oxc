@@ -16,6 +16,7 @@ use std::{path::PathBuf, process::Command};
 
 use oxc_tasks_common::project_root;
 use runtime::Test262RuntimeCase;
+use tools::estree::{AcornJsxCase, AcornJsxSuite, EstreeTypescriptCase};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
@@ -26,10 +27,10 @@ use crate::{
     tools::{
         codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
         estree::EstreeTest262Case,
-        minifier::{MinifierBabelCase, MinifierTest262Case},
-        prettier::{
-            PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
+        formatter::{
+            FormatterBabelCase, FormatterMiscCase, FormatterTest262Case, FormatterTypeScriptCase,
         },
+        minifier::{MinifierBabelCase, MinifierTest262Case},
         semantic::{
             SemanticBabelCase, SemanticMiscCase, SemanticTest262Case, SemanticTypeScriptCase,
         },
@@ -67,7 +68,7 @@ impl AppArgs {
         self.run_parser();
         self.run_semantic();
         self.run_codegen();
-        // self.run_prettier();
+        // self.run_formatter();
         self.run_transformer();
         self.run_transpiler();
         self.run_minifier();
@@ -95,11 +96,11 @@ impl AppArgs {
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
     }
 
-    pub fn run_prettier(&self) {
-        Test262Suite::<PrettierTest262Case>::new().run("prettier_test262", self);
-        BabelSuite::<PrettierBabelCase>::new().run("prettier_babel", self);
-        TypeScriptSuite::<PrettierTypeScriptCase>::new().run("prettier_typescript", self);
-        MiscSuite::<PrettierMiscCase>::new().run("prettier_misc", self);
+    pub fn run_formatter(&self) {
+        Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self);
+        BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
+        TypeScriptSuite::<FormatterTypeScriptCase>::new().run("formatter_typescript", self);
+        MiscSuite::<FormatterMiscCase>::new().run("formatter_misc", self);
     }
 
     pub fn run_transformer(&self) {
@@ -114,6 +115,8 @@ impl AppArgs {
     }
 
     pub fn run_estree(&self) {
+        TypeScriptSuite::<EstreeTypescriptCase>::new().run("estree_typescript", self);
+        AcornJsxSuite::<AcornJsxCase>::new().run("estree_acorn_jsx", self);
         Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self);
     }
 

@@ -74,7 +74,7 @@ impl Rule for RequireReturnsType {
                 // If type exists, skip
                 if let (Some(_), _) = tag.type_comment() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
             }

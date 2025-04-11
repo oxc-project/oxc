@@ -1,20 +1,60 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
+use oxc_ast::ast::{Expression, IdentifierReference, Statement};
+use oxc_ecmascript::{
+    is_global_reference::IsGlobalReference,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct GlobalReferenceChecker {
+struct Ctx {
     global_variable_names: Vec<String>,
+    annotation: bool,
+    pure_function_names: Vec<String>,
+    property_read_side_effects: PropertyReadSideEffects,
+    unknown_global_side_effects: bool,
 }
-impl IsGlobalReference for GlobalReferenceChecker {
+impl Default for Ctx {
+    fn default() -> Self {
+        Self {
+            global_variable_names: vec![],
+            annotation: true,
+            pure_function_names: vec![],
+            property_read_side_effects: PropertyReadSideEffects::All,
+            unknown_global_side_effects: true,
+        }
+    }
+}
+impl IsGlobalReference for Ctx {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
+impl MayHaveSideEffectsContext for Ctx {
+    fn respect_annotations(&self) -> bool {
+        self.annotation
+    }
+
+    fn is_pure_call(&self, callee: &Expression) -> bool {
+        if let Expression::Identifier(id) = callee {
+            self.pure_function_names.iter().any(|name| name == id.name.as_str())
+        } else {
+            false
+        }
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        self.property_read_side_effects
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        self.unknown_global_side_effects
+    }
+}
 
 fn test(source_text: &str, expected: bool) {
-    test_with_global_variables(source_text, vec![], expected);
+    let ctx = Ctx::default();
+    test_with_ctx(source_text, &ctx, expected);
 }
 
 fn test_with_global_variables(
@@ -22,21 +62,20 @@ fn test_with_global_variables(
     global_variable_names: Vec<String>,
     expected: bool,
 ) {
+    let ctx = Ctx { global_variable_names, ..Default::default() };
+    test_with_ctx(source_text, &ctx, expected);
+}
+
+fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
-
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    assert_eq!(
-        stmt.expression.may_have_side_effects(&global_reference_checker),
-        expected,
-        "{source_text}"
-    );
+    assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -96,8 +135,8 @@ fn closure_compiler_tests() {
     test("a ?? b", false);
     // test("'1' + navigator.userAgent", false);
     test("`template`", false);
-    test("`template${name}`", false);
-    test("`${name}template`", false);
+    test("`template${name}`", true);
+    test("`${name}template`", true);
     test("`${naming()}template`", true);
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
@@ -143,7 +182,7 @@ fn closure_compiler_tests() {
     test("[...[i++]]", true);
     test("[...'string']", false);
     test("[...`templatelit`]", false);
-    test("[...`templatelit ${safe}`]", false);
+    test("[...`templatelit ${safe}`]", true);
     test("[...`templatelit ${unsafe()}`]", true);
     test("[...f()]", true);
     test("[...5]", true);
@@ -156,7 +195,7 @@ fn closure_compiler_tests() {
     test("Math.sin(...[i++])", true);
     // test("Math.sin(...'string')", false);
     // test("Math.sin(...`templatelit`)", false);
-    // test("Math.sin(...`templatelit ${safe}`)", false);
+    // test("Math.sin(...`templatelit ${safe}`)", true);
     test("Math.sin(...`templatelit ${unsafe()}`)", true);
     test("Math.sin(...f())", true);
     test("Math.sin(...5)", true);
@@ -169,7 +208,7 @@ fn closure_compiler_tests() {
     test("new Object(...[i++])", true);
     // test("new Object(...'string')", false);
     // test("new Object(...`templatelit`)", false);
-    // test("new Object(...`templatelit ${safe}`)", false);
+    // test("new Object(...`templatelit ${safe}`)", true);
     test("new Object(...`templatelit ${unsafe()}`)", true);
     test("new Object(...f())", true);
     test("new Object(...5)", true);
@@ -343,6 +382,21 @@ fn test_simple_expressions() {
 }
 
 #[test]
+fn test_template_literal() {
+    test("``", false);
+    test("`a`", false);
+    test("`${1}`", false);
+    test("`${[]}`", false);
+    test("`${Symbol()}`", true);
+    test("`${{ toString() { console.log('sideeffect') } }}`", true);
+    test("`${{ valueOf() { console.log('sideeffect') } }}`", true);
+    test("`${{ [s]() { console.log('sideeffect') } }}`", true); // assuming s is Symbol.toPrimitive
+    test("`${a}`", true); // a maybe a symbol
+    test("`${a()}`", true);
+    test("`${a() === b}`", true);
+}
+
+#[test]
 fn test_unary_expressions() {
     test("delete 'foo'", true);
     test("delete foo()", true);
@@ -354,6 +408,7 @@ fn test_unary_expressions() {
 
     test("typeof 'foo'", false);
     test_with_global_variables("typeof a", vec!["a".to_string()], false);
+    test_with_global_variables("typeof (0, a)", vec!["a".to_string()], true);
     test("typeof foo()", true);
 
     test("+0", false);
@@ -546,6 +601,11 @@ fn test_object_expression() {
     test("({[1]: 1})", false);
     test("({[1n]: 1})", false);
     test("({['1']: 1})", false);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("({[{ toString() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ valueOf() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ [s]() { console.log('sideeffect') } }]: 1})", false); // assuming s is Symbol.toPrimitive
+    test("({[foo]: 1})", false);
     test("({[foo()]: 1 })", true);
     test("({a: foo()})", true);
     test("({...a})", true);
@@ -553,6 +613,8 @@ fn test_object_expression() {
     test("({...[...a]})", true);
     test("({...'foo'})", false);
     test("({...`foo`})", false);
+    test("({...`foo${1}`})", false);
+    test("({...`foo${foo}`})", true);
     test("({...`foo${foo()}`})", true);
     test("({...foo()})", true);
 }
@@ -568,6 +630,8 @@ fn test_array_expression() {
     test("[...[...a]]", true);
     test("[...'foo']", false);
     test("[...`foo`]", false);
+    test("[...`foo${1}`]", false);
+    test("[...`foo${foo}`]", true);
     test("[...`foo${foo()}`]", true);
     test("[...foo()]", true);
 }
@@ -614,8 +678,35 @@ fn test_property_access() {
     test("[].length", false);
     test("[]['length']", false);
     test("[][`length`]", false);
+    test("(foo() + '').length", true);
 
     test("a[0]", true);
+    test("''[-1]", true); // String.prototype[-1] may be overridden
+    test("''[0.3]", true); // String.prototype[0.3] may be overridden
+    test("''[0]", true); // String.prototype[0] may be overridden
+    test("'a'[0]", false);
+    test("'a'[0n]", false);
+    test("'a'[1]", true); // String.prototype[1] may be overridden
+    test("'あ'[0]", false);
+    test("'あ'[1]", true); // the length of "あ" is 1
+    test("'😀'[0]", false);
+    test("'😀'[1]", false);
+    test("'😀'[2]", true); // the length of "😀" is 2
+
+    test("[][-1]", true); // Array.prototype[-1] may be overridden
+    test("[][0.3]", true); // Array.prototype[0.3] may be overridden
+    test("[][0]", true); // Array.prototype[0] may be overridden
+    test("[1][0]", false);
+    test("[1][0n]", false);
+    test("[1][1]", true); // Array.prototype[1] may be overridden
+    test("[,][0]", false);
+    test("[...[], 1][0]", false);
+    test("[...[1]][0]", false);
+    test("[...'a'][0]", false);
+    test("[...'a'][1]", true);
+    test("[...'😀'][0]", false);
+    test("[...'😀'][1]", true);
+    test("[...a, 1][0]", true); // "...a" may have a sideeffect
 }
 
 #[test]
@@ -628,7 +719,13 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ foo(...[1])", false);
     test("/* #__PURE__ */ foo(...[bar()])", true);
     test("/* #__PURE__ */ foo(...bar)", true);
+    test("/* #__PURE__ */ foo(...`foo`)", false);
+    test("/* #__PURE__ */ foo(...`${1}`)", false);
+    test("/* #__PURE__ */ foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ (() => { foo() })()", false);
+    test("foo?.()", true);
+    test("/* #__PURE__ */ foo?.()", false);
 
     test("new Foo()", true);
     test("/* #__PURE__ */ new Foo()", false);
@@ -638,7 +735,76 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ new Foo(...[1])", false);
     test("/* #__PURE__ */ new Foo(...[bar()])", true);
     test("/* #__PURE__ */ new Foo(...bar)", true);
+    test("/* #__PURE__ */ new Foo(...`foo`)", false);
+    test("/* #__PURE__ */ new Foo(...`${1}`)", false);
+    test("/* #__PURE__ */ new Foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
+
+    let ctx = Ctx { annotation: false, ..Default::default() };
+    test_with_ctx("/* #__PURE__ */ foo()", &ctx, true);
+    test_with_ctx("/* #__PURE__ */ new Foo()", &ctx, true);
+}
+
+#[test]
+fn test_is_pure_call_support() {
+    let ctx = Ctx {
+        pure_function_names: vec!["foo".to_string(), "Foo".to_string()],
+        ..Default::default()
+    };
+    test_with_ctx("foo()", &ctx, false);
+    test_with_ctx("foo(1)", &ctx, false);
+    test_with_ctx("foo(bar())", &ctx, true);
+    test_with_ctx("bar()", &ctx, true);
+    test_with_ctx("new Foo()", &ctx, false);
+    test_with_ctx("new Foo(1)", &ctx, false);
+    test_with_ctx("new Foo(bar())", &ctx, true);
+    test_with_ctx("new Bar()", &ctx, true);
+    test_with_ctx("foo``", &ctx, false);
+    test_with_ctx("foo`1`", &ctx, false);
+    test_with_ctx("foo`${bar()}`", &ctx, true);
+    test_with_ctx("bar``", &ctx, true);
+}
+
+#[test]
+fn test_property_read_side_effects_support() {
+    let all_ctx =
+        Ctx { property_read_side_effects: PropertyReadSideEffects::All, ..Default::default() };
+    let only_member_ctx = Ctx {
+        property_read_side_effects: PropertyReadSideEffects::OnlyMemberPropertyAccess,
+        ..Default::default()
+    };
+    let none_ctx =
+        Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Default::default() };
+
+    test_with_ctx("foo.bar", &all_ctx, true);
+    test_with_ctx("foo.bar", &only_member_ctx, true);
+    test_with_ctx("foo.bar", &none_ctx, false);
+    test_with_ctx("foo[0]", &none_ctx, false);
+    test_with_ctx("foo[0n]", &none_ctx, false);
+    test_with_ctx("foo[bar()]", &none_ctx, true);
+    test_with_ctx("foo.#bar", &all_ctx, true);
+    test_with_ctx("foo.#bar", &only_member_ctx, true);
+    test_with_ctx("foo.#bar", &none_ctx, false);
+    test_with_ctx("({ bar } = foo)", &all_ctx, true);
+    // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
+    // test_with_ctx("({ bar } = foo)", &none_ctx, false);
+}
+
+#[test]
+fn test_unknown_global_side_effects_support() {
+    let true_ctx = Ctx {
+        unknown_global_side_effects: true,
+        global_variable_names: vec!["foo".to_string()],
+        ..Default::default()
+    };
+    let false_ctx = Ctx {
+        unknown_global_side_effects: false,
+        global_variable_names: vec!["foo".to_string()],
+        ..Default::default()
+    };
+    test_with_ctx("foo", &true_ctx, true);
+    test_with_ctx("foo", &false_ctx, false);
 }
 
 #[test]
@@ -658,7 +824,9 @@ fn test_object_with_to_primitive_related_properties_overridden() {
     test("+{ ...[] }", false);
     test("+{ ...'foo' }", false);
     test("+{ ...`foo` }", false);
-    test("+{ ...`foo${foo}` }", false);
+    test("+{ ...`foo${1}` }", false);
+    test("+{ ...`foo${foo}` }", true);
+    test("+{ ...`foo${foo()}` }", true);
     test("+{ ...{ toString() { return Symbol() } } }", true);
     test("+{ ...{ valueOf() { return Symbol() } } }", true);
     test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);

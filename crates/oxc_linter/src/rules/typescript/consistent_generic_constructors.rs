@@ -155,7 +155,7 @@ impl ConsistentGenericConstructors {
 
         if matches!(self.0.option, PreferGenericType::TypeAnnotation) {
             if type_annotation.is_none() {
-                if let Some(type_arguments) = &new_expression.type_parameters {
+                if let Some(type_arguments) = &new_expression.type_arguments {
                     ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_annotation(
                         type_arguments.span,
                     ));
@@ -166,7 +166,7 @@ impl ConsistentGenericConstructors {
 
         if let Some(type_arguments) = &type_annotation {
             if has_type_parameters(&type_arguments.type_annotation)
-                && new_expression.type_parameters.is_none()
+                && new_expression.type_arguments.is_none()
             {
                 ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_constructor(
                     type_arguments.span,
@@ -178,7 +178,7 @@ impl ConsistentGenericConstructors {
 
 fn has_type_parameters(ts_type: &TSType) -> bool {
     match ts_type {
-        TSType::TSTypeReference(type_ref) => type_ref.type_parameters.is_some(),
+        TSType::TSTypeReference(type_ref) => type_ref.type_arguments.is_some(),
         _ => false,
     }
 }

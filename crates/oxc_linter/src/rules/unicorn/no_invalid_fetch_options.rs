@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::{
@@ -13,9 +14,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
-
-use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
+use oxc_span::{CompactStr, Span};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -120,6 +119,42 @@ fn is_invalid_fetch_options<'a>(
             }
         } else if key_ident_name == "method" {
             match &obj_prop.value {
+                Expression::StaticMemberExpression(s) => {
+                    let symbols = ctx.scoping();
+                    let Expression::Identifier(ident_ref) = &s.object else {
+                        continue;
+                    };
+                    let reference_id = ident_ref.reference_id();
+                    // Check if reference is to an enum and if so then get the string literal initialiser
+                    // for the enum value being referenced.
+                    let reference = symbols.get_reference(reference_id);
+
+                    if let Some(symbol_id) = reference.symbol_id() {
+                        if ctx.scoping().symbol_flags(symbol_id).is_enum() {
+                            let decl = ctx.semantic().symbol_declaration(symbol_id);
+                            let enum_member_res: Option<CompactStr> = match decl.kind() {
+                                AstKind::TSEnumDeclaration(enum_decl) => {
+                                    let member_string_lit: Option<CompactStr> =
+                                        enum_decl.body.members.iter().find_map(|m| {
+                                            if let Some(Expression::StringLiteral(str_lit)) =
+                                                &m.initializer
+                                            {
+                                                Some(str_lit.value.to_compact_str())
+                                            } else {
+                                                None
+                                            }
+                                        });
+                                    member_string_lit
+                                }
+                                _ => None,
+                            };
+
+                            if let Some(value_ident) = enum_member_res {
+                                method_name = value_ident.into();
+                            }
+                        }
+                    }
+                }
                 Expression::StringLiteral(value_ident) => {
                     method_name = value_ident.value.cow_to_ascii_uppercase();
                 }
@@ -127,14 +162,14 @@ fn is_invalid_fetch_options<'a>(
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
                 Expression::Identifier(value_ident) => {
-                    let symbols = ctx.semantic().symbols();
+                    let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
                     let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
                         continue;
                     };
 
-                    let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                    let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
 
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {
@@ -147,7 +182,6 @@ fn is_invalid_fetch_options<'a>(
                             }
                             _ => {
                                 method_name = UNKNOWN_METHOD_NAME;
-                                continue;
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
@@ -183,11 +217,11 @@ fn is_invalid_fetch_options<'a>(
                                 }
                             }
                         }
-                        _ => continue,
+                        _ => {}
                     }
                 }
-                _ => continue,
-            };
+                _ => {}
+            }
         }
     }
 
@@ -252,6 +286,13 @@ fn test() {
         "function foo(method: string, body: string) {
             return new Request(url, {method, body});
         }",
+        r#"enum Method {
+          Post = "POST",
+        }
+        const response = await fetch("/", {
+         method: Method.Post,
+         body: "",
+        });"#,
     ];
 
     let fail = vec![
@@ -277,6 +318,20 @@ fn test() {
         r#"function foo(method: "HEAD" | "GET") {
             return new Request(url, {method, body: ""});
         }"#,
+        r#"enum Method {
+            Get = "GET",
+          }
+          const response = await fetch("/", {
+           method: Method.Get,
+           body: "",
+          });"#,
+        r#"enum Method {
+            Foo = "GET",
+          }
+          const response = await fetch("/", {
+           method: Method.Foo,
+           body: "",
+          });"#,
     ];
 
     Tester::new(NoInvalidFetchOptions::NAME, NoInvalidFetchOptions::PLUGIN, pass, fail)

@@ -85,7 +85,7 @@ impl Rule for NoWrapperObjectTypes {
         };
 
         if matches!(ident_name, "BigInt" | "Boolean" | "Number" | "Object" | "String" | "Symbol") {
-            if ctx.symbols().get_reference(reference_id).symbol_id().is_some() {
+            if ctx.scoping().get_reference(reference_id).symbol_id().is_some() {
                 return;
             }
 

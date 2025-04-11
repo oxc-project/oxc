@@ -61,7 +61,7 @@ impl Rule for PreferNumberProperties {
                     return;
                 };
 
-                if GLOBAL_OBJECT_NAMES.contains(ident_name.name.as_str()) {
+                if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
                     match member_expr.static_property_name() {
                         Some("NaN") => {
                             ctx.diagnostic(prefer_number_properties_diagnostic(
@@ -114,7 +114,7 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
                 return None;
             };
 
-            if GLOBAL_OBJECT_NAMES.contains(ident_name.name.as_str()) {
+            if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
                 member_expr.static_property_name()
             } else {
                 None

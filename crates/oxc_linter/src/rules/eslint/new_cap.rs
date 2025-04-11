@@ -1,4 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, ComputedMemberExpression, Expression},
@@ -6,7 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
     let msg = if *cap == GetCapResult::Lower {
@@ -634,7 +634,7 @@ fn is_cap_allowed_expression(
 
     if let Some(pattern) = &patterns {
         return pattern.find(name).is_some();
-    };
+    }
 
     false
 }

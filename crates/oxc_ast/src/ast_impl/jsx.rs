@@ -16,7 +16,7 @@ impl fmt::Display for JSXIdentifier<'_> {
 
 impl fmt::Display for JSXNamespacedName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.namespace.name, self.property.name)
+        write!(f, "{}:{}", self.namespace.name, self.name.name)
     }
 }
 
@@ -173,7 +173,7 @@ impl<'a> JSXAttributeName<'a> {
     pub fn get_identifier(&self) -> &JSXIdentifier<'a> {
         match self {
             Self::Identifier(ident) => ident.as_ref(),
-            Self::NamespacedName(namespaced) => &namespaced.property,
+            Self::NamespacedName(namespaced) => &namespaced.name,
         }
     }
 }

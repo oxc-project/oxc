@@ -21,6 +21,7 @@ pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
     pub category: RuleCategory,
+    #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,
@@ -46,6 +47,7 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
+                    #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),

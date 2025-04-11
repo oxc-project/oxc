@@ -55,7 +55,7 @@ fn minify(
     let ret = Minifier::new(options).build(allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
-        .with_symbol_table(ret.symbol_table)
+        .with_scoping(ret.scoping)
         .build(&program)
         .code
 }

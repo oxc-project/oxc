@@ -1,8 +1,9 @@
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
-use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::{ScopeFlags, ScopeId};
@@ -78,7 +79,7 @@ impl<'a> TypeScriptEnum<'a> {
         let ast = ctx.ast;
 
         let is_export = export_span.is_some();
-        let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
+        let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
         let enum_name = decl.id.name;
         let func_scope_id = decl.scope_id();
@@ -97,13 +98,21 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
         );
 
-        // Foo[Foo["X"] = 0] = "X";
-        let is_already_declared = self.enums.contains_key(&enum_name);
+        let has_potential_side_effect = decl.body.members.iter().any(|member| {
+            matches!(
+                member.initializer,
+                Some(Expression::NewExpression(_) | Expression::CallExpression(_))
+            )
+        });
 
-        let statements =
-            self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
+        let statements = self.transform_ts_enum_members(
+            decl.scope_id(),
+            &mut decl.body.members,
+            &param_binding,
+            ctx,
+        );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
-        let callee = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -116,9 +125,16 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
             Some(body),
             func_scope_id,
-        ));
+            false,
+        );
 
-        let var_symbol_id = decl.id.symbol_id();
+        let enum_symbol_id = decl.id.symbol_id();
+
+        // Foo[Foo["X"] = 0] = "X";
+        let redeclarations = ctx.scoping().symbol_redeclarations(enum_symbol_id);
+        let is_already_declared =
+            redeclarations.first().map_or_else(|| false, |rd| rd.span != decl.id.span);
+
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = ast.expression_object(SPAN, ast.vec(), None);
@@ -129,7 +145,7 @@ impl<'a> TypeScriptEnum<'a> {
             let left = ctx.create_bound_ident_expr(
                 decl.id.span,
                 enum_name,
-                var_symbol_id,
+                enum_symbol_id,
                 ReferenceFlags::Read,
             );
             let right = ast.expression_object(SPAN, ast.vec(), None);
@@ -137,14 +153,21 @@ impl<'a> TypeScriptEnum<'a> {
             ast.vec1(Argument::from(expression))
         };
 
-        let call_expression = ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let call_expression = ast.expression_call_with_pure(
+            SPAN,
+            callee,
+            NONE,
+            arguments,
+            false,
+            !has_potential_side_effect,
+        );
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
                 enum_name,
-                var_symbol_id,
+                enum_symbol_id,
                 ReferenceFlags::Write,
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
@@ -194,10 +217,7 @@ impl<'a> TypeScriptEnum<'a> {
         let mut prev_member_name = None;
 
         for member in members.iter_mut() {
-            let member_name = match &member.id {
-                TSEnumMemberName::Identifier(id) => id.name,
-                TSEnumMemberName::String(str) => str.value,
-            };
+            let member_name = member.id.static_name();
 
             let init = if let Some(initializer) = &mut member.initializer {
                 let constant_value =
@@ -209,7 +229,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.move_expression(initializer);
+                        let mut new_initializer = initializer.take_in(ast.allocator);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,
@@ -309,7 +329,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Infinity");
+            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Infinity");
             ctx.create_ident_expr(
                 SPAN,
                 Atom::from("Infinity"),
@@ -548,16 +568,16 @@ impl IdentifierReferenceRename<'_, '_> {
         // Don't need to rename the identifier if it's not a member of the enum,
         if !self.previous_enum_members.contains_key(&ident.name) {
             return false;
-        };
+        }
 
-        let symbol_table = self.ctx.scoping.symbols();
-        let Some(symbol_id) = symbol_table.get_reference(ident.reference_id()).symbol_id() else {
+        let scoping = self.ctx.scoping.scoping();
+        let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             // No symbol found, yet the name is found in previous_enum_members.
             // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
             return true;
         };
 
-        let symbol_scope_id = symbol_table.get_scope_id(symbol_id);
+        let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
         // Don't need to rename the identifier when it references a nested enum member:
         //
         // ```ts
@@ -606,6 +626,6 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
             _ => {
                 walk_mut::walk_expression(self, expr);
             }
-        };
+        }
     }
 }

@@ -58,7 +58,7 @@ impl Rule for NoUselessFallbackInSpread {
             return;
         };
 
-        if object_expression.properties.len() != 0 {
+        if !object_expression.properties.is_empty() {
             return;
         }
 

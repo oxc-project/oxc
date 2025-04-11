@@ -60,7 +60,7 @@ impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {
+                if arrow_expr.r#async || arrow_expr.params.items.is_empty() {
                     return;
                 }
 
@@ -81,7 +81,7 @@ impl Rule for PreferNativeCoercionFunctions {
                 }
             }
             AstKind::Function(func) => {
-                if func.r#async || func.generator || func.params.items.len() == 0 {
+                if func.r#async || func.generator || func.params.items.is_empty() {
                     return;
                 }
                 if let Some(parent) = ctx.nodes().parent_node(node.id()) {
@@ -168,7 +168,7 @@ fn is_matching_native_coercion_function_call(
         return None;
     };
 
-    if call_expr.optional || call_expr.arguments.len() == 0 {
+    if call_expr.optional || call_expr.arguments.is_empty() {
         return None;
     }
 

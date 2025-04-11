@@ -1,11 +1,7 @@
-// NB: Miri does not support custom allocators
-#[cfg(all(feature = "allocator", not(miri), not(target_env = "msvc"), not(target_os = "windows")))]
+// NOTE: Miri does not support custom allocators
+#[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
-#[cfg(all(feature = "allocator", not(miri), target_os = "windows"))]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 use oxlint::cli::{CliRunResult, LintRunner, Runner};
 use std::io::BufWriter;

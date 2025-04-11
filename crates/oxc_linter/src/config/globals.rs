@@ -115,7 +115,7 @@ impl Visitor<'_> for GlobalValueVisitor {
     type Value = GlobalValue;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "'readonly', 'writable', 'off', or a boolean")
+        formatter.write_str("'readonly', 'writable', 'off', or a boolean")
     }
 
     fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>

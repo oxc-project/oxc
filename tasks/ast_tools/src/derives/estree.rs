@@ -7,6 +7,7 @@ use quote::quote;
 
 use crate::{
     Result,
+    codegen::{Codegen, DeriveId},
     schema::{Def, EnumDef, FieldDef, File, Schema, StructDef, TypeDef, VariantDef, Visibility},
     utils::create_safe_ident,
 };
@@ -45,7 +46,7 @@ impl Derive for DeriveESTree {
                     StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant | Meta
                 ),
             ),
-            ("ts", attr_positions!(StructField | EnumVariant)),
+            ("ts", attr_positions!(StructField | EnumVariant | Meta)),
         ]
     }
 
@@ -56,6 +57,12 @@ impl Derive for DeriveESTree {
             "ts" => parse_ts_attr(location, &part),
             _ => unreachable!(),
         }
+    }
+
+    /// Initialize `estree.field_order` on structs.
+    fn prepare(&self, schema: &mut Schema, codegen: &Codegen) {
+        let derive_id = codegen.get_derive_id_by_name(self.trait_name());
+        prepare_field_orders(schema, derive_id);
     }
 
     fn prelude(&self) -> TokenStream {
@@ -85,7 +92,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("skip") => struct_def.estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
-            AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
+            AttrPart::Tag("no_ts_def") => struct_def.estree.no_ts_def = true,
             AttrPart::List("add_fields", list) => {
                 for list_element in list {
                     let (name, value) = list_element.try_into_string()?;
@@ -100,22 +107,21 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
 
                 // Convert field names to indexes.
                 // Added fields (`#[estree(add_fields(...))]`) get indexes after the real fields.
-                let field_indices = list
-                    .into_iter()
-                    .map(|list_element| {
-                        let field_name = list_element.try_into_tag()?;
-                        let field_name = field_name.trim_start_matches("r#");
-                        all_field_names
-                            .clone()
-                            .position(|this_field_name| this_field_name == field_name)
-                            .map(|index| u8::try_from(index).map_err(|_| ()))
-                            .ok_or(())?
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-                struct_def.estree.field_indices = Some(field_indices);
-            }
-            AttrPart::String("custom_ts_def", value) => {
-                struct_def.estree.custom_ts_def = Some(value);
+                // Error if same field name included more than once.
+                let mut field_indices = vec![];
+                for list_element in list {
+                    let field_name = list_element.try_into_tag()?;
+                    let field_index = all_field_names
+                        .clone()
+                        .position(|this_field_name| this_field_name == field_name)
+                        .ok_or(())?;
+                    let field_index = u8::try_from(field_index).map_err(|_| ())?;
+                    if field_indices.contains(&field_index) {
+                        return Err(());
+                    }
+                    field_indices.push(field_index);
+                }
+                struct_def.estree.field_indices = field_indices;
             }
             AttrPart::String("ts_alias", value) => struct_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => struct_def.estree.add_ts_def = Some(value),
@@ -127,8 +133,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Enum(enum_def) => match part {
             AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
-            AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
-            AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
+            AttrPart::Tag("no_ts_def") => enum_def.estree.no_ts_def = true,
             AttrPart::String("ts_alias", value) => enum_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => {
                 enum_def.estree.add_ts_def = Some(value);
@@ -140,6 +145,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::StructField(struct_def, field_index) => match part {
             AttrPart::Tag("skip") => struct_def.fields[field_index].estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
+            AttrPart::Tag("no_flatten") => struct_def.fields[field_index].estree.no_flatten = true,
             AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
             AttrPart::String("rename", value) => {
                 struct_def.fields[field_index].estree.rename = Some(value);
@@ -175,14 +181,21 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         },
         // `#[estree]` attr on enum variant
         AttrLocation::EnumVariant(enum_def, variant_index) => match part {
+            AttrPart::Tag("skip") => {
+                enum_def.variants[variant_index].estree.skip = true;
+            }
             AttrPart::String("rename", value) => {
                 enum_def.variants[variant_index].estree.rename = Some(value);
+            }
+            AttrPart::String("via", value) => {
+                enum_def.variants[variant_index].estree.via = Some(value);
             }
             _ => return Err(()),
         },
         // `#[estree]` attr on meta type
         AttrLocation::Meta(meta) => match part {
             AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
+            AttrPart::String("raw_deser", raw_deser) => meta.estree.raw_deser = Some(raw_deser),
             _ => return Err(()),
         },
         _ => unreachable!(),
@@ -197,7 +210,7 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
         return Err(());
     }
 
-    // Location can only be `StructField` or `EnumVariant`
+    // Location can only be `StructField`, `EnumVariant`, or `Meta`
     match location {
         AttrLocation::StructField(struct_def, field_index) => {
             struct_def.fields[field_index].estree.is_ts = true;
@@ -205,10 +218,94 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
         AttrLocation::EnumVariant(enum_def, variant_index) => {
             enum_def.variants[variant_index].estree.is_ts = true;
         }
+        AttrLocation::Meta(meta) => meta.estree.is_ts = true,
         _ => unreachable!(),
     }
 
     Ok(())
+}
+
+/// Initialize `estree.field_order` on all structs.
+fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
+    // Note: Outside the loop to avoid allocating temporary `Vec`s on each turn of the loop.
+    // Instead, reuse this `Vec` over and over.
+    let mut field_indices_temp = vec![];
+
+    for type_id in schema.types.indices() {
+        let Some(struct_def) = schema.types[type_id].as_struct() else { continue };
+        if !struct_def.generates_derive(estree_derive_id) {
+            continue;
+        }
+
+        if struct_def.estree.field_indices.is_empty() {
+            // No field order specified with `#[estree(field_order(...))]`.
+            // Set default order:
+            // 1. Fields without `#[ts]` attr.
+            // 2. Fields with `#[ts]` attr.
+            // 3. Added fields `#[estree(add_fields(...)]`.
+            // 4. Added fields `#[estree(add_fields(...)]`, where converter meta type has `#[ts]` attr.
+            // Within the above groups, ordered in definition order.
+            let mut field_indices = vec![];
+            let ts_field_indices = &mut field_indices_temp;
+            for (field_index, field) in struct_def.fields.iter().enumerate() {
+                if !should_skip_field(field, schema) {
+                    let field_index = u8::try_from(field_index).unwrap();
+                    if field.estree.is_ts {
+                        ts_field_indices.push(field_index);
+                    } else {
+                        field_indices.push(field_index);
+                    }
+                }
+            }
+
+            let fields_len = struct_def.fields.len();
+            for (index, (_, converter_name)) in struct_def.estree.add_fields.iter().enumerate() {
+                let field_index = u8::try_from(fields_len + index).unwrap();
+                let converter = schema.meta_by_name(converter_name);
+                if converter.estree.is_ts {
+                    ts_field_indices.push(field_index);
+                } else {
+                    field_indices.push(field_index);
+                }
+            }
+
+            field_indices.append(ts_field_indices);
+
+            let struct_def = schema.struct_def_mut(type_id);
+            struct_def.estree.field_indices = field_indices;
+        } else {
+            // Custom field order specified with `#[estree(field_order(...))]`.
+            // Verify does not miss any fields, no fields marked `#[estree(skip)]` are included.
+            let unskipped_field_indices = &mut field_indices_temp;
+            for (field_index, field) in struct_def.fields.iter().enumerate() {
+                if !should_skip_field(field, schema) {
+                    let field_index = u8::try_from(field_index).unwrap();
+                    unskipped_field_indices.push(field_index);
+                }
+            }
+
+            let fields_len = struct_def.fields.len();
+            for &field_index in &struct_def.estree.field_indices {
+                if (field_index as usize) < fields_len {
+                    assert!(
+                        unskipped_field_indices.contains(&field_index),
+                        "Skipped field `{}` included in `#[estree(field_order)]`: `{}`",
+                        struct_def.fields[field_index as usize].name(),
+                        struct_def.name()
+                    );
+                }
+            }
+
+            assert!(
+                struct_def.estree.field_indices.len()
+                    == unskipped_field_indices.len() + struct_def.estree.add_fields.len(),
+                "`#[estree(field_order)]` misses fields: `{}`",
+                struct_def.name()
+            );
+
+            unskipped_field_indices.clear();
+        }
+    }
 }
 
 /// Generate implementation of `ESTree` for a struct or enum.
@@ -290,25 +387,13 @@ impl<'s> StructSerializerGenerator<'s> {
 
     /// Generate code to serialize all fields in a struct.
     fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
-        if let Some(field_indices) = &struct_def.estree.field_indices {
-            // Specified field order - serialize in this order
-            for &field_index in field_indices {
-                let field_index = field_index as usize;
-                if let Some(field) = struct_def.fields.get(field_index) {
-                    self.generate_stmts_for_field(field, struct_def, self_path);
-                } else {
-                    let (field_name, converter_name) =
-                        &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
-                    self.generate_stmt_for_added_field(field_name, converter_name, self_path);
-                }
-            }
-        } else {
-            // No specified field order - serialize in original order
-            for field in &struct_def.fields {
+        for &field_index in &struct_def.estree.field_indices {
+            let field_index = field_index as usize;
+            if let Some(field) = struct_def.fields.get(field_index) {
                 self.generate_stmts_for_field(field, struct_def, self_path);
-            }
-
-            for (field_name, converter_name) in &struct_def.estree.add_fields {
+            } else {
+                let (field_name, converter_name) =
+                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
                 self.generate_stmt_for_added_field(field_name, converter_name, self_path);
             }
         }
@@ -407,8 +492,13 @@ impl<'s> StructSerializerGenerator<'s> {
     ) {
         let converter = self.schema.meta_by_name(converter_name);
         let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+        let serialize_method_ident = create_safe_ident(if converter.estree.is_ts {
+            "serialize_ts_field"
+        } else {
+            "serialize_field"
+        });
         self.stmts.extend(quote! {
-            state.serialize_field(#field_name, &#converter_path(#self_path));
+            state.#serialize_method_ident(#field_name, &#converter_path(#self_path));
         });
     }
 }
@@ -417,6 +507,13 @@ impl<'s> StructSerializerGenerator<'s> {
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let match_branches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
+
+        if should_skip_enum_variant(variant) {
+            return quote! {
+                Self::#variant_ident => { unreachable!("This enum variant is skipped.") }
+            };
+        }
+
         if variant.is_fieldless() {
             let value = get_fieldless_variant_value(enum_def, variant);
             let value = string_to_tokens(value.as_ref(), false);
@@ -424,8 +521,17 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
+            let value = if let Some(converter_name) = &variant.estree.via {
+                let converter = schema.meta_by_name(converter_name);
+                let krate = enum_def.file(schema).krate();
+                let converter_path = converter.import_path_from_crate(krate, schema);
+                quote!( #converter_path(it) )
+            } else {
+                quote!(it)
+            };
+
             quote! {
-                Self::#variant_ident(it) => it.serialize(serializer),
+                Self::#variant_ident(it) => #value.serialize(serializer),
             }
         }
     });
@@ -453,7 +559,7 @@ fn generate_body_for_via_override(
 /// Returns `true` if either the field has an `#[estree(skip)]` attr on it,
 /// or the type that the field contains has an `#[estree(skip)]` attr.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
     if field.estree.skip {
         true
@@ -467,6 +573,15 @@ pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
     }
 }
 
+/// Get if an enum variant should be skipped when serializing.
+///
+/// Returns `true` if the variant has an `#[estree(skip)]` attr on it.
+///
+/// This function also used by Typescript and raw transfer generators.
+pub fn should_skip_enum_variant(variant: &VariantDef) -> bool {
+    variant.estree.skip
+}
+
 /// Get if should flatten a struct field.
 ///
 /// Returns `true` if either the field has an `#[estree(flatten)]` attr on it,
@@ -476,6 +591,8 @@ pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
 pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
     if field.estree.flatten {
         true
+    } else if field.estree.no_flatten {
+        false
     } else {
         let field_type = field.type_def(schema);
         matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.flatten)
@@ -512,7 +629,7 @@ pub fn can_flatten_field_inline(field: &FieldDef, krate: &str, schema: &Schema) 
 /// * `#[estree(rename)]` attr on variant.
 /// * `#[estree(no_rename_variants)]` attr on enum.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn get_fieldless_variant_value<'s>(
     enum_def: &'s EnumDef,
     variant: &'s VariantDef,
@@ -528,7 +645,7 @@ pub fn get_fieldless_variant_value<'s>(
 
 /// Get ESTree name for struct field.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn get_struct_field_name(field: &FieldDef) -> Cow<'_, str> {
     if let Some(field_name) = field.estree.rename.as_deref() {
         Cow::Borrowed(field_name)

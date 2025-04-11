@@ -27,10 +27,16 @@ describe('simple', () => {
   });
 
   it('can turn off everything', () => {
-    const ret = minify('test.js', code, { compress: false, mangle: false, codegen: { whitespace: false } });
+    const ret = minify('test.js', code, { compress: false, mangle: false, codegen: { removeWhitespace: false } });
     expect(ret).toStrictEqual({
       'code': 'function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n',
     });
+  });
+
+  it('defaults to esnext', () => {
+    const code = 'try { foo } catch (e) {}';
+    const ret = minify('test.js', code);
+    expect(ret.code).toBe('try{foo}catch{}');
   });
 });
 

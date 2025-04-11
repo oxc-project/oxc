@@ -1,4 +1,4 @@
-commit: d85767ab
+commit: 15392346
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
@@ -385,6 +385,10 @@ export class InClassMethodBad {
 	o(array: T = [], rParam: string): void {}
 }
 ;
+class Bar {}
+export class ClsWithRequiredInitializedParameter {
+	constructor(private arr: Bar = new Bar(), private bool: boolean) {}
+}
 
 //// [fnDecl.d.ts] ////
 type T = number[];
@@ -461,6 +465,12 @@ export declare class InClassMethodOk2 {
 }
 export declare class InClassMethodBad {
 	o(array: T, rParam: string): void;
+}
+declare class Bar {}
+export declare class ClsWithRequiredInitializedParameter {
+	private arr;
+	private bool;
+	constructor(arr: Bar, bool: boolean);
 }
 export {};
 
@@ -542,4 +552,14 @@ export {};
  44 | export class InClassMethodOk2 { o(array: T | undefined = [], rParam: string): void { } };
  45 | export class InClassMethodBad { o(array: T = [], rParam: string): void { } };
     :                                   ^^^^^^^^^^^^^
+ 46 | 
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[fnDecl.d.ts:51:5]
+ 50 |   constructor(
+ 51 |     private arr: Bar = new Bar(),
+    :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 52 |     private bool: boolean,
     `----

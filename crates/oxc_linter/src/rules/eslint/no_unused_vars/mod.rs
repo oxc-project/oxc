@@ -206,7 +206,7 @@ impl Rule for NoUnusedVars {
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol = Symbol::new(ctx.semantic().as_ref(), ctx.module_record(), symbol_id);
+        let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
         if Self::should_skip_symbol(&symbol) {
             return;
         }
@@ -278,7 +278,7 @@ impl NoUnusedVars {
             AstKind::VariableDeclarator(decl) => {
                 if self.is_allowed_variable_declaration(symbol, decl) {
                     return;
-                };
+                }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
                     Some(last_write) => {
                         // ahg
@@ -333,7 +333,7 @@ impl NoUnusedVars {
                 ctx.diagnostic(diagnostic::declared(symbol, &self.caught_errors_ignore_pattern));
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None)),
-        };
+        }
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
@@ -374,16 +374,16 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
-        self.scopes()
-            .ancestors(self.scope_id())
+        self.scoping()
+            .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
-                let flags = self.scopes().get_flags(scope_id);
+                let flags = self.scoping().scope_flags(scope_id);
                 flags.contains(ScopeFlags::TsModuleBlock)
             })
             .any(|ambient_module_scope_id| {
                 let AstKind::TSModuleDeclaration(module) = self
                     .nodes()
-                    .get_node(self.scopes().get_node_id(ambient_module_scope_id))
+                    .get_node(self.scoping().get_node_id(ambient_module_scope_id))
                     .kind()
                 else {
                     return false;

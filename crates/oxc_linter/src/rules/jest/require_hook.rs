@@ -180,7 +180,7 @@ impl Rule for RequireHook {
                 Argument::FunctionExpression(func_expr) => {
                     if let Some(func_body) = &func_expr.body {
                         self.check_block_body(node, &func_body.statements, ctx);
-                    };
+                    }
                 }
                 Argument::ArrowFunctionExpression(arrow_func_expr) => {
                     if !arrow_func_expr.expression {

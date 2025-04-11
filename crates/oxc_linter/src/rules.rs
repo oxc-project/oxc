@@ -7,6 +7,12 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod exports_last;
+    pub mod group_exports;
+    pub mod no_absolute_path;
+    pub mod no_anonymous_default_export;
+    pub mod no_empty_named_blocks;
+    pub mod no_mutable_exports;
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
     pub mod default;
@@ -32,7 +38,6 @@ mod import {
 
 mod eslint {
     pub mod array_callback_return;
-    pub mod constructor_super;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -100,6 +105,7 @@ mod eslint {
     pub mod no_label_var;
     pub mod no_labels;
     pub mod no_lone_blocks;
+    pub mod no_lonely_if;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_assign;
@@ -202,6 +208,7 @@ mod typescript {
     pub mod no_non_null_assertion;
     pub mod no_require_imports;
     pub mod no_this_alias;
+    pub mod no_unnecessary_parameter_property_assignment;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_unsafe_function_type;
@@ -278,6 +285,7 @@ mod react {
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
+    pub mod jsx_filename_extension;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -293,6 +301,7 @@ mod react {
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
+    pub mod no_namespace;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
@@ -327,6 +336,7 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_for_each;
     pub mod no_array_reduce;
@@ -405,6 +415,7 @@ mod unicorn {
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
+    pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
@@ -463,7 +474,6 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
-    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -519,12 +529,15 @@ mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
+    pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
+    pub mod no_return_wrap;
     pub mod param_names;
     pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
+    pub mod prefer_catch;
     pub mod spec_only;
     pub mod valid_params;
 }
@@ -547,7 +560,6 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_deprecated,
     // import::no_unused_modules,
     eslint::array_callback_return,
-    eslint::constructor_super,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
@@ -567,6 +579,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_lonely_if,
     eslint::no_useless_call,
     eslint::no_unneeded_ternary,
     eslint::no_extra_label,
@@ -689,7 +702,13 @@ oxc_macros::declare_all_lint_rules! {
     eslint::yoda,
     import::default,
     import::export,
+    import::exports_last,
     import::first,
+    import::group_exports,
+    import::no_empty_named_blocks,
+    import::no_anonymous_default_export,
+    import::no_absolute_path,
+    import::no_mutable_exports,
     import::no_named_default,
     import::no_namespace,
     import::max_dependencies,
@@ -844,18 +863,20 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
-    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_return_wrap,
+    promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
+    promise::prefer_catch,
     promise::prefer_await_to_callbacks,
     promise::prefer_await_to_then,
     promise::spec_only,
@@ -864,6 +885,7 @@ oxc_macros::declare_all_lint_rules! {
     react::checked_requires_onchange_or_readonly,
     react::exhaustive_deps,
     react::iframe_missing_sandbox,
+    react::jsx_filename_extension,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
     react::jsx_key,
@@ -874,6 +896,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
     react::no_danger_with_children,
@@ -924,6 +947,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_require_imports,
     typescript::no_this_alias,
+    typescript::no_unnecessary_parameter_property_assignment,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
     typescript::no_unsafe_function_type,
@@ -949,6 +973,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_accessor_recursion,
     unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_anonymous_default_export,
@@ -1026,6 +1051,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,

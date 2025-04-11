@@ -1,0 +1,92 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:1:8]
+ 1 │ export let count = 1
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:1:8]
+ 1 │ export var count = 1
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             let foo = 2;
+   ·             ────────────
+ 3 │             export { foo }
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:1:1]
+ 1 │ let foo = 4, baz = 5; export { foo }
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             var foo = 3;
+   ·             ────────────
+ 3 │             export { foo }
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             let foo = 3;
+   ·             ────────────
+ 3 │             export { foo as baz }
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             var foo = 3;
+   ·             ────────────
+ 3 │             export { foo as baz }
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             let foo = 3;
+   ·             ────────────
+ 3 │             export default foo
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             var foo = 3;
+   ·             ────────────
+ 3 │             export default foo
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:3:13]
+ 2 │             var a = 2;
+ 3 │             let c = 3;
+   ·             ──────────
+ 4 │             export {
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             var a = 2;
+   ·             ──────────
+ 3 │             let c = 3;
+   ╰────
+
+  ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
+   ╭─[no_mutable_exports.tsx:2:13]
+ 1 │ 
+ 2 │             let a = 3, c = 4;
+   ·             ─────────────────
+ 3 │             export {
+   ╰────

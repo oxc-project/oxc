@@ -85,7 +85,7 @@ class foo {}
 class Foo { #a; }
 ----------
 import _classPrivateFieldInitSpec from '@oxc-project/runtime/helpers/classPrivateFieldInitSpec';
-var _a = new WeakMap();
+var _a = /* @__PURE__ */ new WeakMap();
 class Foo {
 	constructor() {
 		_classPrivateFieldInitSpec(this, _a, void 0);

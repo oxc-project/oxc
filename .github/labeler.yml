@@ -18,9 +18,9 @@ A-editor:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_language_server/**", "editors/**"]
 
-A-prettier:
+A-formatter:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_prettier/**", "tasks/prettier_conformance/**"]
+      - any-glob-to-any-file: ["crates/oxc_formatter/**", "tasks/prettier_conformance/**"]
 
 A-transformer:
   - changed-files:

@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Performance
+
+- fa0e455 cfg, diagnostics, lexer, syntax, tasks: Remove `write!` macro where unnecessary (#10236) (overlookmotel)
+
+## [0.62.0] - 2025-04-01
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
+### Refactor
+
+- dc3602c semantic: Align handling of declaring symbol for `class` with TypeScript (#10094) (Dunqing)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
+## [0.61.2] - 2025-03-23
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
 ## [0.53.0] - 2025-02-26
 
 ### Refactor

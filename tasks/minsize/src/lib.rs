@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 use std::{
+    fmt::Write as _,
     fs::{self, File},
     io::{self, Write},
     path::Path,
@@ -67,24 +68,28 @@ pub fn run() -> Result<(), io::Error> {
     let mut out = String::new();
 
     let width = 10;
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |\n",
+    writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
         "",
         "Oxc",
         "ESBuild",
         "Oxc",
         "ESBuild",
         width = width,
-    ));
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture\n",
+    )
+    .unwrap();
+    writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture",
         "Original",
         "minified",
         "minified",
         "gzip",
         "gzip",
         width = width,
-    ));
+    )
+    .unwrap();
 
     let fixture_width = files
         .files()
@@ -137,17 +142,16 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(
         &allocator,
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
-    .build(symbols, scopes, &mut program);
+    .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
-        .with_symbol_table(ret.symbol_table)
+        .with_scoping(ret.scoping)
         .build(&program)
         .code
 }

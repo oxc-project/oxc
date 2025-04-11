@@ -4,7 +4,7 @@
 ///
 /// # Example
 ///
-/// ```rust
+/// ```text
 /// find_url_query_value("https://example.com/?foo=bar&baz=qux", "baz") // => Some("qux")
 /// ```
 pub fn find_url_query_value<'url>(url: &'url str, key: &str) -> Option<&'url str> {

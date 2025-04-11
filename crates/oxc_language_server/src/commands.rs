@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use log::error;
 use serde::Deserialize;
-use tower_lsp::{
+use tower_lsp_server::{
     jsonrpc::{self, Error},
     lsp_types::{
-        ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit, request::ApplyWorkspaceEdit,
+        ApplyWorkspaceEditParams, TextEdit, Uri, WorkspaceEdit, request::ApplyWorkspaceEdit,
     },
 };
 
@@ -81,7 +83,7 @@ impl WorkspaceCommand for FixAllCommand {
         backend: &Backend,
         args: Self::CommandArgs<'_>,
     ) -> jsonrpc::Result<Option<serde_json::Value>> {
-        let url = Url::parse(&args.0.uri);
+        let url = Uri::from_str(&args.0.uri);
         if let Err(e) = url {
             error!("Invalid uri passed to {:?}: {e}", self.command_id());
             return Err(Error::invalid_request());

@@ -213,18 +213,18 @@ impl NoAsyncEndpointHandlers {
             Expression::Identifier(handler) => {
                 // Unresolved reference? Nothing we can do.
                 let Some(symbol_id) =
-                    ctx.symbols().get_reference(handler.reference_id()).symbol_id()
+                    ctx.scoping().get_reference(handler.reference_id()).symbol_id()
                 else {
                     return;
                 };
 
                 // Cannot check imported handlers without cross-file analysis.
-                let flags = ctx.symbols().get_flags(symbol_id);
+                let flags = ctx.scoping().symbol_flags(symbol_id);
                 if flags.is_import() {
                     return;
                 }
 
-                let decl_id = ctx.symbols().get_declaration(symbol_id);
+                let decl_id = ctx.scoping().symbol_declaration(symbol_id);
                 let decl_node = ctx.nodes().get_node(decl_id);
                 let registered_at = registered_at.or(Some(handler.span));
                 match decl_node.kind() {

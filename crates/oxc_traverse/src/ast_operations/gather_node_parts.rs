@@ -527,7 +527,7 @@ impl<'a> GatherNodeParts<'a> for JSXElementName<'a> {
 impl<'a> GatherNodeParts<'a> for JSXNamespacedName<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         self.namespace.gather(f);
-        self.property.gather(f);
+        self.name.gather(f);
     }
 }
 

@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToJsString,
@@ -6,19 +7,27 @@ use oxc_ecmascript::{
 };
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, State};
 
 impl<'a> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        if let Expression::TemplateLiteral(t) = expr {
-            self.try_inline_values_in_template_literal(t, ctx);
+    pub fn fold_constants_exit_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        match expr {
+            Expression::TemplateLiteral(t) => {
+                self.try_inline_values_in_template_literal(t, state, ctx);
+            }
+            Expression::ObjectExpression(e) => self.fold_object_spread(e, state, ctx),
+            _ => {}
         }
 
         if let Some(folded_expr) = match expr {
@@ -30,12 +39,11 @@ impl<'a> PeepholeOptimizations {
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
-        };
+            state.changed = true;
+        }
     }
 
     #[expect(clippy::float_cmp)]
@@ -60,7 +68,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_static_member_expr(
-        e: &mut StaticMemberExpression<'a>,
+        e: &StaticMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -72,7 +80,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_computed_member_expr(
-        e: &mut ComputedMemberExpression<'a>,
+        e: &ComputedMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -94,7 +102,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_optional_chain(
-        chain_expr: &mut ChainExpression<'a>,
+        chain_expr: &ChainExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let member_expr = chain_expr.expression.as_member_expression()?;
@@ -124,24 +132,34 @@ impl<'a> PeepholeOptimizations {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
-                return Some(ctx.ast.move_expression(&mut logical_expr.left));
+                return Some(logical_expr.left.take_in(ctx.ast.allocator));
             } else if !left.may_have_side_effects(&ctx) {
-                let parent = ctx.ancestry.parent();
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
+                let should_keep_indirect_access =
+                    Self::should_keep_indirect_access(&logical_expr.right, ctx);
+                // (true && o.f) => (0, o.f)
+                if should_keep_indirect_access {
+                    return Some(ctx.ast.expression_sequence(
+                        logical_expr.span,
+                        ctx.ast.vec_from_array([
+                            ctx.ast.expression_numeric_literal(
+                                logical_expr.left.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            logical_expr.right.take_in(ctx.ast.allocator),
+                        ]),
+                    ));
                 }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(ctx.ast.move_expression(&mut logical_expr.right));
+                return Some(logical_expr.right.take_in(ctx.ast.allocator));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = ctx.ast.move_expression(&mut logical_expr.left);
-            let right = ctx.ast.move_expression(&mut logical_expr.right);
+            let left = logical_expr.left.take_in(ctx.ast.allocator);
+            let right = logical_expr.right.take_in(ctx.ast.allocator);
             let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
@@ -156,8 +174,8 @@ impl<'a> PeepholeOptimizations {
                         if !right_boolean && left_child_op.is_or()
                             || right_boolean && left_child_op.is_and()
                         {
-                            let left = ctx.ast.move_expression(&mut left_child.left);
-                            let right = ctx.ast.move_expression(&mut logical_expr.right);
+                            let left = left_child.left.take_in(ctx.ast.allocator);
+                            let right = logical_expr.right.take_in(ctx.ast.allocator);
                             let logic_expr = ctx.ast.expression_logical(
                                 logical_expr.span,
                                 left,
@@ -186,13 +204,30 @@ impl<'a> PeepholeOptimizations {
                 Some(if left.may_have_side_effects(&ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
-                        ctx.ast.move_expression(&mut logical_expr.left),
-                        ctx.ast.move_expression(&mut logical_expr.right),
+                        logical_expr.left.take_in(ctx.ast.allocator),
+                        logical_expr.right.take_in(ctx.ast.allocator),
                     ]);
                     ctx.ast.expression_sequence(logical_expr.span, expressions)
                 } else {
+                    let should_keep_indirect_access =
+                        Self::should_keep_indirect_access(&logical_expr.right, ctx);
+                    // (null ?? o.f) => (0, o.f)
+                    if should_keep_indirect_access {
+                        return Some(ctx.ast.expression_sequence(
+                            logical_expr.span,
+                            ctx.ast.vec_from_array([
+                                ctx.ast.expression_numeric_literal(
+                                    logical_expr.left.span(),
+                                    0.0,
+                                    None,
+                                    NumberBase::Decimal,
+                                ),
+                                logical_expr.right.take_in(ctx.ast.allocator),
+                            ]),
+                        ));
+                    }
                     // nullish condition => this expression evaluates to the right side.
-                    ctx.ast.move_expression(&mut logical_expr.right)
+                    logical_expr.right.take_in(ctx.ast.allocator)
                 })
             }
             ValueType::Number
@@ -200,8 +235,25 @@ impl<'a> PeepholeOptimizations {
             | ValueType::String
             | ValueType::Boolean
             | ValueType::Object => {
+                let should_keep_indirect_access =
+                    Self::should_keep_indirect_access(&logical_expr.left, ctx);
+                // (o.f ?? something) => (0, o.f)
+                if should_keep_indirect_access {
+                    return Some(ctx.ast.expression_sequence(
+                        logical_expr.span,
+                        ctx.ast.vec_from_array([
+                            ctx.ast.expression_numeric_literal(
+                                logical_expr.right.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            logical_expr.left.take_in(ctx.ast.allocator),
+                        ]),
+                    ));
+                }
                 // non-nullish condition => this expression evaluates to the left side.
-                Some(ctx.ast.move_expression(&mut logical_expr.left))
+                Some(logical_expr.left.take_in(ctx.ast.allocator))
             }
             ValueType::Undetermined => None,
         }
@@ -339,14 +391,14 @@ impl<'a> PeepholeOptimizations {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
                     let value = left_str.into_owned() + &right_str;
                     let right = ctx.ast.expression_string_literal(span, value, None);
-                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
                 }
 
                 if let Some(new_right) =
                     Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
                 {
-                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
                 }
             }
@@ -380,12 +432,12 @@ impl<'a> PeepholeOptimizations {
                     None
                 };
                 left_last_quasi.value.cooked = new_cooked;
-                if right.quasis.len() > 0 {
+                if !right.quasis.is_empty() {
                     left_last_quasi.tail = false;
                 }
                 left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
                 left.expressions.extend(right.expressions.drain(..));
-                return Some(ctx.ast.move_expression(left_expr));
+                return Some(left_expr.take_in(ctx.ast.allocator));
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
@@ -401,7 +453,7 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
-                return Some(ctx.ast.move_expression(left_expr));
+                return Some(left_expr.take_in(ctx.ast.allocator));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
@@ -419,20 +471,28 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
-                return Some(ctx.ast.move_expression(right_expr));
+                return Some(right_expr.take_in(ctx.ast.allocator));
             }
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if left_expr.is_specific_string_literal("") && right_expr.value_type(&ctx).is_string() {
-            return Some(ctx.ast.move_expression(right_expr));
-        } else if right_expr.is_specific_string_literal("")
+        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(&ctx).is_string() {
+            return Some(right_expr.take_in(ctx.ast.allocator));
+        } else if Self::evaluates_to_empty_string(right_expr)
             && left_expr.value_type(&ctx).is_string()
         {
-            return Some(ctx.ast.move_expression(left_expr));
+            return Some(left_expr.take_in(ctx.ast.allocator));
         }
 
         None
+    }
+
+    fn evaluates_to_empty_string(e: &Expression<'a>) -> bool {
+        match e {
+            Expression::StringLiteral(s) => s.value.is_empty(),
+            Expression::ArrayExpression(a) => a.elements.is_empty(),
+            _ => false,
+        }
     }
 
     fn try_fold_left_child_op(
@@ -463,7 +523,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             e.span,
-            ctx.ast.move_expression(expr_to_move),
+            expr_to_move.take_in(ctx.ast.allocator),
             op,
             ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
         ))
@@ -514,7 +574,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_binary_typeof_comparison(
-        bin_expr: &mut BinaryExpression<'a>,
+        bin_expr: &BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
@@ -582,10 +642,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_object_spread(
-        &mut self,
+        &self,
         e: &mut ObjectExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    ) {
         let len = e.properties.len();
         e.properties.retain(|p| {
             if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
@@ -608,17 +669,17 @@ impl<'a> PeepholeOptimizations {
             true
         });
         if e.properties.len() != len {
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
-        None
     }
 
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     fn try_inline_values_in_template_literal(
-        &mut self,
+        &self,
         t: &mut TemplateLiteral<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let has_expr_to_inline = t
@@ -668,7 +729,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 }
 
@@ -1212,7 +1273,7 @@ mod test {
     #[test]
     fn test_fold_logical_op() {
         fold("x = true && x", "x = x");
-        fold("x = [foo()] && x", "x = ([foo()],x)");
+        fold("x = [foo()] && x", "x = (foo(),x)");
 
         fold("x = false && x", "x = !1");
         fold("x = true || x", "x = !0");
@@ -1240,7 +1301,7 @@ mod test {
         fold("x = foo() || true && bar()", "x = foo() || bar()");
         fold("x = foo() || false && bar()", "x = foo() || !1");
         fold("x = foo() && false && bar()", "x = foo() && !1");
-        fold("x = foo() && false || bar()", "x = (foo() && !1, bar())");
+        fold("x = foo() && false || bar()", "x = (foo(), bar())");
         fold("x = foo() || false || bar()", "x = foo() || bar()");
         fold("x = foo() && true && bar()", "x = foo() && bar()");
         fold("x = foo() || true || bar()", "x = foo() || !0");
@@ -1274,13 +1335,18 @@ mod test {
         // 1 || 0 == 1, but true =/= 1
         fold("x = foo() && true || bar()", "x = foo() && !0 || bar()");
         fold("foo() && true || bar()", "foo() && !0 || bar()");
+
+        test("var y; x = (true && y)()", "var y; x = y()");
+        test("var y; x = (true && y.z)()", "var y; x = (0, y.z)()");
+        test("var y; x = (false || y)()", "var y; x = y()");
+        test("var y; x = (false || y.z)()", "var y; x = (0, y.z)()");
     }
 
     #[test]
     fn test_fold_logical_op2() {
         fold("x = function(){} && x", "x=x");
         fold("x = true && function(){}", "x=function(){}");
-        fold("x = [(function(){alert(x)})()] && x", "x=([function(){alert(x)}()],x)");
+        fold("x = [(function(){alert(x)})()] && x", "x=(function(){alert(x)}(),x)");
     }
 
     #[test]
@@ -1288,7 +1354,7 @@ mod test {
         // fold if left is null/undefined
         fold("null ?? 1", "1");
         fold("undefined ?? false", "!1");
-        fold("(a(), null) ?? 1", "(a(), null, 1)");
+        fold("(a(), null) ?? 1", "(a(), 1)");
 
         fold("x = [foo()] ?? x", "x = [foo()]");
 
@@ -1315,6 +1381,11 @@ mod test {
 
         fold("a() ?? (1 ?? b())", "a() ?? 1");
         fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
+
+        test_same("var y; x = (y ?? 1)()"); // can compress to "var y; x = y()" if y is not null or undefined
+        test_same("var y; x = (y.z ?? 1)()"); // "var y; x = (0, y.z)()" if y is not null or undefined
+        test("var y; x = (null ?? y)()", "var y; x = y()");
+        test("var y; x = (null ?? y.z)()", "var y; x = (0, y.z)()");
     }
 
     #[test]
@@ -1509,7 +1580,7 @@ mod test {
         fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
         fold("x = '' + null", "x = 'null'");
         fold("x = true + '' + false", "x = 'truefalse'");
-        // fold("x = '' + []", "x = ''");
+        fold("x = '' + []", "x = ''");
         fold("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
@@ -1786,6 +1857,10 @@ mod test {
         fold_same("typeof foo + '123'");
         fold("typeof foo + ''", "typeof foo");
         fold("'' + typeof foo", "typeof foo");
+        fold("typeof foo + ``", "typeof foo");
+        fold("`` + typeof foo", "typeof foo");
+        fold("typeof foo + []", "typeof foo");
+        fold("[] + typeof foo", "typeof foo");
         fold("(foo ? 'a' : 'b') + ''", "foo ? 'a' : 'b'");
         fold_same("typeof foo - ''");
     }

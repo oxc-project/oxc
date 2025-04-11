@@ -49,3 +49,11 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── '_a' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ for (using x of y) console.log(); x()
+   ·            ┬
+   ·            ╰── 'x' is declared here
+   ╰────
+  help: Consider removing this declaration.

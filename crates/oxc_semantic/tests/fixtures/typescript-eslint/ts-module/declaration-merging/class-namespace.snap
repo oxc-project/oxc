@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/decla
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(Class | NameSpaceModule | ValueModule)",
+        "flags": "SymbolFlags(Class | ValueModule)",
         "id": 0,
         "name": "Foo",
         "node": "Class(Foo)",

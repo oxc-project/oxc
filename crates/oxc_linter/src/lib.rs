@@ -38,6 +38,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
+    loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
@@ -87,18 +88,15 @@ impl Linter {
     }
 
     /// Set the kind of auto fixes to apply.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_linter::{Linter, FixKind};
-    ///
-    /// // turn off all auto fixes. This is default behavior.
-    /// Linter::default().with_fix(FixKind::None);
-    /// ```
     #[must_use]
     pub fn with_fix(mut self, kind: FixKind) -> Self {
         self.options.fix = kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
+        self.options.report_unused_directive = report_config;
         self
     }
 
@@ -106,8 +104,11 @@ impl Linter {
         &self.options
     }
 
-    pub fn number_of_rules(&self) -> usize {
-        self.config.number_of_rules()
+    /// Returns the number of rules that will are being used, unless there
+    /// nested configurations in use, in which case it returns `None` since the
+    /// number of rules depends on which file is being linted.
+    pub fn number_of_rules(&self) -> Option<usize> {
+        self.nested_configs.is_empty().then_some(self.config.number_of_rules())
     }
 
     pub fn run<'a>(
@@ -164,7 +165,7 @@ impl Linter {
                 rule.run_once(ctx);
             }
 
-            for symbol in semantic.symbols().symbol_ids() {
+            for symbol in semantic.scoping().symbol_ids() {
                 for (rule, ctx) in &rules {
                     rule.run_on_symbol(symbol, ctx);
                 }
@@ -187,7 +188,7 @@ impl Linter {
             for (rule, ref ctx) in rules {
                 rule.run_once(ctx);
 
-                for symbol in semantic.symbols().symbol_ids() {
+                for symbol in semantic.scoping().symbol_ids() {
                     rule.run_on_symbol(symbol, ctx);
                 }
 
@@ -200,6 +201,12 @@ impl Linter {
                         rule.run_on_jest_node(&jest_node, ctx);
                     }
                 }
+            }
+        }
+
+        if let Some(severity) = self.options.report_unused_directive {
+            if severity.is_warn_deny() {
+                ctx_host.report_unused_directives(severity.into());
             }
         }
 

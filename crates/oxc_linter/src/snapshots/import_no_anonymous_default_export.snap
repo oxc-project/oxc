@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign array to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default []
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign arrow function to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default () => {}
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Unexpected default export of anonymous class
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default class {}
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Unexpected default export of anonymous function
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default function () {}
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign call result to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default foo(bar)
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign literal to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default 123
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign object to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default {}
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign instance to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default new Foo()
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign literal to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default `foo`
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-anonymous-default-export): Assign literal to a variable before exporting as module default
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ export default /^123/
+   · ─────────────────────
+   ╰────

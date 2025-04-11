@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.62.0] - 2025-04-01
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 ### Features

@@ -1,0 +1,98 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-namespace): React component ns:testcomponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <ns:testcomponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:testcomponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("ns:testcomponent")
+   ·                     ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:testComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <ns:testComponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:testComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("ns:testComponent")
+   ·                     ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:test_component must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <ns:test_component />
+   ·  ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:test_component must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("ns:test_component")
+   ·                     ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:TestComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <ns:TestComponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component ns:TestComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("ns:TestComponent")
+   ·                     ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:testcomponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <Ns:testcomponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:testcomponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("Ns:testcomponent")
+   ·                     ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:testComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <Ns:testComponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:testComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("Ns:testComponent")
+   ·                     ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:test_component must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <Ns:test_component />
+   ·  ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:test_component must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("Ns:test_component")
+   ·                     ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:TestComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:2]
+ 1 │ <Ns:TestComponent />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-namespace): React component Ns:TestComponent must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("Ns:TestComponent")
+   ·                     ──────────────────
+   ╰────

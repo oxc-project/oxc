@@ -1,6 +1,8 @@
 #![expect(missing_docs)] // fixme
-use assert_unchecked::assert_unchecked;
+
 use unicode_id_start::{is_id_continue_unicode, is_id_start_unicode};
+
+use oxc_data_structures::assert_unchecked;
 
 pub const EOF: char = '\0';
 

@@ -69,11 +69,7 @@ impl Generator for AstBuilderGenerator {
             //! AST node factories
 
             //!@@line_break
-            #![expect(
-                clippy::default_trait_access,
-                clippy::too_many_arguments,
-                clippy::fn_params_excessive_bools,
-            )]
+            #![expect(clippy::default_trait_access)]
 
             ///@@line_break
             use std::cell::Cell;
@@ -192,7 +188,6 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
 /// Build a pair of builder methods for a struct.
 ///
 /// This is a separate function as may need to be called twice, with and without semantic ID fields.
-#[expect(clippy::too_many_arguments)]
 fn generate_builder_methods_for_struct_impl(
     struct_def: &StructDef,
     params: &[Param],
@@ -214,37 +209,56 @@ fn generate_builder_methods_for_struct_impl(
         fn_name_base.push_str(fn_name_postfix);
     }
     let fn_name = struct_builder_name(&fn_name_base, false);
-    let alloc_fn_name = struct_builder_name(&fn_name_base, true);
 
-    // Generate doc comments
+    // Only generate an `alloc_*` method if `Box<T>` exists in AST
+    let alloc_fn_name = if struct_def.containers.box_id.is_some() {
+        Some(struct_builder_name(&fn_name_base, true))
+    } else {
+        None
+    };
+
+    // Generate main builder method
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(
-        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
-    );
-    let alloc_doc1 = format!(
-        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
-    );
-    let alloc_doc2 = format!(
-        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
-    );
+    let mut fn_docs = quote!( #[doc = #fn_doc1] );
+    if let Some(alloc_fn_name) = &alloc_fn_name {
+        let fn_doc2 = format!(" use [`AstBuilder::{alloc_fn_name}`] instead.");
+        fn_docs.extend(quote! {
+            #[doc = ""]
+            #[doc = " If you want the built node to be allocated in the memory arena,"]
+            #[doc = #fn_doc2]
+        });
+    }
+
     let params_docs = generate_doc_comment_for_params(params);
 
-    quote! {
+    let method = quote! {
         ///@@line_break
-        #[doc = #fn_doc1]
-        #[doc = ""]
-        #[doc = #fn_doc2]
+        #fn_docs
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
         }
+    };
+
+    let Some(alloc_fn_name) = alloc_fn_name else { return method };
+
+    // Generate `alloc_*` builder method, if required
+    let alloc_doc1 = format!(
+        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
+    );
+    let alloc_doc2 =
+        format!(" If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
+
+    quote! {
+        #method
 
         ///@@line_break
         #[doc = #alloc_doc1]
         #[doc = ""]
+        #[doc = " Returns a [`Box`] containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]
@@ -300,7 +314,7 @@ fn get_struct_params<'s>(
             };
             if is_default {
                 has_default_fields = true;
-            };
+            }
 
             let generic_ident = match type_def {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
@@ -421,7 +435,6 @@ fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> Tok
 }
 
 /// Generate builder method for an enum variant.
-#[expect(clippy::similar_names)]
 fn generate_builder_method_for_enum_variant(
     enum_def: &EnumDef,
     variant: &VariantDef,
@@ -433,38 +446,95 @@ fn generate_builder_method_for_enum_variant(
         variant_type = box_def.inner_type(schema);
         is_boxed = true;
     }
-    let TypeDef::Struct(variant_type) = variant_type else { panic!("Unsupported!") };
+    let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(variant_type, schema);
-    if has_default_fields {
-        params.retain(|param| !param.is_default);
+        get_struct_params(struct_def, schema);
+
+    let fn_name = enum_variant_builder_name(enum_def, variant);
+    let variant_ident = variant.ident();
+
+    let output = has_default_fields.then(|| {
+        let default_params = params.iter().filter(|param| param.is_default);
+        let fn_name_postfix = format!(
+            "_with_{}",
+            default_params.clone().map(|param| param.field.name()).join("_and_")
+        );
+        let doc_postfix =
+            format!(" with `{}`", default_params.map(|param| param.field.name()).join("` and `"));
+        generate_builder_method_for_enum_variant_impl(
+            enum_def,
+            struct_def,
+            &variant_ident,
+            &params,
+            &fn_name,
+            &generic_params,
+            &where_clause,
+            &fn_name_postfix,
+            &doc_postfix,
+            schema,
+            is_boxed,
+        )
+    });
+
+    params.retain(|param| !param.is_default);
+    let mut output2 = generate_builder_method_for_enum_variant_impl(
+        enum_def,
+        struct_def,
+        &variant_ident,
+        &params,
+        &fn_name,
+        &generic_params,
+        &where_clause,
+        "",
+        "",
+        schema,
+        is_boxed,
+    );
+
+    if let Some(output) = output {
+        output2.extend(output);
     }
 
+    output2
+}
+
+fn generate_builder_method_for_enum_variant_impl(
+    enum_def: &EnumDef,
+    struct_def: &StructDef,
+    variant_ident: &Ident,
+    params: &[Param],
+    fn_name: &str,
+    generic_params: &TokenStream,
+    where_clause: &TokenStream,
+    fn_name_postfix: &str,
+    doc_postfix: &str,
+    schema: &Schema,
+    is_boxed: bool,
+) -> TokenStream {
+    let fn_name = format_ident!("{}{}", fn_name, fn_name_postfix);
     let fn_params = params.iter().map(|param| &param.fn_param);
     let args = params.iter().map(|param| &param.ident);
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
-    let fn_name = enum_variant_builder_name(enum_def, variant);
-    let variant_ident = variant.ident();
-    let inner_builder_name = struct_builder_name(&variant_type.snake_name(), is_boxed);
+    let inner_builder_name = format!("{}{fn_name_postfix}", struct_def.snake_name());
+    let inner_builder_name = struct_builder_name(&inner_builder_name, is_boxed);
 
     // Generate doc comments
     let enum_name = enum_def.name();
     let article_enum = article_for(enum_name);
-    let variant_name = variant.ident();
-    let fn_doc1 = format!(" Build {article_enum} [`{enum_name}::{variant_name}`].");
+    let fn_doc1 = format!(" Build {article_enum} [`{enum_name}::{variant_ident}`]{doc_postfix}.");
     let mut fn_docs = quote!( #[doc = #fn_doc1] );
     if is_boxed {
-        let variant_type_name = variant_type.name();
+        let variant_type_name = struct_def.name();
         let article_variant = article_for(variant_type_name);
         let fn_doc2 = format!(
             " This node contains {article_variant} [`{variant_type_name}`] that will be stored in the memory arena."
         );
         fn_docs.extend(quote!( #[doc = ""] #[doc = #fn_doc2] ));
     }
-    let params_docs = generate_doc_comment_for_params(&params);
+    let params_docs = generate_doc_comment_for_params(params);
 
     quote! {
         ///@@line_break
@@ -492,7 +562,7 @@ fn struct_builder_name(snake_name: &str, does_alloc: bool) -> Ident {
 }
 
 /// Get name of enum variant builder method.
-fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident {
+fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> String {
     let enum_name = enum_def.snake_name();
 
     let variant_name = variant.snake_name();
@@ -509,7 +579,7 @@ fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident 
         &variant_name
     };
 
-    format_ident!("{enum_name}_{variant_name}")
+    format!("{enum_name}_{variant_name}")
 }
 
 /// Wrap the value of a default field in `Cell::new(...)` or `Some(...)` if necessary.

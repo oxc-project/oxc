@@ -35,7 +35,11 @@ const isMuslFromFilesystem = () => {
 }
 
 const isMuslFromReport = () => {
-  const report = typeof process.report.getReport === 'function' ? process.report.getReport() : null
+  let report = null
+  if (typeof process.report?.getReport === 'function') {
+    process.report.excludeNetwork = true
+    report = process.report.getReport()
+  }
   if (!report) {
     return null
   }
@@ -359,6 +363,14 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   }
 }
 
+if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
+  try {
+    nativeBinding = require('./webcontainer-fallback.js');
+  } catch (err) {
+    loadErrors.push(err)
+  }
+}
+
 if (!nativeBinding) {
   if (loadErrors.length > 0) {
     // TODO Link to documentation with potential fixes
@@ -374,8 +386,10 @@ module.exports.ParseResult = nativeBinding.ParseResult
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
+module.exports.getBufferOffset = nativeBinding.getBufferOffset
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
-module.exports.parseWithoutReturn = nativeBinding.parseWithoutReturn
+module.exports.parseSyncRaw = nativeBinding.parseSyncRaw
+module.exports.rawTransferSupported = nativeBinding.rawTransferSupported
 module.exports.Severity = nativeBinding.Severity

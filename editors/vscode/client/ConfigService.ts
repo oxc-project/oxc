@@ -9,7 +9,7 @@ export class ConfigService implements IDisposable {
   public config: Config;
 
   public onConfigChange:
-    | ((this: ConfigService, config: ConfigurationChangeEvent) => void)
+    | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
     | undefined;
 
   constructor() {
@@ -22,10 +22,10 @@ export class ConfigService implements IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
-  private onVscodeConfigChange(event: ConfigurationChangeEvent): void {
+  private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
     if (event.affectsConfiguration(ConfigService._namespace)) {
       this.config.refresh();
-      this.onConfigChange?.(event);
+      await this.onConfigChange?.(event);
     }
   }
 

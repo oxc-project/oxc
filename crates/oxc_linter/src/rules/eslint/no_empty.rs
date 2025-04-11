@@ -55,7 +55,7 @@ impl Rule for NoEmpty {
                     return;
                 }
 
-                if ctx.semantic().has_comments_between(block.span) {
+                if ctx.has_comments_between(block.span) {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {

@@ -66,7 +66,7 @@ impl Rule for NoVoid {
             if self.allow_as_statement && matches!(kind, AstKind::ExpressionStatement(_)) {
                 return;
             }
-        };
+        }
 
         if unary_expr.operator == UnaryOperator::Void {
             ctx.diagnostic(no_void_diagnostic(Span::new(

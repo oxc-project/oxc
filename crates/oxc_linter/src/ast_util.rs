@@ -283,24 +283,24 @@ pub fn get_declaration_of_variable<'a, 'b>(
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, semantic)?;
-    let symbol_table = semantic.symbols();
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    let symbol_table = semantic.scoping();
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_declaration_from_reference_id<'a, 'b>(
     reference_id: ReferenceId,
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let symbol_table = semantic.symbols();
+    let symbol_table = semantic.scoping();
     let symbol_id = symbol_table.get_reference(reference_id).symbol_id()?;
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
     semantic: &Semantic<'_>,
 ) -> Option<SymbolId> {
-    semantic.symbols().get_reference(ident.reference_id()).symbol_id()
+    semantic.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(
@@ -343,18 +343,12 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let callee_without_parentheses = call_expr.callee.without_parentheses();
-    let member_expr = match callee_without_parentheses {
-        match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression.member_expression() {
-            Some(e) => e,
-            None => return false,
-        },
-        _ => return false,
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
     };
 
     if let Some(objects) = objects {
-        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
+        let Expression::Identifier(ident) = member_expr.object().get_inner_expression() else {
             return false;
         };
         if !objects.contains(&ident.name.as_str()) {
@@ -421,7 +415,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &Semantic) -> boo
     if call_expr.arguments.len() != 1 {
         return false;
     }
-    call_expr.callee.is_global_reference_name("require", ctx.symbols())
+    call_expr.callee.is_global_reference_name("require", ctx.scoping())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {
@@ -565,11 +559,11 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
             could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
         }
         Expression::Identifier(ident) => {
-            let reference = ctx.symbols().get_reference(ident.reference_id());
+            let reference = ctx.scoping().get_reference(ident.reference_id());
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
-            let decl = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+            let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
@@ -797,7 +791,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         }
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+            if template.expressions.is_empty() && template.quasis.len() == 1 {
                 if let Some(cooked) = &template.quasis[0].value.cooked {
                     return Some(Cow::Borrowed(cooked.as_str()));
                 }

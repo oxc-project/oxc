@@ -3,10 +3,9 @@
 
 use std::cell::Cell;
 
-use oxc_ast::{
-    ast::*,
-    visit::{VisitMut, walk_mut},
-};
+use oxc_allocator::TakeIn;
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
@@ -84,12 +83,17 @@ impl<'a> ClassProperties<'a, '_> {
         replacer.visit_statements(stmts);
 
         let scope_flags = outer_scope_strict_flag | ScopeFlags::Function | ScopeFlags::Arrow;
-        *ctx.scopes_mut().get_flags_mut(scope_id) = scope_flags;
+        *ctx.scoping_mut().scope_flags_mut(scope_id) = scope_flags;
 
         let outer_scope_id = ctx.current_scope_id();
-        ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
+        ctx.scoping_mut().change_scope_parent_id(scope_id, Some(outer_scope_id));
 
-        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
+        wrap_statements_in_arrow_function_iife(
+            stmts.take_in(ctx.ast.allocator),
+            scope_id,
+            block.span,
+            ctx,
+        )
     }
 
     fn convert_static_block_with_single_expression_to_expression(
@@ -104,9 +108,9 @@ impl<'a> ClassProperties<'a, '_> {
         replacer.visit_expression(expr);
 
         // Delete scope for static block
-        ctx.scopes_mut().delete_scope(scope_id);
+        ctx.scoping_mut().delete_scope(scope_id);
 
-        ctx.ast.move_expression(expr)
+        expr.take_in(ctx.ast.allocator)
     }
 
     /// Replace reference to class name with reference to temp var for class.
@@ -121,7 +125,7 @@ impl<'a> ClassProperties<'a, '_> {
         let Some(class_name_symbol_id) = class_name_symbol_id else { return };
 
         let reference_id = ident.reference_id();
-        let reference = ctx.symbols().get_reference(reference_id);
+        let reference = ctx.scoping().get_reference(reference_id);
         let Some(symbol_id) = reference.symbol_id() else { return };
 
         if symbol_id != class_name_symbol_id {
@@ -132,7 +136,7 @@ impl<'a> ClassProperties<'a, '_> {
         let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
         ident.name = temp_binding.name;
 
-        let symbols = ctx.symbols_mut();
+        let symbols = ctx.scoping_mut();
         symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
         symbols.delete_resolved_reference(symbol_id, reference_id);
         symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
@@ -310,7 +314,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         if self.make_sloppy_mode {
             let scope_id = scope_id.get().unwrap();
-            *self.ctx.scopes_mut().get_flags_mut(scope_id) -= ScopeFlags::StrictMode;
+            *self.ctx.scoping_mut().scope_flags_mut(scope_id) -= ScopeFlags::StrictMode;
         }
     }
 
@@ -545,7 +549,7 @@ impl<'a> StaticVisitor<'a, '_, '_> {
         if self.scope_depth == 0 {
             let scope_id = scope_id.get().unwrap();
             let current_scope_id = self.ctx.current_scope_id();
-            self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
+            self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(current_scope_id));
         }
     }
 }

@@ -57,14 +57,13 @@ enum DefinitelyCallsThisBeforeSuper {
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
         let cfg = ctx.cfg();
-        let semantic = ctx.semantic();
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
         let mut basic_blocks_with_super_called = FxHashSet::<BlockNodeId>::default();
         let mut basic_blocks_with_local_violations =
             FxHashMap::<BlockNodeId, Vec<NodeId>>::default();
-        for node in semantic.nodes() {
+        for node in ctx.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     if Self::is_wanted_node(node, ctx).unwrap_or_default() {
@@ -73,7 +72,7 @@ impl Rule for NoThisBeforeSuper {
                 }
                 AstKind::Super(_) => {
                     let basic_block_id = node.cfg_id();
-                    if let Some(parent) = semantic.nodes().parent_node(node.id()) {
+                    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
                         if let AstKind::CallExpression(call_expr) = parent.kind() {
                             let has_this_or_super_in_args =
                                 Self::contains_this_or_super_in_args(&call_expr.arguments);

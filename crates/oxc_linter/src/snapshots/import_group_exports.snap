@@ -1,0 +1,337 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             export const first = true;
+   ·             ──────────────────────────
+ 3 │             export const second = true;
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:3:13]
+ 2 │             export const first = true;
+ 3 │             export const second = true;
+   ·             ───────────────────────────
+ 4 │             export type A = {};
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+    ╭─[group_exports.tsx:11:13]
+ 10 │             const t = 3;
+ 11 │             export { t };
+    ·             ─────────────
+ 12 │         
+    ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             export type A = {
+ 3 │ │                   name: string
+ 4 │ ╰─▶             }
+ 5 │                 export type B = {
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:5:13]
+ 4 │                 }
+ 5 │ ╭─▶             export type B = {
+ 6 │ │                   name: string
+ 7 │ ╰─▶             };
+ 8 │             
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             exports.first = true
+   ·             ────────────────────
+ 3 │             exports.second = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             exports.first = true
+ 3 │             exports.second = true
+   ·             ─────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             exports.second = true
+   ·             ─────────────────────
+ 3 │             module.exports = {
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │                 exports.second = true
+ 3 │ ╭─▶             module.exports = {
+ 4 │ ╰─▶             }
+ 5 │             
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             export type { type1 } from './module-1'
+   ·             ───────────────────────────────────────
+ 3 │             export type { type2 } from './module-1'
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:3:13]
+ 2 │             export type { type1 } from './module-1'
+ 3 │             export type { type2 } from './module-1'
+   ·             ───────────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+    ╭─[group_exports.tsx:9:13]
+  8 │             const first = {};
+  9 │             export type { firstType };
+    ·             ──────────────────────────
+ 10 │             export type { secondType };
+    ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+    ╭─[group_exports.tsx:10:13]
+  9 │             export type { firstType };
+ 10 │             export type { secondType };
+    ·             ───────────────────────────
+ 11 │             export { first };
+    ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = "non-object"
+   ·             ─────────────────────────────
+ 3 │             module.exports.attached = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = "non-object"
+ 3 │             module.exports.attached = true
+   ·             ──────────────────────────────
+ 4 │             module.exports.another = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:4:13]
+ 3 │             module.exports.attached = true
+ 4 │             module.exports.another = true
+   ·             ─────────────────────────────
+ 5 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = "non-object"
+   ·             ─────────────────────────────
+ 3 │             module.exports.attached = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = "non-object"
+ 3 │             module.exports.attached = true
+   ·             ──────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = () => {}
+   ·             ─────────────────────────
+ 3 │             exports.test = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = () => {}
+ 3 │             exports.test = true
+   ·             ───────────────────
+ 4 │             exports.another = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:4:13]
+ 3 │             exports.test = true
+ 4 │             exports.another = true
+   ·             ──────────────────────
+ 5 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = function test() {}
+   ·             ───────────────────────────────────
+ 3 │             module.exports.attached = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = function test() {}
+ 3 │             module.exports.attached = true
+   ·             ──────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = () => {}
+   ·             ─────────────────────────
+ 3 │             module.exports.attached = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = () => {}
+ 3 │             module.exports.attached = true
+   ·             ──────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             exports.test = true
+   ·             ───────────────────
+ 3 │             module.exports.another = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             exports.test = true
+ 3 │             module.exports.another = true
+   ·             ─────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports.test = true
+   ·             ──────────────────────────
+ 3 │             module.exports.another = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports.test = true
+ 3 │             module.exports.another = true
+   ·             ─────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = { test: true }
+   ·             ───────────────────────────────
+ 3 │             module.exports.another = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = { test: true }
+ 3 │             module.exports.another = true
+   ·             ─────────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             module.exports = {}
+   ·             ───────────────────
+ 3 │             module.exports.test = true
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple CommonJS exports; consolidate all exports into a single assignment to `module.exports`
+   ╭─[group_exports.tsx:3:13]
+ 2 │             module.exports = {}
+ 3 │             module.exports.test = true
+   ·             ──────────────────────────
+ 4 │         
+   ╰────
+  help: Combine multiple assignments into a single `module.exports = { ... }` statement
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:2:13]
+ 1 │ 
+ 2 │             export { method1 } from './module-1'
+   ·             ────────────────────────────────────
+ 3 │             export { method2 } from './module-1'
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:3:13]
+ 2 │             export { method1 } from './module-1'
+ 3 │             export { method2 } from './module-1'
+   ·             ────────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:3:13]
+ 2 │             export default a = 3;
+ 3 │             export const b = 2;
+   ·             ───────────────────
+ 4 │             export const c = 2;
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`
+
+  ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
+   ╭─[group_exports.tsx:4:13]
+ 3 │             export const b = 2;
+ 4 │             export const c = 2;
+   ·             ───────────────────
+ 5 │         
+   ╰────
+  help: Use a single export declaration with multiple specifiers: `export { spec1, spec2 }`

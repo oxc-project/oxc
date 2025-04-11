@@ -63,43 +63,46 @@ impl Rule for NoAsyncClientComponent {
                 }
 
                 // async function MyComponent() {...}; export default MyComponent;
-                if let ExportDefaultDeclarationKind::Identifier(export_default_id) =
+                let ExportDefaultDeclarationKind::Identifier(export_default_id) =
                     &export_default_decl.declaration
-                {
-                    let Some(decl) = get_declaration_of_variable(export_default_id, ctx) else {
-                        continue;
-                    };
+                else {
+                    continue;
+                };
+                let Some(decl) = get_declaration_of_variable(export_default_id, ctx) else {
+                    continue;
+                };
 
-                    if let AstKind::Function(func) = decl.kind() {
-                        if func.r#async
-                            && func
-                                .id
-                                .as_ref()
-                                // `func.id.name` MUST be > 0 chars
-                                .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
-                        {
-                            ctx.diagnostic(no_async_client_component_diagnostic(
-                                func.id.as_ref().unwrap().span,
-                            ));
-                        }
+                if let AstKind::Function(func) = decl.kind() {
+                    if func.r#async
+                        && func
+                            .id
+                            .as_ref()
+                            // `func.id.name` MUST be > 0 chars
+                            .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
+                    {
+                        ctx.diagnostic(no_async_client_component_diagnostic(
+                            func.id.as_ref().unwrap().span,
+                        ));
                     }
+                }
 
-                    if let AstKind::VariableDeclarator(var_declarator) = decl.kind() {
-                        if let BindingPatternKind::BindingIdentifier(binding_ident) =
-                            &var_declarator.id.kind
-                        {
-                            // `binding_ident.name` MUST be > 0 chars
-                            if binding_ident.name.chars().next().unwrap().is_uppercase() {
-                                if let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
-                                    &var_declarator.init
-                                {
-                                    if arrow_expr.r#async {
-                                        ctx.diagnostic(no_async_client_component_diagnostic(
-                                            binding_ident.span,
-                                        ));
-                                    }
-                                }
-                            }
+                let AstKind::VariableDeclarator(var_declarator) = decl.kind() else {
+                    continue;
+                };
+
+                let BindingPatternKind::BindingIdentifier(binding_ident) = &var_declarator.id.kind
+                else {
+                    continue;
+                };
+                // `binding_ident.name` MUST be > 0 chars
+                if binding_ident.name.chars().next().unwrap().is_uppercase() {
+                    if let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
+                        &var_declarator.init
+                    {
+                        if arrow_expr.r#async {
+                            ctx.diagnostic(no_async_client_component_diagnostic(
+                                binding_ident.span,
+                            ));
                         }
                     }
                 }

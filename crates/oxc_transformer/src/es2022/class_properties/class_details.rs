@@ -62,7 +62,7 @@ impl<'a> PrivateProp<'a> {
     }
 
     pub fn is_accessor(&self) -> bool {
-        self.is_accessor || self.method_kind.is_some_and(|kind| kind.is_accessor())
+        self.is_accessor || self.method_kind.is_some_and(MethodDefinitionKind::is_accessor)
     }
 
     pub fn set_binding2(&mut self, binding: BoundIdentifier<'a>) {

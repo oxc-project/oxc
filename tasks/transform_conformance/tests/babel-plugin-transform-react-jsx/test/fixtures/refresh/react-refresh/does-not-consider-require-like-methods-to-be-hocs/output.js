@@ -4,7 +4,12 @@ const B = foo ? require("X") : require("Y");
 const C = requireCond(gk, "C");
 const D = import("D");
 export default function App() {
-  return _jsxs("div", { children: [_jsx(A, {}), _jsx(B, {}), _jsx(C, {}), _jsx(D, {})] });
+  return /* @__PURE__ */ _jsxs("div", { children: [
+    /* @__PURE__ */ _jsx(A, {}),
+    /* @__PURE__ */ _jsx(B, {}),
+    /* @__PURE__ */ _jsx(C, {}),
+    /* @__PURE__ */ _jsx(D, {})
+  ] });
 }
 _c = App;
 var _c;

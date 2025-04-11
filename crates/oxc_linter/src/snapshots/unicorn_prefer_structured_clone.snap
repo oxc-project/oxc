@@ -4,70 +4,78 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse((JSON.stringify((foo))))
-   · ─────────────────────────────────
+   · ───────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo))
-   · ──────────────────────────────
+   · ───────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo),)
-   · ──────────────────────────────
+   · ────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo,))
-   · ───────────────────────────────
+   · ────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo,),)
-   · ───────────────────────────────
+   · ─────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse( ((JSON.stringify)) (foo))
-   · ────────────────────────────────────
+   · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ (( JSON.parse)) (JSON.stringify(foo))
-   · ────────────────────────────────────
+   · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify( ((foo)) ))
-   · ────────────────────────────────────
+   · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
-   ╭─[prefer_structured_clone.tsx:3:28]
- 2 │                 function foo() {
- 3 │ ╭─▶                     return JSON
- 4 │ │                               .parse(
- 5 │ │                                       JSON.
- 6 │ │                                               stringify(
- 7 │ │                                                       bar,
- 8 │ ╰─▶                                             ),
- 9 │                                 );
+   ╭─[prefer_structured_clone.tsx:1:1]
+ 1 │ JSON.parse(JSON.stringify( ((foo.bar['hello'])) ))
+   · ──────────────────────────────────────────────────
    ╰────
+  help: Switch to `structuredClone(…)`.
+
+  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+    ╭─[prefer_structured_clone.tsx:3:28]
+  2 │                 function foo() {
+  3 │ ╭─▶                     return JSON
+  4 │ │                               .parse(
+  5 │ │                                       JSON.
+  6 │ │                                               stringify(
+  7 │ │                                                       bar,
+  8 │ │                                               ),
+  9 │ ╰─▶                             );
+ 10 │                 }
+    ╰────
   help: Switch to `structuredClone(…)`.
 
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.

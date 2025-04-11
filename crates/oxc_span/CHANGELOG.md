@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
+## [0.62.0] - 2025-04-01
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
+### Refactor
+
+- d8e49a1 linter: Compute lintable extensions at compile time (#10090) (camchenry)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.54.0] - 2025-03-04
+
+### Features
+
+- a9f0d2b ast_tools: Generate field offset assertions for more types (#9449) (overlookmotel)
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
 ## [0.53.0] - 2025-02-26
 
 ### Refactor

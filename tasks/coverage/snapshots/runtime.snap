@@ -2,7 +2,7 @@ commit: bc5c1417
 
 runtime Summary:
 AST Parsed     : 18253/18253 (100.00%)
-Positive Passed: 17317/18253 (94.87%)
+Positive Passed: 17307/18253 (94.82%)
 tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 codegen error: Test262Error: descriptor should be enumerable; descriptor should be writable
 
@@ -323,6 +323,12 @@ transform error: throw-arg-1
 
 tasks/coverage/test262/test/language/expressions/await/await-monkey-patched-promise.js
 transform error: Test262Error: Monkey-patched "then" on native promises should not be called. Expected SameValue(«1», «0») to be true
+
+tasks/coverage/test262/test/language/expressions/class/accessor-name-inst/computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/accessor-name-static/computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -953,6 +959,9 @@ transform error: Test262Error: Expected a Test262Error to be thrown but no excep
 tasks/coverage/test262/test/language/expressions/class/elements/evaluation-error/computed-name-valueof-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
+tasks/coverage/test262/test/language/expressions/class/elements/fields-computed-name-static-propname-prototype.js
+minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
 transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -1080,8 +1089,17 @@ transform error: Test262Error: The expression should evaluate to the result Expe
 tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 minify error: Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
 
+tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
+minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-invocation.js
 minify error: Test262Error: method invoked exactly once Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-return-obj.js
+minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/equals/get-symbol-to-prim-err.js
+minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
@@ -1167,6 +1185,12 @@ minify error: Test262Error: descriptor value should be func; object value should
 tasks/coverage/test262/test/language/expressions/greater-than/S11.8.2_A2.3_T1.js
 minify error: Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
 
+tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-symbol.js
+minify error: Test262Error: 3n > Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/less-than/bigint-and-symbol.js
+minify error: Test262Error: 3n < Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
+
 tasks/coverage/test262/test/language/expressions/less-than-or-equal/S11.8.3_A2.3_T1.js
 minify error: Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
 
@@ -1190,6 +1214,9 @@ transform error: Test262Error: The right-hand side should not be evaluated
 
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
+
+tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-to-prop-key.js
+minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 minify error: Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2159,6 +2186,9 @@ transform error: Test262Error: Expected SameValue(«"_"», «"#field"») to be t
 
 tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 transform error: Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-grouped.js
+minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/statements/class/static-init-expr-new-target.js
 transform error: SyntaxError: new.target expression is not allowed here

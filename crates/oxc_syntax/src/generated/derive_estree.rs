@@ -8,7 +8,96 @@ use oxc_estree::{
     ser::{AppendTo, AppendToConcat},
 };
 
+use crate::module_record::*;
 use crate::operator::*;
+
+impl ESTree for NameSpan<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("value", &self.name);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for ImportEntry<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("importName", &self.import_name);
+        state.serialize_field("localName", &self.local_name);
+        state.serialize_field("isType", &self.is_type);
+        state.end();
+    }
+}
+
+impl ESTree for ImportImportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::NamespaceObject => JsonSafeString("namespaceObject").serialize(serializer),
+            Self::Default(it) => {
+                crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
+            }
+        }
+    }
+}
+
+impl ESTree for ExportEntry<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("moduleRequest", &self.module_request);
+        state.serialize_field("importName", &self.import_name);
+        state.serialize_field("exportName", &self.export_name);
+        state.serialize_field("localName", &self.local_name);
+        state.end();
+    }
+}
+
+impl ESTree for ExportImportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::All => JsonSafeString("all").serialize(serializer),
+            Self::AllButDefault => JsonSafeString("allButDefault").serialize(serializer),
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ExportExportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::Default(it) => {
+                crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
+            }
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ExportLocalName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::Default(it) => crate::serialize::ExportLocalNameDefault(it).serialize(serializer),
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for DynamicImport {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("moduleRequest", &self.module_request);
+        state.end();
+    }
+}
 
 impl ESTree for AssignmentOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {

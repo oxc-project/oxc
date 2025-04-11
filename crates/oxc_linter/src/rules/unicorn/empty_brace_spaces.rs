@@ -54,7 +54,7 @@ impl Rule for EmptyBraceSpaces {
             AstKind::StaticBlock(static_block) => {
                 let span = static_block.span;
 
-                if static_block.body.is_empty() && !ctx.semantic().has_comments_between(span) {
+                if static_block.body.is_empty() && !ctx.has_comments_between(span) {
                     // Skip the first 6 chars (static block prefix)
                     let static_block_src = &span.source_text(ctx.source_text())[6..];
                     let left_curly_brace = static_block_src.find('{').unwrap();
@@ -80,8 +80,7 @@ impl Rule for EmptyBraceSpaces {
             _ => return,
         };
 
-        if is_empty_body && span.end - span.start > 2 && !ctx.semantic().has_comments_between(span)
-        {
+        if is_empty_body && span.end - span.start > 2 && !ctx.has_comments_between(span) {
             ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
                 fixer.replace(span, "{}")
             });

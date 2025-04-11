@@ -17,7 +17,7 @@ _s2(useFancyEffect, "useEffect{}");
 export default function App() {
   _s3();
   const bar = useFancyState();
-  return _jsx("h1", { children: bar });
+  return /* @__PURE__ */ _jsx("h1", { children: bar });
 }
 _s3(App, "useFancyState{bar}", false, function() {
   return [useFancyState];

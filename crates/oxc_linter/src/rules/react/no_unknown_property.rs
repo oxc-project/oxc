@@ -1,8 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::OnceLock};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
@@ -17,6 +16,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    globals::is_valid_aria_property,
     rule::Rule,
     utils::get_jsx_attribute_name,
 };
@@ -309,23 +309,6 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onPointerUpCapture",
 };
 
-const ARIA_PROPERTIES: Set<&'static str> = phf_set! {
-    // See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes
-    // Global attributes
-    "aria-atomic", "aria-braillelabel", "aria-brailleroledescription", "aria-busy", "aria-controls", "aria-current",
-    "aria-describedby", "aria-description", "aria-details",
-    "aria-disabled", "aria-dropeffect", "aria-errormessage", "aria-flowto", "aria-grabbed", "aria-haspopup",
-    "aria-hidden", "aria-invalid", "aria-keyshortcuts", "aria-label", "aria-labelledby", "aria-live",
-    "aria-owns", "aria-relevant", "aria-roledescription",
-    // Widget attributes
-    "aria-autocomplete", "aria-checked", "aria-expanded", "aria-level", "aria-modal", "aria-multiline", "aria-multiselectable",
-    "aria-orientation", "aria-placeholder", "aria-pressed", "aria-readonly", "aria-required", "aria-selected",
-    "aria-sort", "aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-valuetext",
-    // Relationship attributes
-    "aria-activedescendant", "aria-colcount", "aria-colindex", "aria-colindextext", "aria-colspan",
-    "aria-posinset", "aria-rowcount", "aria-rowindex", "aria-rowindextext", "aria-rowspan", "aria-setsize",
-};
-
 const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "accept-charset" => "acceptCharset",
     "class" => "className",
@@ -426,12 +409,15 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-lazy_static! {
-    static ref DOM_PROPERTIES_LOWER_MAP: FxHashMap<Cow<'static, str>, &'static str> =
+fn dom_properties_lower_map() -> &'static FxHashMap<Cow<'static, str>, &'static str> {
+    static DOM_PROPERTIES_LOWER_MAP: OnceLock<FxHashMap<Cow<'static, str>, &'static str>> =
+        OnceLock::new();
+    DOM_PROPERTIES_LOWER_MAP.get_or_init(|| {
         DOM_PROPERTIES_NAMES
             .iter()
             .map(|it| (it.cow_to_ascii_lowercase(), *it))
-            .collect::<FxHashMap<_, _>>();
+            .collect::<FxHashMap<_, _>>()
+    })
 }
 
 /// Checks if an attribute name is a valid `data-*` attribute:
@@ -515,7 +501,7 @@ impl Rule for NoUnknownProperty {
                 let actual_name = get_jsx_attribute_name(&attr.name);
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
-                };
+                }
                 if is_valid_data_attr(&actual_name) {
                     if self.0.require_data_lowercase && has_uppercase(&actual_name) {
                         ctx.diagnostic(data_lowercase_required(
@@ -524,10 +510,10 @@ impl Rule for NoUnknownProperty {
                         ));
                     }
                     return;
-                };
-                if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
+                }
+                if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
                     return;
-                };
+                }
                 let name = normalize_attribute_case(&actual_name);
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {
@@ -544,7 +530,7 @@ impl Rule for NoUnknownProperty {
                     return;
                 }
 
-                DOM_PROPERTIES_LOWER_MAP
+                dom_properties_lower_map()
                     .get(&name.cow_to_ascii_lowercase())
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(

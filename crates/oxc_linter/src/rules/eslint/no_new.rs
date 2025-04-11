@@ -1,9 +1,10 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_new_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use 'new' for side effects.").with_label(span)
@@ -22,9 +23,20 @@ declare_oxc_lint!(
     /// Calling new without assigning or comparing it the reference is thrown away and in many
     /// cases the constructor can be replaced with a function.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// new Person();
+    ///
+    /// (() => { new Date() })
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var a = new Date()
+    ///
+    /// (() => new Date())
     /// ```
     NoNew,
     eslint,
@@ -37,7 +49,12 @@ impl Rule for NoNew {
             return;
         };
 
-        let mut ancestors = ctx.nodes().ancestor_ids(node.id()).skip(1);
+        let mut ancestors = ctx
+            .nodes()
+            .ancestors(node.id())
+            .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)))
+            .map(AstNode::id)
+            .skip(1);
         let Some(node_id) = ancestors.next() else { return };
 
         let kind = ctx.nodes().kind(node_id);
@@ -65,7 +82,7 @@ fn test() {
         "(() => new Date())",
     ];
 
-    let fail = vec!["new Date()", "(() => { new Date() })"];
+    let fail = vec!["new Date()", "(() => { new Date() })", "(new Date())", "((new Date()))"];
 
     Tester::new(NoNew::NAME, NoNew::PLUGIN, pass, fail).test_and_snapshot();
 }

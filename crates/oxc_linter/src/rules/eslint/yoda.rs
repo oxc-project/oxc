@@ -232,7 +232,7 @@ impl Rule for Yoda {
                     return;
                 }
             }
-        };
+        }
 
         if !expr.operator.is_equality() && !expr.operator.is_compare() {
             return;

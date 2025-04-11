@@ -9,13 +9,12 @@ use quote::{format_ident, quote};
 use crate::{
     AST_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
-    schema::{Def, Schema, TypeDef},
+    schema::{Def, Schema, TypeDef, TypeId},
 };
 
 use super::define_generator;
 
 /// Semantic ID types.
-/// We generate builder methods both with and without these fields for types which include any of them.
 const SEMANTIC_ID_TYPES: [&str; 3] = ["ScopeId", "SymbolId", "ReferenceId"];
 
 /// Generator for methods to get/set semantic IDs on structs which have them.
@@ -25,7 +24,16 @@ define_generator!(GetIdGenerator);
 
 impl Generator for GetIdGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        let impls = schema.types.iter().filter_map(|type_def| generate_for_type(type_def, schema));
+        // Get `TypeId`s for semantic ID types
+        let mut semantic_id_type_ids = [TypeId::DUMMY; SEMANTIC_ID_TYPES.len()];
+        for (index, &type_name) in SEMANTIC_ID_TYPES.iter().enumerate() {
+            semantic_id_type_ids[index] = schema.type_names[type_name];
+        }
+
+        let impls = schema
+            .types
+            .iter()
+            .filter_map(|type_def| generate_for_type(type_def, &semantic_id_type_ids, schema));
 
         let output = quote! {
             use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
@@ -40,7 +48,11 @@ impl Generator for GetIdGenerator {
     }
 }
 
-fn generate_for_type(type_def: &TypeDef, schema: &Schema) -> Option<TokenStream> {
+fn generate_for_type(
+    type_def: &TypeDef,
+    semantic_id_type_ids: &[TypeId; SEMANTIC_ID_TYPES.len()],
+    schema: &Schema,
+) -> Option<TokenStream> {
     let TypeDef::Struct(struct_def) = type_def else { return None };
 
     let struct_name = struct_def.name();
@@ -51,8 +63,7 @@ fn generate_for_type(type_def: &TypeDef, schema: &Schema) -> Option<TokenStream>
         .filter_map(|field| {
             let field_type = field.type_def(schema);
             let inner_type = field_type.as_cell()?.inner_type(schema).as_option()?.inner_type(schema);
-            let inner_type_name = inner_type.name();
-            if !SEMANTIC_ID_TYPES.contains(&inner_type_name) {
+            if !semantic_id_type_ids.contains(&inner_type.id()) {
                 return None;
             }
 
@@ -61,6 +72,7 @@ fn generate_for_type(type_def: &TypeDef, schema: &Schema) -> Option<TokenStream>
             let inner_type_ident = inner_type.ident();
 
             // Generate getter method
+            let inner_type_name = inner_type.name();
             let get_doc1 = format!(" Get [`{inner_type_name}`] of [`{struct_name}`].");
             let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{inner_type_name}`]s are always defined.");
             let get_doc3 = format!(" Panics if `{field_name}` is [`None`].");

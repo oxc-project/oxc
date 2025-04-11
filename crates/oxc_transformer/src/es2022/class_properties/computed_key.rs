@@ -1,6 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class property/method computed keys.
 
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::TraverseCtx;
@@ -34,7 +35,7 @@ impl<'a> ClassProperties<'a, '_> {
         // 3. At least one property satisfying the above is after this method,
         //    or class contains a static block which is being transformed
         //    (static blocks are always evaluated after computed keys, regardless of order)
-        let original_key = ctx.ast.move_expression(key);
+        let original_key = key.take_in(ctx.ast.allocator);
         let (assignment, temp_var) = self.create_computed_key_temp_var(original_key, ctx);
         self.insert_before.push(assignment);
         method.key = PropertyKey::from(temp_var);
@@ -62,7 +63,7 @@ impl<'a> ClassProperties<'a, '_> {
         is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let original_key = ctx.ast.move_expression(key);
+        let original_key = key.take_in(ctx.ast.allocator);
         if key_needs_temp_var(&original_key, ctx) {
             let (assignment, ident) = self.create_computed_key_temp_var(original_key, ctx);
             if is_static {
@@ -131,13 +132,13 @@ impl<'a> ClassProperties<'a, '_> {
                 unreachable!();
             };
             assert!(ident.name.starts_with('_'));
-            assert!(ctx.symbols().get_reference(ident.reference_id()).symbol_id().is_some());
+            assert!(ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_some());
             assert!(ident.span.is_empty());
             assert!(prop.value.is_none());
         }
 
         // Extract assignment from computed key and insert before class
-        let assignment = ctx.ast.move_property_key(&mut prop.key).into_expression();
+        let assignment = prop.key.take_in(ctx.ast.allocator).into_expression();
         self.insert_before.push(assignment);
     }
 }
@@ -179,8 +180,8 @@ fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
         // TODO(improve-on-babel): That case is rare.
         // Test for it in first pass over class elements, and avoid temp vars where possible.
         Expression::Identifier(ident) => {
-            match ctx.symbols().get_reference(ident.reference_id()).symbol_id() {
-                Some(symbol_id) => ctx.symbols().symbol_is_mutated(symbol_id),
+            match ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
+                Some(symbol_id) => ctx.scoping().symbol_is_mutated(symbol_id),
                 None => true,
             }
         }

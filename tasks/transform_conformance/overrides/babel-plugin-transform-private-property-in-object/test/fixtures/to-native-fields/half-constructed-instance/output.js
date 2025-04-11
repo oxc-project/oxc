@@ -1,6 +1,6 @@
-var _F_brand = new WeakSet();
-var _x = new WeakMap();
-var _y = new WeakMap();
+var _F_brand = /* @__PURE__ */ new WeakSet();
+var _x = /* @__PURE__ */ new WeakMap();
+var _y = /* @__PURE__ */ new WeakMap();
 class F {
   constructor() {
     babelHelpers.classPrivateMethodInitSpec(this, _F_brand);

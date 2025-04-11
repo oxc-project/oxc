@@ -49,7 +49,7 @@
 
 use std::mem;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
@@ -101,7 +101,7 @@ impl<'a> Traverse<'a> for OptionalChaining<'a, '_> {
                 self.transform_update_expression(expr, ctx);
             }
             _ => {}
-        };
+        }
     }
 
     // `#[inline]` because this is a hot path
@@ -156,7 +156,7 @@ impl<'a> OptionalChaining<'a, '_> {
             CallContext::Binding(binding) => {
                 binding.name != ident.name
                     || binding.symbol_id.is_some_and(|symbol_id| {
-                        ctx.symbols()
+                        ctx.scoping()
                             .get_reference(ident.reference_id())
                             .symbol_id()
                             .is_some_and(|id| id != symbol_id)
@@ -256,7 +256,7 @@ impl<'a> OptionalChaining<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = ctx.ast.move_expression(expr) else {
+        let Expression::ChainExpression(chain_expr) = expr.take_in(ctx.ast.allocator) else {
             unreachable!()
         };
         match chain_expr.unbox().expression {
@@ -283,7 +283,7 @@ impl<'a> OptionalChaining<'a, '_> {
             // To insert the temp binding in the correct scope, we wrap the expression with
             // an arrow function. During the chain expression transformation, the temp binding
             // will be inserted into the arrow function's body.
-            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
+            wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast.allocator), ctx)
         } else {
             self.transform_chain_expression_impl(false, expr, ctx)
         }
@@ -297,7 +297,7 @@ impl<'a> OptionalChaining<'a, '_> {
     ) {
         *expr = if self.is_inside_function_parameter {
             // Same as the above `transform_chain_expression` explanation
-            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
+            wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast.allocator), ctx)
         } else {
             // Unfortunately no way to get compiler to see that this branch is provably unreachable.
             // We don't want to inline this function, to keep `enter_expression` as small as possible.
@@ -335,14 +335,14 @@ impl<'a> OptionalChaining<'a, '_> {
         //                              ^^^^^^ ^^^^^^^^ Here we will wrap the right part with a `delete` unary expression
         if is_delete {
             chain_expr = ctx.ast.expression_unary(SPAN, UnaryOperator::Delete, chain_expr);
-        };
+        }
 
         // If this chain expression is a callee of a CallExpression, we need to transform it to accept a proper context
         // `(Foo?.["m"])();` -> `(...  _Foo["m"].bind(_Foo))();`
         //                                       ^^^^^^^^^^^ Here we will handle the `right` part to bind a proper context
         if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
             chain_expr = self.transform_expression_to_bind_context(chain_expr, ctx);
-        };
+        }
         // Clear states
         self.temp_binding = None;
         self.call_context = CallContext::None;
@@ -372,7 +372,7 @@ impl<'a> OptionalChaining<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
-                    ctx.ast.move_expression(object),
+                    object.take_in(ctx.ast.allocator),
                     ctx,
                 );
                 binding.create_read_expression(ctx)
@@ -486,7 +486,7 @@ impl<'a> OptionalChaining<'a, '_> {
                         if let Expression::Identifier(ident) = callee {
                             if self.should_specify_context(ident, ctx) {
                                 // `foo$bar(...)` -> `foo$bar.call(context, ...)`
-                                let callee = ctx.ast.move_expression(callee);
+                                let callee = callee.take_in(ctx.ast.allocator);
                                 let property = ctx.ast.identifier_name(SPAN, "call");
                                 let member =
                                     ctx.ast.member_expression_static(SPAN, callee, property, false);
@@ -532,7 +532,7 @@ impl<'a> OptionalChaining<'a, '_> {
                 if ident.name == "eval" {
                     // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                     let zero = ctx.ast.number_0();
-                    let original_callee = ctx.ast.move_expression(expr);
+                    let original_callee = expr.take_in(ctx.ast.allocator);
                     let expressions = ctx.ast.vec_from_array([zero, original_callee]);
                     *expr = ctx.ast.expression_sequence(SPAN, expressions);
                 }
@@ -554,28 +554,7 @@ impl<'a> OptionalChaining<'a, '_> {
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.
         let temp_binding = self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx);
         if is_call && !self.ctx.assumptions.pure_getters {
-            if let Some(member) = expr.as_member_expression_mut() {
-                let object = member.object_mut();
-                // If the [`MemberExpression::object`] is a global reference, we need to assign it to a temp binding.
-                // i.e `foo` -> `(_foo = foo)`
-                if let Expression::Identifier(ident) = object {
-                    let binding =
-                        self.get_existing_binding_for_identifier(ident, ctx).unwrap_or_else(|| {
-                            let binding =
-                                self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
-                            // `(_foo = foo)`
-                            *object = Self::create_assignment_expression(
-                                binding.create_write_target(ctx),
-                                ctx.ast.move_expression(object),
-                                ctx,
-                            );
-                            binding.to_maybe_bound_identifier()
-                        });
-                    self.set_binding_context(binding);
-                } else if object.is_super() {
-                    self.set_this_context();
-                }
-            }
+            self.set_chain_call_context(expr, ctx);
         }
 
         // Replace the expression with the temp binding and assign the original expression to the temp binding
@@ -620,6 +599,7 @@ impl<'a> OptionalChaining<'a, '_> {
             if let Some(temp_binding) = self.temp_binding.take() {
                 self.set_binding_context(temp_binding.to_maybe_bound_identifier());
             }
+            self.set_chain_call_context(expr, ctx);
         }
 
         let temp_binding = {
@@ -649,6 +629,33 @@ impl<'a> OptionalChaining<'a, '_> {
             let reference = temp_binding.create_read_expression(ctx);
             // `left || (binding = expr) === null || binding === void 0`
             Self::create_logical_expression(left, Self::wrap_void0_check(reference, ctx), ctx)
+        }
+    }
+
+    fn set_chain_call_context(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(member) = expr.as_member_expression_mut() {
+            let object = member.object_mut();
+            // If the [`MemberExpression::object`] is a global reference, we need to assign it to a temp binding.
+            // i.e `foo` -> `(_foo = foo)`
+            if matches!(object, Expression::Super(_) | Expression::ThisExpression(_)) {
+                self.set_this_context();
+            } else {
+                let binding = object
+                    .get_identifier_reference()
+                    .and_then(|ident| self.get_existing_binding_for_identifier(ident, ctx))
+                    .unwrap_or_else(|| {
+                        let binding =
+                            self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
+                        // `(_foo = foo)`
+                        *object = Self::create_assignment_expression(
+                            binding.create_write_target(ctx),
+                            object.take_in(ctx.ast.allocator),
+                            ctx,
+                        );
+                        binding.to_maybe_bound_identifier()
+                    });
+                self.set_binding_context(binding);
+            }
         }
     }
 }

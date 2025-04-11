@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
@@ -57,12 +56,7 @@ declare_oxc_lint!(
     restriction
 );
 
-const ACCESS_LEVELS: phf::Set<&'static str> = phf_set! {
-    "package",
-    "private",
-    "protected",
-    "public",
-};
+const ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];
 
 impl Rule for CheckAccess {
     fn run_once(&self, ctx: &LintContext) {
@@ -75,11 +69,8 @@ impl Rule for CheckAccess {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }
 
-        for jsdoc in ctx
-            .semantic()
-            .jsdoc()
-            .iter_all()
-            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+        for jsdoc in
+            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
         {
             let mut access_related_tags_count = 0;
             for tag in jsdoc.tags() {
@@ -92,7 +83,7 @@ impl Rule for CheckAccess {
                 // Has valid access level?
                 let comment = tag.comment();
                 if tag_name == resolved_access_tag_name
-                    && !ACCESS_LEVELS.contains(&comment.parsed())
+                    && !ACCESS_LEVELS.contains(&comment.parsed().as_str())
                 {
                     ctx.diagnostic(invalid_access_level(comment.span_trimmed_first_line()));
                 }

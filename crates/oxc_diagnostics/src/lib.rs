@@ -105,7 +105,7 @@ impl OxcCode {
     }
 }
 
-impl fmt::Display for OxcCode {
+impl Display for OxcCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match (&self.scope, &self.number) {
             (Some(scope), Some(number)) => write!(f, "{scope}({number})"),
@@ -126,9 +126,9 @@ pub struct OxcDiagnosticInner {
     pub url: Option<Cow<'static, str>>,
 }
 
-impl fmt::Display for OxcDiagnostic {
+impl Display for OxcDiagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.message)
+        self.message.fmt(f)
     }
 }
 

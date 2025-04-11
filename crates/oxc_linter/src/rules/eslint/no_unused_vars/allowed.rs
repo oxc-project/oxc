@@ -43,7 +43,7 @@ impl Symbol<'_, '_> {
                 | AstKind::VariableDeclaration(_)
                 | AstKind::BindingIdentifier(_)
                 | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => continue,
+                | AstKind::AssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
@@ -63,9 +63,9 @@ impl Symbol<'_, '_> {
     }
 
     pub fn is_in_declared_module(&self) -> bool {
-        let scopes = self.scopes();
+        let scopes = self.scoping();
         let nodes = self.nodes();
-        scopes.ancestors(self.scope_id())
+        scopes.scope_ancestors(self.scope_id())
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
             .any(|node| matches!(node.kind(), AstKind::TSModuleDeclaration(namespace) if is_ambient_namespace(namespace)))

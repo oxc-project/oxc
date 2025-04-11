@@ -28,6 +28,7 @@ export default function generateWalkFunctionsCode(types) {
       clippy::ref_as_ptr,
       clippy::cast_ptr_alignment,
       clippy::borrow_as_ptr,
+      clippy::match_same_arms,
       unsafe_op_in_unsafe_fn
     )]
 

@@ -5,7 +5,7 @@ expression: json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Oxlintrc",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"$schema\": \"./node_modules/oxlint/configuration_schema.json\", \"plugins\": [\"import\", \"typescript\", \"unicorn\"], \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" }, \"overrides\": [ { \"files\": [\"*.test.ts\", \"*.spec.ts\"], \"rules\": { \"@typescript-eslint/no-explicit-any\": \"off\" } } ] } ```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"$schema\": \"./node_modules/oxlint/configuration_schema.json\", \"plugins\": [\"import\", \"typescript\", \"unicorn\"], \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\", \"react/self-closing-comp\": [\"error\", { \"html\": false }] }, \"overrides\": [ { \"files\": [\"*.test.ts\", \"*.spec.ts\"], \"rules\": { \"@typescript-eslint/no-explicit-any\": \"off\" } } ] } ```",
   "type": "object",
   "properties": {
     "categories": {
@@ -26,6 +26,13 @@ expression: json
           "$ref": "#/definitions/OxlintEnv"
         }
       ]
+    },
+    "extends": {
+      "description": "Paths of configuration files that this configuration file extends (inherits from). The files are resolved relative to the location of the configuration file that contains the `extends` property. The configuration files are merged from the first to the last, with the last file overriding the previous ones.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",

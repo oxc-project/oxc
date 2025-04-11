@@ -29,7 +29,7 @@ pub fn prefer_to_be_simply_bool<'a>(
     let Some(matcher) = vitest_expect_fn_call.matcher() else {
         return;
     };
-    if !is_equality_matcher(matcher) || vitest_expect_fn_call.args.len() == 0 {
+    if !is_equality_matcher(matcher) || vitest_expect_fn_call.args.is_empty() {
         return;
     }
     let Some(arg_expr) = vitest_expect_fn_call.args.first().and_then(Argument::as_expression)

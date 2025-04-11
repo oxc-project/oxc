@@ -282,6 +282,9 @@ impl<'a> From<&oxc_syntax::module_record::ImportImportName<'a>> for ImportImport
 /// ```
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry {
+    /// Span of the export statement.
+    pub statement_span: Span,
+
     /// Span for the entire export entry
     pub span: Span,
 
@@ -319,6 +322,7 @@ pub struct ExportEntry {
 impl<'a> From<&oxc_syntax::module_record::ExportEntry<'a>> for ExportEntry {
     fn from(other: &oxc_syntax::module_record::ExportEntry<'a>) -> Self {
         Self {
+            statement_span: other.statement_span,
             span: other.span,
             module_request: other.module_request.as_ref().map(NameSpan::from),
             import_name: ExportImportName::from(&other.import_name),

@@ -4,7 +4,7 @@ export const A = _s(React.memo(_c2 = _s(React.forwardRef(_c = _s((props, ref) =>
   _s();
   const [foo, setFoo] = useState(0);
   React.useEffect(() => {});
-  return _jsx("h1", {
+  return /* @__PURE__ */ _jsx("h1", {
     ref,
     children: foo
   });
@@ -14,7 +14,7 @@ export const B = _s2(React.memo(_c5 = _s2(React.forwardRef(_c4 = _s2(function(pr
   _s2();
   const [foo, setFoo] = useState(0);
   React.useEffect(() => {});
-  return _jsx("h1", {
+  return /* @__PURE__ */ _jsx("h1", {
     ref,
     children: foo
   });
@@ -26,7 +26,7 @@ function hoc() {
     _s3();
     const [foo, setFoo] = useState(0);
     React.useEffect(() => {});
-    return _jsx("h1", {
+    return /* @__PURE__ */ _jsx("h1", {
       ref,
       children: foo
     });

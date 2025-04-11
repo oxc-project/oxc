@@ -108,7 +108,7 @@ macro_rules! byte_handler {
 ///   fn SPS(lexer: &mut Lexer) {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
-///       use assert_unchecked::assert_unchecked;
+///       use oxc_data_structures::assert_unchecked;
 ///       assert_unchecked!(!lexer.source.is_eof());
 ///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
@@ -125,7 +125,7 @@ macro_rules! ascii_byte_handler {
         byte_handler!($id($lex) {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
-                use assert_unchecked::assert_unchecked;
+                use oxc_data_structures::assert_unchecked;
                 assert_unchecked!(!$lex.source.is_eof());
                 assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }

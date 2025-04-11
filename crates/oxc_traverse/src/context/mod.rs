@@ -1,9 +1,9 @@
-use oxc_allocator::{Allocator, Box};
+use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
 };
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -34,7 +34,7 @@ pub use scoping::TraverseScoping;
 ///
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`ancestors`].
-/// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
+/// * Get scopes tree and symbols table via [`scoping`] and [`scoping_mut`],
 ///   [`ancestor_scopes`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
@@ -96,7 +96,7 @@ pub use scoping::TraverseScoping;
 ///             _ => return,
 ///         };
 ///
-///         let scope_tree_mut = ctx.scoping.scopes_mut();
+///         let scoping_mut = ctx.scoping.scoping_mut();
 ///
 ///         dbg!(right);
 ///     }
@@ -106,9 +106,8 @@ pub use scoping::TraverseScoping;
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`ancestors`]: `TraverseCtx::ancestors`
-/// [`scopes`]: `TraverseCtx::scopes`
-/// [`symbols`]: `TraverseCtx::symbols`
-/// [`scopes_mut`]: `TraverseCtx::scopes_mut`
+/// [`scoping`]: `TraverseCtx::scoping`
+/// [`scoping_mut`]: `TraverseCtx::scoping_mut`
 /// [`symbols_mut`]: `TraverseCtx::symbols_mut`
 /// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
@@ -123,11 +122,11 @@ pub struct TraverseCtx<'a> {
 impl<'a> TraverseCtx<'a> {
     /// Allocate a node in the arena.
     ///
-    /// Returns a [`Box<T>`].
+    /// Returns a [`Box<'a, T>`](ArenaBox).
     ///
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
-    pub fn alloc<T>(&self, node: T) -> Box<'a, T> {
+    pub fn alloc<T>(&self, node: T) -> ArenaBox<'a, T> {
         self.ast.alloc(node)
     }
 
@@ -208,32 +207,16 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.scopes`.
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree {
-        self.scoping.scopes()
+    pub fn scoping(&self) -> &Scoping {
+        self.scoping.scoping()
     }
 
     /// Get mutable scopes tree.
     ///
     /// Shortcut for `ctx.scoping.scopes_mut`.
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        self.scoping.scopes_mut()
-    }
-
-    /// Get symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols`.
-    #[inline]
-    pub fn symbols(&self) -> &SymbolTable {
-        self.scoping.symbols()
-    }
-
-    /// Get mutable symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols_mut`.
-    #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        self.scoping.symbols_mut()
+    pub fn scoping_mut(&mut self) -> &mut Scoping {
+        self.scoping.scoping_mut()
     }
 
     /// Get iterator over scopes, starting with current scope and working up.
@@ -278,6 +261,25 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_statement(stmt, flags)
     }
 
+    /// Insert a scope into scope tree below a statement.
+    ///
+    /// Statement must be in provided scope.
+    /// New scope is created as child of the provided scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statement_from_scope_id`.
+    #[inline]
+    pub fn insert_scope_below_statement_from_scope_id(
+        &mut self,
+        stmt: &Statement,
+        scope_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_statement_from_scope_id(stmt, scope_id, flags)
+    }
+
     /// Insert a scope into scope tree below an expression.
     ///
     /// Expression must be in current scope.
@@ -294,6 +296,52 @@ impl<'a> TraverseCtx<'a> {
         flags: ScopeFlags,
     ) -> ScopeId {
         self.scoping.insert_scope_below_expression(expr, flags)
+    }
+
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statements`.
+    pub fn insert_scope_below_statements(
+        &mut self,
+        stmts: &ArenaVec<Statement>,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_statements(stmts, flags)
+    }
+
+    /// Insert a scope between a parent and a child scope.
+    ///
+    /// For example, given the following scopes
+    /// ```ts
+    /// parentScope1: {
+    ///     childScope: { }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// and calling this function with `parentScope1` and `childScope`,
+    /// the resulting scopes will be:
+    /// ```ts
+    /// parentScope1: {
+    ///     newScope: {   
+    ///         childScope: { }
+    ///     }
+    ///     childScope2: { }
+    /// }
+    /// ```
+    /// This is a shortcut for `ctx.scoping.insert_scope_between`.
+    pub fn insert_scope_between(
+        &mut self,
+        parent_id: ScopeId,
+        child_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_between(parent_id, child_id, flags)
     }
 
     /// Remove scope for an expression from the scope chain.
@@ -393,7 +441,7 @@ impl<'a> TraverseCtx<'a> {
         name: &str,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.generate_uid(name, self.scopes().root_scope_id(), flags)
+        self.generate_uid(name, self.scoping().root_scope_id(), flags)
     }
 
     /// Generate UID based on node.
@@ -616,9 +664,9 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// # SAFETY
     /// This function must not be public to maintain soundness of [`TraverseAncestry`].
-    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
-        let scoping = TraverseScoping::new(scopes, symbols);
+        let scoping = TraverseScoping::new(scoping);
         let ast = AstBuilder::new(allocator);
         Self { ancestry, scoping, ast }
     }

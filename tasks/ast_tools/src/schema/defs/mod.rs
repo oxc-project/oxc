@@ -24,7 +24,7 @@ pub use cell::CellDef;
 pub use r#enum::{Discriminant, EnumDef, VariantDef};
 pub use option::OptionDef;
 pub use primitive::PrimitiveDef;
-pub use r#struct::{FieldDef, StructDef, Visibility};
+pub use r#struct::{FieldDef, StructDef};
 pub use r#type::TypeDef;
 pub use vec::VecDef;
 
@@ -113,4 +113,30 @@ pub trait Def {
             &schema.types[self.id()]
         }
     }
+}
+
+/// IDs of container types containing a type.
+///
+/// e.g. If `Option<Expression>` exists in AST, `Containers::option_id` for `Expression` type def
+/// will contain the [`TypeId`] of `Option<Expression>`.
+#[derive(Clone, Default, Debug)]
+#[expect(clippy::struct_field_names)]
+pub struct Containers {
+    /// [`TypeId`] of `Option` containing this type, if it exists in AST
+    pub option_id: Option<TypeId>,
+    /// [`TypeId`] of `Box` containing this type, if it exists in AST
+    pub box_id: Option<TypeId>,
+    /// [`TypeId`] of `Vec` containing this type, if it exists in AST
+    pub vec_id: Option<TypeId>,
+    /// [`TypeId`] of `Cell` containing this type, if it exists in AST
+    pub cell_id: Option<TypeId>,
+}
+
+/// Visibility of a struct / enum / struct field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    /// `pub(crate)` or `pub(super)`
+    Restricted,
+    Private,
 }

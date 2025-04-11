@@ -1,50 +1,294 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
- 1 │ export default class {}
-   · ───────────────────────
-   ╰────
-
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
+   ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default function () {}
-   · ─────────────────────────────
-   ╰────
-
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
- 1 │ export default () => {};
-   · ────────────────────────
+   ·                ──────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
- 1 │ module.exports = class {}
-   · ─────────────────────────
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class {}
+   ·                ────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
- 1 │ module.exports = function () {}
-   · ───────────────────────────────
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default () => {}
+   ·                ────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
- 1 │ module.exports = () => {}
-   · ─────────────────────────
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function * () {}
+   ·                ────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:17]
- 1 │ export default (async function * () {})
-   ·                 ──────────────────────
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function () {}
+   ·                ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function * () {}
+   ·                ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async () => {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class {}
+   ·                ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class extends class {} {}
+   ·                ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class{}
+   ·                ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class {}
+   ·                ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:19]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default class {}
+   ·                            ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:20]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default (class{})
+   ·                             ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ export default (class extends class {} {})
    ·                 ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:14]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = class {}
+   ·                       ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = class {}
+   ·                  ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function () {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function* () {}
+   ·                ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function* () {}
+   ·                ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function*() {}
+   ·                ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function *() {}
+   ·                ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function   *   () {}
+   ·                ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function * /* comment */ () {}
+   ·                ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ ╭─▶ export default async function * // comment
+ 2 │ ╰─▶             () {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:19]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default async function * () {}
+   ·                            ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:20]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default (async function * () {})
+   ·                             ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:14]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = function() {}
+   ·                       ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = function() {}
+   ·                  ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default () => {}
+   ·                ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async () => {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default () => {};
+   ·                ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:15]
+ 1 │ export default() => {}
+   ·               ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default foo => {}
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:19]
+ 1 │ export default (( () => {} ))
+   ·                   ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:65]
+ 1 │ /* comment 1 */ export /* comment 2 */ default /* comment 3 */  () => {}
+   ·                                                                 ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:6:4]
+ 5 │             // comment 3
+ 6 │             () => {}
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:19]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default async () => {}
+   ·                            ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:17]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = (( () => {} ))
+   ·                          ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:8:4]
+ 7 │             // comment 4
+ 8 │             () => {};
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:17]
+ 1 │ (( exports = (( () => {} )) ))
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:24]
+ 1 │ (( module.exports = (( () => {} )) ))
+   ·                        ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:17]
+ 1 │ (( exports = (( () => {} )) ));
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:24]
+ 1 │ (( module.exports = (( () => {} )) ));
+   ·                        ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ @decorator export default class {}
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default @decorator(class {}) class extends class {} {}
+   ·                ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = @decorator(class {}) class extends class {} {}
+   ·                  ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:1]
+ 1 │ @decorator @decorator(class {}) export default class {}
+   · ───────────────────────────────────────────────────────
    ╰────

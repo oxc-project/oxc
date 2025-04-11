@@ -1,11 +1,15 @@
 use std::path::{Path, PathBuf};
 
+#[derive(Default, Clone)]
 pub struct TestRunnerOptions {
     pub language: TestLanguage,
+    pub debug: bool,
     pub filter: Option<String>,
 }
 
+#[derive(Default, Clone, Copy)]
 pub enum TestLanguage {
+    #[default]
     Js,
     Ts,
 }

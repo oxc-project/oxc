@@ -67,7 +67,6 @@ impl Rule for CheckPropertyNames {
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
         for jsdoc in ctx
-            .semantic()
             .jsdoc()
             .iter_all()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))

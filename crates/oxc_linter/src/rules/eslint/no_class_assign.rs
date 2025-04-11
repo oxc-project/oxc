@@ -17,17 +17,64 @@ pub struct NoClassAssign;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow reassigning class variables.
     ///
     /// ### Why is this bad?
-    /// `ClassDeclaration` creates a variable that can be re-assigned,
-    /// but the re-assignment is a mistake in most cases.
     ///
-    /// ### Example
+    /// `ClassDeclaration` creates a variable that can be re-assigned, but the re-assignment is a
+    /// mistake in most cases.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// class A {}
-    /// A = 123;
-    /// let a = new A() // Error
+    /// class A { }
+    /// A = 0;
+    /// ```
+    ///
+    /// ```javascript
+    /// A = 0;
+    /// class A { }
+    /// ```
+    ///
+    /// ```javascript
+    /// class A {
+    ///   b() {
+    ///     A = 0;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// let A = class A {
+    ///   b() {
+    ///     A = 0;
+    ///     // `let A` is shadowed by the class name.
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// let A = class A { }
+    /// A = 0; // A is a variable.
+    /// ```
+    ///
+    /// ```javascript
+    /// let A = class {
+    ///   b() {
+    ///     A = 0; // A is a variable.
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// class A {
+    ///   b(A) {
+    ///     A = 0; // A is a parameter.
+    ///   }
+    /// }
     /// ```
     NoClassAssign,
     eslint,
@@ -36,13 +83,13 @@ declare_oxc_lint!(
 
 impl Rule for NoClassAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flags(symbol_id).is_class() {
+        let symbol_table = ctx.scoping();
+        if symbol_table.symbol_flags(symbol_id).is_class() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(no_class_assign_diagnostic(
-                        symbol_table.get_name(symbol_id),
-                        symbol_table.get_span(symbol_id),
+                        symbol_table.symbol_name(symbol_id),
+                        symbol_table.symbol_span(symbol_id),
                         ctx.semantic().reference_span(reference),
                     ));
                 }

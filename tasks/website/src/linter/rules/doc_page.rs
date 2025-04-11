@@ -53,13 +53,8 @@ pub fn render_rule_docs_page(rule: &RuleTableRow, git_ref: &str) -> Result<Strin
     }
 
     // how to use
-    let usage = how_to_use(rule);
-    writeln!(page, "\n## How to use")?;
-    writeln!(page, "{usage}")?;
-
-    let rule_source = rule_source(rule, git_ref);
-    writeln!(page, "\n## References")?;
-    writeln!(page, "- [Rule Source]({rule_source})")?;
+    writeln!(page, "\n## How to use\n{}", how_to_use(rule))?;
+    writeln!(page, "\n## References\n- [Rule Source]({})", rule_source(rule, git_ref))?;
 
     Ok(page.into())
 }

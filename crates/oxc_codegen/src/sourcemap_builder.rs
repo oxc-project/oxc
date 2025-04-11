@@ -416,7 +416,7 @@ impl SourcemapBuilder {
 
                         break 'lines;
                     }
-                };
+                }
 
                 // Line break found.
                 // `byte_offset_from_line_start` is now the length of line *including* line break.

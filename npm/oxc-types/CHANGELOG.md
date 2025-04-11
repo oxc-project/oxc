@@ -4,6 +4,117 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
+## [0.62.0] - 2025-04-01
+
+### Bug Fixes
+
+- 8408606 ast/estree: Fix `TSMethodSignature` (#10032) (therewillbecode)
+- 1a0bd7c ast/estree: Fix `TSPropertySignature` (#10031) (therewillbecode)
+- 707a776 ast/estree: Fix TS type defs for `TSIndexSignature` and `TSIndexSignatureName` (#10003) (overlookmotel)
+- c98d3f4 ast/estree: Add custom serializer for extends field of TSInterfaceDeclaration (#9996) (therewillbecode)
+
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- 89cb368 ast/estree: Add decorators field to `AssignmentPattern` (#9967) (therewillbecode)
+- 4980b73 ast/estree: Add missing estree fields to `TSIndexSignature` and `TSIndexSignatureName` (#9968) (therewillbecode)
+- b9f80b9 ast/estree: Fix `TSFunctionType` and `TSCallSignatureDeclaration`  (#9959) (therewillbecode)
+- 0cdeedd ast/estree: Fix `ArrayPattern` (#9956) (therewillbecode)
+- 6fcd342 ast/estree: Fix `FormalParameter` (#9954) (therewillbecode)
+- 9d1035e ast/estree: Fix TS type def for `TSThisParameter` (#9942) (overlookmotel)
+- 8228b74 ast/estree: Fix `Function.this_param` (#9913) (hi-ogawa)
+- d69cc34 ast/estree: Fix `BindingIdentifier` (#9822) (hi-ogawa)
+- 5631ebd ast/extree: Fix `TSModuleDeclaration.global` (#9941) (overlookmotel)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)
+
+## [0.60.0] - 2025-03-18
+
+### Bug Fixes
+
+- 7b711f0 ast/estree: Make TS-only fields optional in TS type defs (#9846) (overlookmotel)
+
+### Performance
+
+- 2d63704 ast: Re-order `VariableDeclarationKind` variants (#9853) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- db946e6 ast/estree: Order TS fields last by default (#9820) (overlookmotel)
+
+### Bug Fixes
+
+- 3f858c4 ast/estree: Add `directive` field to `ExpressionStatement` in TS AST (#9844) (overlookmotel)
+- cd18358 ast/extree: Fix `Class.implements` (#9817) (hi-ogawa)
+
+## [0.58.1] - 2025-03-13
+
+### Bug Fixes
+
+- cd3f2fb ast/estree: Fix `JSXOpeningFragment` (#9747) (Hiroshi Ogawa)
+- fecec56 ast/estree: Fix `JSXOpeningElement` field order (#9746) (hi-ogawa)
+
+## [0.58.0] - 2025-03-13
+
+- 842edd8 ast: [**BREAKING**] Add `raw` property to `JSXText` node (#9641) (Yuji Sugiura)
+
+### Features
+
+- 446d11e ast/estree: Export `Node` union type (#9574) (hi-ogawa)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- af02a87 ast/estree: `Property` have consistent field order (#9547) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+### Features
+
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+
 ## [0.53.0] - 2025-02-26
 
 ### Bug Fixes

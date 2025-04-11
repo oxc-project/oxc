@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo11() { if (foo) return bar 
+ 1 │ ╭─▶ function foo11() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
  2 │ ├─▶             else { [1, 2, 3].map(foo) } }
@@ -157,10 +157,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo12() { if (foo) return bar 
+ 1 │ ╭─▶ function foo12() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
- 2 │ ├─▶             else { baz() } 
+ 2 │ ├─▶             else { baz() }
    · ╰──── Making this `else` block unnecessary.
  3 │                 [1, 2, 3].map(foo) }
    ╰────
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo13() { if (foo) return bar; 
+ 1 │ ╭─▶ function foo13() { if (foo) return bar;
    · │                               ─────┬─────
    · │                                    ╰── This consequent block always returns,
  2 │ ├─▶             else { [1, 2, 3].map(foo) } }
@@ -178,10 +178,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo14() { if (foo) return bar 
+ 1 │ ╭─▶ function foo14() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
- 2 │ ├─▶             else { baz(); } 
+ 2 │ ├─▶             else { baz(); }
    · ╰──── Making this `else` block unnecessary.
  3 │                 [1, 2, 3].map(foo) }
    ╰────
@@ -198,7 +198,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo16() { if (foo) return bar 
+ 1 │ ╭─▶ function foo16() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
  2 │ ├─▶             else { baz() } qaz() }
@@ -208,10 +208,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo17() { if (foo) return bar 
+ 1 │ ╭─▶ function foo17() { if (foo) return bar
    · │                               ─────┬────
    · │                                    ╰── This consequent block always returns,
- 2 │ ├─▶             else { baz() } 
+ 2 │ ├─▶             else { baz() }
    · ╰──── Making this `else` block unnecessary.
  3 │                 qaz() }
    ╰────
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:29]
- 1 │ ╭─▶ function foo18() { if (foo) return function() {} 
+ 1 │ ╭─▶ function foo18() { if (foo) return function() {}
    · │                               ──────────┬─────────
    · │                                         ╰── This consequent block always returns,
  2 │ ├─▶             else [1, 2, 3].map(bar) }

@@ -1,4 +1,4 @@
-var _foo = babelHelpers.classPrivateFieldLooseKey("foo");
+var _foo = /* @__PURE__ */ babelHelpers.classPrivateFieldLooseKey("foo");
 class Foo {
   constructor() {
     Object.defineProperty(this, _foo, {
@@ -8,7 +8,7 @@ class Foo {
   }
   test() {
     let _this$foo;
-    var _foo2 = babelHelpers.classPrivateFieldLooseKey("foo");
+    var _foo2 = /* @__PURE__ */ babelHelpers.classPrivateFieldLooseKey("foo");
     class Nested extends (_this$foo = babelHelpers.classPrivateFieldLooseBase(this, _foo)[_foo], class {
       constructor() {
         this[_this$foo] = 2;

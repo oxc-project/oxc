@@ -2,12 +2,13 @@ use std::cell::Cell;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{
-    AstBuilder, Visit,
+    AstBuilder,
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
         ReturnStatement, TSType, TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
     },
 };
+use oxc_ast_visit::Visit;
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 

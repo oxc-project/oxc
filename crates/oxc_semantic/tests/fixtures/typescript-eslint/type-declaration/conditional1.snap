@@ -9,7 +9,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode | TsConditional)",
             "id": 2,
             "node": "TSConditionalType",
             "symbols": [

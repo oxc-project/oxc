@@ -1,5 +1,6 @@
 use std::{ops::Deref, path::Path};
 
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ExpressionStatement, MemberExpression},
@@ -7,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -191,7 +191,7 @@ impl NoLargeSnapshots {
             return;
         };
 
-        if jest_fn_call.args.len() > 0
+        if !jest_fn_call.args.is_empty()
             && jest_fn_call.members.iter().any(|member| {
                 member.is_name_equal("toMatchInlineSnapshot")
                     || member.is_name_equal("toThrowErrorMatchingInlineSnapshot")

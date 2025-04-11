@@ -96,14 +96,14 @@ impl Rule for NoThenable {
                                 if bind.name == "then" {
                                     ctx.diagnostic(export(bind.span));
                                 }
-                            };
+                            }
                         }
                         Declaration::ClassDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
                                     ctx.diagnostic(export(bind.span));
                                 }
-                            };
+                            }
                         }
                         _ => {}
                     }
@@ -178,7 +178,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
         for inner in &outer.elements {
             // inner item is array
             if let ArrayExpressionElement::ArrayExpression(inner) = inner {
-                if inner.elements.len() > 0
+                if !inner.elements.is_empty()
                     && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
                 {
                     if let Some(expr) = inner.elements[0].as_expression() {
@@ -236,10 +236,10 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             lit.quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
         Expression::Identifier(ident) => {
-            let symbols = ctx.semantic().symbols();
+            let symbols = ctx.scoping();
             let reference_id = ident.reference_id();
             symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
-                let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
                 match &var_decl.init {

@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{Atom, GetSpan, SPAN};
 
@@ -167,7 +167,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt {
                 if let Some(declaration) = &mut decl.declaration {
-                    *stmt = Statement::from(self.ast.move_declaration(declaration));
+                    *stmt = Statement::from(declaration.take_in(self.ast.allocator));
                 }
             }
         });

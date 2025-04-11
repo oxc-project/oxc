@@ -145,6 +145,9 @@ pub(super) enum StructState {
 pub struct FlatStructSerializer<'p, P: StructSerializer>(pub &'p mut P);
 
 impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
+    /// `true` if output should contain TS fields
+    const INCLUDE_TS_FIELDS: bool = P::Config::INCLUDE_TS_FIELDS;
+
     type StructSerializer = Self;
     type SequenceSerializer = ESTreeSequenceSerializer<'p, P::Config, P::Formatter>;
 

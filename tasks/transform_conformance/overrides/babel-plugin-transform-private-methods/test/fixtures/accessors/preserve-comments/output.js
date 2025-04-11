@@ -1,4 +1,4 @@
-var _C_brand = new WeakSet();
+var _C_brand = /* @__PURE__ */ new WeakSet();
 class C {
   constructor() {
     babelHelpers.classPrivateMethodInitSpec(this, _C_brand);

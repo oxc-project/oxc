@@ -77,8 +77,8 @@ declare_oxc_lint!(
 
 impl Rule for NoConfusingSetTimeout {
     fn run_once(&self, ctx: &LintContext) {
-        let scopes = ctx.scopes();
-        let symbol_table = ctx.symbols();
+        let scopes = ctx.scoping();
+        let symbol_table = ctx.scoping();
         let possible_nodes = collect_possible_jest_call_node(ctx);
         let id_to_jest_node_map =
             possible_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
@@ -128,7 +128,7 @@ fn collect_jest_reference_id(
     jest_reference_list: &mut Vec<(ReferenceId, Span)>,
     ctx: &LintContext,
 ) {
-    let symbol_table = ctx.symbols();
+    let symbol_table = ctx.scoping();
     let nodes = ctx.nodes();
 
     for reference_id in reference_id_list {
@@ -155,8 +155,8 @@ fn handle_jest_set_time_out<'a>(
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
-    let scopes = ctx.scopes();
-    let symbol_table = ctx.symbols();
+    let scopes = ctx.scoping();
+    let symbol_table = ctx.scoping();
 
     for reference_id in reference_id_list {
         let reference = symbol_table.get_reference(reference_id);
@@ -185,7 +185,7 @@ fn handle_jest_set_time_out<'a>(
         };
 
         if expr.property.name == "setTimeout" {
-            if !scopes.get_flags(parent_node.scope_id()).is_top() {
+            if !scopes.scope_flags(parent_node.scope_id()).is_top() {
                 ctx.diagnostic(no_global_set_timeout_diagnostic(member_expr.span()));
             }
 

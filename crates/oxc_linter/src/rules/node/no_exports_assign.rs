@@ -19,7 +19,7 @@ fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
     let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
         return false;
     };
-    id.is_global_reference_name("exports", ctx.symbols())
+    id.is_global_reference_name("exports", ctx.scoping())
 }
 
 fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
@@ -32,7 +32,7 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
     };
 
     mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name("module", ctx.symbols())
+        && obj_id.is_global_reference_name("module", ctx.scoping())
 }
 
 #[derive(Debug, Default, Clone)]
@@ -90,7 +90,7 @@ impl Rule for NoExportsAssign {
         if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right {
             if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
                 return;
-            };
+            }
         }
 
         if let Some(AstKind::AssignmentExpression(assign_expr)) = ctx.nodes().parent_kind(node.id())

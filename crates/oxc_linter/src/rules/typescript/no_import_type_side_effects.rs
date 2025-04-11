@@ -96,14 +96,14 @@ impl Rule for NoImportTypeSideEffects {
         // `import { type A, type B } from 'foo.js'`
         ctx.diagnostic_with_fix(
             no_import_type_side_effects_diagnostic(import_decl.span),
-            |_fixer| {
+            |fixer| {
+                let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 1);
                 let raw = ctx.source_range(import_decl.span);
-                let mut fixes = vec![];
 
                 // import type A from 'foo.js'
                 //        ^^^^ add
                 if raw.starts_with("import") {
-                    fixes.push(Fix::new(
+                    fix.push(Fix::new(
                         "import type",
                         Span::new(import_decl.span.start, import_decl.span.start + 6),
                     ));
@@ -112,13 +112,13 @@ impl Rule for NoImportTypeSideEffects {
                 for specifier in type_specifiers {
                     // import { type    A } from 'foo.js'
                     //          ^^^^^^^^
-                    fixes.push(Fix::delete(Span::new(
+                    fix.push(Fix::delete(Span::new(
                         specifier.span.start,
                         specifier.imported.span().start,
                     )));
                 }
 
-                fixes
+                fix.with_message("Convert to top-level type import")
             },
         );
     }

@@ -179,7 +179,7 @@ impl<'a> ModuleImportsStore<'a> {
             return;
         }
 
-        let require_symbol_id = ctx.scopes().get_root_binding("require");
+        let require_symbol_id = ctx.scoping().get_root_binding("require");
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));

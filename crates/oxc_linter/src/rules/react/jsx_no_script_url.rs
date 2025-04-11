@@ -1,5 +1,4 @@
-use lazy_static::lazy_static;
-use regex::Regex;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
@@ -21,10 +20,9 @@ fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-lazy_static! {
-    static ref JS_SCRIPT_REGEX: Regex =
-        Regex::new(r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:").unwrap();
-}
+static JS_SCRIPT_REGEX: Lazy<Regex> = lazy_regex!(
+    r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:"
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoScriptUrl(Box<JsxNoScriptUrlConfig>);

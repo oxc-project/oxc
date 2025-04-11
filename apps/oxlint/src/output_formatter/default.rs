@@ -27,12 +27,17 @@ impl InternalFormatter for DefaultOutputFormatter {
         let time = Self::get_execution_time(&lint_command_info.start_time);
         let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
 
-        Some(format!(
-            "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
-            lint_command_info.number_of_files,
-            lint_command_info.number_of_rules,
-            lint_command_info.threads_count
-        ))
+        if let Some(number_of_rules) = lint_command_info.number_of_rules {
+            Some(format!(
+                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
+                lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
+            ))
+        } else {
+            Some(format!(
+                "Finished in {time} on {} file{s} using {} threads.\n",
+                lint_command_info.number_of_files, lint_command_info.threads_count
+            ))
+        }
     }
 
     #[cfg(not(test))]
@@ -169,7 +174,7 @@ mod test {
         let formatter = DefaultOutputFormatter;
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
-            number_of_rules: 10,
+            number_of_rules: Some(10),
             threads_count: 12,
             start_time: Duration::new(1, 0),
         });
@@ -179,6 +184,20 @@ mod test {
             result.unwrap(),
             "Finished in 1.0s on 5 files with 10 rules using 12 threads.\n"
         );
+    }
+
+    #[test]
+    fn lint_command_info_unknown_rules() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+        });
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
     }
 
     #[test]

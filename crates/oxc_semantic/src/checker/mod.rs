@@ -16,6 +16,8 @@ use crate::{AstNode, builder::SemanticBuilder};
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();
 
+    let is_typescript = ctx.source_type.is_typescript();
+
     match kind {
         AstKind::Program(_) => {
             js::check_duplicate_class_elements(ctx);
@@ -49,16 +51,16 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
         AstKind::LabeledStatement(stmt) => {
             js::check_labeled_statement(stmt, node, ctx);
-            js::check_function_declaration(&stmt.body, true, ctx);
+            js::check_function_declaration_in_labeled_statement(&stmt.body, node, ctx);
         }
         AstKind::ForInStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
-            js::check_for_statement_left(&stmt.left, true, node, ctx);
+            js::check_for_statement_left(&stmt.left, true, ctx);
             ts::check_for_statement_left(&stmt.left, true, ctx);
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
-            js::check_for_statement_left(&stmt.left, false, node, ctx);
+            js::check_for_statement_left(&stmt.left, false, ctx);
             ts::check_for_statement_left(&stmt.left, false, ctx);
         }
         AstKind::WhileStatement(WhileStatement { body, .. })
@@ -74,7 +76,13 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::Class(class) => {
             js::check_class(class, node, ctx);
+            if !is_typescript {
+                js::check_class_redeclaration(class, ctx);
+            }
             ts::check_class(class, ctx);
+        }
+        AstKind::Function(func) if !is_typescript => {
+            js::check_function_redeclaration(func, ctx);
         }
         AstKind::MethodDefinition(method) => {
             js::check_method_definition(method, ctx);
@@ -88,7 +96,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
-            js::check_formal_parameters(params, node, ctx);
+            js::check_formal_parameters(params, ctx);
             ts::check_formal_parameters(params, ctx);
         }
         AstKind::ArrayPattern(pat) => {
@@ -102,10 +110,15 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::LogicalExpression(expr) => js::check_logical_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
-        AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
+        AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
         AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
-        AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
+        AstKind::VariableDeclarator(decl) => {
+            if !is_typescript {
+                js::check_variable_declarator_redeclaration(decl, ctx);
+            }
+            ts::check_variable_declarator(decl, ctx);
+        }
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
@@ -134,7 +147,7 @@ fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
 pub fn check_unresolved_exports(ctx: &SemanticBuilder<'_>) {
     for reference_ids in ctx.unresolved_references.root().values() {
         for reference_id in reference_ids {
-            let reference = ctx.symbols.get_reference(*reference_id);
+            let reference = ctx.scoping.get_reference(*reference_id);
             let node = ctx.nodes.get_node(reference.node_id());
             if node.flags().has_export_specifier() {
                 if let AstKind::IdentifierReference(ident) = node.kind() {

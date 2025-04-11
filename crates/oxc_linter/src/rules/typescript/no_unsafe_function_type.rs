@@ -84,7 +84,7 @@ impl Rule for NoUnsafeFunctionType {
 }
 
 fn handle_function_type<'a>(identifier: &'a IdentifierReference<'a>, ctx: &LintContext<'a>) {
-    if identifier.name == "Function" && identifier.is_global_reference(ctx.symbols()) {
+    if identifier.name == "Function" && identifier.is_global_reference(ctx.scoping()) {
         ctx.diagnostic(no_unsafe_function_type_diagnostic(identifier.span));
     }
 }

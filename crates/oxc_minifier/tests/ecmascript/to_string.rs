@@ -54,4 +54,22 @@ fn test() {
     assert_eq!(empty_object_string, Some("[object Object]".into()));
     assert_eq!(object_with_to_string_string, None);
     assert_eq!(bigint_with_separators_string, Some("10".into()));
+
+    let num_cases = [
+        (0.0, "0"),
+        (-0.0, "0"),
+        (1.0, "1"),
+        (-1.0, "-1"),
+        (f64::NAN, "NaN"),
+        (-f64::NAN, "NaN"),
+        (f64::INFINITY, "Infinity"),
+        (f64::NEG_INFINITY, "-Infinity"),
+    ];
+    for (num, expected) in num_cases {
+        let num_lit = ast.expression_numeric_literal(SPAN, num, None, NumberBase::Decimal);
+        assert_eq!(
+            num_lit.to_js_string(&WithoutGlobalReferenceInformation {}),
+            Some(expected.into())
+        );
+    }
 }

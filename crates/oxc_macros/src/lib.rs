@@ -55,7 +55,7 @@ mod declare_oxc_lint;
 /// #[derive(Debug, Default, Clone)]
 /// pub struct NoDebugger;
 ///
-/// declare_oxc_lint! {
+/// declare_oxc_lint!(
 ///     /// ### What it does
 ///     ///
 ///     /// Checks for usage of the `debugger` statement
@@ -64,7 +64,6 @@ mod declare_oxc_lint;
 ///     ///
 ///     /// `debugger` statements do not affect functionality when a debugger isn't attached.
 ///     /// They're most commonly an accidental debugging leftover.
-///     ///
 ///     ///
 ///     /// ### Examples
 ///     ///
@@ -81,9 +80,10 @@ mod declare_oxc_lint;
 ///     /// var debug = require('foo');
 ///     /// ```
 ///     NoDebugger,
+///     eslint,
 ///     correctness,
 ///     fix
-/// }
+/// );
 /// ```
 #[proc_macro]
 pub fn declare_oxc_lint(input: TokenStream) -> TokenStream {

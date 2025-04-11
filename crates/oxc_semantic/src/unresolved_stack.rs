@@ -1,6 +1,6 @@
-use assert_unchecked::assert_unchecked;
 use rustc_hash::FxHashMap;
 
+use oxc_data_structures::assert_unchecked;
 use oxc_span::Atom;
 use oxc_syntax::reference::ReferenceId;
 

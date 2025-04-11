@@ -1,0 +1,3 @@
+{
+  "extends": ["../extends_rules_config.json"]
+}

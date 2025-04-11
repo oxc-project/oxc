@@ -7,17 +7,19 @@ use std::{
 
 use log::debug;
 use rustc_hash::FxHashSet;
-use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range};
+use tower_lsp_server::{
+    UriExt,
+    lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range, Uri},
+};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    Linter, ModuleRecord,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, Loader},
+    LINTABLE_EXTENSIONS, Linter, ModuleRecord,
+    loader::{JavaScriptSource, Loader},
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::VALID_EXTENSIONS;
 
 use crate::DiagnosticReport;
 use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
@@ -56,13 +58,18 @@ impl IsolatedLintHandler {
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {
                     location: lsp_types::Location {
-                        uri: lsp_types::Url::from_file_path(path).unwrap(),
+                        uri: Uri::from_file_path(path).unwrap(),
                         range: d.diagnostic.range,
                     },
                     message: "original diagnostic".to_string(),
                 }]);
                 for r in related_info {
                     if r.location.range == d.diagnostic.range {
+                        continue;
+                    }
+                    // If there is no message content for this span, then don't produce an additional diagnostic
+                    // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+                    if r.message.is_empty() {
                         continue;
                     }
                     inverted_diagnostics.push(DiagnosticReport {
@@ -114,6 +121,7 @@ impl IsolatedLintHandler {
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: true,
+                    parse_regular_expression: true,
                     ..ParseOptions::default()
                 })
                 .parse();
@@ -128,7 +136,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
@@ -146,7 +154,7 @@ impl IsolatedLintHandler {
                     })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            };
+            }
 
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
@@ -157,6 +165,7 @@ impl IsolatedLintHandler {
                 .into_iter()
                 .map(|msg| {
                     let fixed_content = msg.fix.map(|f| FixedContent {
+                        message: f.message.map(|m| m.to_string()),
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(
@@ -181,9 +190,8 @@ impl IsolatedLintHandler {
 
     fn should_lint_path(path: &Path) -> bool {
         static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
-        let wanted_exts = WANTED_EXTENSIONS.get_or_init(|| {
-            VALID_EXTENSIONS.iter().chain(LINT_PARTIAL_LOADER_EXT.iter()).copied().collect()
-        });
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
         path.extension()
             .and_then(std::ffi::OsStr::to_str)

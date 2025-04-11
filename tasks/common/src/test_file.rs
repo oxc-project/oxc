@@ -98,7 +98,7 @@ impl TestFile {
             return Err(format!("Not an https url: {lib:?}"));
         }
         let filename =
-            lib.split('/').last().ok_or_else(|| "lib url has no segments".to_string())?;
+            lib.split('/').next_back().ok_or_else(|| "lib url has no segments".to_string())?;
 
         let file = project_root().join("target").join(filename);
 

@@ -4,7 +4,7 @@ export default function App() {
   _s();
   const [foo, setFoo] = useState(0);
   React.useEffect(() => {});
-  return _jsx("h1", { children: foo });
+  return /* @__PURE__ */ _jsx("h1", { children: foo });
 }
 _s(App, "useState{[foo, setFoo](0)}\\nuseEffect{}");
 _c = App;

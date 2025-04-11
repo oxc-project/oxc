@@ -33,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │             var arrowFn = () => 'test';
    ·                              ──
- 3 │                   
+ 3 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -394,7 +394,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │             foo(() => true);
  7 │             foo(() => '');
    ·                    ──
- 8 │                   
+ 8 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -403,7 +403,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ 
  10 │             new Accumulator().accumulate(() => 1);
     ·                                             ──
- 11 │                   
+ 11 │             
     ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -446,7 +446,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                           ──
- 4 │                   
+ 4 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -455,7 +455,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                           ──
- 4 │                   
+ 4 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -464,7 +464,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                   ──
- 4 │                   
+ 4 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -473,7 +473,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
  3 │             const x: HigherOrderType = () => arg1 => arg2 => 'foo';
    ·                                                           ──
- 4 │                   
+ 4 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -491,16 +491,14 @@ source: crates/oxc_linter/src/tester.rs
  2 │             const func1 = (value: number) => ({ type: 'X', value }) as any;
  3 │             const func2 = (value: number) => ({ type: 'X', value }) as Action;
    ·                                           ──
- 4 │                   
+ 4 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:39]
- 1 │ 
- 2 │             const func = (value: number) => ({ type: 'X', value }) as const;
-   ·                                          ──
- 3 │                   
+   ╭─[explicit_function_return_type.tsx:1:30]
+ 1 │ const func = (value: number) => ({ type: 'X', value }) as const;
+   ·                              ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -512,11 +510,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Require explicit return types on functions and class methods.
 
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:48]
+   ╭─[explicit_function_return_type.tsx:2:40]
  1 │ 
- 2 │                     const log = (message: string) => {
-   ·                                                   ──
- 3 │                       void console.log(message);
+ 2 │             const log = (message: string) => {
+   ·                                           ──
+ 3 │               void console.log(message);
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -645,11 +643,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Require explicit return types on functions and class methods.
 
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
-   ╭─[explicit_function_return_type.tsx:2:30]
- 1 │ 
- 2 │             let foo = (() => () => {})()();
-   ·                                 ──
- 3 │                   
+   ╭─[explicit_function_return_type.tsx:1:21]
+ 1 │ let foo = (() => () => {})()();
+   ·                     ──
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -658,7 +654,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
  4 │             function f(gotcha: CallBack = () => {}): void {}
    ·                                              ──
- 5 │                   
+ 5 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -667,7 +663,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
  4 │             const f = (gotcha: CallBack = () => {}): void => {};
    ·                                              ──
- 5 │                   
+ 5 │             
    ╰────
   help: Require explicit return types on functions and class methods.
 
@@ -676,6 +672,6 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
  4 │             const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
    ·                                                       ──────────
- 5 │                   
+ 5 │             
    ╰────
   help: Require explicit return types on functions and class methods.

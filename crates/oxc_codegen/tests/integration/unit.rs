@@ -1,6 +1,8 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::tester::{test, test_minify, test_minify_same, test_options, test_same};
+use crate::tester::{
+    test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
+};
 
 #[test]
 fn decl() {
@@ -141,6 +143,7 @@ fn unicode_escape() {
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
     test("console.log('안녕하세요');", "console.log(\"안녕하세요\");\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log(\"🧑‍🤝‍🧑\");\n");
+    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\ud800\\ud801\");\n");
 }
 
 #[test]
@@ -368,7 +371,7 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test_same("/* #__PURE__ */ function foo() {}\n"); // FIXME: can be removed. // INVALID: Only allowed for calls
+    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
@@ -377,14 +380,16 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a.b().c.d();\n");
     test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
-}
 
-#[test]
-fn pure_comment_additional() {
+    // More
     test_same("/* @__PURE__ */ a() || b;\n");
     test_same("/* @__PURE__ */ a() && b;\n");
     test_same("/* @__PURE__ */ a() ?? b;\n");
     test_same("/* @__PURE__ */ a() ? b : c;\n");
+    test_same("/* @__PURE__ */ a.b();\n");
+    test_same("/* @__PURE__ */ a?.b();\n");
+    test_same("true && /* @__PURE__ */ noEffect();\n");
+    test_same("false || /* @__PURE__ */ noEffect();\n");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422
@@ -495,9 +500,73 @@ fn getter_setter() {
 
 #[test]
 fn string() {
+    // `${` only escaped when quote is backtick
+    test("let x = \"${}\";", "let x = \"${}\";\n");
+    test_minify("let x = \"${}\";", "let x=\"${}\";");
+    test("let x = '\"\"${}';", "let x = \"\\\"\\\"${}\";\n");
+    test_minify("let x = '\"\"${}';", "let x='\"\"${}';");
+    test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"''${}\";\n");
+    test_minify("let x = '\"\"\\'\\'${}';", "let x=`\"\"''\\${}`;");
+    test_minify("let x = '\\'\\'\\'\"\"\"${}';", "let x=`'''\"\"\"\\${}`;");
+
+    // Lossy replacement character
+    test("let x = \"�\\u{FFFD}\";", "let x = \"��\";\n");
+    test_minify("let x = \"�\\u{FFFD}\";", "let x=`��`;");
+    test(
+        "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
+        "let x = \"� ��� � ��� �\";\n",
+    );
+    test_minify(
+        "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
+        "let x=`� ��� � ��� �`;",
+    );
+    // Lone surrogates
+    test(
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
+        "let x = \"\\ud800 \\udbff \\udc00 \\udfff\";\n",
+    );
+    test_minify(
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
+        "let x=`\\ud800 \\udbff \\udc00 \\udfff`;",
+    );
+    test("let x = \"\\uD800\u{41}\";", "let x = \"\\ud800A\";\n");
+    test_minify("let x = \"\\uD800\u{41}\";", "let x=`\\ud800A`;");
+    // Invalid pairs
+    test(
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
+        "let x = \"\\ud800\\udbff \\udc00\\udfff\";\n",
+    );
+    test_minify(
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
+        "let x=`\\ud800\\udbff \\udc00\\udfff`;",
+    );
+    // Lone surrogates and lossy replacement characters
+    test(
+        "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";",
+        "let x = \"����\\ud800\\udbff����\\udc00\\udfff����\";\n",
+    );
+    test_minify(
+        "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";",
+        "let x=`����\\ud800\\udbff����\\udc00\\udfff����`;",
+    );
+
     test_minify(
         r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+}
+
+#[test]
+fn v8_intrinsics() {
+    let parse_opts = oxc_parser::ParseOptions {
+        allow_v8_intrinsics: true,
+        ..oxc_parser::ParseOptions::default()
+    };
+
+    test_with_parse_options(
+        "const p = %DebugPrint('hi')",
+        "const p = %DebugPrint(\"hi\");\n",
+        parse_opts,
+    );
 }

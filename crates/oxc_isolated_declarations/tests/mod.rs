@@ -1,6 +1,6 @@
 mod deno;
 
-use std::{fs, path::Path, sync::Arc};
+use std::{fmt::Write, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
@@ -28,9 +28,11 @@ fn transform(path: &Path, source_text: &str) -> String {
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
             .fold(String::new(), |s, error| s + &format!("{error:?}"));
 
-        snapshot.push_str(&format!(
+        write!(
+            snapshot,
             "==================== Errors ====================\n{error_messages}\n\n```"
-        ));
+        )
+        .unwrap();
     }
 
     snapshot

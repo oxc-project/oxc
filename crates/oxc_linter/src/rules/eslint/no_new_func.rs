@@ -93,7 +93,7 @@ impl Rule for NoNewFunc {
         };
 
         if let Some((id, span)) = id_and_span {
-            if id.is_global_reference_name("Function", ctx.symbols()) {
+            if id.is_global_reference_name("Function", ctx.scoping()) {
                 ctx.diagnostic(no_new_func(span));
             }
         }

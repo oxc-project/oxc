@@ -128,11 +128,11 @@ impl NoUnusedVars {
         };
 
         // adjust name to avoid conflicts
-        let scopes = symbol.scopes();
+        let scopes = symbol.scoping();
         let scope_id = symbol.scope_id();
         let mut i = 0;
         let mut new_name = ignored_name.clone();
-        while scopes.has_binding(scope_id, &new_name) {
+        while scopes.scope_has_binding(scope_id, &new_name) {
             new_name = format!("{ignored_name}{i}");
             i += 1;
         }

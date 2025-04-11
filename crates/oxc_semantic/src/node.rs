@@ -50,19 +50,6 @@ impl<'a> AstNode<'a> {
     }
 
     /// Access the underlying struct from [`oxc_ast`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use oxc_semantic::AstNode;
-    ///
-    /// fn get_function_name<'a>(node: AstNode<'a>) -> Option<&'a str> {
-    ///     match node.kind() {
-    ///        AstKind::Function(func) => Some(func.name()),
-    ///        _ => None,
-    ///     }
-    /// }
-    /// ```
     #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
@@ -150,19 +137,6 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Access the underlying struct from [`oxc_ast`].
-    ///
-    /// ## Example
-    ///
-    /// ```
-    /// use oxc_semantic::AstNodes;
-    /// use oxc_ast::AstKind;
-    ///
-    /// let ast: AstNodes<'_> = get_ast_in_some_way();
-    /// assert!(matches!(
-    ///     ast.kind(ast.root().unwrap()),
-    ///     AstKind::Program(_)
-    /// ));
-    /// ```
     #[inline]
     pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
         self.nodes[node_id].kind

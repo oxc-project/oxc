@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, SPAN, Span};
@@ -113,6 +113,7 @@ use super::{
 };
 
 pub struct JsxImpl<'a, 'ctx> {
+    pure: bool,
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
@@ -189,7 +190,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
             let id = self.add_require_statement(var_name, self.jsx_runtime_importer, false, ctx);
             self.require_jsx = Some(id);
-        };
+        }
         self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
     }
 
@@ -260,7 +261,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsx = Some(self.add_jsx_import_statement("jsx", ctx));
-            };
+            }
         }
         self.import_jsx.as_ref().unwrap().create_read_reference(ctx)
     }
@@ -271,7 +272,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsxs = Some(self.add_jsx_import_statement("jsxs", ctx));
-            };
+            }
         }
         self.import_jsxs.as_ref().unwrap().create_read_reference(ctx)
     }
@@ -411,6 +412,8 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         ast: AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
+        // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
+        let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
                 if options.import_source.is_some() {
@@ -475,6 +478,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         };
 
         Self {
+            pure,
             options,
             object_rest_spread_options,
             ctx,
@@ -495,7 +499,7 @@ impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
         if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
             return;
         }
-        *expr = match ctx.ast.move_expression(expr) {
+        *expr = match expr.take_in(ctx.ast.allocator) {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
@@ -555,7 +559,9 @@ impl<'a> JsxImpl<'a, '_> {
         let is_development = self.options.development;
         let is_element = opening_element.is_some();
 
-        let mut arguments = ctx.ast.vec();
+        // The maximum capacity length of arguments allowed.
+        let capacity = if is_classic { 3 + children.len() } else { 6 };
+        let mut arguments = ctx.ast.vec_with_capacity(capacity);
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
@@ -751,9 +757,10 @@ impl<'a> JsxImpl<'a, '_> {
             self.get_fragment(ctx)
         };
         arguments.insert(0, Argument::from(argument_expr));
+        debug_assert!(arguments.len() <= capacity);
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, self.pure)
     }
 
     fn transform_element_name(
@@ -853,7 +860,16 @@ impl<'a> JsxImpl<'a, '_> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
-                let jsx_text = Self::decode_entities(s.value.as_str());
+                let mut decoded = None;
+                Self::decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx);
+                let jsx_text = if let Some(decoded) = decoded {
+                    // Text contains HTML entities which were decoded.
+                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Atom`.
+                    Atom::from(decoded)
+                } else {
+                    // No HTML entities needed to be decoded. Use the original `Atom` without copying.
+                    s.value
+                };
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
             }
             Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
@@ -941,8 +957,8 @@ impl<'a> JsxImpl<'a, '_> {
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value.as_str())
-            .map(|s| ctx.ast.expression_string_literal(text.span, s, None))
+        Self::fixup_whitespace_and_decode_entities(text.value, ctx)
+            .map(|value| ctx.ast.expression_string_literal(text.span, value, None))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the
@@ -960,14 +976,49 @@ impl<'a> JsxImpl<'a, '_> {
     /// - Remove empty lines and join the rest with " ".
     ///
     /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
-    fn fixup_whitespace_and_decode_entities(text: &str) -> Option<String> {
-        let mut acc: Option<String> = None;
+    fn fixup_whitespace_and_decode_entities(
+        text: Atom<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Atom<'a>> {
+        // Avoid copying strings in the common case where there's only 1 line of text,
+        // and it contains no HTML entities that need decoding.
+        //
+        // Where we do have to decode HTML entities, or concatenate multiple lines, assemble the
+        // concatenated text directly in arena, in an `ArenaString` (the accumulator `acc`),
+        // to avoid allocations. Initialize that `ArenaString` with capacity equal to length of
+        // the original text. This may be a bit more capacity than is required, once whitespace
+        // is removed, but it's highly unlikely to be insufficient capacity, so the `ArenaString`
+        // shouldn't need to reallocate while it's being constructed.
+        //
+        // When first line containing some text is found:
+        // * If it contains HTML entities, decode them and write decoded text to accumulator `acc`.
+        // * Otherwise, store trimmed text in `only_line` as an `Atom<'a>`.
+        //
+        // When another line containing some text is found:
+        // * If accumulator isn't already initialized, initialize it, starting with `only_line`.
+        // * Push a space to the accumulator.
+        // * Decode current line into the accumulator.
+        //
+        // At the end:
+        // * If accumulator is initialized, convert the `ArenaString` to an `Atom` and return it.
+        // * If `only_line` contains a string, that means only 1 line contained text, and that line
+        //   didn't contain any HTML entities which needed decoding.
+        //   So we can just return the `Atom` that's in `only_line` (without any copying).
+
+        let mut acc: Option<ArenaString> = None;
+        let mut only_line: Option<Atom<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
         for (index, c) in text.char_indices() {
             if is_line_terminator(c) {
                 if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
-                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..last]));
+                    Self::add_line_of_jsx_text(
+                        Atom::from(&text.as_str()[first..last]),
+                        &mut acc,
+                        &mut only_line,
+                        text.len(),
+                        ctx,
+                    );
                 }
                 first_non_whitespace = None;
             } else if !is_white_space_single_line(c) {
@@ -977,23 +1028,69 @@ impl<'a> JsxImpl<'a, '_> {
                 }
             }
         }
+
         if let Some(first) = first_non_whitespace {
-            Some(Self::add_line_of_jsx_text(acc, &text[first..]))
-        } else {
-            acc
+            Self::add_line_of_jsx_text(
+                Atom::from(&text.as_str()[first..]),
+                &mut acc,
+                &mut only_line,
+                text.len(),
+                ctx,
+            );
         }
+
+        if let Some(acc) = acc { Some(Atom::from(acc)) } else { only_line }
     }
 
-    fn add_line_of_jsx_text(acc: Option<String>, trimmed_line: &str) -> String {
-        let decoded = Self::decode_entities(trimmed_line);
-        if let Some(acc) = acc { format!("{acc} {decoded}") } else { decoded }
+    fn add_line_of_jsx_text(
+        trimmed_line: Atom<'a>,
+        acc: &mut Option<ArenaString<'a>>,
+        only_line: &mut Option<Atom<'a>>,
+        text_len: usize,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if let Some(buffer) = acc.as_mut() {
+            // Already some text in accumulator. Push a space before this line is added to `acc`.
+            buffer.push(' ');
+        } else if let Some(only_line) = only_line.take() {
+            // This is the 2nd line containing text. Previous line did not contain any HTML entities.
+            // Generate an accumulator containing previous line and a trailing space.
+            // Current line will be added to the accumulator after it.
+            let mut buffer = ArenaString::with_capacity_in(text_len, ctx.ast.allocator);
+            buffer.push_str(only_line.as_str());
+            buffer.push(' ');
+            *acc = Some(buffer);
+        }
+
+        // Decode any HTML entities in this line
+        Self::decode_entities(trimmed_line.as_str(), acc, text_len, ctx);
+
+        if acc.is_none() {
+            // This is the first line containing text, and there are no HTML entities in this line.
+            // Record this line in `only_line`.
+            // If this turns out to be the only line, we won't need to construct an `ArenaString`,
+            // so avoid all copying.
+            *only_line = Some(trimmed_line);
+        }
     }
 
     /// Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
     /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
-    fn decode_entities(s: &str) -> String {
-        let mut buffer = String::new();
+    ///
+    /// If either:
+    /// (a) Text contains any HTML entities that need to be decoded, or
+    /// (b) accumulator `acc` passed in to this method is `Some`
+    /// then push the decoded string to `acc` (initializing it first if required).
+    ///
+    /// Otherwise, leave `acc` as `None`. This indicates that the text contains no HTML entities.
+    /// Caller can use a slice of the original text, rather than making any copies.
+    fn decode_entities(
+        s: &str,
+        acc: &mut Option<ArenaString<'a>>,
+        text_len: usize,
+        ctx: &TraverseCtx<'a>,
+    ) {
         let mut chars = s.char_indices();
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
@@ -1007,6 +1104,10 @@ impl<'a> JsxImpl<'a, '_> {
                     }
                 }
                 if let Some(end) = end {
+                    let buffer = acc.get_or_insert_with(|| {
+                        ArenaString::with_capacity_in(text_len, ctx.ast.allocator)
+                    });
+
                     buffer.push_str(&s[prev..start]);
                     prev = end + 1;
                     let word = &s[start + 1..end];
@@ -1015,30 +1116,36 @@ impl<'a> JsxImpl<'a, '_> {
                             if let Some(c) =
                                 u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
                             {
-                                // &x0123;
+                                // `&#x0123;`
                                 buffer.push(c);
                                 continue;
                             }
                         } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32)
                         {
-                            // &#0123;
+                            // `&#0123;`
                             buffer.push(c);
                             continue;
                         }
                     } else if let Some(c) = XML_ENTITIES.get(word) {
-                        // &quote;
+                        // e.g. `&quote;`, `&amp;`
                         buffer.push(*c);
                         continue;
                     }
-                    // fallback
+                    // Fallback
                     buffer.push('&');
                     buffer.push_str(word);
                     buffer.push(';');
+                } else {
+                    // Reached end of text without finding a `;` after the `&`.
+                    // No point searching for a further `&`, so exit the loop.
+                    break;
                 }
             }
         }
-        buffer.push_str(&s[prev..]);
-        buffer
+
+        if let Some(buffer) = acc.as_mut() {
+            buffer.push_str(&s[prev..]);
+        }
     }
 
     /// The react jsx/jsxs transform falls back to `createElement` when an explicit `key` argument comes after a spread
@@ -1107,7 +1214,7 @@ mod test {
 
     use oxc_allocator::Allocator;
     use oxc_ast::ast::Expression;
-    use oxc_semantic::{ScopeTree, SymbolTable};
+    use oxc_semantic::Scoping;
     use oxc_syntax::{node::NodeId, scope::ScopeFlags};
     use oxc_traverse::ReusableTraverseCtx;
 
@@ -1118,10 +1225,10 @@ mod test {
         ($traverse_ctx:ident, $transform_ctx:ident) => {
             let allocator = Allocator::default();
 
-            let mut scopes = ScopeTree::default();
-            scopes.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
+            let mut scoping = Scoping::default();
+            scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
 
-            let traverse_ctx = ReusableTraverseCtx::new(scopes, SymbolTable::default(), &allocator);
+            let traverse_ctx = ReusableTraverseCtx::new(scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
             let mut traverse_ctx = unsafe { traverse_ctx.unwrap() };
             let $traverse_ctx = &mut traverse_ctx;

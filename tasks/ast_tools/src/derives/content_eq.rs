@@ -98,7 +98,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         if body.is_empty() {
             body = quote!(true);
             uses_other = false;
-        };
+        }
         body
     };
 

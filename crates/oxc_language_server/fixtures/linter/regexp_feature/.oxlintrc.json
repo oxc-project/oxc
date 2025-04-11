@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "no-useless-escape": "error",
+    "no-control-regex": "error"
+  }
+}

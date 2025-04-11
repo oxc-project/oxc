@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ScopeId, ScopeTree};
+use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -181,7 +181,7 @@ fn is_safe_from_name_collisions(
     stmt: &Statement,
     parent_scope_id: ScopeId,
 ) -> bool {
-    let scopes: &ScopeTree = ctx.scopes();
+    let scopes = ctx.scoping();
 
     match stmt {
         Statement::BlockStatement(block) => {
@@ -492,41 +492,41 @@ fn test() {
         ),
         ("function foo10() { if (foo) return bar; else (foo).bar(); }", None),
         (
-            "function foo11() { if (foo) return bar 
+            "function foo11() { if (foo) return bar
 			else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
-            "function foo12() { if (foo) return bar 
-			else { baz() } 
+            "function foo12() { if (foo) return bar
+			else { baz() }
 			[1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo13() { if (foo) return bar; 
+            "function foo13() { if (foo) return bar;
 			else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
-            "function foo14() { if (foo) return bar 
-			else { baz(); } 
+            "function foo14() { if (foo) return bar
+			else { baz(); }
 			[1, 2, 3].map(foo) }",
             None,
         ),
         ("function foo15() { if (foo) return bar; else { baz() } qaz() }", None),
         (
-            "function foo16() { if (foo) return bar 
+            "function foo16() { if (foo) return bar
 			else { baz() } qaz() }",
             None,
         ),
         (
-            "function foo17() { if (foo) return bar 
-			else { baz() } 
+            "function foo17() { if (foo) return bar
+			else { baz() }
 			qaz() }",
             None,
         ),
         (
-            "function foo18() { if (foo) return function() {} 
+            "function foo18() { if (foo) return function() {}
 			else [1, 2, 3].map(bar) }",
             None,
         ),
@@ -727,24 +727,24 @@ fn test() {
             None,
         ),
         (
-            "function foo13() { if (foo) return bar; 
+            "function foo13() { if (foo) return bar;
 			else { [1, 2, 3].map(foo) } }",
             "function foo13() { if (foo) return bar; [1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo14() { if (foo) return bar 
-			else { baz(); } 
+            "function foo14() { if (foo) return bar
+			else { baz(); }
 			[1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar\n baz(); 
+            "function foo14() { if (foo) return bar\n baz();
 			[1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo17() { if (foo) return bar 
-			else { baz() } 
+            "function foo17() { if (foo) return bar
+			else { baz() }
 			qaz() }",
-            "function foo17() { if (foo) return bar\n baz() 
+            "function foo17() { if (foo) return bar\n baz()
 			qaz() }",
             None,
         ),

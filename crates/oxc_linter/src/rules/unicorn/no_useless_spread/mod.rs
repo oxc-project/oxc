@@ -31,7 +31,9 @@ fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
 }
 
 fn spread_in_arguments(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_label(span)
+    OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.")
+        .with_help("Pass arguments directly instead of spreading an array.")
+        .with_label(span)
 }
 
 fn iterable_to_array(span: Span, ctor_name: &str) -> OxcDiagnostic {
@@ -215,7 +217,18 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
             // foo(...[ ])
             AstKind::Argument(_) => {
                 ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
-                    fix_by_removing_array_spread(fixer, array_expr, spread_elem)
+                    let replacer = if let Some(first) = array_expr.elements.first() {
+                        let mut span = first.span();
+                        if array_expr.elements.len() != 1 {
+                            let last = array_expr.elements.last().unwrap();
+                            span = Span::new(first.span().start, last.span().end);
+                        }
+                        ctx.source_range(span)
+                    } else {
+                        ""
+                    };
+
+                    fixer.replace(spread_elem.span(), replacer)
                 });
                 true
             }
@@ -744,6 +757,9 @@ fn test() {
         ("[...((0, []))]", "((0, []))"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
+        // Issue: <https://github.com/oxc-project/oxc/issues/8115>
+        ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),
+        ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

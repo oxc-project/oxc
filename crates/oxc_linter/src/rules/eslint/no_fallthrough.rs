@@ -2,6 +2,7 @@ use std::ops::Range;
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Statement, SwitchCase, SwitchStatement},
@@ -16,7 +17,6 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -384,7 +384,7 @@ impl NoFallthrough {
             let comment = semantic
                 .comments_range(range)
                 .map(|comment| ctx.source_range(comment.content_span()))
-                .last()
+                .next_back()
                 .map(str::trim);
 
             comment.is_some_and(|comment| self.is_comment_fall_through(comment))

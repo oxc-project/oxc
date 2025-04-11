@@ -1,0 +1,50 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:3:13]
+ 2 │             const bool = true
+ 3 │             export default bool
+   ·             ───────────────────
+ 4 │             const str = 'foo'
+   ╰────
+
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:2:13]
+ 1 │ 
+ 2 │             export const bool = true
+   ·             ────────────────────────
+ 3 │             const str = 'foo'
+   ╰────
+
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:2:13]
+ 1 │ 
+ 2 │             export const foo = 'bar'
+   ·             ────────────────────────
+ 3 │             const bar = true
+   ╰────
+
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:2:13]
+ 1 │ 
+ 2 │             export default 'such foo many bar'
+   ·             ──────────────────────────────────
+ 3 │             export const so = 'many'
+   ╰────
+
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:3:13]
+ 2 │             export default 'such foo many bar'
+ 3 │             export const so = 'many'
+   ·             ────────────────────────
+ 4 │             const foo = 'bar'
+   ╰────
+
+  ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
+   ╭─[exports_last.tsx:2:13]
+ 1 │ 
+ 2 │             export * from './foo'         ;
+   ·             ───────────────────────────────
+ 3 │             const bar = true
+   ╰────

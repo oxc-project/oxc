@@ -2,9 +2,14 @@
 
 A JavaScript minifier has three components:
 
-1. printer
+1. compressor
 2. mangler
-3. compressor
+3. printer
+
+## Compressor
+
+The compressor is responsible for rewriting statements and expressions for minimal text output.
+[Terser](https://github.com/terser/terser) is a good place to start for learning the fundamentals.
 
 ## Mangler
 
@@ -13,10 +18,9 @@ It is responsible for shortening variables. Its algorithm should be gzip friendl
 
 The printer is also responsible for printing out the shortened variable names.
 
-## Compressor
+## Printer
 
-The compressor is responsible for rewriting statements and expressions for minimal text output.
-[Terser](https://github.com/terser/terser) is a good place to start for learning the fundamentals.
+The printer is responsible for removing whitespace from the source text.
 
 ### Assumptions
 

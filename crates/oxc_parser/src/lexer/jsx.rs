@@ -1,5 +1,6 @@
-use memchr::{memchr, memchr2};
+use memchr::memchr;
 
+use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
 use crate::diagnostics;
@@ -11,6 +12,9 @@ use super::{
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
+
+static JSX_CHILD_END_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| b == b'{' || b == b'}' || b == b'>' || b == b'<');
 
 /// `JSXDoubleStringCharacters` ::
 ///   `JSXDoubleStringCharacter` `JSXDoubleStringCharactersopt`
@@ -72,20 +76,27 @@ impl Lexer<'_> {
                 Kind::LCurly
             }
             Some(_) => {
-                // The tokens `{`, `<`, `>` and `}` cannot appear in JSX text.
-                // The TypeScript compiler raises the error "Unexpected token. Did you mean `{'>'}` or `&gt;`?".
-                // Where as the Babel compiler does not raise any errors.
-                // The following check omits `>` and `}` so that more Babel tests can be passed.
-                let len = memchr2(b'{', b'<', self.remaining().as_bytes());
-                if let Some(len) = len {
-                    // SAFETY: `memchr2` guarantees `len` will be offset from current position
-                    // of a `{` or `<` byte. So must be a valid UTF-8 boundary, and within bounds of source.
-                    let end = unsafe { self.source.position().add(len) };
-                    self.source.set_position(end);
+                let next_byte = byte_search! {
+                    lexer: self,
+                    table: JSX_CHILD_END_TABLE,
+                    handle_eof: {
+                        return Kind::Undetermined;
+                    },
+                };
+
+                if matches!(next_byte, b'<' | b'{') {
+                    Kind::JSXText
                 } else {
-                    self.source.advance_to_end();
+                    cold_branch(|| {
+                        let start = self.offset();
+                        self.error(diagnostics::unexpected_jsx_end(
+                            Span::new(start, start),
+                            next_byte as char,
+                            if next_byte == b'}' { "rbrace" } else { "gt" },
+                        ));
+                        Kind::Undetermined
+                    })
                 }
-                Kind::JSXText
             }
             None => Kind::Eof,
         }

@@ -5,7 +5,7 @@ use std::{
     slice,
 };
 
-use assert_unchecked::assert_unchecked;
+use crate::assert_unchecked;
 
 use super::StackCapacity;
 

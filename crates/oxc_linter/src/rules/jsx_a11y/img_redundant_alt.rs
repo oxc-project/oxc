@@ -185,7 +185,7 @@ impl Rule for ImgRedundantAlt {
                 _ => {}
             },
             _ => {}
-        };
+        }
     }
 }
 

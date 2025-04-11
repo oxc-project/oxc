@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component.t
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(Function)",
         "id": 0,
         "name": "Foo",
         "node": "Function(Foo)",

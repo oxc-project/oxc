@@ -88,12 +88,12 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
+        uses: taiki-e/install-action@d4635f2de61c8b8104d59cd4aede2060638378cc # v2.49.45
         with:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -102,15 +102,11 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          CC: clang # for mimalloc
         run: |
-          # Need to support 16kb-aligned pages for aarch64 systems,
-          # Asahi Linux & Raspberry Pi OS use a 16k page size.
-          # https://github.com/oxc-project/oxc/issues/3783
-          case ${{ matrix.target }} in
-            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
-          esac;
-          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
-          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+          cross build --release -p oxlint --bin oxlint --features allocator --target=${{ matrix.target }}
+          cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
@@ -137,7 +133,7 @@ jobs:
           tar czf $OXLS_BIN_NAME.tar.gz $OXLS_BIN_NAME
 
       - name: Upload Binary
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           if-no-files-found: error
           name: binaries-${{ matrix.code-target }}
@@ -174,7 +170,7 @@ jobs:
             echo EOF
           } >> $GITHUB_OUTPUT
 
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           merge-multiple: true
 

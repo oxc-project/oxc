@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator,
+    AST_VISIT_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{Def, Schema, StructDef, TypeId},
     utils::create_ident,
@@ -21,7 +21,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
         let output = generate(schema, codegen);
         Output::Rust {
-            path: output_path(AST_CRATE_PATH, "utf8_to_utf16_converter.rs"),
+            path: output_path(AST_VISIT_CRATE_PATH, "utf8_to_utf16_converter.rs"),
             tokens: output,
         }
     }
@@ -43,6 +43,9 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
+
+    // Types with custom visitors (see comment above).
+    // Also skip `Comment` because we handle adjusting comment spans separately.
     let skip_type_ids = [
         "ObjectProperty",
         "BindingProperty",
@@ -50,6 +53,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportSpecifier",
         "WithClause",
         "TemplateLiteral",
+        "Comment",
     ]
     .map(|type_name| schema.type_names[type_name]);
 
@@ -64,8 +68,12 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             return None;
         }
 
-        // Skip `oxc_regular_expression` types. They don't appear in ESTree AST.
-        if struct_def.file(schema).krate() == "oxc_regular_expression" {
+        // Skip types in `oxc_regular_expression`, `oxc_syntax`, and `napi/parser` crates.
+        // They don't appear in ESTree AST.
+        if matches!(
+            struct_def.file(schema).krate(),
+            "oxc_regular_expression" | "oxc_syntax" | "napi/parser"
+        ) {
             return None;
         }
 
@@ -75,12 +83,12 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     quote! {
         use oxc_span::GetSpan;
         use oxc_syntax::scope::ScopeFlags;
+        use oxc_ast::ast::*;
 
         ///@@line_break
         use crate::{
-            ast::*,
             utf8_to_utf16::Utf8ToUtf16Converter,
-            visit::{VisitMut, walk_mut},
+            VisitMut, walk_mut,
         };
 
         ///@@line_break

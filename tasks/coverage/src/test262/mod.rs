@@ -150,10 +150,10 @@ impl Case for Test262Case {
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
             self.execute(source_type)
         } else {
-            self.always_strict = true;
+            self.always_strict = false;
             let res = self.execute(source_type);
-            if matches!(res, TestResult::Passed) {
-                self.always_strict = false;
+            if matches!(res, TestResult::Passed | TestResult::CorrectError(..)) {
+                self.always_strict = true;
                 self.execute(source_type)
             } else {
                 res

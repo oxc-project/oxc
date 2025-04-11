@@ -217,13 +217,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                     return;
                 }
 
-                let Some(params) = &tref.type_parameters else { return };
+                let Some(params) = &tref.type_arguments else { return };
                 if params.params.len() != 2 {
                     return;
                 }
 
                 if let Some(TSType::TSStringKeyword(first)) =
-                    &tref.type_parameters.as_ref().and_then(|params| params.params.first())
+                    &tref.type_arguments.as_ref().and_then(|params| params.params.first())
                 {
                     ctx.diagnostic_with_fix(
                         consistent_indexed_object_style_diagnostic(

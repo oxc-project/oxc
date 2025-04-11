@@ -4,6 +4,161 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+
+### Performance
+
+- fa0e455 cfg, diagnostics, lexer, syntax, tasks: Remove `write!` macro where unnecessary (#10236) (overlookmotel)
+
+### Documentation
+
+- d8bbe2a lexer: Fix doc comment (#10181) (overlookmotel)
+
+### Refactor
+
+- ec10d94 parser: Use `AstBuilder::string_literal_with_lone_surrogates` (#10178) (overlookmotel)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.62.0] - 2025-04-01
+
+### Bug Fixes
+
+- 418cfaf parser: Handle asi for `declare module "foo";` (#10010) (Boshen)
+- f0e1510 parser: Store lone surrogates as escape sequence (#10041) (overlookmotel)
+
+### Performance
+
+- 59b855f lexer: Faster decoding unicode escape sequences (#10073) (overlookmotel)
+
+### Refactor
+
+- 630e189 lexer: Shorten code for parsing hex digit (#10072) (overlookmotel)
+- a24cceb lexer: Remove unnecessary line (#10042) (overlookmotel)
+- c7079b5 lexer: Clarify and reformat comments (#10040) (overlookmotel)
+- 326b4df lexer: Simplify macros for string parsing + correct comment (#10039) (overlookmotel)
+- b93c394 parser: Rename var (#10012) (overlookmotel)
+
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- eaea5fd parser: Handle invalid surrogate pair as lossy (#9964) (hi-ogawa)
+- e696fda parser: Fix broken `regular_expression` feature (#9963) (Boshen)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+- a9a47a6 parser: Add regex cargo feature to oxc_parser (#9879) (Toshit)
+- d4a83ba parser: Report duplicate modifier `Accessibility modifier already seen.` (#9890) (Boshen)
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+### Bug Fixes
+
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 8abb4f6 parser: Correctly set `export_kind` for `ExportNamedDeclaration` (#9827) (camc314)
+- f707d1f parser: Set kind of var_declarator correctly for using decl (#9753) (camc314)
+
+### Performance
+
+- 6fc26db lexer: Mark error case as cold branch when parsing `JSXText` (#9831) (overlookmotel)
+
+### Refactor
+
+- 3945385 parser: Simplify parsing extends clause (#9773) (Dunqing)
+
+## [0.58.0] - 2025-03-13
+
+- 842edd8 ast: [**BREAKING**] Add `raw` property to `JSXText` node (#9641) (Yuji Sugiura)
+
+### Features
+
+
+### Performance
+
+- a83cebd parser: Do not call `ParserImpl::end_span` twice for `StringLiteral`s (#9737) (overlookmotel)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+### Features
+
+- 638007b parser: Apply `preserveParens` to `TSParenthesizedType` (#9653) (Boshen)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+- cfdcfdb parser: Fix end span for optional binding pattern without type annotation (#9652) (Boshen)
+- 26da65d parser: Parse asi after class accessor property (#9623) (Boshen)
+- 87462fd parser: Fix end span for `using` declaration (#9622) (Boshen)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Bug Fixes
+
+- a88eb56 parser: Parsing errors occur when type parameters are followed by `as` or `satisfies` (#9553) (Dunqing)
+- 2c6e3f1 parser: Fix false positive parsing optional member expr (#9534) (camc314)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- 9c6ae9f parser: `@__NO_SIDE_EFFECTS` only affects const variable decl (#9517) (Boshen)
+- b7d5513 parser: Parse `@__NO_SIDE_EFFECTS__` between `export default` and `async function` (#9514) (Boshen)
+- 01de74c parser: Correctly fail parsing when parsing `foo.bar?.` (#9499) (camc314)
+- 58defe3 parser: Mark expression as pure in chain expression (#9479) (sapphi-red)
+- 2a03689 parser: Mark expressions on the left side of logical and conditional expressions as pure (#9414) (sapphi-red)
+
+### Performance
+
+
 ## [0.53.0] - 2025-02-26
 
 ### Performance

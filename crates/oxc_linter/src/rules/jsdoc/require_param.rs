@@ -1,13 +1,16 @@
-use std::sync::Mutex;
+use std::sync::{
+    OnceLock, {RwLock, RwLockWriteGuard},
+};
 
-use lazy_static::lazy_static;
-use oxc_ast::{AstKind, ast::MethodDefinitionKind};
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, JSDoc};
-use regex::Regex;
+use lazy_regex::Regex;
+use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
+
+use oxc_ast::{AstKind, ast::MethodDefinitionKind};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{AstNode, JSDoc};
 
 use crate::{
     context::LintContext,
@@ -17,6 +20,12 @@ use crate::{
         should_ignore_as_avoid, should_ignore_as_internal, should_ignore_as_private,
     },
 };
+
+fn require_param_diagnostic(violations: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing JSDoc `@param` declaration for function parameters.")
+        .with_help("Add `@param` tag with name.")
+        .with_labels(violations)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireParam(Box<RequireParamConfig>);
@@ -91,9 +100,9 @@ fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
 }
 
-// For perf, cache regex is needed
-lazy_static! {
-    static ref REGEX_CACHE: Mutex<FxHashMap<String, Regex>> = Mutex::new(FxHashMap::default());
+fn regex_cache() -> RwLockWriteGuard<'static, FxHashMap<String, Regex>> {
+    static REGEX_CACHE: OnceLock<RwLock<FxHashMap<String, Regex>>> = OnceLock::new();
+    REGEX_CACHE.get_or_init(|| RwLock::new(FxHashMap::default())).write().unwrap()
 }
 
 impl Rule for RequireParam {
@@ -147,10 +156,14 @@ impl Rule for RequireParam {
             }
         }
 
+        // If there is a `@type` tag for this function, then `@param` is not required
+        if jsdocs.iter().any(has_type_tag) {
+            return;
+        }
+
         // If JSDoc is found but safely ignored, skip
         if jsdocs
             .iter()
-            .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
             .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
             .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
@@ -165,14 +178,15 @@ impl Rule for RequireParam {
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
-        let mut regex_cache = REGEX_CACHE.lock().unwrap();
+        let mut cache = regex_cache();
         let check_types_regex =
-            regex_cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
+            cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
                 Regex::new(config.check_types_pattern.as_str())
                     .expect("`config.checkTypesPattern` should be a valid regex pattern")
             });
 
         let mut violations = vec![];
+
         for (idx, param) in params_to_check.iter().enumerate() {
             match param {
                 ParamKind::Single(param) => {
@@ -244,15 +258,7 @@ impl Rule for RequireParam {
         }
 
         if !violations.is_empty() {
-            let labels = violations
-                .iter()
-                .map(|span| LabeledSpan::new_with_span(None, *span))
-                .collect::<Vec<_>>();
-            ctx.diagnostic(
-                OxcDiagnostic::warn("Missing JSDoc `@param` declaration for function parameters.")
-                    .with_help("Add `@param` tag with name.")
-                    .with_labels(labels),
-            );
+            ctx.diagnostic(require_param_diagnostic(violations));
         }
     }
 }
@@ -284,7 +290,8 @@ fn collect_tags<'a>(
     collected
 }
 
-fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
+/// Returns true if the JSDoc has a `@type` tag in it
+fn has_type_tag(jsdoc: &JSDoc) -> bool {
     jsdoc.tags().iter().any(|tag| "type" == tag.kind.parsed())
 }
 
@@ -296,7 +303,7 @@ fn is_name_equal(a: &str, b: &str) -> bool {
 
     loop {
         match (a_chars.next(), b_chars.next()) {
-            (Some(ac), Some(bc)) if ac == bc => continue,
+            (Some(ac), Some(bc)) if ac == bc => {}
             (None, None) => return true, // Both done
             _ => return false,           // Either one is done, or not equal
         }
@@ -313,7 +320,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -322,7 +329,7 @@ fn test() {
 			           * @param root0.foo
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -333,7 +340,7 @@ fn test() {
 			           * @param root1.bar
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -344,7 +351,7 @@ fn test() {
 			           * @param arg1.bar
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "unnamedRootBase": [            "arg",          ],        },      ])), None),
 ("
@@ -357,7 +364,7 @@ fn test() {
 			           * @param config1.baz
 			           */
 			          function quux ({foo}, {bar}, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "unnamedRootBase": [            "arg", "config",          ],        },      ])), None),
 ("
@@ -365,7 +372,7 @@ fn test() {
 			           * @inheritdoc
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -373,7 +380,7 @@ fn test() {
 			           * @arg foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "tagNamePreference": {            "param": "arg",          },        },      } }))),
 ("
@@ -382,7 +389,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -390,7 +397,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -398,7 +405,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "overrideReplacesDocs": true,        },      } }))),
 ("
@@ -406,7 +413,7 @@ fn test() {
 			           * @ignore
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignoreReplacesDocs": true,        },      } }))),
 ("
@@ -414,7 +421,7 @@ fn test() {
 			           * @implements
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "implementsReplacesDocs": true,        },      } }))),
 ("
@@ -423,7 +430,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -431,7 +438,7 @@ fn test() {
 			           * @augments
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "augmentsExtendsReplacesDocs": true,        },      } }))),
 ("
@@ -440,7 +447,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -448,7 +455,7 @@ fn test() {
 			           * @extends
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "augmentsExtendsReplacesDocs": true,        },      } }))),
 ("
@@ -457,7 +464,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, None),
 ("
@@ -465,7 +472,7 @@ fn test() {
 			           * @internal
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignoreInternal": true,        },      } }))),
 ("
@@ -473,7 +480,7 @@ fn test() {
 			           * @private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignorePrivate": true,        },      } }))),
 ("
@@ -481,7 +488,7 @@ fn test() {
 			           * @access private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ", None, Some(serde_json::json!({ "settings": {        "jsdoc": {          "ignorePrivate": true,        },      } }))),
 ("
@@ -494,7 +501,7 @@ fn test() {
 			           * @type {MyCallback}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "exemptedBy": [            "type",          ],        },      ])), None),
 ("
@@ -519,7 +526,7 @@ fn test() {
 			      ", None, None),
 ("
 			    export abstract class StephanPlugin<O, D> {
-			
+
 			        /**
 			         * Called right after Stephan loads the plugin file.
 			         *
@@ -542,13 +549,13 @@ fn test() {
 			            options: O;
 			            client: unknown;
 			        }, defaultOptions: D) {
-			
+
 			        }
 			    }
 			      ", None, None), // {        "parser": typescriptEslintParser      },
 ("
 			        export abstract class StephanPlugin<O, D> {
-			
+
 			        /**
 			         * Called right after Stephan loads the plugin file.
 			         *
@@ -572,7 +579,7 @@ fn test() {
 			            options: O;
 			            client: { name: string };
 			        }, defaultOptions: D) {
-			
+
 			        }
 			    }
 			      ", None, None), // {        "parser": typescriptEslintParser      },
@@ -630,7 +637,7 @@ fn test() {
 			           * @param cfg
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "checkDestructured": false,        },      ])), None),
 ("
@@ -639,7 +646,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ", Some(serde_json::json!([        {          "checkDestructuredRoots": false,        },      ])), None),
 (r#"
@@ -648,7 +655,7 @@ fn test() {
 			           * @param root.foo
 			           */
 			          function quux ({"foo": bar}) {
-			
+
 			          }
 			      "#, None, None),
 (r#"
@@ -657,7 +664,7 @@ fn test() {
 			           * @param root."foo"
 			           */
 			          function quux ({foo: bar}) {
-			
+
 			          }
 			      "#, None, None),
 ("
@@ -745,6 +752,15 @@ fn test() {
 			          return a + b;
 			        }
 			      ", None, None), // {        "parser": typescriptEslintParser,      }
+        // https://github.com/oxc-project/oxc/issues/10253
+        ("
+            /** @typedef {import('../types.d.ts').FileURL} FileURL */
+
+            /**
+             * @type {import('node:module').ResolveHook}
+             */
+            async function resolveJSONC(specifier, ctx, nextResolve) {}
+        ", None, None)
     ];
 
     let fail = vec![
@@ -754,7 +770,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -766,7 +782,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -778,7 +794,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ",
             Some(
@@ -792,7 +808,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar, {baz}) {
-			
+
 			          }
 			      ",
             Some(
@@ -806,7 +822,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "enableFixer": false,        },      ])),
@@ -818,7 +834,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo: bar = 5} = {}) {
-			
+
 			          }
 			      ",
             None,
@@ -830,7 +846,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -842,7 +858,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "autoIncrementBase": 1,        },      ])),
@@ -854,7 +870,7 @@ fn test() {
 			           * @param options
 			           */
 			          function quux ({foo}) {
-			
+
 			          }
 			      ",
             None,
@@ -866,7 +882,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux ({ foo, bar: { baz }}) {
-			
+
 			          }
 			      ",
             None,
@@ -878,7 +894,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -892,7 +908,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -906,7 +922,7 @@ fn test() {
 			           *
 			           */
 			          function quux ({foo}, {bar}) {
-			
+
 			          }
 			      ",
             Some(
@@ -920,7 +936,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo, bar) {
-			
+
 			          }
 			      ",
             None,
@@ -932,7 +948,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo, bar) {
-			
+
 			          }
 			      ",
             None,
@@ -944,7 +960,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -957,7 +973,7 @@ fn test() {
 			           * @param bar
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -969,7 +985,7 @@ fn test() {
 			           * @param baz
 			           */
 			          function quux (foo, bar, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -981,7 +997,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -995,7 +1011,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1009,7 +1025,7 @@ fn test() {
 			           * @ignore
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1023,7 +1039,7 @@ fn test() {
 			           * @implements
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1037,7 +1053,7 @@ fn test() {
 			           * @augments
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1049,7 +1065,7 @@ fn test() {
 			           * @extends
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -1107,7 +1123,7 @@ fn test() {
 			           * @inheritdoc
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "exemptedBy": [],        },      ])),
@@ -1122,7 +1138,7 @@ fn test() {
 			           * @param {string} employees[].department - The employee's department.
 			           */
 			          function assign (employees, name) {
-			
+
 			          };
 			      ",
             None,
@@ -1135,7 +1151,7 @@ fn test() {
 			           * @param options
 			           */
 			          function quux (baz, {foo: bar}) {
-			
+
 			          }
 			      ",
             None,
@@ -1147,7 +1163,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([        {          "enableFixer": false,        },      ])),

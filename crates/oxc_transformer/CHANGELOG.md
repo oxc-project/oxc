@@ -4,6 +4,211 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 78f1b3a transformer: Enable `using` by default (#10286) (Boshen)
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+- d0001eb transformer/typescript: Redeclaration of `namespace` with `enum` causes syntax error (#10172) (Dunqing)
+- 778b044 transformer/using: Transform using declarations in try block (#10211) (camc314)
+
+### Performance
+
+- f5b53d4 transformer: Do not update options from comments when `only_remove_type_imports` is enabled (#10167) (Dunqing)
+
+### Refactor
+
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.62.0] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+
+### Bug Fixes
+
+- e4ab61b transformer: `TransformOptions::enable_all` enable decorator transform (#9946) (overlookmotel)
+- 5ed31e0 transformer: Correct function symbol flags to `SymbolFlags::Function` (#10008) (Dunqing)
+- 44efec7 transformer/legacy-decorator: Do not emit decorator metadata if the class is not decorated or it is typescript syntax (#10154) (Dunqing)
+- 2c53a72 transformer/using: Correctly reparent scopes in for of stmt (#9960) (camc314)
+
+### Refactor
+
+- a2b03d3 ast: Methods for fieldless enums take `self` not `&self` + remove unnecessary `matches!` (#10013) (overlookmotel)
+- 2720204 transformer: Use `FormalParameter::has_modifier` to detect parameter properties (#10099) (Ulrich Stark 🦀)
+- e4029b8 transformer/legacy-decorator: Split the transforming decorated class into two parts and run them in `exit_class` and `exit_statement` respectively (#10153) (Dunqing)
+- c99a317 transformer/using: Use `current_scope_id` consistently (#9966) (camc314)
+
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- af78acb transformer: Add `StatementInjectorStore::move_insertions` method (#9951) (overlookmotel)
+
+### Bug Fixes
+
+- c7fc700 transformer/decorator: Do not lose `WeakMap` when decorator and class properties transforms combined (#9952) (overlookmotel)
+
+### Performance
+
+- 374050a transformer/jsx: Pre-allocate enough memory for `arguments` of `createElement`/`jsx` function (#9915) (Dunqing)
+
+### Refactor
+
+- fbb268a minifier, transformer: Replace `vec_from_iter` with `vec_from_array` for array (#9906) (Dunqing)
+- 7f06cec transformer: Construct new AST instead of calling `ast.clone_in()` (#9916) (Dunqing)
+- ffd4d13 transformer/decorator: Rename `enter_statement` to `exit_statement` (#9950) (overlookmotel)
+
+## [0.61.0] - 2025-03-20
+
+### Bug Fixes
+
+- 1774225 transformer/using: Incorrect scope ids for bindings (#9871) (camc314)
+
+### Refactor
+
+- dbe61c5 transformer/module-runner-transform: Remove redundant converison (#9912) (Dunqing)
+- ecdfe2e transformer/using: Move work to `exit_static_block` (#9713) (camc314)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
+### Refactor
+
+- 43e8efd transformer/using: Remove use of child scope ids in enter_program (#9748) (camc314)
+- bda4b9a traverse: Add `TraverseCtx::insert_scope_below_statements` (#9757) (overlookmotel)
+
+## [0.58.1] - 2025-03-13
+
+### Features
+
+- a8331f7 transformer: Turn off explicit resource management by default (#9749) (Boshen)
+
+## [0.58.0] - 2025-03-13
+
+### Features
+
+- a10ead8 transformer: Transform explicit resource management (#9310) (camc314)
+- 3429898 transformer/module_runner_transform: Remove duplicate `deps` and `dynamicDeps` (#9709) (Dunqing)
+
+### Bug Fixes
+
+- 475b48f ast: Change `ImportExpression::attributes` to `options` (#9665) (Boshen)
+- f9580d8 transformer/module_runner: Handle re-export as deps (#9696) (hi-ogawa)
+
+### Performance
+
+- 31d626b transformer/module_runner: Use `itoa` to convert `u32` to string (#9686) (overlookmotel)
+- d303ba9 transformer/using: Inline `enter_statement` (#9680) (overlookmotel)
+- 15dd0d4 transformer/using: Avoid large types on stack (#9676) (overlookmotel)
+
+### Documentation
+
+- 3ccb2fa transformer/module_runner: Reformat module doc comment (#9687) (overlookmotel)
+
+### Refactor
+
+- 0903e7e transformer/using: Remove unused call to `enter_block_statement` (#9698) (overlookmotel)
+- f437a95 transformer/using: Remove unused call to `enter_statement` (#9692) (camc314)
+- b2fbd99 transformer/using: Remove unused call to `enter_statements` (#9691) (camc314)
+- 664c6f8 transformer/using: Rename vars (#9677) (overlookmotel)
+- 076d872 transformer/using: Remove `.into()` (#9675) (overlookmotel)
+- 3180c65 transformer/using: Shorten `AstBuilder` calls (#9674) (overlookmotel)
+- 06bd816 transformer/using: Add more comments and amend some (#9673) (overlookmotel)
+- ce810ae transformer/using: Re-order imports (#9672) (overlookmotel)
+
+### Testing
+
+- 7f1a050 transformer/module_runner_transform: Add more tests that copy from Vite (#9708) (Dunqing)
+- 325a1a4 transformer/module_runner_transform: Add tests for `deps` and `dynamicDeps` (#9707) (Dunqing)
+
+## [0.57.0] - 2025-03-11
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Bug Fixes
+
+- 29edb51 transformer: Fix module runner transform of export default expression (#9661) (hi-ogawa)
+
+### Refactor
+
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+- adf7987 transformer: Combine strings by `ctx.ast.atom_from_array` (#9401) (Dunqing)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 45ace44 transformer: Add `/* @_PURE__ */` annotation for pure calls (#9424) (Dunqing)
+- ffd485c transformer, napi/transform: Expose `moduleRunnerTransform` function (#9532) (Dunqing)
+
+### Bug Fixes
+
+- cead38d transformer/optional-chaining: Fix context of optional chain call (#9526) (hi-ogawa)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+### Refactor
+
+- fb4d0b6 transformer: Shorten code for using `*_with_scope_id` methods (#9538) (Dunqing)
+- 0c46f2a transformer/object-rest-spread: Use `helper_call` instead of `helper_load` + `call_expression` (#9536) (Dunqing)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- aa06932 transformer: Support `ModuleRunnerTransform` (#9371) (Dunqing)
+
+### Bug Fixes
+
+- 7fde233 transformer/legacy-decorator: Incorrect check for potentially non-existent ident (#9491) (Dunqing)
+- b4f050c transformer/legacy-decorator: Metadata incorrectly wrapped by decorateParam (#9490) (Dunqing)
+- 5f67fa9 transformer/optional-chaning: Keep `this` when transforming `this.f?.()` (#9505) (camc314)
+
+### Performance
+
+
 ## [0.53.0] - 2025-02-26
 
 ### Refactor

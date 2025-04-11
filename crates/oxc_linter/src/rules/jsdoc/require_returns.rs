@@ -6,7 +6,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
-use phf::phf_set;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -168,7 +167,7 @@ impl Rule for RequireReturns {
                         }
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 
@@ -242,11 +241,11 @@ impl Rule for RequireReturns {
     }
 }
 
-const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
-    "abstract", "virtual", "class", "constructor", "type", "interface"
-};
+const CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
+    ["abstract", "virtual", "class", "constructor", "type", "interface"];
+
 fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(tag.kind.parsed()))
+    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
 fn is_missing_returns_tag(jsdoc_tags: &[&JSDocTag], resolved_returns_tag_name: &str) -> bool {
@@ -305,7 +304,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                     // })
                     // ```
                     // IMO: This is a fault of the original rule design...
-                    for resolve_ref in ctx.symbols().get_resolved_references(ident.symbol_id()) {
+                    for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
                         // Check if `resolve` is called with value
                         match ctx.nodes().parent_node(resolve_ref.node_id())?.kind() {
                             // `resolve(foo)`
@@ -318,7 +317,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                             AstKind::Argument(_) => {
                                 return Some(true);
                             }
-                            _ => continue,
+                            _ => {}
                         }
                     }
                     None

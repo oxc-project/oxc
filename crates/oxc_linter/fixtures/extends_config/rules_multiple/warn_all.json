@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "no-console": "warn",
+    "no-var": "warn",
+    "oxc/approx-constant": "warn",
+    "unicorn/no-null": "warn",
+    "unicorn/no-array-for-each": "warn"
+  }
+}

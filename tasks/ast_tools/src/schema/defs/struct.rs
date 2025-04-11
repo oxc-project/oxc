@@ -7,11 +7,12 @@ use quote::quote;
 use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
+    Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
         ast_builder::{AstBuilderStructField, AstBuilderType},
         clone_in::{CloneInStructField, CloneInType},
         content_eq::{ContentEqStructField, ContentEqType},
+        dummy::DummyStruct,
         estree::{ESTreeStruct, ESTreeStructField},
         kind::Kind,
         layout::{Layout, Offset},
@@ -27,7 +28,11 @@ pub struct StructDef {
     pub name: String,
     pub plural_name: Option<String>,
     pub has_lifetime: bool,
+    pub is_foreign: bool,
     pub file_id: FileId,
+    pub containers: Containers,
+    #[expect(unused)]
+    pub visibility: Visibility,
     pub generated_derives: Derives,
     pub fields: Vec<FieldDef>,
     pub builder: AstBuilderType,
@@ -36,6 +41,7 @@ pub struct StructDef {
     pub layout: Layout,
     pub span: SpanStruct,
     pub clone_in: CloneInType,
+    pub dummy: DummyStruct,
     pub content_eq: ContentEqType,
     pub estree: ESTreeStruct,
 }
@@ -47,7 +53,9 @@ impl StructDef {
         name: String,
         plural_name: Option<String>,
         has_lifetime: bool,
+        is_foreign: bool,
         file_id: FileId,
+        visibility: Visibility,
         generated_derives: Derives,
         fields: Vec<FieldDef>,
     ) -> Self {
@@ -56,7 +64,10 @@ impl StructDef {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            containers: Containers::default(),
+            visibility,
             generated_derives,
             fields,
             builder: AstBuilderType::default(),
@@ -65,6 +76,7 @@ impl StructDef {
             layout: Layout::default(),
             span: SpanStruct::default(),
             clone_in: CloneInType::default(),
+            dummy: DummyStruct::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeStruct::default(),
         }
@@ -187,13 +199,4 @@ impl FieldDef {
     pub fn type_def<'s>(&self, schema: &'s Schema) -> &'s TypeDef {
         &schema.types[self.type_id]
     }
-}
-
-/// Visibility of a struct field.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Visibility {
-    Public,
-    /// `pub(crate)` or `pub(super)`
-    Restricted,
-    Private,
 }

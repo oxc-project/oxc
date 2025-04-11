@@ -99,7 +99,7 @@ impl Rule for PreferPromiseRejectErrors {
                     return;
                 };
 
-                if ident.name != "Promise" || new_expr.arguments.len() == 0 {
+                if ident.name != "Promise" || new_expr.arguments.is_empty() {
                     return;
                 }
 
@@ -125,11 +125,11 @@ impl Rule for PreferPromiseRejectErrors {
 }
 
 fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_reject: bool) {
-    if call_expr.arguments.len() == 0 && allow_empty_reject {
+    if call_expr.arguments.is_empty() && allow_empty_reject {
         return;
     }
 
-    if call_expr.arguments.len() == 0
+    if call_expr.arguments.is_empty()
         || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(ctx, e))
         || is_undefined(&call_expr.arguments[0])
     {

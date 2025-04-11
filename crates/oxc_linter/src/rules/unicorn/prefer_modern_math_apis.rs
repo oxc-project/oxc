@@ -84,7 +84,7 @@ impl Rule for PreferModernMathApis {
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, None, Some(&["sqrt"]), Some(1), Some(1)) {
                     return;
-                };
+                }
 
                 let Some(member_expr) = call_expr.callee.as_member_expression() else {
                     return;
@@ -92,7 +92,7 @@ impl Rule for PreferModernMathApis {
 
                 if !member_expr.object().is_specific_id("Math") {
                     return;
-                };
+                }
 
                 let Some(arg) = call_expr.arguments[0].as_expression() else {
                     return;
@@ -127,7 +127,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
 
             if !is_method_call(call_expr, None, Some(&["log"]), Some(1), Some(1)) {
                 return;
-            };
+            }
 
             if matches!(call_expr.arguments[0], Argument::SpreadElement(_)) {
                 return;
@@ -139,7 +139,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
 
             if !member_expr.object().is_specific_id("Math") {
                 return;
-            };
+            }
 
             let Some(member_expr) = expr.right.as_member_expression() else {
                 return;
@@ -150,11 +150,11 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
                 Some("LN10" | "LN2" | "LOG10E" | "LOG2E")
             ) {
                 return;
-            };
+            }
 
             if !member_expr.object().is_specific_id("Math") {
                 return;
-            };
+            }
 
             ctx.diagnostic(prefer_math_log_n(
                 expr.span,
@@ -186,7 +186,7 @@ fn check_multiplication<'a, 'b>(
 
     if !is_method_call(call_expr, None, Some(&["log"]), Some(1), Some(1)) {
         return;
-    };
+    }
 
     if matches!(call_expr.arguments[0], Argument::SpreadElement(_)) {
         return;
@@ -198,7 +198,7 @@ fn check_multiplication<'a, 'b>(
 
     if !member_expr.object().is_specific_id("Math") {
         return;
-    };
+    }
 
     let Some(member_expr) = right.as_member_expression() else {
         return;
@@ -206,11 +206,11 @@ fn check_multiplication<'a, 'b>(
 
     if !matches!(member_expr.static_property_name(), Some("LN10" | "LN2" | "LOG10E" | "LOG2E")) {
         return;
-    };
+    }
 
     if !member_expr.object().is_specific_id("Math") {
         return;
-    };
+    }
 
     ctx.diagnostic(prefer_math_log_n(
         expr_span,

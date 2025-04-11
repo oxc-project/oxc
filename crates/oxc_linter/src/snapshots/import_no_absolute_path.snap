@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:15]
+ 1 │ import _ from '/lodash'
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:15]
+ 1 │ import _ from '/lodash'
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:15]
+ 1 │ import f from '/foo/path'
+   ·               ───────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:15]
+ 1 │ import f from '/foo/bar/baz.js'
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:19]
+ 1 │ var foo = require('/foo')
+   ·                   ──────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:17]
+ 1 │ var f = require('/foo/some')
+   ·                 ───────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:17]
+ 1 │ var f = require('/foo/some/add')
+   ·                 ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:10]
+ 1 │ require(['/foo'], function(){})
+   ·          ──────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:19]
+ 1 │ require(['./foo', '/boo'], function(){})
+   ·                   ──────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:10]
+ 1 │ require(['/foo', '/boo'], function(){})
+   ·          ──────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:18]
+ 1 │ require(['/foo', '/boo'], function(){})
+   ·                  ──────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:9]
+ 1 │ define(['/foo'], function(){})
+   ·         ──────
+   ╰────

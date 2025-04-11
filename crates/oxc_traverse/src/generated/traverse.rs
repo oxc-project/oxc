@@ -1268,6 +1268,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -1568,6 +1583,11 @@ pub trait Traverse<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
+
+    #[inline]
+    fn enter_ts_enum_body(&mut self, node: &mut TSEnumBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_enum_body(&mut self, node: &mut TSEnumBody<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_ts_enum_member(&mut self, node: &mut TSEnumMember<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -2188,51 +2208,6 @@ pub trait Traverse<'a> {
     fn enter_ts_import_type(&mut self, node: &mut TSImportType<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_ts_import_type(&mut self, node: &mut TSImportType<'a>, ctx: &mut TraverseCtx<'a>) {}
-
-    #[inline]
-    fn enter_ts_import_attributes(
-        &mut self,
-        node: &mut TSImportAttributes<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attributes(
-        &mut self,
-        node: &mut TSImportAttributes<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_import_attribute(
-        &mut self,
-        node: &mut TSImportAttribute<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attribute(
-        &mut self,
-        node: &mut TSImportAttribute<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_import_attribute_name(
-        &mut self,
-        node: &mut TSImportAttributeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attribute_name(
-        &mut self,
-        node: &mut TSImportAttributeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
 
     #[inline]
     fn enter_ts_function_type(&mut self, node: &mut TSFunctionType<'a>, ctx: &mut TraverseCtx<'a>) {

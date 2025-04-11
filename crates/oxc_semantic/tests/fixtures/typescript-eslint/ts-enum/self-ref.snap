@@ -42,7 +42,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-re
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Foo",
-            "node_id": 9
+            "node_id": 10
           }
         ]
       }

@@ -4,7 +4,6 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -76,7 +75,7 @@ declare_oxc_lint!(
     style,
 );
 
-const MODIFIER_NAME: phf::Set<&'static str> = phf_set!["not", "rejects", "resolves"];
+const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -142,7 +141,7 @@ impl NoRestrictedMatchers {
     }
 
     fn check_restriction(chain_call: &str, restriction: &str) -> bool {
-        if MODIFIER_NAME.contains(restriction)
+        if MODIFIER_NAME.contains(&restriction)
             || Path::new(restriction).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("not"))
         {
             return chain_call.starts_with(restriction);

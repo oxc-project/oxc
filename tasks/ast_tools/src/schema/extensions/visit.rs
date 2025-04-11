@@ -10,6 +10,8 @@ pub struct VisitStruct {
     pub visitor_names: Option<VisitorNames>,
     pub visit_args: Vec<(String, String)>,
     pub scope: Option<Scope>,
+    /// `true` if this type has a scope, or any of its fields contain a scope.
+    pub contains_scope: bool,
 }
 
 impl VisitStruct {
@@ -32,6 +34,8 @@ pub struct VisitEnum {
     /// Name of `visit_*` method and `walk_*` function.
     /// `None` if this enum is not visited.
     pub visitor_names: Option<VisitorNames>,
+    /// `true` if any variants contain a scope.
+    pub contains_scope: bool,
 }
 
 impl VisitEnum {

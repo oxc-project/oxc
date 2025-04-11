@@ -1,6 +1,7 @@
 #![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
@@ -14,6 +15,21 @@ use oxc_ast_macros::ast;
 #[content_eq(skip)]
 #[estree(skip)]
 pub struct SymbolId(NonMaxU32);
+
+impl<'alloc> CloneIn<'alloc> for SymbolId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips symbol_id field
+        unreachable!();
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
+    }
+}
 
 impl SymbolId {
     /// Create `SymbolId` from `u32`.
@@ -80,14 +96,6 @@ impl Serialize for RedeclarationId {
     }
 }
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
-"#;
-
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -117,7 +125,12 @@ bitflags! {
         const TypeParameter           = 1 << 13;
         const NameSpaceModule         = 1 << 14;
         const ValueModule             = 1 << 15;
-        // In a dts file or there is a declare flag
+        /// Declared with `declare` modifier, like `declare function x() {}`.
+        //
+        // This flag is not part of TypeScript's `SymbolFlags`, it comes from TypeScript's `NodeFlags`. We introduced it into
+        // here because `NodeFlags` is incomplete and we only can access to `NodeFlags` in the Semantic, but we also need to
+        // access it in the Transformer.
+        // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
@@ -125,24 +138,27 @@ bitflags! {
 
         const BlockScoped = Self::BlockScopedVariable.bits() | Self::Enum.bits() | Self::Class.bits();
 
-        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
+        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Function.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
         const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
-        const FunctionScopedVariableExcludes = Self::Value.bits() - Self::FunctionScopedVariable.bits();
+        const FunctionScopedVariableExcludes = Self::Value.bits() - Self::FunctionScopedVariable.bits() - Self::Function.bits();
 
         /// Block-scoped declarations are not allowed to be re-declared
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits();
+        const FunctionExcludes = Self::Value.bits() & !(Self::Function.bits() | Self::ValueModule.bits() | Self::Class.bits());
+        const ClassExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::ValueModule.bits() | Self::Function.bits() | Self::Interface.bits());
 
-        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !(Self::ValueModule.bits() | Self::Interface.bits() | Self::Function.bits());
         const ImportBindingExcludes = Self::Import.bits() | Self::TypeImport.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();
         const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
         const TypeParameterExcludes = Self::Type.bits() & !Self::TypeParameter.bits();
         const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
+        const ValueModuleExcludes = Self::Value.bits() & !(Self::Function.bits() | Self::Class.bits() | Self::RegularEnum.bits() | Self::ValueModule.bits());
+        const NamespaceModuleExcludes = 0;
         // TODO: include value module in regular enum excludes
         const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() | Self::ValueModule.bits() );
         const EnumMemberExcludes = Self::EnumMember.bits();
@@ -170,7 +186,7 @@ impl SymbolFlags {
     /// If true, then the symbol is a value, such as a Variable, Function, or Class
     #[inline]
     pub fn is_value(&self) -> bool {
-        self.intersects(Self::Value | Self::Import | Self::Function)
+        self.intersects(Self::Value | Self::Import)
     }
 
     #[inline]
@@ -205,6 +221,11 @@ impl SymbolFlags {
     }
 
     #[inline]
+    pub fn is_const_enum(&self) -> bool {
+        self.intersects(Self::ConstEnum)
+    }
+
+    #[inline]
     pub fn is_enum_member(&self) -> bool {
         self.contains(Self::EnumMember)
     }
@@ -229,16 +250,21 @@ impl SymbolFlags {
         self.contains(Self::TypeImport)
     }
 
+    #[inline]
+    pub fn is_ambient(&self) -> bool {
+        self.contains(Self::Ambient)
+    }
+
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import)
+        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NameSpaceModule)
     }
 
     /// If true, then the symbol can be referenced by a value reference
     #[inline]
     pub fn can_be_referenced_by_value(&self) -> bool {
-        self.intersects(Self::Value | Self::Import | Self::Function)
+        self.is_value()
     }
 
     /// If true, then the symbol can be referenced by a value_as_type reference

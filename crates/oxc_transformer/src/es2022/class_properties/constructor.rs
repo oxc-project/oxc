@@ -101,9 +101,11 @@
 
 use std::iter;
 
+use oxc_allocator::TakeIn;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_syntax::{
     node::NodeId,
@@ -197,7 +199,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Only include `constructor_scope_id` in return value if constructor's scope has some bindings.
         // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
         // because no bindings to clash with.
-        let constructor_scope_id = if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
+        let constructor_scope_id = if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
             None
         } else {
             Some(constructor_scope_id)
@@ -323,25 +325,24 @@ impl<'a> ClassProperties<'a, '_> {
         let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 
         // `(..._args) => (super(..._args), <inits>, this)`
-        let super_func = Expression::ArrowFunctionExpression(
-            ctx.ast.alloc_arrow_function_expression_with_scope_id(
+        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+            SPAN,
+            true,
+            false,
+            NONE,
+            ctx.ast.alloc_formal_parameters(
                 SPAN,
-                true,
-                false,
-                NONE,
-                ctx.ast.alloc_formal_parameters(
-                    SPAN,
-                    FormalParameterKind::ArrowFormalParameters,
-                    ctx.ast.vec(),
-                    Some(ctx.ast.alloc_binding_rest_element(
-                        SPAN,
-                        args_binding.create_binding_pattern(ctx),
-                    )),
+                FormalParameterKind::ArrowFormalParameters,
+                ctx.ast.vec(),
+                Some(
+                    ctx.ast
+                        .alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
                 ),
-                NONE,
-                ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
-                super_func_scope_id,
             ),
+            NONE,
+            ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
+            super_func_scope_id,
+            false,
         );
 
         // `var _super = (..._args) => ( ... );`
@@ -375,7 +376,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Add `"use strict"` directive if outer scope is not strict mode
         // TODO: This should be parent scope if insert `_super` function as expression before class expression.
         let outer_scope_id = ctx.current_block_scope_id();
-        let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
+        let directives = if ctx.scoping().scope_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
             ctx.ast.vec1(ctx.ast.use_strict_directive())
@@ -387,7 +388,7 @@ impl<'a> ClassProperties<'a, '_> {
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
         let super_func_scope_id = self.instance_inits_scope_id;
-        let super_func = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -405,7 +406,8 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
             super_func_scope_id,
-        ));
+            false,
+        );
 
         // Insert `_super` function after class.
         // TODO: Need to add `_super` function to class as a static method, and then remove it again
@@ -502,7 +504,7 @@ impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
 
         // Create scope for `_super` function
         let outer_scope_id = self.ctx.current_block_scope_id();
-        let super_func_scope_id = self.ctx.scopes_mut().add_scope(
+        let super_func_scope_id = self.ctx.scoping_mut().add_scope(
             Some(outer_scope_id),
             NodeId::DUMMY,
             ScopeFlags::Function | ScopeFlags::StrictMode,
@@ -588,7 +590,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = ctx.ast.move_expression(expr);
+        let super_call = expr.take_in(ctx.ast.allocator);
         *expr = ctx.ast.expression_call(
             span,
             Expression::from(ctx.ast.member_expression_static(
@@ -692,7 +694,7 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
             break;
         }
 
-        let super_func_scope_id = self.ctx.scopes_mut().add_scope(
+        let super_func_scope_id = self.ctx.scoping_mut().add_scope(
             Some(self.constructor_scope_id),
             NodeId::DUMMY,
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
@@ -806,7 +808,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
 
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
-        if let Some(symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
+        if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
             if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
                 ident.name = *new_name;
             }

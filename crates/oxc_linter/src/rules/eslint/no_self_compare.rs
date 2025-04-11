@@ -48,7 +48,11 @@ impl Rule for NoSelfCompare {
             return;
         }
 
-        if binary_expr.left.content_eq(&binary_expr.right) {
+        if binary_expr
+            .left
+            .without_parentheses()
+            .content_eq(binary_expr.right.without_parentheses())
+        {
             ctx.diagnostic(no_self_compare_diagnostic(
                 binary_expr.left.span(),
                 binary_expr.right.span(),
@@ -84,6 +88,9 @@ fn test() {
         ("x < x", None),
         ("x >= x", None),
         ("x <= x", None),
+        ("x > (x)", None),
+        ("(x) == x", None),
+        ("(x) >= ((x))", None),
         ("foo.bar().baz.qux >= foo.bar ().baz .qux", None),
         ("class C { #field; foo() { this.#field === this.#field; } }", None),
     ];

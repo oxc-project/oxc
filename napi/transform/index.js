@@ -35,7 +35,11 @@ const isMuslFromFilesystem = () => {
 }
 
 const isMuslFromReport = () => {
-  const report = typeof process.report.getReport === 'function' ? process.report.getReport() : null
+  let report = null
+  if (typeof process.report?.getReport === 'function') {
+    process.report.excludeNetwork = true
+    report = process.report.getReport()
+  }
   if (!report) {
     return null
   }
@@ -372,5 +376,6 @@ if (!nativeBinding) {
 
 module.exports.HelperMode = nativeBinding.HelperMode
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
+module.exports.moduleRunnerTransform = nativeBinding.moduleRunnerTransform
 module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform

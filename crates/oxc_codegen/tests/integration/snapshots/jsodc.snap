@@ -190,7 +190,7 @@ export enum DefinitionKind {
 	*
 	* @example defineSomething<{ ... }>()
 	*/
-	TS = 'TS',
+	TS = 'TS'
 }
 export type TSTypeLiteral = {
 	/**

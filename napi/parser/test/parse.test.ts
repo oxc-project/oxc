@@ -2,6 +2,7 @@ import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
+import type { ExpressionStatement, TSTypeAliasDeclaration } from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -26,6 +27,120 @@ describe('parse', () => {
       'value': ' comment ',
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
+  });
+
+  it('checks semantic', async () => {
+    const code = 'let x; let x;';
+    let ret = await parseAsync('test.js', code);
+    expect(ret.errors.length).toBe(0);
+
+    ret = await parseAsync('test.js', code, {
+      showSemanticErrors: true,
+    });
+    expect(ret.errors.length).toBe(1);
+  });
+
+  describe('TS properties', () => {
+    const code = 'let x;';
+
+    const withTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+                decorators: [],
+                typeAnnotation: null,
+                optional: false,
+              },
+              init: null,
+              definite: false,
+            },
+          ],
+          kind: 'let',
+          declare: false,
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    const withoutTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+              },
+              init: null,
+            },
+          ],
+          kind: 'let',
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    describe('included when', () => {
+      it('filename has `.ts` extension', () => {
+        const { program } = parseSync('test.ts', code);
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`lang` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`astType` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'js', astType: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+    });
+
+    describe('not included when', () => {
+      it('filename has `.js` extension', () => {
+        const { program } = parseSync('test.js', code);
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`lang` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`astType` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'ts', astType: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+    });
   });
 
   it('`Infinity` is represented as `Infinity` number', () => {
@@ -62,6 +177,62 @@ describe('parse', () => {
         raw: '123_456n',
         bigint: '123456',
       },
+    });
+  });
+
+  describe('`StringLiteral`', () => {
+    it('lone surrogates', () => {
+      const ret = parseSync('test.js', ';"\\uD800\\uDBFF";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 16,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 15,
+          value: '\ud800\udbff',
+          raw: '"\\uD800\\uDBFF"',
+        },
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', ';"�\\u{FFFD}";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 13,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 12,
+          value: '��',
+          raw: '"�\\u{FFFD}"',
+        },
+      });
+    });
+
+    it('lone surrogates and lossy replacement characters', () => {
+      const ret = parseSync('test.js', ';"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}";');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: 'ExpressionStatement',
+        start: 1,
+        end: 34,
+        expression: {
+          type: 'Literal',
+          start: 1,
+          end: 33,
+          value: '��\ud800\udbff��',
+          raw: '"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}"',
+        },
+      });
     });
   });
 
@@ -111,6 +282,146 @@ describe('parse', () => {
     });
   });
 
+  describe('`TemplateLiteral`', () => {
+    it('lone surrogates', () => {
+      const ret = parseSync('test.js', '`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 31,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 30,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 15,
+              end: 16,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 13,
+              value: {
+                raw: '\\uD800\\uDBFF',
+                cooked: '\ud800\udbff',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 17,
+              end: 29,
+              value: {
+                raw: '\\uD800\\uDBFF',
+                cooked: '\ud800\udbff',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}${x}�\\u{FFFD}`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 25,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 24,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 12,
+              end: 13,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 10,
+              value: {
+                raw: '�\\u{FFFD}',
+                cooked: '��',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 14,
+              end: 23,
+              value: {
+                raw: '�\\u{FFFD}',
+                cooked: '��',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+
+    it('lone surrogates and lossy replacement characters', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 37,
+        expression: {
+          type: 'TemplateLiteral',
+          start: 0,
+          end: 36,
+          expressions: [
+            {
+              type: 'Identifier',
+              start: 18,
+              end: 19,
+              name: 'x',
+            },
+          ],
+          quasis: [
+            {
+              type: 'TemplateElement',
+              start: 1,
+              end: 16,
+              value: {
+                raw: '�\\u{FFFD}\\uD800',
+                cooked: '��\ud800',
+              },
+              'tail': false,
+            },
+            {
+              type: 'TemplateElement',
+              start: 20,
+              end: 35,
+              value: {
+                raw: '\\uDBFF�\\u{FFFD}',
+                cooked: '\udbff��',
+              },
+              'tail': true,
+            },
+          ],
+        },
+      });
+    });
+  });
+
   describe('hashbang', () => {
     it('is `null` when no hashbang', () => {
       const ret = parseSync('test.js', 'let x;');
@@ -129,6 +440,25 @@ describe('parse', () => {
         end: 19,
         value: '/usr/bin/env node',
       });
+    });
+  });
+
+  describe('preserveParens', () => {
+    it('should include parens when true', () => {
+      let ret = parseSync('test.js', '(x)');
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('ParenthesizedExpression');
+
+      ret = parseSync('test.ts', 'type Foo = (x)');
+      expect((ret.program.body[0] as TSTypeAliasDeclaration).typeAnnotation.type).toBe('TSParenthesizedType');
+    });
+
+    it('should omit parens when false', () => {
+      const options = { preserveParens: false };
+      let ret = parseSync('test.js', '(x)', options);
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('Identifier');
+
+      ret = parseSync('test.ts', 'type Foo = (x)', options);
+      expect((ret.program.body[0] as TSTypeAliasDeclaration).typeAnnotation.type).toBe('TSTypeReference');
     });
   });
 });
@@ -242,6 +572,15 @@ describe('UTF-16 span', () => {
     expect(ret.errors).toMatchInlineSnapshot(`
       [
         {
+          "codeframe": "
+        x Expected a semicolon or an implicit semicolon after a statement, but found
+        | none
+         ,-[test.js:1:12]
+       1 | "🤨";asdf asdf
+         :          ^
+         \`----
+        help: Try insert a semicolon here
+      ",
           "helpMessage": "Try insert a semicolon here",
           "labels": [
             {
@@ -263,6 +602,7 @@ describe('error', () => {
   it('returns structured error', () => {
     const ret = parseSync('test.js', code);
     expect(ret.errors.length).toBe(1);
+    delete ret.errors[0].codeframe;
     expect(ret.errors[0]).toStrictEqual({
       'helpMessage': 'Try insert a semicolon here',
       'labels': [

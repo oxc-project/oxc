@@ -18,8 +18,12 @@ use crate::{
     },
 };
 
-fn anchor_has_ambiguous_text(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected ambagious anchor link text.").with_label(span)
+fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Ambiguous text within anchor, screen reader users rely on link text for context.",
+    )
+    .with_label(span)
+    .with_help(format!("Avoid using ambiguous text like \"{text}\", replace it with more descriptive text that provides context."))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -122,8 +126,10 @@ impl Rule for AnchorAmbiguousText {
             return;
         }
 
-        if self.words.contains(&normalize_str(&text)) {
-            ctx.diagnostic(anchor_has_ambiguous_text(jsx_el.span));
+        let text = normalize_str(&text);
+
+        if self.words.contains(&text) {
+            ctx.diagnostic(anchor_has_ambiguous_text(jsx_el.span, &text));
         }
     }
 }
@@ -163,7 +169,7 @@ fn get_accessible_text<'a, 'b>(
     if let Some(aria_label) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "aria-label") {
         if let Some(label_text) = get_string_literal_prop_value(aria_label) {
             return Some(Cow::Borrowed(label_text));
-        };
+        }
     }
 
     let name = get_element_type(ctx, &jsx_el.opening_element);
@@ -171,8 +177,8 @@ fn get_accessible_text<'a, 'b>(
         if let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt") {
             if let Some(text) = get_string_literal_prop_value(alt_text) {
                 return Some(Cow::Borrowed(text));
-            };
-        };
+            }
+        }
     }
 
     if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {

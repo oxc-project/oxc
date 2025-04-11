@@ -287,7 +287,7 @@ impl Rule for FuncStyle {
                 AstKind::ArrowFunctionExpression(_) if !self.allow_arrow_functions => {
                     arrow_func_nodes.push(node);
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

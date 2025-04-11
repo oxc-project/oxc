@@ -4,6 +4,206 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 603abdc minifier: Compress assignment to prefix increment (#10244) (Ulrich Stark)
+- aaafdbf minifier: Fold `String::trimStart` / `String::trimEnd` (#10261) (sapphi-red)
+- af7a298 minifier: Support advanced `String::indexOf` evaluation (#10186) (sapphi-red)
+- bc5411d minifier: Compress `if (foo, !!bar)` to `if (foo, bar)` (#10164) (sapphi-red)
+- 395b545 minifier: Compress `foo == true` into `foo == 1` (#10163) (sapphi-red)
+
+### Bug Fixes
+
+- c35d01a minifier: Keep side effect in `String::replace` argument (#10185) (sapphi-red)
+- bac8ca0 minifier: Non-constant argument passed to `String::substring` (#10184) (sapphi-red)
+
+### Performance
+
+- 876b6ea minifier: Reduce allocations (#10301) (overlookmotel)
+- 0186383 minifier: Avoid cloning `Cow` and allocating `Atom` (#10177) (overlookmotel)
+
+### Refactor
+
+- 9ffb613 minifier: Prefer `is_empty()` over `len() == 0` (#10199) (overlookmotel)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+### Testing
+
+- 3a64819 minifier: `String::replace` for objects with `Symbol.replace` (#10260) (sapphi-red)
+
+## [0.62.0] - 2025-04-01
+
+- 4077868 ecmascript: [**BREAKING**] Introduce MayHaveSideEffectsContext (#10126) (sapphi-red)
+
+### Features
+
+- 11ddda6 ecmascript: Add `unknown_global_side_effects` to `MayHaveSideEffectsContext` (#10130) (sapphi-red)
+- ef3451c ecmascript: Add `property_read_side_effects` to `MayHaveSideEffectsContext` (#10129) (sapphi-red)
+- ac2ecbb ecmascript: Add `is_pure_call` to `MayHaveSideEffectsContext` (#10128) (sapphi-red)
+- e004a3f ecmascript: Add `respect_annotations` to `MayHaveSideEffectsContext` (#10127) (sapphi-red)
+
+### Refactor
+
+
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- ea3de06 mangler: Support `keep_names` option (#9898) (sapphi-red)
+
+### Refactor
+
+- 5ff50e6 minifier: Add `State` for checking changes (#9949) (Boshen)
+- fbb268a minifier, transformer: Replace `vec_from_iter` with `vec_from_array` for array (#9906) (Dunqing)
+
+## [0.61.0] - 2025-03-20
+
+- eef7eb6 minifier: [**BREAKING**] Rename `CompressOptions::all_true`/`all_false` to `smallest`/`safest` (#9866) (sapphi-red)
+
+### Features
+
+- dcd356e minifier: Support `keep_names` option (#9867) (sapphi-red)
+
+### Performance
+
+- b272893 mangler, minifier: Initialize a Vec with a specific value using `Vec::from_iter_in` combined with `repeat_with` (#9908) (Dunqing)
+
+### Refactor
+
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+### Bug Fixes
+
+- f707d1f parser: Set kind of var_declarator correctly for using decl (#9753) (camc314)
+
+### Refactor
+
+
+## [0.58.0] - 2025-03-13
+
+### Documentation
+
+- a6c9b09 napi/minifier: Improve documentation (#9736) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Features
+
+- b6deff8 ecmascript: Support integer index access for array and string in `may_have_side_effects` (#9603) (sapphi-red)
+- 047fb01 minifier: Place `void 0` on right hand side if possible (#9606) (sapphi-red)
+- 36f8703 minifier: Compress `[] + string` to `string` (#9602) (sapphi-red)
+- 554c4ce minifier: Compress constant integer index access (#9604) (sapphi-red)
+- e3c2015 minifier: Allow compressing computed __proto__ more precisely (#9595) (sapphi-red)
+- 6a57198 minifier: Allow compressing computed constructor/prototype keys precisely (#9594) (sapphi-red)
+
+### Bug Fixes
+
+- 96eef8b ecmascript: `(foo() + "").length` may have a side effect (#9605) (sapphi-red)
+- 24d9261 minifier: Remove names from functions / classes in normal pass to make the minifier idempotent (#9608) (sapphi-red)
+
+### Refactor
+
+
+## [0.56.2] - 2025-03-07
+
+### Refactor
+
+- 2cbfacb minifier: Remove `clippy::needless_pass_by_ref_mut` (Boshen)
+
+## [0.56.1] - 2025-03-07
+
+### Testing
+
+- 6fd11ce minifier: Test var decl in catch clause edge case (#9577) (翠 / green)
+
+## [0.56.0] - 2025-03-06
+
+### Features
+
+- a92b863 minifier: Keep indirect access more precisely (#9562) (sapphi-red)
+
+### Bug Fixes
+
+- 7a220a3 minifier: Keep indirect access for `delete` and `typeof` (#9563) (sapphi-red)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 9321439 minifier: Merge throw statements at the end (#9539) (sapphi-red)
+- 803f061 minifier: Apply `__NO_SIDE_EFFECTS__` (#9533) (Boshen)
+
+### Testing
+
+- dc1465e minifier: Enable some tests in minimize_conditions (#9543) (sapphi-red)
+- 0a5c73b minifier: Enable some tests in peephole directory (#9542) (sapphi-red)
+- 55e7ee9 minifier: Enable some esbuild tests (#9540) (sapphi-red)
+
+## [0.54.0] - 2025-03-04
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 64f4a82 ecmascript: Handle pure call expression in chain expressions (#9480) (sapphi-red)
+- 32139d2 ecmascript: Support `/* @__PURE__ */` in may_have_side_effects (#9409) (sapphi-red)
+- f5453f6 minifier: Flatten spread args in new expressions (#9512) (sapphi-red)
+- f8073f3 minifier: Support if with side effects in dead code elimination (#9502) (sapphi-red)
+- 10eb8f7 minifier: Use `remove_unused_expression` in `try_fold_sequence_expression` in `remove_dead_code` (#9467) (sapphi-red)
+- 70916db minifier: Remove unused expression in for init and update (#9466) (sapphi-red)
+- 26fde56 minifier: Inline simple IIFEs in `remove_unused_expression` (#9465) (sapphi-red)
+- ec2193e minifier: Support extracting arguments in pure calls in `remove_unused_expression` (#9463) (sapphi-red)
+- 007051c minifier: Compress `a != null && a.b()` to `a?.b()` in `remove_unused_expression` (#9459) (sapphi-red)
+- 50fce20 minifier: Support binary expression in `remove_unused_expression` (#9456) (sapphi-red)
+- ed9ede3 minifier: Support conditional expression in `remove_unused_expression` (#9432) (sapphi-red)
+- 3520538 minifier: Support object expression in `remove_unused_expression` (#9430) (sapphi-red)
+- fb8a93d minifier: Improve array expression handling in `remove_unused_expression` (#9427) (sapphi-red)
+- ff477cd minifier: Support template literals in `remove_unused_expression` (#9426) (sapphi-red)
+- 0d26113 minifier: Compress `/* @__PURE__ */ a() ? b : b` to `b` (#9410) (sapphi-red)
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+
+### Bug Fixes
+
+- f5bbd5d ecmascript: Fix toString for negative numbers (#9508) (sapphi-red)
+- d2cd975 ecmascript: Fix may_have_side_effects for `${a() === b}` (#9478) (sapphi-red)
+- 584d847 ecmascript: Objects passed to template literals may have side effects (#9425) (sapphi-red)
+- 1fff993 minifier: Correctly remove dead code in `try` with `finally` (#9503) (sapphi-red)
+- 0b96ebe minifier: Don't inline IIFE with parameters (#9477) (sapphi-red)
+- 071c84c minifier: Skip `try_fold_stmt_in_boolean_context` on `ExpressionStatement` (#9458) (sapphi-red)
+- 306284d minifier: Call mark_current_function_as_changed in remove_unused_expression (#9457) (sapphi-red)
+
+### Refactor
+
+- bbb450c minifier: Move `a != null && b` -> `a ?? b` compression to `remove_unused_expression` (#9468) (sapphi-red)
+- b93774c minifier: Move `try_fold_iife` to `remove_unused_expression` (#9464) (sapphi-red)
+- 96a9719 minifier: Use `may_have_side_effects` in `remove_unused_expression` (#9413) (sapphi-red)
+
+### Testing
+
+- c187b11 ecmascript: Add comments and tests for cases where `ToPropertyKey` throws an error (#9429) (sapphi-red)
+
 ## [0.53.0] - 2025-02-26
 
 ### Features

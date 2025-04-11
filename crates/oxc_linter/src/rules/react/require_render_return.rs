@@ -76,7 +76,7 @@ impl Rule for RequireRenderReturn {
                     ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
                 }
                 _ => {}
-            };
+            }
         }
     }
 

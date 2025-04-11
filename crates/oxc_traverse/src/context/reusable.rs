@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 
 use super::TraverseCtx;
 
@@ -11,8 +11,7 @@ use super::TraverseCtx;
 /// This wrapper type can safely be passed to user code as only ways it can be used are to:
 ///
 /// * Call `traverse_mut_with_ctx`, which maintains safety invariants.
-/// * Unwrap it to [`SymbolTable`] and [`ScopeTree`], which discards the sensitive [`TraverseAncestry`]
-///   in the process.
+/// * Unwrap it to [`Scoping`], which discards the sensitive [`TraverseAncestry`] in the process.
 ///
 /// [`TraverseAncestry`]: super::TraverseAncestry
 #[repr(transparent)]
@@ -21,13 +20,13 @@ pub struct ReusableTraverseCtx<'a>(TraverseCtx<'a>);
 // Public methods
 impl<'a> ReusableTraverseCtx<'a> {
     /// Create new [`ReusableTraverseCtx`].
-    pub fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
-        Self(TraverseCtx::new(scopes, symbols, allocator))
+    pub fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
+        Self(TraverseCtx::new(scoping, allocator))
     }
 
-    /// Consume [`ReusableTraverseCtx`] and return [`SymbolTable`] and [`ScopeTree`].
-    pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
-        self.0.scoping.into_symbol_table_and_scope_tree()
+    /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].
+    pub fn into_scoping(self) -> Scoping {
+        self.0.scoping.into_scoping()
     }
 
     /// Unwrap [`TraverseCtx`] in a [`ReusableTraverseCtx`].

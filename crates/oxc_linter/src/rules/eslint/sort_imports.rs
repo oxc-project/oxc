@@ -303,7 +303,7 @@ impl SortImports {
         // import { /* comment */ a, b, c, d } from 'foo.js'
         // ```
         // I use ImportStatement's span to check if there are comments between the specifiers.
-        let is_fixable = !ctx.semantic().has_comments_between(current.span);
+        let is_fixable = !ctx.has_comments_between(current.span);
 
         if is_fixable {
             // Safe to index because we know that `specifiers` is at least 2 element long
@@ -437,12 +437,13 @@ impl FromStr for ImportKind {
 
 impl Display for ImportKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ImportKind::None => write!(f, "None"),
-            ImportKind::All => write!(f, "All"),
-            ImportKind::Multiple => write!(f, "Multiple"),
-            ImportKind::Single => write!(f, "Single"),
-        }
+        let kind_name = match self {
+            ImportKind::None => "None",
+            ImportKind::All => "All",
+            ImportKind::Multiple => "Multiple",
+            ImportKind::Single => "Single",
+        };
+        f.write_str(kind_name)
     }
 }
 

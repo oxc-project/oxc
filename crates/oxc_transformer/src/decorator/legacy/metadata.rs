@@ -87,7 +87,7 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
@@ -107,26 +107,28 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.decorators.is_empty() {
+        if class.is_expression() || class.is_typescript_syntax() {
             return;
         }
+
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
             ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
             _ => None,
         });
 
         if let Some(constructor) = constructor {
+            if class.decorators.is_empty()
+                && constructor.value.params.items.iter().all(|param| param.decorators.is_empty())
+            {
+                return;
+            }
+
             let serialized_type =
                 self.serialize_parameter_types_of_node(&constructor.value.params, ctx);
             let metadata_decorator =
                 self.create_metadata_decorate("design:paramtypes", serialized_type, ctx);
 
-            if let Some(param) = constructor.value.params.items.last_mut() {
-                // We need to make sure all metadata decorators are placed after parameter decorators
-                param.decorators.push(metadata_decorator);
-            } else {
-                class.decorators.push(metadata_decorator);
-            }
+            class.decorators.push(metadata_decorator);
         }
     }
 
@@ -135,7 +137,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if method.kind.is_constructor() {
+        if method.kind.is_constructor() || method.value.is_typescript_syntax() {
             return;
         }
 
@@ -158,12 +160,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             },
         ]);
 
-        if let Some(param) = method.value.params.items.last_mut() {
-            // We need to make sure all metadata decorators are placed after parameter decorators
-            param.decorators.extend(metadata_decorators);
-        } else {
-            method.decorators.extend(metadata_decorators);
-        }
+        method.decorators.extend(metadata_decorators);
     }
 
     #[inline]
@@ -172,10 +169,10 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !prop.decorators.is_empty() {
-            prop.decorators
-                .push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
+        if prop.declare || prop.decorators.is_empty() {
+            return;
         }
+        prop.decorators.push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
     }
 
     #[inline]
@@ -375,7 +372,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
                     let ident1 = binding.create_read_expression(ctx);
                     let ident2 = binding.create_read_expression(ctx);
-                    let member = create_property_access(ident1, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
                     Self::create_checked_value(ident2, member, ctx)
                 } else {
                     // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
@@ -384,7 +381,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = ctx.ast.move_expression(&mut logical.right);
+                    let right = logical.right.take_in(ctx.ast.allocator);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,
@@ -401,7 +398,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     );
 
                     let object = binding.create_read_expression(ctx);
-                    let member = create_property_access(object, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
                     ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member)
                 }
             }
@@ -460,7 +457,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     return Self::global_object(ctx);
                 }
                 _ => {}
-            };
+            }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
             if matches!(&serialized_constituent, Expression::Identifier(ident) if ident.name == "Object")
@@ -561,7 +558,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let operator = BinaryOperator::StrictEquality;
+        let operator = BinaryOperator::StrictInequality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
         let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
         let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);
@@ -575,7 +572,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        let arguments = ctx.ast.vec_from_iter([
+        let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
             Argument::from(value),
         ]);

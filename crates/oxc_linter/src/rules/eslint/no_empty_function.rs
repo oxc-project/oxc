@@ -66,7 +66,7 @@ impl Rule for NoEmptyFunction {
         let AstKind::FunctionBody(fb) = node.kind() else {
             return;
         };
-        if fb.is_empty() && !ctx.semantic().has_comments_between(fb.span) {
+        if fb.is_empty() && !ctx.has_comments_between(fb.span) {
             let (kind, fn_name) = get_function_name_and_kind(node, ctx);
             ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
         }
@@ -84,11 +84,8 @@ fn get_function_name_and_kind<'a>(
                     let kind = if f.generator { "generator function" } else { "function" };
                     return (kind, Some(name.into()));
                 }
-                continue;
             }
-            AstKind::ArrowFunctionExpression(_) => {
-                continue;
-            }
+            AstKind::ArrowFunctionExpression(_) => {}
             AstKind::IdentifierName(IdentifierName { name, .. })
             | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
                 return ("function", Some(Cow::Borrowed(name.as_str())));

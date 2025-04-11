@@ -66,6 +66,7 @@
 
 mod for_await;
 
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -164,7 +165,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         }
 
         expr.argument.as_mut().map(|argument| {
-            let argument = Argument::from(ctx.ast.move_expression(argument));
+            let argument = Argument::from(argument.take_in(ctx.ast.allocator));
             let arguments = ctx.ast.vec1(argument);
             let mut argument =
                 self.ctx.helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
@@ -199,7 +200,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             return None;
         }
 
-        let mut argument = ctx.ast.move_expression(&mut expr.argument);
+        let mut argument = expr.argument.take_in(ctx.ast.allocator);
         let arguments = ctx.ast.vec1(Argument::from(argument));
         argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
 

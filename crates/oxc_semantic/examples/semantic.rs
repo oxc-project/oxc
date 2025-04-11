@@ -9,8 +9,8 @@ use oxc_span::SourceType;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_semantic --example simple`
-// or `just watch "run -p oxc_semantic --example simple"`
+// run `cargo run -p oxc_semantic --example semantic`
+// or `just watch "run -p oxc_semantic --example semantic"`
 
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());

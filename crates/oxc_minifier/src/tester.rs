@@ -5,16 +5,19 @@ use oxc_span::SourceType;
 
 use crate::{CompressOptions, Compressor};
 
+#[track_caller]
 pub fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
 
+#[track_caller]
 pub fn test(source_text: &str, expected: &str) {
-    let result = run(source_text, Some(CompressOptions::all_true()));
+    let result = run(source_text, Some(CompressOptions::smallest()));
     let expected = run(expected, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
+#[track_caller]
 pub fn run(source_text: &str, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::mjs();

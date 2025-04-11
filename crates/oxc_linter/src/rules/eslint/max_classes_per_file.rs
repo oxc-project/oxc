@@ -83,11 +83,10 @@ impl Rule for MaxClassesPerFile {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut class_count = ctx.semantic().classes().declarations.len();
+        let mut class_count = ctx.classes().declarations.len();
 
         if self.ignore_expressions {
             let class_expressions = ctx
-                .semantic()
                 .classes()
                 .iter_enumerated()
                 .filter(|(_class_id, node_id)| !ctx.nodes().kind(**node_id).is_declaration())
@@ -99,7 +98,7 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let node_id = ctx.semantic().classes().get_node_id(ClassId::from(self.max));
+        let node_id = ctx.classes().get_node_id(ClassId::from(self.max));
         let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
             class.span
         } else {

@@ -124,7 +124,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if call_expr.type_parameters.is_some() || Self::has_return_type(factory_node) {
+        if call_expr.type_arguments.is_some() || Self::has_return_type(factory_node) {
             return;
         }
 

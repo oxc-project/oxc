@@ -63,6 +63,6 @@ impl fmt::Display for ESTarget {
             Self::ES2025 => "es2025",
             Self::ESNext => "esnext",
         };
-        write!(f, "{s}",)
+        f.write_str(s)
     }
 }

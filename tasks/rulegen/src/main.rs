@@ -6,15 +6,12 @@ use std::{
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    Visit,
-    ast::{
-        Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-        TemplateLiteral,
-    },
+use oxc_ast::ast::{
+    Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
+    ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement,
+    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
+use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
@@ -294,9 +291,9 @@ impl<'a> Visit<'a> for TestCase {
                             json::convert_config_to_json_literal(language_options);
                         self.language_options = Some(language_options);
                     }
-                    _ => continue,
+                    _ => {}
                 },
-                ObjectPropertyKind::SpreadProperty(_) => continue,
+                ObjectPropertyKind::SpreadProperty(_) => {}
             }
         }
     }
@@ -437,8 +434,10 @@ impl<'a> Visit<'a> for State<'a> {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
             Statement::ExportDefaultDeclaration(export_decl) => {
-                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
-                    &export_decl.declaration
+                if let Some(Expression::ObjectExpression(obj_expr)) = &export_decl
+                    .declaration
+                    .as_expression()
+                    .map(oxc_ast::ast::Expression::get_inner_expression)
                 {
                     self.visit_object_expression(obj_expr);
                 }
@@ -623,22 +622,23 @@ impl RuleKind {
 
 impl Display for RuleKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ESLint => write!(f, "eslint"),
-            Self::Typescript => write!(f, "typescript-eslint"),
-            Self::Jest => write!(f, "eslint-plugin-jest"),
-            Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
-            Self::Import => write!(f, "eslint-plugin-import"),
-            Self::React => write!(f, "eslint-plugin-react"),
-            Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
-            Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
-            Self::Oxc => write!(f, "oxc"),
-            Self::NextJS => write!(f, "eslint-plugin-next"),
-            Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
-            Self::Node => write!(f, "eslint-plugin-n"),
-            Self::Promise => write!(f, "eslint-plugin-promise"),
-            Self::Vitest => write!(f, "eslint-plugin-vitest"),
-        }
+        let kind_name = match self {
+            Self::ESLint => "eslint",
+            Self::Typescript => "typescript-eslint",
+            Self::Jest => "eslint-plugin-jest",
+            Self::Unicorn => "eslint-plugin-unicorn",
+            Self::Import => "eslint-plugin-import",
+            Self::React => "eslint-plugin-react",
+            Self::ReactPerf => "eslint-plugin-react-perf",
+            Self::JSXA11y => "eslint-plugin-jsx-a11y",
+            Self::Oxc => "oxc",
+            Self::NextJS => "eslint-plugin-next",
+            Self::JSDoc => "eslint-plugin-jsdoc",
+            Self::Node => "eslint-plugin-n",
+            Self::Promise => "eslint-plugin-promise",
+            Self::Vitest => "eslint-plugin-vitest",
+        };
+        f.write_str(kind_name)
     }
 }
 
@@ -802,7 +802,7 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         return Err(format!("failed to find '{mod_def}' in {rules_path}").into());
     };
     let mod_end = &rules[mod_start..]
-        .find("}\n")
+        .find('}')
         .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
     let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
 

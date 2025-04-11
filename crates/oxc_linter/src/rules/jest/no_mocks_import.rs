@@ -55,13 +55,13 @@ impl Rule for NoMocksImport {
             }
         }
 
-        let Some(require_reference_ids) = ctx.scopes().root_unresolved_references().get("require")
+        let Some(require_reference_ids) = ctx.scoping().root_unresolved_references().get("require")
         else {
             return;
         };
 
         for &reference_id in require_reference_ids {
-            let reference = ctx.symbols().get_reference(reference_id);
+            let reference = ctx.scoping().get_reference(reference_id);
             let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;
             };

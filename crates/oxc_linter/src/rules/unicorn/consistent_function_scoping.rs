@@ -1,6 +1,10 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{AstKind, Visit, visit::walk};
+use oxc_ast::{
+    AstKind,
+    ast::{Function, IdentifierReference, JSXElementName, ThisExpression},
+};
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags};
@@ -152,12 +156,12 @@ impl Rule for ConsistentFunctionScoping {
                     }
 
                     let func_scope_id = function.scope_id();
-                    if let Some(parent_scope_id) = ctx.scopes().get_parent_id(func_scope_id) {
+                    if let Some(parent_scope_id) = ctx.scoping().scope_parent_id(func_scope_id) {
                         // Example: const foo = function bar() {};
                         // The bar function scope id is 1. In order to ignore this rule,
                         // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
                         // should be considered.
-                        if parent_scope_id == ctx.scopes().root_scope_id() {
+                        if parent_scope_id == ctx.scoping().root_scope_id() {
                             return;
                         }
                     }
@@ -192,8 +196,8 @@ impl Rule for ConsistentFunctionScoping {
             };
 
         // if the function is declared at the root scope, we don't need to check anything
-        if ctx.symbols().get_scope_id(function_declaration_symbol_id)
-            == ctx.scopes().root_scope_id()
+        if ctx.scoping().symbol_scope_id(function_declaration_symbol_id)
+            == ctx.scoping().root_scope_id()
         {
             return;
         }
@@ -221,10 +225,11 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         let parent_scope_ids = {
-            let mut current_scope_id = ctx.symbols().get_scope_id(function_declaration_symbol_id);
+            let mut current_scope_id =
+                ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
             let mut parent_scope_ids = FxHashSet::default();
             parent_scope_ids.insert(current_scope_id);
-            while let Some(parent_scope_id) = ctx.scopes().get_parent_id(current_scope_id) {
+            while let Some(parent_scope_id) = ctx.scoping().scope_parent_id(current_scope_id) {
                 parent_scope_ids.insert(parent_scope_id);
                 current_scope_id = parent_scope_id;
             }
@@ -232,9 +237,9 @@ impl Rule for ConsistentFunctionScoping {
         };
 
         for reference_id in function_body_var_references {
-            let reference = ctx.symbols().get_reference(reference_id);
+            let reference = ctx.scoping().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
-            let scope_id = ctx.symbols().get_scope_id(symbol_id);
+            let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             if parent_scope_ids.contains(&scope_id) && symbol_id != function_declaration_symbol_id {
                 return;
             }
@@ -252,22 +257,22 @@ struct ReferencesFinder {
 }
 
 impl<'a> Visit<'a> for ReferencesFinder {
-    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         self.references.push(it.reference_id());
     }
 
-    fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {
+    fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {
         // Ignore references in JSX elements e.g. `Foo` in `<Foo>`.
         // No need to walk children as only references they may contain are also JSX identifiers.
     }
 
-    fn visit_this_expression(&mut self, _: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _: &ThisExpression) {
         if self.in_function == 0 {
             self.is_parent_this_referenced = true;
         }
     }
 
-    fn visit_function(&mut self, func: &oxc_ast::ast::Function<'a>, flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.in_function += 1;
         walk::walk_function(self, func, flags);
         self.in_function -= 1;

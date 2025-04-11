@@ -74,9 +74,9 @@ impl Rule for NoRenderReturnValue {
                         }
 
                         let scope_id = parent_node.scope_id();
-                        if ctx.scopes().get_flags(scope_id).is_arrow() {
+                        if ctx.scoping().scope_flags(scope_id).is_arrow() {
                             if let AstKind::ArrowFunctionExpression(e) =
-                                ctx.nodes().kind(ctx.scopes().get_node_id(scope_id))
+                                ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
                             {
                                 if e.expression {
                                     ctx.diagnostic(no_render_return_value_diagnostic(

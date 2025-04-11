@@ -31,6 +31,8 @@ fn jsx_props_no_spread_multiple_member_expressions_diagnostic(
         .with_labels(spans)
 }
 
+const REMOVE_DUPLICATE_SPREAD: &str = "Remove duplicate spread";
+
 #[derive(Debug, Default, Clone)]
 pub struct JsxPropsNoSpreadMulti;
 
@@ -106,6 +108,7 @@ impl Rule for JsxPropsNoSpreadMulti {
                             .skip(1)
                             .map(|span| Fix::delete(*span))
                             .collect::<RuleFix<'a>>()
+                            .with_message(REMOVE_DUPLICATE_SPREAD)
                     },
                 );
             }
@@ -120,7 +123,9 @@ impl Rule for JsxPropsNoSpreadMulti {
                                 vec![*left_span, *right_span],
                                 member_prop_name,
                             ),
-                            |fixer| fixer.delete_range(*left_span),
+                            |fixer| {
+                                fixer.delete_range(*left_span).with_message(REMOVE_DUPLICATE_SPREAD)
+                            },
                         );
                     }
                 },

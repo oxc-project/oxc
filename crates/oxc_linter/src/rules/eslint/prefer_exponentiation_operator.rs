@@ -43,7 +43,7 @@ impl Rule for PreferExponentiationOperator {
 
         if !is_method_call(call_expr, None, Some(&["pow"]), Some(2), Some(2)) {
             return;
-        };
+        }
 
         let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
@@ -67,7 +67,7 @@ impl Rule for PreferExponentiationOperator {
                 }
 
                 if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
-                    if GLOBAL_OBJECT_NAMES.contains(ident.name.as_str())
+                    if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
                         && ctx.is_reference_to_global_variable(ident)
                     {
                         ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
@@ -75,7 +75,7 @@ impl Rule for PreferExponentiationOperator {
                 }
             }
             _ => {}
-        };
+        }
     }
 }
 

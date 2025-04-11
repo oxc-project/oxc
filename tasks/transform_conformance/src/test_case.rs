@@ -237,11 +237,14 @@ impl TestCase {
             .as_ref()
             .and_then(|cwd| path.strip_prefix(cwd).ok().map(|p| Path::new("<CWD>").join(p)))
             .unwrap_or(path.clone());
-        let mut driver = Driver::new(false, allow_return_outside_function, options).execute(
-            &source_text,
-            self.source_type,
-            cwd_path.as_path(),
-        );
+        let mut driver = Driver::new(
+            false,
+            allow_return_outside_function,
+            /* print_annotation_comments */
+            !self.options.plugins.async_to_generator,
+            options,
+        )
+        .execute(&source_text, self.source_type, cwd_path.as_path());
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(
@@ -311,7 +314,7 @@ impl TestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, self.source_type)
+                    let mut ret = Parser::new(&allocator, &output, self.source_type)
                         .with_options(ParseOptions {
                             // Related: async to generator, regression
                             allow_return_outside_function: true,
@@ -319,9 +322,15 @@ impl TestCase {
                         })
                         .parse();
 
+                    // Clear comments to avoid pure annotation comments that cause mismatch.
+                    ret.program.comments.clear();
+
                     CodeGenerator::new()
                         .with_options(CodegenOptions {
                             comments: false,
+                            // Disable pure annotation comments for async_to_generator plugin,
+                            // because it's weird some tests have it and some don't.
+                            annotation_comments: !babel_options.plugins.async_to_generator,
                             ..CodegenOptions::default()
                         })
                         .build(&ret.program)
@@ -379,10 +388,15 @@ impl TestCase {
 
         if passed {
             if let Some(options) = transform_options {
-                let mismatch_errors =
-                    Driver::new(/* check transform mismatch */ true, false, options)
-                        .execute(&input, self.source_type, &self.path)
-                        .errors();
+                let mismatch_errors = Driver::new(
+                    /* check transform mismatch */ true,
+                    false,
+                    /* print_annotation_comments */
+                    !self.options.plugins.async_to_generator,
+                    options,
+                )
+                .execute(&input, self.source_type, &self.path)
+                .errors();
                 self.errors.extend(mismatch_errors);
             }
         } else if let Some(actual_errors) = actual_errors {

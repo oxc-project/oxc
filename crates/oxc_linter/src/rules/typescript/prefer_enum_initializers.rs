@@ -47,11 +47,11 @@ declare_oxc_lint!(
 
 impl Rule for PreferEnumInitializers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSEnumDeclaration(decl) = node.kind() else {
+        let AstKind::TSEnumBody(enum_body) = node.kind() else {
             return;
         };
 
-        for (index, member) in decl.members.iter().enumerate() {
+        for (index, member) in enum_body.members.iter().enumerate() {
             if member.initializer.is_none() {
                 if let TSEnumMemberName::Identifier(i) = &member.id {
                     ctx.diagnostic(prefer_enum_initializers_diagnostic(

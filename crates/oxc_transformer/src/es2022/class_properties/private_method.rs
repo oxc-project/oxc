@@ -1,7 +1,9 @@
 //! ES2022: Class Properties
 //! Transform of private method uses e.g. `this.#method()`.
 
-use oxc_ast::{VisitMut, ast::*, visit::walk_mut};
+use oxc_allocator::TakeIn;
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
 use oxc_traverse::TraverseCtx;
@@ -45,7 +47,8 @@ impl<'a> ClassProperties<'a, '_> {
             return None;
         };
 
-        let mut function = ctx.ast.move_function(value);
+        let mut function = value.take_in_box(ctx.ast.allocator);
+
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writeable_private_prop(ident)
         } else {
@@ -61,9 +64,9 @@ impl<'a> ClassProperties<'a, '_> {
         // strict mode flag if parent scope is not strict mode.
         let scope_id = function.scope_id();
         let new_parent_id = ctx.current_scope_id();
-        ctx.scopes_mut().change_parent_id(scope_id, Some(new_parent_id));
+        ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
         let is_strict_mode = ctx.current_scope_flags().is_strict_mode();
-        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags -= ScopeFlags::GetAccessor | ScopeFlags::SetAccessor;
         if !is_strict_mode {
             // TODO: Needs to remove all child scopes' strict mode flag if child scope
@@ -74,7 +77,6 @@ impl<'a> ClassProperties<'a, '_> {
         PrivateMethodVisitor::new(*r#static, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
-        let function = ctx.ast.alloc(function);
         Some(Statement::FunctionDeclaration(function))
     }
 

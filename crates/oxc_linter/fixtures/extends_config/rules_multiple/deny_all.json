@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "no-console": "error",
+    "no-var": "error",
+    "oxc/approx-constant": "error",
+    "unicorn/no-null": "error",
+    "unicorn/no-array-for-each": "error"
+  }
+}

@@ -4,7 +4,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -44,17 +43,17 @@ declare_oxc_lint!(
     correctness
 );
 
-const OBJECT_MUTATION_METHODS: phf::Set<&'static str> =
-    phf_set!("assign", "defineProperty", "defineProperties", "freeze", "setPrototypeOf");
+const OBJECT_MUTATION_METHODS: [&str; 5] =
+    ["assign", "defineProperty", "defineProperties", "freeze", "setPrototypeOf"];
 
-const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
-    phf_set!("defineProperty", "deleteProperty", "set", "setPrototypeOf");
+const REFLECT_MUTATION_METHODS: [&str; 4] =
+    ["defineProperty", "deleteProperty", "set", "setPrototypeOf"];
 
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flags(symbol_id).is_import() {
-            let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
+        let symbol_table = ctx.scoping();
+        if symbol_table.symbol_flags(symbol_id).is_import() {
+            let kind = ctx.nodes().kind(symbol_table.symbol_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if is_namespace_specifier {
@@ -125,9 +124,9 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
             return false;
         };
 
-        if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(property_name))
-            || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(property_name)))
-            && !ctx.symbols().has_binding(ident.reference_id())
+        if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(&property_name))
+            || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(&property_name)))
+            && !ctx.scoping().has_binding(ident.reference_id())
         {
             return expr
                 .arguments

@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(Function)",
         "id": 0,
         "name": "f",
         "node": "Function(f)",

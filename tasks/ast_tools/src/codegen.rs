@@ -112,10 +112,10 @@ pub enum GeneratorOrDerive {
 
 impl GeneratorOrDerive {
     /// Execute `prepare` method on the [`Generator`] or [`Derive`].
-    pub fn prepare(self, schema: &mut Schema) {
+    pub fn prepare(self, schema: &mut Schema, codegen: &Codegen) {
         match self {
-            Self::Generator(generator) => generator.prepare(schema),
-            Self::Derive(derive) => derive.prepare(schema),
+            Self::Generator(generator) => generator.prepare(schema, codegen),
+            Self::Derive(derive) => derive.prepare(schema, codegen),
         }
     }
 

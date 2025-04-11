@@ -9,6 +9,8 @@ fn no_debugger_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`debugger` statement is not allowed").with_label(span)
 }
 
+const REMOVE_DEBUGGER: &str = "Remove the debugger statement";
+
 #[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
 
@@ -45,7 +47,7 @@ impl Rule for NoDebugger {
                     .skip(1)
                     .find(|p| !matches!(p.kind(), AstKind::ParenthesizedExpression(_)))
                 else {
-                    return fixer.delete(&stmt.span);
+                    return fixer.delete(&stmt.span).with_message(REMOVE_DEBUGGER);
                 };
 
                 // For statements like `if (foo) debugger;`, we can't just
@@ -55,11 +57,13 @@ impl Rule for NoDebugger {
                     | AstKind::WhileStatement(_)
                     | AstKind::ForStatement(_)
                     | AstKind::ForInStatement(_)
-                    | AstKind::ForOfStatement(_) => fixer.replace(stmt.span, "{}"),
+                    | AstKind::ForOfStatement(_) => {
+                        fixer.replace(stmt.span, "{}").with_message(REMOVE_DEBUGGER)
+                    }
                     // NOTE: no need to check for
                     // AstKind::ArrowFunctionExpression because
                     // `const x = () => debugger` is a parse error
-                    _ => fixer.delete(&stmt.span),
+                    _ => fixer.delete(&stmt.span).with_message(REMOVE_DEBUGGER),
                 }
             });
         }

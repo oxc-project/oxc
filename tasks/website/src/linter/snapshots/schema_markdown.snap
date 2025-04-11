@@ -1,7 +1,6 @@
 ---
 source: tasks/website/src/linter/json_schema.rs
 expression: snapshot
-snapshot_kind: text
 ---
 # Oxlint Configuration File
 
@@ -36,7 +35,13 @@ Example
   "settings": {},
   "rules": {
     "eqeqeq": "warn",
-    "import/no-cycle": "error"
+    "import/no-cycle": "error",
+    "react/self-closing-comp": [
+      "error",
+      {
+        "html": false
+      }
+    ]
   },
   "overrides": [
     {
@@ -133,6 +138,14 @@ type: `Record<string, boolean>`
 Predefine global variables.
 
 Environments specify what global variables are predefined. See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments) for what environments are available and what each one provides.
+
+
+## extends
+
+type: `string[]`
+
+
+Paths of configuration files that this configuration file extends (inherits from). The files are resolved relative to the location of the configuration file that contains the `extends` property. The configuration files are merged from the first to the last, with the last file overriding the previous ones.
 
 
 ## globals

@@ -14015,14 +14015,6 @@ Negative Passed: 4519/4519 (100.00%)
  23 │   }
     ╰────
 
-  × Cannot use await in class static initialization block
-    ╭─[test262/test/language/expressions/class/static-init-await-binding.js:22:12]
- 21 │   static {
- 22 │     (class await {});
-    ·            ─────
- 23 │   }
-    ╰────
-
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/static-method-param-dflt-yield.js:22:16]
  21 │ 0, class {
@@ -23905,7 +23897,7 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ 
     ╰────
 
-  × Duplicated export '\ud83c'
+  × Duplicated export '�d83c'
     ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
  20 │ // 🌙 is '\uD83C\uDF19'
  21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
@@ -32478,14 +32470,6 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/statements/class/static-init-await-binding-invalid.js:25:11]
- 24 │   static {
- 25 │     class await {}
-    ·           ─────
- 26 │   }
-    ╰────
-
-  × Cannot use await in class static initialization block
     ╭─[test262/test/language/statements/class/static-init-await-binding-invalid.js:25:11]
  24 │   static {
  25 │     class await {}

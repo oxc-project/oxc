@@ -116,7 +116,7 @@ impl Rule for NumericSeparatorsStyle {
                 }
             }
             _ => {}
-        };
+        }
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {

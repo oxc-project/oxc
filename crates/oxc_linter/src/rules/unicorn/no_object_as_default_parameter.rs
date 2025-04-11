@@ -56,7 +56,7 @@ impl Rule for NoObjectAsDefaultParameter {
             return;
         };
 
-        if object_expr.properties.len() == 0 {
+        if object_expr.properties.is_empty() {
             return;
         }
 

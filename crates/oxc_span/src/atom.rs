@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, FromIn};
+use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -68,6 +68,15 @@ impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Atom::from_in(self.as_str(), allocator)
+    }
+}
+
+impl<'a> Dummy<'a> for Atom<'a> {
+    /// Create a dummy [`Atom`].
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn dummy(_allocator: &'a Allocator) -> Self {
+        Atom::empty()
     }
 }
 

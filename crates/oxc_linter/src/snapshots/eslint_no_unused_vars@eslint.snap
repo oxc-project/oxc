@@ -132,7 +132,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
+  ⚠ eslint(no-unused-vars): Function 'a' is declared but never used.
    ╭─[no_unused_vars.tsx:1:29]
  1 │ function f(){var x;function a(){x=42;}function b(){alert(x);}}
    ·                             ┬
@@ -140,7 +140,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
+  ⚠ eslint(no-unused-vars): Function 'b' is declared but never used.
    ╭─[no_unused_vars.tsx:1:48]
  1 │ function f(){var x;function a(){x=42;}function b(){alert(x);}}
    ·                                                ┬

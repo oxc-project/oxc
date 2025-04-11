@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
@@ -62,26 +61,26 @@ declare_oxc_lint!(
     restriction
 );
 
-const EMPTY_TAGS: phf::Set<&'static str> = phf_set! {
+const EMPTY_TAGS: [&str; 18] = [
     "abstract",
     "async",
     "generator",
     "global",
     "hideconstructor",
     "ignore",
+    "inheritDoc",
     "inner",
     "instance",
-    "override",
-    "readonly",
-    "inheritDoc",
     "internal",
+    "override",
     "overload",
     "package",
     "private",
     "protected",
     "public",
+    "readonly",
     "static",
-};
+];
 
 #[derive(Debug, Default, Clone, Deserialize)]
 struct EmptyTagsConfig {
@@ -102,7 +101,7 @@ impl Rule for EmptyTags {
         let settings = &ctx.settings().jsdoc;
 
         let is_empty_tag_kind = |tag_name: &str| {
-            if EMPTY_TAGS.contains(tag_name) {
+            if EMPTY_TAGS.binary_search(&tag_name).is_ok() {
                 return true;
             }
             if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {
@@ -111,11 +110,8 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in ctx
-            .semantic()
-            .jsdoc()
-            .iter_all()
-            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        for jsdoc in
+            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
         {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();

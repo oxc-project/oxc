@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         entry.0 |= method.return_type.is_none();
                         entry.2 = Some(&mut method.return_type);
                     }
-                };
+                }
             }
         });
 

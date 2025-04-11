@@ -1,0 +1,11 @@
+{
+  "overrides": [
+    {
+      "files": ["*.{ts,tsx}"],
+      "plugins": ["typescript"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error"
+      }
+    }
+  ]
+}

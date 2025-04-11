@@ -45,9 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeClassMembers {
     fn run_once(&self, ctx: &LintContext) {
-        ctx.semantic().classes().iter_enumerated().for_each(|(class_id, _)| {
+        ctx.classes().iter_enumerated().for_each(|(class_id, _)| {
             let mut defined_elements = FxHashMap::default();
-            let elements = &ctx.semantic().classes().elements[class_id];
+            let elements = &ctx.classes().elements[class_id];
             for (element_id, element) in elements.iter_enumerated() {
                 if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
                     let prev_element = &elements[prev_element_id];

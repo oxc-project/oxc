@@ -109,7 +109,7 @@ impl Rule for PreferQuerySelector {
             let literal_value = match argument_expr {
                 Expression::StringLiteral(literal) => Some(literal.value.trim()),
                 Expression::TemplateLiteral(literal) => {
-                    if literal.expressions.len() == 0 {
+                    if literal.expressions.is_empty() {
                         literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
                     } else {
                         None

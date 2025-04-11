@@ -17,7 +17,6 @@ import { fileURLToPath } from 'url';
 import { promisify } from 'util';
 import generateAncestorsCode from './lib/ancestor.mjs';
 import getTypesFromCode from './lib/parse.mjs';
-import generateScopesCollectorCode from './lib/scopes_collector.mjs';
 import generateTraverseTraitCode from './lib/traverse.mjs';
 import generateWalkFunctionsCode from './lib/walk.mjs';
 
@@ -35,7 +34,6 @@ await Promise.all([
   writeToFile('traverse.rs', generateTraverseTraitCode(types)),
   writeToFile('ancestor.rs', generateAncestorsCode(types)),
   writeToFile('walk.rs', generateWalkFunctionsCode(types)),
-  writeToFile('scopes_collector.rs', generateScopesCollectorCode(types)),
 ]);
 
 /**

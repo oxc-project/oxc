@@ -123,7 +123,7 @@ fn is_type_checking_expr(expr: &Expression) -> bool {
 }
 
 fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
-    if call_expr.arguments.len() == 0 {
+    if call_expr.arguments.is_empty() {
         return false;
     }
 

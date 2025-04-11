@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",

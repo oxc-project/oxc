@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_index::IndexVec;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
@@ -14,12 +16,12 @@ use crate::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
         PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
     },
+    utils::{FxIndexMap, FxIndexSet, ident_name},
 };
 
 use super::{
-    Derives, FxIndexMap, FxIndexSet,
+    Derives,
     attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
-    ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
 };
 
@@ -90,17 +92,23 @@ impl<'c> Parser<'c> {
         skeletons: IndexVec<TypeId, Skeleton>,
         meta_skeletons: IndexVec<MetaId, Skeleton>,
     ) -> Schema {
+        // Parse `#[ast_meta]` types from `Skeleton` to `MetaType`
         let metas = meta_skeletons
             .into_iter_enumerated()
             .map(|(meta_id, skeleton)| self.parse_meta_type(meta_id, skeleton))
             .collect::<IndexVec<_, _>>();
 
+        // Parse `#[ast]` types from `Skeleton` to `TypeDef`
         let mut types = skeletons
             .into_iter_enumerated()
             .map(|(type_id, skeleton)| self.parse_type(type_id, skeleton))
             .collect::<IndexVec<_, _>>();
-        types.extend(self.extra_types);
+        types.extend(mem::take(&mut self.extra_types));
 
+        // Set container IDs on type defs
+        self.set_container_ids(&mut types);
+
+        // Generate `HashMap` mapping name of `#[ast_meta]` type to its `MetaId`
         let meta_names = self
             .meta_names
             .into_iter()
@@ -108,6 +116,7 @@ impl<'c> Parser<'c> {
             .map(|(meta_id, meta_name)| (meta_name, MetaId::from_usize(meta_id)))
             .collect();
 
+        // Generate `HashMap` mapping name of `#[ast]` type to its `TypeId`
         let type_names = self
             .type_names
             .into_iter()
@@ -116,6 +125,62 @@ impl<'c> Parser<'c> {
             .collect();
 
         Schema { types, type_names, metas, meta_names, files: self.files }
+    }
+
+    /// Set container IDs on type defs.
+    ///
+    /// i.e. if `Option<Expression>` exists in AST, set `option_id` on type def for `Expression`
+    /// to the `TypeId` of `Option<Expression>`.
+    ///
+    /// Same for `Box`, `Vec` and `Cell`.
+    fn set_container_ids(&self, types: &mut IndexVec<TypeId, TypeDef>) {
+        for (&inner_type_id, &option_id) in &self.options {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Enum(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Primitive(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Option(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Box(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Vec(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Cell(def) => def.containers.option_id = Some(option_id),
+            }
+        }
+
+        for (&inner_type_id, &box_id) in &self.boxes {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Enum(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Primitive(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Option(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Box(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Vec(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Cell(def) => def.containers.box_id = Some(box_id),
+            }
+        }
+
+        for (&inner_type_id, &vec_id) in &self.vecs {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Enum(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Primitive(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Option(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Box(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Vec(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Cell(def) => def.containers.vec_id = Some(vec_id),
+            }
+        }
+
+        for (&inner_type_id, &cell_id) in &self.cells {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Enum(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Primitive(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Option(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Box(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Vec(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Cell(def) => def.containers.cell_id = Some(cell_id),
+            }
+        }
     }
 
     /// Get [`TypeId`] for type name.
@@ -203,9 +268,10 @@ impl<'c> Parser<'c> {
 
     /// Parse [`StructSkeleton`] to yield a [`TypeDef`].
     fn parse_struct(&mut self, type_id: TypeId, skeleton: StructSkeleton) -> TypeDef {
-        let StructSkeleton { name, item, file_id } = skeleton;
+        let StructSkeleton { name, item, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Struct(StructDef::new(
@@ -213,7 +279,9 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            visibility,
             generated_derives,
             fields,
         ));
@@ -276,10 +344,11 @@ impl<'c> Parser<'c> {
 
     /// Parse [`EnumSkeleton`] to yield a [`TypeDef`].
     fn parse_enum(&mut self, type_id: TypeId, skeleton: EnumSkeleton) -> TypeDef {
-        let EnumSkeleton { name, item, inherits, file_id } = skeleton;
+        let EnumSkeleton { name, item, inherits, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Enum(EnumDef::new(
@@ -287,7 +356,9 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
+            visibility,
             generated_derives,
             variants,
             inherits,
@@ -367,11 +438,7 @@ impl<'c> Parser<'c> {
         let type_id = self
             .parse_type_name(ty)
             .unwrap_or_else(|| panic!("Cannot parse type reference: {}", ty.to_token_stream()));
-        let visibility = match &field.vis {
-            SynVisibility::Public(_) => Visibility::Public,
-            SynVisibility::Restricted(_) => Visibility::Restricted,
-            SynVisibility::Inherited => Visibility::Private,
-        };
+        let visibility = convert_visibility(&field.vis);
 
         // Get doc comment
         let mut doc_comment = None;
@@ -782,7 +849,7 @@ fn process_attr(
             for meta in parts {
                 match &meta {
                     Meta::Path(path) => {
-                        let part_name = path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(path.get_ident().ok_or(())?);
                         process_attr_part(
                             processor,
                             attr_name,
@@ -791,7 +858,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::NameValue(name_value) => {
-                        let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                         let str = convert_expr_to_string(&name_value.value);
                         process_attr_part(
                             processor,
@@ -801,7 +868,7 @@ fn process_attr(
                         )?;
                     }
                     Meta::List(meta_list) => {
-                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                        let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                         let list = parse_attr_part_list(meta_list)?;
                         process_attr_part(
                             processor,
@@ -810,7 +877,7 @@ fn process_attr(
                             AttrPart::List(&part_name, list),
                         )?;
                     }
-                };
+                }
             }
             Ok(())
         }
@@ -825,16 +892,16 @@ fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>
         .into_iter()
         .map(|meta| match meta {
             Meta::Path(path) => {
-                let part_name = path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(path.get_ident().ok_or(())?);
                 Ok(AttrPartListElement::Tag(part_name))
             }
             Meta::NameValue(name_value) => {
-                let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(name_value.path.get_ident().ok_or(())?);
                 let str = convert_expr_to_string(&name_value.value);
                 Ok(AttrPartListElement::String(part_name, str))
             }
             Meta::List(meta_list) => {
-                let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                let part_name = ident_name(meta_list.path.get_ident().ok_or(())?);
                 let list = parse_attr_part_list(&meta_list)?;
                 Ok(AttrPartListElement::List(part_name, list))
             }
@@ -909,4 +976,13 @@ fn check_attr_position(
         "`{type_name}` type has `#[{attr_name}]` attribute on a {position_debug_str}, \
         but `#[{attr_name}]` is not legal in this position."
     );
+}
+
+/// Convert `syn::Visibility` to our `Visibility` type.
+fn convert_visibility(vis: &SynVisibility) -> Visibility {
+    match vis {
+        SynVisibility::Public(_) => Visibility::Public,
+        SynVisibility::Restricted(_) => Visibility::Restricted,
+        SynVisibility::Inherited => Visibility::Private,
+    }
 }

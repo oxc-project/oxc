@@ -92,8 +92,7 @@ impl Default for CodegenOptions {
 
 impl CodegenOptions {
     pub(crate) fn print_comments(&self) -> bool {
-        !self.minify
-            && (self.comments || self.annotation_comments || self.legal_comments.is_inline())
+        !self.minify && (self.comments || self.legal_comments.is_inline())
     }
 
     pub(crate) fn print_annotation_comments(&self) -> bool {

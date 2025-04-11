@@ -4,6 +4,157 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+## [0.62.0] - 2025-04-01
+
+- cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)
+
+### Features
+
+- f6d181f semantic: Add `symbol_id` for `declare class` binding (#10095) (Dunqing)
+- 9b92919 semantic: Check redeclaration of function declaration and class declaration (#10093) (Dunqing)
+- 84a3490 semantic: Add `symbol_id` for declare function binding (#10078) (Dunqing)
+- 370266c semantic: Check redeclaration of variable declaration and function declaration in the block scope (#10074) (Dunqing)
+- b804f7c semantic: Introduce `Redeclaraion` for `Scoping::symbol_declarations` (#10059) (Dunqing)
+- 528469e semantic/scoping: Add `declaration` and `flags` fields for Redeclaraion (#10060) (Dunqing)
+
+### Bug Fixes
+
+- 765ef4c semantic: Function declaration is not allowed in `LabeledStatement` (#10149) (Dunqing)
+- be08766 semantic: False positive checking redeclaration of function in script code (#10148) (Dunqing)
+- bcd9a03 semantic: Use `FormalParameter::has_modifier` to detect parameter properties (#10096) (Ulrich Stark 🦀)
+- 6687f5b semantic: Define a variable in a function expression whose name is the same as the function name which is considered a redeclaration (#10077) (Dunqing)
+
+### Performance
+
+- 84e167e semantic: Use `FxHashMap` to replace `IndexVec` for `symbol_redeclarations` (#10058) (Dunqing)
+
+### Documentation
+
+- 5983760 semantic: Fix instructions for running semantic example (#10016) (overlookmotel)
+
+### Refactor
+
+- dc3602c semantic: Align handling of declaring symbol for `class` with TypeScript (#10094) (Dunqing)
+- 5d829c2 semantic: Align handling of declaring symbol for function with TypeScript (#10086) (Dunqing)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
+## [0.61.2] - 2025-03-23
+
+### Features
+
+- b4f3d00 oxc_semantic: Make `Scoping` cloneable (#9953) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+### Bug Fixes
+
+- 3d4c5f3 semantic: Correctly visit `IfStmt` `test` when building cfg (#9864) (camc314)
+
+### Performance
+
+- f7d078c semantic: Use `reserve_exact` instead of `reserve` to save memory in pre-reserve (#9910) (Dunqing)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- 3f808cb semantic: Speed up creating redeclarations (#9851) (overlookmotel)
+
+### Refactor
+
+- 78d0713 semantic: Remove dead code (#9852) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+
+## [0.57.0] - 2025-03-11
+
+- b0d979d semantic: [**BREAKING**] Make `Scoping::references` private (#9629) (Boshen)
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Bug Fixes
+
+
+### Refactor
+
+- a43c341 semantic: Add `Scoping` to `Semantic` (#9614) (Boshen)
+
+## [0.56.5] - 2025-03-07
+
+### Refactor
+
+- 5103322 semantic: Move `IsGlobalReference` to its own file (#9592) (Boshen)
+- b7484b8 semantic: Remove `CompactStr` usage from `ClassTable` (#9591) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 803f061 minifier: Apply `__NO_SIDE_EFFECTS__` (#9533) (Boshen)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+
+### Performance
+
+
 ## [0.53.0] - 2025-02-26
 
 ### Refactor

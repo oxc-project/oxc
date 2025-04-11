@@ -1,10 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -73,16 +72,14 @@ impl Rule for Radix {
         };
 
         match call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident) => {
-                if ident.is_global_reference_name("parseInt", ctx.symbols()) {
-                    Self::check_arguments(self, call_expr, ctx);
-                }
+            Expression::Identifier(ident) if Self::is_global_parse_int_ident(ident, ctx) => {
+                Self::check_arguments(self, call_expr, ctx);
             }
-            Expression::StaticMemberExpression(member_expr) => {
+            Expression::StaticMemberExpression(member_expr)
+                if member_expr.property.name == "parseInt" =>
+            {
                 if let Expression::Identifier(ident) = member_expr.object.without_parentheses() {
-                    if ident.is_global_reference_name("Number", ctx.symbols())
-                        && member_expr.property.name == "parseInt"
-                    {
+                    if Self::is_global_number_ident(ident, ctx) {
                         Self::check_arguments(self, call_expr, ctx);
                     }
                 }
@@ -90,8 +87,8 @@ impl Rule for Radix {
             Expression::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression() {
                     if let Expression::Identifier(ident) = member_expr.object() {
-                        if ident.is_global_reference_name("Number", ctx.symbols())
-                            && member_expr.static_property_name() == Some("parseInt")
+                        if member_expr.static_property_name() == Some("parseInt")
+                            && Self::is_global_number_ident(ident, ctx)
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
@@ -104,6 +101,14 @@ impl Rule for Radix {
 }
 
 impl Radix {
+    fn is_global_number_ident(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+        ident.name == "Number" && ctx.is_reference_to_global_variable(ident)
+    }
+
+    fn is_global_parse_int_ident(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+        ident.name == "parseInt" && ctx.is_reference_to_global_variable(ident)
+    }
+
     fn check_arguments(&self, call_expr: &CallExpression, ctx: &LintContext) {
         match call_expr.arguments.len() {
             0 => ctx.diagnostic(missing_parameters(call_expr.span)),
@@ -165,66 +170,74 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"parseInt("10", 10);"#, None),
-        (r#"parseInt("10", 2);"#, None),
-        (r#"parseInt("10", 36);"#, None),
-        (r#"parseInt("10", 0x10);"#, None),
-        (r#"parseInt("10", 1.6e1);"#, None),
-        (r#"parseInt("10", 10.0);"#, None),
-        (r#"parseInt("10", foo);"#, None),
-        (r#"Number.parseInt("10", foo);"#, None),
-        (r#"parseInt("10", 10);"#, Some(json!(["always"]))),
-        (r#"parseInt("10");"#, Some(json!(["as-needed"]))),
-        (r#"parseInt("10", 8);"#, Some(json!(["as-needed"]))),
-        (r#"parseInt("10", foo);"#, Some(json!(["as-needed"]))),
-        ("parseInt", None),
-        ("Number.foo();", None),
-        ("Number[parseInt]();", None),
-        ("class C { #parseInt; foo() { Number.#parseInt(); } }", None),
-        ("class C { #parseInt; foo() { Number.#parseInt(foo); } }", None),
-        ("class C { #parseInt; foo() { Number.#parseInt(foo, 'bar'); } }", None),
-        ("class C { #parseInt; foo() { Number.#parseInt(foo, 10); } }", Some(json!(["as-needed"]))),
-        ("var parseInt; parseInt();", None),
-        ("var parseInt; parseInt(foo);", Some(json!(["always"]))),
-        ("var parseInt; parseInt(foo, 10);", Some(json!(["as-needed"]))),
-        ("var Number; Number.parseInt();", None),
-        ("var Number; Number.parseInt(foo);", Some(json!(["always"]))),
-        ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
+        (r#"parseInt("10", 10);"#, None, None),
+        (r#"parseInt("10", 2);"#, None, None),
+        (r#"parseInt("10", 36);"#, None, None),
+        (r#"parseInt("10", 0x10);"#, None, None),
+        (r#"parseInt("10", 1.6e1);"#, None, None),
+        (r#"parseInt("10", 10.0);"#, None, None),
+        (r#"parseInt("10", foo);"#, None, None),
+        (r#"Number.parseInt("10", foo);"#, None, None),
+        (r#"parseInt("10", 10);"#, Some(json!(["always"])), None),
+        (r#"parseInt("10");"#, Some(json!(["as-needed"])), None),
+        (r#"parseInt("10", 8);"#, Some(json!(["as-needed"])), None),
+        (r#"parseInt("10", foo);"#, Some(json!(["as-needed"])), None),
+        ("parseInt", None, None),
+        ("Number.foo();", None, None),
+        ("Number[parseInt]();", None, None),
+        ("class C { #parseInt; foo() { Number.#parseInt(); } }", None, None),
+        ("class C { #parseInt; foo() { Number.#parseInt(foo); } }", None, None),
+        ("class C { #parseInt; foo() { Number.#parseInt(foo, 'bar'); } }", None, None),
+        (
+            "class C { #parseInt; foo() { Number.#parseInt(foo, 10); } }",
+            Some(json!(["as-needed"])),
+            None,
+        ),
+        ("var parseInt; parseInt();", None, None),
+        ("var parseInt; parseInt(foo);", Some(json!(["always"])), None),
+        ("var parseInt; parseInt(foo, 10);", Some(json!(["as-needed"])), None),
+        ("var Number; Number.parseInt();", None, None),
+        ("var Number; Number.parseInt(foo);", Some(json!(["always"])), None),
+        ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"])), None),
         // ("/* globals parseInt:off */ parseInt(foo);", Some(json!(["always"]))),
-        // ("Number.parseInt(foo, 10);", Some(json!(["as-needed"]))), // { globals: { Number: "off" } }
-        (r#"function *f(){ yield(Number).parseInt("10", foo) }"#, None), // { "ecmaVersion": 6 },
+        (
+            "Number.parseInt(foo, 10);",
+            Some(json!(["as-needed"])),
+            Some(serde_json::json!({"globals": {"Number": "off"} })),
+        ),
+        (r#"function *f(){ yield(Number).parseInt("10", foo) }"#, None, None), // { "ecmaVersion": 6 },
     ];
 
     let fail = vec![
-        ("parseInt();", Some(json!(["as-needed"]))),
-        ("parseInt();", None),
-        (r#"parseInt("10");"#, None),
-        (r#"parseInt("10",);"#, None),
-        (r#"parseInt((0, "10"));"#, None),
-        (r#"parseInt((0, "10"),);"#, None),
-        (r#"parseInt("10", null);"#, None),
-        (r#"parseInt("10", undefined);"#, None),
-        (r#"parseInt("10", true);"#, None),
-        (r#"parseInt("10", "foo");"#, None),
-        (r#"parseInt("10", "123");"#, None),
-        (r#"parseInt("10", 1);"#, None),
-        (r#"parseInt("10", 37);"#, None),
-        (r#"parseInt("10", 10.5);"#, None),
-        ("Number.parseInt();", None),
-        ("Number.parseInt();", Some(json!(["as-needed"]))),
-        (r#"Number.parseInt("10");"#, None),
-        (r#"Number.parseInt("10", 1);"#, None),
-        (r#"Number.parseInt("10", 37);"#, None),
-        (r#"Number.parseInt("10", 10.5);"#, None),
-        (r#"parseInt("10", 10);"#, Some(json!(["as-needed"]))),
-        (r#"parseInt?.("10");"#, None),
-        (r#"Number.parseInt?.("10");"#, None),
-        (r#"Number?.parseInt("10");"#, None),
-        (r#"(Number?.parseInt)("10");"#, None),
-        ("function *f(){ yield(Number).parseInt() }", None), // { "ecmaVersion": 6 },
-        ("{ let parseInt; } parseInt();", None),
-        ("{ let Number; } Number.parseInt();", None),
-        ("{ let Number; } (Number?.parseInt)();", None),
+        ("parseInt();", Some(json!(["as-needed"])), None),
+        ("parseInt();", None, None),
+        (r#"parseInt("10");"#, None, None),
+        (r#"parseInt("10",);"#, None, None),
+        (r#"parseInt((0, "10"));"#, None, None),
+        (r#"parseInt((0, "10"),);"#, None, None),
+        (r#"parseInt("10", null);"#, None, None),
+        (r#"parseInt("10", undefined);"#, None, None),
+        (r#"parseInt("10", true);"#, None, None),
+        (r#"parseInt("10", "foo");"#, None, None),
+        (r#"parseInt("10", "123");"#, None, None),
+        (r#"parseInt("10", 1);"#, None, None),
+        (r#"parseInt("10", 37);"#, None, None),
+        (r#"parseInt("10", 10.5);"#, None, None),
+        ("Number.parseInt();", None, None),
+        ("Number.parseInt();", Some(json!(["as-needed"])), None),
+        (r#"Number.parseInt("10");"#, None, None),
+        (r#"Number.parseInt("10", 1);"#, None, None),
+        (r#"Number.parseInt("10", 37);"#, None, None),
+        (r#"Number.parseInt("10", 10.5);"#, None, None),
+        (r#"parseInt("10", 10);"#, Some(json!(["as-needed"])), None),
+        (r#"parseInt?.("10");"#, None, None),
+        (r#"Number.parseInt?.("10");"#, None, None),
+        (r#"Number?.parseInt("10");"#, None, None),
+        (r#"(Number?.parseInt)("10");"#, None, None),
+        ("function *f(){ yield(Number).parseInt() }", None, None), // { "ecmaVersion": 6 },
+        ("{ let parseInt; } parseInt();", None, None),
+        ("{ let Number; } Number.parseInt();", None, None),
+        ("{ let Number; } (Number?.parseInt)();", None, None),
     ];
 
     Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).test_and_snapshot();

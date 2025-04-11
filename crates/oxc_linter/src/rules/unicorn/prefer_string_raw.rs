@@ -135,7 +135,7 @@ impl Rule for PreferStringRaw {
                 AstKind::TSEnumMember(member) => {
                     if member.span == string_literal.span {
                         return;
-                    };
+                    }
 
                     let TSEnumMemberName::String(id) = &member.id else {
                         return;

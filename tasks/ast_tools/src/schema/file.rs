@@ -5,6 +5,9 @@ use itertools::Itertools;
 pub struct File {
     /// Crate file is in e.g. `oxc_ast`
     pub krate: String,
+    /// `true` if file is in a NAPI package, rather than a crate
+    #[allow(dead_code, clippy::allow_attributes)]
+    pub is_napi: bool,
     /// Import path excluding crate e.g. `::ast::js`
     pub import_path: String,
 }
@@ -19,16 +22,19 @@ impl File {
         let path = file_path.trim_end_matches(".rs").trim_end_matches("/mod");
 
         let mut parts = path.split('/');
-        assert_eq!(parts.next(), Some("crates"));
-        let krate = parts.next().unwrap().to_string();
+        let (krate, is_napi) = match parts.next().unwrap() {
+            "crates" => (parts.next().unwrap().to_string(), false),
+            "napi" => (format!("napi/{}", parts.next().unwrap()), true),
+            _ => panic!("Expected path beginning with `crates/` or `napi/`: `{path}`"),
+        };
         assert_eq!(parts.next(), Some("src"));
 
         let mut import_path = format!("::{}", parts.join("::"));
         if import_path == "::lib" {
-            import_path = String::new();
+            import_path.clear();
         }
 
-        Self { krate, import_path }
+        Self { krate, is_napi, import_path }
     }
 
     /// Get name of crate this [`File`] is in.
@@ -49,15 +55,18 @@ mod test {
     #[test]
     fn test_file_new() {
         let cases = [
-            ("crates/oxc_ast/src/ast/js.rs", "oxc_ast", "::ast::js"),
-            ("crates/oxc_span/src/source_type/mod.rs", "oxc_span", "::source_type"),
-            ("crates/oxc_syntax/src/lib.rs", "oxc_syntax", ""),
+            ("crates/oxc_ast/src/ast/js.rs", "oxc_ast", "::ast::js", false),
+            ("crates/oxc_span/src/source_type/mod.rs", "oxc_span", "::source_type", false),
+            ("crates/oxc_syntax/src/lib.rs", "oxc_syntax", "", false),
+            ("napi/parser/src/blah.rs", "napi/parser", "::blah", true),
+            ("napi/parser/src/lib.rs", "napi/parser", "", true),
         ];
 
-        for (file_path, krate, import_path) in cases {
+        for (file_path, krate, import_path, is_napi) in cases {
             let file = File::new(file_path);
             assert_eq!(file.krate(), krate);
             assert_eq!(file.import_path(), import_path);
+            assert_eq!(file.is_napi, is_napi);
         }
     }
 }

@@ -18,6 +18,7 @@ pub mod extensions {
     pub mod ast_builder;
     pub mod clone_in;
     pub mod content_eq;
+    pub mod dummy;
     pub mod estree;
     pub mod kind;
     pub mod layout;
@@ -64,7 +65,6 @@ impl Schema {
     ///
     /// # Panics
     /// Panics if no type with supplied name.
-    #[expect(dead_code)]
     pub fn type_by_name(&self, name: &str) -> &TypeDef {
         let type_id = self.type_names[name];
         &self.types[type_id]

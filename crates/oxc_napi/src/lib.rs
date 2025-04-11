@@ -1,68 +1,58 @@
-use napi_derive::napi;
+mod comment;
+mod error;
 
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+pub use comment::*;
+pub use error::*;
 
-#[napi(object)]
-pub struct OxcError {
-    pub severity: Severity,
-    pub message: String,
-    pub labels: Vec<ErrorLabel>,
-    pub help_message: Option<String>,
-}
+use oxc_ast::{CommentKind, ast::Program};
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_syntax::module_record::ModuleRecord;
 
-impl OxcError {
-    pub fn new(message: String) -> Self {
-        Self { severity: Severity::Error, message, labels: vec![], help_message: None }
-    }
-}
+/// Convert spans to UTF-16
+pub fn convert_utf8_to_utf16(
+    source_text: &str,
+    program: &mut Program,
+    module_record: &mut ModuleRecord,
+    errors: &mut Vec<OxcError>,
+) -> Vec<Comment> {
+    let span_converter = Utf8ToUtf16::new(source_text);
+    span_converter.convert_program(program);
 
-impl From<OxcDiagnostic> for OxcError {
-    fn from(diagnostic: OxcDiagnostic) -> Self {
-        let labels = diagnostic
-            .labels
-            .as_ref()
-            .map(|labels| labels.iter().map(ErrorLabel::from).collect::<Vec<_>>())
-            .unwrap_or_default();
-        Self {
-            severity: Severity::from(diagnostic.severity),
-            message: diagnostic.message.to_string(),
-            labels,
-            help_message: diagnostic.help.as_ref().map(ToString::to_string),
+    // Convert comments
+    let mut offset_converter = span_converter.converter();
+    let comments = program
+        .comments
+        .iter()
+        .map(|comment| {
+            let value = comment.content_span().source_text(source_text).to_string();
+            let mut span = comment.span;
+            if let Some(converter) = offset_converter.as_mut() {
+                converter.convert_span(&mut span);
+            }
+            Comment {
+                r#type: match comment.kind {
+                    CommentKind::Line => String::from("Line"),
+                    CommentKind::Block => String::from("Block"),
+                },
+                value,
+                start: span.start,
+                end: span.end,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    // Convert spans in module record to UTF-16
+    span_converter.convert_module_record(module_record);
+
+    // Convert spans in errors to UTF-16
+    if let Some(mut converter) = span_converter.converter() {
+        for error in errors {
+            for label in &mut error.labels {
+                converter.convert_offset(&mut label.start);
+                converter.convert_offset(&mut label.end);
+            }
         }
     }
-}
 
-#[napi(object)]
-pub struct ErrorLabel {
-    pub message: Option<String>,
-    pub start: u32,
-    pub end: u32,
-}
-
-impl From<&LabeledSpan> for ErrorLabel {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from(label: &LabeledSpan) -> Self {
-        Self {
-            message: label.label().map(ToString::to_string),
-            start: label.offset() as u32,
-            end: (label.offset() + label.len()) as u32,
-        }
-    }
-}
-
-#[napi(string_enum)]
-pub enum Severity {
-    Error,
-    Warning,
-    Advice,
-}
-
-impl From<oxc_diagnostics::Severity> for Severity {
-    fn from(value: oxc_diagnostics::Severity) -> Self {
-        match value {
-            oxc_diagnostics::Severity::Error => Self::Error,
-            oxc_diagnostics::Severity::Warning => Self::Warning,
-            oxc_diagnostics::Severity::Advice => Self::Advice,
-        }
-    }
+    comments
 }

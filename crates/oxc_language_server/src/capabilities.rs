@@ -1,4 +1,4 @@
-use tower_lsp::lsp_types::{
+use tower_lsp_server::lsp_types::{
     ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability,
     ExecuteCommandOptions, OneOf, ServerCapabilities, TextDocumentSyncCapability,
     TextDocumentSyncKind, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
@@ -78,7 +78,7 @@ impl From<Capabilities> for ServerCapabilities {
 
 #[cfg(test)]
 mod test {
-    use tower_lsp::lsp_types::{
+    use tower_lsp_server::lsp_types::{
         ClientCapabilities, CodeActionClientCapabilities, CodeActionKindLiteralSupport,
         CodeActionLiteralSupport, DynamicRegistrationClientCapabilities,
         TextDocumentClientCapabilities, WorkspaceClientCapabilities,

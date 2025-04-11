@@ -1,0 +1,6 @@
+{
+  "extends": ["jsx.json", "./typescript.json"],
+  "rules": {
+    "no-unused-vars": "off"
+  }
+}

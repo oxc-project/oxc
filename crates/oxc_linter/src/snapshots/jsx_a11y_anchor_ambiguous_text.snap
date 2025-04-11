@@ -1,170 +1,199 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>here</a>;
    · ───────────
    ╰────
+  help: Avoid using ambiguous text like "here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>HERE</a>;
    · ───────────
    ╰────
+  help: Avoid using ambiguous text like "here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>click here</a>;
    · ─────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more</a>;
    · ─────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn      more</a>;
    · ──────────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more.</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more?</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more,</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more!</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more;</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>learn more:</a>;
    · ──────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>link</a>;
    · ───────────
    ╰────
+  help: Avoid using ambiguous text like "link", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>a link</a>;
    · ─────────────
    ╰────
+  help: Avoid using ambiguous text like "a link", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a aria-label="click here">something</a>;
    · ────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a> a link </a>;
    · ───────────────
    ╰────
+  help: Avoid using ambiguous text like "a link", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>a<i></i> link</a>;
    · ────────────────────
    ╰────
+  help: Avoid using ambiguous text like "a link", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><i></i>a link</a>;
    · ────────────────────
    ╰────
+  help: Avoid using ambiguous text like "a link", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><span>click</span> here</a>;
    · ──────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><span> click </span> here</a>;
    · ────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><span aria-hidden>more text</span>learn more</a>;
    · ───────────────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><span aria-hidden="true">more text</span>learn more</a>;
    · ──────────────────────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "learn more", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><img alt="click here"/></a>;
    · ──────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a alt="tutorial on using eslint-plugin-jsx-a11y">click here</a>;
    · ────────────────────────────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><span alt="tutorial on using eslint-plugin-jsx-a11y">click here</span></a>;
    · ─────────────────────────────────────────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><CustomElement>click</CustomElement> here</a>;
    · ────────────────────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <Link>here</Link>
    · ─────────────────
    ╰────
+  help: Avoid using ambiguous text like "here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a><Image alt="click here" /></a>
    · ─────────────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>a disallowed word</a>
    · ────────────────────────
    ╰────
+  help: Avoid using ambiguous text like "a disallowed word", replace it with more descriptive text that provides context.

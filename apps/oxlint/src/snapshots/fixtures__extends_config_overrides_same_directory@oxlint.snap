@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: overrides_same_directory
+working directory: fixtures/extends_config
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[overrides_same_directory/config/test.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

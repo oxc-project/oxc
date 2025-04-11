@@ -54,7 +54,6 @@ impl Rule for RequirePropertyDescription {
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
         for jsdoc in ctx
-            .semantic()
             .jsdoc()
             .iter_all()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
@@ -69,7 +68,7 @@ impl Rule for RequirePropertyDescription {
                 let (_, _, comment_part) = tag.type_name_comment();
                 if !comment_part.parsed().is_empty() {
                     continue;
-                };
+                }
 
                 ctx.diagnostic(require_property_description_diagnostic(tag_name.span));
             }

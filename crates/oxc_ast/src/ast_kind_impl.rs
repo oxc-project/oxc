@@ -167,6 +167,7 @@ impl<'a> AstKind<'a> {
             Expression::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
             Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
             Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
+            Expression::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
         }
     }
 }
@@ -380,7 +381,7 @@ impl AstKind<'_> {
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
             Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
-
+            Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
@@ -407,6 +408,7 @@ impl AstKind<'_> {
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
+            Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
         }
     }
 }

@@ -6,16 +6,25 @@ export interface CodegenOptions {
    *
    * @default true
    */
-  whitespace?: boolean
+  removeWhitespace?: boolean
 }
 
 export interface CompressOptions {
   /**
-   * Enables optional catch or nullish-coalescing operator if targeted higher.
+   * Set desired EcmaScript standard version for output.
    *
-   * @default 'es2015'
+   * Set `esnext` to enable all target highering.
+   *
+   * e.g.
+   *
+   * * catch optional binding when >= es2019
+   * * `??` operator >= es2020
+   *
+   * @default 'esnext'
    */
-  target?: string
+  target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
+  /** Keep function / class names. */
+  keepNames?: CompressOptionsKeepNames
   /**
    * Pass true to discard calls to `console.*`.
    *
@@ -30,20 +39,58 @@ export interface CompressOptions {
   dropDebugger?: boolean
 }
 
+export interface CompressOptionsKeepNames {
+  /**
+   * Keep function names so that `Function.prototype.name` is preserved.
+   *
+   * This does not guarantee that the `undefined` name is preserved.
+   *
+   * @default false
+   */
+  function: boolean
+  /**
+   * Keep class names so that `Class.prototype.name` is preserved.
+   *
+   * This does not guarantee that the `undefined` name is preserved.
+   *
+   * @default false
+   */
+  class: boolean
+}
+
 export interface MangleOptions {
-  /** Pass true to mangle names declared in the top level scope. */
+  /**
+   * Pass `true` to mangle names declared in the top level scope.
+   *
+   * @default false
+   */
   toplevel?: boolean
+  /**
+   * Preserve `name` property for functions and classes.
+   *
+   * @default false
+   */
+  keepNames?: boolean | MangleOptionsKeepNames
   /** Debug mangled names. */
   debug?: boolean
 }
 
-/**
- * Minify synchronously.
- *
- * # Errors
- *
- * * Fails to parse the options.
- */
+export interface MangleOptionsKeepNames {
+  /**
+   * Preserve `name` property for functions.
+   *
+   * @default false
+   */
+  function: boolean
+  /**
+   * Preserve `name` property for classes.
+   *
+   * @default false
+   */
+  class: boolean
+}
+
+/** Minify synchronously. */
 export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
 export interface MinifyOptions {

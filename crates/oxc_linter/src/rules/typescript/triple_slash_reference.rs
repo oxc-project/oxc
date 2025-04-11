@@ -115,7 +115,7 @@ impl Rule for TripleSlashReference {
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
         let mut refs_for_import = FxHashMap::default();
 
-        for comment in ctx.semantic().comments_range(0..comments_range_end) {
+        for comment in ctx.comments_range(0..comments_range_end) {
             let raw = ctx.source_range(comment.content_span());
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)

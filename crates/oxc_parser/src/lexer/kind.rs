@@ -1,6 +1,6 @@
 //! ECMAScript Token Kinds
 
-use std::fmt;
+use std::fmt::{self, Display};
 
 /// Lexer token kind
 ///
@@ -248,6 +248,16 @@ impl Kind {
     #[inline]
     pub fn is_identifier(self) -> bool {
         self.is_identifier_name() && !self.is_reserved_keyword()
+    }
+
+    /// TypeScript Identifier
+    ///
+    /// <https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/parser.ts#L2316-L2335>
+    #[inline]
+    pub fn is_ts_identifier(self, r#yield: bool, r#await: bool) -> bool {
+        self.is_identifier_reference(r#yield, r#await)
+            && !self.is_strict_mode_contextual_keyword()
+            && !self.is_contextual_keyword()
     }
 
     /// `IdentifierName`
@@ -683,8 +693,8 @@ impl Kind {
     }
 }
 
-impl fmt::Display for Kind {
+impl Display for Kind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
+        self.to_str().fmt(f)
     }
 }

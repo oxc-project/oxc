@@ -173,7 +173,7 @@ fn check_parents<'a>(
             let Some(ident) = &function.id else {
                 return InConditional(false);
             };
-            let symbol_table = ctx.semantic().symbols();
+            let symbol_table = ctx.scoping();
             let symbol_id = ident.symbol_id();
 
             // Consider cases like:

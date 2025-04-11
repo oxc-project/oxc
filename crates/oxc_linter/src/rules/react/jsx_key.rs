@@ -115,7 +115,7 @@ pub fn is_import<'a>(
     expected_module_name: &'a str,
 ) -> bool {
     if ctx.module_record().requested_modules.is_empty()
-        && ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).is_empty()
+        && ctx.scoping().get_bindings(ctx.scoping().root_scope_id()).is_empty()
     {
         return actual_local_name == expected_local_name;
     }

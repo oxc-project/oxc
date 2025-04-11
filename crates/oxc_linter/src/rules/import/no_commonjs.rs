@@ -179,20 +179,20 @@ impl Rule for NoCommonjs {
                             ));
                         } else {
                             return;
-                        };
+                        }
                     } else {
                         ctx.diagnostic(no_commonjs_diagnostic(
                             member_expr.span(),
                             "export",
                             property_name,
                         ));
-                    };
+                    }
                     return;
                 }
 
                 // exports.
                 if member_expr.object().is_specific_id("exports") {
-                    if node.scope_id() != ctx.scopes().root_scope_id() {
+                    if node.scope_id() != ctx.scoping().root_scope_id() {
                         return;
                     }
 
@@ -204,7 +204,8 @@ impl Rule for NoCommonjs {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                if self.allow_conditional_require && node.scope_id() != ctx.scopes().root_scope_id()
+                if self.allow_conditional_require
+                    && node.scope_id() != ctx.scoping().root_scope_id()
                 {
                     return;
                 }
@@ -213,15 +214,15 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
+                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
                     return;
                 }
 
                 if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
-                    if template_literal.expressions.len() != 0 {
+                    if !template_literal.expressions.is_empty() {
                         return;
                     }
-                };
+                }
 
                 if self.allow_require {
                     return;

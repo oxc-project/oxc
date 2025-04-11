@@ -1,8 +1,8 @@
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::{Regex, RegexBuilder};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -140,7 +140,7 @@ impl Rule for DefaultCase {
             let has_default_comment = ctx
                 .semantic()
                 .comments_range(last_case.span.start..switch.span.end)
-                .last()
+                .next_back()
                 .is_some_and(|comment| {
                     let raw = ctx.source_range(comment.content_span()).trim();
                     match &self.comment_pattern {

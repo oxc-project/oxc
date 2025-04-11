@@ -313,6 +313,7 @@ impl<'a> Lexer<'a> {
     /// Whitespace and line terminators are skipped
     fn read_next_token(&mut self) -> Kind {
         self.trivia_builder.has_pure_comment = false;
+        self.trivia_builder.has_no_side_effects_comment = false;
         loop {
             let offset = self.offset();
             self.token.start = offset;

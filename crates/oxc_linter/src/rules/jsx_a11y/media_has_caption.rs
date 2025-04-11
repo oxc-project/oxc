@@ -70,36 +70,26 @@ impl Rule for MediaHasCaption {
 
         if let Some(arr) = value.as_array() {
             for v in arr {
-                if let serde_json::Value::Object(rule_config) = v {
-                    if let Some(audio) = rule_config.get("audio").and_then(Value::as_array) {
-                        config.audio.extend(
-                            audio
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    if let Some(video) = rule_config.get("video").and_then(Value::as_array) {
-                        config.video.extend(
-                            video
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    if let Some(track) = rule_config.get("track").and_then(Value::as_array) {
-                        config.track.extend(
-                            track
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .map(String::from)
-                                .map(Into::into),
-                        );
-                    }
-                    break;
+                let serde_json::Value::Object(rule_config) = v else {
+                    continue;
+                };
+
+                if let Some(audio) = rule_config.get("audio").and_then(Value::as_array) {
+                    config.audio.extend(
+                        audio.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
                 }
+                if let Some(video) = rule_config.get("video").and_then(Value::as_array) {
+                    config.video.extend(
+                        video.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
+                }
+                if let Some(track) = rule_config.get("track").and_then(Value::as_array) {
+                    config.track.extend(
+                        track.iter().filter_map(Value::as_str).map(String::from).map(Into::into),
+                    );
+                }
+                break;
             }
         }
 
@@ -122,23 +112,22 @@ impl Rule for MediaHasCaption {
         }
 
         let muted = jsx_el.attributes.iter().any(|attr_item| {
-            if let JSXAttributeItem::Attribute(attr) = attr_item {
-                if let JSXAttributeName::Identifier(iden) = &attr.name {
-                    if iden.name == "muted" {
-                        return match &attr.value {
-                            Some(JSXAttributeValue::ExpressionContainer(exp)) => {
-                                match &exp.expression {
-                                    JSXExpression::BooleanLiteral(boolean) => boolean.value,
-                                    _ => false,
-                                }
-                            }
-                            Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
-                            None => true, // e.g. <video muted></video>
-                            _ => false,
-                        };
-                    }
-                }
+            let JSXAttributeItem::Attribute(attr) = attr_item else { return false };
+
+            let JSXAttributeName::Identifier(iden) = &attr.name else { return false };
+
+            if iden.name == "muted" {
+                return match &attr.value {
+                    Some(JSXAttributeValue::ExpressionContainer(exp)) => match &exp.expression {
+                        JSXExpression::BooleanLiteral(boolean) => boolean.value,
+                        _ => false,
+                    },
+                    Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
+                    None => true, // e.g. <video muted></video>
+                    _ => false,
+                };
             }
+
             false
         });
 
@@ -161,13 +150,13 @@ impl Rule for MediaHasCaption {
 
                     self.0.track.contains(&child_name)
                         && child_el.opening_element.attributes.iter().any(|attr| {
-                            if let JSXAttributeItem::Attribute(attr) = attr {
-                                if let JSXAttributeName::Identifier(iden) = &attr.name {
-                                    if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
-                                        return iden.name == "kind"
-                                            && s.value.eq_ignore_ascii_case("captions");
-                                    }
-                                }
+                            let JSXAttributeItem::Attribute(attr) = attr else { return false };
+                            let JSXAttributeName::Identifier(iden) = &attr.name else {
+                                return false;
+                            };
+                            if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
+                                return iden.name == "kind"
+                                    && s.value.eq_ignore_ascii_case("captions");
                             }
                             false
                         })

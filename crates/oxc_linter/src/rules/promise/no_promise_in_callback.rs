@@ -61,7 +61,7 @@ impl Rule for NoPromiseInCallback {
         // To avoid false positives, this case is intentionally excluded from the scope of this rule.
         if let Some(AstKind::ReturnStatement(_)) = ctx.nodes().parent_kind(node.id()) {
             return;
-        };
+        }
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_callback_function(node, ctx)) {
@@ -110,7 +110,7 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
     };
     if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
         return false;
-    };
+    }
 
     let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(parent.id()) else {
         return false;

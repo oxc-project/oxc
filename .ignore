@@ -11,4 +11,3 @@ tasks/prettier_conformance/prettier/**
 **/*.snap
 
 crates/oxc_transformer/src/options/es_features.rs
-npm/oxc-wasm/**

@@ -124,7 +124,7 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
 fn is_undefined(arg: &Argument) -> bool {
     if !arg.is_expression() {
         return false;
-    };
+    }
     let expr: &Expression = arg.to_expression();
     if let Expression::Identifier(_) = expr {
         return expr.is_undefined();
@@ -184,9 +184,8 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
-                                    .semantic()
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
-                                    .last()
+                                    .next_back()
                                 {
                                     Span::new(comment.span.end, undefined_literal.span.end)
                                 } else {

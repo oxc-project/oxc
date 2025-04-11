@@ -47,15 +47,12 @@
 //! [`Derive`]: crate::Derive
 //! [`Generator`]: crate::Generator
 
-use indexmap::{IndexMap, IndexSet};
 use oxc_index::IndexVec;
-use rustc_hash::FxBuildHasher;
-use syn::Ident;
 
 use crate::{
     Codegen, log, log_success,
-    schema::Derives,
-    schema::{File, FileId, Schema},
+    schema::{Derives, File, FileId, Schema},
+    utils::FxIndexMap,
 };
 
 pub mod attr;
@@ -66,9 +63,6 @@ mod skeleton;
 use load::load_file;
 use parse::parse;
 use skeleton::Skeleton;
-
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
-type FxIndexSet<K> = IndexSet<K, FxBuildHasher>;
 
 /// Analyse the files with provided paths, and generate a [`Schema`].
 pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
@@ -108,11 +102,4 @@ fn analyse_file(
     log_success!();
 
     File::new(file_path)
-}
-
-/// Convert [`Ident`] to `String`, removing `r#` from start.
-///
-/// [`Ident`]: struct@Ident
-fn ident_name(ident: &Ident) -> String {
-    ident.to_string().trim_start_matches("r#").to_string()
 }

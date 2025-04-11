@@ -2,6 +2,9 @@
   "recommendations": [
     "rust-lang.rust-analyzer", // official rust extension
     "vadimcn.vscode-lldb", // for debugging
-    "tamasfe.even-better-toml" // toml syntax
+    "tamasfe.even-better-toml", // toml syntax
+    "nefrob.vscode-just-syntax", // justfile syntax & task runner
+    "tekumara.typos-vscode", // spell checker
+    "EditorConfig.EditorConfig" // editorconfig
   ]
 }

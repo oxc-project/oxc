@@ -7,7 +7,7 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -250,7 +250,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
+        arguments.insert(0, Argument::from(expr.take_in(ctx.ast.allocator)));
         *expr = ctx.ast.expression_call(
             SPAN,
             binding.create_read_expression(ctx),
@@ -307,7 +307,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let current_scope_id = ctx.current_scope_id();
-        if !ctx.scopes().get_flags(current_scope_id).is_function() {
+        if !ctx.scoping().scope_flags(current_scope_id).is_function() {
             return;
         }
 
@@ -337,9 +337,9 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
 
             if let Some(binding_name) = binding_name {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
-                    ctx.scopes()
+                    ctx.scoping()
                         .find_binding(
-                            ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
+                            ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {
@@ -503,7 +503,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                ctx.ast.move_expression(expr),
+                expr.take_in(ctx.ast.allocator),
             );
         }
 
@@ -593,7 +593,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 )),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function = Argument::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+            let function = Argument::from(ctx.ast.expression_function_with_scope_id_and_pure(
                 SPAN,
                 FunctionType::FunctionExpression,
                 None,
@@ -606,6 +606,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 NONE,
                 Some(function_body),
                 scope_id,
+                false,
             ));
             arguments.push(function);
         }
@@ -793,7 +794,7 @@ impl<'a> ReactRefresh<'a, '_> {
             // See if this identifier is used in JSX. Then it's a component.
             // TODO: Here we should check if the variable is used in JSX. But now we only check if it has value references.
             // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
-            if !ctx.symbols().get_resolved_references(symbol_id).any(Reference::is_value) {
+            if !ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_value) {
                 return None;
             }
         }

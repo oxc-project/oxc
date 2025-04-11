@@ -1,4 +1,6 @@
-use oxc_allocator::{CloneIn, Vec};
+use std::iter::repeat_with;
+
+use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
@@ -14,36 +16,54 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
-    pub fn substitute_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: Ctx<'a, '_>) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    pub fn substitute_object_property(
+        &self,
+        prop: &mut ObjectProperty<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        if !prop.method {
+            if let PropertyKey::StringLiteral(str) = &prop.key {
+                // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
+                if str.value == "__proto__" {
+                    return;
+                }
+            }
+        }
+
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_assignment_target_property_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.name, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_assignment_target_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_assignment_target_property(prop, ctx);
+        self.try_compress_assignment_target_property(prop, state, ctx);
     }
 
     pub fn try_compress_assignment_target_property(
-        &mut self,
+        &self,
         prop: &mut AssignmentTargetProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // `a: a` -> `a`
@@ -60,71 +80,120 @@ impl<'a> PeepholeOptimizations {
                     ctx.ast.identifier_reference(assign_target_prop_prop.span, prop_name),
                     None,
                 );
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
     }
 
     pub fn substitute_binding_property(
-        &mut self,
+        &self,
         prop: &mut BindingProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_method_definition(
-        &mut self,
+        &self,
         prop: &mut MethodDefinition<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_property_definition(
-        &mut self,
+        &self,
         prop: &mut PropertyDefinition<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_accessor_property(
-        &mut self,
+        &self,
         prop: &mut AccessorProperty<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
 
     pub fn substitute_return_statement(
-        &mut self,
+        &self,
         stmt: &mut ReturnStatement<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        self.compress_return_statement(stmt, ctx);
+        self.compress_return_statement(stmt, state, ctx);
     }
 
     pub fn substitute_variable_declaration(
-        &mut self,
+        &self,
         decl: &mut VariableDeclaration<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
-            self.compress_variable_declarator(declarator, ctx);
+            self.compress_variable_declarator(declarator, state, ctx);
         }
     }
 
-    pub fn substitute_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) {
-        self.try_compress_call_expression_arguments(expr, ctx);
+    pub fn substitute_call_expression(
+        &self,
+        expr: &mut CallExpression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_flatten_arguments(&mut expr.arguments, state, ctx);
     }
 
-    pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_new_expression(
+        &self,
+        expr: &mut NewExpression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_flatten_arguments(&mut expr.arguments, state, ctx);
+    }
+
+    pub fn substitute_exit_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         // Change syntax
         match expr {
-            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
-            Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
+            Expression::ArrowFunctionExpression(e) => {
+                self.try_compress_arrow_expression(e, state, ctx);
+            }
+            Expression::ChainExpression(e) => {
+                self.try_compress_chain_call_expression(e, state, ctx);
+            }
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
+            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, state, ctx),
+            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, state, ctx),
             _ => {}
         }
 
@@ -149,13 +218,13 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
-            && (e.left.is_literal() || e.left.is_no_substitution_template())
+            && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
             && !e.right.is_literal()
         {
             std::mem::swap(&mut e.left, &mut e.right);
@@ -164,8 +233,9 @@ impl<'a> PeepholeOptimizations {
 
     /// `() => { return foo })` -> `() => foo`
     fn try_compress_arrow_expression(
-        &mut self,
+        &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if !arrow_expr.expression
@@ -175,11 +245,11 @@ impl<'a> PeepholeOptimizations {
             if let Some(body) = arrow_expr.body.statements.first_mut() {
                 if let Statement::ReturnStatement(ret_stmt) = body {
                     let return_stmt_arg =
-                        ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
+                        ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx.ast.allocator));
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
-                        self.mark_current_function_as_changed();
+                        state.changed = true;
                     }
                 }
             }
@@ -218,14 +288,13 @@ impl<'a> PeepholeOptimizations {
         };
         if let Expression::Identifier(ident) = &unary_expr.argument {
             if ctx.is_global_reference(ident) {
-                let left = ctx.ast.move_expression(&mut expr.left);
+                let left = expr.left.take_in(ctx.ast.allocator);
                 let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
                 return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
             }
         }
 
-        let Expression::UnaryExpression(unary_expr) = ctx.ast.move_expression(&mut expr.left)
-        else {
+        let Expression::UnaryExpression(unary_expr) = expr.left.take_in(ctx.ast.allocator) else {
             unreachable!()
         };
         let right = ctx.ast.void_0(expr.right.span());
@@ -260,7 +329,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        Some(ctx.ast.move_expression(&mut expr.argument))
+        Some(expr.argument.take_in(ctx.ast.allocator))
     }
 
     /// For `+a - n` => `a - n` (assuming n is a number)
@@ -316,9 +385,9 @@ impl<'a> PeepholeOptimizations {
 
         let mut new_left = ctx.ast.expression_logical(
             expr.span,
-            ctx.ast.move_expression(&mut expr.left),
+            expr.left.take_in(ctx.ast.allocator),
             expr.operator,
-            ctx.ast.move_expression(&mut right.left),
+            right.left.take_in(ctx.ast.allocator),
         );
 
         {
@@ -332,7 +401,7 @@ impl<'a> PeepholeOptimizations {
             expr.span,
             new_left,
             expr.operator,
-            ctx.ast.move_expression(&mut right.right),
+            right.right.take_in(ctx.ast.allocator),
         ))
     }
 
@@ -388,7 +457,7 @@ impl<'a> PeepholeOptimizations {
         .map(|new_expr| {
             ctx.ast.expression_logical(
                 expr.span,
-                ctx.ast.move_expression(&mut left.left),
+                left.left.take_in(ctx.ast.allocator),
                 expr.operator,
                 new_expr,
             )
@@ -508,15 +577,9 @@ impl<'a> PeepholeOptimizations {
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
             let (left, right) = if ctx.is_expression_undefined(&e.right) {
-                (
-                    ctx.ast.move_expression(&mut e.left),
-                    ctx.ast.expression_null_literal(e.right.span()),
-                )
+                (e.left.take_in(ctx.ast.allocator), ctx.ast.expression_null_literal(e.right.span()))
             } else if ctx.is_expression_undefined(&e.left) {
-                (
-                    ctx.ast.move_expression(&mut e.right),
-                    ctx.ast.expression_null_literal(e.left.span()),
-                )
+                (e.right.take_in(ctx.ast.allocator), ctx.ast.expression_null_literal(e.left.span()))
             } else {
                 return None;
             };
@@ -531,7 +594,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: Ctx<'a, '_>) {
+    fn compress_return_statement(
+        &self,
+        stmt: &mut ReturnStatement<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
@@ -551,28 +619,34 @@ impl<'a> PeepholeOptimizations {
             }
         }
         stmt.argument = None;
-        self.mark_current_function_as_changed();
+        state.changed = true;
     }
 
     fn compress_variable_declarator(
-        &mut self,
+        &self,
         decl: &mut VariableDeclarator<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
-        if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
+        if matches!(
+            decl.kind,
+            VariableDeclarationKind::Const
+                | VariableDeclarationKind::Using
+                | VariableDeclarationKind::AwaitUsing
+        ) || decl.id.kind.is_destructuring_pattern()
+        {
             return;
         }
         if !decl.kind.is_var()
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
         {
             decl.init = None;
-            self.mark_current_function_as_changed();
+            state.changed = true;
         }
     }
 
-    /// Fold `Boolean`, `Number`, `String`, `BigInt` constructors.
-    ///
+    /// Fold `Boolean`, ///
     /// `Boolean(a)` -> `!!a`
     /// `Number(0)` -> `0`
     /// `String()` -> `''`
@@ -607,7 +681,7 @@ impl<'a> PeepholeOptimizations {
             "Boolean" => match arg {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
-                    let mut arg = ctx.ast.move_expression(arg);
+                    let mut arg = arg.take_in(ctx.ast.allocator);
                     self.try_fold_expr_in_boolean_context(&mut arg, ctx);
                     let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
                     Some(self.minimize_not(span, arg, ctx))
@@ -626,7 +700,7 @@ impl<'a> PeepholeOptimizations {
                             span,
                             ctx.ast.expression_string_literal(call_expr.span, "", None),
                             BinaryOperator::Addition,
-                            ctx.ast.move_expression(arg),
+                            arg.take_in(ctx.ast.allocator),
                         ))
                     }
                 }
@@ -644,7 +718,7 @@ impl<'a> PeepholeOptimizations {
             "BigInt" => match arg {
                 None => None,
                 Some(arg) => matches!(arg, Expression::BigIntLiteral(_))
-                    .then(|| ctx.ast.move_expression(arg)),
+                    .then(|| arg.take_in(ctx.ast.allocator)),
             },
             _ => None,
         }
@@ -704,8 +778,8 @@ impl<'a> PeepholeOptimizations {
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                let elisions = std::iter::from_fn(|| {
-                                    Some(ArrayExpressionElement::Elision(ctx.ast.elision(n.span)))
+                                let elisions = repeat_with(|| {
+                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
                                 })
                                 .take(n_int);
                                 return Some(ctx.ast.expression_array(
@@ -716,28 +790,28 @@ impl<'a> PeepholeOptimizations {
                             }
                         }
                         let callee = ctx.ast.expression_identifier(n.span, "Array");
-                        let args = ctx.ast.move_vec(args);
+                        let args = args.take_in(ctx.ast.allocator);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                         let elements = ctx
                             .ast
-                            .vec1(ArrayExpressionElement::from(ctx.ast.move_expression(arg)));
+                            .vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator)));
                         Some(ctx.ast.expression_array(span, elements, None))
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
                         let callee = ctx.ast.expression_identifier(span, "Array");
-                        let args = ctx.ast.move_vec(args);
+                        let args = args.take_in(ctx.ast.allocator);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
                 } else {
                     // // `new Array(1, 2, 3)` -> `[1, 2, 3]`
                     let elements = ctx.ast.vec_from_iter(
-                        args.iter_mut()
-                            .filter_map(|arg| arg.as_expression_mut())
-                            .map(|arg| ArrayExpressionElement::from(ctx.ast.move_expression(arg))),
+                        args.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(|arg| {
+                            ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator))
+                        }),
                     );
                     Some(ctx.ast.expression_array(span, elements, None))
                 }
@@ -780,9 +854,9 @@ impl<'a> PeepholeOptimizations {
         } {
             Some(ctx.ast.expression_call(
                 e.span,
-                ctx.ast.move_expression(&mut e.callee),
+                e.callee.take_in(ctx.ast.allocator),
                 NONE,
-                ctx.ast.move_vec(&mut e.arguments),
+                e.arguments.take_in(ctx.ast.allocator),
                 false,
             ))
         } else {
@@ -806,8 +880,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_compress_chain_call_expression(
-        &mut self,
+        &self,
         chain_expr: &mut ChainExpression<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
@@ -819,7 +894,7 @@ impl<'a> PeepholeOptimizations {
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
                 call_expr.callee = ctx.ast.expression_identifier(call_expr.callee.span(), "Object");
-                self.mark_current_function_as_changed();
+                state.changed = true;
             }
         }
     }
@@ -830,9 +905,10 @@ impl<'a> PeepholeOptimizations {
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
     fn try_compress_property_key(
-        &mut self,
+        &self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         if let PropertyKey::NumericLiteral(_) = key {
@@ -840,18 +916,13 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             return;
-        };
+        }
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
-        // Uncaught SyntaxError: Classes may not have a field named 'constructor'
-        // Uncaught SyntaxError: Class constructor may not be a private method
-        if matches!(value, "__proto__" | "prototype" | "constructor" | "#constructor") {
-            return;
-        }
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
-            self.mark_current_function_as_changed();
+            state.changed = true;
             return;
         }
         if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
@@ -863,7 +934,7 @@ impl<'a> PeepholeOptimizations {
                     None,
                     NumberBase::Decimal,
                 ));
-                self.mark_current_function_as_changed();
+                state.changed = true;
                 return;
             }
         }
@@ -873,13 +944,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
-    fn try_compress_call_expression_arguments(
-        &mut self,
-        node: &mut CallExpression<'a>,
+    // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
+    fn try_flatten_arguments(
+        &self,
+        args: &mut Vec<'a, Argument<'a>>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
         let (new_size, should_fold) =
-            node.arguments.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+            args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
                     if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
                         should_fold = true;
@@ -893,101 +966,86 @@ impl<'a> PeepholeOptimizations {
 
                 (new_size, should_fold)
             });
+        if !should_fold {
+            return;
+        }
 
-        if should_fold {
-            let old_args =
-                std::mem::replace(&mut node.arguments, ctx.ast.vec_with_capacity(new_size));
-            let new_args = &mut node.arguments;
+        let old_args = std::mem::replace(args, ctx.ast.vec_with_capacity(new_size));
+        let new_args = args;
 
-            for arg in old_args {
-                if let Argument::SpreadElement(mut spread_el) = arg {
-                    if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                        for el in &mut array_expr.elements {
-                            match el {
-                                ArrayExpressionElement::SpreadElement(spread_el) => {
-                                    new_args.push(ctx.ast.argument_spread_element(
-                                        spread_el.span,
-                                        ctx.ast.move_expression(&mut spread_el.argument),
-                                    ));
-                                }
-                                ArrayExpressionElement::Elision(elision) => {
-                                    new_args.push(ctx.ast.void_0(elision.span).into());
-                                }
-                                match_expression!(ArrayExpressionElement) => {
-                                    new_args.push(
-                                        ctx.ast.move_expression(el.to_expression_mut()).into(),
-                                    );
-                                }
+        for arg in old_args {
+            if let Argument::SpreadElement(mut spread_el) = arg {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                    for el in &mut array_expr.elements {
+                        match el {
+                            ArrayExpressionElement::SpreadElement(spread_el) => {
+                                new_args.push(ctx.ast.argument_spread_element(
+                                    spread_el.span,
+                                    spread_el.argument.take_in(ctx.ast.allocator),
+                                ));
+                            }
+                            ArrayExpressionElement::Elision(elision) => {
+                                new_args.push(ctx.ast.void_0(elision.span).into());
+                            }
+                            match_expression!(ArrayExpressionElement) => {
+                                new_args
+                                    .push(el.to_expression_mut().take_in(ctx.ast.allocator).into());
                             }
                         }
-                    } else {
-                        new_args.push(ctx.ast.argument_spread_element(
-                            spread_el.span,
-                            ctx.ast.move_expression(&mut spread_el.argument),
-                        ));
                     }
                 } else {
-                    new_args.push(arg);
+                    new_args.push(ctx.ast.argument_spread_element(
+                        spread_el.span,
+                        spread_el.argument.take_in(ctx.ast.allocator),
+                    ));
                 }
-            }
-            self.mark_current_function_as_changed();
-        }
-    }
-
-    pub fn substitute_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            if let Some(folded_expr) = match &mut expr_stmt.expression {
-                Expression::LogicalExpression(expr) => {
-                    self.try_compress_is_null_and_to_nullish_coalescing(expr, ctx)
-                }
-                _ => None,
-            } {
-                expr_stmt.expression = folded_expr;
-                self.mark_current_function_as_changed();
+            } else {
+                new_args.push(arg);
             }
         }
+        state.changed = true;
     }
 
-    /// Compress `a == null && b` to `a ?? b`
+    /// Remove name from function expressions if it is not used.
     ///
-    /// - `a == null && b` -> `a ?? b`
-    /// - `a != null || b` -> `a ?? b`
+    /// e.g. `var a = function f() {}` -> `var a = function () {}`
     ///
-    /// This can be only done when the return value is not used.
-    /// For example when a = 1, `a == null && b` returns `false` while `a ?? b` returns `1`.
-    fn try_compress_is_null_and_to_nullish_coalescing(
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn try_remove_name_from_functions(
         &self,
-        expr: &mut LogicalExpression<'a>,
+        func: &mut Function<'a>,
+        state: &mut State,
         ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
+    ) {
+        if self.keep_names.function {
+            return;
         }
-        let target_op = match expr.operator {
-            LogicalOperator::And => BinaryOperator::Equality,
-            LogicalOperator::Or => BinaryOperator::Inequality,
-            LogicalOperator::Coalesce => return None,
-        };
-        let Expression::BinaryExpression(binary_expr) = &mut expr.left else {
-            return None;
-        };
-        if binary_expr.operator != target_op {
-            return None;
-        }
-        let new_left_hand_expr = if binary_expr.left.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.right)
-        } else if binary_expr.right.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.left)
-        } else {
-            return None;
-        };
 
-        Some(ctx.ast.expression_logical(
-            expr.span,
-            new_left_hand_expr,
-            LogicalOperator::Coalesce,
-            ctx.ast.move_expression(&mut expr.right),
-        ))
+        if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+            func.id = None;
+            state.changed = true;
+        }
+    }
+
+    /// Remove name from class expressions if it is not used.
+    ///
+    /// e.g. `var a = class C {}` -> `var a = class {}`
+    ///
+    /// This compression is not safe if the code relies on `Class::name`.
+    fn try_remove_name_from_classes(
+        &self,
+        class: &mut Class<'a>,
+        state: &mut State,
+        ctx: Ctx<'a, '_>,
+    ) {
+        if self.keep_names.class {
+            return;
+        }
+
+        if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+            class.id = None;
+            state.changed = true;
+        }
     }
 }
 
@@ -996,7 +1054,6 @@ impl<'a> LatePeepholeOptimizations {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
-        Self::remove_name_from_expressions(expr, ctx);
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
@@ -1109,36 +1166,12 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || !ctx.symbols().symbol_is_used(ident.symbol_id())
+                        || !ctx.scoping().symbol_is_used(ident.symbol_id())
                     {
                         catch.param = None;
                     }
-                };
-            }
-        }
-    }
-
-    /// Remove name from function / class expressions if it is not used.
-    ///
-    /// - `var a = function f() {}` -> `var a = function () {}`
-    /// - `var a = class C {}` -> `var a = class {}`
-    ///
-    /// This compression is not safe if the code relies on `Function::name`.
-    fn remove_name_from_expressions(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        match expr {
-            Expression::FunctionExpression(func) => {
-                if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    func.id = None;
                 }
             }
-            Expression::ClassExpression(class) => {
-                if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    class.id = None;
-                }
-            }
-            _ => {}
         }
     }
 
@@ -1163,6 +1196,68 @@ impl<'a> LatePeepholeOptimizations {
     }
 }
 
+struct ClassPropertyKeyParent {
+    pub ty: ClassPropertyKeyParentType,
+    /// Whether the property is static.
+    pub r#static: bool,
+}
+
+impl ClassPropertyKeyParent {
+    /// Whether the key should be kept as a computed property to avoid early errors.
+    ///
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+    /// <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+    fn should_keep_as_computed_property(&self, key: &str) -> bool {
+        match key {
+            "prototype" => self.r#static,
+            "constructor" => match self.ty {
+                // Uncaught SyntaxError: Class constructor may not be an accessor
+                ClassPropertyKeyParentType::MethodDefinition => !self.r#static,
+                // Uncaught SyntaxError: Classes may not have a field named 'constructor'
+                // Uncaught SyntaxError: Class constructor may not be a private method
+                ClassPropertyKeyParentType::AccessorProperty
+                | ClassPropertyKeyParentType::PropertyDefinition => true,
+            },
+            "#constructor" => true,
+            _ => false,
+        }
+    }
+}
+
+enum ClassPropertyKeyParentType {
+    PropertyDefinition,
+    AccessorProperty,
+    MethodDefinition,
+}
+
+impl From<&PropertyDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(prop: &PropertyDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::PropertyDefinition, r#static: prop.r#static }
+    }
+}
+
+impl From<&AccessorProperty<'_>> for ClassPropertyKeyParent {
+    fn from(accessor: &AccessorProperty<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::AccessorProperty, r#static: accessor.r#static }
+    }
+}
+
+impl From<&MethodDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(method: &MethodDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::MethodDefinition, r#static: method.r#static }
+    }
+}
+
+impl<T> From<&mut T> for ClassPropertyKeyParent
+where
+    ClassPropertyKeyParent: for<'a> std::convert::From<&'a T>,
+{
+    fn from(prop: &mut T) -> Self {
+        (&*prop).into()
+    }
+}
+
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
@@ -1170,8 +1265,15 @@ mod test {
 
     use crate::{
         CompressOptions,
+        options::CompressOptionsKeepNames,
         tester::{run, test, test_same},
     };
+
+    fn test_same_keep_names(keep_names: CompressOptionsKeepNames, code: &str) {
+        let result = run(code, Some(CompressOptions { keep_names, ..CompressOptions::smallest() }));
+        let expected = run(code, None);
+        assert_eq!(result, expected, "\nfor source\n{code}\ngot\n{result}");
+    }
 
     #[test]
     fn test_fold_return_result() {
@@ -1215,25 +1317,25 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("x == true", "x == !0");
-        test("x == false", "x == !1");
-        test("x != true", "x != !0");
-        test("x < true", "x < !0");
-        test("x <= true", "x <= !0");
-        test("x > true", "x > !0");
-        test("x >= true", "x >= !0");
+        test("v = x == true", "v = x == 1");
+        test("v = x == false", "v = x == 0");
+        test("v = x != true", "v = x != 1");
+        test("v = x < true", "v = x < !0");
+        test("v = x <= true", "v = x <= !0");
+        test("v = x > true", "v = x > !0");
+        test("v = x >= true", "v = x >= !0");
 
-        test("x instanceof true", "x instanceof !0");
-        test("x + false", "x + !1");
+        test("v = x instanceof true", "v = x instanceof !0");
+        test("v = x + false", "v = x + !1");
 
         // Order: should perform the nearest.
-        test("x == x instanceof false", "x == x instanceof !1");
-        test("x in x >> true", "x in x >> !0");
-        test("x == fake(false)", "x == fake(!1)");
+        test("v = x == x instanceof false", "v = x == x instanceof !1");
+        test("v = x in x >> true", "v = x in x >> !0");
+        test("v = x == fake(false)", "v = x == fake(!1)");
 
         // The following should not be folded.
-        test("x === true", "x === !0");
-        test("x !== false", "x !== !1");
+        test("v = x === true", "v = x === !0");
+        test("v = x !== false", "v = x !== !1");
     }
 
     /// Based on https://github.com/terser/terser/blob/58ba5c163fa1684f2a63c7bc19b7ebcf85b74f73/test/compress/assignment.js
@@ -1303,8 +1405,7 @@ mod test {
     #[test]
     fn test_fold_subtraction_assignment() {
         test("x -= 1", "--x");
-        // FIXME
-        // test("x -= -1", "++x");
+        test("x -= -1", "++x");
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
@@ -1457,7 +1558,7 @@ mod test {
     fn test_template_string_to_string() {
         test("x = `abcde`", "x = 'abcde'");
         test("x = `ab cd ef`", "x = 'ab cd ef'");
-        test_same("`hello ${name}`");
+        test_same("x = `hello ${name}`");
         test_same("tag `hello ${name}`");
         test_same("tag `hello`");
         test("x = `hello ${'foo'}`", "x = 'hello foo'");
@@ -1517,47 +1618,47 @@ mod test {
 
     #[test]
     fn test_fold_is_typeof_equals_undefined_resolved() {
-        test("var x; typeof x !== 'undefined'", "var x; x !== void 0");
-        test("var x; typeof x != 'undefined'", "var x; x !== void 0");
-        test("var x; 'undefined' !== typeof x", "var x; x !== void 0");
-        test("var x; 'undefined' != typeof x", "var x; x !== void 0");
+        test("var x; v = typeof x !== 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = typeof x != 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' !== typeof x", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' != typeof x", "var x; v = x !== void 0");
 
-        test("var x; typeof x === 'undefined'", "var x; x === void 0");
-        test("var x; typeof x == 'undefined'", "var x; x === void 0");
-        test("var x; 'undefined' === typeof x", "var x; x === void 0");
-        test("var x; 'undefined' == typeof x", "var x; x === void 0");
+        test("var x; v = typeof x === 'undefined'", "var x; v = x === void 0");
+        test("var x; v = typeof x == 'undefined'", "var x; v = x === void 0");
+        test("var x; v = 'undefined' === typeof x", "var x; v = x === void 0");
+        test("var x; v = 'undefined' == typeof x", "var x; v = x === void 0");
 
         test(
-            "var x; function foo() { typeof x !== 'undefined' }",
-            "var x; function foo() { x !== void 0 }",
+            "var x; function foo() { v = typeof x !== 'undefined' }",
+            "var x; function foo() { v = x !== void 0 }",
         );
         test(
-            "typeof x !== 'undefined'; function foo() { var x }",
-            "typeof x < 'u'; function foo() { var x }",
+            "v = typeof x !== 'undefined'; function foo() { var x }",
+            "v = typeof x < 'u'; function foo() { var x }",
         );
-        test("typeof x !== 'undefined'; { var x }", "x !== void 0; var x;");
-        test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
-        test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
+        test("v = typeof x !== 'undefined'; { var x }", "v = x !== void 0; var x;");
+        test("v = typeof x !== 'undefined'; { let x }", "v = typeof x < 'u'; { let x }");
+        test("v = typeof x !== 'undefined'; var x", "v = x !== void 0; var x");
         // input and output both errors with same TDZ error
-        test("typeof x !== 'undefined'; let x", "x !== void 0; let x");
+        test("v = typeof x !== 'undefined'; let x", "v = x !== void 0; let x");
 
-        test("typeof x.y === 'undefined'", "x.y === void 0");
-        test("typeof x.y !== 'undefined'", "x.y !== void 0");
-        test("typeof (x + '') === 'undefined'", "x + '' === void 0");
+        test("v = typeof x.y === 'undefined'", "v = x.y === void 0");
+        test("v = typeof x.y !== 'undefined'", "v = x.y !== void 0");
+        test("v = typeof (x + '') === 'undefined'", "v = x + '' === void 0");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
     #[test]
     fn test_fold_is_typeof_equals_undefined() {
-        test("typeof x !== 'undefined'", "typeof x < 'u'");
-        test("typeof x != 'undefined'", "typeof x < 'u'");
-        test("'undefined' !== typeof x", "typeof x < 'u'");
-        test("'undefined' != typeof x", "typeof x < 'u'");
+        test("v = typeof x !== 'undefined'", "v = typeof x < 'u'");
+        test("v = typeof x != 'undefined'", "v = typeof x < 'u'");
+        test("v = 'undefined' !== typeof x", "v = typeof x < 'u'");
+        test("v = 'undefined' != typeof x", "v = typeof x < 'u'");
 
-        test("typeof x === 'undefined'", "typeof x > 'u'");
-        test("typeof x == 'undefined'", "typeof x > 'u'");
-        test("'undefined' === typeof x", "typeof x > 'u'");
-        test("'undefined' == typeof x", "typeof x > 'u'");
+        test("v = typeof x === 'undefined'", "v = typeof x > 'u'");
+        test("v = typeof x == 'undefined'", "v = typeof x > 'u'");
+        test("v = 'undefined' === typeof x", "v = typeof x > 'u'");
+        test("v = 'undefined' == typeof x", "v = typeof x > 'u'");
     }
 
     #[test]
@@ -1610,6 +1711,25 @@ mod test {
     }
 
     #[test]
+    fn test_swap_binary_expressions() {
+        test_same("v = a === 0");
+        test("v = 0 === a", "v = a === 0");
+        test_same("v = a === '0'");
+        test("v = '0' === a", "v = a === '0'");
+        test("v = a === `0`", "v = a === '0'");
+        test("v = `0` === a", "v = a === '0'");
+        test_same("v = a === void 0");
+        test("v = void 0 === a", "v = a === void 0");
+
+        test_same("v = a !== 0");
+        test("v = 0 !== a", "v = a !== 0");
+        test_same("v = a == 0");
+        test("v = 0 == a", "v = a == 0");
+        test_same("v = a != 0");
+        test("v = 0 != a", "v = a != 0");
+    }
+
+    #[test]
     fn test_remove_unary_plus() {
         test("v = 1 - +foo", "v = 1 - foo");
         test("v = +foo - 1", "v = foo - 1");
@@ -1622,19 +1742,19 @@ mod test {
 
     #[test]
     fn test_fold_loose_equals_undefined() {
-        test_same("foo != null");
-        test("foo != undefined", "foo != null");
-        test("foo != void 0", "foo != null");
-        test("undefined != foo", "foo != null");
-        test("void 0 != foo", "foo != null");
+        test_same("v = foo != null");
+        test("v = foo != undefined", "v = foo != null");
+        test("v = foo != void 0", "v = foo != null");
+        test("v = undefined != foo", "v = foo != null");
+        test("v = void 0 != foo", "v = foo != null");
     }
 
     #[test]
     fn test_property_key() {
         // Object Property
         test(
-            "({ '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
-            "({  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
+            "v = { '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ }",
+            "v = {  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ }",
         );
         // AssignmentTargetPropertyProperty
         test(
@@ -1663,10 +1783,47 @@ mod test {
         );
 
         test("class C { ['-1']() {} }", "class C { '-1'() {} }");
-        test_same("class C { ['prototype']() {} }");
-        test_same("class C { ['__proto__']() {} }");
-        test_same("class C { ['constructor']() {} }");
-        test_same("class C { ['#constructor']() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
+        test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
+        test("({ ['__proto__']: _ } = {})", "({ __proto__: _ } = {})");
+        test("class C { ['__proto__'] = 0 }", "class C { __proto__ = 0 }");
+        test("class C { ['__proto__']() {} }", "class C { __proto__() {} }");
+        test("class C { accessor ['__proto__'] = 0 }", "class C { accessor __proto__ = 0 }");
+        test("class C { static ['__proto__'] = 0 }", "class C { static __proto__ = 0 }");
+        test(
+            "class C { static accessor ['__proto__'] = 0 }",
+            "class C { static accessor __proto__ = 0 }",
+        );
+        test("class C { static static ['__proto__']() {} }", "class C { static __proto__() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+        // <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+        test_same("class C { static ['prototype']() {} }"); // class C { static prototype() {} } is an early error
+        test_same("class C { static ['prototype'] = 0 }"); // class C { prototype = 0 } is an early error
+        test_same("class C { static accessor ['prototype'] = 0 }"); // class C { accessor prototype = 0 } is an early error
+        test("class C { ['prototype']() {} }", "class C { prototype() {} }");
+        test("class C { ['prototype'] = 0 }", "class C { prototype = 0 }");
+        test("class C { accessor ['prototype'] = 0 }", "class C { accessor prototype = 0 }");
+        test_same("class C { ['constructor'] = 0 }"); // class C { constructor = 0 } is an early error
+        test_same("class C { accessor ['constructor'] = 0 }"); // class C { accessor constructor = 0 } is an early error
+        test_same("class C { static ['constructor'] = 0 }"); // class C { static constructor = 0 } is an early error
+        test_same("class C { static accessor ['constructor'] = 0 }"); // class C { static accessor constructor = 0 } is an early error
+        test_same("class C { ['constructor']() {} }"); // computed `constructor` is not treated as a constructor
+        test_same("class C { *['constructor']() {} }"); // class C { *constructor() {} } is an early error
+        test_same("class C { async ['constructor']() {} }"); // class C { async constructor() {} } is an early error
+        test_same("class C { async *['constructor']() {} }"); // class C { async *constructor() {} } is an early error
+        test_same("class C { get ['constructor']() {} }"); // class C { get constructor() {} } is an early error
+        test_same("class C { set ['constructor'](v) {} }"); // class C { set constructor(v) {} } is an early error
+        test("class C { static ['constructor']() {} }", "class C { static constructor() {} }");
+        test_same("class C { ['#constructor'] = 0 }"); // class C { #constructor = 0 } is an early error
+        test_same("class C { accessor ['#constructor'] = 0 }"); // class C { accessor #constructor = 0 } is an early error
+        test_same("class C { ['#constructor']() {} }"); // class C { #constructor() {} } is an early error
+        test_same("class C { static ['#constructor'] = 0 }"); // class C { static #constructor = 0 } is an early error
+        test_same("class C { static accessor ['#constructor'] = 0 }"); // class C { static accessor #constructor = 0 } is an early error
+        test_same("class C { static ['#constructor']() {} }"); // class C { static #constructor() {} } is an early error
     }
 
     #[test]
@@ -1674,12 +1831,15 @@ mod test {
         test_same("f(...a)");
         test_same("f(...a, ...b)");
         test_same("f(...a, b, ...c)");
+        test_same("new F(...a)");
 
         test("f(...[])", "f()");
         test("f(...[1])", "f(1)");
         test("f(...[1, 2])", "f(1, 2)");
         test("f(...[1,,,3])", "f(1, void 0, void 0, 3)");
         test("f(a, ...[])", "f(a)");
+        test("new F(...[])", "new F()");
+        test("new F(...[1])", "new F(1)");
     }
 
     #[test]
@@ -1747,6 +1907,9 @@ mod test {
         test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
+        test_same("try { foo } catch(e) { var e = 2; bar(e) }");
+        test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+        test_same("try { foo } catch(e) { var e = 2 } bar(e)");
 
         let target = ESTarget::ES2018;
         let code = "try { foo } catch(e) {}";
@@ -1760,17 +1923,10 @@ mod test {
     fn test_remove_name_from_expressions() {
         test("var a = function f() {}", "var a = function () {}");
         test_same("var a = function f() { return f; }");
+        test_same_keep_names(CompressOptionsKeepNames::function_only(), "var a = function f() {}");
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
-    }
-
-    #[test]
-    fn test_compress_is_null_and_to_nullish_coalescing() {
-        test("x == null && y", "x ?? y");
-        test("x != null || y", "x ?? y");
-        test_same("v = x == null && y");
-        test_same("v = x != null || y");
-        test("void (x == null && y)", "x ?? y");
+        test_same_keep_names(CompressOptionsKeepNames::class_only(), "var a = class C {}");
     }
 
     #[test]

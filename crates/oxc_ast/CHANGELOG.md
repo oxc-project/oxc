@@ -4,6 +4,260 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+- 5ad41c9 ast: [**BREAKING**] Remove unnecessary `AstBuilder::alloc_*` methods (#10267) (overlookmotel)
+
+- 14ff99c ast: [**BREAKING**] Remove all `AstBuilder::move_xxxx` methods (#10171) (Dunqing)
+
+### Features
+
+- 8bbaedc ast_tools: Derive `Hash` for `AstType` (#10212) (lazytype)
+
+### Bug Fixes
+
+- 08a0d5e ast: Fix `Display` impl for `RegExpFlags` (#10235) (overlookmotel)
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- db0b2eb ast/estree: Add ts-estree fields to `FormalParametersRest` custom serializer (#10192) (therewillbecode)
+- abc9ea4 ast/estree: Better align program span start (#10134) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 27768a5 parser: Store lone surrogates in `TemplateElementValue` as escape sequence (#10182) (overlookmotel)
+
+### Performance
+
+- 5b4c2ae ast: Remove `write!` macro where unnecessary (#10234) (overlookmotel)
+
+### Documentation
+
+- 4d33af7 ast: Correct comment (#10176) (overlookmotel)
+
+### Refactor
+
+- 5525206 ast/estree: Simplify static converters (#10197) (overlookmotel)
+- b662df4 ast/estree: Alter `Program` start span with converter (#10195) (overlookmotel)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+- 2dde8be ast: Reformat AST types (#10278) (overlookmotel)
+- c290faa ast: Reformat `AstBuilder` doc comments (#10263) (overlookmotel)
+
+## [0.62.0] - 2025-04-01
+
+- 45015ee ast: [**BREAKING**] Remove unused `Function::symbol_id` method (#10061) (Dunqing)
+
+### Features
+
+- 8cd7430 allocator: `TakeIn` trait (#9969) (overlookmotel)
+
+### Bug Fixes
+
+- 95e69f6 ast/estree: Fix `StringLiteral`s containing lone surrogates (#10036) (overlookmotel)
+- 8408606 ast/estree: Fix `TSMethodSignature` (#10032) (therewillbecode)
+- 1a0bd7c ast/estree: Fix `TSPropertySignature` (#10031) (therewillbecode)
+- 707a776 ast/estree: Fix TS type defs for `TSIndexSignature` and `TSIndexSignatureName` (#10003) (overlookmotel)
+- c98d3f4 ast/estree: Add custom serializer for extends field of TSInterfaceDeclaration (#9996) (therewillbecode)
+- f0e1510 parser: Store lone surrogates as escape sequence (#10041) (overlookmotel)
+
+### Refactor
+
+- a2b03d3 ast: Methods for fieldless enums take `self` not `&self` + remove unnecessary `matches!` (#10013) (overlookmotel)
+- 5f45005 ast: `AstBuilder::move_*` methods use `TakeIn` (#10001) (overlookmotel)
+- 0fa58d7 semantic: Always use `SymbolFlags::Function` for function id (#7479) (Dunqing)
+
+## [0.61.2] - 2025-03-23
+
+### Bug Fixes
+
+- 89cb368 ast/estree: Add decorators field to `AssignmentPattern` (#9967) (therewillbecode)
+- 4980b73 ast/estree: Add missing estree fields to `TSIndexSignature` and `TSIndexSignatureName` (#9968) (therewillbecode)
+- b9f80b9 ast/estree: Fix `TSFunctionType` and `TSCallSignatureDeclaration`  (#9959) (therewillbecode)
+- 0cdeedd ast/estree: Fix `ArrayPattern` (#9956) (therewillbecode)
+- 6fcd342 ast/estree: Fix `FormalParameter` (#9954) (therewillbecode)
+- 9d1035e ast/estree: Fix TS type def for `TSThisParameter` (#9942) (overlookmotel)
+- 8228b74 ast/estree: Fix `Function.this_param` (#9913) (hi-ogawa)
+- d69cc34 ast/estree: Fix `BindingIdentifier` (#9822) (hi-ogawa)
+- 5631ebd ast/extree: Fix `TSModuleDeclaration.global` (#9941) (overlookmotel)
+
+### Refactor
+
+- d3d7d98 ast: Shorten generated code for `CloneIn` (#9939) (overlookmotel)
+- db642eb ast/estree: Shorten raw deser code (#9944) (overlookmotel)
+- dc3e725 ast/estree: Expose `INCLUDE_TS_FIELDS` constant on `Serializer` (#9943) (overlookmotel)
+- 28179cd ast_tools: Simplify `CloneIn` derive (#9938) (overlookmotel)
+- 30990d2 ast_tools/estree: Re-order custom serializers (#9945) (overlookmotel)
+
+## [0.61.1] - 2025-03-21
+
+### Features
+
+- bc0670c tasks,oxc_allocator: Add new method clone_in_with_semantic_ids for `CloneIn` trait (#9894) (IWANABETHATGUY)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)- 68018e1 Ast changes (Boshen)
+
+### Performance
+
+- 5f97f28 ast/estree: Speed up raw deser for `JSXElement` (#9895) (overlookmotel)
+
+### Refactor
+
+- 62e2859 ast/ast_builder: Use `self.vec_from_iter` instead of `Vec::from_iter_in` for consistency (#9909) (Dunqing)
+
+## [0.60.0] - 2025-03-18
+
+- b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- bc8bc08 semantic: Use correct scope flags for using declarations (#9751) (camc314)
+
+### Performance
+
+- 2d63704 ast: Re-order `VariableDeclarationKind` variants (#9853) (overlookmotel)
+
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Features
+
+- db946e6 ast/estree: Order TS fields last by default (#9820) (overlookmotel)
+
+### Bug Fixes
+
+- 3f858c4 ast/estree: Add `directive` field to `ExpressionStatement` in TS AST (#9844) (overlookmotel)
+- cd18358 ast/extree: Fix `Class.implements` (#9817) (hi-ogawa)
+- 8abb4f6 parser: Correctly set `export_kind` for `ExportNamedDeclaration` (#9827) (camc314)
+
+### Refactor
+
+
+## [0.58.1] - 2025-03-13
+
+### Bug Fixes
+
+- cd3f2fb ast/estree: Fix `JSXOpeningFragment` (#9747) (Hiroshi Ogawa)
+- fecec56 ast/estree: Fix `JSXOpeningElement` field order (#9746) (hi-ogawa)
+
+## [0.58.0] - 2025-03-13
+
+- 842edd8 ast: [**BREAKING**] Add `raw` property to `JSXText` node (#9641) (Yuji Sugiura)
+
+### Features
+
+
+### Bug Fixes
+
+- 475b48f ast: Change `ImportExpression::attributes` to `options` (#9665) (Boshen)
+- 0d1e2c5 transformer: Fix `TSInstantiationExpression` not being removed (#9725) (Boshen)
+
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+### Features
+
+- 554c4ce minifier: Compress constant integer index access (#9604) (sapphi-red)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+- 4056560 ast/estree: [**BREAKING**] Option to return JS-only AST (#9520) (overlookmotel)
+
+### Features
+
+- 59a9f1d ast: Add `AstBuilder::*_with_pure` etc methods (#9417) (Dunqing)
+- af02a87 ast/estree: `Property` have consistent field order (#9547) (overlookmotel)
+- 3e4f909 ast/estree: ESTree AST `ExportNamedDeclaration` always have `attributes` field (#9546) (overlookmotel)
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+### Refactor
+
+- 734b6b6 ast: `RegExpFlags::to_string` return flags in alphabetical order (#9548) (overlookmotel)
+- c1a8cea ast/estree: Simplify serializing `RegExpLiteral`s (#9551) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+- abb15e0 ast: [**BREAKING**] Add `pure` field to `Function`, `CallExpression`, and `NewExpression` (#9207) (overlookmotel)
+
+### Features
+
+- 26fde56 minifier: Inline simple IIFEs in `remove_unused_expression` (#9465) (sapphi-red)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- b371fdc estree/ast: Camel-case `typeAnnotation` field (#9420) (overlookmotel)
+
+### Performance
+
+- 10e4431 ast/estree: Skip escaping identifiers (#9398) (overlookmotel)
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- 8916335 ast/estree: Convert enums with converters on variants (#9438) (overlookmotel)
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
 ## [0.53.0] - 2025-02-26
 
 ### Features

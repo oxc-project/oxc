@@ -47,7 +47,7 @@ impl<'a> JSDocTag<'a> {
     /// Comment can be multiline.
     ///
     /// Variants:
-    /// ```
+    /// ```text
     /// @kind comment
     /// @kind
     /// ```
@@ -58,7 +58,7 @@ impl<'a> JSDocTag<'a> {
     /// Use for `@type`, `@satisfies`, ...etc.
     ///
     /// Variants:
-    /// ```
+    /// ```text
     /// @kind {type}
     /// @kind
     /// ```
@@ -78,7 +78,7 @@ impl<'a> JSDocTag<'a> {
     /// Comment can be multiline.
     ///
     /// Variants:
-    /// ```
+    /// ```text
     /// @kind {type} comment
     /// @kind {type}
     /// @kind comment
@@ -116,7 +116,7 @@ impl<'a> JSDocTag<'a> {
     /// Comment can be multiline.
     ///
     /// Variants:
-    /// ```
+    /// ```text
     /// @kind {type} name comment
     /// @kind {type} name
     /// @kind {type}

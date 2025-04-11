@@ -210,7 +210,7 @@ impl Rule for PreferLowercaseTitle {
             return;
         };
 
-        let scopes = ctx.scopes();
+        let scopes = ctx.scoping();
 
         let ignores = Self::populate_ignores(&self.ignore);
 
@@ -219,7 +219,7 @@ impl Rule for PreferLowercaseTitle {
         }
 
         if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
+            if self.ignore_top_level_describe && scopes.scope_flags(node.scope_id()).is_top() {
                 return;
             }
         } else if !matches!(

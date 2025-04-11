@@ -45,15 +45,49 @@ declare_oxc_lint!(
     /// The two are generally very similar, and can often be used interchangeably.
     /// Using the same type declaration style consistently helps with code readability.
     ///
-    /// ### Example
-    /// ```ts
-    /// // incorrect, when set to "interface"
-    /// type T = { x: number };
+    /// ### Examples
     ///
-    /// // incorrect when set to "type"
+    /// By default this rule enforces the use of interfaces for object types.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```typescript
+    /// type T = { x: number };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// type T = string;
+    /// type Foo = string | {};
+    ///
     /// interface T {
-    /// x: number;
+    ///   x: number;
     /// }
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule has a single string option:
+    ///
+    /// `{ type: string, default: "interface" }`
+    ///
+    /// ### interface
+    ///
+    /// This is the default option.
+    ///
+    /// ### type
+    ///
+    /// Enforces the use of types for object type definitions.
+    ///
+    /// Examples of **incorrect** code for this option:
+    /// ```typescript
+    /// interface T {
+    ///   x: number;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this option:
+    /// ```typescript
+    /// type T = { x: number };
     /// ```
     ConsistentTypeDefinitions,
     typescript,
@@ -93,7 +127,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                     if let Some(params) = &decl.type_parameters {
                         name_span_end = &params.span.end;
-                    };
+                    }
 
                     let name =
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
@@ -130,7 +164,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                     if let Some(params) = &decl.type_parameters {
                         name_span_end = &params.span.end;
-                    };
+                    }
 
                     let name =
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
@@ -194,7 +228,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                 if let Some(params) = &decl.type_parameters {
                     name_span_end = &params.span.end;
-                };
+                }
 
                 let name = &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
 

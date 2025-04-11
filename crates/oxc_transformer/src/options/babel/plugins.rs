@@ -69,9 +69,10 @@ pub struct BabelPlugins {
     // ES2022
     pub class_static_block: bool,
     pub class_properties: Option<ClassPropertiesOptions>,
-
     // Decorator
     pub legacy_decorator: Option<DecoratorOptions>,
+    // Proposals
+    pub explicit_resource_management: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -96,8 +97,21 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         entry.value::<TypeScriptOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
                 "transform-react-jsx" => {
-                    p.react_jsx =
-                        entry.value::<JsxOptions>().map_err(|err| p.errors.push(err)).ok();
+                    #[derive(Deserialize, Default)]
+                    struct Pure {
+                        pure: bool,
+                    }
+
+                    let pure = entry.clone().value::<Pure>().map(|p| p.pure).unwrap_or(false);
+                    p.react_jsx = entry
+                        .value::<JsxOptions>()
+                        .map_err(|err| p.errors.push(err))
+                        .map(|mut options| {
+                            // `pure` only defaults to `true` in `preset-react`
+                            options.pure = pure;
+                            options
+                        })
+                        .ok();
                 }
                 "transform-react-jsx-development" => {
                     p.react_jsx_dev =
@@ -146,6 +160,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                     p.legacy_decorator =
                         entry.value::<DecoratorOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
+                "proposal-explicit-resource-management" => p.explicit_resource_management = true,
                 s => p.unsupported.push(s.to_string()),
             }
         }

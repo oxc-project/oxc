@@ -6,7 +6,7 @@ use std::{
 use crate::{DERIVES, codegen::DeriveId};
 
 /// Number of bytes required for bit set which can represent all [`DeriveId`]s.
-const NUM_BYTES: usize = (DERIVES.len() + 7) / 8;
+const NUM_BYTES: usize = DERIVES.len().div_ceil(8);
 
 /// Bit set with a bit for each [`DeriveId`].
 #[derive(Clone, Copy)]

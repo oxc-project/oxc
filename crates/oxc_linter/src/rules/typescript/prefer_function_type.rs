@@ -20,6 +20,8 @@ fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnosti
         .with_label(span)
 }
 
+const CONVERT_TO_FUNCTION_TYPE: &str = "Convert to function type";
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferFunctionType;
 
@@ -138,10 +140,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                     let mut span = interface_decl.id.span;
                                     span.end = type_parameters.span.end;
                                     let type_name = fixer.source_range(span);
-                                    fixer.replace(
-                                        interface_decl.span,
-                                        format!("type {type_name} = {suggestion};"),
-                                    )
+                                    fixer
+                                        .replace(
+                                            interface_decl.span,
+                                            format!("type {type_name} = {suggestion};"),
+                                        )
+                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
                                 },
                             );
                         } else {
@@ -162,11 +166,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                     }
 
                                     let has_comments =
-                                        ctx.semantic().has_comments_between(interface_decl.span);
+                                        ctx.has_comments_between(interface_decl.span);
 
                                     if has_comments {
                                         let comments = ctx
-                                            .semantic()
                                             .comments_range(node_start..node_end)
                                             .map(|comment| (*comment, comment.content_span()));
 
@@ -205,7 +208,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 &suggestion
                                             ),
                                             Span::new(node_start, node_end),
-                                        );
+                                        )
+                                        .with_message(CONVERT_TO_FUNCTION_TYPE);
                                     }
 
                                     Fix::new(
@@ -217,6 +221,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         ),
                                         Span::new(node_start, node_end),
                                     )
+                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
                                 },
                             );
                         }
@@ -231,7 +236,9 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                     ctx.diagnostic_with_fix(
                                         prefer_function_type_diagnostic(&suggestion, decl.span),
                                         |fixer| {
-                                            fixer.replace(literal.span, format!("({suggestion})"))
+                                            fixer
+                                                .replace(literal.span, format!("({suggestion})"))
+                                                .with_message(CONVERT_TO_FUNCTION_TYPE)
                                         },
                                     );
                                 }
@@ -240,7 +247,11 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 
                         TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
                             prefer_function_type_diagnostic(&suggestion, decl.span),
-                            |fixer| fixer.replace(literal.span, suggestion),
+                            |fixer| {
+                                fixer
+                                    .replace(literal.span, suggestion)
+                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
+                            },
                         ),
 
                         _ => {
@@ -261,10 +272,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                     decl.span,
                                                 ),
                                                 |fixer| {
-                                                    fixer.replace(
-                                                        literal.span,
-                                                        format!("({suggestion})"),
-                                                    )
+                                                    fixer
+                                                        .replace(
+                                                            literal.span,
+                                                            format!("({suggestion})"),
+                                                        )
+                                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
                                                 },
                                             );
                                         }
@@ -283,10 +296,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                     decl.span,
                                                 ),
                                                 |fixer| {
-                                                    fixer.replace(
-                                                        literal.span,
-                                                        format!("({suggestion})"),
-                                                    )
+                                                    fixer
+                                                        .replace(
+                                                            literal.span,
+                                                            format!("({suggestion})"),
+                                                        )
+                                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
                                                 },
                                             );
                                         }
@@ -296,7 +311,11 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 
                             TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
                                 prefer_function_type_diagnostic(&suggestion, decl.span),
-                                |fixer| fixer.replace(literal.span, suggestion),
+                                |fixer| {
+                                    fixer
+                                        .replace(literal.span, suggestion)
+                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
+                                },
                             ),
 
                             _ => {}

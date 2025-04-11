@@ -42,3 +42,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────
    ╰────
   help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:15]
+ 1 │ const a = [...obj?.foo];
+   ·               ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:21]
+ 1 │ const b = [...c, ...obj?.foo];
+   ·                     ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:23]
+ 1 │ const s = [], t = [...obj?.foo];
+   ·                       ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:23]
+ 1 │ const c = () => ([...(obj?.foo)]);
+   ·                       ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError

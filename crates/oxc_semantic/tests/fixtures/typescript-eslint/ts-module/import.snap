@@ -13,7 +13,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/impor
         "symbols": [
           {
             "flags": "SymbolFlags(Import)",
-            "id": 1,
+            "id": 0,
             "name": "bar",
             "node": "ImportSpecifier(bar)",
             "references": []
@@ -24,14 +24,6 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/impor
     "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
-    "symbols": [
-      {
-        "flags": "SymbolFlags(NameSpaceModule | Ambient)",
-        "id": 0,
-        "name": "foo",
-        "node": "TSModuleDeclaration(foo)",
-        "references": []
-      }
-    ]
+    "symbols": []
   }
 ]
