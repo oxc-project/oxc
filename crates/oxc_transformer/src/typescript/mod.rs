@@ -118,14 +118,6 @@ impl<'a> Traverse<'a> for TypeScript<'a, '_> {
         self.annotations.enter_class_body(body, ctx);
     }
 
-    fn enter_ts_module_declaration(
-        &mut self,
-        decl: &mut TSModuleDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.enter_ts_module_declaration(decl, ctx);
-    }
-
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_expression(expr, ctx);
     }

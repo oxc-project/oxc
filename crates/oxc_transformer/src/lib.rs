@@ -307,16 +307,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         self.x2_es2022.exit_static_block(block, ctx);
     }
 
-    fn enter_ts_module_declaration(
-        &mut self,
-        decl: &mut TSModuleDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_ts_module_declaration(decl, ctx);
-        }
-    }
-
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_expression(expr, ctx);
