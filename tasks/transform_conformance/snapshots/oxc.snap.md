@@ -399,6 +399,12 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
+Reference flags mismatch for "UnboundTypeReference":
+after transform: ReferenceId(2): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+Reference flags mismatch for "UnboundTypeReference":
+after transform: ReferenceId(3): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(4), ReferenceId(5)]
