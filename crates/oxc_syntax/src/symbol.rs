@@ -152,6 +152,8 @@ bitflags! {
         const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
         const TypeParameterExcludes = Self::Type.bits() & !Self::TypeParameter.bits();
         const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
+        const ValueModuleExcludes = Self::Value.bits() & !(Self::Function.bits() | Self::Class.bits() | Self::RegularEnum.bits() | Self::ValueModule.bits());
+        const NamespaceModuleExcludes = 0;
         // TODO: include value module in regular enum excludes
         const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() | Self::ValueModule.bits() );
         const EnumMemberExcludes = Self::EnumMember.bits();
@@ -214,6 +216,11 @@ impl SymbolFlags {
     }
 
     #[inline]
+    pub fn is_const_enum(&self) -> bool {
+        self.intersects(Self::ConstEnum)
+    }
+
+    #[inline]
     pub fn is_enum_member(&self) -> bool {
         self.contains(Self::EnumMember)
     }
@@ -241,7 +248,7 @@ impl SymbolFlags {
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import)
+        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NameSpaceModule)
     }
 
     /// If true, then the symbol can be referenced by a value reference

@@ -1030,7 +1030,14 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            _ => None,
+            Declaration::TSModuleDeclaration(decl) => {
+                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                    Some(ident)
+                } else {
+                    None
+                }
+            }
+            Declaration::VariableDeclaration(_) => None,
         }
     }
 

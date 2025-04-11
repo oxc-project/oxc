@@ -174,7 +174,7 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Name":
-after transform: SymbolId(7): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(7): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Name":
 after transform: SymbolId(7): Span { start: 116, end: 120 }
@@ -202,7 +202,7 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 31, end: 33 }
@@ -222,13 +222,13 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 31, end: 33 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 130, end: 132 }
@@ -242,13 +242,13 @@ Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 34, end: 36 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 145, end: 147 }
@@ -274,7 +274,7 @@ Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "x":
-after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule)
+after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "x":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
@@ -283,7 +283,7 @@ Symbol redeclarations mismatch for "x":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "y":
-after transform: SymbolId(2): SymbolFlags(RegularEnum | NameSpaceModule)
+after transform: SymbolId(2): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
