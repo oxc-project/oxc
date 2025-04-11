@@ -78,20 +78,20 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                         // Keep the export declaration if there are no export specifiers
                         true
                     } else {
-                        decl.specifiers.retain(|specifier| {
-                            !(specifier.export_kind.is_type()
-                                || self.type_identifier_names.contains(&specifier.exported.name())
-                                || matches!(
-                                    &specifier.local, ModuleExportName::IdentifierReference(ident)
-                                    if ctx.scoping().get_reference(ident.reference_id()).is_type()
-                                ))
-                        });
+                        decl.specifiers
+                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
-                Statement::ExportDefaultDeclaration(decl) => !decl.is_typescript_syntax(),
+                Statement::ExportDefaultDeclaration(decl) => {
+                    !decl.is_typescript_syntax()
+                        && !matches!(
+                            &decl.declaration,
+                            ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
+                        )
+                }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
@@ -613,6 +613,30 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
         }
 
         self.is_jsx_imports(&id.name)
+    }
+
+    fn can_retain_export_specifier(
+        &self,
+        specifier: &ExportSpecifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if specifier.export_kind.is_type()
+            || self.type_identifier_names.contains(&specifier.exported.name())
+        {
+            return false;
+        }
+        !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx))
+    }
+
+    fn is_refers_to_type(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let scoping = ctx.scoping();
+        let reference = scoping.get_reference(ident.reference_id());
+
+        reference.symbol_id().is_some_and(|symbol_id| {
+            reference.is_type()
+                || scoping.symbol_flags(symbol_id).is_ambient()
+                    && scoping.symbol_redeclarations(symbol_id).iter().all(|r| r.flags.is_ambient())
+        })
     }
 }
 

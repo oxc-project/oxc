@@ -1727,7 +1727,36 @@ after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225,
 rebuilt        : SymbolId(2): []
 
 * exports/declared-types/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "M", "N", "f", "foo", "x"]
+rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+Bindings mismatch:
+after transform: ScopeId(12): ["BB", "K"]
+rebuilt        : ScopeId(2): ["BB"]
+Scope flags mismatch:
+after transform: ScopeId(12): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(13): ["BB", "L"]
+rebuilt        : ScopeId(3): ["BB"]
+Scope flags mismatch:
+after transform: ScopeId(13): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Scope flags mismatch:
+after transform: ScopeId(16): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "BB":
+after transform: SymbolId(11): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "BB":
+after transform: SymbolId(11): [Span { start: 479, end: 481 }, Span { start: 495, end: 497 }]
+rebuilt        : SymbolId(1): []
+Symbol flags mismatch for "BB2":
+after transform: SymbolId(16): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 * exports/default-function/input.ts
 Scope children mismatch:

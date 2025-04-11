@@ -1498,15 +1498,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : <None>
-Reference flags mismatch for "foo":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["foo"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
 semantic error: Bindings mismatch:
@@ -1515,15 +1506,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : <None>
-Reference flags mismatch for "foo":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["foo"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-after/input.ts
 semantic error: Scope flags mismatch:

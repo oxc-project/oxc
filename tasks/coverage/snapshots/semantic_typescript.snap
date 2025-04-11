@@ -361,15 +361,6 @@ tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImportsCanPa
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "Color":
-after transform: SymbolId(0) "Color"
-rebuilt        : <None>
-Reference flags mismatch for "Color":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Color"]
 
 tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclarationWithExtends.ts
 semantic error: Bindings mismatch:
@@ -8163,29 +8154,11 @@ tasks/coverage/typescript/tests/cases/compiler/declarationEmitToDeclarationDirWi
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitToDeclarationDirWithDeclarationOption.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCrossFile.ts
 semantic error: Scope children mismatch:
@@ -8291,15 +8264,6 @@ tasks/coverage/typescript/tests/cases/compiler/declarationEmitWithComposite.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitWithDefaultAsComputedName.ts
 semantic error: Bindings mismatch:
@@ -13152,15 +13116,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "m":
-after transform: SymbolId(0) "m"
-rebuilt        : <None>
-Reference flags mismatch for "m":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["m"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultImportedType.ts
 semantic error: Scope children mismatch:
@@ -20643,15 +20598,6 @@ tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationOfAlias.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "I":
-after transform: SymbolId(0) "I"
-rebuilt        : <None>
-Reference flags mismatch for "I":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["I"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsBundledOutput1.ts
 semantic error: Scope children mismatch:
@@ -28735,15 +28681,9 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(14), ScopeId(16), ScopeId(19)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "spected":
-after transform: SymbolId(0) "spected"
-rebuilt        : <None>
-Reference flags mismatch for "spected":
-after transform: ReferenceId(73): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 Unresolved references mismatch:
 after transform: ["Array", "Partial", "ReadonlyArray"]
-rebuilt        : ["spected"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/specializationError.ts
 semantic error: Scope children mismatch:
@@ -31954,15 +31894,6 @@ tasks/coverage/typescript/tests/cases/compiler/uniqueSymbolPropertyDeclarationEm
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Op"]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "Op":
-after transform: SymbolId(0) "Op"
-rebuilt        : <None>
-Reference flags mismatch for "Op":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Op"]
 
 tasks/coverage/typescript/tests/cases/compiler/unknownLikeUnionObjectFlagsNotPropagated.ts
 semantic error: Scope children mismatch:
