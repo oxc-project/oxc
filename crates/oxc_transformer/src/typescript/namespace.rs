@@ -111,6 +111,11 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             return;
         };
 
+        // Empty namespace or only have type declarations.
+        if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace() {
+            return;
+        }
+
         let Some(body) = body else {
             return;
         };
@@ -233,14 +238,6 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 _ => {}
             }
             new_stmts.push(stmt);
-        }
-
-        if new_stmts.is_empty() {
-            // Delete the scope binding that `ctx.generate_uid` created above,
-            // as no binding is actually being created
-            ctx.scoping_mut().remove_binding(scope_id, uid_binding.name.as_str());
-
-            return;
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {

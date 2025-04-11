@@ -1165,7 +1165,6 @@ Namespaces exporting non-const are not supported by Babel. Change to const or se
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/autonumberingInEnums.ts
 semantic error: Bindings mismatch:
@@ -2097,8 +2096,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(4): ["C", "T", "_M2"]
-rebuilt        : ScopeId(1): ["C", "_M2"]
+after transform: ScopeId(4): ["C", "T", "_M"]
+rebuilt        : ScopeId(1): ["C", "_M"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -2398,10 +2397,7 @@ rebuilt        : ["$"]
 tasks/coverage/typescript/tests/cases/compiler/cloduleWithPriorUninstantiatedModule.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "Moclodule":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -2873,18 +2869,42 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientClass.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["exports", "m1", "m2", "require"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["m2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(6): ["_m", "exports", "require"]
+rebuilt        : ScopeId(1): ["_m"]
+Scope children mismatch:
+after transform: ScopeId(6): [ScopeId(7), ScopeId(8)]
+rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(5): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(5): Span { start: 147, end: 149 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["exports", "m1", "m2", "require"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["m2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(6): ["_m", "exports", "require"]
+rebuilt        : ScopeId(1): ["_m"]
+Scope children mismatch:
+after transform: ScopeId(6): [ScopeId(7), ScopeId(8)]
+rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(13): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(13): Span { start: 279, end: 281 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunction.ts
 semantic error: Bindings mismatch:
@@ -6258,83 +6278,14 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty", "templa"]
-rebuilt        : ScopeId(0): ["_defineProperty"]
+after transform: ScopeId(0): ["templa"]
+rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(10), ScopeId(15), ScopeId(19), ScopeId(24)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(26): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Symbol flags mismatch for "dom":
-after transform: SymbolId(16): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "dom":
-after transform: SymbolId(16): Span { start: 643, end: 646 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "mvc":
-after transform: SymbolId(17): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "mvc":
-after transform: SymbolId(17): Span { start: 647, end: 650 }
-rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Symbol flags mismatch for "dom":
-after transform: SymbolId(20): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "dom":
-after transform: SymbolId(20): Span { start: 913, end: 916 }
-rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
-Symbol flags mismatch for "mvc":
-after transform: SymbolId(21): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "mvc":
-after transform: SymbolId(21): Span { start: 917, end: 920 }
-rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
-Symbol flags mismatch for "composite":
-after transform: SymbolId(22): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "composite":
-after transform: SymbolId(22): Span { start: 921, end: 930 }
-rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
+rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["IElementController", "mvc", "require"]
-rebuilt        : ["require", "templa"]
+after transform: ["IElementController", "mvc"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
 semantic error: Symbol flags mismatch for "m":
@@ -6409,37 +6360,7 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "B":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "B":
-after transform: SymbolId(3): Span { start: 56, end: 57 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 58, end: 59 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithPropertyOfTypeModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -6940,52 +6861,7 @@ after transform: ScopeId(0): ["X"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["A", "W", "_C2"]
-rebuilt        : ScopeId(4): ["W", "_C2"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Symbol flags mismatch for "A":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(4): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol flags mismatch for "B":
-after transform: SymbolId(5): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "B":
-after transform: SymbolId(5): Span { start: 59, end: 60 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(6): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "C":
-after transform: SymbolId(6): Span { start: 61, end: 62 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["X"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause2.ts
 semantic error: Bindings mismatch:
@@ -6993,46 +6869,10 @@ after transform: ScopeId(0): ["X"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(4): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol flags mismatch for "B":
-after transform: SymbolId(5): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "B":
-after transform: SymbolId(5): Span { start: 59, end: 60 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(6): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "C":
-after transform: SymbolId(6): Span { start: 61, end: 62 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
+rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["A"]
-rebuilt        : ["X"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
 semantic error: Bindings mismatch:
@@ -7040,46 +6880,7 @@ after transform: ScopeId(0): ["X"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(4): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol flags mismatch for "B":
-after transform: SymbolId(5): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "B":
-after transform: SymbolId(5): Span { start: 59, end: 60 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-Symbol flags mismatch for "C":
-after transform: SymbolId(6): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "C":
-after transform: SymbolId(6): Span { start: 61, end: 62 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["X"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declInput-2.ts
 semantic error: Scope flags mismatch:
@@ -14879,97 +14680,25 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["EndGate", "_defineProperty"]
-rebuilt        : ScopeId(0): ["_defineProperty"]
+after transform: ScopeId(0): ["EndGate"]
+rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "Tweening":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "Tweening":
-after transform: SymbolId(3): Span { start: 154, end: 162 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "Tweening":
-after transform: SymbolId(7): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "Tweening":
-after transform: SymbolId(7): Span { start: 343, end: 351 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
+rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["ICloneable", "Tween", "require"]
-rebuilt        : ["EndGate", "Tween", "require"]
+after transform: ["ICloneable", "Tween"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["EndGate", "_defineProperty"]
-rebuilt        : ScopeId(0): ["_defineProperty"]
+after transform: ScopeId(0): ["EndGate"]
+rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "Tweening":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "Tweening":
-after transform: SymbolId(3): Span { start: 146, end: 154 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "Tweening":
-after transform: SymbolId(7): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "Tweening":
-after transform: SymbolId(7): Span { start: 334, end: 342 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
-Reference symbol mismatch for "EndGate":
-after transform: SymbolId(0) "EndGate"
-rebuilt        : <None>
+rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["ICloneable", "Tween", "require"]
-rebuilt        : ["EndGate", "Tween", "require"]
+after transform: ["ICloneable", "Tween"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/genericConstructSignatureInInterface.ts
 semantic error: Scope children mismatch:
@@ -17921,26 +17650,11 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(8), Sc
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceInReopenedModule.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty", "m"]
-rebuilt        : ScopeId(0): ["_defineProperty"]
+after transform: ScopeId(0): ["m"]
+rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Reference symbol mismatch for "m":
-after transform: SymbolId(0) "m"
-rebuilt        : <None>
-Reference symbol mismatch for "m":
-after transform: SymbolId(0) "m"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["m", "require"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceInheritance2.ts
 semantic error: Scope children mismatch:
@@ -18213,7 +17927,15 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasVarInsideTopLevelMod
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasWithDottedNameEmit.ts
-semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["a"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["b"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -29644,18 +29366,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule7.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["M"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "M":
-after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "M":
-after transform: SymbolId(0): Span { start: 49, end: 50 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 49, end: 50 }, Span { start: 123, end: 124 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/systemModuleAmbientDeclarations.ts
 semantic error: Bindings mismatch:
@@ -32903,26 +32619,35 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "M2"]
-rebuilt        : ScopeId(0): ["M2"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(6): ["C", "E", "M", "_M2", "f", "x"]
-rebuilt        : ScopeId(1): ["_M2"]
+after transform: ScopeId(1): ["C", "E", "M", "_M", "f", "x"]
+rebuilt        : ScopeId(1): ["_M"]
 Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(6): ["C", "E", "M", "_M2", "f", "x"]
+rebuilt        : ScopeId(2): ["_M2"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Scope children mismatch:
+after transform: ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
+rebuilt        : ScopeId(2): []
+Symbol flags mismatch for "M":
+after transform: SymbolId(0): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "M":
+after transform: SymbolId(0): Span { start: 7, end: 8 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "M2":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M2":
 after transform: SymbolId(6): Span { start: 173, end: 175 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbientExternalModule.ts
 semantic error: Bindings mismatch:
@@ -44628,7 +44353,7 @@ after transform: ScopeId(0): ["C", "E", "F", "N"]
 rebuilt        : ScopeId(0): ["C", "E", "F"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Bindings mismatch:
 after transform: ScopeId(3): ["E", "w"]
 rebuilt        : ScopeId(3): ["E"]
@@ -44655,19 +44380,10 @@ after transform: SymbolId(2): [Span { start: 80, end: 81 }, Span { start: 109, e
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
 after transform: SymbolId(9): SymbolFlags(Function | ValueModule)
-rebuilt        : SymbolId(12): SymbolFlags(Function)
+rebuilt        : SymbolId(10): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(9): [Span { start: 310, end: 311 }, Span { start: 336, end: 337 }]
-rebuilt        : SymbolId(12): []
-Reference symbol mismatch for "N":
-after transform: SymbolId(7) "N"
-rebuilt        : <None>
-Reference symbol mismatch for "N":
-after transform: SymbolId(7) "N"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["N"]
+rebuilt        : SymbolId(10): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target3.ts
 semantic error: Bindings mismatch:
@@ -44772,7 +44488,7 @@ after transform: ScopeId(0): ["C", "E", "F", "N"]
 rebuilt        : ScopeId(0): ["C", "E", "F"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Bindings mismatch:
 after transform: ScopeId(3): ["E", "w"]
 rebuilt        : ScopeId(3): ["E"]
@@ -44799,19 +44515,10 @@ after transform: SymbolId(2): [Span { start: 80, end: 81 }, Span { start: 109, e
 rebuilt        : SymbolId(3): []
 Symbol flags mismatch for "F":
 after transform: SymbolId(9): SymbolFlags(Function | ValueModule)
-rebuilt        : SymbolId(12): SymbolFlags(Function)
+rebuilt        : SymbolId(10): SymbolFlags(Function)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(9): [Span { start: 310, end: 311 }, Span { start: 336, end: 337 }]
-rebuilt        : SymbolId(12): []
-Reference symbol mismatch for "N":
-after transform: SymbolId(7) "N"
-rebuilt        : <None>
-Reference symbol mismatch for "N":
-after transform: SymbolId(7) "N"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["N"]
+rebuilt        : SymbolId(10): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target3.ts
 semantic error: Bindings mismatch:
@@ -46291,7 +45998,18 @@ tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarat
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
-semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A", "M2", "m", "p", "point"]
+rebuilt        : ScopeId(0): ["m", "p", "point"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7), ScopeId(10)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "M2":
+after transform: SymbolId(6) "M2"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["C"]
+rebuilt        : ["M2"]
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nonInstantiatedModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
