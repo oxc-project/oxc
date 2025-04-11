@@ -11,6 +11,9 @@ use crate::Linter;
 
 mod runtime;
 
+#[cfg(feature = "language_server")]
+pub mod offset_to_position;
+
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
@@ -87,15 +90,25 @@ impl LintService {
         tx_error.send(None).unwrap();
     }
 
+    #[cfg(feature = "language_server")]
+    pub fn run_source<'a>(
+        &mut self,
+        allocator: &'a oxc_allocator::Allocator,
+        path: &Arc<OsStr>,
+        source_text: &str,
+    ) -> Vec<crate::MessageWithPosition<'a>> {
+        self.runtime.run_source(allocator, path, source_text)
+    }
+
     /// For tests
     #[cfg(test)]
-    pub(crate) fn run_source<'a>(
+    pub(crate) fn run_test_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
         source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {
-        self.runtime.run_source(allocator, source_text, check_syntax_errors, tx_error)
+        self.runtime.run_test_source(allocator, source_text, check_syntax_errors, tx_error)
     }
 }
