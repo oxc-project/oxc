@@ -1,7 +1,7 @@
 use std::{
     env, fs,
     io::{ErrorKind, Write},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf, absolute},
     time::Instant,
 };
 
@@ -475,7 +475,7 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
         if let Some(config_path) = config {
-            let full_path = match cwd.join(config_path).canonicalize() {
+            let full_path = match absolute(cwd.join(config_path)) {
                 Ok(path) => path,
                 Err(e) => {
                     let handler = GraphicalReportHandler::new();
