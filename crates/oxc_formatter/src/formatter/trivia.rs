@@ -1,15 +1,14 @@
 //! Provides builders for comments and skipped token trivia.
 
-// use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
-
 use oxc_span::Span;
+
+use crate::write;
 
 use super::{
     Argument, Arguments, GroupId, SyntaxToken,
     comments::{CommentKind, SourceComment},
     prelude::*,
 };
-use crate::write;
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -28,7 +27,7 @@ fn should_nestle_adjacent_doc_comments(
     first_comment: &SourceComment,
     second_comment: &SourceComment,
 ) -> bool {
-    todo!()
+    false
     // let first = first_comment.piece();
     // let second = second_comment.piece();
 
@@ -62,7 +61,10 @@ impl Format<'_> for FormatLeadingComments<'_> {
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            write!(f, [comment])?;
+            if comment.formatted.get() {
+                continue;
+            }
+            write!(f, comment)?;
 
             match comment.kind() {
                 CommentKind::Block | CommentKind::InlineBlock => match comment.lines_after() {
@@ -120,6 +122,9 @@ impl Format<'_> for FormatTrailingComments<'_> {
         let mut previous_comment: Option<&SourceComment> = None;
 
         for comment in trailing_comments {
+            if comment.formatted.get() {
+                continue;
+            }
             total_lines_before += comment.lines_before();
 
             let should_nestle = previous_comment.is_some_and(|previous_comment| {
