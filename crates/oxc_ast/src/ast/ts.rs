@@ -1629,6 +1629,7 @@ pub enum ImportOrExportKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocNullableType")]
 pub struct JSDocNullableType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
@@ -1640,6 +1641,7 @@ pub struct JSDocNullableType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocNonNullableType")]
 pub struct JSDocNonNullableType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
@@ -1649,6 +1651,7 @@ pub struct JSDocNonNullableType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocUnknownType")]
 pub struct JSDocUnknownType {
     pub span: Span,
 }

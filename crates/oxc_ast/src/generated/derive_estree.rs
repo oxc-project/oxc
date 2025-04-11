@@ -3328,7 +3328,7 @@ impl ESTree for ImportOrExportKind {
 impl ESTree for JSDocNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocNullableType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3340,7 +3340,7 @@ impl ESTree for JSDocNullableType<'_> {
 impl ESTree for JSDocNonNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocNonNullableType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocNonNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3352,7 +3352,7 @@ impl ESTree for JSDocNonNullableType<'_> {
 impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocUnknownType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocUnknownType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
