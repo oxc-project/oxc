@@ -254,7 +254,9 @@ impl ConfigStoreBuilder {
                 LintFilterKind::Category(category) => {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
-                LintFilterKind::Rule(_, name) => self.upsert_where(severity, |r| r.name() == name),
+                LintFilterKind::Rule(plugin, rule) => {
+                    self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
+                }
                 LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
                 LintFilterKind::All => {
                     self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
@@ -264,7 +266,9 @@ impl ConfigStoreBuilder {
                 LintFilterKind::Category(category) => {
                     self.rules.retain(|rule| rule.category() != *category);
                 }
-                LintFilterKind::Rule(_, name) => self.rules.retain(|rule| rule.name() != name),
+                LintFilterKind::Rule(plugin, rule) => {
+                    self.rules.retain(|r| r.plugin_name() != plugin || r.name() != rule);
+                }
                 LintFilterKind::Generic(name) => self.rules.retain(|rule| rule.name() != name),
                 LintFilterKind::All => self.rules.clear(),
             },
