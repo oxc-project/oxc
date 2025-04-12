@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1298/5754 (22.56%)
+Negative Passed: 1297/5754 (22.54%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -815,6 +815,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecif
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportStarFromEmptyModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportedBlockScopedDeclarations.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expr.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extBaseClass2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendAndImplementTheSameBaseType2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendArray.ts
@@ -8107,14 +8108,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:9:21]
-  8 │ 
-  9 │ const WhatFoo = foo<?>;
-    ·                     ─
- 10 │ const HuhFoo = foo<string?>;
-    ╰────
-
   × await expression not allowed in formal parameter
    ╭─[typescript/tests/cases/compiler/expressionsForbiddenInParameterInitializers.ts:1:35]
  1 │ export async function foo({ foo = await import("./bar") }) {
@@ -10852,6 +10845,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Did you mean to write 'number | null | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:8:16]
+ 7 │ 
+ 8 │ function f4(a: ?string) {}
+   ·                ───────
+ 9 │ function f5(a: ?number) {}
+   ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:9:16]
+  8 │ function f4(a: ?string) {}
+  9 │ function f5(a: ?number) {}
+    ·                ───────
+ 10 │ 
+    ╰────
+  help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:11:25]
  10 │ 
  11 │ function f6(a: string): ?string {
@@ -10866,6 +10877,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  16 │ const b: number? = 1;
     ·          ───────
  17 │ 
+    ╰────
+  help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
+ 18 │ const c = 1 as ?any;
+ 19 │ const d: ?number = 1;
+    ·          ───────
+ 20 │ 
     ╰────
   help: Did you mean to write 'number | null | undefined'?
 
