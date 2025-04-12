@@ -1,15 +1,14 @@
 //! Provides builders for comments and skipped token trivia.
 
-// use biome_rowan::{SyntaxNode, SyntaxToken, TextSize};
-
 use oxc_span::Span;
+
+use crate::write;
 
 use super::{
     Argument, Arguments, GroupId, SyntaxToken,
     comments::{CommentKind, SourceComment},
     prelude::*,
 };
-use crate::write;
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -28,7 +27,7 @@ fn should_nestle_adjacent_doc_comments(
     first_comment: &SourceComment,
     second_comment: &SourceComment,
 ) -> bool {
-    todo!()
+    false
     // let first = first_comment.piece();
     // let second = second_comment.piece();
 
@@ -40,14 +39,14 @@ fn should_nestle_adjacent_doc_comments(
 }
 
 /// Formats the leading comments of `node`
-pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a> {
-    FormatLeadingComments::Node(span)
+pub const fn format_leading_comments<'a>(pos: u32) -> FormatLeadingComments<'a> {
+    FormatLeadingComments::Node(pos)
 }
 
 /// Formats the leading comments of a node.
 #[derive(Debug, Copy, Clone)]
 pub enum FormatLeadingComments<'a> {
-    Node(Span),
+    Node(/* span start */ u32),
     Comments(&'a [SourceComment]),
 }
 
@@ -56,13 +55,16 @@ impl Format<'_> for FormatLeadingComments<'_> {
         let comments = f.context().comments().clone();
 
         let leading_comments = match self {
-            FormatLeadingComments::Node(span) => comments.leading_comments(*span),
+            FormatLeadingComments::Node(start) => comments.leading_comments(*start),
             FormatLeadingComments::Comments(comments) => comments,
         };
 
         let mut leading_comments_iter = leading_comments.iter().peekable();
         while let Some(comment) = leading_comments_iter.next() {
-            write!(f, [comment])?;
+            if comment.formatted.get() {
+                continue;
+            }
+            write!(f, comment)?;
 
             match comment.kind() {
                 CommentKind::Block | CommentKind::InlineBlock => match comment.lines_after() {
@@ -97,14 +99,14 @@ impl Format<'_> for FormatLeadingComments<'_> {
 }
 
 /// Formats the trailing comments of `node`.
-pub const fn format_trailing_comments<'a>(span: Span) -> FormatTrailingComments<'a> {
-    FormatTrailingComments::Node(span)
+pub const fn format_trailing_comments<'a>(end: u32) -> FormatTrailingComments<'a> {
+    FormatTrailingComments::Node(end)
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
 pub enum FormatTrailingComments<'a> {
-    Node(Span),
+    Node(/* span end */ u32),
     Comments(&'a [SourceComment]),
 }
 
@@ -112,7 +114,7 @@ impl Format<'_> for FormatTrailingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
         let trailing_comments = match self {
-            FormatTrailingComments::Node(span) => comments.trailing_comments(*span),
+            FormatTrailingComments::Node(end) => comments.trailing_comments(*end),
             FormatTrailingComments::Comments(comments) => comments,
         };
 
@@ -120,6 +122,9 @@ impl Format<'_> for FormatTrailingComments<'_> {
         let mut previous_comment: Option<&SourceComment> = None;
 
         for comment in trailing_comments {
+            if comment.formatted.get() {
+                continue;
+            }
             total_lines_before += comment.lines_before();
 
             let should_nestle = previous_comment.is_some_and(|previous_comment| {

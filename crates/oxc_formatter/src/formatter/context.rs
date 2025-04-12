@@ -18,7 +18,7 @@ impl<'ast> FormatContext<'ast> {
         Self {
             options,
             source_text: program.source_text,
-            comments: Comments::from_oxc_comments(&program.comments),
+            comments: Comments::from_oxc_comments(program),
         }
     }
 

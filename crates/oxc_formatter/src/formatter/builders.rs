@@ -2431,7 +2431,7 @@ where
     pub fn entry(&mut self, span: Span, source_text: &str, content: &dyn Format<'ast>) {
         self.result = self.result.and_then(|()| {
             if self.has_elements {
-                if has_lines_before(span, source_text) {
+                if self.has_lines_before(span, source_text) {
                     write!(self.fmt, [empty_line()])?;
                 } else {
                     self.separator.fmt(self.fmt)?;
@@ -2468,13 +2468,19 @@ where
     pub fn finish(&mut self) -> FormatResult<()> {
         self.result
     }
-}
 
-/// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-pub fn has_lines_before(span: Span, source_text: &str) -> bool {
-    // Count the newlines in the leading trivia of the next node
-    source_text[..span.start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
-        > 1
+    /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
+    pub fn has_lines_before(&self, span: Span, source_text: &str) -> bool {
+        // Count the newlines in the leading trivia of the next node
+        let start = if let Some(comment) = self.fmt.comments().leading_comments(span.start).first()
+        {
+            comment.span.start
+        } else {
+            span.start
+        };
+        source_text[..start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
+            > 1
+    }
 }
 
 /// Builder to fill as many elements as possible on a single line.
