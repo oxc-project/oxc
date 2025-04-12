@@ -2187,15 +2187,14 @@ impl std::fmt::Debug for IndentIfGroupBreaks<'_, '_> {
 #[derive(Copy, Clone)]
 pub struct FormatWith<T> {
     formatter: T,
-    context: PhantomData<T>,
 }
 
-impl<T> Format<'_> for FormatWith<T>
+impl<'ast, T> Format<'ast> for FormatWith<T>
 where
-    T: Fn(&mut Formatter) -> FormatResult<()>,
+    T: Fn(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         (self.formatter)(f)
     }
 }
@@ -2244,11 +2243,11 @@ impl<T> std::fmt::Debug for FormatWith<T> {
 /// # Ok(())
 /// # }
 /// ```
-pub const fn format_with<T>(formatter: T) -> FormatWith<T>
+pub const fn format_with<'ast, T>(formatter: T) -> FormatWith<T>
 where
-    T: Fn(&mut Formatter) -> FormatResult<()>,
+    T: Fn(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
-    FormatWith { formatter, context: PhantomData }
+    FormatWith { formatter }
 }
 
 /// Creates an inline `Format` object that can only be formatted once.
@@ -2432,15 +2431,13 @@ where
         self.result = self.result.and_then(|()| {
             if self.has_elements {
                 if self.has_lines_before(span, source_text) {
-                    write!(self.fmt, [empty_line()])?;
+                    write!(self.fmt, empty_line())?;
                 } else {
                     self.separator.fmt(self.fmt)?;
                 }
             }
-
             self.has_elements = true;
-
-            write!(self.fmt, [content])
+            write!(self.fmt, content)
         });
     }
 
@@ -2448,8 +2445,7 @@ where
     pub fn entry_no_separator(&mut self, content: &dyn Format<'ast>) {
         self.result = self.result.and_then(|()| {
             self.has_elements = true;
-
-            write!(self.fmt, [content])
+            write!(self.fmt, content)
         });
     }
 
