@@ -258,6 +258,11 @@ impl<'ast> Formatter<'_, 'ast> {
         let stack = &self.state().stack;
         stack.as_slice().get(stack.len() - 2).unwrap()
     }
+
+    pub fn parent_parent_kind(&self) -> Option<&AstKind<'ast>> {
+        let stack = &self.state().stack;
+        stack.as_slice().get(stack.len() - 3)
+    }
 }
 
 impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {

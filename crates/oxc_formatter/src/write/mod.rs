@@ -2,7 +2,6 @@ mod array_element_list;
 mod block_statement;
 mod directive;
 mod function;
-mod if_statement;
 mod object_like;
 mod semicolon;
 mod utils;
@@ -263,23 +262,24 @@ impl<'a> FormatWrite<'a> for PrivateFieldExpression<'a> {
 
 impl<'a> FormatWrite<'a> for CallExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.callee, "("])?;
-        write!(f, [self.arguments, ")"])
+        write!(f, [self.callee, self.arguments])
     }
 }
 
 impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, "(")?;
         for arg in self {
             write!(f, arg)?;
         }
-        Ok(())
+        write!(f, ")")
     }
 }
 
 impl<'a> FormatWrite<'a> for NewExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["new", space(), self.callee, "(", self.arguments, ")"])
+        let Self { callee, type_arguments, arguments, .. } = self;
+        write!(f, ["new", space(), callee, type_arguments, arguments])
     }
 }
 
@@ -321,7 +321,7 @@ impl<'a> FormatWrite<'a> for UnaryExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, self.operator.as_str());
         if self.operator.is_keyword() {
-            write!(f, hard_space());
+            write!(f, space());
         }
         write!(f, self.argument)
     }
@@ -463,13 +463,16 @@ impl<'a> FormatWrite<'a> for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> FormatWrite<'a> for SequenceExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        for (i, expr) in self.expressions.iter().enumerate() {
-            if i != 0 {
-                write!(f, ", ")?;
+        let format_inner = format_with(|f| {
+            for (i, expr) in self.expressions.iter().enumerate() {
+                if i != 0 {
+                    write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()])?;
+                }
+                write!(f, expr)?;
             }
-            write!(f, expr)?;
-        }
-        Ok(())
+            Ok(())
+        });
+        write!(f, group(&format_inner))
     }
 }
 
@@ -481,7 +484,7 @@ impl<'a> FormatWrite<'a> for Super {
 
 impl<'a> FormatWrite<'a> for AwaitExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["await ", self.argument])
+        write!(f, ["await", space(), self.argument])
     }
 }
 
@@ -589,19 +592,63 @@ impl<'a> FormatWrite<'a> for ExpressionStatement<'a> {
 
 impl<'a> FormatWrite<'a> for DoWhileStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["do", self.body, "while(", self.test, ")", OptionalSemicolon])
+        let Self { body, test, .. } = self;
+        write!(f, group(&format_args!("do", FormatStatementBody::new(body))))?;
+        if matches!(body, Statement::BlockStatement(_)) {
+            write!(f, space())?;
+        } else {
+            write!(f, hard_line_break())?;
+        }
+        write!(f, ["while", space(), "(", group(&soft_block_indent(test)), ")", OptionalSemicolon])
     }
 }
 
 impl<'a> FormatWrite<'a> for WhileStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["while(", self.test, ")", self.body, OptionalSemicolon])
+        let Self { test, body, .. } = self;
+        write!(
+            f,
+            group(&format_args!(
+                "while",
+                space(),
+                "(",
+                group(&soft_block_indent(test)),
+                ")",
+                FormatStatementBody::new(body)
+            ))
+        )
     }
 }
 
 impl<'a> FormatWrite<'a> for ForStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        let ForStatement { init, test, update, body, .. } = self;
+        let format_body = FormatStatementBody::new(body);
+        if init.is_none() && test.is_none() && update.is_none() {
+            return write!(f, group(&format_args!("for", space(), "(;;)", format_body)));
+        }
+        let format_inner = format_with(|f| {
+            write!(
+                f,
+                [
+                    "for",
+                    space(),
+                    "(",
+                    group(&soft_block_indent(&format_args!(
+                        init,
+                        ";",
+                        soft_line_break_or_space(),
+                        test,
+                        ";",
+                        soft_line_break_or_space(),
+                        update
+                    ))),
+                    ")",
+                    format_body
+                ]
+            )
+        });
+        write!(f, group(&format_inner))
     }
 }
 
@@ -613,18 +660,109 @@ impl<'a> FormatWrite<'a> for ForStatementInit<'a> {
 
 impl<'a> FormatWrite<'a> for ForInStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        let Self { left, right, body, .. } = self;
+        write!(
+            f,
+            group(&format_args!(
+                "for",
+                space(),
+                "(",
+                left,
+                space(),
+                "in",
+                space(),
+                right,
+                ")",
+                FormatStatementBody::new(body)
+            ))
+        )
     }
 }
 
 impl<'a> FormatWrite<'a> for ForStatementLeft<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        match self {
+            ForStatementLeft::VariableDeclaration(var) => var.fmt(f),
+            match_assignment_target!(ForStatementLeft) => self.to_assignment_target().fmt(f),
+        }
     }
 }
 
 impl<'a> FormatWrite<'a> for ForOfStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let Self { r#await, left, right, body, .. } = self;
+        let format_inner = format_with(|f| {
+            write!(f, "for")?;
+            if *r#await {
+                write!(f, [space(), "await"])?;
+            }
+            write!(
+                f,
+                [
+                    space(),
+                    "(",
+                    left,
+                    space(),
+                    "of",
+                    space(),
+                    right,
+                    ")",
+                    FormatStatementBody::new(body)
+                ]
+            )
+        });
+        write!(f, group(&format_inner))
+    }
+}
+
+impl<'a> FormatWrite<'a> for IfStatement<'a> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let IfStatement { test, consequent, alternate, .. } = self;
+        write!(
+            f,
+            group(&format_args!(
+                "if",
+                space(),
+                "(",
+                group(&soft_block_indent(test)),
+                ")",
+                FormatStatementBody::new(consequent),
+            ))
+        )?;
+        if let Some(alternate) = alternate {
+            let comments = f.context().comments();
+            let dangling_comments = comments.dangling_comments(alternate.span());
+            let dangling_line_comment =
+                dangling_comments.last().is_some_and(|comment| comment.kind().is_line());
+            let has_dangling_comments = !dangling_comments.is_empty();
+
+            let trailing_line_comment = comments
+                .trailing_comments(consequent.span().end)
+                .iter()
+                .any(|comment| comment.kind().is_line());
+
+            let else_on_same_line = matches!(consequent, Statement::BlockStatement(_))
+                && !trailing_line_comment
+                && !dangling_line_comment;
+
+            if else_on_same_line {
+                write!(f, space())?;
+            } else {
+                write!(f, hard_line_break())?;
+            }
+
+            if has_dangling_comments {
+                write!(f, format_dangling_comments(self.span))?;
+
+                if trailing_line_comment || dangling_line_comment {
+                    write!(f, hard_line_break())?;
+                } else {
+                    write!(f, space())?;
+                }
+            }
+
+            write!(f, alternate)?;
+        }
         Ok(())
     }
 }
@@ -661,22 +799,41 @@ impl<'a> FormatWrite<'a> for ReturnStatement<'a> {
 
 impl<'a> FormatWrite<'a> for WithStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let Self { object, body, .. } = self;
         write!(
             f,
-            group(&format_args!(
-                "with",
-                space(),
-                "(",
-                self.object,
-                ")",
-                FormatStatementBody::new(&self.body)
-            ))
+            group(&format_args!("with", space(), "(", object, ")", FormatStatementBody::new(body)))
         )
     }
 }
 
 impl<'a> FormatWrite<'a> for SwitchStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let Self { discriminant, cases, .. } = self;
+        let format_cases =
+            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
+        write!(
+            f,
+            [
+                "switch",
+                space(),
+                "(",
+                group(&soft_block_indent(discriminant)),
+                ")",
+                space(),
+                "{",
+                block_indent(&format_cases),
+                "}"
+            ]
+        )
+    }
+}
+
+impl<'a> Format<'a> for Vec<'a, SwitchCase<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        for case in self {
+            write!(f, case)?;
+        }
         Ok(())
     }
 }
@@ -689,7 +846,17 @@ impl<'a> FormatWrite<'a> for SwitchCase<'a> {
 
 impl<'a> FormatWrite<'a> for LabeledStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.label, ": ", self.body, OptionalSemicolon])
+        let Self { label, body, .. } = self;
+        write!(f, [label, ":"])?;
+        match body {
+            Statement::EmptyStatement(empty) => {
+                // If the body is an empty statement, force semicolon insertion
+                write!(f, [empty, ";"])
+            }
+            body => {
+                write!(f, [space(), body])
+            }
+        }
     }
 }
 
@@ -701,24 +868,21 @@ impl<'a> FormatWrite<'a> for ThrowStatement<'a> {
 
 impl<'a> FormatWrite<'a> for TryStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                "try ",
-                self.block,
-                "catch",
-                self.handler,
-                "finally",
-                self.finalizer,
-                OptionalSemicolon
-            ]
-        )
+        let Self { block, handler, finalizer, .. } = self;
+        write!(f, ["try", space(), block])?;
+        if let Some(handler) = handler {
+            write!(f, [space(), handler])?;
+        }
+        if let Some(finalizer) = finalizer {
+            write!(f, [space(), "finally", space(), finalizer])?;
+        }
+        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for CatchClause<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.param, self.body])
+        write!(f, ["catch", space(), self.param, self.body])
     }
 }
 
@@ -811,7 +975,7 @@ impl<'a> FormatWrite<'a> for YieldExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "yield")?;
         if self.delegate {
-            write!(f, "*")?;
+            write!(f, ["*", space()])?;
         }
         write!(f, self.argument)
     }
@@ -903,13 +1067,17 @@ impl<'a> FormatWrite<'a> for AccessorProperty<'a> {
 
 impl<'a> FormatWrite<'a> for ImportExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import(", self.source, ")"])
+        write!(f, ["import(", self.source])?;
+        for option in &self.options {
+            write!(f, [",", space(), option])?;
+        }
+        write!(f, ")")
     }
 }
 
 impl<'a> FormatWrite<'a> for ImportDeclaration<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, "import")
     }
 }
 
@@ -921,6 +1089,11 @@ impl<'a> FormatWrite<'a> for ImportDeclarationSpecifier<'a> {
 
 impl<'a> FormatWrite<'a> for ImportSpecifier<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let Self { imported, local, .. } = self;
+        write!(f, imported)?;
+        if imported.span() != local.span {
+            write!(f, [space(), "as", imported])?;
+        }
         Ok(())
     }
 }
@@ -1000,13 +1173,17 @@ impl<'a> FormatWrite<'a> for ExportDefaultDeclarationKind<'a> {
 
 impl<'a> FormatWrite<'a> for ModuleExportName<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        match self {
+            Self::IdentifierName(ident) => ident.fmt(f),
+            Self::IdentifierReference(ident) => ident.fmt(f),
+            Self::StringLiteral(literal) => literal.fmt(f),
+        }
     }
 }
 
 impl<'a> FormatWrite<'a> for V8IntrinsicExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["%", self.name, "(", self.arguments, ")"])
+        write!(f, ["%", self.name, self.arguments])
     }
 }
 
