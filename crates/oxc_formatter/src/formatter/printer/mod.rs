@@ -12,7 +12,7 @@ use unicode_width::UnicodeWidthChar;
 use self::call_stack::PrintIndentStack;
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    SourceMarker, TextLen, TextRange, TextSize,
+    TextLen, TextRange, TextSize,
     format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
     prelude::{
         Tag::EndFill,
@@ -328,44 +328,7 @@ impl<'a> Printer<'a> {
             self.state.pending_space = false;
         }
 
-        // Insert source map markers before and after the token
-        //
-        // If the token has source position information the start marker
-        // will use the start position of the original token, and the end
-        // marker will use that position + the text length of the token
-        //
-        // If the token has no source position (was created by the formatter)
-        // both the start and end marker will use the last known position
-        // in the input source (from state.source_position)
-        if let Some(source) = source_position {
-            self.state.source_position = source;
-        }
-
-        self.push_marker(SourceMarker {
-            source: self.state.source_position,
-            dest: self.state.buffer.text_len(),
-        });
-
         self.print_str(text);
-
-        if source_position.is_some() {
-            self.state.source_position += text.text_len();
-        }
-
-        self.push_marker(SourceMarker {
-            source: self.state.source_position,
-            dest: self.state.buffer.text_len(),
-        });
-    }
-
-    fn push_marker(&mut self, marker: SourceMarker) {
-        if let Some(last) = self.state.source_markers.last() {
-            if last != &marker {
-                self.state.source_markers.push(marker);
-            }
-        } else {
-            self.state.source_markers.push(marker);
-        }
     }
 
     fn flush_line_suffixes(
@@ -683,8 +646,6 @@ impl<'a> Printer<'a> {
         if char == '\n' {
             self.state.buffer.push_str(self.options.line_ending.as_str());
 
-            self.state.generated_line += 1;
-            self.state.generated_column = 0;
             self.state.line_width = 0;
 
             // Fit's only tests if groups up to the first line break fit.
@@ -692,7 +653,6 @@ impl<'a> Printer<'a> {
             self.state.measured_group_fits = false;
         } else {
             self.state.buffer.push(char);
-            self.state.generated_column += 1;
 
             let char_width = if char == '\t' {
                 self.options.indent_width().value() as usize
@@ -728,13 +688,9 @@ enum FillPairLayout {
 #[derive(Default, Debug)]
 struct PrinterState<'a> {
     buffer: String,
-    source_markers: Vec<SourceMarker>,
-    source_position: TextSize,
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
-    generated_line: usize,
-    generated_column: usize,
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,

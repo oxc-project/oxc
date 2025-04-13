@@ -75,15 +75,6 @@ pub use self::{
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
-/// Lightweight sourcemap marker between source and output tokens
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct SourceMarker {
-    /// Position of the marker in the original source
-    pub source: TextSize,
-    /// Position of the marker in the output code
-    pub dest: TextSize,
-}
-
 #[derive(Debug, Clone)]
 pub struct Formatted<'a> {
     document: Document,
