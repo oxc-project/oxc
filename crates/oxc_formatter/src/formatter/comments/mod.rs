@@ -937,8 +937,8 @@ impl Comments {
     ///
     /// Returns `true` for the expression statement but `false` for the call expression because the
     /// call expression is nested inside of the expression statement.
-    pub fn is_suppressed(&self, node: &SyntaxNode) -> bool {
-        todo!()
+    pub fn is_suppressed(&self, span: Span) -> bool {
+        false
         // self.mark_suppression_checked(node);
         // let is_suppression = self.data.is_suppression;
 
