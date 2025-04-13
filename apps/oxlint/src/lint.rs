@@ -1120,4 +1120,19 @@ mod test {
             );
         }
     }
+
+    fn test_cross_modules_with_nested_config() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cross_module_nested_config".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_cross_modules_with_extended_config() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cross_module_extended_config".into())
+            .test_and_snapshot(args);
+    }
 }

@@ -40,13 +40,31 @@ impl Generator for FormatterFormatGenerator {
                     _ => unreachable!(),
                 };
 
+                let leading = if type_def.is_enum() {
+                    quote! {}
+                } else {
+                    quote! {
+                        format_leading_comments(self.span.start).fmt(f)?;
+                    }
+                };
+
+                let trailing = if type_def.is_enum() {
+                    quote! {}
+                } else {
+                    quote! {
+                        format_trailing_comments(self.span.end).fmt(f)?;
+                    }
+                };
+
                 if has_kind {
                     quote! {
                         ///@@line_break
                         impl<'a> Format<'a> for #type_ty {
                             fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                                 f.state_mut().stack.push(AstKind::#type_ident(hack(self)));
+                                #leading
                                 let result = self.write(f);
+                                #trailing
                                 unsafe { f.state_mut().stack.pop_unchecked() };
                                 result
                             }
@@ -72,9 +90,11 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Buffer, Format, FormatResult, Formatter},
-                write,
-                write::FormatWrite,
+                formatter::{
+                    Buffer, Format, FormatResult, Formatter,
+                    trivia::{format_leading_comments, format_trailing_comments},
+                },
+                write::{self, FormatWrite},
             };
 
             ///@@line_break

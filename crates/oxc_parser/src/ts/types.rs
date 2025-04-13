@@ -1318,20 +1318,18 @@ impl<'a> ParserImpl<'a> {
     fn parse_js_doc_unknown_or_nullable_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump `?`
-        let type_annotation = self.parse_ts_type()?;
-        let span = self.end_span(span);
         if matches!(
             self.cur_kind(),
             Kind::Comma | Kind::RCurly | Kind::RParen | Kind::RAngle | Kind::Eq | Kind::Pipe
         ) {
-            Ok(self.ast.ts_type_js_doc_unknown_type(span))
-        } else {
-            Ok(self.ast.ts_type_js_doc_nullable_type(
-                span,
-                type_annotation,
-                /* postfix */ false,
-            ))
+            return Ok(self.ast.ts_type_js_doc_unknown_type(self.end_span(span)));
         }
+        let type_annotation = self.parse_ts_type()?;
+        Ok(self.ast.ts_type_js_doc_nullable_type(
+            self.end_span(span),
+            type_annotation,
+            /* postfix */ false,
+        ))
     }
 
     fn parse_js_doc_non_nullable_type(&mut self) -> Result<TSType<'a>> {
