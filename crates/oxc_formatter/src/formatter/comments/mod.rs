@@ -921,8 +921,9 @@ impl Comments {
     /// Returns `true` if that node has skipped token trivia attached.
     #[inline]
     pub fn has_skipped(&self, token: &SyntaxToken) -> bool {
-        todo!()
+        // TODO
         // self.data.with_skipped.contains(&token.key())
+        false
     }
 
     /// Returns `true` if `node` has a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) suppression comment.

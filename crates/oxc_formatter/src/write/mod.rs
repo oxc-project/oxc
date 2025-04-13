@@ -3,6 +3,7 @@ mod block_statement;
 mod directive;
 mod function;
 mod if_statement;
+mod object_like;
 mod semicolon;
 mod utils;
 mod variable_declaration;
@@ -15,13 +16,15 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter, group_id, prelude::*,
-        trivia::format_trailing_comments, write,
+        separated::FormatSeparatedIter, trivia::format_trailing_comments, write,
     },
+    options::FormatTrailingCommas,
     write,
 };
 
 use self::{
-    array_element_list::ArrayElementList, semicolon::OptionalSemicolon, utils::FormatStatementBody,
+    array_element_list::ArrayElementList, object_like::ObjectLike, semicolon::OptionalSemicolon,
+    utils::FormatStatementBody,
 };
 
 impl<'a, T: Format<'a>> Format<'a> for Box<'a, T> {
@@ -169,19 +172,36 @@ impl<'a> FormatWrite<'a> for Elision {
 
 impl<'a> FormatWrite<'a> for ObjectExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        ObjectLike::ObjectExpression(self).fmt(f)
+    }
+}
+
+impl<'a> Format<'a> for Vec<'a, ObjectPropertyKind<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
+        let source_text = f.context().source_text();
+        let mut join = f.join_nodes_with_soft_line();
+        for (element, formatted) in self.iter().zip(
+            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator),
+        ) {
+            join.entry(element.span(), source_text, &formatted);
+        }
+        join.finish()
     }
 }
 
 impl<'a> FormatWrite<'a> for ObjectPropertyKind<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        match self {
+            Self::ObjectProperty(p) => p.fmt(f),
+            Self::SpreadProperty(p) => p.fmt(f),
+        }
     }
 }
 
 impl<'a> FormatWrite<'a> for ObjectProperty<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, [self.key, ":", space(), self.value])
     }
 }
 
@@ -1586,7 +1606,20 @@ impl<'a> FormatWrite<'a> for TSTypeParameterDeclaration<'a> {
 
 impl<'a> FormatWrite<'a> for TSTypeAliasDeclaration<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(
+            f,
+            [
+                self.declare.then_some("declare "),
+                "type",
+                space(),
+                self.id,
+                self.type_parameters,
+                space(),
+                "=",
+                space(),
+                self.type_annotation
+            ]
+        )
     }
 }
 
@@ -1616,6 +1649,18 @@ impl<'a> FormatWrite<'a> for TSPropertySignature<'a> {
 
 impl<'a> FormatWrite<'a> for TSSignature<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        match self {
+            Self::TSIndexSignature(o) => o.fmt(f),
+            Self::TSPropertySignature(o) => o.fmt(f),
+            Self::TSCallSignatureDeclaration(o) => o.fmt(f),
+            Self::TSConstructSignatureDeclaration(o) => o.fmt(f),
+            Self::TSMethodSignature(o) => o.fmt(f),
+        }
+    }
+}
+
+impl<'a> Format<'a> for Vec<'a, TSSignature<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
@@ -1697,7 +1742,7 @@ impl<'a> FormatWrite<'a> for TSModuleBlock<'a> {
 
 impl<'a> FormatWrite<'a> for TSTypeLiteral<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        ObjectLike::TSTypeLiteral(self).fmt(f)
     }
 }
 

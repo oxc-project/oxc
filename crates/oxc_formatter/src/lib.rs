@@ -33,11 +33,10 @@ impl<'a> Formatter<'a> {
         Self { allocator, source_text: "", options }
     }
 
-    pub fn build(&mut self, program: &Program<'a>) -> String {
+    pub fn build(mut self, program: &Program<'a>) -> String {
         let source_text = program.source_text;
         self.source_text = source_text;
-        let options = FormatOptions::default();
-        let context = FormatContext::new(program, options);
+        let context = FormatContext::new(program, self.options);
         let formatted = formatter::format(
             program,
             context,
