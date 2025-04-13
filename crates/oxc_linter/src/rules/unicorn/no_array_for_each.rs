@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -73,13 +72,13 @@ impl Rule for NoArrayForEach {
 
             match object {
                 Expression::Identifier(ident) => {
-                    if IGNORED_OBJECTS.contains(ident.name.as_str()) {
+                    if IGNORED_OBJECTS.contains(&ident.name.as_str()) {
                         return;
                     }
                 }
                 match_member_expression!(Expression) => {
                     if let Some(name) = object.to_member_expression().static_property_name() {
-                        if IGNORED_OBJECTS.contains(name) {
+                        if IGNORED_OBJECTS.contains(&name) {
                             return;
                         }
                     }
@@ -96,11 +95,7 @@ impl Rule for NoArrayForEach {
     }
 }
 
-pub const IGNORED_OBJECTS: phf::Set<&'static str> = phf_set! {
-    "Children",
-    "r",
-    "pIteration",
-};
+pub const IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
 
 #[test]
 fn test() {
