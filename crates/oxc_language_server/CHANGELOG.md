@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.6] - 2025-04-14
+
+### Features
+
+- 0370363 language_server: Switch `tower-lsp` to `tower-lsp-server` (#10298) (Boshen)
+
+### Bug Fixes
+
+- 664342b language_server: Diable nested configuration when config path is provided (#10385) (Sysix)
+
+### Performance
+
+- e0057c3 language_server: Only restart internal linter once when multiple config changes detected (#10256) (Sysix)
+
+### Refactor
+
+- a95ba40 language_server: Make server more error resistance by falling back to default config (#10257) (Sysix)
+
+### Testing
+
+- 4a6bb21 language_server: Add test for `import` plugin integration (#10364) (Sysix)
+
 ## [0.16.5] - 2025-04-07
 
 ### Features
