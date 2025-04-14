@@ -63,8 +63,8 @@ struct Options {
 }
 
 impl Options {
-    fn disable_nested_configs(&self) -> bool {
-        self.flags.contains_key("disable_nested_config")
+    fn use_nested_configs(&self) -> bool {
+        !self.flags.contains_key("disable_nested_config") || self.config_path.is_some()
     }
 
     fn fix_kind(&self) -> FixKind {
@@ -143,7 +143,7 @@ impl LanguageServer for Backend {
 
         *self.options.lock().await = changed_options.clone();
 
-        if changed_options.disable_nested_configs() != current_option.disable_nested_configs() {
+        if changed_options.use_nested_configs() != current_option.use_nested_configs() {
             self.nested_configs.pin().clear();
             self.init_nested_configs().await;
         }
@@ -156,7 +156,7 @@ impl LanguageServer for Backend {
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         debug!("watched file did change");
-        if !self.options.lock().await.disable_nested_configs() {
+        if self.options.lock().await.use_nested_configs() {
             let nested_configs = self.nested_configs.pin();
 
             params.changes.iter().for_each(|x| {
@@ -508,7 +508,7 @@ impl Backend {
 
     fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
         old_options.config_path != new_options.config_path
-            || old_options.disable_nested_configs() != new_options.disable_nested_configs()
+            || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind() != new_options.fix_kind()
     }
 
@@ -523,7 +523,7 @@ impl Backend {
         };
 
         // nested config is disabled, no need to search for configs
-        if self.options.lock().await.disable_nested_configs() {
+        if !self.options.lock().await.use_nested_configs() {
             return;
         }
 
@@ -578,9 +578,7 @@ impl Backend {
         let lint_options =
             LintOptions { fix: self.options.lock().await.fix_kind(), ..Default::default() };
 
-        let linter = if self.options.lock().await.disable_nested_configs() {
-            Linter::new(lint_options, config_store)
-        } else {
+        let linter = if self.options.lock().await.use_nested_configs() {
             let nested_configs = self.nested_configs.pin();
             let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
                 .iter()
@@ -588,6 +586,8 @@ impl Backend {
                 .collect::<FxHashMap<_, _>>();
 
             Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
+        } else {
+            Linter::new(lint_options, config_store)
         };
 
         *self.server_linter.write().await = ServerLinter::new_with_linter(linter);
