@@ -113,16 +113,16 @@ export const updateNotSupportedStatus = (ruleEntries) => {
  * @param {string} constName
  * @param {string} fileContent
  */
-const getPhfSetEntries = (constName, fileContent) => {
+const getArrayEntries = (constName, fileContent) => {
   // Find the start of the list
   // ```
-  // const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
+  // const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
   //   "consistent-test-it",
   //   "expect-expect",
   //   ...
-  // };
+  // ];
   // ```
-  const regSearch = new RegExp(`const ${constName}[^.]+phf_set! {([^}]+)`, 's');
+  const regSearch = new RegExp(`const ${constName}[^=]+= \\[([^\\]]+)`, 's');
 
   const vitestCompatibleRules = fileContent.match(regSearch)?.[1];
   if (!vitestCompatibleRules) {
@@ -159,7 +159,7 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getPhfSetEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
+  const rules = getArrayEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
 
   for (const rule of rules) {
     const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
@@ -183,7 +183,7 @@ export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) =>
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getPhfSetEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
+  const rules = getArrayEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);
