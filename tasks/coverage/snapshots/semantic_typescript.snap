@@ -2095,9 +2095,6 @@ rebuilt        : ScopeId(0): ["M2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(4): ["C", "T", "_M"]
-rebuilt        : ScopeId(1): ["C", "_M"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -17964,9 +17961,6 @@ rebuilt        : ScopeId(0): ["B"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "Y", "_B"]
-rebuilt        : ScopeId(1): ["A", "_B"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -20060,9 +20054,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(4): ["Bug", "_editor", "i", "modes"]
-rebuilt        : ScopeId(3): ["Bug", "_editor", "i"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -20078,9 +20069,6 @@ rebuilt        : ScopeId(14): ScopeFlags(Function)
 Scope children mismatch:
 after transform: ScopeId(15): [ScopeId(16), ScopeId(17)]
 rebuilt        : ScopeId(14): [ScopeId(15)]
-Bindings mismatch:
-after transform: ScopeId(18): ["A1Alias1", "_B", "c", "i"]
-rebuilt        : ScopeId(16): ["_B", "c", "i"]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(16): ScopeFlags(Function)
@@ -20926,9 +20914,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["M", "_M2", "bar"]
-rebuilt        : ScopeId(5): ["_M2", "bar"]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)

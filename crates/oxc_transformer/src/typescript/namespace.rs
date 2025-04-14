@@ -1,7 +1,6 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::Reference;
 use oxc_span::SPAN;
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
@@ -22,16 +21,11 @@ pub struct TypeScriptNamespace<'a, 'ctx> {
 
     // Options
     allow_namespaces: bool,
-    only_remove_type_imports: bool,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self {
-            ctx,
-            allow_namespaces: options.allow_namespaces,
-            only_remove_type_imports: options.only_remove_type_imports,
-        }
+        Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }
 
@@ -39,7 +33,6 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
-
         if !has_namespace(program.body.as_slice()) {
             return;
         }
@@ -59,14 +52,12 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                     continue;
                 }
-                Statement::ExportNamedDeclaration(export_decl) => {
-                    if export_decl.declaration.as_ref().is_none_or(|decl| {
-                        decl.declare() || !matches!(decl, Declaration::TSModuleDeclaration(_))
-                    }) {
-                        new_stmts.push(Statement::ExportNamedDeclaration(export_decl));
-                        continue;
-                    }
-
+                Statement::ExportNamedDeclaration(export_decl)
+                    if export_decl.declaration.as_ref().is_some_and(|declaration| {
+                        !declaration.declare()
+                            && matches!(declaration, Declaration::TSModuleDeclaration(_))
+                    }) =>
+                {
                     let Some(Declaration::TSModuleDeclaration(decl)) =
                         export_decl.unbox().declaration
                     else {
@@ -156,7 +147,6 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
-                    continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
@@ -219,25 +209,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                             _ => {}
                         }
                     }
-                    continue;
                 }
-                // Retain when `only_remove_type_imports` is true or there are value references
-                // The behavior is the same as `TypeScriptModule::transform_ts_import_equals`
-                Statement::TSImportEqualsDeclaration(decl)
-                    if !self.only_remove_type_imports
-                        && ctx
-                            .scoping()
-                            .get_resolved_references(decl.id.symbol_id())
-                            .all(Reference::is_type) =>
-                {
-                    continue;
-                }
-                Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
-                    continue;
-                }
-                _ => {}
+                _ => new_stmts.push(stmt),
             }
-            new_stmts.push(stmt);
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {

@@ -1,5 +1,3 @@
-use rustc_hash::FxHashSet;
-
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,7 +27,6 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     has_jsx_fragment: bool,
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
-    type_identifier_names: FxHashSet<Atom<'a>>,
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
@@ -55,7 +52,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
-            type_identifier_names: FxHashSet::default(),
         }
     }
 }
@@ -79,7 +75,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
@@ -456,8 +452,6 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            // Any namespaces left after namespace transform are type only, so remove them
-            Statement::TSModuleDeclaration(_) => false,
             match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
@@ -548,17 +542,6 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     fn enter_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.has_jsx_fragment = true;
     }
-
-    fn enter_ts_module_declaration(
-        &mut self,
-        decl: &mut TSModuleDeclaration<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // NB: Namespace transform happens in `enter_program` visitor, and replaces retained
-        // namespaces with functions. This visitor is called after, by which time any remaining
-        // namespaces need to be deleted.
-        self.type_identifier_names.insert(decl.id.name());
-    }
 }
 
 impl<'a> TypeScriptAnnotations<'a, '_> {
@@ -615,14 +598,8 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
         self.is_jsx_imports(&id.name)
     }
 
-    fn can_retain_export_specifier(
-        &self,
-        specifier: &ExportSpecifier<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        if specifier.export_kind.is_type()
-            || self.type_identifier_names.contains(&specifier.exported.name())
-        {
+    fn can_retain_export_specifier(specifier: &ExportSpecifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if specifier.export_kind.is_type() {
             return false;
         }
         !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx))

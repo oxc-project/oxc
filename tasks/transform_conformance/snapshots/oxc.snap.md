@@ -209,9 +209,6 @@ after transform: SymbolId(1): Span { start: 31, end: 33 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 * namespace/import-=/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["V", "X", "_N"]
-rebuilt        : ScopeId(1): ["V", "_N"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
