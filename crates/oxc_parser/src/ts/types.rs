@@ -1,7 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -928,7 +927,7 @@ impl<'a> ParserImpl<'a> {
         }
         let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
-            if ty.span.start == ty.type_annotation.span().start {
+            if ty.postfix {
                 Ok(self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation))
             } else {
                 Ok(TSTupleElement::JSDocNullableType(ty))
