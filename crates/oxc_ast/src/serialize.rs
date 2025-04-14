@@ -1026,8 +1026,8 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
 #[estree(
     ts_type = "TSTypeParameter['name']",
     raw_deser = "
-        const type_parameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
-        type_parameter.name
+        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
+        typeParameter.name
     "
 )]
 pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
@@ -1037,12 +1037,12 @@ impl ESTree for TSMappedTypeKey<'_, '_> {
         self.0.type_parameter.name.serialize(serializer);
     }
 }
-// NOTE: Variable `type_parameter` in 'raw_deser' is declared in `TSMappedTypeKey`'s `raw_deser`.
+// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
 // They will be concatenated in the generated code.
 #[ast_meta]
 #[estree(
     ts_type = "TSTypeParameter['constraint']",
-    raw_deser = "type_parameter.constraint"
+    raw_deser = "typeParameter.constraint"
 )]
 pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
 
