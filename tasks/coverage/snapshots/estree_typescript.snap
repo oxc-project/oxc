@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 8573/10725 (79.93%)
+Positive Passed: 8575/10725 (79.95%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
@@ -1180,8 +1180,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictModeWordInExportD
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictNullEmptyDestructuring.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictNullNotNullIndexTypeNoLib.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/stringRawType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
 tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable01.ts
