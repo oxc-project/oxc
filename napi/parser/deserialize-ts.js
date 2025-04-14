@@ -1049,16 +1049,18 @@ function deserializeImportAttribute(pos) {
 }
 
 function deserializeExportNamedDeclaration(pos) {
+  const declaration = deserializeOptionDeclaration(pos + 8);
   const withClause = deserializeOptionBoxWithClause(pos + 112);
+  const exportKind = deserializeImportOrExportKind(pos + 104);
   return {
     type: 'ExportNamedDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    declaration: deserializeOptionDeclaration(pos + 8),
+    declaration,
     specifiers: deserializeVecExportSpecifier(pos + 24),
     source: deserializeOptionStringLiteral(pos + 56),
     attributes: withClause === null ? [] : withClause.withEntries,
-    exportKind: deserializeImportOrExportKind(pos + 104),
+    exportKind: declaration?.declare ? 'type' : exportKind,
   };
 }
 

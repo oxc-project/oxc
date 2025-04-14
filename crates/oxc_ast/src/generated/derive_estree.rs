@@ -1758,7 +1758,10 @@ impl ESTree for ExportNamedDeclaration<'_> {
             "attributes",
             &crate::serialize::ExportNamedDeclarationWithClause(self),
         );
-        state.serialize_ts_field("exportKind", &self.export_kind);
+        state.serialize_ts_field(
+            "exportKind",
+            &crate::serialize::ExportNamedDeclarationExportKind(self),
+        );
         state.end();
     }
 }
