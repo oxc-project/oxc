@@ -719,6 +719,7 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
             &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
         );
         state.serialize_field("kind", &crate::serialize::Init(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }
@@ -735,6 +736,7 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
         state.serialize_field("key", &self.name);
         state.serialize_field("value", &self.binding);
         state.serialize_field("kind", &crate::serialize::Init(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.end();
     }
 }

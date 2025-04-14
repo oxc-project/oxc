@@ -288,6 +288,7 @@ export interface AssignmentTargetPropertyIdentifier extends Span {
   key: IdentifierReference;
   value: IdentifierReference | AssignmentTargetWithDefault;
   kind: 'init';
+  optional?: false;
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
@@ -298,6 +299,7 @@ export interface AssignmentTargetPropertyProperty extends Span {
   key: PropertyKey;
   value: AssignmentTargetMaybeDefault;
   kind: 'init';
+  optional?: false;
 }
 
 export interface SequenceExpression extends Span {

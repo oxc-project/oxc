@@ -952,8 +952,8 @@ pub enum AssignmentTargetProperty<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(method = False, shorthand = True, computed = False, kind = Init),
-    field_order(span, method, shorthand, computed, binding, init, kind),
+    add_fields(method = False, shorthand = True, computed = False, kind = Init, optional = TsFalse),
+    field_order(span, method, shorthand, computed, binding, init, kind, optional),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -971,8 +971,8 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(method = False, shorthand = False, kind = Init),
-    field_order(span, method, shorthand, computed, name, binding, kind),
+    add_fields(method = False, shorthand = False, kind = Init, optional = TsFalse),
+    field_order(span, method, shorthand, computed, name, binding, kind, optional),
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,

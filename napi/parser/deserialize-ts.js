@@ -406,6 +406,7 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     key,
     value,
     kind: 'init',
+    optional: false,
   };
 }
 
@@ -420,6 +421,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
     key: deserializePropertyKey(pos + 8),
     value: deserializeAssignmentTargetMaybeDefault(pos + 24),
     kind: 'init',
+    optional: false,
   };
 }
 
