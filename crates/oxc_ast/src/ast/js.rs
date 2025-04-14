@@ -1621,7 +1621,10 @@ pub struct ArrayPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "RestElement")]
+#[estree(
+    rename = "RestElement",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
+)]
 pub struct BindingRestElement<'a> {
     pub span: Span,
     pub argument: BindingPattern<'a>,

@@ -1325,6 +1325,10 @@ impl ESTree for BindingRestElement<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
+        state.serialize_ts_field("value", &crate::serialize::TsNull(self));
         state.end();
     }
 }

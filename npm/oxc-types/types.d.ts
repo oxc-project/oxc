@@ -551,6 +551,10 @@ export interface ArrayPattern extends Span {
 export interface BindingRestElement extends Span {
   type: 'RestElement';
   argument: BindingPattern;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
+  value?: null;
 }
 
 export interface Function extends Span {

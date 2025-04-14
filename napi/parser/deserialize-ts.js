@@ -782,6 +782,10 @@ function deserializeBindingRestElement(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     argument: deserializeBindingPattern(pos + 8),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
+    value: null,
   };
 }
 
