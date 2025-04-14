@@ -1066,7 +1066,7 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
             TSMappedTypeModifierOperator::True => true.serialize(serializer),
             TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
             TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
-            // This is typed as `undefined`(= key is not present) in TS-ESTree.
+            // This is typed as `undefined` (= key is not present) in TS-ESTree.
             // But we serialize it as `null` to align result in snapshot tests.
             TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
         }
