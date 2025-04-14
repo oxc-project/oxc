@@ -834,10 +834,11 @@ impl ESTree for ExportNamedDeclarationExportKind<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(decl) = &self.0.declaration {
             if decl.declare() {
-                return ImportOrExportKind::Type.serialize(serializer);
+                ImportOrExportKind::Type.serialize(serializer);
             }
+        } else {
+            self.0.export_kind.serialize(serializer);
         }
-        self.0.export_kind.serialize(serializer);
     }
 }
 
