@@ -109,7 +109,8 @@ impl ESTree for ProgramConverter<'_, '_> {
             } else if let Some(first_stmt) = program.body.first() {
                 first_stmt.span().start
             } else {
-                program.span.start
+                // If program contains no statements or directives, span start = span end
+                program.span.end
             }
         } else {
             program.span.start
