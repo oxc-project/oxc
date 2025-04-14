@@ -1051,7 +1051,7 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
 
 #[ast_meta]
 #[estree(
-    ts_type = "boolean | '+' | '-' | null",
+    ts_type = "true | '+' | '-' | null",
     raw_deser = "
         const operator = uint8[pos];
         [true, '+', '-', null][operator]
@@ -1065,7 +1065,8 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
             TSMappedTypeModifierOperator::True => True(()).serialize(serializer),
             TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
             TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
-            // This is typed as `undefined` === key is not present in TS-ESTree
+            // This is typed as `undefined`(= key is not present) in TS-ESTree.
+            // But we serialize it as `null` to align result in snapshot tests.
             TSMappedTypeModifierOperator::None => TsNull(()).serialize(serializer),
         }
     }
