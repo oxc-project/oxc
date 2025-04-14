@@ -1053,7 +1053,7 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
 #[estree(
     ts_type = "true | '+' | '-' | null",
     raw_deser = "
-        const operator = uint8[pos];
+        const operator = DESER[u8](POS);
         [true, '+', '-', null][operator]
     "
 )]

@@ -3884,7 +3884,7 @@ function deserializeTSTypeQueryExprName(pos) {
 }
 
 function deserializeTSMappedTypeModifierOperator(pos) {
-  const operator = uint8[pos];
+  const operator = deserializeU8(pos);
   return [true, '+', '-', null][operator];
 }
 
