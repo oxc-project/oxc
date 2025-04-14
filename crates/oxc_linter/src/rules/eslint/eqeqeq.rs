@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// const b = true;
     /// a == b
     /// ```
-    /// The above will evaluate to `true`, but almost surely not want you want.
+    /// The above will evaluate to `true`, but that is almost surely not what you want.
     ///
     /// Examples of **correct** code for this rule:
     ///
