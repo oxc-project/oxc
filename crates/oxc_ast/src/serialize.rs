@@ -835,10 +835,10 @@ impl ESTree for ExportNamedDeclarationExportKind<'_, '_> {
         if let Some(decl) = &self.0.declaration {
             if decl.declare() {
                 ImportOrExportKind::Type.serialize(serializer);
+                return;
             }
-        } else {
-            self.0.export_kind.serialize(serializer);
         }
+        self.0.export_kind.serialize(serializer);
     }
 }
 
