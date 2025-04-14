@@ -1346,8 +1346,8 @@ export interface TSMappedType extends Span {
   type: 'TSMappedType';
   nameType: TSType | null;
   typeAnnotation: TSType | null;
-  optional: boolean | '+' | '-' | null;
-  readonly: boolean | '+' | '-' | null;
+  optional: true | '+' | '-' | null;
+  readonly: true | '+' | '-' | null;
   key: TSTypeParameter['name'];
   constraint: TSTypeParameter['constraint'];
 }

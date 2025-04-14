@@ -1920,7 +1920,7 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
-  const type_parameter = deserializeBoxTSTypeParameter(pos + 8);
+  const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   return {
     type: 'TSMappedType',
     start: deserializeU32(pos),
@@ -1929,8 +1929,8 @@ function deserializeTSMappedType(pos) {
     typeAnnotation: deserializeOptionTSType(pos + 32),
     optional: deserializeTSMappedTypeModifierOperator(pos + 48),
     readonly: deserializeTSMappedTypeModifierOperator(pos + 49),
-    key: type_parameter.name,
-    constraint: type_parameter.constraint,
+    key: typeParameter.name,
+    constraint: typeParameter.constraint,
   };
 }
 
