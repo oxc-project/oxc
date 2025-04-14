@@ -1014,11 +1014,6 @@ impl Gen for ExportNamedDeclaration<'_> {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export");
-        if self.export_kind.is_type()
-            && !self.declaration.as_ref().is_some_and(oxc_ast::ast::Declaration::is_type)
-        {
-            p.print_str(" type ");
-        }
         if let Some(decl) = &self.declaration {
             p.print_hard_space();
             match decl {
