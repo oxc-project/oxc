@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.6] - 2025-04-14
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Features
+
+- d48e886 linter: Add `import/group-exports` rule (#10330) (yefan)
+
+### Bug Fixes
+
+- 04e2fd4 linter: Fix false positives for `no-control-regex` (#10345) (Cam McHenry)
+- e000f60 linter: Make extended configs properly inherit plugins (#10174) (Sub)
+- 81867c4 linter: Fix stack overflow in react/exhaustive deps (#10322) (camc314)
+
+### Performance
+
+- 1bb61c6 linter: Replace `phf_set` with `array` in `unicorn/prefer-native-coercion-functions` (#10384) (shulaoda)
+- e1e7a19 linter: Replace `phf_set` with `array` in `unicorn/no-array-for-each` (#10377) (dalaoshu)
+- 5f0e66c linter: Replace `phf_set` with `array` in `unicorn/prefer-spread` (#10376) (dalaoshu)
+- 8d9559d linter: Replace `phf_set` with `array` in `react/jsx-key` (#10375) (dalaoshu)
+- fbd4f92 linter: Replace `phf_set` with `array` in `utils::jest` (#10369) (shulaoda)
+- 8d0eb33 linter: Replace `phf_set` with `array` in `utils::express` (#10370) (shulaoda)
+- ba538ff linter: Use `binary_search` for arrays with more than `7` elements (#10357) (shulaoda)
+- 283e4c7 linter: Replace `phf_set` with `array` in `react/exhaustive-deps` (#10337) (shulaoda)
+- 8b8d708 linter: Replace `phf_set` with `array` in `nextjs/no-typos` (#10336) (shulaoda)
+- 0fd93d6 linter: Replace `phf_set` with `array` in `utils::promise` (#10335) (shulaoda)
+- 485ba19 linter: Replace `phf_set` with `array` in `jest/prefer-jest-mocked` (#10302) (shulaoda)
+- 83931ec linter: Replace `phf_set` with `array` in `jsdoc/check-access` (#10303) (shulaoda)
+- 651b56f linter: Replace `phf_set` with `array` in `jsdoc/empty-tags` (#10304) (shulaoda)
+- 7ffb7aa linter: Replace `phf_set` with `array` in `jsdoc/require-returns` (#10305) (shulaoda)
+- d7399c4 linter: Replace `phf_set` with `array` in `jsx-a11y/no-noninteractive-tabindex` (#10306) (shulaoda)
+- afe663b linter: Replace `phf_set` with `array` in `jest/no-restricted-matchers` (#10297) (shulaoda)
+- bd27959 linter: Replace `phf_set` with `array` in `eslint/array-callback-return` (#10296) (shulaoda)
+- 1aa0d71 linter: Replace `phf_set` with `array` in `react/no-array-index-key` (#10294) (shulaoda)
+- d9c4891 linter: Replace `phf_set` with `array` in `eslint/valid-typeof` (#10293) (shulaoda)
+
+### Refactor
+
+- 2e1ef4c linter: Extract common logic from `jsdoc/require-yields` and `jsdoc/require-returns` (#10383) (shulaoda)
+- 9533d09 linter: Remove duplicate ARIA property lists (#10326) (camchenry)
+- 67bd7aa linter: Add `AriaProperty` enum (#10325) (camchenry)
+- 52ea978 linter: Update comments, improve tests, add variant All to LintFilterKind (#10259) (Ulrich Stark)
+
 ## [0.16.5] - 2025-04-07
 
 ### Features
