@@ -820,6 +820,27 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "ImportOrExportKind",
+    raw_deser = "
+        const exportKind = DESER[ImportOrExportKind](POS_OFFSET.export_kind);
+        THIS.declaration?.declare ? 'type' : exportKind
+    "
+)]
+pub struct ExportNamedDeclarationExportKind<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+
+impl ESTree for ExportNamedDeclarationExportKind<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(decl) = &self.0.declaration {
+            if decl.declare() {
+                return ImportOrExportKind::Type.serialize(serializer);
+            }
+        }
+        self.0.export_kind.serialize(serializer);
+    }
+}
+
 // --------------------
 // JSX
 // --------------------

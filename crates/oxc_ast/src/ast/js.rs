@@ -2503,6 +2503,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     #[ts]
+    #[estree(via = ExportNamedDeclarationExportKind)]
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
     #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
