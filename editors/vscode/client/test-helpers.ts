@@ -1,4 +1,5 @@
-import { extensions, Uri, workspace, WorkspaceEdit } from 'vscode';
+import { commands, Diagnostic, extensions, languages, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import path = require('path');
 
 type OxlintConfigPlugins = string[];
 type OxlintConfigCategories = Record<string, unknown>;
@@ -28,7 +29,7 @@ export type OxlintConfig = {
   ignorePatterns?: OxlintConfigIgnorePatterns;
 };
 
-export const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
+export const WORKSPACE_DIR = workspace.workspaceFolders![0].uri;
 
 const rootOxlintConfigPath = WORKSPACE_DIR + '/.oxlintrc.json';
 const rootOxlintConfigUri = Uri.parse(rootOxlintConfigPath);
@@ -53,11 +54,17 @@ export async function createOxlintConfiguration(configuration: OxlintConfig): Pr
   await workspace.applyEdit(edit);
 }
 
-export async function deleteOxlintConfiguration(): Promise<void> {
-  const edit = new WorkspaceEdit();
-  edit.deleteFile(rootOxlintConfigUri, {
-    ignoreIfNotExists: true,
-  });
-  await workspace.applyEdit(edit);
+export async function loadFixture(fixture: string): Promise<void> {
+  const absolutePath = path.resolve(`${__dirname}/../fixtures/${fixture}`);
+  // do not copy directly into the workspace folder. FileWatcher will detect them as a deletion and stop itself.
+  await workspace.fs.copy(Uri.file(absolutePath), Uri.joinPath(WORKSPACE_DIR, 'diagnostic'), { overwrite: true });
+}
+
+export async function getDiagnostics(file: string): Promise<Diagnostic[]> {
+  const fileUri = Uri.joinPath(WORKSPACE_DIR, 'diagnostic', file);
+  await window.showTextDocument(fileUri);
   await sleep(500);
+  const diagnostics = languages.getDiagnostics(fileUri);
+  await commands.executeCommand('workbench.action.closeActiveEditor');
+  return diagnostics;
 }

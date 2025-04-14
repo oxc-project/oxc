@@ -1,5 +1,4 @@
 import { deepStrictEqual, notEqual, strictEqual } from 'assert';
-import { readFile } from 'fs/promises';
 import {
   CodeAction,
   commands,
@@ -14,28 +13,20 @@ import {
 import {
   activateExtension,
   createOxlintConfiguration,
-  deleteOxlintConfiguration,
+  getDiagnostics,
+  loadFixture,
   sleep,
   WORKSPACE_DIR,
 } from './test-helpers';
 import assert = require('assert');
 
-const filePath = WORKSPACE_DIR + '/debugger.js';
-const fileUri = Uri.parse(filePath);
+const fileUri = Uri.joinPath(WORKSPACE_DIR, 'debugger.js');
+
+setup(async () => {
+  await activateExtension();
+});
 
 suite('commands', () => {
-  setup(async () => {
-    await activateExtension();
-  });
-
-  suiteTeardown(async () => {
-    const edit = new WorkspaceEdit();
-    edit.deleteFile(fileUri, {
-      ignoreIfNotExists: true,
-    });
-    await workspace.applyEdit(edit);
-  });
-
   test('listed commands', async () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
 
@@ -76,6 +67,7 @@ suite('commands', () => {
     const edit = new WorkspaceEdit();
     edit.createFile(fileUri, {
       contents: Buffer.from('/* 😊 */debugger;'),
+      overwrite: true,
     });
 
     await workspace.applyEdit(edit);
@@ -85,54 +77,18 @@ suite('commands', () => {
     });
     await workspace.saveAll();
 
-    const content = await readFile(fileUri.fsPath, {
-      encoding: 'utf8',
-    });
+    const content = await workspace.fs.readFile(fileUri);
 
-    strictEqual(content, '/* 😊 */');
+    strictEqual(content.toString(), '/* 😊 */');
   });
 });
 
-suite('E2E Diagnostics', () => {
-  setup(async () => {
-    await activateExtension();
-  });
-
-  teardown(async () => {
-    const edit = new WorkspaceEdit();
-    edit.deleteFile(fileUri, {
-      ignoreIfNotExists: true,
-    });
-    await workspace.applyEdit(edit);
-    await deleteOxlintConfiguration();
-  });
-
-  test('simple debugger statement', async () => {
-    const edit = new WorkspaceEdit();
-    edit.createFile(fileUri, {
-      contents: Buffer.from('/* 😊 */debugger;'),
-      overwrite: true,
-    });
-
-    await workspace.applyEdit(edit);
-    await window.showTextDocument(fileUri);
-    const diagnostics = languages.getDiagnostics(fileUri);
-
-    strictEqual(diagnostics.length, 1);
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Remove the debugger statement');
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
-    strictEqual(diagnostics[0].range.start.line, 0);
-    strictEqual(diagnostics[0].range.start.character, 8);
-    strictEqual(diagnostics[0].range.end.line, 0);
-    strictEqual(diagnostics[0].range.end.character, 17);
-  });
-
-  test('code actions', async () => {
+suite('code actions', () => {
+  test('listed code actions', async () => {
     const edit = new WorkspaceEdit();
     edit.createFile(fileUri, {
       contents: Buffer.from('debugger;'),
+      overwrite: true,
     });
 
     await workspace.applyEdit(edit);
@@ -172,19 +128,12 @@ suite('E2E Diagnostics', () => {
       ],
     );
   });
+});
 
-  test('empty oxlint configuration behaves like default configuration', async () => {
-    await createOxlintConfiguration({});
-
-    const edit = new WorkspaceEdit();
-    edit.createFile(fileUri, {
-      contents: Buffer.from('/* 😊 */debugger;'),
-      overwrite: true,
-    });
-
-    await workspace.applyEdit(edit);
-    await window.showTextDocument(fileUri);
-    const diagnostics = languages.getDiagnostics(fileUri);
+suite('E2E Diagnostics', () => {
+  test('simple debugger statement', async () => {
+    await loadFixture('debugger');
+    const diagnostics = await getDiagnostics('debugger.js');
 
     strictEqual(diagnostics.length, 1);
     assert(typeof diagnostics[0].code == 'object');
@@ -195,8 +144,21 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].range.start.character, 8);
     strictEqual(diagnostics[0].range.end.line, 0);
     strictEqual(diagnostics[0].range.end.character, 17);
+  });
 
-    await deleteOxlintConfiguration();
+  test('empty oxlint configuration behaves like default configuration', async () => {
+    await loadFixture('debugger_empty_config');
+    const diagnostics = await getDiagnostics('debugger.js');
+
+    strictEqual(diagnostics.length, 1);
+    assert(typeof diagnostics[0].code == 'object');
+    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Remove the debugger statement');
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
+    strictEqual(diagnostics[0].range.start.line, 0);
+    strictEqual(diagnostics[0].range.start.character, 8);
+    strictEqual(diagnostics[0].range.end.line, 0);
+    strictEqual(diagnostics[0].range.end.character, 17);
   });
 
   test('setting rule to error, will report the diagnostic as error', async () => {
@@ -208,6 +170,7 @@ suite('E2E Diagnostics', () => {
 
     await workspace.applyEdit(edit);
     await window.showTextDocument(fileUri);
+    await sleep(500);
     const diagnosticsWarning = languages.getDiagnostics(fileUri);
 
     strictEqual(diagnosticsWarning.length, 1);
@@ -258,11 +221,9 @@ suite('E2E Diagnostics', () => {
     });
     await workspace.saveAll();
 
-    const content = await readFile(fileUri.fsPath, {
-      encoding: 'utf8',
-    });
+    const content = await workspace.fs.readFile(fileUri);
 
-    strictEqual(content, originalContent);
+    strictEqual(content.toString(), originalContent);
 
     await workspace.getConfiguration('oxc').update('flags', {
       fix_kind: 'all',
@@ -274,11 +235,10 @@ suite('E2E Diagnostics', () => {
     await commands.executeCommand('oxc.fixAll', {
       uri: fileUri.toString(),
     });
+    await sleep(500);
     await workspace.saveAll();
-    const contentWithFixAll = await readFile(fileUri.fsPath, {
-      encoding: 'utf8',
-    });
+    const contentWithFixAll = await workspace.fs.readFile(fileUri);
 
-    strictEqual(contentWithFixAll, 'if (foo === null) { bar();}');
+    strictEqual(contentWithFixAll.toString(), 'if (foo === null) { bar();}');
   });
 });
