@@ -1037,6 +1037,7 @@ impl ESTree for TSMappedTypeKey<'_, '_> {
         self.0.type_parameter.name.serialize(serializer);
     }
 }
+
 // NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
 // They will be concatenated in the generated code.
 #[ast_meta]
