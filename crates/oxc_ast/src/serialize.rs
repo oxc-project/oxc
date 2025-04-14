@@ -1040,10 +1040,7 @@ impl ESTree for TSMappedTypeKey<'_, '_> {
 // NOTE: Variable `type_parameter` in 'raw_deser' is declared in `TSMappedTypeKey`'s `raw_deser`.
 // They will be concatenated in the generated code.
 #[ast_meta]
-#[estree(
-    ts_type = "TSTypeParameter['constraint']",
-    raw_deser = "type_parameter.constraint"
-)]
+#[estree(ts_type = "TSTypeParameter['constraint']", raw_deser = "type_parameter.constraint")]
 pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
 
 impl ESTree for TSMappedTypeConstraint<'_, '_> {
