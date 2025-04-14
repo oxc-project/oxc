@@ -2297,8 +2297,8 @@ Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
 Bindings mismatch:
-after transform: ScopeId(12): ["D", "_d2"]
-rebuilt        : ScopeId(4): ["_d2"]
+after transform: ScopeId(12): ["D", "_d"]
+rebuilt        : ScopeId(4): ["_d"]
 Scope children mismatch:
 after transform: ScopeId(12): [ScopeId(13)]
 rebuilt        : ScopeId(4): []

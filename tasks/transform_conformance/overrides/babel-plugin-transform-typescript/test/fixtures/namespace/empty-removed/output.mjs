@@ -8,30 +8,30 @@ let a;
 let WithTypes;
 (function(_WithTypes) {
   let d;
-  (function(_d2) {})(d || (d = {}));
+  (function(_d) {})(d || (d = {}));
 })(WithTypes || (WithTypes = {}));
 let WithValues;
 (function(_WithValues) {
   let a;
-  (function(_a3) {
+  (function(_a2) {
     class A {}
   })(a || (a = {}));
   let b;
-  (function(_b3) {
+  (function(_b) {
     let B = /* @__PURE__ */ function(B) {
       return B;
     }({});
   })(b || (b = {}));
   let c;
-  (function(_c3) {
+  (function(_c2) {
     function C() {}
   })(c || (c = {}));
   let d;
-  (function(_d3) {
+  (function(_d2) {
     var D;
   })(d || (d = {}));
   let e;
-  (function(_e2) {
+  (function(_e) {
     E;
   })(e || (e = {}));
 })(WithValues || (WithValues = {}));

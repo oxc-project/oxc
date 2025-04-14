@@ -255,6 +255,11 @@ impl SymbolFlags {
         self.contains(Self::Ambient)
     }
 
+    #[inline]
+    pub fn is_namespace(&self) -> bool {
+        self.contains(Self::NameSpaceModule)
+    }
+
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
