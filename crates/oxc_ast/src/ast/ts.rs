@@ -1412,9 +1412,11 @@ pub struct TSConstructorType<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint))]
 pub struct TSMappedType<'a> {
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
+    #[estree(skip)]
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
@@ -1448,14 +1450,13 @@ pub struct TSMappedType<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[estree(via = TSMappedTypeModifierOperatorConverter)]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
     True = 0,
     /// e.g. `+?` in `{ [P in K]+?: T }`
-    #[estree(rename = "+")]
     Plus = 1,
     /// e.g. `-?` in `{ [P in K]-?: T }`
-    #[estree(rename = "-")]
     Minus = 2,
     /// No modifier present
     None = 3,

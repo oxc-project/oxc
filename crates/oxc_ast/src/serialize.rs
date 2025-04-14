@@ -1021,6 +1021,59 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     }
 }
 
+/// Serializer for `key` and `constraint` field of `TSMappedType`.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameter['name']",
+    raw_deser = "
+        const type_parameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
+        type_parameter.name
+    "
+)]
+pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeKey<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.type_parameter.name.serialize(serializer);
+    }
+}
+// NOTE: Variable `type_parameter` in 'raw_deser' is declared in `TSMappedTypeKey`'s `raw_deser`.
+// They will be concatenated in the generated code.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameter['constraint']",
+    raw_deser = "type_parameter.constraint"
+)]
+pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeConstraint<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.type_parameter.constraint.serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "boolean | '+' | '-' | undefined",
+    raw_deser = "
+        const operator = uint8[pos];
+        [true, '+', '-', false][operator]
+    "
+)]
+pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifierOperator);
+
+impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSMappedTypeModifierOperator::True => True(()).serialize(serializer),
+            TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
+            TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
+            // This is typed as `undefined` === key is not present in TS-ESTree
+            TSMappedTypeModifierOperator::None => False(()).serialize(serializer),
+        }
+    }
+}
+
 // --------------------
 // Comments
 // --------------------
