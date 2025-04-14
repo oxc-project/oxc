@@ -1021,6 +1021,58 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     }
 }
 
+/// Serializer for `key` and `constraint` field of `TSMappedType`.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameter['name']",
+    raw_deser = "
+        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
+        typeParameter.name
+    "
+)]
+pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeKey<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.type_parameter.name.serialize(serializer);
+    }
+}
+
+// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
+// They will be concatenated in the generated code.
+#[ast_meta]
+#[estree(ts_type = "TSTypeParameter['constraint']", raw_deser = "typeParameter.constraint")]
+pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeConstraint<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.type_parameter.constraint.serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "true | '+' | '-' | null",
+    raw_deser = "
+        const operator = DESER[u8](POS);
+        [true, '+', '-', null][operator]
+    "
+)]
+pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifierOperator);
+
+impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSMappedTypeModifierOperator::True => true.serialize(serializer),
+            TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
+            TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
+            // This is typed as `undefined` (= key is not present) in TS-ESTree.
+            // But we serialize it as `null` to align result in snapshot tests.
+            TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
+        }
+    }
+}
+
 // --------------------
 // Comments
 // --------------------

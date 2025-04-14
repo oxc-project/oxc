@@ -3159,23 +3159,19 @@ impl ESTree for TSMappedType<'_> {
         state.serialize_field("type", &JsonSafeString("TSMappedType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("typeParameter", &self.type_parameter);
         state.serialize_field("nameType", &self.name_type);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("optional", &self.optional);
         state.serialize_field("readonly", &self.readonly);
+        state.serialize_field("key", &crate::serialize::TSMappedTypeKey(self));
+        state.serialize_field("constraint", &crate::serialize::TSMappedTypeConstraint(self));
         state.end();
     }
 }
 
 impl ESTree for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::True => JsonSafeString("true").serialize(serializer),
-            Self::Plus => JsonSafeString("+").serialize(serializer),
-            Self::Minus => JsonSafeString("-").serialize(serializer),
-            Self::None => JsonSafeString("none").serialize(serializer),
-        }
+        crate::serialize::TSMappedTypeModifierOperatorConverter(self).serialize(serializer)
     }
 }
 
