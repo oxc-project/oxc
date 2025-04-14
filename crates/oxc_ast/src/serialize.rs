@@ -1063,12 +1063,12 @@ pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifie
 impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self.0 {
-            TSMappedTypeModifierOperator::True => True(()).serialize(serializer),
+            TSMappedTypeModifierOperator::True => true.serialize(serializer),
             TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
             TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
             // This is typed as `undefined`(= key is not present) in TS-ESTree.
             // But we serialize it as `null` to align result in snapshot tests.
-            TSMappedTypeModifierOperator::None => TsNull(()).serialize(serializer),
+            TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
         }
     }
 }
