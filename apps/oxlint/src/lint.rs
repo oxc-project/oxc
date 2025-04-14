@@ -1121,6 +1121,7 @@ mod test {
         }
     }
 
+    #[test]
     fn test_cross_modules_with_nested_config() {
         let args = &[];
         Tester::new()
