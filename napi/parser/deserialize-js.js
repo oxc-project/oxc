@@ -1844,15 +1844,17 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
+  const type_parameter = deserializeBoxTSTypeParameter(pos + 8);
   return {
     type: 'TSMappedType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    typeParameter: deserializeBoxTSTypeParameter(pos + 8),
     nameType: deserializeOptionTSType(pos + 16),
     typeAnnotation: deserializeOptionTSType(pos + 32),
     optional: deserializeTSMappedTypeModifierOperator(pos + 48),
     readonly: deserializeTSMappedTypeModifierOperator(pos + 49),
+    key: type_parameter.name,
+    constraint: type_parameter.constraint,
   };
 }
 
@@ -3882,18 +3884,8 @@ function deserializeTSTypeQueryExprName(pos) {
 }
 
 function deserializeTSMappedTypeModifierOperator(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return 'true';
-    case 1:
-      return '+';
-    case 2:
-      return '-';
-    case 3:
-      return 'none';
-    default:
-      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSMappedTypeModifierOperator`);
-  }
+  const operator = uint8[pos];
+  return [true, '+', '-', null][operator];
 }
 
 function deserializeTSModuleReference(pos) {
