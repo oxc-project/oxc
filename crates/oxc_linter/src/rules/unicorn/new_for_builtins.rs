@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
-use phf::phf_set;
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
@@ -69,7 +68,7 @@ impl Rule for NewForBuiltins {
                     return;
                 };
 
-                if ENFORCE_NEW_FOR_BUILTINS.contains(builtin_name) {
+                if ENFORCE_NEW_FOR_BUILTINS.binary_search(&builtin_name).is_ok() {
                     if builtin_name == "Object" {
                         let parent_kind = ctx.nodes().parent_kind(node.id());
                         if let Some(AstKind::BinaryExpression(bin_expr)) = parent_kind {
@@ -116,36 +115,36 @@ fn is_expr_global_builtin<'a, 'b>(
     }
 }
 
-const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf_set! {
-    "Int8Array",
-    "Uint8Array",
-    "Uint8ClampedArray",
-    "Int16Array",
-    "Uint16Array",
-    "Int32Array",
-    "Uint32Array",
-    "Float32Array",
-    "Float64Array",
-    "BigInt64Array",
-    "BigUint64Array",
-    "Object",
+const ENFORCE_NEW_FOR_BUILTINS: [&str; 28] = [
     "Array",
     "ArrayBuffer",
+    "BigInt64Array",
+    "BigUint64Array",
     "DataView",
     "Date",
     "Error",
-    "Function",
-    "Map",
-    "WeakMap",
-    "Set",
-    "WeakSet",
-    "Promise",
-    "RegExp",
-    "SharedArrayBuffer",
-    "Proxy",
-    "WeakRef",
     "FinalizationRegistry",
-};
+    "Float32Array",
+    "Float64Array",
+    "Function",
+    "Int16Array",
+    "Int32Array",
+    "Int8Array",
+    "Map",
+    "Object",
+    "Promise",
+    "Proxy",
+    "RegExp",
+    "Set",
+    "SharedArrayBuffer",
+    "Uint16Array",
+    "Uint32Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "WeakMap",
+    "WeakRef",
+    "WeakSet",
+];
 
 const DISALLOW_NEW_FOR_BUILTINS: [&str; 5] = ["BigInt", "Boolean", "Number", "Symbol", "String"];
 
