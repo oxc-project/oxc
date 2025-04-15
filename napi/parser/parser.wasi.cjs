@@ -86,6 +86,7 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
 })
 
 module.exports.ParseResult = __napiModule.exports.ParseResult
+module.exports.callThreadsafeFunction = __napiModule.exports.callThreadsafeFunction
 module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind

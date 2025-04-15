@@ -383,6 +383,7 @@ if (!nativeBinding) {
 }
 
 module.exports.ParseResult = nativeBinding.ParseResult
+module.exports.callThreadsafeFunction = nativeBinding.callThreadsafeFunction
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind

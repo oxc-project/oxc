@@ -9,6 +9,8 @@ export declare class ParseResult {
   get errors(): Array<OxcError>
 }
 
+export declare function callThreadsafeFunction(callback: (...args: any[]) => any): void
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string

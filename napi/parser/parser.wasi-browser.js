@@ -54,6 +54,7 @@ const {
   },
 })
 export const ParseResult = __napiModule.exports.ParseResult
+export const callThreadsafeFunction = __napiModule.exports.callThreadsafeFunction
 export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind

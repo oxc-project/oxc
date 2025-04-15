@@ -157,3 +157,30 @@ pub fn parse_async(
     let options = options.unwrap_or_default();
     AsyncTask::new(ResolveTask { filename, source_text, options })
 }
+
+#[napi]
+pub fn call_threadsafe_function(callback: napi::JsFunction) -> napi::Result<()> {
+    use std::sync::Arc;
+
+    use napi::threadsafe_function::{ThreadsafeFunction, UnknownReturnValue};
+
+    use tokio::runtime::Runtime;
+
+    let rt = Runtime::new().unwrap();
+
+    rt.block_on(async {
+        let tsfn: ThreadsafeFunction<u32, UnknownReturnValue, _> = callback
+            .create_threadsafe_function(|ctx| ctx.env.create_uint32(ctx.value + 1).map(|v| vec![v]))
+            .unwrap();
+        let tsfn = Arc::new(tsfn);
+
+        for n in 0..10 {
+            let tsfn = tsfn.clone();
+            tokio::spawn(async move {
+                let _ = tsfn.call_async(Ok(n)).await;
+            });
+        }
+    });
+
+    Ok(())
+}

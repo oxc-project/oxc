@@ -2009,6 +2009,7 @@ dependencies = [
  "oxc_estree",
  "oxc_napi",
  "rustc-hash",
+ "tokio",
 ]
 
 [[package]]
