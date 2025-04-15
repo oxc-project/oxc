@@ -8,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{
     AstNode,
@@ -61,13 +60,13 @@ declare_oxc_lint!(
     correctness
 );
 
-const VOID_DOM_ELEMENTS: phf::Set<&'static str> = phf_set![
+const VOID_DOM_ELEMENTS: [&str; 16] = [
     "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem",
     "meta", "param", "source", "track", "wbr",
 ];
 
-pub fn is_void_dom_element(element_name: &str) -> bool {
-    VOID_DOM_ELEMENTS.contains(element_name)
+pub fn is_not_void_dom_element(element_name: &str) -> bool {
+    VOID_DOM_ELEMENTS.binary_search(&element_name).is_err()
 }
 
 impl Rule for VoidDomElementsNoChildren {
@@ -79,7 +78,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if !is_void_dom_element(&identifier.name) {
+                if is_not_void_dom_element(&identifier.name) {
                     return;
                 }
 
@@ -115,7 +114,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if !is_void_dom_element(element_name.value.as_str()) {
+                if is_not_void_dom_element(element_name.value.as_str()) {
                     return;
                 }
 
