@@ -258,11 +258,17 @@ export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTa
 export interface ArrayAssignmentTarget extends Span {
   type: 'ArrayPattern';
   elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface ObjectAssignmentTarget extends Span {
   type: 'ObjectPattern';
   properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface AssignmentTargetRest extends Span {

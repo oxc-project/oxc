@@ -870,7 +870,10 @@ pub use match_assignment_target_pattern;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "ArrayPattern")]
+#[estree(
+    rename = "ArrayPattern",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+)]
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
@@ -886,7 +889,10 @@ pub struct ArrayAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "ObjectPattern")]
+#[estree(
+    rename = "ObjectPattern",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+)]
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
