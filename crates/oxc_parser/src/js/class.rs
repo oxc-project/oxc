@@ -295,6 +295,7 @@ impl<'a> ParserImpl<'a> {
                 computed,
                 r#static,
                 r#abstract,
+                r#override,
                 definite,
                 accessibility,
             )
@@ -498,6 +499,7 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
         r#static: bool,
         r#abstract: bool,
+        r#override: bool,
         definite: bool,
         accessibility: Option<TSAccessibility>,
     ) -> Result<ClassElement<'a>> {
@@ -519,6 +521,7 @@ impl<'a> ParserImpl<'a> {
             value,
             computed,
             r#static,
+            r#override,
             definite,
             type_annotation,
             accessibility,

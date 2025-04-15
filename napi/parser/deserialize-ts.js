@@ -969,11 +969,11 @@ function deserializeAccessorProperty(pos) {
     computed: deserializeBool(pos + 80),
     static: deserializeBool(pos + 81),
     decorators: deserializeVecDecorator(pos + 16),
-    definite: deserializeBool(pos + 82),
+    definite: deserializeBool(pos + 83),
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 88),
     accessibility: deserializeOptionTSAccessibility(pos + 96),
     optional: false,
-    override: false,
+    override: deserializeBool(pos + 82),
     readonly: false,
     declare: false,
   };

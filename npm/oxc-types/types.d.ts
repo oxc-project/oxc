@@ -704,7 +704,7 @@ export interface AccessorProperty extends Span {
   typeAnnotation?: TSTypeAnnotation | null;
   accessibility?: TSAccessibility | null;
   optional?: false;
-  override?: false;
+  override?: boolean;
   readonly?: false;
   declare?: false;
 }

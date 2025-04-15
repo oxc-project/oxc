@@ -9042,6 +9042,8 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProper
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_COMPUTED: usize = offset_of!(AccessorProperty, computed);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorProperty, r#static);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_OVERRIDE: usize =
+    offset_of!(AccessorProperty, r#override);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_DEFINITE: usize = offset_of!(AccessorProperty, definite);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
     offset_of!(AccessorProperty, type_annotation);
@@ -9092,6 +9094,11 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
     }
 
     #[inline]
@@ -9171,6 +9178,11 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
     pub fn definite(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
     }
@@ -9243,6 +9255,11 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
     #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
     }
 
     #[inline]
@@ -9326,6 +9343,11 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
     }
 
     #[inline]
