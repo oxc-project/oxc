@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1297/5754 (22.54%)
+Negative Passed: 1307/5754 (22.71%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -827,8 +827,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendGlobal
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendNonClassSymbol2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendPrivateConstructorClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendsClauseAlreadySeen.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendsClauseAlreadySeen2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleExportingGenericClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
@@ -997,10 +995,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/identityForS
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ifElseWithStatements1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ignoredJsxAttributes.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementArrayInterface.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementClausePrecedingExtends.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementGenericWithMismatchedTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementPublicPropertyAsPrivate.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementsClauseAlreadySeen.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implementsIncorrectlyNoAssertion.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyAmbients.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyCastedValue.ts
@@ -3686,14 +3682,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/CatchClauses/parserCatchClauseWithTypeAnnotation1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration24.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration3.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName1.ts
@@ -3763,7 +3754,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
@@ -8125,6 +8115,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
+  × TS(1172): 'extends' clause already seen
+   ╭─[typescript/tests/cases/compiler/extendsClauseAlreadySeen.ts:4:19]
+ 3 │ }
+ 4 │ class D extends C extends C {
+   ·                   ───────
+ 5 │     baz() { }
+   ╰────
+
+  × TS(1172): 'extends' clause already seen
+   ╭─[typescript/tests/cases/compiler/extendsClauseAlreadySeen2.ts:4:30]
+ 3 │ }
+ 4 │ class D<T> extends C<number> extends C<string> {
+   ·                              ───────
+ 5 │     baz() { }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/extendsUntypedModule.ts:3:5]
  2 │ 
@@ -8419,6 +8425,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                 ───────
  17 │             }
     ╰────
+
+  × TS(1173): 'extends' clause must precede 'implements' clause
+   ╭─[typescript/tests/cases/compiler/implementClausePrecedingExtends.ts:2:22]
+ 1 │ class C { foo: number }
+ 2 │ class D implements C extends C { }
+   ·                      ───────
+   ╰────
+
+  × TS(1175): 'implements' clause already seen
+   ╭─[typescript/tests/cases/compiler/implementsClauseAlreadySeen.ts:4:22]
+ 3 │ }
+ 4 │ class D implements C implements C {
+   ·                      ──────────
+ 5 │     baz() { }
+   ╰────
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/importAndVariableDeclarationConflict3.ts:5:8]
@@ -21037,6 +21058,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                 ╰── `,` expected
    ╰────
 
+  × TS(1172): 'extends' clause already seen
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration1.ts:1:19]
+ 1 │ class C extends A extends B {
+   ·                   ───────
+ 2 │ }
+   ╰────
+
   × Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:2:4]
  1 │ class C {
@@ -21093,6 +21121,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │    constructor() { }
    ╰────
 
+  × TS(1175): 'implements' clause already seen
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration2.ts:1:22]
+ 1 │ class C implements A implements B {
+   ·                      ──────────
+ 2 │ }
+   ╰────
+
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration21.ts:2:5]
  1 │ class C {
@@ -21123,6 +21158,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  7 │     next(): string;
    ·     ────
  8 │ }
+   ╰────
+
+  × TS(1173): 'extends' clause must precede 'implements' clause
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration3.ts:1:22]
+ 1 │ class C implements A extends B {
+   ·                      ───────
+ 2 │ }
+   ╰────
+
+  × TS(1172): 'extends' clause already seen
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration4.ts:1:32]
+ 1 │ class C extends A implements B extends C {
+   ·                                ───────
+ 2 │ }
+   ╰────
+
+  × TS(1175): 'implements' clause already seen
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration5.ts:1:32]
+ 1 │ class C extends A implements B implements C {
+   ·                                ──────────
+ 2 │ }
    ╰────
 
   × Constructor implementation is missing.
@@ -22056,6 +22112,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │    []: number
    ·     ─
  3 │ }
+   ╰────
+
+  × TS(1172): 'extends' clause already seen
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts:1:23]
+ 1 │ interface I extends A extends B {
+   ·                       ───────
+ 2 │ }
    ╰────
 
   × 'public' modifier cannot be used here.
