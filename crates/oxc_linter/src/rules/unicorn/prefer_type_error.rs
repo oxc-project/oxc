@@ -129,11 +129,11 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
 
     match &call_expr.callee {
         Expression::Identifier(ident) => {
-            TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(ident.name.as_str())
+            TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(&ident.name.as_str())
         }
         callee @ match_member_expression!(Expression) => {
             if let Some(ident) = callee.to_member_expression().static_property_name() {
-                return TYPE_CHECKING_IDENTIFIERS.contains(ident);
+                return TYPE_CHECKING_IDENTIFIERS.binary_search(&ident).is_ok();
             }
             false
         }
@@ -143,13 +143,13 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
 
 fn is_type_checking_member_expr(member_expr: &MemberExpression) -> bool {
     if let Some(ident) = member_expr.static_property_name() {
-        return TYPE_CHECKING_IDENTIFIERS.contains(ident);
+        return TYPE_CHECKING_IDENTIFIERS.binary_search(&ident).is_ok();
     }
 
     false
 }
 
-const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set!(
+const TYPE_CHECKING_IDENTIFIERS: [&str; 36] = [
     "isArray",
     "isArrayBuffer",
     "isArrayLike",
@@ -186,10 +186,9 @@ const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set!(
     "isWeakSet",
     "isWindow",
     "isXMLDoc",
-);
+];
 
-const TYPE_CHECKING_GLOBAL_IDENTIFIERS: phf::Set<&'static str> =
-    phf::phf_set!("isFinite", "isNaN",);
+const TYPE_CHECKING_GLOBAL_IDENTIFIERS: [&str; 2] = ["isFinite", "isNaN"];
 
 #[test]
 fn test() {
