@@ -183,6 +183,24 @@ pub fn const_class_member(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+// 'extends' clause already seen. ts(1172)
+#[cold]
+pub fn extends_clause_already_seen(span: Span) -> OxcDiagnostic {
+    ts_error("1172", "'extends' clause already seen").with_label(span)
+}
+
+// 'extends' clause must precede 'implements' clause. ts(1173)
+#[cold]
+pub fn extends_clause_must_precede_implements(span: Span) -> OxcDiagnostic {
+    ts_error("1173", "'extends' clause must precede 'implements' clause").with_label(span)
+}
+
+// 'implements' clause already seen. ts(1175)
+#[cold]
+pub fn implements_clause_already_seen(span: Span) -> OxcDiagnostic {
+    ts_error("1175", "'implements' clause already seen").with_label(span)
+}
+
 #[cold]
 pub fn binding_rest_element_last(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element must be last in a destructuring pattern").with_label(span)

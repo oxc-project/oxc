@@ -117,9 +117,23 @@ impl<'a> ParserImpl<'a> {
         loop {
             match self.cur_kind() {
                 Kind::Extends => {
+                    if extends.is_some() {
+                        self.error(diagnostics::extends_clause_already_seen(
+                            self.cur_token().span(),
+                        ));
+                    } else if implements.is_some() {
+                        self.error(diagnostics::extends_clause_must_precede_implements(
+                            self.cur_token().span(),
+                        ));
+                    }
                     extends = Some(self.parse_extends_clause()?);
                 }
                 Kind::Implements => {
+                    if implements.is_some() {
+                        self.error(diagnostics::implements_clause_already_seen(
+                            self.cur_token().span(),
+                        ));
+                    }
                     implements = Some(self.parse_ts_implements_clause()?);
                 }
                 _ => break,
