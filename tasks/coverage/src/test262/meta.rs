@@ -1,4 +1,4 @@
-use saphyr::Yaml;
+use saphyr::{LoadableYamlNode, Yaml};
 
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
@@ -91,24 +91,35 @@ impl MetaData {
         let Some(yaml) = yamls.first() else { return Self::default() };
         Self {
             // description: yaml["description"].as_str().unwrap_or_default().into(),
-            esid: yaml["esid"].as_str().map(Into::into),
+            esid: yaml
+                .as_mapping_get("esid")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string().into_boxed_str()),
             // es5id: yaml["es5id"].as_str().map(Into::into),
             // es6id: yaml["es6id"].as_str().map(Into::into),
             // info: yaml["info"].as_str().unwrap_or_default().into(),
-            features: Self::get_vec_of_string(&yaml["features"]),
-            includes: Self::get_vec_of_string(&yaml["includes"]),
-            flags: yaml["flags"]
-                .as_vec()
-                .map_or_else(Vec::new, |a| {
-                    a.iter()
+            features: yaml
+                .as_mapping_get("features")
+                .map(Self::get_vec_of_string)
+                .unwrap_or_default(),
+            includes: yaml
+                .as_mapping_get("includes")
+                .map(Self::get_vec_of_string)
+                .unwrap_or_default(),
+            flags: yaml
+                .as_mapping_get("flags")
+                .and_then(|v| v.as_vec())
+                .map(|vec| {
+                    vec.iter()
                         .map(|v| v.as_str().map(TestFlag::from_str).unwrap())
                         .collect::<Vec<_>>()
+                        .into_boxed_slice()
                 })
-                .into(),
-            negative: {
-                let yaml = &yaml["negative"];
-                (!yaml.is_null() && !yaml.is_badvalue()).then(|| Negative::from_yaml(yaml))
-            },
+                .unwrap_or_default(),
+            negative: yaml
+                .as_mapping_get("negative")
+                .filter(|yaml| (!yaml.is_null() && !yaml.is_badvalue()))
+                .map(|yaml| Negative::from_yaml(yaml)),
             // locale: Self::get_vec_of_string(&yaml["locale"]),
         }
     }
