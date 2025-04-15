@@ -1345,6 +1345,7 @@ impl<'a> Dummy<'a> for AccessorProperty<'a> {
             value: Dummy::dummy(allocator),
             computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
+            r#override: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),

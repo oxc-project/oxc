@@ -6693,6 +6693,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
+    /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -6706,6 +6707,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        r#override: bool,
         definite: bool,
         type_annotation: T1,
         accessibility: Option<TSAccessibility>,
@@ -6721,6 +6723,7 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
+            r#override,
             definite,
             type_annotation,
             accessibility,
@@ -7250,6 +7253,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
+    /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -7263,6 +7267,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        r#override: bool,
         definite: bool,
         type_annotation: T1,
         accessibility: Option<TSAccessibility>,
@@ -7278,6 +7283,7 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
+            r#override,
             definite,
             type_annotation: type_annotation.into_in(self.allocator),
             accessibility,
@@ -7297,6 +7303,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
+    /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -7310,6 +7317,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        r#override: bool,
         definite: bool,
         type_annotation: T1,
         accessibility: Option<TSAccessibility>,
@@ -7326,6 +7334,7 @@ impl<'a> AstBuilder<'a> {
                 value,
                 computed,
                 r#static,
+                r#override,
                 definite,
                 type_annotation,
                 accessibility,

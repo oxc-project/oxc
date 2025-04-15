@@ -656,7 +656,8 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 64);
     assert!(offset_of!(AccessorProperty, computed) == 80);
     assert!(offset_of!(AccessorProperty, r#static) == 81);
-    assert!(offset_of!(AccessorProperty, definite) == 82);
+    assert!(offset_of!(AccessorProperty, r#override) == 82);
+    assert!(offset_of!(AccessorProperty, definite) == 83);
     assert!(offset_of!(AccessorProperty, type_annotation) == 88);
     assert!(offset_of!(AccessorProperty, accessibility) == 96);
 
@@ -2051,7 +2052,8 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 36);
     assert!(offset_of!(AccessorProperty, computed) == 44);
     assert!(offset_of!(AccessorProperty, r#static) == 45);
-    assert!(offset_of!(AccessorProperty, definite) == 46);
+    assert!(offset_of!(AccessorProperty, r#override) == 46);
+    assert!(offset_of!(AccessorProperty, definite) == 47);
     assert!(offset_of!(AccessorProperty, type_annotation) == 48);
     assert!(offset_of!(AccessorProperty, accessibility) == 52);
 

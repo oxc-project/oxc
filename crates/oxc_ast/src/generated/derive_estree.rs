@@ -1631,7 +1631,7 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
-        state.serialize_ts_field("override", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("readonly", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("declare", &crate::serialize::TsFalse(self));
         state.end();

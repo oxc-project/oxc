@@ -2782,6 +2782,11 @@ impl Gen for AccessorProperty<'_> {
             p.print_str("static");
             p.print_soft_space();
         }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
+            p.print_soft_space();
+        }
         p.print_space_before_identifier();
         p.print_str("accessor");
         if self.computed {

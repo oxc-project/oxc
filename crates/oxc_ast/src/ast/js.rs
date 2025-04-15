@@ -2300,7 +2300,7 @@ pub enum AccessorPropertyType {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[rustfmt::skip]
 #[estree(
-    add_fields(declare = TsFalse, optional = TsFalse, r#override = TsFalse, readonly = TsFalse),
+    add_fields(declare = TsFalse, optional = TsFalse, readonly = TsFalse),
     field_order(
       r#type, span, key, value, computed, r#static, decorators, definite, type_annotation,
       accessibility, optional, r#override, readonly, declare)
@@ -2321,6 +2321,9 @@ pub struct AccessorProperty<'a> {
     pub computed: bool,
     /// Property was declared with a `static` modifier
     pub r#static: bool,
+    /// Property was declared with a `override` modifier
+    #[ts]
+    pub r#override: bool,
     /// Property has a `!` after its key.
     #[ts]
     pub definite: bool,
