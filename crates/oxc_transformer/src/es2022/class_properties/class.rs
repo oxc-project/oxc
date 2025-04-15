@@ -164,6 +164,8 @@ impl<'a> ClassProperties<'a, '_> {
             }
         }
 
+        self.private_field_count += private_props.len();
+
         // Exit if nothing to transform
         if instance_prop_count == 0
             && !has_static_prop
@@ -385,7 +387,6 @@ impl<'a> ClassProperties<'a, '_> {
         } else {
             debug_assert!(class_details.bindings.temp.is_none());
         }
-
         // Pop off stack. We're done!
         self.classes_stack.pop();
     }
@@ -444,6 +445,7 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         if let Some(private_props) = &class_details.private_props {
+            self.private_field_count -= private_props.len();
             if self.private_fields_as_properties {
                 let mut private_props = private_props
                     .iter()
@@ -588,6 +590,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Babel has these always go first, regardless of order of class elements.
         // Also insert `var _prop;` temp var declarations for private static props.
         if let Some(private_props) = &class_details.private_props {
+            self.private_field_count -= private_props.len();
             // Insert `var _prop;` declarations here rather than when binding was created to maintain
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
