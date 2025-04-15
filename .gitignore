@@ -15,6 +15,7 @@ target/
 /tasks/e2e/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
+/experiment/node_modules
 
 # vscode
 /editors/vscode/.vscode-test/

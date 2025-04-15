@@ -1,0 +1,14 @@
+{
+  "name": "experiment",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.js",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "oxc-walker": "^0.2.4"
+  },
+  "packageManager": "pnpm@10.8.1"
+}

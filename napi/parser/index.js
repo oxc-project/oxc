@@ -82,6 +82,46 @@ function parseSyncRaw(filename, sourceText, options) {
   };
 }
 
+module.exports.parseSyncRawFromBuffer = function parseSyncRaw(filename, sourceText, sourceBuffer, options) {
+  // Create buffer
+  if (!buffer) buffer = createBuffer();
+
+  // Write source into start of buffer
+  const sourceUint8 = new Uint8Array(sourceBuffer);
+  buffer.set(sourceUint8);
+  const sourceByteLen = sourceUint8.length;
+
+  // Parse
+  bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+
+  // Deserialize.
+  // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
+  // another file before the getter is called.
+
+  // (2 * 1024 * 1024 * 1024 - 12)
+  const astTypeFlagPos = 2147483636;
+  let isJsAst = buffer[astTypeFlagPos] === 0;
+
+  const data = isJsAst
+    ? deserializeJS(buffer, sourceText, sourceByteLen)
+    : deserializeTS(buffer, sourceText, sourceByteLen);
+
+  return {
+    get program() {
+      return data.program;
+    },
+    get module() {
+      return data.module;
+    },
+    get comments() {
+      return data.comments;
+    },
+    get errors() {
+      return data.errors;
+    },
+  };
+};
+
 const ONE_GIB = 1 << 30,
   TWO_GIB = ONE_GIB * 2,
   SIX_GIB = ONE_GIB * 6;
