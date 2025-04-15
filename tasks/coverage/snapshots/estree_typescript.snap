@@ -2338,7 +2338,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature9.ts
 Unexpected token
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts
+`extends` clause already seen
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts
 'export' modifier cannot be used here.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts
