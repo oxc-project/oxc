@@ -31,7 +31,7 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{
@@ -487,13 +487,13 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             return;
         }
 
-        let mut call_expr: Option<CallExpression<'a>> = None;
+        let mut call_expr: Option<ArenaBox<'a, CallExpression<'a>>> = None;
         let mut props = ctx.ast.vec_with_capacity(obj_expr.properties.len());
 
         for prop in obj_expr.properties.drain(..) {
-            if let ObjectPropertyKind::SpreadProperty(spread_prop) = prop {
+            if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
                 Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
-                let arg = spread_prop.unbox().argument.take_in(ctx.ast.allocator);
+                let arg = spread_prop.argument.take_in(ctx.ast.allocator);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
                 props.push(prop);
@@ -504,11 +504,11 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
         }
 
-        *expr = Expression::CallExpression(ctx.ast.alloc(call_expr.unwrap()));
+        *expr = Expression::CallExpression(call_expr.unwrap());
     }
 
     fn make_object_spread(
-        expr: &mut Option<CallExpression<'a>>,
+        expr: &mut Option<ArenaBox<'a, CallExpression<'a>>>,
         props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
         transform_ctx: &'ctx TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -520,7 +520,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             mem::replace(props, ctx.ast.vec_with_capacity(props.capacity() - props.len())),
         );
         let arguments = if let Some(call_expr) = expr.take() {
-            let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
+            let arg = Expression::CallExpression(call_expr);
             let arg = Argument::from(arg);
             if had_props {
                 let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec());
@@ -532,7 +532,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             ctx.ast.vec1(Argument::from(obj))
         };
         let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
-        expr.replace(new_expr);
+        expr.replace(ctx.ast.alloc(new_expr));
     }
 }
 
