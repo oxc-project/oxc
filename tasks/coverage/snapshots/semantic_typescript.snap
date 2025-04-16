@@ -8332,9 +8332,24 @@ after transform: [ReferenceId(16), ReferenceId(17)]
 rebuilt        : [ReferenceId(13)]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImport.ts
-semantic error: Symbol reference IDs mismatch for "Observable":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Observable", "Test", "_decorate", "_decorateMetadata", "_decorateParam", "_ref", "whatever"]
+rebuilt        : ScopeId(0): ["Test", "_decorate", "_decorateMetadata", "_decorateParam", "_ref", "whatever"]
+Reference symbol mismatch for "Observable":
+after transform: SymbolId(0) "Observable"
+rebuilt        : <None>
+Reference flags mismatch for "Observable":
+after transform: ReferenceId(8): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "Observable":
+after transform: SymbolId(0) "Observable"
+rebuilt        : <None>
+Reference flags mismatch for "Observable":
+after transform: ReferenceId(9): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Function", "Number", "Object", "String"]
+rebuilt        : ["Function", "Number", "Object", "Observable", "String"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImportOnDeclare.ts
 semantic error: Bindings mismatch:
@@ -8390,6 +8405,18 @@ rebuilt        : <None>
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
+Reference flags mismatch for "Promise":
+after transform: ReferenceId(22): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read)
+Reference flags mismatch for "Promise":
+after transform: ReferenceId(23): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+Reference flags mismatch for "Promise":
+after transform: ReferenceId(28): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read)
+Reference flags mismatch for "Promise":
+after transform: ReferenceId(29): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(35): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "MethodDecorator", "Object", "Promise", "require"]
 rebuilt        : ["Function", "Object", "Promise", "decorator", "require"]
@@ -8437,26 +8464,56 @@ after transform: [ReferenceId(1), ReferenceId(10)]
 rebuilt        : [ReferenceId(10)]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision.ts
-semantic error: Symbol reference IDs mismatch for "db":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "db", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "someDecorator"]
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(3): Span { start: 100, end: 107 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(8): Span { start: 100, end: 107 }
+rebuilt        : SymbolId(7): Span { start: 100, end: 107 }
+Reference symbol mismatch for "db":
+after transform: SymbolId(0) "db"
+rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "db":
+after transform: SymbolId(0) "db"
+rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Object"]
+rebuilt        : ["Object", "db"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision2.ts
-semantic error: Symbol reference IDs mismatch for "Database":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Database", "MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "someDecorator"]
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(3): Span { start: 112, end: 119 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(8): Span { start: 112, end: 119 }
+rebuilt        : SymbolId(7): Span { start: 112, end: 119 }
+Reference symbol mismatch for "Database":
+after transform: SymbolId(0) "Database"
+rebuilt        : <None>
+Reference flags mismatch for "Database":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "Database":
+after transform: SymbolId(0) "Database"
+rebuilt        : <None>
+Reference flags mismatch for "Database":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Object"]
+rebuilt        : ["Database", "Object"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
 semantic error: Symbol span mismatch for "MyClass":
@@ -8468,34 +8525,70 @@ rebuilt        : SymbolId(7): Span { start: 104, end: 111 }
 Reference symbol mismatch for "db":
 after transform: SymbolId(0) "db"
 rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
 Reference symbol mismatch for "db":
 after transform: SymbolId(0) "db"
 rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Object"]
 rebuilt        : ["Object", "db"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
-semantic error: Symbol reference IDs mismatch for "db":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "db", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "someDecorator"]
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(3): Span { start: 98, end: 105 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(8): Span { start: 98, end: 105 }
+rebuilt        : SymbolId(7): Span { start: 98, end: 105 }
+Reference symbol mismatch for "db":
+after transform: SymbolId(0) "db"
+rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "db":
+after transform: SymbolId(0) "db"
+rebuilt        : <None>
+Reference flags mismatch for "db":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Object"]
+rebuilt        : ["Object", "db"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision6.ts
-semantic error: Symbol reference IDs mismatch for "database":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "database", "someDecorator"]
+rebuilt        : ScopeId(0): ["MyClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "someDecorator"]
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(3): Span { start: 104, end: 111 }
-rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyClass":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(8): Span { start: 104, end: 111 }
+rebuilt        : SymbolId(7): Span { start: 104, end: 111 }
+Reference symbol mismatch for "database":
+after transform: SymbolId(0) "database"
+rebuilt        : <None>
+Reference flags mismatch for "database":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "database":
+after transform: SymbolId(0) "database"
+rebuilt        : <None>
+Reference flags mismatch for "database":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Object"]
+rebuilt        : ["Object", "database"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
 semantic error: Symbol span mismatch for "MyClass":
@@ -8507,17 +8600,38 @@ rebuilt        : SymbolId(7): Span { start: 110, end: 117 }
 Reference symbol mismatch for "database":
 after transform: SymbolId(0) "database"
 rebuilt        : <None>
+Reference flags mismatch for "database":
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
 Reference symbol mismatch for "database":
 after transform: SymbolId(0) "database"
 rebuilt        : <None>
+Reference flags mismatch for "database":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Object"]
 rebuilt        : ["Object", "database"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
-semantic error: Symbol reference IDs mismatch for "Yoha":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Bar", "Yoha", "_decorate", "_decorateMetadata", "_decorateParam", "_ref", "foo"]
+rebuilt        : ScopeId(0): ["Bar", "_decorate", "_decorateMetadata", "_decorateParam", "_ref", "foo"]
+Reference symbol mismatch for "Yoha":
+after transform: SymbolId(0) "Yoha"
+rebuilt        : <None>
+Reference flags mismatch for "Yoha":
+after transform: ReferenceId(5): ReferenceFlags(Type)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+Reference symbol mismatch for "Yoha":
+after transform: SymbolId(0) "Yoha"
+rebuilt        : <None>
+Reference flags mismatch for "Yoha":
+after transform: ReferenceId(6): ReferenceFlags(Type)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Function", "Object"]
+rebuilt        : ["Function", "Object", "Yoha"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferences.ts
 semantic error: Bindings mismatch:
@@ -19651,12 +19765,12 @@ tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationWithShared
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias.ts
-semantic error: Symbol reference IDs mismatch for "SomeClass":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): []
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
+rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
 Symbol reference IDs mismatch for "_ref":
 after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(4): []
+rebuilt        : SymbolId(3): []
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDecorator"]
 rebuilt        : ["Object"]
@@ -19665,12 +19779,12 @@ after transform: [ReferenceId(8), ReferenceId(9)]
 rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias2.ts
-semantic error: Symbol reference IDs mismatch for "SomeClass":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): []
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
+rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
 Symbol reference IDs mismatch for "_ref":
 after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(4): []
+rebuilt        : SymbolId(3): []
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDecorator"]
 rebuilt        : ["Object"]
@@ -19767,12 +19881,12 @@ after transform: [ReferenceId(0), ReferenceId(29), ReferenceId(34), ReferenceId(
 rebuilt        : [ReferenceId(18), ReferenceId(28), ReferenceId(49), ReferenceId(54), ReferenceId(59), ReferenceId(64), ReferenceId(69)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataReferencedWithinFilteredUnion.ts
-semantic error: Symbol reference IDs mismatch for "Class1":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(0): []
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Class1", "Class2", "_decorate", "_decorateMetadata", "_ref", "decorate"]
+rebuilt        : ScopeId(0): ["Class2", "_decorate", "_decorateMetadata", "_ref", "decorate"]
 Symbol reference IDs mismatch for "_ref":
 after transform: SymbolId(6): [ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(3): []
+rebuilt        : SymbolId(2): []
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(10), ReferenceId(11)]
 rebuilt        : [ReferenceId(7)]
@@ -36374,25 +36488,34 @@ rebuilt        : SymbolId(0): []
 tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadata.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MyComponent", "Service", "_decorate", "_decorateMetadata", "_ref", "decorator"]
-rebuilt        : ScopeId(0): ["MyComponent", "Service", "_decorate", "_decorateMetadata", "_ref"]
-Symbol reference IDs mismatch for "Service":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(14), ReferenceId(15)]
+rebuilt        : ScopeId(0): ["MyComponent", "_decorate", "_decorateMetadata", "_ref"]
 Symbol span mismatch for "MyComponent":
 after transform: SymbolId(2): Span { start: 80, end: 91 }
-rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyComponent":
 after transform: SymbolId(7): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(5): Span { start: 80, end: 91 }
+rebuilt        : SymbolId(4): Span { start: 80, end: 91 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
+Reference symbol mismatch for "Service":
+after transform: SymbolId(0) "Service"
+rebuilt        : <None>
+Reference flags mismatch for "Service":
+after transform: ReferenceId(3): ReferenceFlags(Type)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference symbol mismatch for "Service":
+after transform: SymbolId(0) "Service"
+rebuilt        : <None>
+Reference flags mismatch for "Service":
+after transform: ReferenceId(4): ReferenceFlags(Type)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "Object"]
-rebuilt        : ["Function", "Object", "decorator"]
+rebuilt        : ["Function", "Object", "Service", "decorator"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadataWithTypeOnlyImport.ts
 semantic error: Bindings mismatch:
@@ -36413,9 +36536,15 @@ rebuilt        : <None>
 Reference symbol mismatch for "Service":
 after transform: SymbolId(0) "Service"
 rebuilt        : <None>
+Reference flags mismatch for "Service":
+after transform: ReferenceId(3): ReferenceFlags(Type)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
 Reference symbol mismatch for "Service":
 after transform: SymbolId(0) "Service"
 rebuilt        : <None>
+Reference flags mismatch for "Service":
+after transform: ReferenceId(4): ReferenceFlags(Type)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "Object"]
 rebuilt        : ["Function", "Object", "Service", "decorator"]
