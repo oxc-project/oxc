@@ -204,7 +204,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(
       diagnostics[0].message,
-      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - diagnostic/dep-b.ts\n-> ./dep-a.ts - diagnostic/dep-a.ts',
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - fixtures/dep-b.ts\n-> ./dep-a.ts - fixtures/dep-a.ts',
     );
     strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
     strictEqual(diagnostics[0].range.start.line, 1);
@@ -222,7 +222,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(
       diagnostics[0].message,
-      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./folder-dep-b.ts - diagnostic/folder/folder-dep-b.ts\n-> ./folder-dep-a.ts - diagnostic/folder/folder-dep-a.ts',
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./folder-dep-b.ts - fixtures/folder/folder-dep-b.ts\n-> ./folder-dep-a.ts - fixtures/folder/folder-dep-a.ts',
     );
     strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
     strictEqual(diagnostics[0].range.start.line, 1);
@@ -239,7 +239,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(
       diagnostics[0].message,
-      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - diagnostic/dep-b.ts\n-> ./dep-a.ts - diagnostic/dep-a.ts',
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - fixtures/dep-b.ts\n-> ./dep-a.ts - fixtures/dep-a.ts',
     );
     strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
     strictEqual(diagnostics[0].range.start.line, 1);
