@@ -385,6 +385,8 @@ impl<'a> ClassProperties<'a, '_> {
         if class_details.is_transform_required {
             self.transform_class_declaration_on_exit_impl(class, ctx);
         } else {
+            // Note: `is_transform_required` is `true` if class has any private properties/methods,
+            // so no need to touch `private_field_count` here
             debug_assert!(class_details.bindings.temp.is_none());
         }
         // Pop off stack. We're done!
@@ -446,6 +448,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         if let Some(private_props) = &class_details.private_props {
             self.private_field_count -= private_props.len();
+
             if self.private_fields_as_properties {
                 let mut private_props = private_props
                     .iter()
@@ -536,6 +539,8 @@ impl<'a> ClassProperties<'a, '_> {
         if class_details.is_transform_required {
             self.transform_class_expression_on_exit_impl(expr, ctx);
         } else {
+            // Note: `is_transform_required` is `true` if class has any private properties/methods,
+            // so no need to touch `private_field_count` here
             debug_assert!(class_details.bindings.temp.is_none());
         }
 
@@ -591,6 +596,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Also insert `var _prop;` temp var declarations for private static props.
         if let Some(private_props) = &class_details.private_props {
             self.private_field_count -= private_props.len();
+
             // Insert `var _prop;` declarations here rather than when binding was created to maintain
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`

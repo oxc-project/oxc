@@ -261,6 +261,8 @@ pub struct ClassProperties<'a, 'ctx> {
     /// This problem only affects class expressions. Class declarations aren't affected,
     /// as their exit-phase transform happens in `exit_class`.
     classes_stack: ClassesStack<'a>,
+    /// Count of private fields in current class and parent classes.
+    private_field_count: usize,
 
     // ----- State used only during enter phase -----
     //
@@ -277,8 +279,6 @@ pub struct ClassProperties<'a, 'ctx> {
     /// Keys are symbols' IDs.
     /// Values are initially the original name of binding, later on the name of new UID name.
     clashing_constructor_symbols: FxHashMap<SymbolId, Atom<'a>>,
-    /// Count of private fields in class and also included parent classes.
-    private_field_count: usize,
 
     // ----- State used only during exit phase -----
     //
@@ -309,12 +309,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             transform_static_blocks,
             ctx,
             classes_stack: ClassesStack::new(),
+            private_field_count: 0,
             // Temporary values - overwritten when entering class
             instance_inits_scope_id: ScopeId::new(0),
             instance_inits_constructor_scope_id: None,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
-            private_field_count: 0,
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
@@ -342,7 +342,9 @@ impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Return early if no private fields are found.
+        // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
+        // If we're not inside a class which has private fields, `#prop` can't be present here,
+        // so exit early - fast path for common case.
         if self.private_field_count == 0 {
             return;
         }
