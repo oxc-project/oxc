@@ -122,6 +122,19 @@ module.exports.parseSyncRawFromBuffer = function parseSyncRaw(filename, sourceTe
   };
 };
 
+module.exports.parseSyncRawFromBufferNoDeser = function parseSyncRaw(filename, sourceBuffer, options) {
+  // Create buffer
+  if (!buffer) buffer = createBuffer();
+
+  // Write source into start of buffer
+  const sourceUint8 = new Uint8Array(sourceBuffer);
+  buffer.set(sourceUint8);
+  const sourceByteLen = sourceUint8.length;
+
+  // Parse
+  bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+};
+
 const ONE_GIB = 1 << 30,
   TWO_GIB = ONE_GIB * 2,
   SIX_GIB = ONE_GIB * 6;
