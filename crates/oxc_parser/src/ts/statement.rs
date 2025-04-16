@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use crate::{
     ParserImpl, diagnostics,
@@ -20,7 +20,7 @@ impl<'a> ParserImpl<'a> {
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
@@ -113,7 +113,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Type)?;
@@ -152,7 +152,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Interface)?; // bump interface
@@ -283,7 +283,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
-        span: Span,
+        span: u32,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
@@ -332,7 +332,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_declaration_statement(
         &mut self,
-        start_span: Span,
+        start_span: u32,
     ) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration()?;
@@ -347,7 +347,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
@@ -407,7 +407,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_declare_function(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_import_equals_declaration(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Declaration<'a>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
             ImportOrExportKind::Type

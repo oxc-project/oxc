@@ -1,7 +1,6 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind, modifiers::Modifier};
@@ -138,7 +137,7 @@ impl<'a> ParserImpl<'a> {
                 left,
                 right,
             );
-            self.state.cover_initialized_name.insert(span.start, expr);
+            self.state.cover_initialized_name.insert(span, expr);
         }
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
@@ -155,7 +154,7 @@ impl<'a> ParserImpl<'a> {
     ///   `PropertyName`[?Yield, ?Await] : `AssignmentExpression`[+In, ?Yield, ?Await]
     fn parse_property_definition_assignment(
         &mut self,
-        span: Span,
+        span: u32,
         key: PropertyKey<'a>,
         computed: bool,
     ) -> Result<Box<'a, ObjectProperty<'a>>> {

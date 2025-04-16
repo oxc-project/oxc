@@ -1,6 +1,6 @@
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
@@ -165,7 +165,7 @@ impl<'a> ParserImpl<'a> {
     ///   = `AssignmentExpression`[?In, ?Yield, ?Await]
     fn parse_initializer(
         &mut self,
-        span: Span,
+        span: u32,
         left: BindingPattern<'a>,
     ) -> Result<BindingPattern<'a>> {
         if self.eat(Kind::Eq) {

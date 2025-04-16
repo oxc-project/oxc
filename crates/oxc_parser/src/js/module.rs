@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
@@ -12,7 +12,7 @@ impl<'a> ParserImpl<'a> {
     /// `ImportCall` : import ( `AssignmentExpression` )
     pub(crate) fn parse_import_expression(
         &mut self,
-        span: Span,
+        span: u32,
         phase: Option<ImportPhase>,
     ) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
@@ -212,7 +212,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
         self.expect(Kind::Eq)?;
         let expression = self.parse_assignment_expression_or_higher()?;
@@ -222,7 +222,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
-        start_span: Span,
+        start_span: u32,
     ) -> Result<Box<'a, TSNamespaceExportDeclaration<'a>>> {
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
@@ -278,7 +278,7 @@ impl<'a> ParserImpl<'a> {
     //   ModuleExportName as ModuleExportName
     fn parse_export_named_specifiers(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
         self.expect(Kind::LCurly)?;
@@ -351,7 +351,7 @@ impl<'a> ParserImpl<'a> {
     // export Declaration
     fn parse_export_named_declaration(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let decl_span = self.start_span();
         // For tc39/proposal-decorators
@@ -384,7 +384,7 @@ impl<'a> ParserImpl<'a> {
     // export default AssignmentExpression[+In, ~Yield, +Await] ;
     fn parse_export_default_declaration(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let decl_span = self.start_span();
@@ -440,7 +440,7 @@ impl<'a> ParserImpl<'a> {
     //   NamedExports
     fn parse_export_all_declaration(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Box<'a, ExportAllDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`

@@ -240,7 +240,7 @@ impl<'a> ParserImpl<'a> {
     /// Section 14.5 Expression Statement
     pub(crate) fn parse_expression_statement(
         &mut self,
-        span: Span,
+        span: u32,
         expression: Expression<'a>,
     ) -> Result<Statement<'a>> {
         self.asi()?;
@@ -349,7 +349,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_variable_declaration_for_statement(
         &mut self,
-        span: Span,
+        span: u32,
         r#await: bool,
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
@@ -370,7 +370,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_using_declaration_for_statement(
         &mut self,
-        span: Span,
+        span: u32,
         r#await: bool,
     ) -> Result<Statement<'a>> {
         let using_decl = self.parse_using_declaration(StatementContext::For)?;
@@ -398,7 +398,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_for_loop(
         &mut self,
-        span: Span,
+        span: u32,
         init: Option<ForStatementInit<'a>>,
         r#await: bool,
     ) -> Result<Statement<'a>> {
@@ -429,7 +429,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_for_in_or_of_loop(
         &mut self,
-        span: Span,
+        span: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Result<Statement<'a>> {
@@ -489,8 +489,8 @@ impl<'a> ParserImpl<'a> {
         };
         if !self.ctx.has_return() {
             self.error(diagnostics::return_statement_only_in_function_body(Span::new(
-                span.start,
-                span.start + 6,
+                span,
+                span + 6,
             )));
         }
         Ok(self.ast.statement_return(self.end_span(span), argument))

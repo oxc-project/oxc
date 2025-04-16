@@ -19,7 +19,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_statement(
         &mut self,
         stmt_ctx: StatementContext,
-        start_span: Span,
+        start_span: u32,
     ) -> Result<Statement<'a>> {
         let modifiers = self.parse_modifiers(
             /* allow_decorators */ true, /* permit_const_as_modifier */ false,
@@ -40,7 +40,7 @@ impl<'a> ParserImpl<'a> {
     /// Section 15.7 Class Definitions
     pub(crate) fn parse_class_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Class<'a>>> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
@@ -57,14 +57,14 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         r#type: ClassType,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 
         let decorators = self.consume_decorators();
-        let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
+        let start_span = decorators.iter().next().map_or(start_span, |d| d.span.start);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
             Some(self.parse_binding_identifier()?)
@@ -391,7 +391,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_method_definition(
         &mut self,
-        span: Span,
+        span: u32,
         kind: MethodDefinitionKind,
         key: PropertyKey<'a>,
         computed: bool,
@@ -455,7 +455,7 @@ impl<'a> ParserImpl<'a> {
     /// `FieldDefinition`[?Yield, ?Await] ;
     fn parse_class_property_definition(
         &mut self,
-        span: Span,
+        span: u32,
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
@@ -497,7 +497,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `ClassStaticBlockStatementList` :
     ///    `StatementList`[~Yield, +Await, ~Return]
-    fn parse_class_static_block(&mut self, span: Span) -> Result<ClassElement<'a>> {
+    fn parse_class_static_block(&mut self, span: u32) -> Result<ClassElement<'a>> {
         let block =
             self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block)?;
         Ok(self.ast.class_element_static_block(self.end_span(span), block.unbox().body))
@@ -506,7 +506,7 @@ impl<'a> ParserImpl<'a> {
     /// <https://github.com/tc39/proposal-decorators>
     fn parse_class_accessor_property(
         &mut self,
-        span: Span,
+        span: u32,
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,

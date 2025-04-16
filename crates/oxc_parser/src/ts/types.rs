@@ -648,7 +648,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_this_type_predicate(&mut self, this_ty: TSThisType) -> Result<TSType<'a>> {
-        let span = this_ty.span;
+        let span = this_ty.span.start;
         self.bump_any(); // bump `is`
         // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
@@ -1230,7 +1230,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_index_signature_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
