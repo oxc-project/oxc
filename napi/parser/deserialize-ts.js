@@ -37,12 +37,30 @@ function deserialize(buffer, sourceTextInput, sourceLenInput) {
 function deserializeProgram(pos) {
   const body = deserializeVecDirective(pos + 88);
   body.push(...deserializeVecStatement(pos + 120));
-  let start = deserializeU32(pos);
-  if (body.length > 0) start = body[0].start;
+
+  const end = deserializeU32(pos + 4);
+
+  let start;
+  if (body.length > 0) {
+    const first = body[0];
+    start = first.start;
+    if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+      const { declaration } = first;
+      if (
+        declaration !== null && declaration.type === 'ClassDeclaration' &&
+        declaration.decorators.length > 0
+      ) {
+        const decoratorStart = declaration.decorators[0].start;
+        if (decoratorStart < start) start = decoratorStart;
+      }
+    }
+  } else {
+    start = end;
+  }
   const program = {
     type: 'Program',
     start,
-    end: deserializeU32(pos + 4),
+    end,
     body,
     sourceType: deserializeModuleKind(pos + 9),
     hashbang: deserializeOptionHashbang(pos + 64),

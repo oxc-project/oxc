@@ -1,3 +1,5 @@
+use std::cmp;
+
 use cow_utils::CowUtils;
 
 use crate::ast::*;
@@ -80,18 +82,47 @@ impl Program<'_> {
 /// This is required because unlike Acorn, TS-ESLint excludes whitespace and comments
 /// from the `Program` start span.
 /// See <https://github.com/oxc-project/oxc/pull/10134> for more info.
+///
+/// Special case where first statement is an `ExportNamedDeclaration` or `ExportDefaultDeclaration`
+/// exporting a class with decorators, where one of the decorators is before `export`.
+/// In these cases, the span of the statement starts after the span of the decorators.
+/// e.g. `@dec export class C {}` - `ExportNamedDeclaration` span start is 5, `Decorator` span start is 0.
+/// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
     const body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
-    let start = DESER[u32](POS_OFFSET.span.start);
+
+    /* IF_JS */
+    const start = DESER[u32](POS_OFFSET.span.start);
+    /* END_IF_JS */
+
+    const end = DESER[u32](POS_OFFSET.span.end);
+
     /* IF_TS */
-    if (body.length > 0) start = body[0].start;
+    let start;
+    if (body.length > 0) {
+        const first = body[0];
+        start = first.start;
+        if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+            const {declaration} = first;
+            if (
+                declaration !== null && declaration.type === 'ClassDeclaration'
+                && declaration.decorators.length > 0
+            ) {
+                const decoratorStart = declaration.decorators[0].start;
+                if (decoratorStart < start) start = decoratorStart;
+            }
+        }
+    } else {
+        start = end;
+    }
     /* END_IF_TS */
+
     const program = {
         type: 'Program',
         start,
-        end: DESER[u32](POS_OFFSET.span.end),
+        end,
         body,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
@@ -103,18 +134,8 @@ pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
 impl ESTree for ProgramConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let program = self.0;
-        let span_start = if S::INCLUDE_TS_FIELDS {
-            if let Some(first_directive) = program.directives.first() {
-                first_directive.span.start
-            } else if let Some(first_stmt) = program.body.first() {
-                first_stmt.span().start
-            } else {
-                // If program contains no statements or directives, span start = span end
-                program.span.end
-            }
-        } else {
-            program.span.start
-        };
+        let span_start =
+            if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Program"));
@@ -127,6 +148,39 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
         state.end();
+    }
+}
+
+fn get_ts_start_span(program: &Program<'_>) -> u32 {
+    if let Some(first_directive) = program.directives.first() {
+        return first_directive.span.start;
+    }
+
+    let Some(first_stmt) = program.body.first() else {
+        // Program contains no statements or directives. Span start = span end.
+        return program.span.end;
+    };
+
+    match first_stmt {
+        Statement::ExportNamedDeclaration(decl) => {
+            let start = decl.span.start;
+            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration {
+                if let Some(decorator) = class.decorators.first() {
+                    return cmp::min(start, decorator.span.start);
+                }
+            }
+            start
+        }
+        Statement::ExportDefaultDeclaration(decl) => {
+            let start = decl.span.start;
+            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration {
+                if let Some(decorator) = class.decorators.first() {
+                    return cmp::min(start, decorator.span.start);
+                }
+            }
+            start
+        }
+        _ => first_stmt.span().start,
     }
 }
 
