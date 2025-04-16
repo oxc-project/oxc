@@ -488,7 +488,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         }
 
         let mut call_expr: Option<CallExpression<'a>> = None;
-        let mut props = vec![];
+        let mut props = ctx.ast.vec_with_capacity(obj_expr.properties.len());
 
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(spread_prop) = prop {
@@ -509,12 +509,17 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
 
     fn make_object_spread(
         expr: &mut Option<CallExpression<'a>>,
-        props: &mut Vec<ObjectPropertyKind<'a>>,
+        props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
         transform_ctx: &'ctx TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)), None);
+        let obj = ctx.ast.expression_object(
+            SPAN,
+            // Reserve maximize might be used space for new vec
+            mem::replace(props, ctx.ast.vec_with_capacity(props.capacity() - props.len())),
+            None,
+        );
         let arguments = if let Some(call_expr) = expr.take() {
             let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
             let arg = Argument::from(arg);
