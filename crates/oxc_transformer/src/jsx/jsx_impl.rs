@@ -582,10 +582,18 @@ impl<'a> JsxImpl<'a, '_> {
                     JSXAttributeItem::Attribute(attr) => {
                         let JSXAttribute { span, name, value } = attr.unbox();
                         match &name {
-                            JSXAttributeName::Identifier(ident) if ident.name == "__self" => {
+                            JSXAttributeName::Identifier(ident)
+                                if self.options.development
+                                    && self.options.jsx_self_plugin
+                                    && ident.name == "__self" =>
+                            {
                                 self.jsx_self.report_error(ident.span);
                             }
-                            JSXAttributeName::Identifier(ident) if ident.name == "__source" => {
+                            JSXAttributeName::Identifier(ident)
+                                if self.options.development
+                                    && self.options.jsx_source_plugin
+                                    && ident.name == "__source" =>
+                            {
                                 self.jsx_source.report_error(ident.span);
                             }
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {

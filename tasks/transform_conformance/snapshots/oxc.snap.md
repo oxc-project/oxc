@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 148/241
+Passed: 150/243
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -15,6 +15,7 @@ Passed: 148/241
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
+* babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 * regexp
 
