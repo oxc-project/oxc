@@ -1068,8 +1068,8 @@ impl<'a> FormatWrite<'a> for AccessorProperty<'a> {
 impl<'a> FormatWrite<'a> for ImportExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["import(", self.source])?;
-        for option in &self.options {
-            write!(f, [",", space(), option])?;
+        if let Some(options) = &self.options {
+            write!(f, [",", space(), options])?;
         }
         write!(f, ")")
     }

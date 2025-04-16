@@ -14536,12 +14536,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                      ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-not-extensible-args.js:39:48]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-not-extensible-args.js:39:15]
  38 │ 
  39 │ let f = () => import('./empty_FIXTURE.js', {}, '');
-    ·                                                ─┬
-    ·                                                 ╰── `)` expected
+    ·               ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -14642,12 +14641,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-not-extensible-args.js:40:3]
  39 │ let f = () => {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -14757,12 +14755,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ });
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-not-extensible-args.js:40:9]
  39 │ (async () => {
  40 │   await import('./empty_FIXTURE.js', {}, '')
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ });
     ╰────
 
@@ -14866,12 +14863,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                           ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-not-extensible-args.js:39:53]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-not-extensible-args.js:39:20]
  38 │ 
  39 │ (async () => await import('./empty_FIXTURE.js', {}, ''))
-    ·                                                     ─┬
-    ·                                                      ╰── `)` expected
+    ·                    ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -14988,12 +14984,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-not-extensible-args.js:40:9]
  39 │ async function f() {
  40 │   await import('./empty_FIXTURE.js', {}, '');
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15095,12 +15090,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-not-extensible-args.js:40:3]
  39 │ async function f() {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15184,12 +15178,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-not-extensible-args.js:40:49]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-not-extensible-args.js:40:16]
  39 │ async function f() {
  40 │   return await import('./empty_FIXTURE.js', {}, '');
-    ·                                                 ─┬
-    ·                                                  ╰── `)` expected
+    ·                ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15325,12 +15318,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-not-extensible-args.js:40:9]
  39 │ async function * f() {
  40 │   await import('./empty_FIXTURE.js', {}, '')
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15504,12 +15496,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-not-extensible-args.js:40:3]
  39 │ label: {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -15555,12 +15546,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-not-extensible-args.js:40:3]
  39 │ {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -15670,12 +15660,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ } while (false);
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-not-extensible-args.js:40:3]
  39 │ do {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ } while (false);
     ╰────
 
@@ -15787,12 +15776,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-not-extensible-args.js:41:41]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-not-extensible-args.js:41:8]
  40 │ 
  41 │ } else import('./empty_FIXTURE.js', {}, '');
-    ·                                         ─┬
-    ·                                          ╰── `)` expected
+    ·        ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -15893,12 +15881,11 @@ Negative Passed: 4519/4519 (100.00%)
  46 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-not-extensible-args.js:42:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-not-extensible-args.js:42:3]
  41 │ } else {
  42 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  43 │ }
     ╰────
 
@@ -16008,12 +15995,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-not-extensible-args.js:40:3]
  39 │ function fn() {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16097,12 +16083,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-not-extensible-args.js:40:43]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-not-extensible-args.js:40:10]
  39 │ function fn() {
  40 │   return import('./empty_FIXTURE.js', {}, '');
-    ·                                           ─┬
-    ·                                            ╰── `)` expected
+    ·          ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16240,12 +16225,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                  ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-not-extensible-args.js:39:44]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-not-extensible-args.js:39:11]
  38 │ 
  39 │ if (true) import('./empty_FIXTURE.js', {}, '');
-    ·                                            ─┬
-    ·                                             ╰── `)` expected
+    ·           ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -16346,12 +16330,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-not-extensible-args.js:40:3]
  39 │ if (true) {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16461,12 +16444,11 @@ Negative Passed: 4519/4519 (100.00%)
  46 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-not-extensible-args.js:42:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-not-extensible-args.js:42:3]
  41 │   x++;
  42 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  43 │ };
     ╰────
 
@@ -16578,12 +16560,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·              ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-not-extensible-args.js:38:40]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-not-extensible-args.js:38:7]
  37 │ 
  38 │ with (import('./empty_FIXTURE.js', {}, '')) {}
-    ·                                        ─┬
-    ·                                         ╰── `)` expected
+    ·       ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -16684,12 +16665,11 @@ Negative Passed: 4519/4519 (100.00%)
  43 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-not-extensible-args.js:39:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-not-extensible-args.js:39:3]
  38 │ with ({}) {
  39 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  40 │ }
     ╰────
 
@@ -16793,12 +16773,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-not-extensible-args.js:29:34]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-not-extensible-args.js:29:1]
  28 │ 
  29 │ import('./empty_FIXTURE.js', {}, '');
-    ·                                  ─┬
-    ·                                   ╰── `)` expected
+    · ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`

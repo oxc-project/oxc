@@ -658,12 +658,12 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, type_annotation) == 88);
     assert!(offset_of!(AccessorProperty, accessibility) == 96);
 
-    assert!(size_of::<ImportExpression>() == 64);
+    assert!(size_of::<ImportExpression>() == 48);
     assert!(align_of::<ImportExpression>() == 8);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
     assert!(offset_of!(ImportExpression, options) == 24);
-    assert!(offset_of!(ImportExpression, phase) == 56);
+    assert!(offset_of!(ImportExpression, phase) == 40);
 
     assert!(size_of::<ImportDeclaration>() == 112);
     assert!(align_of::<ImportDeclaration>() == 8);
@@ -2051,12 +2051,12 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, type_annotation) == 48);
     assert!(offset_of!(AccessorProperty, accessibility) == 52);
 
-    assert!(size_of::<ImportExpression>() == 36);
+    assert!(size_of::<ImportExpression>() == 28);
     assert!(align_of::<ImportExpression>() == 4);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
     assert!(offset_of!(ImportExpression, options) == 16);
-    assert!(offset_of!(ImportExpression, phase) == 32);
+    assert!(offset_of!(ImportExpression, phase) == 24);
 
     assert!(size_of::<ImportDeclaration>() == 64);
     assert!(align_of::<ImportDeclaration>() == 4);

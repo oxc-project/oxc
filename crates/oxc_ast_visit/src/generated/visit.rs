@@ -2666,7 +2666,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.source);
-        visitor.visit_expressions(&it.options);
+        if let Some(options) = &it.options {
+            visitor.visit_expression(options);
+        }
         visitor.leave_node(kind);
     }
 

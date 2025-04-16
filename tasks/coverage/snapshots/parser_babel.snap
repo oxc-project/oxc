@@ -5908,11 +5908,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─────────────
    ╰────
 
-  × Expected `)` but found `string`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/multiple-args/input.js:1:26]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/multiple-args/input.js:1:1]
  1 │ import('hello', 'world', '!');
-   ·                          ─┬─
-   ·                           ╰── `)` expected
+   · ────────────────────────
    ╰────
 
   × import() requires a specifier.
@@ -5947,11 +5946,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─────────────
    ╰────
 
-  × Expected `)` but found `string`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:26]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:1]
  1 │ import('hello', 'world', '!');
-   ·                          ─┬─
-   ·                           ╰── `)` expected
+   · ────────────────────────
    ╰────
 
   × import() requires a specifier.

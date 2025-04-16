@@ -1058,7 +1058,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_import_expression(&mut self, it: &ImportExpression<'a>) {
         self.visit_expression(&it.source);
-        self.visit_expressions(&it.options);
+        if let Some(options) = &it.options {
+            self.visit_expression(options);
+        }
     }
 
     #[inline(always)]

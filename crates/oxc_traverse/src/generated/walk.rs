@@ -2757,11 +2757,11 @@ unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ImportExpressionOptions);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
-        as *mut Vec<Expression>)
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
+        as *mut Option<Expression>)
     {
-        walk_expression(traverser, item as *mut _, ctx);
+        ctx.retag_stack(AncestorType::ImportExpressionOptions);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_import_expression(&mut *node, ctx);
