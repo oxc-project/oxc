@@ -13,10 +13,8 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::{
-        jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_pure_string},
-        vitest::VALID_VITEST_FN_CALL_CHAINS,
-    },
+    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_pure_string},
+    utils::valid_vitest_fn::is_valid_vitest_call,
 };
 
 pub fn parse_jest_fn_call<'a>(
@@ -307,10 +305,6 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
                 .unwrap_or(Ordering::Equal)
         })
         .is_ok()
-}
-
-fn is_valid_vitest_call(members: &[Cow<str>]) -> bool {
-    VALID_VITEST_FN_CALL_CHAINS.contains(&members.join("."))
 }
 
 fn resolve_to_jest_fn<'a>(
