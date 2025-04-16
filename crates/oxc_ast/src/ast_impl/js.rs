@@ -4,7 +4,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Box;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
@@ -853,27 +853,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> ArrayAssignmentTarget<'a> {
-    /// Creates a new array assignment target (like `[a, b]` in the code `[a, b] = [1, 2]`)
-    /// using the given elements.
-    pub fn new_with_elements(
-        span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    ) -> Self {
-        Self { span, elements, rest: None }
-    }
-}
-
-impl<'a> ObjectAssignmentTarget<'a> {
-    /// Creates a new object assignment target (like `{a, b}` in the code `({a, b} = obj)`) using
-    /// the given properties.
-    pub fn new_with_properties(
-        span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    ) -> Self {
-        Self { span, properties, rest: None }
-    }
-
+impl ObjectAssignmentTarget<'_> {
     /// Returns `true` if this object assignment target is empty.
     ///
     /// ## Example
