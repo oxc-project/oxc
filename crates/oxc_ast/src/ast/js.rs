@@ -890,9 +890,9 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
-/// `rest` in `[foo, ...rest] = arr;`
+/// `rest` in `[foo, ...rest] = arr;` or `({foo, ...rest} = obj);`.
 ///
-/// Represents a rest element in an array assignment target, which can include a target.
+/// Represents rest element in an `ArrayAssignmentTarget` or `ObjectAssignmentTarget`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
