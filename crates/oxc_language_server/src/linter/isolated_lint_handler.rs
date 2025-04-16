@@ -29,12 +29,12 @@ pub struct IsolatedLintHandlerOptions {
 }
 
 pub struct IsolatedLintHandler {
-    linter: Arc<Linter>,
-    options: Arc<IsolatedLintHandlerOptions>,
+    linter: Linter,
+    options: IsolatedLintHandlerOptions,
 }
 
 impl IsolatedLintHandler {
-    pub fn new(linter: Arc<Linter>, options: Arc<IsolatedLintHandlerOptions>) -> Self {
+    pub fn new(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
         Self { linter, options }
     }
 
@@ -121,7 +121,7 @@ impl IsolatedLintHandler {
         .with_cross_module(self.options.use_cross_module);
         // ToDo: do not clone the linter
         let path_arc = Arc::from(path.as_os_str());
-        let mut lint_service = LintService::new((*self.linter).clone(), lint_service_options);
+        let mut lint_service = LintService::new(self.linter.clone(), lint_service_options);
         let result = lint_service.run_source(allocator, &path_arc, &source_text);
 
         Some(result)

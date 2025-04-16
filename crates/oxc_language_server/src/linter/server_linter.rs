@@ -11,8 +11,7 @@ use super::isolated_lint_handler::IsolatedLintHandlerOptions;
 
 #[derive(Clone)]
 pub struct ServerLinter {
-    linter: Arc<Linter>,
-    options: Arc<IsolatedLintHandlerOptions>,
+    isolated_linter: Arc<IsolatedLintHandler>,
 }
 
 impl ServerLinter {
@@ -20,16 +19,20 @@ impl ServerLinter {
         let config_store =
             ConfigStoreBuilder::default().build().expect("Failed to build config store");
         let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);
-        Self { linter: Arc::new(linter), options: Arc::new(options) }
+
+        let isolated_linter = Arc::new(IsolatedLintHandler::new(linter, options));
+
+        Self { isolated_linter }
     }
 
     pub fn new_with_linter(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
-        Self { linter: Arc::new(linter), options: Arc::new(options) }
+        let isolated_linter = Arc::new(IsolatedLintHandler::new(linter, options));
+
+        Self { isolated_linter }
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
-        IsolatedLintHandler::new(Arc::clone(&self.linter), Arc::clone(&self.options))
-            .run_single(&uri.to_file_path().unwrap(), content)
+        self.isolated_linter.run_single(&uri.to_file_path().unwrap(), content)
     }
 }
 
