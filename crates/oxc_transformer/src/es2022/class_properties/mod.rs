@@ -277,6 +277,8 @@ pub struct ClassProperties<'a, 'ctx> {
     /// Keys are symbols' IDs.
     /// Values are initially the original name of binding, later on the name of new UID name.
     clashing_constructor_symbols: FxHashMap<SymbolId, Atom<'a>>,
+    /// Count of private fields in class and also included parent classes.
+    private_field_count: usize,
 
     // ----- State used only during exit phase -----
     //
@@ -312,6 +314,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             instance_inits_constructor_scope_id: None,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
+            private_field_count: 0,
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
@@ -339,6 +342,11 @@ impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Return early if no private fields are found.
+        if self.private_field_count == 0 {
+            return;
+        }
+
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
