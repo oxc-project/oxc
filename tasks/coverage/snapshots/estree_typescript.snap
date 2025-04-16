@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 8971/10725 (83.65%)
+Positive Passed: 9012/10725 (84.03%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/accessOverriddenBaseClassMember1.ts
@@ -242,7 +242,6 @@ declare' modifier already seen.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declareDottedExtend.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declareDottedModuleName.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnTypeAlias.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataRestParameterWithImportedType.ts
 tasks/coverage/typescript/tests/cases/compiler/defaultPropsEmptyCurlyBecomesAnyForJs.ts
 Unexpected estree file content error: 2 != 3
 
@@ -294,7 +293,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBOM.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithPrologueDirectives1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitCapturingThisInTupleDestructuring1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitCapturingThisInTupleDestructuring2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitHelpersWithLocalCollisions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitMemberAccessExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitPinnedCommentsOnTopOfFile.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitSuperCallBeforeEmitParameterPropertyDeclaration1.ts
@@ -429,11 +427,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/importExportInternalCom
 tasks/coverage/typescript/tests/cases/compiler/importHelpersCommonJSJavaScript.ts
 Unexpected estree file content error: 2 != 3
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersES6.ts
 tasks/coverage/typescript/tests/cases/compiler/importHelpersVerbatimModuleSyntax.ts
 Unexpected estree file content error: 2 != 3
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
 tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember10.ts
 Unexpected estree file content error: 1 != 2
@@ -1129,12 +1125,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/con
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsSystem1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsSystem2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassFromExternalModule.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorOnClass2.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadata-jsdoc.ts
 Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadata.ts
@@ -1266,12 +1256,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing7.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing8.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass2.es6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass3.es6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass4.es6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass6.es6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass7.es6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass8.es6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersFunction.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersFunctionES6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersFunctionExpression.ts
@@ -1400,10 +1384,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/functionD
 Cannot use `yield` as an identifier in a generator context
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration5_es6.ts
 Cannot use `yield` as an identifier in a generator context
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsAmd/decoratedDefaultExportsGetExportedAmd.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsCommonjs/decoratedDefaultExportsGetExportedCommonjs.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/decoratedDefaultExportsGetExportedSystem.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsUmd/decoratedDefaultExportsGetExportedUmd.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames01.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames02.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/restParameters/emitRestParametersFunction.ts
@@ -1664,10 +1644,7 @@ Unexpected trailing comma after rest element
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts
 A rest parameter must be last in a parameter list
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-parameterProperties.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-setFunctionName.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.17.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.7.ts
@@ -1718,12 +1695,6 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJsImportBindingElementNarrowType.ts
 Unexpected estree file content error: 1 != 2
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target11.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target11.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target3.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts
 Missing initializer in const declaration
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/globalAugmentationModuleResolution.ts
@@ -2443,18 +2414,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.2_A1.5_T2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.6_A4.2_T1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.11.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.10.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.8.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.9.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.10.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.8.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithLegacyClassDecorators.9.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of12.ts
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of20.ts

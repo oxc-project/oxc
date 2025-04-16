@@ -64,7 +64,14 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `class`
 
         let decorators = self.consume_decorators();
-        let start_span = decorators.iter().next().map_or(start_span, |d| d.span.start);
+
+        // Move span start to decorator position if this is a class expression.
+        let mut start_span = start_span;
+        if r#type == ClassType::ClassExpression {
+            if let Some(d) = decorators.first() {
+                start_span = d.span.start;
+            }
+        }
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
             Some(self.parse_binding_identifier()?)
