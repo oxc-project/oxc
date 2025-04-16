@@ -216,19 +216,37 @@ impl<'a> FormatWrite<'a> for PropertyKey<'a> {
 
 impl<'a> FormatWrite<'a> for TemplateLiteral<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, "`")?;
+        let mut expressions = self.expressions.iter();
+        for quasi in &self.quasis {
+            write!(f, quasi)?;
+
+            if let Some(expr) = expressions.next() {
+                write!(
+                    f,
+                    group(&format_args!(
+                        "${",
+                        soft_line_break(),
+                        soft_block_indent(expr),
+                        soft_line_break(),
+                        "}"
+                    ))
+                )?;
+            }
+        }
+        write!(f, "`")
     }
 }
 
 impl<'a> FormatWrite<'a> for TaggedTemplateExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, [self.tag, self.quasi])
     }
 }
 
 impl<'a> FormatWrite<'a> for TemplateElement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, dynamic_text(self.value.raw.as_str(), self.span.start))
     }
 }
 
@@ -1977,7 +1995,7 @@ impl<'a> FormatWrite<'a> for TSTemplateLiteralType<'a> {
                     write!(f, ["${", types, "}"])?;
                 }
             }
-            write!(f, dynamic_text(item.value.raw.as_str(), item.span.start));
+            write!(f, item);
         }
         write!(f, "`")
     }

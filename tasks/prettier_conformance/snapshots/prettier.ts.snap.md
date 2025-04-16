@@ -1,4 +1,4 @@
-ts compatibility: 20/573 (3.49%)
+ts compatibility: 21/573 (3.66%)
 
 # Failed
 
@@ -13,7 +13,6 @@ ts compatibility: 20/573 (3.49%)
 | jsx/comments/jsx-tag-comment-after-prop.js | 💥 | 26.67% |
 | jsx/comments/like-a-comment-in-jsx-text.js | 💥 | 0.00% |
 | jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 45.33% |
-| jsx/embed/css-embed.js | 💥 | 0.00% |
 | jsx/escape/nbsp.js | 💥 | 70.00% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 44.00% |
@@ -30,13 +29,13 @@ ts compatibility: 20/573 (3.49%)
 | jsx/jsx/hug.js | 💥💥💥💥 | 31.37% |
 | jsx/jsx/logical-expression.js | 💥💥💥💥 | 37.50% |
 | jsx/jsx/object-property.js | 💥💥💥💥 | 36.84% |
-| jsx/jsx/open-break.js | 💥💥💥💥 | 16.67% |
+| jsx/jsx/open-break.js | 💥💥💥💥 | 25.00% |
 | jsx/jsx/parens.js | 💥💥💥💥 | 45.16% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 31.91% |
 | jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/jsx/return-statement.js | 💥💥💥💥 | 43.24% |
 | jsx/jsx/spacing.js | 💥💥💥💥 | 22.22% |
-| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 26.67% |
+| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 23.53% |
 | jsx/jsx/ternary.js | 💥💥💥💥 | 0.00% |
 | jsx/last-line/last_line.js | 💥💥 | 44.51% |
 | jsx/last-line/single_prop_multiline_string.js | 💥💥 | 22.88% |
@@ -52,7 +51,7 @@ ts compatibility: 20/573 (3.49%)
 | jsx/spread/child.js | 💥 | 31.11% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 12.18% |
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
-| jsx/text-wrap/test.js | 💥 | 32.16% |
+| jsx/text-wrap/test.js | 💥 | 32.24% |
 | typescript/abstract-class/export-default.ts | 💥 | 33.33% |
 | typescript/abstract-construct-types/abstract-construct-types.ts | 💥 | 0.00% |
 | typescript/abstract-property/semicolon.ts | 💥💥 | 28.57% |
@@ -503,7 +502,7 @@ ts compatibility: 20/573 (3.49%)
 | typescript/trailing-comma/type-parameters-vs-arguments.ts | 💥💥💥 | 14.29% |
 | typescript/tsx/generic-component.tsx | 💥 | 40.00% |
 | typescript/tsx/member-expression.tsx | 💥 | 20.00% |
-| typescript/tsx/not-react.ts | 💥 | 75.00% |
+| typescript/tsx/not-react.ts | 💥 | 87.50% |
 | typescript/tsx/react.tsx | 💥 | 33.33% |
 | typescript/tsx/type-parameters.tsx | 💥 | 35.29% |
 | typescript/tsx/url.tsx | 💥 | 37.04% |
@@ -534,7 +533,7 @@ ts compatibility: 20/573 (3.49%)
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 15.00% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 22.22% |
 | typescript/typeparams/long-function-arg.ts | 💥 | 8.70% |
-| typescript/typeparams/tagged-template-expression.ts | 💥 | 0.00% |
+| typescript/typeparams/tagged-template-expression.ts | 💥 | 25.00% |
 | typescript/typeparams/consistent/flow-only.ts | 💥 | 0.00% |
 | typescript/typeparams/consistent/issue-9501.ts | 💥 | 0.00% |
 | typescript/typeparams/consistent/simple-types.ts | 💥 | 0.00% |
