@@ -458,6 +458,10 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 TSType::TSAnyKeyword(_) => {
                     return Self::global_object(ctx);
                 }
+                // Unlike TypeScript, we don't have a way to determine what the referent is,
+                // so return `Object` early, because once have a type reference, the final
+                // type is `Object` anyway.
+                TSType::TSTypeReference(_) => return Self::global_object(ctx),
                 _ => {}
             }
 

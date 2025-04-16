@@ -377,23 +377,17 @@ rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "_ref2", "_ref3", "dec"]
-rebuilt        : ScopeId(0): ["Cls", "_ref", "_ref2", "_ref3"]
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["Cls", "_ref"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol reference IDs mismatch for "_ref2":
-after transform: SymbolId(10): [ReferenceId(15), ReferenceId(16)]
-rebuilt        : SymbolId(1): []
-Symbol reference IDs mismatch for "_ref3":
-after transform: SymbolId(11): [ReferenceId(20), ReferenceId(21)]
-rebuilt        : SymbolId(2): []
 Symbol span mismatch for "Cls":
 after transform: SymbolId(6): Span { start: 135, end: 138 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol span mismatch for "Cls":
-after transform: SymbolId(12): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(4): Span { start: 135, end: 138 }
+after transform: SymbolId(10): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 135, end: 138 }
 Reference symbol mismatch for "Foo":
 after transform: SymbolId(0) "Foo"
 rebuilt        : <None>
@@ -412,9 +406,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Foo", "Object", "babelHelpers", "console", "dec"]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(12), ReferenceId(17), ReferenceId(22), ReferenceId(23)]
-rebuilt        : [ReferenceId(10), ReferenceId(11)]
 
 * oxc/metadata/typescript-syntax/input.ts
 Bindings mismatch:

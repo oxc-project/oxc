@@ -8301,8 +8301,8 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataConditionalType.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["BaseEntity", "C", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "d"]
-rebuilt        : ScopeId(0): ["BaseEntity", "C", "_decorate", "_decorateMetadata", "_defineProperty", "_ref"]
+after transform: ScopeId(0): ["BaseEntity", "C", "_decorate", "_decorateMetadata", "_defineProperty", "d"]
+rebuilt        : ScopeId(0): ["BaseEntity", "C", "_decorate", "_decorateMetadata", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
@@ -8312,9 +8312,6 @@ rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
-Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(6): [ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(3): []
 Reference symbol mismatch for "d":
 after transform: SymbolId(0) "d"
 rebuilt        : <None>
@@ -8324,11 +8321,8 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Boolean", "Object", "PropertyDecorator", "require"]
 rebuilt        : ["Boolean", "Object", "d", "require"]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(10), ReferenceId(11)]
-rebuilt        : [ReferenceId(7)]
 Unresolved reference IDs mismatch for "Boolean":
-after transform: [ReferenceId(16), ReferenceId(17)]
+after transform: [ReferenceId(11), ReferenceId(12)]
 rebuilt        : [ReferenceId(13)]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImport.ts
@@ -19766,31 +19760,19 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
-rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
-Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(3): []
+after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
+rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDecorator"]
 rebuilt        : ["Object"]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(8), ReferenceId(9)]
-rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
-rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "_ref", "annotation"]
-Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(3): []
+after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
+rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDecorator"]
 rebuilt        : ["Object"]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(8), ReferenceId(9)]
-rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromModule.ts
 semantic error: Scope flags mismatch:
@@ -19826,70 +19808,43 @@ rebuilt        : ScopeId(5): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(12): [ReferenceId(20), ReferenceId(21)]
-rebuilt        : SymbolId(3): []
-Symbol reference IDs mismatch for "_ref3":
-after transform: SymbolId(17): [ReferenceId(60), ReferenceId(61)]
-rebuilt        : SymbolId(5): []
-Symbol reference IDs mismatch for "_ref4":
-after transform: SymbolId(18): [ReferenceId(65), ReferenceId(66)]
-rebuilt        : SymbolId(6): []
-Symbol reference IDs mismatch for "_ref6":
-after transform: SymbolId(20): [ReferenceId(78), ReferenceId(79)]
-rebuilt        : SymbolId(8): []
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(3): [ReferenceId(2), ReferenceId(18), ReferenceId(19)]
-rebuilt        : SymbolId(12): []
+after transform: SymbolId(3): [ReferenceId(2)]
+rebuilt        : SymbolId(8): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
-after transform: SymbolId(5): [ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(47), ReferenceId(52), ReferenceId(53), ReferenceId(58), ReferenceId(59), ReferenceId(63), ReferenceId(64), ReferenceId(70), ReferenceId(71), ReferenceId(76), ReferenceId(77)]
-rebuilt        : SymbolId(14): [ReferenceId(30), ReferenceId(39), ReferenceId(40), ReferenceId(53), ReferenceId(54)]
+after transform: SymbolId(5): [ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(42), ReferenceId(47), ReferenceId(48), ReferenceId(55), ReferenceId(56)]
+rebuilt        : SymbolId(10): [ReferenceId(30), ReferenceId(39), ReferenceId(40), ReferenceId(53), ReferenceId(54)]
 Unresolved references mismatch:
-after transform: ["Boolean", "Number", "Object", "String", "require"]
+after transform: ["Boolean", "Object", "String", "require"]
 rebuilt        : ["Boolean", "Object", "require"]
 Unresolved reference IDs mismatch for "Boolean":
-after transform: [ReferenceId(25), ReferenceId(26), ReferenceId(29)]
+after transform: [ReferenceId(20), ReferenceId(21), ReferenceId(24)]
 rebuilt        : [ReferenceId(14)]
 Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(0), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(56), ReferenceId(62), ReferenceId(67), ReferenceId(68), ReferenceId(74), ReferenceId(80), ReferenceId(82)]
+after transform: [ReferenceId(0), ReferenceId(18), ReferenceId(25), ReferenceId(51), ReferenceId(53), ReferenceId(59), ReferenceId(61)]
 rebuilt        : [ReferenceId(9), ReferenceId(19), ReferenceId(42), ReferenceId(47), ReferenceId(56), ReferenceId(61)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfUnionWithNull.ts
-semantic error: Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(7): [ReferenceId(46), ReferenceId(47)]
-rebuilt        : SymbolId(3): []
-Symbol reference IDs mismatch for "_ref2":
-after transform: SymbolId(8): [ReferenceId(53), ReferenceId(54)]
-rebuilt        : SymbolId(4): []
-Symbol reference IDs mismatch for "_ref3":
-after transform: SymbolId(9): [ReferenceId(60), ReferenceId(61)]
-rebuilt        : SymbolId(5): []
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(3): [ReferenceId(10), ReferenceId(12), ReferenceId(44), ReferenceId(45), ReferenceId(51), ReferenceId(52)]
-rebuilt        : SymbolId(9): []
+semantic error: Symbol reference IDs mismatch for "A":
+after transform: SymbolId(3): [ReferenceId(10), ReferenceId(12)]
+rebuilt        : SymbolId(6): []
 Symbol reference IDs mismatch for "B":
-after transform: SymbolId(4): [ReferenceId(14), ReferenceId(58), ReferenceId(59), ReferenceId(68), ReferenceId(70), ReferenceId(72), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(80), ReferenceId(82), ReferenceId(84), ReferenceId(86), ReferenceId(88), ReferenceId(90)]
-rebuilt        : SymbolId(10): [ReferenceId(19), ReferenceId(24), ReferenceId(29), ReferenceId(33), ReferenceId(37), ReferenceId(41), ReferenceId(45), ReferenceId(50), ReferenceId(55), ReferenceId(60), ReferenceId(65), ReferenceId(70)]
+after transform: SymbolId(4): [ReferenceId(14), ReferenceId(53), ReferenceId(55), ReferenceId(57), ReferenceId(59), ReferenceId(61), ReferenceId(63), ReferenceId(65), ReferenceId(67), ReferenceId(69), ReferenceId(71), ReferenceId(73), ReferenceId(75)]
+rebuilt        : SymbolId(7): [ReferenceId(19), ReferenceId(24), ReferenceId(29), ReferenceId(33), ReferenceId(37), ReferenceId(41), ReferenceId(45), ReferenceId(50), ReferenceId(55), ReferenceId(60), ReferenceId(65), ReferenceId(70)]
 Unresolved references mismatch:
 after transform: ["Boolean", "Object", "String", "Symbol", "require"]
 rebuilt        : ["Boolean", "Object", "require"]
 Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(0), ReferenceId(29), ReferenceId(34), ReferenceId(41), ReferenceId(48), ReferenceId(49), ReferenceId(55), ReferenceId(56), ReferenceId(62), ReferenceId(63), ReferenceId(66)]
+after transform: [ReferenceId(0), ReferenceId(29), ReferenceId(34), ReferenceId(41), ReferenceId(44), ReferenceId(46), ReferenceId(48), ReferenceId(51)]
 rebuilt        : [ReferenceId(18), ReferenceId(28), ReferenceId(49), ReferenceId(54), ReferenceId(59), ReferenceId(64), ReferenceId(69)]
 
 tasks/coverage/typescript/tests/cases/compiler/metadataReferencedWithinFilteredUnion.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Class1", "Class2", "_decorate", "_decorateMetadata", "_ref", "decorate"]
-rebuilt        : ScopeId(0): ["Class2", "_decorate", "_decorateMetadata", "_ref", "decorate"]
-Symbol reference IDs mismatch for "_ref":
-after transform: SymbolId(6): [ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(2): []
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(10), ReferenceId(11)]
-rebuilt        : [ReferenceId(7)]
+after transform: ScopeId(0): ["Class1", "Class2", "_decorate", "_decorateMetadata", "decorate"]
+rebuilt        : ScopeId(0): ["Class2", "_decorate", "_decorateMetadata", "decorate"]
 
 tasks/coverage/typescript/tests/cases/compiler/methodContainingLocalFunction.ts
 semantic error: Scope flags mismatch:

@@ -1,4 +1,4 @@
-var _ref, _ref2, _ref3;
+var _ref;
 
 let Cls = class Cls {
 	constructor(param, param2) {
