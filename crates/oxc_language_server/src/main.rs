@@ -2,7 +2,7 @@ use commands::LSP_COMMANDS;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
-use linter::config_walker::ConfigWalker;
+use linter::{config_walker::ConfigWalker, isolated_lint_handler::IsolatedLintHandlerOptions};
 use log::{debug, error, info};
 use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 use rustc_hash::{FxBuildHasher, FxHashMap};
@@ -570,15 +570,25 @@ impl Backend {
             Oxlintrc::default()
         };
 
-        let config_store = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone())
-            .expect("failed to build config")
-            .build()
-            .expect("failed to build config");
+        // clone because we are returning it for ignore builder
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
+
+        // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
+        let use_nested_config = self.options.lock().await.use_nested_configs();
+
+        let use_cross_module = if use_nested_config {
+            self.nested_configs.pin().values().any(|config| config.plugins().has_import())
+        } else {
+            config_builder.plugins().has_import()
+        };
+
+        let config_store = config_builder.build().expect("Failed to build config store");
 
         let lint_options =
             LintOptions { fix: self.options.lock().await.fix_kind(), ..Default::default() };
 
-        let linter = if self.options.lock().await.use_nested_configs() {
+        let linter = if use_nested_config {
             let nested_configs = self.nested_configs.pin();
             let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
                 .iter()
@@ -590,9 +600,12 @@ impl Backend {
             Linter::new(lint_options, config_store)
         };
 
-        *self.server_linter.write().await = ServerLinter::new_with_linter(linter);
+        *self.server_linter.write().await = ServerLinter::new_with_linter(
+            linter,
+            IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
+        );
 
-        Some(oxlintrc.clone())
+        Some(oxlintrc)
     }
 
     async fn handle_file_update(&self, uri: Uri, content: Option<String>, version: Option<i32>) {
@@ -644,7 +657,10 @@ async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let server_linter = ServerLinter::new();
+    let server_linter = ServerLinter::new(IsolatedLintHandlerOptions {
+        use_cross_module: false,
+        root_path: PathBuf::new(),
+    });
     let diagnostics_report_map = ConcurrentHashMap::default();
 
     let (service, socket) = LspService::build(|client| Backend {

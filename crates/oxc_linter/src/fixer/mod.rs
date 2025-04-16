@@ -6,6 +6,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
 
+#[cfg(feature = "language_server")]
+use crate::service::offset_to_position::SpanPositionMessage;
+#[cfg(feature = "language_server")]
+pub use fix::FixWithPosition;
+#[cfg(feature = "language_server")]
+use oxc_diagnostics::{OxcCode, Severity};
+
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 use oxc_allocator::{Allocator, CloneIn};
@@ -223,6 +230,32 @@ pub struct Message<'a> {
     pub fix: Option<Fix<'a>>,
     span: Span,
     fixed: bool,
+}
+
+#[cfg(feature = "language_server")]
+pub struct MessageWithPosition<'a> {
+    pub message: Cow<'a, str>,
+    pub labels: Option<Vec<SpanPositionMessage<'a>>>,
+    pub help: Option<Cow<'a, str>>,
+    pub severity: Severity,
+    pub code: OxcCode,
+    pub url: Option<Cow<'a, str>>,
+    pub fix: Option<FixWithPosition<'a>>,
+}
+
+#[cfg(feature = "language_server")]
+impl From<OxcDiagnostic> for MessageWithPosition<'_> {
+    fn from(from: OxcDiagnostic) -> Self {
+        Self {
+            message: from.message.clone(),
+            labels: None,
+            help: from.help.clone(),
+            severity: from.severity,
+            code: from.code.clone(),
+            url: from.url.clone(),
+            fix: None,
+        }
+    }
 }
 
 impl<'new> CloneIn<'new> for Message<'_> {

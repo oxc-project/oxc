@@ -53,6 +53,9 @@ use crate::{
     utils::iter_possible_jest_call_node,
 };
 
+#[cfg(feature = "language_server")]
+pub use crate::fixer::{FixWithPosition, MessageWithPosition};
+
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
@@ -62,7 +65,7 @@ fn size_asserts() {
     assert_eq!(size_of::<RuleEnum>(), 16);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Linter {
     // rules: Vec<RuleWithSeverity>,
     options: LintOptions,

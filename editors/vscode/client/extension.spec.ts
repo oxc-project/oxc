@@ -161,6 +161,59 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].range.end.character, 17);
   });
 
+  test('cross module', async () => {
+    await loadFixture('cross_module');
+    const diagnostics = await getDiagnostics('dep-a.ts');
+
+    strictEqual(diagnostics.length, 1);
+    assert(typeof diagnostics[0].code == 'object');
+    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(
+      diagnostics[0].message,
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - diagnostic/dep-b.ts\n-> ./dep-a.ts - diagnostic/dep-a.ts',
+    );
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
+    strictEqual(diagnostics[0].range.start.line, 1);
+    strictEqual(diagnostics[0].range.start.character, 18);
+    strictEqual(diagnostics[0].range.end.line, 1);
+    strictEqual(diagnostics[0].range.end.character, 30);
+  });
+
+  test('cross module with nested config', async () => {
+    await loadFixture('cross_module_nested_config');
+    const diagnostics = await getDiagnostics('folder/folder-dep-a.ts');
+
+    strictEqual(diagnostics.length, 1);
+    assert(typeof diagnostics[0].code == 'object');
+    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(
+      diagnostics[0].message,
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./folder-dep-b.ts - diagnostic/folder/folder-dep-b.ts\n-> ./folder-dep-a.ts - diagnostic/folder/folder-dep-a.ts',
+    );
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
+    strictEqual(diagnostics[0].range.start.line, 1);
+    strictEqual(diagnostics[0].range.start.character, 18);
+    strictEqual(diagnostics[0].range.end.line, 1);
+    strictEqual(diagnostics[0].range.end.character, 37);
+  });
+
+  test('cross module with extended config', async () => {
+    await loadFixture('cross_module_extended_config');
+    const diagnostics = await getDiagnostics('dep-a.ts');
+
+    assert(typeof diagnostics[0].code == 'object');
+    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(
+      diagnostics[0].message,
+      'Dependency cycle detected\nhelp: These paths form a cycle: \n-> ./dep-b.ts - diagnostic/dep-b.ts\n-> ./dep-a.ts - diagnostic/dep-a.ts',
+    );
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
+    strictEqual(diagnostics[0].range.start.line, 1);
+    strictEqual(diagnostics[0].range.start.character, 18);
+    strictEqual(diagnostics[0].range.end.line, 1);
+    strictEqual(diagnostics[0].range.end.character, 30);
+  });
+
   test('setting rule to error, will report the diagnostic as error', async () => {
     const edit = new WorkspaceEdit();
     edit.createFile(fileUri, {

@@ -6,7 +6,10 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use super::{error_with_position::DiagnosticReport, server_linter::ServerLinter};
+use super::{
+    error_with_position::DiagnosticReport, isolated_lint_handler::IsolatedLintHandlerOptions,
+    server_linter::ServerLinter,
+};
 
 /// Given a file path relative to the crate root directory, return the URI of the file.
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
@@ -89,11 +92,27 @@ pub struct Tester<'t> {
 
 impl Tester<'_> {
     pub fn new() -> Self {
-        Self { snapshot_suffix: None, server_linter: ServerLinter::new() }
+        Self {
+            snapshot_suffix: None,
+            server_linter: ServerLinter::new(IsolatedLintHandlerOptions {
+                use_cross_module: false,
+                root_path: std::env::current_dir().expect("could not get current dir"),
+            }),
+        }
     }
 
     pub fn new_with_linter(linter: Linter) -> Self {
-        Self { snapshot_suffix: None, server_linter: ServerLinter::new_with_linter(linter) }
+        Self::new_with_server_linter(ServerLinter::new_with_linter(
+            linter,
+            IsolatedLintHandlerOptions {
+                use_cross_module: false,
+                root_path: std::env::current_dir().expect("could not get current dir"),
+            },
+        ))
+    }
+
+    pub fn new_with_server_linter(server_linter: ServerLinter) -> Self {
+        Self { snapshot_suffix: None, server_linter }
     }
 
     pub fn with_snapshot_suffix(mut self, suffix: &'static str) -> Self {

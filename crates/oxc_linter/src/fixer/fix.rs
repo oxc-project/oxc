@@ -4,6 +4,9 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
+#[cfg(feature = "language_server")]
+use crate::service::offset_to_position::SpanPositionMessage;
+
 bitflags! {
     /// Flags describing an automatic code fix.
     ///
@@ -286,6 +289,12 @@ pub struct Fix<'a> {
     /// editors via code actions.
     pub message: Option<Cow<'a, str>>,
     pub span: Span,
+}
+
+#[cfg(feature = "language_server")]
+pub struct FixWithPosition<'a> {
+    pub content: Cow<'a, str>,
+    pub span: SpanPositionMessage<'a>,
 }
 
 impl<'new> CloneIn<'new> for Fix<'_> {
