@@ -274,6 +274,10 @@ export interface ObjectAssignmentTarget extends Span {
 export interface AssignmentTargetRest extends Span {
   type: 'RestElement';
   argument: AssignmentTarget;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
+  value?: null;
 }
 
 export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | AssignmentTarget;
