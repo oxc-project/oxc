@@ -4626,11 +4626,6 @@ function deserializeVecArrayExpressionElement(pos) {
   return arr;
 }
 
-function deserializeOptionSpan(pos) {
-  if (uint8[pos] === 0) return null;
-  return deserializeSpan(pos + 8);
-}
-
 function deserializeBoxSpreadElement(pos) {
   return deserializeSpreadElement(uint32[pos >> 2]);
 }

@@ -145,7 +145,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     ) {
         let elements = arguments.drain(..).map(ArrayExpressionElement::from);
         let elements = ctx.ast.vec_from_iter(elements);
-        let array = ctx.ast.expression_array(SPAN, elements, None);
+        let array = ctx.ast.expression_array(SPAN, elements);
         arguments.push(Argument::from(array));
     }
 

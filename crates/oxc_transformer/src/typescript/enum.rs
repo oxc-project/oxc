@@ -137,7 +137,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_expr = ast.expression_object(SPAN, ast.vec(), None);
+            let object_expr = ast.expression_object(SPAN, ast.vec());
             ast.vec1(Argument::from(object_expr))
         } else {
             // }(Foo || {});
@@ -148,7 +148,7 @@ impl<'a> TypeScriptEnum<'a> {
                 enum_symbol_id,
                 ReferenceFlags::Read,
             );
-            let right = ast.expression_object(SPAN, ast.vec(), None);
+            let right = ast.expression_object(SPAN, ast.vec());
             let expression = ast.expression_logical(SPAN, left, op, right);
             ast.vec1(Argument::from(expression))
         };

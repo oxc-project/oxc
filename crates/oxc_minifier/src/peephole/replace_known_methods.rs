@@ -956,7 +956,6 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.expression_array(
             span,
             ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
-            None,
         ))
     }
 

@@ -433,13 +433,13 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_array_expression_element,
             )
         })?;
-        let trailing_comma = self.at(Kind::Comma).then(|| {
-            let span = self.start_span();
+        if self.at(Kind::Comma) {
+            let comma_span = self.start_span();
             self.bump_any();
-            self.end_span(span)
-        });
+            self.state.trailing_commas.insert(span.start, self.end_span(comma_span));
+        }
         self.expect(Kind::RBrack)?;
-        Ok(self.ast.expression_array(self.end_span(span), elements, trailing_comma))
+        Ok(self.ast.expression_array(self.end_span(span), elements))
     }
 
     fn parse_array_expression_element(&mut self) -> Result<ArrayExpressionElement<'a>> {

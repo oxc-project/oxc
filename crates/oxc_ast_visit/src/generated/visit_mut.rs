@@ -1468,9 +1468,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_array_expression_elements(&mut it.elements);
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1508,9 +1505,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_object_property_kinds(&mut it.properties);
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1860,9 +1854,6 @@ pub mod walk_mut {
         }
         if let Some(rest) = &mut it.rest {
             visitor.visit_assignment_target_rest(rest);
-        }
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
         }
         visitor.leave_node(kind);
     }

@@ -49,11 +49,10 @@ const _: () = {
     assert!(align_of::<ThisExpression>() == 8);
     assert!(offset_of!(ThisExpression, span) == 0);
 
-    assert!(size_of::<ArrayExpression>() == 56);
+    assert!(size_of::<ArrayExpression>() == 40);
     assert!(align_of::<ArrayExpression>() == 8);
     assert!(offset_of!(ArrayExpression, span) == 0);
     assert!(offset_of!(ArrayExpression, elements) == 8);
-    assert!(offset_of!(ArrayExpression, trailing_comma) == 40);
 
     assert!(size_of::<ArrayExpressionElement>() == 16);
     assert!(align_of::<ArrayExpressionElement>() == 8);
@@ -62,11 +61,10 @@ const _: () = {
     assert!(align_of::<Elision>() == 8);
     assert!(offset_of!(Elision, span) == 0);
 
-    assert!(size_of::<ObjectExpression>() == 56);
+    assert!(size_of::<ObjectExpression>() == 40);
     assert!(align_of::<ObjectExpression>() == 8);
     assert!(offset_of!(ObjectExpression, span) == 0);
     assert!(offset_of!(ObjectExpression, properties) == 8);
-    assert!(offset_of!(ObjectExpression, trailing_comma) == 40);
 
     assert!(size_of::<ObjectPropertyKind>() == 16);
     assert!(align_of::<ObjectPropertyKind>() == 8);
@@ -223,12 +221,11 @@ const _: () = {
     assert!(size_of::<AssignmentTargetPattern>() == 16);
     assert!(align_of::<AssignmentTargetPattern>() == 8);
 
-    assert!(size_of::<ArrayAssignmentTarget>() == 80);
+    assert!(size_of::<ArrayAssignmentTarget>() == 64);
     assert!(align_of::<ArrayAssignmentTarget>() == 8);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 40);
-    assert!(offset_of!(ArrayAssignmentTarget, trailing_comma) == 64);
 
     assert!(size_of::<ObjectAssignmentTarget>() == 64);
     assert!(align_of::<ObjectAssignmentTarget>() == 8);
@@ -1445,11 +1442,10 @@ const _: () = {
     assert!(align_of::<ThisExpression>() == 4);
     assert!(offset_of!(ThisExpression, span) == 0);
 
-    assert!(size_of::<ArrayExpression>() == 36);
+    assert!(size_of::<ArrayExpression>() == 24);
     assert!(align_of::<ArrayExpression>() == 4);
     assert!(offset_of!(ArrayExpression, span) == 0);
     assert!(offset_of!(ArrayExpression, elements) == 8);
-    assert!(offset_of!(ArrayExpression, trailing_comma) == 24);
 
     assert!(size_of::<ArrayExpressionElement>() == 12);
     assert!(align_of::<ArrayExpressionElement>() == 4);
@@ -1458,11 +1454,10 @@ const _: () = {
     assert!(align_of::<Elision>() == 4);
     assert!(offset_of!(Elision, span) == 0);
 
-    assert!(size_of::<ObjectExpression>() == 36);
+    assert!(size_of::<ObjectExpression>() == 24);
     assert!(align_of::<ObjectExpression>() == 4);
     assert!(offset_of!(ObjectExpression, span) == 0);
     assert!(offset_of!(ObjectExpression, properties) == 8);
-    assert!(offset_of!(ObjectExpression, trailing_comma) == 24);
 
     assert!(size_of::<ObjectPropertyKind>() == 8);
     assert!(align_of::<ObjectPropertyKind>() == 4);
@@ -1619,12 +1614,11 @@ const _: () = {
     assert!(size_of::<AssignmentTargetPattern>() == 8);
     assert!(align_of::<AssignmentTargetPattern>() == 4);
 
-    assert!(size_of::<ArrayAssignmentTarget>() == 52);
+    assert!(size_of::<ArrayAssignmentTarget>() == 40);
     assert!(align_of::<ArrayAssignmentTarget>() == 4);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 24);
-    assert!(offset_of!(ArrayAssignmentTarget, trailing_comma) == 40);
 
     assert!(size_of::<ObjectAssignmentTarget>() == 40);
     assert!(align_of::<ObjectAssignmentTarget>() == 4);

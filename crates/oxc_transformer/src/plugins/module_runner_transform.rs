@@ -660,7 +660,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Argument<'a> {
-        let value = ctx.ast.expression_array(SPAN, elements, None);
+        let value = ctx.ast.expression_array(SPAN, elements);
         let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
         let imported_names = ctx.ast.object_property_kind_object_property(
             SPAN,
@@ -671,7 +671,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             false,
         );
-        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names), None))
+        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names)))
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -763,7 +763,6 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Self::create_object_property("configurable", None, ctx),
                 Self::create_object_property("get", Some(getter), ctx),
             ]),
-            None,
         );
 
         let arguments = ctx.ast.vec_from_array([

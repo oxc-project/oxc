@@ -514,12 +514,12 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)), None);
+        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)));
         let arguments = if let Some(call_expr) = expr.take() {
             let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
             let arg = Argument::from(arg);
             if had_props {
-                let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
+                let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec());
                 ctx.ast.vec_from_array([arg, Argument::from(empty_object), Argument::from(obj)])
             } else {
                 ctx.ast.vec1(arg)
@@ -1069,11 +1069,9 @@ impl<'a> SpreadPair<'a> {
             // `function _objectDestructuringEmpty(t) { if (null == t) throw new TypeError("Cannot destructure " + t); }`
             let mut arguments = ctx.ast.vec();
             // Add `{}`.
-            arguments.push(Argument::ObjectExpression(ctx.ast.alloc_object_expression(
-                SPAN,
-                ctx.ast.vec(),
-                None,
-            )));
+            arguments.push(Argument::ObjectExpression(
+                ctx.ast.alloc_object_expression(SPAN, ctx.ast.vec()),
+            ));
             // Add `(_objectDestructuringEmpty(b), b);`
             arguments.push(Argument::SequenceExpression(ctx.ast.alloc_sequence_expression(
                 SPAN,
@@ -1095,7 +1093,7 @@ impl<'a> SpreadPair<'a> {
             // / `_objectWithoutProperties(_z, ["a", "b"])`
             let mut arguments =
                 ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx)));
-            let key_expression = ctx.ast.expression_array(SPAN, self.keys, None);
+            let key_expression = ctx.ast.expression_array(SPAN, self.keys);
 
             let key_expression = if self.all_primitives
                 && ctx.scoping.current_scope_id() != ctx.scoping().root_scope_id()

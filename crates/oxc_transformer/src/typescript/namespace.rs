@@ -307,7 +307,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     binding.create_write_target(ctx)
                 };
 
-                let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
+                let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec());
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
                     ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);

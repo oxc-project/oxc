@@ -308,10 +308,6 @@ pub struct ThisExpression {
 pub struct ArrayExpression<'a> {
     pub span: Span,
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
-    /// Array trailing comma
-    /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    #[estree(skip)]
-    pub trailing_comma: Option<Span>,
 }
 
 inherit_variants! {
@@ -328,7 +324,7 @@ pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
     /// `<empty>` in `const array = [1, , 2];`
     ///
-    /// Array hole for sparse arrays
+    /// Array hole for sparse arrays.
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
@@ -352,8 +348,6 @@ pub struct Elision {
 ///
 /// Represents an object literal, which can include properties, spread properties,
 /// or computed properties.
-///
-/// If the object literal has a trailing comma, `trailing_comma` contains the span of that comma.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -361,8 +355,6 @@ pub struct ObjectExpression<'a> {
     pub span: Span,
     /// Properties declared in the object
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
-    #[estree(skip)]
-    pub trailing_comma: Option<Span>,
 }
 
 /// Represents a property in an object literal.
@@ -879,8 +871,6 @@ pub struct ArrayAssignmentTarget<'a> {
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[estree(append_to = "elements")]
     pub rest: Option<AssignmentTargetRest<'a>>,
-    #[estree(skip)]
-    pub trailing_comma: Option<Span>,
 }
 
 /// `{ foo }` in `({ foo } = obj);`

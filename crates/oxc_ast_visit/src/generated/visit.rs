@@ -1464,9 +1464,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_array_expression_elements(&it.elements);
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1501,9 +1498,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_object_property_kinds(&it.properties);
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1829,9 +1823,6 @@ pub mod walk {
         }
         if let Some(rest) = &it.rest {
             visitor.visit_assignment_target_rest(rest);
-        }
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
         }
         visitor.leave_node(kind);
     }

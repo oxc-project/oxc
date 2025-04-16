@@ -95,11 +95,7 @@ impl<'a> Dummy<'a> for ArrayExpression<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            elements: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), elements: Dummy::dummy(allocator) }
     }
 }
 
@@ -126,11 +122,7 @@ impl<'a> Dummy<'a> for ObjectExpression<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            properties: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), properties: Dummy::dummy(allocator) }
     }
 }
 
@@ -461,7 +453,7 @@ impl<'a> Dummy<'a> for AssignmentTargetPattern<'a> {
     ///
     /// Has cost of making 1 allocation (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::ObjectAssignmentTarget(Dummy::dummy(allocator))
+        Self::ArrayAssignmentTarget(Dummy::dummy(allocator))
     }
 }
 
@@ -474,7 +466,6 @@ impl<'a> Dummy<'a> for ArrayAssignmentTarget<'a> {
             span: Dummy::dummy(allocator),
             elements: Dummy::dummy(allocator),
             rest: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
         }
     }
 }

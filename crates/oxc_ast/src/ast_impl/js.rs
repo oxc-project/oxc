@@ -860,7 +860,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     ) -> Self {
-        Self { span, elements, rest: None, trailing_comma: None }
+        Self { span, elements, rest: None }
     }
 }
 

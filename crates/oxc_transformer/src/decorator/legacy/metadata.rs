@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 self.serialize_type_annotation(rest.argument.type_annotation.as_ref(), ctx),
             ));
         }
-        ctx.ast.expression_array(SPAN, elements, None)
+        ctx.ast.expression_array(SPAN, elements)
     }
 
     /// Serializes the return type of a node for use with decorator type metadata.

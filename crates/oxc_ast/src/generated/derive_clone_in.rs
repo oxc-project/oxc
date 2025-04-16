@@ -388,7 +388,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpression<'_> {
         ArrayExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             elements: CloneIn::clone_in(&self.elements, allocator),
-            trailing_comma: CloneIn::clone_in(&self.trailing_comma, allocator),
         }
     }
 
@@ -396,7 +395,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpression<'_> {
         ArrayExpression {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             elements: CloneIn::clone_in_with_semantic_ids(&self.elements, allocator),
-            trailing_comma: CloneIn::clone_in_with_semantic_ids(&self.trailing_comma, allocator),
         }
     }
 }
@@ -702,7 +700,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectExpression<'_> {
         ObjectExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             properties: CloneIn::clone_in(&self.properties, allocator),
-            trailing_comma: CloneIn::clone_in(&self.trailing_comma, allocator),
         }
     }
 
@@ -710,7 +707,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectExpression<'_> {
         ObjectExpression {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             properties: CloneIn::clone_in_with_semantic_ids(&self.properties, allocator),
-            trailing_comma: CloneIn::clone_in_with_semantic_ids(&self.trailing_comma, allocator),
         }
     }
 }
@@ -1881,7 +1877,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayAssignmentTarget<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             elements: CloneIn::clone_in(&self.elements, allocator),
             rest: CloneIn::clone_in(&self.rest, allocator),
-            trailing_comma: CloneIn::clone_in(&self.trailing_comma, allocator),
         }
     }
 
@@ -1890,7 +1885,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayAssignmentTarget<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             elements: CloneIn::clone_in_with_semantic_ids(&self.elements, allocator),
             rest: CloneIn::clone_in_with_semantic_ids(&self.rest, allocator),
-            trailing_comma: CloneIn::clone_in_with_semantic_ids(&self.trailing_comma, allocator),
         }
     }
 }

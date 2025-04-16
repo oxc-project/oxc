@@ -2007,7 +2007,6 @@ impl<'a> ClassProperties<'a, '_> {
                 ArrayExpressionElement::from(prop_ident),
                 ArrayExpressionElement::from(object),
             ]),
-            None,
         );
         let arguments = ctx.ast.vec_from_array([
             Argument::from(self.ctx.helper_load(Helper::ClassPrivateFieldSet2, ctx)),

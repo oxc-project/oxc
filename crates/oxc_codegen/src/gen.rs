@@ -1931,24 +1931,22 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
+        for (i, item) in self.elements.iter().enumerate() {
+            if i != 0 {
                 p.print_comma();
                 p.print_soft_space();
             }
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-        }
-        if let Some(target) = &self.rest {
-            if !self.elements.is_empty() {
+            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
                 p.print_comma();
             }
+        }
+        if let Some(target) = &self.rest {
+            p.print_soft_space();
             p.add_source_mapping(self.span);
             target.print(p, ctx);
-        }
-        if self.trailing_comma.is_some() {
-            p.print_comma();
         }
         p.print_ascii_byte(b']');
         p.add_source_mapping_end(self.span);

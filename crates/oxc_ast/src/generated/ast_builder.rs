@@ -319,15 +319,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
-    /// * `trailing_comma`: Array trailing comma
     #[inline]
     pub fn expression_array(
         self,
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
-        trailing_comma: Option<Span>,
     ) -> Expression<'a> {
-        Expression::ArrayExpression(self.alloc_array_expression(span, elements, trailing_comma))
+        Expression::ArrayExpression(self.alloc_array_expression(span, elements))
     }
 
     /// Build an [`Expression::ArrowFunctionExpression`].
@@ -894,15 +892,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
-    /// * `trailing_comma`
     #[inline]
     pub fn expression_object(
         self,
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
-        trailing_comma: Option<Span>,
     ) -> Expression<'a> {
-        Expression::ObjectExpression(self.alloc_object_expression(span, properties, trailing_comma))
+        Expression::ObjectExpression(self.alloc_object_expression(span, properties))
     }
 
     /// Build an [`Expression::ParenthesizedExpression`].
@@ -1471,15 +1467,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
-    /// * `trailing_comma`: Array trailing comma
     #[inline]
     pub fn array_expression(
         self,
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
-        trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a> {
-        ArrayExpression { span, elements, trailing_comma }
+        ArrayExpression { span, elements }
     }
 
     /// Build an [`ArrayExpression`], and store it in the memory arena.
@@ -1490,15 +1484,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
-    /// * `trailing_comma`: Array trailing comma
     #[inline]
     pub fn alloc_array_expression(
         self,
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
-        trailing_comma: Option<Span>,
     ) -> Box<'a, ArrayExpression<'a>> {
-        Box::new_in(self.array_expression(span, elements, trailing_comma), self.allocator)
+        Box::new_in(self.array_expression(span, elements), self.allocator)
     }
 
     /// Build an [`ArrayExpressionElement::SpreadElement`].
@@ -1543,15 +1535,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
-    /// * `trailing_comma`
     #[inline]
     pub fn object_expression(
         self,
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
-        trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a> {
-        ObjectExpression { span, properties, trailing_comma }
+        ObjectExpression { span, properties }
     }
 
     /// Build an [`ObjectExpression`], and store it in the memory arena.
@@ -1562,15 +1552,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `properties`: Properties declared in the object
-    /// * `trailing_comma`
     #[inline]
     pub fn alloc_object_expression(
         self,
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
-        trailing_comma: Option<Span>,
     ) -> Box<'a, ObjectExpression<'a>> {
-        Box::new_in(self.object_expression(span, properties, trailing_comma), self.allocator)
+        Box::new_in(self.object_expression(span, properties), self.allocator)
     }
 
     /// Build an [`ObjectPropertyKind::ObjectProperty`].
@@ -2772,21 +2760,16 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
-    /// * `trailing_comma`
     #[inline]
     pub fn assignment_target_pattern_array_assignment_target(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: Option<AssignmentTargetRest<'a>>,
-        trailing_comma: Option<Span>,
     ) -> AssignmentTargetPattern<'a> {
-        AssignmentTargetPattern::ArrayAssignmentTarget(self.alloc_array_assignment_target(
-            span,
-            elements,
-            rest,
-            trailing_comma,
-        ))
+        AssignmentTargetPattern::ArrayAssignmentTarget(
+            self.alloc_array_assignment_target(span, elements, rest),
+        )
     }
 
     /// Build an [`AssignmentTargetPattern::ObjectAssignmentTarget`].
@@ -2818,16 +2801,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
-    /// * `trailing_comma`
     #[inline]
     pub fn array_assignment_target(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: Option<AssignmentTargetRest<'a>>,
-        trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a> {
-        ArrayAssignmentTarget { span, elements, rest, trailing_comma }
+        ArrayAssignmentTarget { span, elements, rest }
     }
 
     /// Build an [`ArrayAssignmentTarget`], and store it in the memory arena.
@@ -2839,19 +2820,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `elements`
     /// * `rest`
-    /// * `trailing_comma`
     #[inline]
     pub fn alloc_array_assignment_target(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: Option<AssignmentTargetRest<'a>>,
-        trailing_comma: Option<Span>,
     ) -> Box<'a, ArrayAssignmentTarget<'a>> {
-        Box::new_in(
-            self.array_assignment_target(span, elements, rest, trailing_comma),
-            self.allocator,
-        )
+        Box::new_in(self.array_assignment_target(span, elements, rest), self.allocator)
     }
 
     /// Build an [`ObjectAssignmentTarget`].

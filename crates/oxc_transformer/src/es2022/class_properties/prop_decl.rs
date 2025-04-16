@@ -184,7 +184,7 @@ impl<'a> ClassProperties<'a, '_> {
             false,
             false,
         );
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property), None);
+        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property));
 
         // Insert after class
         let class_details = self.current_class();
@@ -350,7 +350,6 @@ impl<'a> ClassProperties<'a, '_> {
                     false,
                 ),
             ]),
-            None,
         );
 
         let private_props = self.current_class().private_props.as_ref().unwrap();

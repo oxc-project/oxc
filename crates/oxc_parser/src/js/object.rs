@@ -23,17 +23,9 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_object_expression_property,
             )
         })?;
-        let trailing_comma = self.at(Kind::Comma).then(|| {
-            let span = self.start_span();
-            self.bump_any();
-            self.end_span(span)
-        });
+        self.eat(Kind::Comma); // Trailing Comma
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.alloc_object_expression(
-            self.end_span(span),
-            object_expression_properties,
-            trailing_comma,
-        ))
+        Ok(self.ast.alloc_object_expression(self.end_span(span), object_expression_properties))
     }
 
     fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a>> {

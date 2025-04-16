@@ -2680,8 +2680,6 @@ impl<'a, 't> GetAddress for ProgramWithoutBody<'a, 't> {
 
 pub(crate) const OFFSET_ARRAY_EXPRESSION_SPAN: usize = offset_of!(ArrayExpression, span);
 pub(crate) const OFFSET_ARRAY_EXPRESSION_ELEMENTS: usize = offset_of!(ArrayExpression, elements);
-pub(crate) const OFFSET_ARRAY_EXPRESSION_TRAILING_COMMA: usize =
-    offset_of!(ArrayExpression, trailing_comma);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -2695,14 +2693,6 @@ impl<'a, 't> ArrayExpressionWithoutElements<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_SPAN) as *const Span) }
     }
-
-    #[inline]
-    pub fn trailing_comma(self) -> &'t Option<Span> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_TRAILING_COMMA)
-                as *const Option<Span>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for ArrayExpressionWithoutElements<'a, 't> {
@@ -2715,8 +2705,6 @@ impl<'a, 't> GetAddress for ArrayExpressionWithoutElements<'a, 't> {
 pub(crate) const OFFSET_OBJECT_EXPRESSION_SPAN: usize = offset_of!(ObjectExpression, span);
 pub(crate) const OFFSET_OBJECT_EXPRESSION_PROPERTIES: usize =
     offset_of!(ObjectExpression, properties);
-pub(crate) const OFFSET_OBJECT_EXPRESSION_TRAILING_COMMA: usize =
-    offset_of!(ObjectExpression, trailing_comma);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -2729,14 +2717,6 @@ impl<'a, 't> ObjectExpressionWithoutProperties<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn trailing_comma(self) -> &'t Option<Span> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_EXPRESSION_TRAILING_COMMA)
-                as *const Option<Span>)
-        }
     }
 }
 
@@ -4153,8 +4133,6 @@ pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS: usize =
     offset_of!(ArrayAssignmentTarget, elements);
 pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_REST: usize =
     offset_of!(ArrayAssignmentTarget, rest);
-pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_TRAILING_COMMA: usize =
-    offset_of!(ArrayAssignmentTarget, trailing_comma);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -4174,14 +4152,6 @@ impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
                 as *const Option<AssignmentTargetRest<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn trailing_comma(self) -> &'t Option<Span> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_TRAILING_COMMA)
-                as *const Option<Span>)
         }
     }
 }
@@ -4211,14 +4181,6 @@ impl<'a, 't> ArrayAssignmentTargetWithoutRest<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS)
                 as *const Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn trailing_comma(self) -> &'t Option<Span> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_TRAILING_COMMA)
-                as *const Option<Span>)
         }
     }
 }
