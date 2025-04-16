@@ -173,7 +173,9 @@ impl<'a> ModuleRunnerTransform<'a> {
             }
         }
 
-        new_stmts.splice(0..0, hoist_exports.into_iter().chain(hoist_imports));
+        if !hoist_imports.is_empty() || !hoist_exports.is_empty() {
+            new_stmts.splice(0..0, hoist_exports.into_iter().chain(hoist_imports));
+        }
 
         program.body = new_stmts;
     }

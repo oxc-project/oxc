@@ -165,6 +165,9 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn insert_import_statements(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
         let mut imports = self.imports.borrow_mut();
+        if imports.is_empty() {
+            return;
+        }
         let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
         transform_ctx.top_level_statements.insert_statements(stmts);
     }

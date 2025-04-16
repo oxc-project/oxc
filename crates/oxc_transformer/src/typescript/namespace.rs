@@ -194,7 +194,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 });
                                 let stmts =
                                     Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
-                                new_stmts.extend(stmts);
+                                if !stmts.is_empty() {
+                                    new_stmts.extend(stmts);
+                                }
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
                                 self.handle_nested(
