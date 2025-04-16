@@ -4,7 +4,6 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::Box;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
@@ -1747,11 +1746,11 @@ impl<'a> ModuleDeclaration<'a> {
     /// - `import thing from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export * from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export default thing` => `None`
-    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
         match self {
-            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
