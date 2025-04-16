@@ -4,7 +4,9 @@ import {
   commands,
   DiagnosticSeverity,
   languages,
+  Position,
   ProviderResult,
+  Range,
   Uri,
   window,
   workspace,
@@ -127,6 +129,38 @@ suite('code actions', () => {
         },
       ],
     );
+  });
+
+  // https://github.com/oxc-project/oxc/issues/10422
+  test('code action `source.fixAll.oxc` on editor.codeActionsOnSave', async () => {
+    let file = Uri.joinPath(WORKSPACE_DIR, 'fixtures', 'file.js');
+    let expectedFile = Uri.joinPath(WORKSPACE_DIR, 'fixtures', 'expected.txt');
+
+    await workspace.getConfiguration('editor').update('codeActionsOnSave', {
+      'source.fixAll.oxc': 'always',
+    });
+    await workspace.saveAll();
+
+    const range = new Range(new Position(0, 0), new Position(0, 0));
+    const edit = new WorkspaceEdit();
+    edit.replace(file, range, ' ');
+
+    await sleep(1000);
+
+    await loadFixture('fixall_with_code_actions_on_save');
+    await workspace.openTextDocument(file);
+    await workspace.applyEdit(edit);
+    await sleep(1000);
+    await workspace.saveAll();
+    await sleep(500);
+
+    const content = await workspace.fs.readFile(file);
+    const expected = await workspace.fs.readFile(expectedFile);
+
+    strictEqual(content.toString(), expected.toString());
+
+    await workspace.getConfiguration('editor').update('codeActionsOnSave', undefined);
+    await workspace.saveAll();
   });
 });
 

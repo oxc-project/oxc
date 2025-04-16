@@ -270,6 +270,8 @@ impl LanguageServer for Backend {
                 r.diagnostic.range == params.range
                     || range_overlaps(params.range, r.diagnostic.range)
             });
+            let mut quick_fixes: Vec<TextEdit> = vec![];
+
             for report in reports {
                 // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
                 let mut rule_name: Option<String> = None;
@@ -296,30 +298,38 @@ impl LanguageServer for Backend {
                             }
                         }
                     };
-                    code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                        title,
-                        kind: Some(if is_source_fix_all_oxc {
-                            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
-                        } else {
-                            CodeActionKind::QUICKFIX
-                        }),
-                        is_preferred: Some(true),
-                        edit: Some(WorkspaceEdit {
-                            #[expect(clippy::disallowed_types)]
-                            changes: Some(std::collections::HashMap::from([(
-                                uri.clone(),
-                                vec![TextEdit {
-                                    range: fixed_content.range,
-                                    new_text: fixed_content.code.clone(),
-                                }],
-                            )])),
-                            ..WorkspaceEdit::default()
-                        }),
-                        disabled: None,
-                        data: None,
-                        diagnostics: None,
-                        command: None,
-                    }));
+
+                    // when source.fixAll.oxc we collect all changes at ones
+                    // and return them as one workspace edit.
+                    // it is possible that one fix will change the range for the next fix
+                    // see oxc-project/oxc#10422
+                    if is_source_fix_all_oxc {
+                        quick_fixes.push(TextEdit {
+                            range: fixed_content.range,
+                            new_text: fixed_content.code.clone(),
+                        });
+                    } else {
+                        code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
+                            title,
+                            kind: Some(CodeActionKind::QUICKFIX),
+                            is_preferred: Some(true),
+                            edit: Some(WorkspaceEdit {
+                                #[expect(clippy::disallowed_types)]
+                                changes: Some(std::collections::HashMap::from([(
+                                    uri.clone(),
+                                    vec![TextEdit {
+                                        range: fixed_content.range,
+                                        new_text: fixed_content.code.clone(),
+                                    }],
+                                )])),
+                                ..WorkspaceEdit::default()
+                            }),
+                            disabled: None,
+                            data: None,
+                            diagnostics: None,
+                            command: None,
+                        }));
+                    }
                 }
 
                 code_actions_vec.push(
@@ -387,6 +397,23 @@ impl LanguageServer for Backend {
                                 ),
                             }],
                         )])),
+                        ..WorkspaceEdit::default()
+                    }),
+                    disabled: None,
+                    data: None,
+                    diagnostics: None,
+                    command: None,
+                }));
+            }
+
+            if is_source_fix_all_oxc && !quick_fixes.is_empty() {
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
+                    title: "quick fix".to_string(),
+                    kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
+                    is_preferred: Some(true),
+                    edit: Some(WorkspaceEdit {
+                        #[expect(clippy::disallowed_types)]
+                        changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
                         ..WorkspaceEdit::default()
                     }),
                     disabled: None,
