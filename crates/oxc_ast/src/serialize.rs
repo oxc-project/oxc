@@ -730,29 +730,6 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
     }
 }
 
-/// Serializer for `options` field of `ImportExpression`.
-///
-/// Serialize only the first expression in `options`, or `null` if `options` is empty.
-#[ast_meta]
-#[estree(
-    ts_type = "Expression | null",
-    raw_deser = "
-        const options = DESER[Vec<Expression>](POS_OFFSET.options);
-        options.length === 0 ? null : options[0]
-    "
-)]
-pub struct ImportExpressionOptions<'a>(pub &'a ImportExpression<'a>);
-
-impl ESTree for ImportExpressionOptions<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.options.first() {
-            expression.serialize(serializer);
-        } else {
-            ().serialize(serializer);
-        }
-    }
-}
-
 // Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //

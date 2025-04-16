@@ -514,6 +514,11 @@ pub fn private_in_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
 }
 
+#[cold]
+pub fn import_arguments(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

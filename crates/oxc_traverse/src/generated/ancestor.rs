@@ -9352,10 +9352,10 @@ impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
     }
 
     #[inline]
-    pub fn options(self) -> &'t Vec<'a, Expression<'a>> {
+    pub fn options(self) -> &'t Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_OPTIONS)
-                as *const Vec<'a, Expression<'a>>)
+                as *const Option<Expression<'a>>)
         }
     }
 

@@ -800,7 +800,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         source: Expression<'a>,
-        options: Vec<'a, Expression<'a>>,
+        options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
         Expression::ImportExpression(self.alloc_import_expression(span, source, options, phase))
@@ -7334,7 +7334,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         source: Expression<'a>,
-        options: Vec<'a, Expression<'a>>,
+        options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
         ImportExpression { span, source, options, phase }
@@ -7355,7 +7355,7 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         source: Expression<'a>,
-        options: Vec<'a, Expression<'a>>,
+        options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
         Box::new_in(self.import_expression(span, source, options, phase), self.allocator)

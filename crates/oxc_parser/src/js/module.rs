@@ -16,24 +16,24 @@ impl<'a> ParserImpl<'a> {
         phase: Option<ImportPhase>,
     ) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
-
         if self.eat(Kind::RParen) {
             return Err(oxc_diagnostics::OxcDiagnostic::error("import() requires a specifier.")
                 .with_label(self.end_span(span)));
         }
-
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
-
         let expression = self.parse_assignment_expression_or_higher()?;
-        let mut arguments = self.ast.vec();
-        if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
-            arguments.push(self.parse_assignment_expression_or_higher()?);
-        }
-
-        self.ctx = self.ctx.and_in(has_in);
+        let arguments = if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
+            Some(self.parse_assignment_expression_or_higher()?)
+        } else {
+            None
+        };
+        // Allow trailing comma
         self.bump(Kind::Comma);
-        self.expect(Kind::RParen)?;
+        if !self.eat(Kind::RParen) {
+            return Err(diagnostics::import_arguments(self.end_span(span)));
+        }
+        self.ctx = self.ctx.and_in(has_in);
         let expr =
             self.ast.alloc_import_expression(self.end_span(span), expression, arguments, phase);
         self.module_record_builder.visit_import_expression(&expr);
