@@ -34,7 +34,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident))
             }
             match_member_expression!(Expression) => {
-                let member_expr = MemberExpression::try_from(expr).unwrap();
+                let member_expr = expr.into_member_expression();
                 Ok(SimpleAssignmentTarget::from(member_expr))
             }
             Expression::ParenthesizedExpression(expr) => {
@@ -71,7 +71,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
                 match_expression!(ArrayExpressionElement) => {
-                    let expr = Expression::try_from(elem).unwrap();
+                    let expr = elem.into_expression();
                     let target = AssignmentTargetMaybeDefault::cover(expr, p)?;
                     elements.push(Some(target));
                 }
