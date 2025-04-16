@@ -1,4 +1,4 @@
-use std::ops::ControlFlow;
+use std::{iter, ops::ControlFlow};
 
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
@@ -39,7 +39,7 @@ impl<'a> PeepholeOptimizations {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        let mut new_stmts = ctx.ast.vec_from_iter(stmts.drain(..));
+        let mut new_stmts = stmts.take_in(ctx.ast.allocator);
         for i in 0..new_stmts.len() {
             let stmt = new_stmts[i].take_in(ctx.ast.allocator);
             if is_control_flow_dead
@@ -508,11 +508,12 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if can_move_branch_condition_outside_scope {
-                    let mut body = ctx.ast.vec();
-                    if let Some(alternate) = if_stmt.alternate.take() {
-                        body.push(alternate);
-                    }
-                    body.extend(stmts.drain(i + 1..));
+                    let drained_stmts = stmts.drain(i + 1..);
+                    let mut body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ctx.ast.vec_from_iter(iter::once(alternate).chain(drained_stmts))
+                    } else {
+                        ctx.ast.vec_from_iter(drained_stmts)
+                    };
 
                     self.minimize_statements(&mut body, state, ctx);
                     let span =
