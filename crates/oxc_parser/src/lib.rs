@@ -410,7 +410,7 @@ impl<'a> ParserImpl<'a> {
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::default(),
+            state: ParserState::new(allocator),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator),

@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
+use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
@@ -327,8 +327,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        let decorators = std::mem::take(&mut self.state.decorators);
-        self.ast.vec_from_iter(decorators)
+        self.state.decorators.take_in(self.ast.allocator)
     }
 
     pub(crate) fn parse_normal_list<F, T>(
