@@ -2551,9 +2551,7 @@ pub mod walk {
         if let Some(super_type_arguments) = &it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        if let Some(implements) = &it.implements {
-            visitor.visit_ts_class_implementses(implements);
-        }
+        visitor.visit_ts_class_implementses(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);

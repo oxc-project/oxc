@@ -215,7 +215,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         class.type_parameters = None;
         class.super_type_arguments = None;
-        class.implements = None;
+        class.implements.clear();
         class.r#abstract = false;
     }
 

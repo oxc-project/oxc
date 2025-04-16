@@ -2509,13 +2509,11 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
-        as *mut Option<Vec<TSClassImplements>>)
+    ctx.retag_stack(AncestorType::ClassImplements);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
+        as *mut Vec<TSClassImplements>)
     {
-        ctx.retag_stack(AncestorType::ClassImplements);
-        for item in field.iter_mut() {
-            walk_ts_class_implements(traverser, item as *mut _, ctx);
-        }
+        walk_ts_class_implements(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassBody);
     walk_class_body(

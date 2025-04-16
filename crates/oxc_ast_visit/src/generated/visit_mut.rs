@@ -2637,9 +2637,7 @@ pub mod walk_mut {
         if let Some(super_type_arguments) = &mut it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        if let Some(implements) = &mut it.implements {
-            visitor.visit_ts_class_implementses(implements);
-        }
+        visitor.visit_ts_class_implementses(&mut it.implements);
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);

@@ -157,13 +157,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_implements_clause(&mut self) -> Result<Vec<'a, TSClassImplements<'a>>> {
         self.expect(Kind::Implements)?;
         let first = self.parse_ts_implement_name()?;
-        let mut implements = self.ast.vec();
-        implements.push(first);
-
+        let mut implements = self.ast.vec1(first);
         while self.eat(Kind::Comma) {
             implements.push(self.parse_ts_implement_name()?);
         }
-
         Ok(implements)
     }
 

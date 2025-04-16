@@ -4991,11 +4991,6 @@ function deserializeVecTSClassImplements(pos) {
   return arr;
 }
 
-function deserializeOptionVecTSClassImplements(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeVecTSClassImplements(pos);
-}
-
 function deserializeBoxClassBody(pos) {
   return deserializeClassBody(uint32[pos >> 2]);
 }

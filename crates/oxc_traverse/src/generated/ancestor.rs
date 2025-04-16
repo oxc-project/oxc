@@ -7769,10 +7769,10 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 
@@ -7852,10 +7852,10 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 
@@ -7937,10 +7937,10 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 
@@ -8023,10 +8023,10 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 
@@ -8108,10 +8108,10 @@ impl<'a, 't> ClassWithoutSuperTypeArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 
@@ -8283,10 +8283,10 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Vec<'a, TSClassImplements<'a>>)
         }
     }
 

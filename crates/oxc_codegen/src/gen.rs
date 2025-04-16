@@ -2341,9 +2341,9 @@ impl Gen for Class<'_> {
                     super_type_parameters.print(p, ctx);
                 }
             }
-            if let Some(implements) = self.implements.as_ref() {
+            if !self.implements.is_empty() {
                 p.print_str(" implements ");
-                p.print_list(implements, ctx);
+                p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
             self.body.print(p, ctx);

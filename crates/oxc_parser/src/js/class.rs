@@ -13,8 +13,6 @@ use crate::{
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
-type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
-
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
     // `start_span` points at the start of all decoractors and `class` keyword.
@@ -110,9 +108,9 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_heritage_clause(
         &mut self,
-    ) -> Result<(Option<Extends<'a>>, Option<Implements<'a>>)> {
+    ) -> Result<(Option<Extends<'a>>, Vec<'a, TSClassImplements<'a>>)> {
         let mut extends = None;
-        let mut implements = None;
+        let mut implements = self.ast.vec();
 
         loop {
             match self.cur_kind() {
@@ -121,7 +119,7 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::extends_clause_already_seen(
                             self.cur_token().span(),
                         ));
-                    } else if implements.is_some() {
+                    } else if !implements.is_empty() {
                         self.error(diagnostics::extends_clause_must_precede_implements(
                             self.cur_token().span(),
                         ));
@@ -129,12 +127,12 @@ impl<'a> ParserImpl<'a> {
                     extends = Some(self.parse_extends_clause()?);
                 }
                 Kind::Implements => {
-                    if implements.is_some() {
+                    if !implements.is_empty() {
                         self.error(diagnostics::implements_clause_already_seen(
                             self.cur_token().span(),
                         ));
                     }
-                    implements = Some(self.parse_ts_implements_clause()?);
+                    implements.extend(self.parse_ts_implements_clause()?);
                 }
                 _ => break,
             }

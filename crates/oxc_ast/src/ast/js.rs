@@ -1941,8 +1941,7 @@ pub struct Class<'a> {
     /// //                   ^^^
     /// ```
     #[ts]
-    #[estree(via = ClassImplements)]
-    pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
+    pub implements: Vec<'a, TSClassImplements<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     /// Whether the class is abstract
     ///
