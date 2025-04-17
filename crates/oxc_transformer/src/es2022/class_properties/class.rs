@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use indexmap::{IndexMap, map::Entry};
+use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
@@ -389,7 +389,11 @@ impl<'a> ClassProperties<'a, '_> {
         }
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
-        self.private_field_count -= class_details.private_props.as_ref().map_or(0, IndexMap::len);
+        if let Some(private_props) = &class_details.private_props {
+            // Note: `private_props` can be non-empty even if `is_transform_required == false`,
+            // if class contains private accessors, which we don't transform yet
+            self.private_field_count -= private_props.len();
+        }
     }
 
     fn transform_class_declaration_on_exit_impl(
@@ -541,7 +545,11 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
-        self.private_field_count -= class_details.private_props.as_ref().map_or(0, IndexMap::len);
+        if let Some(private_props) = &class_details.private_props {
+            // Note: `private_props` can be non-empty even if `is_transform_required == false`,
+            // if class contains private accessors, which we don't transform yet
+            self.private_field_count -= private_props.len();
+        }
     }
 
     fn transform_class_expression_on_exit_impl(
