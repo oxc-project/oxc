@@ -717,9 +717,7 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
         params
     "
 )]
-pub struct TSMethodSignatureFormalParameters<'a, 'b>(
-    pub &'b TSMethodSignature<'a>,
-);
+pub struct TSMethodSignatureFormalParameters<'a, 'b>(pub &'b TSMethodSignature<'a>);
 
 impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
@@ -751,9 +749,7 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
         params
     "
 )]
-pub struct TSFunctionTypeFormalParameters<'a, 'b>(
-    pub &'b TSFunctionType<'a>,
-);
+pub struct TSFunctionTypeFormalParameters<'a, 'b>(pub &'b TSFunctionType<'a>);
 
 impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
