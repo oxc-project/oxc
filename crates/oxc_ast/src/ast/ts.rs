@@ -897,6 +897,7 @@ pub enum TSAccessibility {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
     pub span: Span,
     pub expression: TSTypeName<'a>,

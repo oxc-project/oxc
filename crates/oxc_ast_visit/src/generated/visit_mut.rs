@@ -1249,8 +1249,8 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
+    fn visit_ts_class_implements_list(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implements_list(self, it);
     }
 
     #[inline]
@@ -2628,7 +2628,7 @@ pub mod walk_mut {
         if let Some(super_type_arguments) = &mut it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        visitor.visit_ts_class_implementses(&mut it.implements);
+        visitor.visit_ts_class_implements_list(&mut it.implements);
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -4472,7 +4472,7 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
+    pub fn walk_ts_class_implements_list<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSClassImplements<'a>>,
     ) {
