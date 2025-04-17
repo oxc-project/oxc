@@ -160,7 +160,8 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
         let (extends, _) = self.parse_heritage_clause()?;
         let body = self.parse_ts_interface_body()?;
-        let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
+        let extends =
+            extends.map_or_else(|| self.ast.vec(), |e| self.ast.ts_interface_heritages(e));
 
         self.verify_modifiers(
             modifiers,

@@ -928,8 +928,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     /// Other interfaces/types this interface extends.
     #[scope(enter_before)]
-    #[estree(via = TSInterfaceDeclarationExtends)]
-    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+    pub extends: Vec<'a, TSInterfaceHeritage<'a>>,
     /// Type parameters that get bound to the interface.
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
