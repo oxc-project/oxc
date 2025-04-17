@@ -1944,7 +1944,9 @@ impl Gen for ArrayAssignmentTarget<'_> {
             }
         }
         if let Some(target) = &self.rest {
-            p.print_soft_space();
+            if !self.elements.is_empty() {
+                p.print_soft_space();
+            }
             p.add_source_mapping(self.span);
             target.print(p, ctx);
         }
@@ -1961,6 +1963,7 @@ impl Gen for ObjectAssignmentTarget<'_> {
         if let Some(target) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
+                p.print_soft_space();
             }
             p.add_source_mapping(self.span);
             target.print(p, ctx);
