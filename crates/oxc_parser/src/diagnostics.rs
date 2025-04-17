@@ -525,6 +525,11 @@ pub fn rest_element_property_name(span: Span) -> OxcDiagnostic {
     ts_error("2566", "A rest element cannot have a property name.").with_label(span)
 }
 
+#[cold]
+pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

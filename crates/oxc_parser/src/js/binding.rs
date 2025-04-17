@@ -123,12 +123,17 @@ impl<'a> ParserImpl<'a> {
         // The span is not extended to its type_annotation
         let type_annotation = self.parse_ts_type_annotation()?;
         let pattern = self.ast.binding_pattern(kind, type_annotation, false);
+
         // Rest element does not allow `= initializer`
+        // function foo([...x = []]) { }
+        //                    ^^^^ A rest element cannot have an initializer
         let argument = self
             .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
-        let span = self.end_span(span);
+        if let BindingPatternKind::AssignmentPattern(pat) = &argument.kind {
+            self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
+        }
 
-        Ok(self.ast.binding_rest_element(span, argument))
+        Ok(self.ast.binding_rest_element(self.end_span(span), argument))
     }
 
     /// `BindingProperty`[Yield, Await] :

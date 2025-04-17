@@ -8194,19 +8194,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ (...arg) => 103;
    ╰────
 
-  × A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
- 1 │ (arg1?, arg2) => 101;
-   ·         ────
- 2 │ (...arg?) => 102;
-   ╰────
-
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:4:5]
  3 │ (...arg) => 103;
  4 │ (...arg:number [] = []) => 104;
    ·     ──────────────────
  5 │ 
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
+ 1 │ (arg1?, arg2) => 101;
+   ·         ────
+ 2 │ (...arg?) => 102;
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -11890,7 +11890,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function f2(...x = []) { }
    ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:2:16]
  1 │ function f(...x?) { }
  2 │ function f2(...x = []) { }
@@ -11920,19 +11920,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·            ────
    ╰────
 
-  × TS(2566): A rest element cannot have a property name.
-   ╭─[typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts:9:46]
- 8 │ 
- 9 │ function e(...{0: a = 1, 1: b = true, ...rest: rest}: [boolean, string, number]) { }
-   ·                                              ──────
-   ╰────
-
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts:3:19]
  2 │ 
  3 │ function b(...[...foo = []]: string[]) { }
    ·                   ────────
  4 │ 
+   ╰────
+
+  × TS(2566): A rest element cannot have a property name.
+   ╭─[typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts:9:46]
+ 8 │ 
+ 9 │ function e(...{0: a = 1, 1: b = true, ...rest: rest}: [boolean, string, number]) { }
+   ·                                              ──────
    ╰────
 
   × Identifier `v` has already been declared
@@ -16708,6 +16708,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
     ╰────
 
+  × A rest element cannot have an initializer.
+    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
+ 14 │ function a3(...b?) { }            // Error, can't be optional
+ 15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
+    ·                ───────────
+ 16 │ function a5([a, b, [[c]]]) { }
+    ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:29:24]
  28 │ class C {
@@ -16974,7 +16982,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                ─────
    ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts:2:9]
  1 │ var a: number[];
  2 │ var [...x = a] = a;  // Error, rest element cannot have initializer
@@ -22341,7 +22349,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList10.ts:2:11]
  1 │ class C {
  2 │    foo(...bar = 0) { }
