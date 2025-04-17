@@ -841,10 +841,10 @@ impl<'a> ParserImpl<'a> {
         let mut optional = false;
         let mut callee = self.parse_member_expression_or_higher(&mut optional)?;
 
-        let mut type_parameter = None;
+        let mut type_arguments = None;
         if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
             let instantiation_expr = instantiation_expr.unbox();
-            type_parameter.replace(instantiation_expr.type_arguments);
+            type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
         }
 
@@ -876,7 +876,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::new_optional_chain(span));
         }
 
-        Ok(self.ast.expression_new(span, callee, arguments, type_parameter))
+        Ok(self.ast.expression_new(span, callee, arguments, type_arguments))
     }
 
     /// Section 13.3 Call Expression
@@ -905,10 +905,12 @@ impl<'a> ParserImpl<'a> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if let Expression::TSInstantiationExpression(expr) = lhs {
-                    let expr = expr.unbox();
-                    type_arguments.replace(expr.type_arguments);
-                    lhs = expr.expression;
+                if !optional_call {
+                    if let Expression::TSInstantiationExpression(expr) = lhs {
+                        let expr = expr.unbox();
+                        type_arguments.replace(expr.type_arguments);
+                        lhs = expr.expression;
+                    }
                 }
 
                 lhs =

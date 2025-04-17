@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 9036/10725 (84.25%)
+Positive Passed: 9037/10725 (84.26%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/accessOverriddenBaseClassMember1.ts
@@ -780,7 +780,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralMem
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralMemberWithQuestionMark1.ts
 Expected `,` but found `?`
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectRestSpread.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalChainWithInstantiationExpression2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalParameterProperty.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadsWithConstraints.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/overrideBaseIntersectionMethod.ts
