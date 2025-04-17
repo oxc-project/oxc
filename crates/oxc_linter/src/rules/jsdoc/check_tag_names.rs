@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
@@ -59,7 +58,7 @@ struct CheckTagnamesConfig {
     typed: bool,
 }
 
-const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
+const VALID_BLOCK_TAGS: [&str; 74] = [
     "abstract",
     "access",
     "alias",
@@ -89,10 +88,12 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
     "hideconstructor",
     "ignore",
     "implements",
+    "import",
     "inheritdoc",
     "inner",
     "instance",
     "interface",
+    "internal",
     "kind",
     "lends",
     "license",
@@ -108,6 +109,7 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
     "module",
     "name",
     "namespace",
+    "overload",
     "override",
     "package",
     "param",
@@ -118,10 +120,12 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
     "readonly",
     "requires",
     "returns",
+    "satisfies",
     "see",
     "since",
     "static",
     "summary",
+    "template",
     "this",
     "throws",
     "todo",
@@ -131,22 +135,11 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
     "variation",
     "version",
     "yields",
-    // JSDoc TS specific
-    "import",
-    "internal",
-    "overload",
-    "satisfies",
-    "template",
-};
+];
 
-const JSX_TAGS: phf::Set<&'static str> = phf_set! {
-    "jsx",
-    "jsxFrag",
-    "jsxImportSource",
-    "jsxRuntime",
-};
+const JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
 
-const ALWAYS_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+const ALWAYS_INVALID_TAGS_IF_TYPED: [&str; 13] = [
     "augments",
     "callback",
     "class",
@@ -160,8 +153,9 @@ const ALWAYS_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "this",
     "type",
     "typedef",
-};
-const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+];
+
+const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
     "abstract",
     "access",
     "class",
@@ -179,8 +173,8 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "instance",
     "interface",
     "member",
-    "memberof",
     "memberOf",
+    "memberof",
     "method",
     "mixes",
     "mixin",
@@ -192,7 +186,7 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "requires",
     "static",
     "this",
-};
+];
 
 impl Rule for CheckTagNames {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -248,7 +242,7 @@ impl Rule for CheckTagNames {
 
                 // Additional check for `typed` mode
                 if config.typed {
-                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                    if ALWAYS_INVALID_TAGS_IF_TYPED.binary_search(&tag_name).is_ok() {
                         ctx.diagnostic(check_tag_names_diagnostic(
                             tag.kind.span,
                             &format!("`@{tag_name}` is redundant when using a type system."),
@@ -261,15 +255,17 @@ impl Rule for CheckTagNames {
                         continue;
                     }
 
-                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                    if !is_ambient
+                        && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.binary_search(&tag_name).is_ok()
+                    {
                         ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.")));
                         continue;
                     }
                 }
 
                 // If invalid or unknown, report
-                let is_valid = (config.jsx_tags && JSX_TAGS.contains(tag_name))
-                    || VALID_BLOCK_TAGS.contains(tag_name);
+                let is_valid = (config.jsx_tags && JSX_TAGS.contains(&tag_name))
+                    || VALID_BLOCK_TAGS.binary_search(&tag_name).is_ok();
                 if !is_valid {
                     ctx.diagnostic(check_tag_names_diagnostic(
                         tag.kind.span,
