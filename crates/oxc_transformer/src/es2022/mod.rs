@@ -37,6 +37,13 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for ES2022<'a, '_> {
+    #[inline] // Because this is a no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.exit_program(program, ctx);
+        }
+    }
+
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);
