@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+- c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+- 2c66ac2 codegen: Preserve code coverage ignore comments (e.g. `v8 ignore`) (#10338) (Boshen)
+
+### Bug Fixes
+
+- 9734152 ast: Handle `TSThisType` in `TSTypePredicate` (#10328) (Yuji Sugiura)
+- b54fb3e estree: Rename `TSInstantiationExpression`.`type_parameters` to `type_arguments` (#10327) (Yuji Sugiura)
+- 5850a0d parse: `type x = typeof import('')` -> ` TSTypeQuery(TSImportType)` (#10317) (Boshen)
+- 58ab8ff parser: Adjust class start position when decorators are involved (#10438) (Boshen)
+- 3d7bcac parser: Fix span position for `+ ++x` (#10429) (Boshen)
+- f9fd666 parser: Report errors for duplicate extends/implements clauses(TS1172/1173/1175) (#10420) (Yuji Sugiura)
+- 385d009 parser: Correctly handle `?` postfixed element type in `TupleType` (#10390) (Yuji Sugiura)
+- 41d8e9d parser: `ExportNamedDeclaration.exportKind` should be `type` for `declare` declaration (#10389) (Yuji Sugiura)
+- 4fe9151 parser: Handle `JSDocUnknownType` correctly (#10363) (Yuji Sugiura)
+
+### Performance
+
+- 93b8e86 parser: Use `ArenaVec` to store decorators (#10437) (Dunqing)
+- 0a42695 parser: Pass span starts (u32) around instead of Span (2x u32) (#10433) (Boshen)
+
+### Refactor
+
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+- a6b2232 parser: Shorten code (#10445) (overlookmotel)
+
 ## [0.63.0] - 2025-04-08
 
 - a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)

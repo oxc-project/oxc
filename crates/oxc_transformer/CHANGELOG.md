@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 08a1d4b transformer: Eliminate `ExportSpecifier` where refers to a `declare` declaration (#10356) (Dunqing)
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 17d26d9 transformer/decorator-metadata: Serialize type reference nodes causing imports cannot be removed (#10360) (Dunqing)
+- 4e36b84 transformer/jsx: Do not report "duplicate __source/__self prop found" error when `development` is disabled (#10393) (Dunqing)
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+- e0b6c8c transformer/react: Correct comment (#10323) (overlookmotel)
+
+### Performance
+
+- ebe3496 transformer/class-properties: Return early if no private fields are found (#10418) (Dunqing)
+- 880647b transformer/decorator-metadata: Return `Object` as early as possible if there is a `TSTypeReference` within `TSUnionType` (#10361) (Dunqing)
+- 267922b transformer/jsx: Speed up decoding `JSXText` strings (#9741) (overlookmotel)
+- 25e4c53 transformer/object-rest-spread: Pass `Box` to `make_object_spread` (#10446) (overlookmotel)
+- 595c5df transformer/object_rest_spread: Use `ArenaVec` to store values that will be used in constructing AST (#10434) (Dunqing)
+
+### Refactor
+
+- 3ebd494 transformer/class-properties: Re-order fields and expand comments (#10447) (overlookmotel)
+- 7508a43 transformer/typescript: Remove unnecessary specific handling of `TSModuleDeclaration` transformation (#10359) (Dunqing)
+- 032377d transformer/typescript: Do not need to go through `TSModuleDeclaration` if is a `NamespaceModule` (#10366) (Dunqing)
+- 4c14d0b transformer/typescript: Simplify `TypeScriptAnnotations::has_value_reference` method (#10349) (Dunqing)
+
 ## [0.63.0] - 2025-04-08
 
 ### Features

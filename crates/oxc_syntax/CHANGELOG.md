@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+### Features
+
+- 1a37e3f semantic: Add `SymbolFlags::Ambient` for declaration with `declare` modifier (#10355) (Dunqing)
+
+### Bug Fixes
+
+- dd2aef0 semantic: Incorrect `SymbolFlags` of `TSModuleDeclaration` (#10350) (Dunqing)
+
+### Refactor
+
+- 032377d transformer/typescript: Do not need to go through `TSModuleDeclaration` if is a `NamespaceModule` (#10366) (Dunqing)
+
 ## [0.63.0] - 2025-04-08
 
 ### Performance
