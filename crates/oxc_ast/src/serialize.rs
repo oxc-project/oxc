@@ -689,21 +689,8 @@ pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
 
 impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
-        if let Some(this_param) = &self.0.this_param {
-            seq.serialize_element(this_param);
-        }
-
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
-
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_ref(), &v.params, serializer);
     }
 }
 
@@ -721,21 +708,8 @@ pub struct TSMethodSignatureFormalParameters<'a, 'b>(pub &'b TSMethodSignature<'
 
 impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
-        if let Some(this_param) = &self.0.this_param {
-            seq.serialize_element(this_param);
-        }
-
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
-
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
     }
 }
 
@@ -753,22 +727,31 @@ pub struct TSFunctionTypeFormalParameters<'a, 'b>(pub &'b TSFunctionType<'a>);
 
 impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
-        if let Some(this_param) = &self.0.this_param {
-            seq.serialize_element(this_param);
-        }
-
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
-
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
     }
+}
+
+fn serialize_formal_params_with_this_param<'a, S: Serializer>(
+    this_param: Option<&TSThisParameter<'a>>,
+    params: &FormalParameters<'a>,
+    serializer: S,
+) {
+    let mut seq = serializer.serialize_sequence();
+
+    if let Some(this_param) = this_param {
+        seq.serialize_element(this_param);
+    }
+
+    for item in &params.items {
+        seq.serialize_element(item);
+    }
+
+    if let Some(rest) = &params.rest {
+        seq.serialize_element(&FormalParametersRest(rest));
+    }
+
+    seq.end();
 }
 
 /// Serializer for `extends` field of `TSInterfaceDeclaration`.
