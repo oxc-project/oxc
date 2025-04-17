@@ -26,7 +26,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "outer1",
         "node": "VariableDeclarator(outer1)",
@@ -40,7 +40,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 1,
         "name": "outer2",
         "node": "VariableDeclarator(outer2)",
@@ -54,7 +54,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "A",
         "node": "VariableDeclarator(A)",

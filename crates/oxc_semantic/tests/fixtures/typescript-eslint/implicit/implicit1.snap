@@ -10,7 +10,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/implicit/implic
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "x",
         "node": "VariableDeclarator(x)",

@@ -12,7 +12,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "BlockStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 0,
             "name": "_",
             "node": "VariableDeclarator(_)",
@@ -27,7 +27,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "BlockStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 1,
             "name": "_",
             "node": "VariableDeclarator(_)",
@@ -42,7 +42,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "BlockStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 2,
             "name": "foo",
             "node": "VariableDeclarator(foo)",
@@ -57,7 +57,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "BlockStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 3,
             "name": "foo",
             "node": "VariableDeclarator(foo)",
@@ -80,7 +80,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "ForOfStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 4,
             "name": "x",
             "node": "VariableDeclarator(x)",
@@ -103,7 +103,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "node": "ForOfStatement",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 5,
             "name": "y",
             "node": "VariableDeclarator(y)",

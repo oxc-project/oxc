@@ -25,7 +25,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)",
+        "flags": "SymbolFlags(BlockScopedVariable | TypeAlias)",
         "id": 0,
         "name": "dual",
         "node": "VariableDeclarator(dual)",
@@ -52,7 +52,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "reference2",
         "node": "VariableDeclarator(reference2)",

@@ -356,11 +356,7 @@ impl Scoping {
     /// If symbol is `const`, always returns `false`.
     /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
     pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
-        if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
-            false
-        } else {
-            self.get_resolved_references(symbol_id).any(Reference::is_write)
-        }
+        self.get_resolved_references(symbol_id).any(Reference::is_write)
     }
 
     /// Get whether a symbol is used (i.e. read or written after declaration).

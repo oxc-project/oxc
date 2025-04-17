@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/this-jsxide
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)",
+        "flags": "SymbolFlags(BlockScopedVariable | Ambient)",
         "id": 0,
         "name": "React",
         "node": "VariableDeclarator(React)",

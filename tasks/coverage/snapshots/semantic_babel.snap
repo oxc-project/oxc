@@ -1635,8 +1635,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Symbol flags mismatch for "X":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []

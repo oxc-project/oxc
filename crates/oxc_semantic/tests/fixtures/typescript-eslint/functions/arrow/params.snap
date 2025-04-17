@@ -81,7 +81,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "outer",
         "node": "VariableDeclarator(outer)",
@@ -95,7 +95,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 8,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

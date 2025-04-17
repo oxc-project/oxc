@@ -137,7 +137,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 )
             }
             TSModuleReference::ExternalModuleReference(reference) => {
-                flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
+                flags.insert(SymbolFlags::BlockScopedVariable);
 
                 if self.ctx.module.is_esm() {
                     self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));

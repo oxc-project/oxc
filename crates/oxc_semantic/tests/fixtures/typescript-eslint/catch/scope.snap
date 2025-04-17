@@ -55,14 +55,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 3,
         "name": "dontReference2",
         "node": "VariableDeclarator(dontReference2)",

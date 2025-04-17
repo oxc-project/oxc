@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "x",
         "node": "VariableDeclarator(x)",
@@ -39,7 +39,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

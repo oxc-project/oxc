@@ -1,6 +1,8 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -51,9 +53,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::VariableDeclarator(declarator) = node.kind() else {
+            return;
+        };
+        if !declarator.kind.is_const() {
+            return;
+        }
         let symbol_table = ctx.scoping();
-        if symbol_table.symbol_flags(symbol_id).is_const_variable() {
+        declarator.id.bound_names(&mut |id| {
+            let symbol_id = id.symbol_id();
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(no_const_assign_diagnostic(
@@ -63,7 +72,7 @@ impl Rule for NoConstAssign {
                     ));
                 }
             }
-        }
+        });
     }
 }
 

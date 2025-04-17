@@ -40,14 +40,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "foo",
         "node": "VariableDeclarator(foo)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 3,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

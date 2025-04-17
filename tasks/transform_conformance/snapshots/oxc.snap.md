@@ -300,8 +300,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Import)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
@@ -318,8 +318,8 @@ Symbol redeclarations mismatch for "T":
 after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 267, end: 268 }
 rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
