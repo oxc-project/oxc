@@ -2930,7 +2930,10 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field(
+            "params",
+            &crate::serialize::TSCallSignatureDeclarationFormalParameters(self),
+        );
         state.serialize_field("returnType", &self.return_type);
         state.end();
     }
@@ -2957,7 +2960,7 @@ impl ESTree for TSMethodSignature<'_> {
         state.serialize_field("optional", &self.optional);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::TSMethodSignatureFormalParameters(self));
         state.serialize_field("returnType", &self.return_type);
         state.serialize_field("accessibility", &crate::serialize::Null(self));
         state.serialize_field("readonly", &crate::serialize::False(self));
@@ -3149,7 +3152,7 @@ impl ESTree for TSFunctionType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::TSFunctionTypeFormalParameters(self));
         state.serialize_field("returnType", &self.return_type);
         state.end();
     }

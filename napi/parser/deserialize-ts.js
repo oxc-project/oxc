@@ -1791,17 +1791,23 @@ function deserializeTSIndexSignature(pos) {
 }
 
 function deserializeTSCallSignatureDeclaration(pos) {
+  const params = deserializeBoxFormalParameters(pos + 48);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSCallSignatureDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    params: deserializeBoxFormalParameters(pos + 48),
+    params,
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
   };
 }
 
 function deserializeTSMethodSignature(pos) {
+  const params = deserializeBoxFormalParameters(pos + 48);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 40);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSMethodSignature',
     start: deserializeU32(pos),
@@ -1811,7 +1817,7 @@ function deserializeTSMethodSignature(pos) {
     optional: deserializeBool(pos + 25),
     kind: deserializeTSMethodSignatureKind(pos + 26),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 32),
-    params: deserializeBoxFormalParameters(pos + 48),
+    params,
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
     accessibility: null,
     readonly: false,
@@ -1929,12 +1935,15 @@ function deserializeTSImportType(pos) {
 }
 
 function deserializeTSFunctionType(pos) {
+  const params = deserializeBoxFormalParameters(pos + 24);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSFunctionType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    params: deserializeBoxFormalParameters(pos + 24),
+    params,
     returnType: deserializeBoxTSTypeAnnotation(pos + 32),
   };
 }

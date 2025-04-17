@@ -673,6 +673,108 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
+    pub &'b TSCallSignatureDeclaration<'a>,
+);
+
+impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if let Some(this_param) = &self.0.this_param {
+            seq.serialize_element(this_param);
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSMethodSignatureFormalParameters<'a, 'b>(
+    pub &'b TSMethodSignature<'a>,
+);
+
+impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if let Some(this_param) = &self.0.this_param {
+            seq.serialize_element(this_param);
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSFunctionTypeFormalParameters<'a, 'b>(
+    pub &'b TSFunctionType<'a>,
+);
+
+impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if let Some(this_param) = &self.0.this_param {
+            seq.serialize_element(this_param);
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
 /// Serializer for `extends` field of `TSInterfaceDeclaration`.
 ///
 /// Serialize `extends` as an empty array if it's `None`.
