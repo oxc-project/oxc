@@ -91,6 +91,9 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_rest_binding(&mut self) -> Result<BindingRestElement<'a>> {
         let elem = self.parse_rest_element()?;
+        if let Some(ty) = &elem.argument.type_annotation {
+            self.error(diagnostics::rest_element_property_name(ty.span));
+        }
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
                 let span = self.cur_token().span();

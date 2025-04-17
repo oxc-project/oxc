@@ -770,7 +770,8 @@ Unexpected estree file content error: 1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/numberVsBigIntOperations.ts
 Missing initializer in const declaration
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectBindingPattern_restElementWithPropertyName.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectBindingPattern_restElementWithPropertyName.ts
+A rest element cannot have a property name.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectCreationOfElementAccessExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectLiteralIndexerNoImplicitAny.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectLiteralMemberWithModifiers1.ts
@@ -865,7 +866,8 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParameterAssignment
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParameterNotLast.ts
 A rest parameter must be last in a parameter list
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts
+A rest element cannot have a property name.
 tasks/coverage/typescript/tests/cases/compiler/reuseTypeAnnotationImportTypeInGlobalThisTypeArgument.ts
 Unexpected estree file content error: 2 != 4
 
