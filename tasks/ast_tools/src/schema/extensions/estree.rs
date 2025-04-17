@@ -92,8 +92,6 @@ pub struct ESTreeEnumVariant {
     pub rename: Option<String>,
     /// Name of custom serializer `#[ast_meta]` type to use to serialize this variant.
     pub via: Option<String>,
-    /// `true` if variant is only included in TS-ESTree AST (not JS ESTree AST).
-    pub is_ts: bool,
 }
 
 /// Configuration for ESTree converter/serializer on a meta type.
