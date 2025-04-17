@@ -673,6 +673,52 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     }
 }
 
+/// Serializer for `key` field of `MethodDefinition`.
+///
+/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
+/// is represented as an `Identifier`.
+/// In Acorn and Espree, it's a `Literal`.
+/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
+#[ast_meta]
+#[estree(
+    ts_type = "PropertyKey",
+    raw_deser = "
+        /* IF_JS */
+        DESER[PropertyKey](POS_OFFSET.key)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        let key = DESER[PropertyKey](POS_OFFSET.key);
+        if (THIS.kind === 'constructor') {
+            key = {
+                type: 'Identifier',
+                start: key.start,
+                end: key.end,
+                name: 'constructor',
+                decorators: [],
+                optional: false,
+                typeAnnotation: null,
+            };
+        }
+        key
+        /* END_IF_TS */
+    "
+)]
+pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
+
+impl ESTree for MethodDefinitionKey<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let method = self.0;
+        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
+            // `key` can only be either an identifier `constructor`, or string `"constructor"`
+            let span = method.key.span();
+            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
+        } else {
+            method.key.serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `extends` field of `TSInterfaceDeclaration`.
 ///
 /// Serialize `extends` as an empty array if it's `None`.

@@ -2040,6 +2040,7 @@ pub struct MethodDefinition<'a> {
     pub r#type: MethodDefinitionType,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[estree(via = MethodDefinitionKey)]
     pub key: PropertyKey<'a>,
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,

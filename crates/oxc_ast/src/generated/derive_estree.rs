@@ -1514,7 +1514,7 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("static", &self.r#static);
         state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
+        state.serialize_field("key", &crate::serialize::MethodDefinitionKey(self));
         state.serialize_field("kind", &self.kind);
         state.serialize_field("value", &self.value);
         state.serialize_ts_field("decorators", &self.decorators);
