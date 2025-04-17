@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+- 09f4c30 ast: [**BREAKING**] Remove `ArrayAssignmentTarget::new_with_elements` and `ObjectAssignmentTarget::new_with_properties` (#10440) (overlookmotel)
+
+- c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+- 2c66ac2 codegen: Preserve code coverage ignore comments (e.g. `v8 ignore`) (#10338) (Boshen)
+
+### Bug Fixes
+
+- f3ddefb ast/estree: Add missing fields to `AssignmentTargetRest` in TS-ESTree AST (#10456) (overlookmotel)
+- 77b6f7e ast/estree: Fix start span of `Program` in TS-ESTree AST where first statement is `@dec export class C {}` (#10448) (overlookmotel)
+- 4817c7e ast/estree: Add fields to `AssignmentTargetPattern` in TS-ESTree AST (#10423) (overlookmotel)
+- b3094b3 ast/estree: Add `optional` field to `AssignmentTargetProperty` in TS-ESTree AST (#10412) (overlookmotel)
+- a7fd30f ast/estree: Add fields to `BindingRestElement` in TS-ESTree AST (#10411) (overlookmotel)
+- 9d82402 ast/estree: Fix `Program` span when contains no statements (#10408) (overlookmotel)
+- cc07efd ast/estree: Fix `JSXOpeningFragment` (#10208) (therewillbecode)
+- 48ed6a1 ast/estree: Fix span for `TemplateElement` in TS AST (#10315) (overlookmotel)
+- 2520b25 estree: Align `TSMappedType` fields (#10392) (Yuji Sugiura)
+- 3ed3669 estree: Rename `JSDocXxxType` to `TSJSDocXxxType` (#10358) (Yuji Sugiura)
+- b54fb3e estree: Rename `TSInstantiationExpression`.`type_parameters` to `type_arguments` (#10327) (Yuji Sugiura)
+- 5850a0d parse: `type x = typeof import('')` -> ` TSTypeQuery(TSImportType)` (#10317) (Boshen)
+- dd2aef0 semantic: Incorrect `SymbolFlags` of `TSModuleDeclaration` (#10350) (Dunqing)
+
+### Documentation
+
+- c6f08d0 ast: Improve docs for `AssignmentTargetRest` (#10442) (overlookmotel)
+
+### Refactor
+
+- 192717c ast: `ModuleDeclaration::with_clause` return `Option<&WithClause>` (#10441) (overlookmotel)
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+- 294d24b ast/estree: Simplify serialization for `JSXOpeningFragment` (#10316) (overlookmotel)
+
 ## [0.63.0] - 2025-04-08
 
 - a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)

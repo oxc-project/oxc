@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+### Bug Fixes
+
+- 48c711a minifier: Panic when compressing `a ? b() : b()` (#10311) (翠 / green)
+
+### Performance
+
+- 8db9dc5 minifier/minimize_statements: Reduce allocations of `Vec` (#10435) (Dunqing)
+
+### Refactor
+
+
 ## [0.63.0] - 2025-04-08
 
 ### Features

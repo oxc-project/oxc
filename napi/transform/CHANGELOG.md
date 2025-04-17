@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+### Features
+
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+
+## [0.64.0] - 2025-04-17
+
+### Features
+
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+
 ## [0.63.0] - 2025-04-08
 
 ### Features
