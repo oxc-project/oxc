@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use indexmap::map::Entry;
+use indexmap::{IndexMap, map::Entry};
 use oxc_allocator::{Address, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
@@ -385,12 +385,11 @@ impl<'a> ClassProperties<'a, '_> {
         if class_details.is_transform_required {
             self.transform_class_declaration_on_exit_impl(class, ctx);
         } else {
-            // Note: `is_transform_required` is `true` if class has any private properties/methods,
-            // so no need to touch `private_field_count` here
             debug_assert!(class_details.bindings.temp.is_none());
         }
         // Pop off stack. We're done!
-        self.classes_stack.pop();
+        let class_details = self.classes_stack.pop();
+        self.private_field_count -= class_details.private_props.as_ref().map_or(0, IndexMap::len);
     }
 
     fn transform_class_declaration_on_exit_impl(
@@ -447,8 +446,6 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         if let Some(private_props) = &class_details.private_props {
-            self.private_field_count -= private_props.len();
-
             if self.private_fields_as_properties {
                 let mut private_props = private_props
                     .iter()
@@ -539,13 +536,12 @@ impl<'a> ClassProperties<'a, '_> {
         if class_details.is_transform_required {
             self.transform_class_expression_on_exit_impl(expr, ctx);
         } else {
-            // Note: `is_transform_required` is `true` if class has any private properties/methods,
-            // so no need to touch `private_field_count` here
             debug_assert!(class_details.bindings.temp.is_none());
         }
 
         // Pop off stack. We're done!
-        self.classes_stack.pop();
+        let class_details = self.classes_stack.pop();
+        self.private_field_count -= class_details.private_props.as_ref().map_or(0, IndexMap::len);
     }
 
     fn transform_class_expression_on_exit_impl(
@@ -595,8 +591,6 @@ impl<'a> ClassProperties<'a, '_> {
         // Babel has these always go first, regardless of order of class elements.
         // Also insert `var _prop;` temp var declarations for private static props.
         if let Some(private_props) = &class_details.private_props {
-            self.private_field_count -= private_props.len();
-
             // Insert `var _prop;` declarations here rather than when binding was created to maintain
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
