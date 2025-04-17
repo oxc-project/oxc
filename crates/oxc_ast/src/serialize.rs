@@ -206,7 +206,7 @@ pub struct TsNull<T>(pub T);
 
 impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -306,7 +306,7 @@ pub struct TsEmptyArray<T>(pub T);
 
 impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray(()).serialize(serializer);
     }
 }
 
@@ -410,7 +410,7 @@ pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -432,7 +432,7 @@ pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -570,7 +570,7 @@ pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
 
 impl ESTree for ElisionConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -761,7 +761,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
         if let Some(specifiers) = &self.0.specifiers {
             specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -853,7 +853,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -873,7 +873,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -893,7 +893,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -1060,7 +1060,7 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
