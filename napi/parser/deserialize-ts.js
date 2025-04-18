@@ -406,6 +406,9 @@ function deserializeAssignmentTargetWithDefault(pos) {
     end: deserializeU32(pos + 4),
     left: deserializeAssignmentTarget(pos + 8),
     right: deserializeExpression(pos + 24),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -423,6 +426,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
         end: end,
         left: keyCopy,
         right: init,
+        typeAnnotation: null,
+        optional: false,
+        decorators: [],
       };
   return {
     type: 'Property',
@@ -760,6 +766,8 @@ function deserializeAssignmentPattern(pos) {
     left: deserializeBindingPattern(pos + 8),
     right: deserializeExpression(pos + 40),
     decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 

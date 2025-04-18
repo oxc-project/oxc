@@ -286,6 +286,9 @@ export interface AssignmentTargetWithDefault extends Span {
   type: 'AssignmentPattern';
   left: AssignmentTarget;
   right: Expression;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;
@@ -533,6 +536,8 @@ export interface AssignmentPattern extends Span {
   left: BindingPattern;
   right: Expression;
   decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface ObjectPattern extends Span {

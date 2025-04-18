@@ -381,6 +381,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
         end: end,
         left: keyCopy,
         right: init,
+        typeAnnotation: null,
+        optional: false,
+        decorators: [],
       };
   return {
     type: 'Property',
