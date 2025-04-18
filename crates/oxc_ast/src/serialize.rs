@@ -744,6 +744,11 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     end: THIS.end,
                     left: keyCopy,
                     right: init,
+                    /* IF_TS */
+                    typeAnnotation: null,
+                    optional: false,
+                    decorators: [],
+                    /* END_IF_TS */
                 };
         value
     "
@@ -761,6 +766,9 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
             state.serialize_field("end", &self.0.span.end);
             state.serialize_field("left", &self.0.binding);
             state.serialize_field("right", init);
+            state.serialize_ts_field("typeAnnotation", &Null(()));
+            state.serialize_ts_field("optional", &False(()));
+            state.serialize_ts_field("decorators", &EmptyArray(()));
             state.end();
         } else {
             self.0.binding.serialize(serializer);

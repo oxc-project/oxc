@@ -701,6 +701,9 @@ impl ESTree for AssignmentTargetWithDefault<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.binding);
         state.serialize_field("right", &self.init);
+        state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
@@ -1280,6 +1283,8 @@ impl ESTree for AssignmentPattern<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }

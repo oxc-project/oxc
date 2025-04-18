@@ -925,7 +925,10 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "AssignmentPattern")]
+#[estree(
+    rename = "AssignmentPattern",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct AssignmentTargetWithDefault<'a> {
     pub span: Span,
     #[estree(rename = "left")]
@@ -1563,7 +1566,7 @@ pub enum BindingPatternKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(decorators = TsEmptyArray))]
+#[estree(add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull))]
 pub struct AssignmentPattern<'a> {
     pub span: Span,
     pub left: BindingPattern<'a>,
