@@ -744,9 +744,11 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     end: THIS.end,
                     left: keyCopy,
                     right: init,
+                    /* IF_TS */
                     typeAnnotation: null,
                     optional: false,
                     decorators: [],
+                    /* END_IF_TS */
                 };
         value
     "
