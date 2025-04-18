@@ -634,6 +634,45 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `Function`.
+///
+/// In TS-ESTree, this adds `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        /* IF_TS */
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        /* END_IF_TS */
+        params
+    "
+)]
+pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+
+impl ESTree for FunctionFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+
+        if S::INCLUDE_TS_FIELDS {
+            if let Some(this_param) = &self.0.this_param {
+                seq.serialize_element(this_param);
+            }
+        }
+
+        for item in &self.0.params.items {
+            seq.serialize_element(item);
+        }
+
+        if let Some(rest) = &self.0.params.rest {
+            seq.serialize_element(&FormalParametersRest(rest));
+        }
+
+        seq.end();
+    }
+}
+
 /// Serializer for `key` field of `MethodDefinition`.
 ///
 /// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
@@ -1070,45 +1109,6 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
             // But we serialize it as `null` to align result in snapshot tests.
             TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
         }
-    }
-}
-
-/// Serializer for `params` field of `Function`.
-///
-/// In TS AST, this adds `this_param` to start of the `params` array.
-#[ast_meta]
-#[estree(
-    ts_type = "ParamPattern[]",
-    raw_deser = "
-        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        /* IF_TS */
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
-        if (thisParam !== null) params.unshift(thisParam);
-        /* END_IF_TS */
-        params
-    "
-)]
-pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
-
-impl ESTree for FunctionFormalParameters<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
-        if S::INCLUDE_TS_FIELDS {
-            if let Some(this_param) = &self.0.this_param {
-                seq.serialize_element(this_param);
-            }
-        }
-
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
-
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
     }
 }
 
