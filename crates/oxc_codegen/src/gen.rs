@@ -3700,11 +3700,9 @@ impl Gen for TSInterfaceDeclaration<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        if let Some(extends) = &self.extends {
-            if !extends.is_empty() {
-                p.print_str(" extends ");
-                p.print_list(extends, ctx);
-            }
+        if !self.extends.is_empty() {
+            p.print_str(" extends ");
+            p.print_list(&self.extends, ctx);
         }
         p.print_soft_space();
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {

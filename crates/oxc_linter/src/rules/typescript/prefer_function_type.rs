@@ -89,24 +89,15 @@ declare_oxc_lint!(
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
-    if decl.extends.is_none() {
-        return false;
+    match decl.extends.len() {
+        0 => return false,
+        1 => {}
+        _ => return true,
     }
 
-    let decl_extends_vec = decl.extends.as_deref().unwrap();
-
-    if decl_extends_vec.is_empty() {
-        return false;
-    }
-
-    if decl_extends_vec.len() != 1 {
-        return true;
-    }
-
-    let expr = &decl_extends_vec[0].expression;
-
+    let expr = &decl.extends[0].expression;
     if let Expression::Identifier(identifier) = expr {
-        return !matches!(identifier.name.as_str(), "Function");
+        return &identifier.name != "Function";
     }
 
     true

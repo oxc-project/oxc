@@ -3819,9 +3819,7 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        if let Some(extends) = &mut it.extends {
-            visitor.visit_ts_interface_heritages(extends);
-        }
+        visitor.visit_ts_interface_heritages(&mut it.extends);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }

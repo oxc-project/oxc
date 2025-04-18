@@ -12525,10 +12525,10 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn extends(self) -> &'t Option<Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
         }
     }
 
@@ -12657,10 +12657,10 @@ impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn extends(self) -> &'t Option<Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
         }
     }
 
@@ -12719,10 +12719,10 @@ impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn extends(self) -> &'t Option<Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
         }
     }
 

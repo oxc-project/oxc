@@ -1206,29 +1206,6 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     seq.end();
 }
 
-/// Serializer for `extends` field of `TSInterfaceDeclaration`.
-///
-/// Serialize `extends` as an empty array if it's `None`.
-#[ast_meta]
-#[estree(
-    ts_type = "Array<TSInterfaceHeritage>",
-    raw_deser = "
-        const extendsArr = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
-        extendsArr === null ? [] : extendsArr
-    "
-)]
-pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
-
-impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(extends) = &self.0.extends {
-            extends.serialize(serializer);
-        } else {
-            EmptyArray(()).serialize(serializer);
-        }
-    }
-}
-
 // --------------------
 // Comments
 // --------------------

@@ -1761,13 +1761,12 @@ function deserializeTSClassImplements(pos) {
 }
 
 function deserializeTSInterfaceDeclaration(pos) {
-  const extendsArr = deserializeOptionVecTSInterfaceHeritage(pos + 40);
   return {
     type: 'TSInterfaceDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeBindingIdentifier(pos + 8),
-    extends: extendsArr === null ? [] : extendsArr,
+    extends: deserializeVecTSInterfaceHeritage(pos + 40),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 72),
     body: deserializeBoxTSInterfaceBody(pos + 80),
     declare: deserializeBool(pos + 88),
@@ -5575,11 +5574,6 @@ function deserializeVecTSInterfaceHeritage(pos) {
     pos += 32;
   }
   return arr;
-}
-
-function deserializeOptionVecTSInterfaceHeritage(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeVecTSInterfaceHeritage(pos);
 }
 
 function deserializeBoxTSInterfaceBody(pos) {

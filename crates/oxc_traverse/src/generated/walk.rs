@@ -4622,14 +4622,11 @@ unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-        as *mut Option<Vec<TSInterfaceHeritage>>)
+    ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+        as *mut Vec<TSInterfaceHeritage>)
     {
-        ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
-        for item in field.iter_mut() {
-            walk_ts_interface_heritage(traverser, item as *mut _, ctx);
-        }
+        walk_ts_interface_heritage(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
