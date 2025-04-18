@@ -1,5 +1,1 @@
-class Foo {
-  constructor() {
-    this.bar = void 0;
-  }
-}
+class Foo { }

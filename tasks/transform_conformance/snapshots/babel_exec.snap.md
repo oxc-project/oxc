@@ -2,7 +2,7 @@ commit: 578ac4df
 
 node: v22.14.0
 
-Passed: 320 of 406 (78.82%)
+Passed: 319 of 406 (78.57%)
 
 Failures:
 
@@ -57,6 +57,10 @@ AssertionError: expected function to throw an error, but it didn't
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-infer-name-exec.test.js
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-infer-name-exec.test.js:8:19
+
+./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-undefined-exec.test.js
+AssertionError: expected false to be true // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-undefined-exec.test.js:5:23
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-static-infer-name-exec.test.js
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
