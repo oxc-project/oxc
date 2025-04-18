@@ -1018,6 +1018,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<TSThisParameter<'a>>,
+    #[estree(via = TSCallSignatureDeclarationFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1056,6 +1057,7 @@ pub struct TSMethodSignature<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    #[estree(via = TSMethodSignatureFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1366,6 +1368,7 @@ pub struct TSFunctionType<'a> {
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
+    #[estree(via = TSFunctionTypeFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts
