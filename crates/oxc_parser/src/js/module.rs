@@ -287,7 +287,7 @@ impl<'a> ParserImpl<'a> {
                 Kind::RCurly,
                 Kind::Comma,
                 /* trailing_separator */ true,
-                Self::parse_export_named_specifier,
+                |parser| parser.parse_export_named_specifier(export_kind),
             )
         })?;
         self.expect(Kind::RCurly)?;
@@ -548,7 +548,10 @@ impl<'a> ParserImpl<'a> {
         ImportOrExportKind::Value
     }
 
-    fn parse_export_named_specifier(&mut self) -> Result<ExportSpecifier<'a>> {
+    fn parse_export_named_specifier(
+        &mut self,
+        parent_export_kind: ImportOrExportKind,
+    ) -> Result<ExportSpecifier<'a>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         // export { type}              // name: `type`
@@ -571,8 +574,16 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        // `export type { type bar } from 'foo';`
+        if parent_export_kind == ImportOrExportKind::Type && export_kind == ImportOrExportKind::Type
+        {
+            self.error(diagnostics::type_modifier_on_named_type_export(self.cur_token().span()));
+        }
         if export_kind == ImportOrExportKind::Type {
             self.bump_any();
+        }
+        if parent_export_kind == ImportOrExportKind::Type {
+            export_kind = ImportOrExportKind::Type;
         }
 
         let local = self.parse_module_export_name()?;

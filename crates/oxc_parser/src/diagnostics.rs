@@ -587,6 +587,13 @@ pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDia
         .with_label(modifier.span)
 }
 
+/// TS(2207)
+#[cold]
+pub fn type_modifier_on_named_type_export(span: Span) -> OxcDiagnostic {
+    ts_error("2207", "The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.")
+        .with_label(span)
+}
+
 // ================================== TS ENUMS =================================
 
 /// Computed property names are not allowed in enums.ts(1164)

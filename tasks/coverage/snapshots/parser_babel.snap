@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1555/1673 (92.95%)
+Negative Passed: 1556/1673 (93.01%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
@@ -112,7 +112,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access-babel-7/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid-babel-7/input.ts
@@ -12935,6 +12934,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ▲
    ╰────
   help: Try insert a semicolon here
+
+  × TS(2207): The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts:1:15]
+ 1 │ export type { type foo } from "foo";
+   ·               ────
+   ╰────
 
   × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
