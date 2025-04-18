@@ -707,7 +707,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
         }
-        self.visit_ts_class_implementses(&class.implements);
+        self.visit_ts_class_implements_list(&class.implements);
         self.visit_class_body(&class.body);
 
         self.leave_scope();

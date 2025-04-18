@@ -973,28 +973,6 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span)
-}
-
-pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
-    if let Some(rest) = &params.rest {
-        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-            ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
-        }
-    }
-}
-
-pub fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
-    // function foo([...x = []]) { }
-    //                    ^^^^ A rest element cannot have an initializer
-    if let Some(rest) = &pattern.rest {
-        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-            ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
-        }
-    }
-}
-
 fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
 }

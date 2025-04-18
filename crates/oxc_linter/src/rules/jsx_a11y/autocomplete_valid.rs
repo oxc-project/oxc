@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use phf::{phf_map, phf_set};
 use rustc_hash::FxHashSet;
 use serde_json::Value;
 
@@ -66,98 +65,80 @@ impl std::default::Default for AutocompleteValidConfig {
     }
 }
 
-static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf_set! {
-    "on",
-    "name",
-    "email",
-    "username",
-    "new-password",
-    "current-password",
-    "one-time-code",
-    "off",
-    "organization-title",
-    "organization",
-    "street-address",
+static VALID_AUTOCOMPLETE_VALUES: [&str; 49] = [
+    "address-level1",
+    "address-level2",
+    "address-level3",
+    "address-level4",
     "address-line1",
     "address-line2",
     "address-line3",
-    "address-level4",
-    "address-level3",
-    "address-level2",
-    "address-level1",
-    "country",
-    "country-name",
-    "postal-code",
-    "cc-name",
-    "cc-given-name",
-    "cc-additional-name",
-    "cc-family-name",
-    "cc-number",
-    "cc-exp",
-    "cc-exp-month",
-    "cc-exp-year",
-    "cc-csc",
-    "cc-type",
-    "transaction-currency",
-    "transaction-amount",
-    "language",
     "bday",
     "bday-day",
     "bday-month",
     "bday-year",
-    "sex",
-    "tel",
-    "tel-country-code",
-    "tel-national",
-    "tel-area-code",
-    "tel-local",
-    "tel-extension",
+    "cc-additional-name",
+    "cc-csc",
+    "cc-exp",
+    "cc-exp-month",
+    "cc-exp-year",
+    "cc-family-name",
+    "cc-given-name",
+    "cc-name",
+    "cc-number",
+    "cc-type",
+    "country",
+    "country-name",
+    "current-password",
+    "email",
     "impp",
-    "url",
+    "language",
+    "name",
+    "new-password",
+    "off",
+    "on",
+    "one-time-code",
+    "organization",
+    "organization-title",
     "photo",
+    "postal-code",
+    "sex",
+    "street-address",
+    "tel",
+    "tel-area-code",
+    "tel-country-code",
+    "tel-extension",
+    "tel-local",
+    "tel-national",
+    "transaction-amount",
+    "transaction-currency",
+    "url",
+    "username",
     "webauthn",
-};
+];
 
-static BILLING: phf::Set<&'static str> = phf_set! {
-    "street-address",
+static BILLING_AND_SHIPPING: [&str; 11] = [
+    "address-level1",
+    "address-level2",
+    "address-level3",
+    "address-level4",
     "address-line1",
     "address-line2",
     "address-line3",
-    "address-level4",
-    "address-level3",
-    "address-level2",
-    "address-level1",
     "country",
     "country-name",
     "postal-code",
-};
-
-static SHIPPING: phf::Set<&'static str> = phf_set! {
     "street-address",
-    "address-line1",
-    "address-line2",
-    "address-line3",
-    "address-level4",
-    "address-level3",
-    "address-level2",
-    "address-level1",
-    "country",
-    "country-name",
-    "postal-code",
-};
-
-static VALID_AUTOCOMPLETE_COMBINATIONS: phf::Map<&'static str, &'static phf::Set<&'static str>> = phf_map! {
-    "billing" => &BILLING,
-    "shipping" => &SHIPPING,
-};
+];
 
 fn is_valid_autocomplete_value(value: &str) -> bool {
     let parts: Vec<&str> = value.split_whitespace().collect();
+
     match parts.len() {
-        1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
-        2 => VALID_AUTOCOMPLETE_COMBINATIONS
-            .get(parts[0])
-            .is_some_and(|valid_suffixes| valid_suffixes.contains(parts[1])),
+        1 => VALID_AUTOCOMPLETE_VALUES.binary_search(&parts[0]).is_ok(),
+        2 if ["billing", "shipping"].contains(&parts[0]) => {
+            BILLING_AND_SHIPPING.binary_search(&parts[1]).is_ok()
+        }
         _ => false,
     }
 }

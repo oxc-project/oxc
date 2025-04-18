@@ -206,7 +206,7 @@ pub struct TsNull<T>(pub T);
 
 impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -306,7 +306,7 @@ pub struct TsEmptyArray<T>(pub T);
 
 impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray(()).serialize(serializer);
     }
 }
 
@@ -410,7 +410,7 @@ pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -432,7 +432,7 @@ pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -570,7 +570,7 @@ pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
 
 impl ESTree for ElisionConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -634,6 +634,52 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Serializer for `key` field of `MethodDefinition`.
+///
+/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
+/// is represented as an `Identifier`.
+/// In Acorn and Espree, it's a `Literal`.
+/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
+#[ast_meta]
+#[estree(
+    ts_type = "PropertyKey",
+    raw_deser = "
+        /* IF_JS */
+        DESER[PropertyKey](POS_OFFSET.key)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        let key = DESER[PropertyKey](POS_OFFSET.key);
+        if (THIS.kind === 'constructor') {
+            key = {
+                type: 'Identifier',
+                start: key.start,
+                end: key.end,
+                name: 'constructor',
+                decorators: [],
+                optional: false,
+                typeAnnotation: null,
+            };
+        }
+        key
+        /* END_IF_TS */
+    "
+)]
+pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
+
+impl ESTree for MethodDefinitionKey<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let method = self.0;
+        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
+            // `key` can only be either an identifier `constructor`, or string `"constructor"`
+            let span = method.key.span();
+            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
+        } else {
+            method.key.serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `specifiers` field of `ImportDeclaration`.
 ///
 /// Serialize `specifiers` as an empty array if it's `None`.
@@ -653,7 +699,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
         if let Some(specifiers) = &self.0.specifiers {
             specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -745,7 +791,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -765,7 +811,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -785,7 +831,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -952,7 +998,7 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -1170,7 +1216,7 @@ impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
         if let Some(extends) = &self.0.extends {
             extends.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }

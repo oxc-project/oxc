@@ -62,7 +62,7 @@ impl Rule for ClickEventsHaveKeyEvents {
         // Check only native DOM elements or custom component via settings
         let element_type = get_element_type(ctx, jsx_opening_el);
 
-        if !HTML_TAG.contains(&element_type) {
+        if HTML_TAG.binary_search(&element_type.as_ref()).is_err() {
             return;
         }
 

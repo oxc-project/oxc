@@ -519,6 +519,17 @@ pub fn import_arguments(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
 }
 
+/// TS(2566)
+#[cold]
+pub fn rest_element_property_name(span: Span) -> OxcDiagnostic {
+    ts_error("2566", "A rest element cannot have a property name.").with_label(span)
+}
+
+#[cold]
+pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

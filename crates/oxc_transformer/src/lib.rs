@@ -201,6 +201,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
         }
+        self.x2_es2022.exit_program(program, ctx);
         self.x2_es2018.exit_program(program, ctx);
         self.common.exit_program(program, ctx);
     }

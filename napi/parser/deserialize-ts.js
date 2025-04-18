@@ -932,14 +932,27 @@ function deserializeClassBody(pos) {
 }
 
 function deserializeMethodDefinition(pos) {
+  const kind = deserializeMethodDefinitionKind(pos + 72);
+  let key = deserializePropertyKey(pos + 48);
+  if (kind === 'constructor') {
+    key = {
+      type: 'Identifier',
+      start: key.start,
+      end: key.end,
+      name: 'constructor',
+      decorators: [],
+      optional: false,
+      typeAnnotation: null,
+    };
+  }
   return {
     type: deserializeMethodDefinitionType(pos + 8),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     static: deserializeBool(pos + 74),
     computed: deserializeBool(pos + 73),
-    key: deserializePropertyKey(pos + 48),
-    kind: deserializeMethodDefinitionKind(pos + 72),
+    key,
+    kind,
     value: deserializeBoxFunction(pos + 64),
     decorators: deserializeVecDecorator(pos + 16),
     override: deserializeBool(pos + 75),
