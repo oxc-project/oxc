@@ -927,11 +927,11 @@ pub struct TSInterfaceDeclaration<'a> {
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
-    /// Other interfaces/types this interface extends.
-    #[scope(enter_before)]
-    pub extends: Vec<'a, TSInterfaceHeritage<'a>>,
     /// Type parameters that get bound to the interface.
+    #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    /// Other interfaces/types this interface extends.
+    pub extends: Vec<'a, TSInterfaceHeritage<'a>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,

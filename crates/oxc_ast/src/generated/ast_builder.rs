@@ -4128,8 +4128,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
@@ -4137,8 +4137,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> Declaration<'a>
@@ -4149,8 +4149,8 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc_ts_interface_declaration(
             span,
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             declare,
         ))
@@ -4163,8 +4163,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
@@ -4173,8 +4173,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
@@ -4186,8 +4186,8 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc_ts_interface_declaration_with_scope_id(
             span,
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             declare,
             scope_id,
@@ -8132,8 +8132,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
@@ -8141,8 +8141,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a>
@@ -8153,8 +8153,8 @@ impl<'a> AstBuilder<'a> {
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(self.alloc_ts_interface_declaration(
             span,
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             declare,
         ))
@@ -8167,8 +8167,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
@@ -8177,8 +8177,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
@@ -8191,8 +8191,8 @@ impl<'a> AstBuilder<'a> {
             self.alloc_ts_interface_declaration_with_scope_id(
                 span,
                 id,
-                extends,
                 type_parameters,
+                extends,
                 body,
                 declare,
                 scope_id,
@@ -12070,8 +12070,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
@@ -12079,8 +12079,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> TSInterfaceDeclaration<'a>
@@ -12091,8 +12091,8 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceDeclaration {
             span,
             id,
-            extends,
             type_parameters: type_parameters.into_in(self.allocator),
+            extends,
             body: body.into_in(self.allocator),
             declare,
             scope_id: Default::default(),
@@ -12107,8 +12107,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
@@ -12116,8 +12116,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
     ) -> Box<'a, TSInterfaceDeclaration<'a>>
@@ -12126,7 +12126,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
         Box::new_in(
-            self.ts_interface_declaration(span, id, extends, type_parameters, body, declare),
+            self.ts_interface_declaration(span, id, type_parameters, extends, body, declare),
             self.allocator,
         )
     }
@@ -12139,8 +12139,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
@@ -12149,8 +12149,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
@@ -12162,8 +12162,8 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceDeclaration {
             span,
             id,
-            extends,
             type_parameters: type_parameters.into_in(self.allocator),
+            extends,
             body: body.into_in(self.allocator),
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -12178,8 +12178,8 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The identifier (name) of the interface.
-    /// * `extends`: Other interfaces/types this interface extends.
     /// * `type_parameters`: Type parameters that get bound to the interface.
+    /// * `extends`: Other interfaces/types this interface extends.
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
@@ -12188,8 +12188,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         type_parameters: T1,
+        extends: Vec<'a, TSInterfaceHeritage<'a>>,
         body: T2,
         declare: bool,
         scope_id: ScopeId,
@@ -12202,8 +12202,8 @@ impl<'a> AstBuilder<'a> {
             self.ts_interface_declaration_with_scope_id(
                 span,
                 id,
-                extends,
                 type_parameters,
+                extends,
                 body,
                 declare,
                 scope_id,

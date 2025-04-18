@@ -172,8 +172,8 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_interface(
             self.end_span(span),
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             modifiers.contains_declare(),
         ))

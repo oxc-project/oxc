@@ -3622,10 +3622,10 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_binding_identifier(&it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_ts_interface_heritages(&it.extends);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_ts_interface_heritages(&it.extends);
         visitor.visit_ts_interface_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);

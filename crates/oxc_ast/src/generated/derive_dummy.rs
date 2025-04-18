@@ -2345,8 +2345,8 @@ impl<'a> Dummy<'a> for TSInterfaceDeclaration<'a> {
         Self {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
-            extends: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
+            extends: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),

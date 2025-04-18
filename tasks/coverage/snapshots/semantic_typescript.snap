@@ -1276,7 +1276,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
 after transform: SymbolId(1): [ReferenceId(6), ReferenceId(7)]
@@ -18622,7 +18622,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52), ScopeId(54), ScopeId(56), ScopeId(58), ScopeId(60), ScopeId(62), ScopeId(63), ScopeId(64), ScopeId(66), ScopeId(68), ScopeId(69), ScopeId(71), ScopeId(74), ScopeId(75), ScopeId(76), ScopeId(77), ScopeId(78), ScopeId(79), ScopeId(84), ScopeId(85), ScopeId(86)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(195), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(242)]
+after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(196), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(242)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "ReactSelectClass":
 after transform: SymbolId(19) "ReactSelectClass"

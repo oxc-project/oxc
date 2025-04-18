@@ -1639,8 +1639,8 @@ function deserializeTSInterfaceDeclaration(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeBindingIdentifier(pos + 8),
-    extends: deserializeVecTSInterfaceHeritage(pos + 40),
-    typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 72),
+    typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 40),
+    extends: deserializeVecTSInterfaceHeritage(pos + 48),
     body: deserializeBoxTSInterfaceBody(pos + 80),
     declare: deserializeBool(pos + 88),
   };

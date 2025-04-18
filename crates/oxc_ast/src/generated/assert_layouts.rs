@@ -1130,8 +1130,8 @@ const _: () = {
     assert!(align_of::<TSInterfaceDeclaration>() == 8);
     assert!(offset_of!(TSInterfaceDeclaration, span) == 0);
     assert!(offset_of!(TSInterfaceDeclaration, id) == 8);
-    assert!(offset_of!(TSInterfaceDeclaration, extends) == 40);
-    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 72);
+    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 40);
+    assert!(offset_of!(TSInterfaceDeclaration, extends) == 48);
     assert!(offset_of!(TSInterfaceDeclaration, body) == 80);
     assert!(offset_of!(TSInterfaceDeclaration, declare) == 88);
     assert!(offset_of!(TSInterfaceDeclaration, scope_id) == 92);
@@ -2523,8 +2523,8 @@ const _: () = {
     assert!(align_of::<TSInterfaceDeclaration>() == 4);
     assert!(offset_of!(TSInterfaceDeclaration, span) == 0);
     assert!(offset_of!(TSInterfaceDeclaration, id) == 8);
-    assert!(offset_of!(TSInterfaceDeclaration, extends) == 28);
-    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 44);
+    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 28);
+    assert!(offset_of!(TSInterfaceDeclaration, extends) == 32);
     assert!(offset_of!(TSInterfaceDeclaration, body) == 48);
     assert!(offset_of!(TSInterfaceDeclaration, declare) == 52);
     assert!(offset_of!(TSInterfaceDeclaration, scope_id) == 56);

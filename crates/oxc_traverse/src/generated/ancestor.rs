@@ -249,8 +249,8 @@ pub(crate) enum AncestorType {
     TSClassImplementsExpression = 226,
     TSClassImplementsTypeArguments = 227,
     TSInterfaceDeclarationId = 228,
-    TSInterfaceDeclarationExtends = 229,
-    TSInterfaceDeclarationTypeParameters = 230,
+    TSInterfaceDeclarationTypeParameters = 229,
+    TSInterfaceDeclarationExtends = 230,
     TSInterfaceDeclarationBody = 231,
     TSInterfaceBodyBody = 232,
     TSPropertySignatureKey = 233,
@@ -751,10 +751,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSClassImplementsTypeArguments as u16,
     TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a, 't>) =
         AncestorType::TSInterfaceDeclarationId as u16,
-    TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a, 't>) =
-        AncestorType::TSInterfaceDeclarationExtends as u16,
     TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a, 't>) =
         AncestorType::TSInterfaceDeclarationTypeParameters as u16,
+    TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationExtends as u16,
     TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a, 't>) =
         AncestorType::TSInterfaceDeclarationBody as u16,
     TSInterfaceBodyBody(TSInterfaceBodyWithoutBody<'a, 't>) =
@@ -1637,8 +1637,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::TSInterfaceDeclarationId(_)
-                | Self::TSInterfaceDeclarationExtends(_)
                 | Self::TSInterfaceDeclarationTypeParameters(_)
+                | Self::TSInterfaceDeclarationExtends(_)
                 | Self::TSInterfaceDeclarationBody(_)
         )
     }
@@ -2426,8 +2426,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSClassImplementsExpression(a) => a.address(),
             Self::TSClassImplementsTypeArguments(a) => a.address(),
             Self::TSInterfaceDeclarationId(a) => a.address(),
-            Self::TSInterfaceDeclarationExtends(a) => a.address(),
             Self::TSInterfaceDeclarationTypeParameters(a) => a.address(),
+            Self::TSInterfaceDeclarationExtends(a) => a.address(),
             Self::TSInterfaceDeclarationBody(a) => a.address(),
             Self::TSInterfaceBodyBody(a) => a.address(),
             Self::TSPropertySignatureKey(a) => a.address(),
@@ -12498,10 +12498,10 @@ impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeArguments<'a, 't> {
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SPAN: usize =
     offset_of!(TSInterfaceDeclaration, span);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_ID: usize = offset_of!(TSInterfaceDeclaration, id);
-pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
-    offset_of!(TSInterfaceDeclaration, extends);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSInterfaceDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
+    offset_of!(TSInterfaceDeclaration, extends);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_BODY: usize =
     offset_of!(TSInterfaceDeclaration, body);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
@@ -12525,18 +12525,18 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Vec<'a, TSInterfaceHeritage<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
         }
     }
 
@@ -12565,68 +12565,6 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutId<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSInterfaceDeclarationWithoutExtends<'a, 't>(
-    pub(crate) *const TSInterfaceDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn id(self) -> &'t BindingIdentifier<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
-                as *const BindingIdentifier<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(self) -> &'t Box<'a, TSInterfaceBody<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
-                as *const Box<'a, TSInterfaceBody<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn declare(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -12697,6 +12635,68 @@ impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutTypeParameters<'a, 't> 
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutExtends<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutBody<'a, 't>(
     pub(crate) *const TSInterfaceDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
@@ -12719,18 +12719,18 @@ impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Vec<'a, TSInterfaceHeritage<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
         }
     }
 
