@@ -2,7 +2,6 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_semantic::ScopeId;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
@@ -22,23 +21,10 @@ impl<'a> ClassProperties<'a, '_> {
         &mut self,
         prop: &mut PropertyDefinition<'a>,
         instance_inits: &mut Vec<Expression<'a>>,
-        instance_inits_scope_id: ScopeId,
-        instance_inits_constructor_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = match prop.value.take() {
-            Some(value) => {
-                self.transform_instance_initializer(
-                    &value,
-                    instance_inits_scope_id,
-                    instance_inits_constructor_scope_id,
-                    ctx,
-                );
-                value
-            }
-            None => ctx.ast.void_0(SPAN),
-        };
+        let value = prop.value.take().unwrap_or_else(|| ctx.ast.void_0(SPAN));
 
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             self.create_private_instance_init_assignment(ident, value, ctx)
