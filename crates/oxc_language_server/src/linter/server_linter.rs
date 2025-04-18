@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
-use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
+use oxc_linter::Linter;
 
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::isolated_lint_handler::IsolatedLintHandler;
@@ -15,7 +15,10 @@ pub struct ServerLinter {
 }
 
 impl ServerLinter {
+    #[cfg(test)]
     pub fn new(options: IsolatedLintHandlerOptions) -> Self {
+        use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions};
+
         let config_store =
             ConfigStoreBuilder::default().build().expect("Failed to build config store");
         let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);
@@ -42,7 +45,7 @@ mod test {
 
     use super::*;
     use crate::linter::tester::Tester;
-    use oxc_linter::{LintFilter, LintFilterKind, Oxlintrc};
+    use oxc_linter::{ConfigStoreBuilder, LintFilter, LintFilterKind, LintOptions, Oxlintrc};
     use rustc_hash::FxHashMap;
 
     #[test]
