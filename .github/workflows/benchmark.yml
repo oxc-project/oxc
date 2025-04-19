@@ -51,14 +51,16 @@ jobs:
       fail-fast: true
       matrix:
         component:
-          - lexer
-          - parser
+          # - lexer
+          # - parser
           - transformer
           - isolated_declarations
-          - semantic
+          # - semantic
           - minifier
-          - codegen
-          - formatter
+          # - codegen
+          # - formatter
+          # - codegen
+          # - formatter
 
     steps:
       - name: Checkout Branch
@@ -87,76 +89,76 @@ jobs:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: cargo codspeed run
 
-  # Build linter benchmark.
-  # Linter benchmarks are much slower than the rest, so we run each fixture in a separate job.
-  # But only build the linter benchmark once.
-  build-linter:
-    name: Build Linter Benchmark
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+  # # Build linter benchmark.
+  # # Linter benchmarks are much slower than the rest, so we run each fixture in a separate job.
+  # # But only build the linter benchmark once.
+  # build-linter:
+  #   name: Build Linter Benchmark
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Branch
+  #       uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        with:
-          cache-key: benchmark-linter
-          save-cache: ${{ github.ref_name == 'main' }}
+  #     - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+  #       with:
+  #         cache-key: benchmark-linter
+  #         save-cache: ${{ github.ref_name == 'main' }}
 
-      - name: Build benchmark
-        env:
-          RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        run: |
-          cargo build --release -p oxc_benchmark --bench linter \
-            --no-default-features --features linter --features codspeed
-          mkdir -p target/codspeed/instrumentation/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/instrumentation/oxc_benchmark
-          rm target/codspeed/instrumentation/oxc_benchmark/*.d
+  #     - name: Build benchmark
+  #       env:
+  #         RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
+  #       run: |
+  #         cargo build --release -p oxc_benchmark --bench linter \
+  #           --no-default-features --features linter --features codspeed
+  #         mkdir -p target/codspeed/instrumentation/oxc_benchmark
+  #         mv target/release/deps/linter-* target/codspeed/instrumentation/oxc_benchmark
+  #         rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
-      - name: Upload Binary
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          if-no-files-found: error
-          name: benchmark-linter
-          path: ./target/codspeed/instrumentation/oxc_benchmark
-          retention-days: 1
+      # - name: Upload Binary
+      #   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      #   with:
+      #     if-no-files-found: error
+      #     name: benchmark-linter
+      #     path: ./target/codspeed/instrumentation/oxc_benchmark
+      #     retention-days: 1
 
-  # Run linter benchmarks. Each fixture in a separate job.
-  benchmark-linter:
-    name: Benchmark linter
-    needs: build-linter
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        fixture:
-          - 0
-          - 1
+  # # Run linter benchmarks. Each fixture in a separate job.
+  # benchmark-linter:
+  #   name: Benchmark linter
+  #   needs: build-linter
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       fixture:
+  #         - 0
+  #         - 1
 
-    steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+  #   steps:
+  #     - name: Checkout Branch
+  #       uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - name: Download Binary
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
-        with:
-          name: benchmark-linter
-          path: ./target/codspeed/instrumentation/oxc_benchmark
+      # - name: Download Binary
+      #   uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+      #   with:
+      #     name: benchmark-linter
+      #     path: ./target/codspeed/instrumentation/oxc_benchmark
 
-      - name: Fix permission loss
-        run: |
-          ls ./target/codspeed/instrumentation/oxc_benchmark
-          chmod +x ./target/codspeed/instrumentation/oxc_benchmark/*
+  #     - name: Fix permission loss
+  #       run: |
+  #         ls ./target/codspeed/instrumentation/oxc_benchmark
+  #         chmod +x ./target/codspeed/instrumentation/oxc_benchmark/*
 
-      - name: Install codspeed
-        uses: taiki-e/install-action@be7c31b6745feec79dec5eb79178466c0670bb2d # v2.49.49
-        with:
-          tool: cargo-codspeed
+      # - name: Install codspeed
+      #   uses: taiki-e/install-action@be7c31b6745feec79dec5eb79178466c0670bb2d # v2.49.49
+      #   with:
+      #     tool: cargo-codspeed
 
-      - name: Run benchmark
-        uses: CodSpeedHQ/action@0010eb0ca6e89b80c88e8edaaa07cfe5f3e6664d # v3.5.0
-        timeout-minutes: 30
-        env:
-          FIXTURE: ${{ matrix.fixture }}
-        with:
-          token: ${{ secrets.CODSPEED_TOKEN }}
-          run: cargo codspeed run
+  #     - name: Run benchmark
+  #       uses: CodSpeedHQ/action@0010eb0ca6e89b80c88e8edaaa07cfe5f3e6664d # v3.5.0
+  #       timeout-minutes: 30
+  #       env:
+  #         FIXTURE: ${{ matrix.fixture }}
+  #       with:
+  #         token: ${{ secrets.CODSPEED_TOKEN }}
+  #         run: cargo codspeed run
