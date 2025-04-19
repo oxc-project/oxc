@@ -181,7 +181,7 @@ TypeScript and React transforms are complete. See [Milestone 2](https://github.c
 
 ### 🔸 Isolated Declarations
 
-[TypeScript Isolated Declarations Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-beta/#isolated-declarations) without using the TypeScript compiler.
+[TypeScript Isolated Declarations Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5/#isolated-declarations) without using the TypeScript compiler.
 
 Our [benchmark](https://github.com/oxc-project/bench-transformer) indications that our implementation is at least 20 times faster than the TypeScript compiler.
 
