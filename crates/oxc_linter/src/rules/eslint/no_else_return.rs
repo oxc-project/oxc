@@ -231,9 +231,16 @@ fn no_else_return_diagnostic_fix(
         let mut replacement_span = if let Statement::BlockStatement(block) = else_stmt {
             let first_stmt_start = block.body.first().map(|stmt| stmt.span().start);
             let last_stmt_end = block.body.last().map(|stmt| stmt.span().end);
-            let (Some(start), Some(end)) = (first_stmt_start, last_stmt_end) else {
+            let (Some(mut start), Some(end)) = (first_stmt_start, last_stmt_end) else {
                 return fixer.noop();
             };
+            // check is there any comments between the start of the block and the first statement
+            let range = Span::new(block.span.start, start);
+            if let Some(first_comment) =
+                ctx.comments().iter().find(|comment| range.contains_inclusive(comment.span))
+            {
+                start = first_comment.span.start;
+            }
             Span::new(start, end)
         } else {
             else_content_span
@@ -829,7 +836,31 @@ fn test() {
             None,
         ),
         ("if (foo) { return true; } else { let a; }", "if (foo) { return true; } let a;", None),
+        (
+            "if (a) { return 2 } else { /** bar */ /** foo */ return 4 }",
+            "if (a) { return 2 } /** bar */ /** foo */ return 4",
+            None,
+        ),
+        (
+            "
+                if (a) {
+                    return foo;
+                } else {
+                    // comments
+                    return baz;
+                }
+            ",
+            "
+                if (a) {
+                    return foo;
+                }
+                    // comments
+                    return baz;
+            ",
+            None,
+        ),
     ];
+
     Tester::new(NoElseReturn::NAME, NoElseReturn::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
