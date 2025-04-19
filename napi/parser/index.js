@@ -1,6 +1,4 @@
 const bindings = require('./bindings.js');
-const deserializeJS = require('./generated/deserialize/js.js');
-const deserializeTS = require('./generated/deserialize/ts.js');
 const { wrap } = require('./wrap.cjs');
 
 module.exports.ParseResult = bindings.ParseResult;
@@ -22,7 +20,7 @@ module.exports.parseSync = function parseSync(filename, sourceText, options) {
   return wrap(bindings.parseSync(filename, sourceText, options));
 };
 
-let buffer, encoder;
+let buffer, encoder, deserializeJS, deserializeTS;
 
 function parseSyncRaw(filename, sourceText, options) {
   if (!rawTransferSupported()) {
@@ -62,14 +60,17 @@ function parseSyncRaw(filename, sourceText, options) {
   const astTypeFlagPos = 2147483636;
   let isJsAst = buffer[astTypeFlagPos] === 0;
 
+  // Lazy load deserializer, and deserialize buffer to JS objects
   let data;
   if (isJsAst) {
+    if (!deserializeJS) deserializeJS = require('./generated/deserialize/js.js');
     data = deserializeJS(buffer, sourceText, sourceByteLen);
     const { hashbang } = data.program;
     if (hashbang !== null) {
       data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
     }
   } else {
+    if (!deserializeTS) deserializeTS = require('./generated/deserialize/ts.js');
     data = deserializeTS(buffer, sourceText, sourceByteLen);
   }
 
