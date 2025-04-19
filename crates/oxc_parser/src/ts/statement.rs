@@ -12,11 +12,6 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     /* ------------------- Enum ------------------ */
-
-    pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
-        self.at(Kind::Enum) || (self.at(Kind::Const) && self.peek_at(Kind::Enum))
-    }
-
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,

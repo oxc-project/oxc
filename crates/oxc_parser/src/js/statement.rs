@@ -114,20 +114,42 @@ impl<'a> ParserImpl<'a> {
             // Fast path
             Kind::Function => self.parse_function_declaration(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
+            // Peek tokens
+            Kind::Async
+                if {
+                    let peek_token = self.peek_token();
+                    peek_token.kind == Kind::Function && !peek_token.is_on_new_line
+                } =>
+            {
+                self.parse_function_declaration(stmt_ctx)
+            }
             Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
                 self.parse_import_declaration()
             }
-            Kind::Const if !(self.is_ts && self.is_at_enum_declaration()) => {
+            Kind::Const if !(self.is_ts && self.peek_at(Kind::Enum)) => {
                 self.parse_variable_statement(stmt_ctx)
             }
-            Kind::Await
-                if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
+            Kind::Using
+                if {
+                    let peek_token = self.peek_token();
+                    peek_token.kind.is_binding_identifier() && !peek_token.is_on_new_line
+                } =>
             {
                 self.parse_using_statement()
             }
-            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using_statement(),
-            Kind::Async if self.peek_at(Kind::Function) && !self.peek_token().is_on_new_line => {
-                self.parse_function_declaration(stmt_ctx)
+            // Peek 2 tokens
+            Kind::Await
+                if {
+                    let peek_token = self.peek_token();
+                    if peek_token.kind == Kind::Using && !peek_token.is_on_new_line {
+                        let peek2_token = self.nth(2);
+                        peek2_token.kind.is_binding_identifier() && !peek2_token.is_on_new_line
+                    } else {
+                        false
+                    }
+                } =>
+            {
+                self.parse_using_statement()
             }
             _ if self.is_ts && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
