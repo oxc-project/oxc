@@ -25,15 +25,22 @@ impl<'a> ClassProperties<'a, '_> {
     pub(super) fn transform_instance_initializer(
         &mut self,
         value: &Expression<'a>,
+        instance_inits_scope_id: ScopeId,
+        instance_inits_constructor_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(constructor_scope_id) = self.instance_inits_constructor_scope_id {
+        if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
             // Re-parent first-level scopes, and check for symbol clashes
-            let mut updater = InstanceInitializerVisitor::new(constructor_scope_id, self, ctx);
+            let mut updater = InstanceInitializerVisitor::new(
+                instance_inits_scope_id,
+                constructor_scope_id,
+                self,
+                ctx,
+            );
             updater.visit_expression(value);
         } else {
             // No symbol clashes possible. Just re-parent first-level scopes (faster).
-            let mut updater = FastInstanceInitializerVisitor::new(self, ctx);
+            let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
             updater.visit_expression(value);
         }
     }
@@ -58,6 +65,7 @@ struct InstanceInitializerVisitor<'a, 'v> {
 
 impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     fn new(
+        instance_inits_scope_id: ScopeId,
         constructor_scope_id: ScopeId,
         class_properties: &'v mut ClassProperties<'a, '_>,
         ctx: &'v mut TraverseCtx<'a>,
@@ -66,7 +74,7 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
             // Most initializers don't contain any scopes, so best default is 0 capacity
             // to avoid an allocation in most cases
             scope_ids_stack: Stack::new(),
-            parent_scope_id: class_properties.instance_inits_scope_id,
+            parent_scope_id: instance_inits_scope_id,
             constructor_scope_id,
             clashing_symbols: &mut class_properties.clashing_constructor_symbols,
             ctx,
@@ -154,8 +162,8 @@ struct FastInstanceInitializerVisitor<'a, 'v> {
 }
 
 impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
-    fn new(class_properties: &'v ClassProperties<'a, '_>, ctx: &'v mut TraverseCtx<'a>) -> Self {
-        Self { parent_scope_id: class_properties.instance_inits_scope_id, ctx }
+    fn new(instance_inits_scope_id: ScopeId, ctx: &'v mut TraverseCtx<'a>) -> Self {
+        Self { parent_scope_id: instance_inits_scope_id, ctx }
     }
 }
 

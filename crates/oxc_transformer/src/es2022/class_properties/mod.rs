@@ -203,7 +203,7 @@ use serde::Deserialize;
 
 use oxc_ast::ast::*;
 use oxc_span::Atom;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -266,15 +266,6 @@ pub struct ClassProperties<'a, 'ctx> {
 
     // ----- State used only during enter phase -----
     //
-    /// Scope that instance property initializers will be inserted into.
-    /// This is usually class constructor, but can also be a `_super` function which is created.
-    instance_inits_scope_id: ScopeId,
-    /// Scope of class constructor, if instance property initializers will be inserted into constructor.
-    /// Used for checking for variable name clashes.
-    /// e.g. `class C { prop = x(); constructor(x) {} }`
-    /// - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
-    /// `None` if class has no existing constructor, as then there can't be any clashes.
-    instance_inits_constructor_scope_id: Option<ScopeId>,
     /// Symbols in constructor which clash with instance prop initializers.
     /// Keys are symbols' IDs.
     /// Values are initially the original name of binding, later on the name of new UID name.
@@ -310,9 +301,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ctx,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
-            // Temporary values - overwritten when entering class
-            instance_inits_scope_id: ScopeId::new(0),
-            instance_inits_constructor_scope_id: None,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
             insert_before: vec![],

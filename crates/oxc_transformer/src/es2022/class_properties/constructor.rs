@@ -215,10 +215,10 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// Add a constructor to class containing property initializers.
     pub(super) fn insert_constructor(
-        &self,
         body: &mut ClassBody<'a>,
         inits: Vec<Expression<'a>>,
         has_super_class: bool,
+        constructor_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Create statements to go in function body
@@ -226,7 +226,6 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Add `super(..._args);` statement and `..._args` param if class has a super class.
         // `constructor(..._args) { super(..._args); /* prop initialization */ }`
-        let constructor_scope_id = self.instance_inits_scope_id;
         let mut params_rest = None;
         if has_super_class {
             let args_binding =
@@ -301,6 +300,7 @@ impl<'a> ClassProperties<'a, '_> {
         constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
+        super_func_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Rename any symbols in constructor which clash with references in inits
@@ -313,7 +313,6 @@ impl<'a> ClassProperties<'a, '_> {
         // rather than an additional `return this` statement.
         // Actually this wouldn't work at present, as `_classPrivateFieldInitSpec(this, _prop, value)`
         // does not return `this`. We could alter it so it does when we have our own helper package.
-        let super_func_scope_id = self.instance_inits_scope_id;
         let args_binding =
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
         let super_call = create_super_call(&args_binding, ctx);
@@ -371,6 +370,7 @@ impl<'a> ClassProperties<'a, '_> {
         &mut self,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
+        super_func_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Add `"use strict"` directive if outer scope is not strict mode
@@ -387,7 +387,6 @@ impl<'a> ClassProperties<'a, '_> {
         // `<inits>; return this;`
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
-        let super_func_scope_id = self.instance_inits_scope_id;
         let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
