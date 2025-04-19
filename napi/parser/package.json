@@ -43,8 +43,7 @@
     "wasm.mjs",
     "bindings.js",
     "webcontainer-fallback.js",
-    "deserialize-js.js",
-    "deserialize-ts.js"
+    "generated"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

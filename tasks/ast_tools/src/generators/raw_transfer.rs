@@ -7,7 +7,7 @@ use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    Generator, RAW_TRANSFER_JS_DESERIALIZER_PATH, RAW_TRANSFER_TS_DESERIALIZER_PATH,
+    Generator, NAPI_PARSER_PACKAGE_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
@@ -39,8 +39,14 @@ impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let Codes { js, ts, .. } = generate_deserializers(schema, codegen);
         vec![
-            Output::Javascript { path: RAW_TRANSFER_JS_DESERIALIZER_PATH.to_string(), code: js },
-            Output::Javascript { path: RAW_TRANSFER_TS_DESERIALIZER_PATH.to_string(), code: ts },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.js"),
+                code: js,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
+                code: ts,
+            },
         ]
     }
 }
