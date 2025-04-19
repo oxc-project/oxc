@@ -23,9 +23,9 @@ assert.equal(declaration, 'declare class A<T> {}\n');
 assert(errors.length == 0);
 ```
 
-## [Isolated Declarations for Standalone DTS Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-beta/#isolated-declarations)
+## [Isolated Declarations for Standalone DTS Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5/#isolated-declarations)
 
-Conforms to TypeScript Compiler's `--isolated-declaration` `.d.ts` emit.
+Conforms to TypeScript compiler's `--isolatedDeclarations` `.d.ts` emit.
 
 ### Usage
 
