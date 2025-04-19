@@ -1,6 +1,6 @@
 const bindings = require('./bindings.js');
-const deserializeJS = require('./deserialize-js.js');
-const deserializeTS = require('./deserialize-ts.js');
+const deserializeJS = require('./generated/deserialize/js.js');
+const deserializeTS = require('./generated/deserialize/ts.js');
 const { wrap } = require('./wrap.cjs');
 
 module.exports.ParseResult = bindings.ParseResult;

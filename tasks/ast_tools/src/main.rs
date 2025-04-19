@@ -242,9 +242,8 @@ const TRAVERSE_CRATE_PATH: &str = "crates/oxc_traverse";
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
-// Paths to write raw deserializer to
-const RAW_TRANSFER_JS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-js.js";
-const RAW_TRANSFER_TS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-ts.js";
+/// Path to NAPI parser package
+const NAPI_PARSER_PACKAGE_PATH: &str = "napi/parser";
 
 /// Path to write AST changes filter list to
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
