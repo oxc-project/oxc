@@ -84,11 +84,11 @@ use std::{
     rc::Rc,
 };
 
-use oxc_ast::{Comment, ast::Program};
+use oxc_ast::ast::Program;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{formatter::prelude::dynamic_text, write};
+use crate::{formatter::prelude::*, write};
 
 use super::{
     Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize, buffer::Buffer,
@@ -250,8 +250,37 @@ impl SourceComment {
 }
 
 impl<'a> Format<'a> for SourceComment {
+    #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.span.source_text(f.source_text()), self.span.start)])
+        let source_text = self.span.source_text(f.source_text());
+        if is_alignable_comment(source_text) {
+            let mut source_offset = self.span.start;
+
+            let mut lines = source_text.lines();
+
+            // `is_alignable_comment` only returns `true` for multiline comments
+            let first_line = lines.next().unwrap();
+            write!(f, [dynamic_text(first_line.trim_end(), source_offset)])?;
+
+            source_offset += first_line.len() as u32;
+
+            // Indent the remaining lines by one space so that all `*` are aligned.
+            write!(
+                f,
+                [&format_once(|f| {
+                    for line in lines {
+                        write!(
+                            f,
+                            [hard_line_break(), " ", dynamic_text(line.trim(), source_offset)]
+                        )?;
+                        source_offset += line.len() as u32;
+                    }
+                    Ok(())
+                })]
+            )
+        } else {
+            write!(f, [dynamic_text(source_text, self.span.start)])
+        }
     }
 }
 
@@ -920,7 +949,7 @@ impl Comments {
 
     /// Returns `true` if that node has skipped token trivia attached.
     #[inline]
-    pub fn has_skipped(&self, token: &SyntaxToken) -> bool {
+    pub fn has_skipped(&self, span: Span) -> bool {
         // TODO
         // self.data.with_skipped.contains(&token.key())
         false
@@ -1156,17 +1185,13 @@ impl<C> Default for FormatPlainComment<C> {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(comment: &SyntaxTriviaPieceComments) -> bool {
-    todo!()
-    // if !comment.has_newline() {
-    // return false;
-    // }
-
-    // let text = comment.text();
-
-    // text.lines().enumerate().all(|(index, line)| {
-    // if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-    // })
+pub fn is_alignable_comment(source_text: &str) -> bool {
+    if !source_text.contains('\n') {
+        return false;
+    }
+    source_text.lines().enumerate().all(|(index, line)| {
+        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
+    })
 }
 
 /// **TODO:** This is really JS-specific logic, both in syntax and semantics.

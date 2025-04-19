@@ -349,21 +349,20 @@ pub struct FormatTrimmedToken<'a> {
 // }
 
 /// Formats the skipped token trivia of a removed token and marks the token as tracked.
-pub const fn format_removed(token: &SyntaxToken) -> FormatRemoved {
-    FormatRemoved { token }
+pub const fn format_removed(span: Span) -> FormatRemoved {
+    FormatRemoved { span }
 }
 
 /// Formats the trivia of a token that is present in the source text but should be omitted in the
 /// formatted output.
-pub struct FormatRemoved<'a> {
-    token: &'a SyntaxToken,
+pub struct FormatRemoved {
+    span: Span,
 }
 
-impl Format<'_> for FormatRemoved<'_> {
+impl Format<'_> for FormatRemoved {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.state_mut().track_token(self.token);
-
-        write!(f, [format_skipped_token_trivia(self.token)])
+        f.state_mut().track_token(self.span);
+        write!(f, format_skipped_token_trivia(self.span))
     }
 }
 
@@ -371,88 +370,81 @@ impl Format<'_> for FormatRemoved<'_> {
 ///
 /// This will print the skipped token trivia that belong to `token` to `content`;
 /// `token` is then marked as consumed by the formatter.
-pub fn format_replaced<'a, 'content, 'ast>(
-    token: &'a SyntaxToken,
+pub fn format_replaced<'content, 'ast>(
+    span: Span,
     content: &'content impl Format<'ast>,
-) -> FormatReplaced<'a, 'content, 'ast> {
-    FormatReplaced { token, content: Argument::new(content) }
+) -> FormatReplaced<'content, 'ast> {
+    FormatReplaced { span, content: Argument::new(content) }
 }
 
 /// Formats a token's skipped token trivia but uses the provided content instead
 /// of the token in the formatted output.
 #[derive(Copy, Clone)]
-pub struct FormatReplaced<'a, 'content, 'ast> {
-    token: &'a SyntaxToken,
+pub struct FormatReplaced<'content, 'ast> {
+    span: Span,
     content: Argument<'content, 'ast>,
 }
 
-impl<'ast> Format<'ast> for FormatReplaced<'_, '_, 'ast> {
+impl<'ast> Format<'ast> for FormatReplaced<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        f.state_mut().track_token(self.token);
-
-        write!(f, [format_skipped_token_trivia(self.token)])?;
-
+        f.state_mut().track_token(self.span);
+        write!(f, format_skipped_token_trivia(self.span))?;
         f.write_fmt(Arguments::from(&self.content))
     }
 }
 
 /// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-pub fn format_only_if_breaks<'a, 'content, 'ast, Content>(
-    token: &'a SyntaxToken,
+pub fn format_only_if_breaks<'content, 'ast, Content>(
+    span: Span,
     content: &'content Content,
-) -> FormatOnlyIfBreaks<'a, 'content, 'ast>
+) -> FormatOnlyIfBreaks<'content, 'ast>
 where
     Content: Format<'ast>,
 {
-    FormatOnlyIfBreaks { token, content: Argument::new(content), group_id: None }
+    FormatOnlyIfBreaks { span, content: Argument::new(content), group_id: None }
 }
 
 /// Formats a token with its skipped token trivia that only gets printed if its enclosing
 /// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'a, 'content, 'ast> {
-    token: &'a SyntaxToken,
+pub struct FormatOnlyIfBreaks<'content, 'ast> {
+    span: Span,
     content: Argument<'content, 'ast>,
     group_id: Option<GroupId>,
 }
 
-impl FormatOnlyIfBreaks<'_, '_, '_> {
+impl FormatOnlyIfBreaks<'_, '_> {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
     }
 }
 
-impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, '_, 'ast> {
+impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        write!(
-            f,
-            [if_group_breaks(&Arguments::from(&self.content)).with_group_id(self.group_id),]
-        )?;
-
-        if f.comments().has_skipped(self.token) {
+        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id))?;
+        if f.comments().has_skipped(self.span) {
             // Print the trivia otherwise
             write!(
                 f,
-                [if_group_fits_on_line(&format_skipped_token_trivia(self.token))
-                    .with_group_id(self.group_id)]
+                if_group_fits_on_line(&format_skipped_token_trivia(self.span))
+                    .with_group_id(self.group_id)
             )?;
         }
-
         Ok(())
     }
 }
 
 /// Formats the skipped token trivia of `token`.
-pub const fn format_skipped_token_trivia(token: &SyntaxToken) -> FormatSkippedTokenTrivia {
-    FormatSkippedTokenTrivia { token }
+pub const fn format_skipped_token_trivia(span: Span) -> FormatSkippedTokenTrivia {
+    FormatSkippedTokenTrivia { span }
 }
 
 /// Formats the skipped token trivia of `token`.
-pub struct FormatSkippedTokenTrivia<'a> {
-    token: &'a SyntaxToken,
+pub struct FormatSkippedTokenTrivia {
+    span: Span,
 }
 
-impl FormatSkippedTokenTrivia<'_> {
+impl FormatSkippedTokenTrivia {
     #[cold]
     fn fmt_skipped(&self, f: &mut Formatter) -> FormatResult<()> {
         todo!()
@@ -578,8 +570,8 @@ impl FormatSkippedTokenTrivia<'_> {
     }
 }
 
-impl Format<'_> for FormatSkippedTokenTrivia<'_> {
+impl Format<'_> for FormatSkippedTokenTrivia {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        if f.comments().has_skipped(self.token) { self.fmt_skipped(f) } else { Ok(()) }
+        if f.comments().has_skipped(self.span) { self.fmt_skipped(f) } else { Ok(()) }
     }
 }
