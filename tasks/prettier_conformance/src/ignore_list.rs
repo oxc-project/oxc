@@ -2,16 +2,15 @@ pub const IGNORE_TESTS: &[&str] = &[
     // Copied from Biome
     // https://github.com/biomejs/biome/blob/cd1c8ec4249e8df8d221393586d664537c9fddb2/crates/biome_formatter_test/src/diff_report.rs#L105
     // ----------------------------------------------------------------------------------------------------------------------------------
-    // Babel plugins (mostly experimental syntaxes)
-    "js/babel-plugins/",
     // Bogus nodes
     "js/chain-expression/new-expression.js",
     "js/chain-expression/tagged-template-literals.js",
-    "js/optional-chaining-assignment/valid-parenthesized.js",
     "typescript/conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts",
     "typescript/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement21.ts",
     "typescript/chain-expression/new-expression.ts",
     "typescript/chain-expression/tagged-template-literals.ts",
+    // Expression syntax: `a?.b = c`
+    "js/optional-chaining-assignment/",
     // Experimental syntax: `do {}`
     "js/async-do-expressions/",
     "js/do/",
@@ -46,12 +45,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/no-semi-babylon-extensions/no-semi.js",
     // Experimental syntax: `let { #x: x } = ...`
     "js/destructuring-private-fields",
-    // Experimental syntax: `import defer`
-    "js/deferred-import-evaluation/",
-    // Experimental syntax: `import source`
-    "js/source-phase-imports/",
-    "js/dynamic-import/import-phase.js",
-    "js/dynamic-import/template-literal.js",
     // Experimental syntax: `import module`
     "js/import-reflection/",
     // Experimental syntax: `throw` expressions
@@ -86,11 +79,10 @@ pub const IGNORE_TESTS: &[&str] = &[
     // Unsupported stage3 features
     "tuple-and-record.js",
     "js/async-do-expressions",
+    // Babel plugins (mostly experimental syntaxes)
     "js/babel-plugins",
-    "js/decorator",
     "js/destructuring-private-fields",
     "js/do", // do expression
-    "js/explicit-resource-management",
     "js/export-default/escaped",
     "js/export-default/export-default-from",
     "js/import-reflection",
@@ -111,5 +103,4 @@ pub const IGNORE_TESTS: &[&str] = &[
     "cursor",
     // Invalid
     "js/call/invalid",
-    "optional-chaining-assignment/invalid-",
 ];
