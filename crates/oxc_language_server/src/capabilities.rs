@@ -7,11 +7,12 @@ use tower_lsp_server::lsp_types::{
 
 use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::LSP_COMMANDS};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Capabilities {
     pub code_action_provider: bool,
     pub workspace_apply_edit: bool,
     pub workspace_execute_command: bool,
+    pub workspace_configuration: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -28,8 +29,17 @@ impl From<ClientCapabilities> for Capabilities {
             value.workspace.as_ref().is_some_and(|workspace| workspace.apply_edit.is_some());
         let workspace_execute_command =
             value.workspace.as_ref().is_some_and(|workspace| workspace.execute_command.is_some());
+        let workspace_configuration = value
+            .workspace
+            .as_ref()
+            .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
 
-        Self { code_action_provider, workspace_apply_edit, workspace_execute_command }
+        Self {
+            code_action_provider,
+            workspace_apply_edit,
+            workspace_execute_command,
+            workspace_configuration,
+        }
     }
 }
 
