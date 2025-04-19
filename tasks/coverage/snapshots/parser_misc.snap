@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 34/34 (100.00%)
-Positive Passed: 34/34 (100.00%)
+AST Parsed     : 35/35 (100.00%)
+Positive Passed: 35/35 (100.00%)
 Negative Passed: 31/31 (100.00%)
 
   × Identifier `b` has already been declared

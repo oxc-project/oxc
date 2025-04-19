@@ -436,16 +436,6 @@ pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnost
 }
 
 #[cold]
-pub fn line_terminator_before_using_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Line terminator not permitted before using declaration.").with_label(span)
-}
-
-#[cold]
-pub fn await_in_using_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Await is not allowed in using declarations.").with_label(span)
-}
-
-#[cold]
 pub fn invalid_identifier_in_using_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations may not have binding patterns.").with_label(span)
 }
