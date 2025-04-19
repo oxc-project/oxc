@@ -78,7 +78,7 @@ impl Rule for SpecOnly {
             return;
         };
 
-        if PROMISE_STATIC_METHODS.binary_search(&prop_name).is_ok() {
+        if PROMISE_STATIC_METHODS.contains(&prop_name) {
             return;
         }
 

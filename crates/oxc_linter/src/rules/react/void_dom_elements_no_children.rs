@@ -65,8 +65,8 @@ const VOID_DOM_ELEMENTS: [&str; 16] = [
     "meta", "param", "source", "track", "wbr",
 ];
 
-pub fn is_not_void_dom_element(element_name: &str) -> bool {
-    VOID_DOM_ELEMENTS.binary_search(&element_name).is_err()
+pub fn is_void_dom_element(element_name: &str) -> bool {
+    VOID_DOM_ELEMENTS.contains(&element_name)
 }
 
 impl Rule for VoidDomElementsNoChildren {
@@ -78,7 +78,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if is_not_void_dom_element(&identifier.name) {
+                if !is_void_dom_element(&identifier.name) {
                     return;
                 }
 
@@ -114,7 +114,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if is_not_void_dom_element(element_name.value.as_str()) {
+                if !is_void_dom_element(element_name.value.as_str()) {
                     return;
                 }
 
