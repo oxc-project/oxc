@@ -1,6 +1,6 @@
 //! A string builder for constructing source code.
 
-use std::iter;
+use std::{iter, ptr};
 
 use crate::assert_unchecked;
 
@@ -287,6 +287,43 @@ impl CodeBuffer {
         }
     }
 
+    /// Push a byte to the buffer, without checking that there's sufficient capacity, and without checking
+    /// that the buffer still represents a valid UTF-8 string.
+    ///
+    /// Useful for reducing number of bounds checks when pushing multiple batches of bytes/strings.
+    ///
+    /// # SAFETY
+    ///
+    /// All the safety constraints of [`print_byte_unchecked`] apply.
+    ///
+    /// Additionally, caller must ensure buffer is not full to capacity.
+    /// i.e. `self.capacity() - self.len() >= 1`.
+    ///
+    /// # Example
+    ///
+    /// ```rs
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.reserve(2);
+    ///
+    /// // SAFETY: 'a' and 'b' are a valid ASCII characters.
+    /// // Their UTF-8 representation only require a single byte.
+    /// // We reserved 2 bytes capacity above.
+    /// unsafe {
+    ///     code.print_byte_unchecked_cap(b'a');
+    ///     code.print_byte_unchecked_cap(b'b');
+    /// }
+    /// ```
+    ///
+    /// [`print_byte_unchecked`]: Self::print_byte_unchecked
+    #[inline]
+    pub unsafe fn print_byte_unchecked_cap(&mut self, byte: u8) {
+        // SAFETY: Caller guarantees buffer is not full to capacity, and they take responsibility
+        // for ensuring that buffer is not put into a state where it contains an invalid UTF-8 string.
+        unsafe { assert_unchecked!(self.buf.len() != self.buf.capacity()) }
+        self.buf.push(byte);
+    }
+
     /// Push a single Unicode character into the buffer.
     ///
     /// When pushing multiple characters, consider choosing [`print_str`] over this method
@@ -324,6 +361,38 @@ impl CodeBuffer {
     #[inline]
     pub fn print_str<S: AsRef<str>>(&mut self, s: S) {
         self.buf.extend_from_slice(s.as_ref().as_bytes());
+    }
+
+    /// Push a string into the buffer, without checking there is sufficient capacity.
+    ///
+    /// Useful for reducing number of bounds checks when pushing multiple batches of bytes/strings.
+    ///
+    /// # SAFETY
+    ///
+    /// There must be sufficient spare capacity in the buffer for the string `s`.
+    /// i.e. `self.capacity() - self.len() >= s.len()`.
+    ///
+    /// # Example
+    ///
+    /// ```rs
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    ///
+    /// let s1 = "abcde";
+    /// let s2 = "fghij";
+    ///
+    /// code.reserve(s1.len() + s2.len());
+    /// // SAFETY: Have reserved sufficient capacity
+    /// unsafe {
+    ///     code.print_str_unchecked_cap(s1);
+    ///     code.print_str_unchecked_cap(s2);
+    /// }
+    /// ```
+    #[inline]
+    pub unsafe fn print_str_unchecked_cap<S: AsRef<str>>(&mut self, s: S) {
+        let bytes = s.as_ref().as_bytes();
+        // SAFETY: Caller guarantees there is sufficient capacity in buffer for `s`
+        unsafe { self.print_bytes_unchecked_cap(bytes) };
     }
 
     /// Push a sequence of ASCII characters into the buffer.
@@ -379,6 +448,50 @@ impl CodeBuffer {
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
         self.buf.extend_from_slice(bytes);
+    }
+
+    /// Print a slice of bytes, without checking there is sufficient capacity,
+    /// and without checking that the buffer still contains a valid UTF-8 string.
+    ///
+    /// Useful for reducing number of bounds checks when pushing multiple batches of bytes/strings.
+    ///
+    /// # SAFETY
+    ///
+    /// All the safety requirements of [`print_bytes_unchecked`] apply.
+    ///
+    /// Additionally, there must be sufficient spare capacity in the buffer for `bytes`.
+    /// i.e. `self.capacity() - self.len() >= bytes.len()`.
+    ///
+    /// # Example
+    ///
+    /// ```rs
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    ///
+    /// let b1 = b"abcde";
+    /// let b2 = b"fghij";
+    ///
+    /// code.reserve(b1.len() + b2.len());
+    /// // SAFETY: Have reserved sufficient capacity.
+    /// // `b1` and `b2` only contain ASCII bytes.
+    /// unsafe {
+    ///     code.print_bytes_unchecked_cap(b1);
+    ///     code.print_bytes_unchecked_cap(b2);
+    /// }
+    /// ```
+    ///
+    /// [`print_bytes_unchecked`]: Self::print_bytes_unchecked
+    #[inline]
+    pub unsafe fn print_bytes_unchecked_cap(&mut self, bytes: &[u8]) {
+        let src = bytes.as_ptr();
+        let buf_len = self.len();
+        let bytes_len = bytes.len();
+        // SAFETY: Caller guarantees there is sufficient capacity in buffer to contain `bytes`
+        unsafe {
+            let dst = self.buf.as_mut_ptr().add(buf_len);
+            ptr::copy_nonoverlapping(src, dst, bytes_len);
+            self.buf.set_len(buf_len + bytes_len);
+        }
     }
 
     /// Print a sequence of bytes, without checking that the buffer still contains a valid UTF-8 string.
@@ -542,6 +655,26 @@ mod test {
     }
 
     #[test]
+    fn print_str_unchecked_cap() {
+        let mut code = CodeBuffer::new();
+
+        let s1 = "Hello, ";
+        let s2 = "world";
+        let s3 = "!";
+
+        code.reserve(s1.len() + s2.len() + s3.len());
+        // SAFETY: Have reserved sufficient capacity
+        unsafe {
+            code.print_str_unchecked_cap(s1);
+            code.print_str_unchecked_cap(s2);
+            code.print_str_unchecked_cap(s3);
+        }
+
+        assert_eq!(code.len(), s1.len() + s2.len() + s3.len());
+        assert_eq!(String::from(code), "Hello, world!");
+    }
+
+    #[test]
     #[expect(clippy::byte_char_slices)]
     fn print_ascii_byte() {
         let mut code = CodeBuffer::new();
@@ -572,6 +705,22 @@ mod test {
 
     #[test]
     #[expect(clippy::byte_char_slices)]
+    fn print_byte_unchecked_cap() {
+        let mut code = CodeBuffer::with_capacity(3);
+        // SAFETY: These bytes are all ASCII
+        unsafe {
+            code.print_byte_unchecked_cap(b'f');
+            code.print_byte_unchecked_cap(b'o');
+            code.print_byte_unchecked_cap(b'o');
+        }
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    #[expect(clippy::byte_char_slices)]
     fn print_bytes_unchecked() {
         let mut code = CodeBuffer::new();
         // SAFETY: These bytes are all ASCII
@@ -580,6 +729,26 @@ mod test {
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn print_bytes_unchecked_cap() {
+        let mut code = CodeBuffer::new();
+
+        let s1 = b"Hello, ";
+        let s2 = b"world";
+        let s3 = b"!";
+
+        code.reserve(s1.len() + s2.len() + s3.len());
+        // SAFETY: Have reserved sufficient capacity. All bytes are ASCII.
+        unsafe {
+            code.print_bytes_unchecked_cap(s1);
+            code.print_bytes_unchecked_cap(s2);
+            code.print_bytes_unchecked_cap(s3);
+        }
+
+        assert_eq!(code.len(), s1.len() + s2.len() + s3.len());
+        assert_eq!(String::from(code), "Hello, world!");
     }
 
     #[test]
