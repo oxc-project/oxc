@@ -5,10 +5,7 @@ use tower_lsp_server::lsp_types::{
     WorkspaceServerCapabilities,
 };
 
-use crate::commands::LSP_COMMANDS;
-
-pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
-    CodeActionKind::new("source.fixAll.oxc");
+use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::LSP_COMMANDS};
 
 #[derive(Clone)]
 pub struct Capabilities {
