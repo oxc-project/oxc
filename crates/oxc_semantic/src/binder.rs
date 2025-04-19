@@ -26,13 +26,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             .is_some_and(|kind| matches!(kind, AstKind::VariableDeclaration(decl) if decl.declare));
 
         let (mut includes, excludes) = match self.kind {
-            VariableDeclarationKind::Const
+            VariableDeclarationKind::Let
+            | VariableDeclarationKind::Const
             | VariableDeclarationKind::Using
-            | VariableDeclarationKind::AwaitUsing => (
-                SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
-                SymbolFlags::BlockScopedVariableExcludes,
-            ),
-            VariableDeclarationKind::Let => {
+            | VariableDeclarationKind::AwaitUsing => {
                 (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
             }
             VariableDeclarationKind::Var => {

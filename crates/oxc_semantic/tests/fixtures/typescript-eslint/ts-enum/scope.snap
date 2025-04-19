@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/scope.t
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

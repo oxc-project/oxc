@@ -99,39 +99,37 @@ impl Serialize for RedeclarationId {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct SymbolFlags: u32 {
+    pub struct SymbolFlags: u16 {
         const None                    = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
         const BlockScopedVariable     = 1 << 1;
-        /// A const variable (const)
-        const ConstVariable           = 1 << 2;
-        const Class                   = 1 << 3;
+        const Class                   = 1 << 2;
         /// `try {} catch(catch_variable) {}`
-        const CatchVariable           = 1 << 4;
+        const CatchVariable           = 1 << 3;
         /// A function declaration or expression
-        const Function                = 1 << 5;
+        const Function                = 1 << 4;
         /// Imported ESM binding
-        const Import                  = 1 << 6;
+        const Import                  = 1 << 5;
         /// Imported ESM type-only binding
-        const TypeImport              = 1 << 7;
+        const TypeImport              = 1 << 6;
         // Type specific symbol flags
-        const TypeAlias               = 1 << 8;
-        const Interface               = 1 << 9;
-        const RegularEnum             = 1 << 10;
-        const ConstEnum               = 1 << 11;
-        const EnumMember              = 1 << 12;
-        const TypeParameter           = 1 << 13;
-        const NameSpaceModule         = 1 << 14;
-        const ValueModule             = 1 << 15;
+        const TypeAlias               = 1 << 7;
+        const Interface               = 1 << 8;
+        const RegularEnum             = 1 << 9;
+        const ConstEnum               = 1 << 10;
+        const EnumMember              = 1 << 11;
+        const TypeParameter           = 1 << 12;
+        const NameSpaceModule         = 1 << 13;
+        const ValueModule             = 1 << 14;
         /// Declared with `declare` modifier, like `declare function x() {}`.
         //
         // This flag is not part of TypeScript's `SymbolFlags`, it comes from TypeScript's `NodeFlags`. We introduced it into
         // here because `NodeFlags` is incomplete and we only can access to `NodeFlags` in the Semantic, but we also need to
         // access it in the Transformer.
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
-        const Ambient                 = 1 << 16;
+        const Ambient                 = 1 << 15;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -187,11 +185,6 @@ impl SymbolFlags {
     #[inline]
     pub fn is_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import)
-    }
-
-    #[inline]
-    pub fn is_const_variable(&self) -> bool {
-        self.contains(Self::ConstVariable)
     }
 
     /// Returns `true` if this symbol is a function declaration or expression.

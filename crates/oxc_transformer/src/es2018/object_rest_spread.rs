@@ -1039,10 +1039,8 @@ fn kind_to_symbol_flags(kind: VariableDeclarationKind) -> SymbolFlags {
         VariableDeclarationKind::Var => SymbolFlags::FunctionScopedVariable,
         VariableDeclarationKind::Let
         | VariableDeclarationKind::Using
-        | VariableDeclarationKind::AwaitUsing => SymbolFlags::BlockScopedVariable,
-        VariableDeclarationKind::Const => {
-            SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable
-        }
+        | VariableDeclarationKind::AwaitUsing
+        | VariableDeclarationKind::Const => SymbolFlags::BlockScopedVariable,
     }
 }
 
@@ -1103,10 +1101,8 @@ impl<'a> SpreadPair<'a> {
                 && ctx.scoping.current_scope_id() != ctx.scoping().root_scope_id()
             {
                 // Move the key_expression to the root scope.
-                let bound_identifier = ctx.generate_uid_in_root_scope(
-                    "excluded",
-                    SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
-                );
+                let bound_identifier =
+                    ctx.generate_uid_in_root_scope("excluded", SymbolFlags::BlockScopedVariable);
                 let kind = VariableDeclarationKind::Const;
                 let declarator = ctx.ast.variable_declarator(
                     SPAN,

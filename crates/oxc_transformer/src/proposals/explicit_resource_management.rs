@@ -93,7 +93,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         let temp_id = ctx.generate_uid_based_on_node(
             variable_declarator.id.get_binding_identifier().unwrap(),
             for_of_stmt_scope_id,
-            SymbolFlags::ConstVariable | SymbolFlags::BlockScopedVariable,
+            SymbolFlags::BlockScopedVariable,
         );
 
         let binding_pattern =

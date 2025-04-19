@@ -64,8 +64,7 @@ impl<'a> Symbol<'_, 'a> {
     /// - function parameters
     #[inline]
     fn is_definitely_reassignable_variable(&self) -> bool {
-        let f = self.flags();
-        f.is_variable() && !f.contains(SymbolFlags::ConstVariable.union(SymbolFlags::Function))
+        self.flags().is_variable()
     }
 
     /// Checks if this [`Symbol`] could be used as a type reference within its
