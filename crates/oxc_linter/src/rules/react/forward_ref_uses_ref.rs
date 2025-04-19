@@ -55,8 +55,9 @@ declare_oxc_lint!(
     /// ```
     ForwardRefUsesRef,
     react,
-    correctness
-    // it's not autofixable, as adding the param causes unused parameter lint
+    correctness,
+    pending
+    // TODO: two ways to fix it: add `ref` param or remove `forwardRef` call
 );
 
 fn check_forward_ref_inner(exp: &Expression, ctx: &LintContext) {
@@ -65,13 +66,13 @@ fn check_forward_ref_inner(exp: &Expression, ctx: &LintContext) {
             if f.params.parameters_count() >= 2 || f.params.rest.is_some() {
                 return;
             }
-            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span))
+            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span));
         }
         Expression::FunctionExpression(f) => {
             if f.params.parameters_count() >= 2 || f.params.rest.is_some() {
                 return;
             }
-            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span))
+            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span));
         }
         // NOTE: Not sure whether to warn in `forwardRef(((props, ref) => null))` (with parentheses)
         // Expression::ParenthesizedExpression(p) => check_forward_ref_inner(&p.expression),
@@ -88,7 +89,7 @@ impl Rule for ForwardRefUsesRef {
         let Some("forwardRef") = call_expr.callee_name() else {
             return;
         };
-        let Some(first_arg) = call_expr.arguments.get(0) else {
+        let Some(first_arg) = call_expr.arguments.first() else {
             return;
         };
         let Some(first_arg_as_exp) = first_arg.as_expression() else {
