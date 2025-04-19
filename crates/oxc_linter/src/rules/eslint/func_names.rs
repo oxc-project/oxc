@@ -388,7 +388,7 @@ const INVALID_NAMES: [&str; 9] =
     ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
 
 fn is_valid_identifier_name(name: &str) -> bool {
-    INVALID_NAMES.binary_search(&name).is_err() && is_identifier_name(name)
+    !INVALID_NAMES.contains(&name) && is_identifier_name(name)
 }
 
 #[test]

@@ -128,7 +128,7 @@ fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<
                 return None;
             };
 
-            if SECOND_INDEX_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
+            if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
                 return find_index_param_name_by_position(call_expr, 1);
             }
 

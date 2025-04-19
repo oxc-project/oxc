@@ -65,7 +65,7 @@ impl std::default::Default for AutocompleteValidConfig {
     }
 }
 
-static VALID_AUTOCOMPLETE_VALUES: [&str; 49] = [
+static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "address-level1",
     "address-level2",
     "address-level3",
@@ -135,9 +135,9 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
     let parts: Vec<&str> = value.split_whitespace().collect();
 
     match parts.len() {
-        1 => VALID_AUTOCOMPLETE_VALUES.binary_search(&parts[0]).is_ok(),
+        1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
         2 if ["billing", "shipping"].contains(&parts[0]) => {
-            BILLING_AND_SHIPPING.binary_search(&parts[1]).is_ok()
+            BILLING_AND_SHIPPING.contains(&parts[1])
         }
         _ => false,
     }

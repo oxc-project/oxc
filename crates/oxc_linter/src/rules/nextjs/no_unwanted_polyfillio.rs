@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 // Keep in sync with next.js polyfills file : https://github.com/vercel/next.js/blob/v15.0.2/packages/next-polyfill-nomodule/src/index.js
-const NEXT_POLYFILLED_FEATURES: [&str; 63] = [
+const NEXT_POLYFILLED_FEATURES: phf::Set<&'static str> = phf::phf_set![
     "Array.from",
     "Array.of",
     "Array.prototype.@@iterator",
@@ -161,7 +161,7 @@ impl Rule for NoUnwantedPolyfillio {
 
             let unwanted_features: Vec<&str> = features_value
                 .split(',')
-                .filter(|feature| NEXT_POLYFILLED_FEATURES.binary_search(feature).is_ok())
+                .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
                 .collect();
             if !unwanted_features.is_empty() {
                 ctx.diagnostic(no_unwanted_polyfillio_diagnostic(

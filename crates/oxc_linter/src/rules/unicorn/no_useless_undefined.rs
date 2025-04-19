@@ -91,7 +91,7 @@ static FUNCTION_NAMES: [&str; 27] = [
 
 fn is_match_ignore_func_name(name: &str) -> bool {
     // Check if the name is in the static set
-    FUNCTION_NAMES.binary_search(&name).is_ok()
+    FUNCTION_NAMES.contains(&name)
         // `setState(undefined)`
         || name.starts_with("set")
 }

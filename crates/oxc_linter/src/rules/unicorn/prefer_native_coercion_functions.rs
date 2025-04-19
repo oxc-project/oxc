@@ -178,7 +178,7 @@ fn is_matching_native_coercion_function_call<'a>(
 
     let fn_name = callee_ident.name.as_str();
 
-    if NATIVE_COERCION_FUNCTION_NAMES.binary_search(&fn_name).is_err() {
+    if !NATIVE_COERCION_FUNCTION_NAMES.contains(&fn_name) {
         return None;
     }
 
@@ -228,7 +228,7 @@ fn check_array_callback_methods(
     let Some(method_name) = callee_member_expr.static_property_name() else {
         return false;
     };
-    if ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.binary_search(&method_name).is_err() {
+    if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(&method_name) {
         return false;
     }
 

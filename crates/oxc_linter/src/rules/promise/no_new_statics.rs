@@ -65,7 +65,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        if PROMISE_STATIC_METHODS.binary_search(&prop_name).is_ok() {
+        if PROMISE_STATIC_METHODS.contains(&prop_name) {
             ctx.diagnostic_with_fix(
                 static_promise_diagnostic(
                     prop_name,

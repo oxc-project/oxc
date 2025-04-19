@@ -63,7 +63,7 @@ impl Rule for PreferAddEventListener {
             return;
         }
 
-        if !DOM_EVENT_TYPE_NAMES.contains(&name.trim_start_matches("on")) {
+        if !DOM_EVENT_TYPE_NAMES.contains(name.trim_start_matches("on")) {
             return;
         }
 
@@ -71,7 +71,7 @@ impl Rule for PreferAddEventListener {
     }
 }
 
-const DOM_EVENT_TYPE_NAMES: [&str; 184] = [
+const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "AnimationEnd",
     "AnimationIteration",
     "AnimationStart",

@@ -50,7 +50,7 @@ impl Rule for AriaUnsupportedElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let el_type = get_element_type(ctx, jsx_el);
-            if RESERVED_HTML_TAG.binary_search(&el_type.as_ref()).is_ok() {
+            if RESERVED_HTML_TAG.contains(&el_type.as_ref()) {
                 for attr in &jsx_el.attributes {
                     let attr = match attr {
                         JSXAttributeItem::Attribute(attr) => attr,

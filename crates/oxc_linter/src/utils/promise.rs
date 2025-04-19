@@ -13,8 +13,7 @@ pub fn is_promise(call_expr: &CallExpression) -> Option<String> {
         return Some(prop_name.into());
     }
 
-    if member_expr.object().is_specific_id("Promise")
-        && PROMISE_STATIC_METHODS.binary_search(&prop_name).is_ok()
+    if member_expr.object().is_specific_id("Promise") && PROMISE_STATIC_METHODS.contains(&prop_name)
     {
         return Some(prop_name.into());
     }
