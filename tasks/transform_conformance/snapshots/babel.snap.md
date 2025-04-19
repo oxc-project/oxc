@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 714/1191
+Passed: 711/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -273,7 +273,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/268)
+# babel-plugin-transform-class-properties (209/268)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -316,9 +316,7 @@ after transform: ["T", "babelHelpers"]
 rebuilt        : ["babelHelpers"]
 
 * compile-to-class/constructor-collision-ignores-types-loose/input.js
-Unresolved references mismatch:
-after transform: ["T"]
-rebuilt        : []
+x Output mismatch
 
 * nested-class/super-call-in-decorator/input.js
 x Output mismatch
@@ -436,10 +434,19 @@ x Output mismatch
 * public-loose/computed/input.js
 x Output mismatch
 
+* public-loose/instance-undefined/input.js
+x Output mismatch
+
+* public-loose/preserve-comments/input.js
+x Output mismatch
+
 * public-loose/static-infer-name/input.js
 x Output mismatch
 
 * public-loose/static-super/input.js
+x Output mismatch
+
+* public-loose/static-undefined/input.js
 x Output mismatch
 
 * regression/6153/input.js
