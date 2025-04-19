@@ -80,7 +80,7 @@ impl WorkspaceCommand for FixAllCommand {
 
     async fn execute(
         &self,
-        backend: &Backend,
+        _backend: &Backend,
         args: Self::CommandArgs<'_>,
     ) -> jsonrpc::Result<Option<serde_json::Value>> {
         let url = Uri::from_str(&args.0.uri);
@@ -88,30 +88,30 @@ impl WorkspaceCommand for FixAllCommand {
             error!("Invalid uri passed to {:?}: {e}", self.command_id());
             return Err(Error::invalid_request());
         }
-        let url = url.unwrap();
-
-        let mut edits = vec![];
-        if let Some(value) = backend.diagnostics_report_map.pin_owned().get(&url.to_string()) {
-            for report in value {
-                if let Some(fixed) = &report.fixed_content {
-                    edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() });
-                }
-            }
-            let _ = backend
-                .client
-                .send_request::<ApplyWorkspaceEdit>(ApplyWorkspaceEditParams {
-                    label: Some(match edits.len() {
-                        1 => "Oxlint: 1 fix applied".into(),
-                        n => format!("Oxlint: {n} fixes applied"),
-                    }),
-                    edit: WorkspaceEdit {
-                        #[expect(clippy::disallowed_types)]
-                        changes: Some(std::collections::HashMap::from([(url, edits)])),
-                        ..WorkspaceEdit::default()
-                    },
-                })
-                .await;
-        }
+        // let url = url.unwrap();
+        //
+        // let mut edits = vec![];
+        // if let Some(value) = backend.diagnostics_report_map.pin_owned().get(&url.to_string()) {
+        //     for report in value {
+        //         if let Some(fixed) = &report.fixed_content {
+        //             edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() });
+        //         }
+        //     }
+        //     let _ = backend
+        //         .client
+        //         .send_request::<ApplyWorkspaceEdit>(ApplyWorkspaceEditParams {
+        //             label: Some(match edits.len() {
+        //                 1 => "Oxlint: 1 fix applied".into(),
+        //                 n => format!("Oxlint: {n} fixes applied"),
+        //             }),
+        //             edit: WorkspaceEdit {
+        //                 #[expect(clippy::disallowed_types)]
+        //                 changes: Some(std::collections::HashMap::from([(url, edits)])),
+        //                 ..WorkspaceEdit::default()
+        //             },
+        //         })
+        //         .await;
+        // }
 
         Ok(None)
     }
