@@ -337,6 +337,15 @@ checksum = "136d3e02915a2cea4d74caa8681e2d44b1c3254bdbf17d11d41d587ff858832c"
 
 [[package]]
 name = "convert_case"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db05ffb6856bf0ecdf6367558a76a0e8a77b1713044eb92845c692100ed50190"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "convert_case"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
@@ -1440,9 +1449,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.7.0"
+version = "3.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f27a163b545fd2184d2efdccf3d3df56acdb63465f2fcfebcaee0463c1e91783"
+checksum = "4e917a98ac74187a5d486604a269ed69cd7901dd4824453d5573fb051f69b1b3"
 dependencies = [
  "bitflags",
  "ctor",
@@ -1462,11 +1471,11 @@ checksum = "d376940fd5b723c6893cd1ee3f33abbfd86acb1cd1ec079f3ab04a2a3bc4d3b1"
 
 [[package]]
 name = "napi-derive"
-version = "3.4.0"
+version = "3.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47cffa09ea668c4cc5d7b1198780882e28780ed1804a903b80680725426223d9"
+checksum = "a258a6521951715e00568b258b8fb7a44c6087f588c371dc6b84a413f2728fdb"
 dependencies = [
- "convert_case",
+ "convert_case 0.9.0",
  "ctor",
  "napi-derive-backend",
  "proc-macro2",
@@ -1476,11 +1485,11 @@ dependencies = [
 
 [[package]]
 name = "napi-derive-backend"
-version = "4.0.0"
+version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e186227ec22f4675267a176d98dffecb27e6cc88926cbb7efb5427268565c0f"
+checksum = "77c36636292fe04366a1eec028adc25bc72f4fd7cce35bdcc310499ef74fb7de"
 dependencies = [
- "convert_case",
+ "convert_case 0.9.0",
  "proc-macro2",
  "quote",
  "semver",
@@ -1489,9 +1498,9 @@ dependencies = [
 
 [[package]]
 name = "napi-sys"
-version = "3.2.1"
+version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8eb602b84d7c1edae45e50bbf1374696548f36ae179dfa667f577e384bb90c2b"
+checksum = "50ef9c1086f16aea2417c3788dbefed7591c3bccd800b827f4dfb271adff1149"
 dependencies = [
  "libloading",
 ]
@@ -1650,9 +1659,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.1.4"
+version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bd39c45e1d6bd2abfbd4b89cbcaba34bd315cd3cee23aad623fd075acc1ea01"
+checksum = "f978be538ca5e2a64326d24b7991dc658cc8495132833ae387212ab3b8abd70a"
 dependencies = [
  "bincode 2.0.1",
  "flate2",
@@ -1750,7 +1759,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "bpaf",
- "convert_case",
+ "convert_case 0.10.0",
  "cow-utils",
  "indexmap",
  "itertools",
@@ -2020,7 +2029,7 @@ version = "1.32.0"
 dependencies = [
  "bitflags",
  "constcat",
- "convert_case",
+ "convert_case 0.10.0",
  "cow-utils",
  "fast-glob",
  "icu_segmenter",
@@ -2070,7 +2079,7 @@ dependencies = [
 name = "oxc_linter_codegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.10.0",
  "project-root",
  "rustc-hash",
  "syn",
@@ -2080,7 +2089,7 @@ dependencies = [
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.10.0",
  "itertools",
  "proc-macro2",
  "quote",
@@ -2272,9 +2281,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.15.0"
+version = "11.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "630a9355dd8fab35d4731f99e1d303499d70b55f7c5a996466050a0a29f4bc76"
+checksum = "d4dbede303ffad37b0e3f3e69b9a2cf798e40c5f5f77d43d104bbd54921943f6"
 dependencies = [
  "cfg-if",
  "fast-glob",
@@ -2926,7 +2935,7 @@ dependencies = [
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.10.0",
  "handlebars",
  "lazy-regex",
  "oxc_allocator",

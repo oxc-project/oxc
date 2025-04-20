@@ -11,7 +11,7 @@ fn test_cli() {
 
 #[test]
 fn test_cli_terminal() {
-    let snapshot = oxfmt::cli::format_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+    let snapshot = format_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
         insta::assert_snapshot!(snapshot);
     });
