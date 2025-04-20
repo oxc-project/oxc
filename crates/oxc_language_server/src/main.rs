@@ -3,7 +3,7 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use linter::{config_walker::ConfigWalker, isolated_lint_handler::IsolatedLintHandlerOptions};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
@@ -583,11 +583,11 @@ impl Backend {
                 if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
                     oxlintrc
                 } else {
-                    error!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
                     Oxlintrc::default()
                 }
             } else {
-                error!(
+                warn!(
                     "Config file not found: {}, fallback to default config",
                     config.to_string_lossy()
                 );
