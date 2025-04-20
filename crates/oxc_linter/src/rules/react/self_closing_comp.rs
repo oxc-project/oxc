@@ -60,7 +60,7 @@ declare_oxc_lint!(
     SelfClosingComp,
     react,
     style,
-    pending
+    fix
 );
 
 impl Rule for SelfClosingComp {
@@ -121,7 +121,12 @@ impl Rule for SelfClosingComp {
         }
 
         if self.html && is_dom_comp || self.component && !is_dom_comp {
-            ctx.diagnostic(self_closing_comp_diagnostic(jsx_closing_elem.span));
+            ctx.diagnostic_with_fix(self_closing_comp_diagnostic(jsx_closing_elem.span), |fixer| {
+                fixer.replace(
+                    Span::new(jsx_el.opening_element.span.end - 1, jsx_closing_elem.span.end),
+                    " />",
+                )
+            });
         }
     }
 
@@ -351,5 +356,7 @@ fn test() {
             Some(serde_json::json!([{ "html": true }])),
         ),
     ];
-    Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail)
+        .expect_fix(_fix)
+        .test_and_snapshot();
 }
