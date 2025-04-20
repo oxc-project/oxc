@@ -1,10 +1,12 @@
 import { deepStrictEqual, strictEqual } from 'assert';
 import { Uri, workspace, WorkspaceEdit } from 'vscode';
+import { WORKSPACE_FOLDER } from './test-helpers.js';
 import { WorkspaceConfig } from './WorkspaceConfig.js';
 
-suite('Config', () => {
+const uri = WORKSPACE_FOLDER;
+suite('WorkspaceConfig', () => {
   setup(async () => {
-    const wsConfig = workspace.getConfiguration('oxc');
+    const wsConfig = workspace.getConfiguration('oxc', uri);
     const keys = ['lint.run', 'configPath', 'flags'];
 
     await Promise.all(keys.map(key => wsConfig.update(key, undefined)));
@@ -19,36 +21,36 @@ suite('Config', () => {
   });
 
   test('default values on initialization', () => {
-    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
+    const config = new WorkspaceConfig(uri);
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.configPath, null);
     deepStrictEqual(config.flags, {});
   });
 
   test('configPath defaults to null when using nested configs and configPath is empty', async () => {
-    const wsConfig = workspace.getConfiguration('oxc');
+    const wsConfig = workspace.getConfiguration('oxc', uri);
     await wsConfig.update('configPath', '');
     await wsConfig.update('flags', {});
 
-    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
+    const config = new WorkspaceConfig(uri);
 
     deepStrictEqual(config.flags, {});
     strictEqual(config.configPath, null);
   });
 
   test('configPath defaults to .oxlintrc.json when not using nested configs and configPath is empty', async () => {
-    const wsConfig = workspace.getConfiguration('oxc');
+    const wsConfig = workspace.getConfiguration('oxc', uri);
     await wsConfig.update('configPath', undefined);
     await wsConfig.update('flags', { disable_nested_config: '' });
 
-    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
+    const config = new WorkspaceConfig(uri);
 
     deepStrictEqual(config.flags, { disable_nested_config: '' });
     strictEqual(config.configPath, '.oxlintrc.json');
   });
 
   test('updating values updates the workspace configuration', async () => {
-    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
+    const config = new WorkspaceConfig(uri);
 
     await Promise.all([
       config.updateRunTrigger('onSave'),
@@ -56,7 +58,7 @@ suite('Config', () => {
       config.updateFlags({ test: 'value' }),
     ]);
 
-    const wsConfig = workspace.getConfiguration('oxc');
+    const wsConfig = workspace.getConfiguration('oxc', uri);
 
     strictEqual(wsConfig.get('lint.run'), 'onSave');
     strictEqual(wsConfig.get('configPath'), './somewhere');

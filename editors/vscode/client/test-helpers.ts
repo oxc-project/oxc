@@ -29,7 +29,8 @@ export type OxlintConfig = {
   ignorePatterns?: OxlintConfigIgnorePatterns;
 };
 
-export const WORKSPACE_DIR = workspace.workspaceFolders![0].uri;
+export const WORKSPACE_FOLDER = workspace.workspaceFolders![0];
+export const WORKSPACE_DIR = WORKSPACE_FOLDER.uri;
 
 const rootOxlintConfigUri = Uri.joinPath(WORKSPACE_DIR, '.oxlintrc.json');
 
@@ -52,14 +53,15 @@ export async function createOxlintConfiguration(configuration: OxlintConfig): Pr
   });
   await workspace.applyEdit(edit);
 }
-export async function loadFixture(fixture: string): Promise<void> {
+
+export async function loadFixture(fixture: string, workspaceUri: Uri = WORKSPACE_DIR): Promise<void> {
   const absolutePath = path.resolve(`${__dirname}/../fixtures/${fixture}`);
   // do not copy directly into the workspace folder. FileWatcher will detect them as a deletion and stop itself.
-  await workspace.fs.copy(Uri.file(absolutePath), Uri.joinPath(WORKSPACE_DIR, 'fixtures'), { overwrite: true });
+  await workspace.fs.copy(Uri.file(absolutePath), Uri.joinPath(workspaceUri, 'fixtures'), { overwrite: true });
 }
 
-export async function getDiagnostics(file: string): Promise<Diagnostic[]> {
-  const fileUri = Uri.joinPath(WORKSPACE_DIR, 'fixtures', file);
+export async function getDiagnostics(file: string, workspaceUri: Uri = WORKSPACE_DIR): Promise<Diagnostic[]> {
+  const fileUri = Uri.joinPath(workspaceUri, 'fixtures', file);
   await window.showTextDocument(fileUri);
   await sleep(500);
   const diagnostics = languages.getDiagnostics(fileUri);

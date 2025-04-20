@@ -13,9 +13,9 @@ use tower_lsp_server::{
     lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, ServerInfo,
-        Uri, WorkspaceEdit,
+        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, ServerInfo, Uri, WorkspaceEdit,
     },
 };
 use worker::WorkspaceWorker;
@@ -79,26 +79,89 @@ impl Options {
 }
 
 impl LanguageServer for Backend {
-    #[expect(deprecated)] // TODO: FIXME
+    #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
         });
 
-        // ToDo: add support for multiple workspace folders
-        // maybe fallback when the client does not support it
-        let root_worker =
-            WorkspaceWorker::new(&params.root_uri.unwrap(), options.clone().unwrap_or_default());
-
-        *self.workspace_workers.lock().await = vec![root_worker];
-
-        if let Some(value) = options {
+        if let Some(value) = &options {
             info!("initialize: {value:?}");
             info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
         }
 
         let capabilities = Capabilities::from(params.capabilities);
+
+        if let Some(workspace_folder) = params.workspace_folders.as_ref() {
+            if workspace_folder.is_empty() {
+                return Err(Error::invalid_params("workspace folder is empty"));
+            }
+
+            let mut workers = vec![];
+            // when we have only one workspace folder and the client already passed the configuration
+            if workspace_folder.len() == 1 && options.is_some() {
+                let root_worker =
+                    WorkspaceWorker::new(&workspace_folder.first().unwrap().uri, options.unwrap());
+                workers.push(root_worker);
+                // else check if the client support workspace configuration requests
+                // and we can request the configuration for each workspace folder
+            } else if capabilities.workspace_configuration {
+                let configs = self
+                    .request_workspace_configuration(
+                        workspace_folder.iter().map(|w| w.uri.clone()).collect(),
+                    )
+                    .await;
+                for (index, folder) in workspace_folder.iter().enumerate() {
+                    let workspace_options = configs
+                        .get(index)
+                        // when there is no valid index fallback to the initialize options
+                        .unwrap_or(&options)
+                        .clone()
+                        // no valid index or initialize option, still fallback to default
+                        .unwrap_or_default();
+
+                    workers.push(WorkspaceWorker::new(&folder.uri, workspace_options));
+                }
+            } else {
+                for folder in workspace_folder {
+                    workers.push(WorkspaceWorker::new(
+                        &folder.uri,
+                        options.clone().unwrap_or_default(),
+                    ));
+                }
+            }
+
+            *self.workspace_workers.lock().await = workers;
+        // fallback to root uri if no workspace folder is provided
+        } else if let Some(root_uri) = params.root_uri.as_ref() {
+            // use the initialize options if the client does not support workspace configuration or already provided one
+            let root_options = if options.is_some() {
+                options.clone().unwrap()
+            // check if the client support workspace configuration requests
+            } else if capabilities.workspace_configuration {
+                let configs = self.request_workspace_configuration(vec![root_uri.clone()]).await;
+                configs
+                    .first()
+                    // options is already none, no need to pass it here
+                    .unwrap_or(&None)
+                    // no valid index or initialize option, still fallback to default
+                    .clone()
+                    .unwrap_or_default()
+            // no initialize options provided and the client does not support workspace configuration
+            // fallback to default
+            } else {
+                Options::default()
+            };
+
+            let root_worker = WorkspaceWorker::new(root_uri, root_options);
+            *self.workspace_workers.lock().await = vec![root_worker];
+        // one of the two (workspace folder or root_uri) must be provided
+        } else {
+            return Err(Error::invalid_params("no workspace folder or root uri"));
+        }
+
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => {
@@ -117,14 +180,24 @@ impl LanguageServer for Backend {
         })
     }
 
+    async fn initialized(&self, _params: InitializedParams) {
+        debug!("oxc initialized.");
+    }
+
+    async fn shutdown(&self) -> Result<()> {
+        self.clear_all_diagnostics().await;
+        Ok(())
+    }
+
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         let workers = self.workspace_workers.lock().await;
+        let params_options = serde_json::from_value::<Options>(params.settings).ok();
 
-        // when we have only workspace folder, apply to it
-        // ToDo: check if this is really safe because the client could still pass an empty settings
-        if workers.len() == 1 {
+        // when we have only workspace folder and the client provided us the configuration
+        // we can just update the worker with the new configuration
+        if workers.len() == 1 && params_options.is_some() {
             let worker = workers.first().unwrap();
-            worker.did_change_configuration(params.settings).await;
+            worker.did_change_configuration(&params_options.unwrap()).await;
 
         // else check if the client support workspace configuration requests so we can only restart only the needed workers
         } else if self
@@ -132,36 +205,30 @@ impl LanguageServer for Backend {
             .get()
             .is_some_and(|capabilities| capabilities.workspace_configuration)
         {
-            let mut config_items = vec![];
-            for worker in workers.iter() {
-                let Some(uri) = worker.get_root_uri() else {
-                    continue;
-                };
-                // ToDo: this is broken in VSCode. Check how we can get the language server configuration from the client
-                // changing `section` to `oxc` will return the client configuration.
-                config_items.push(ConfigurationItem {
-                    scope_uri: Some(uri),
-                    section: Some("oxc_language_server".into()),
-                });
-            }
-
-            let Ok(configs) = self.client.configuration(config_items).await else {
-                debug!("failed to get configuration");
-                return;
-            };
-
+            let configs = self
+                .request_workspace_configuration(
+                    workers.iter().map(worker::WorkspaceWorker::get_root_uri).collect(),
+                )
+                .await;
             // we expect that the client is sending all the configuration items in order and completed
             // this is a LSP specification and errors should be reported on the client side
             for (index, worker) in workers.iter().enumerate() {
-                let config = &configs[index];
-                worker.did_change_configuration(config.clone()).await;
+                // get the index or fallback to the initialize options
+                let config = configs.get(index).unwrap_or(&params_options);
+
+                // change anything
+                let Some(config) = config else {
+                    continue;
+                };
+
+                worker.did_change_configuration(config).await;
             }
 
             // we have multiple workspace folders and the client does not support workspace configuration requests
-            // we assume that every workspace is under effect
-        } else {
+            // the client must provide a configuration change or else we do not know what to do
+        } else if params_options.is_some() {
             for worker in workers.iter() {
-                worker.did_change_configuration(params.settings.clone()).await;
+                worker.did_change_configuration(&params_options.clone().unwrap()).await;
             }
         }
     }
@@ -205,13 +272,42 @@ impl LanguageServer for Backend {
         self.publish_all_diagnostics(x).await;
     }
 
-    async fn initialized(&self, _params: InitializedParams) {
-        debug!("oxc initialized.");
-    }
+    async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
+        let mut workers = self.workspace_workers.lock().await;
+        let mut cleared_diagnostics = vec![];
+        for folder in params.event.removed {
+            let Some((index, worker)) = workers
+                .iter()
+                .enumerate()
+                .find(|(_, worker)| worker.is_responsible_for_uri(&folder.uri))
+            else {
+                continue;
+            };
+            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
+            workers.remove(index);
+        }
 
-    async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
-        Ok(())
+        self.publish_all_diagnostics(&cleared_diagnostics).await;
+
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
+        {
+            let configurations = self
+                .request_workspace_configuration(
+                    params.event.added.iter().map(|w| w.uri.clone()).collect(),
+                )
+                .await;
+
+            for (index, folder) in params.event.added.iter().enumerate() {
+                let option = configurations.get(index).unwrap_or(&None);
+                let option = option.clone().unwrap_or(Options::default());
+
+                workers.push(WorkspaceWorker::new(&folder.uri, option));
+            }
+        } else {
+            for folder in params.event.added {
+                workers.push(WorkspaceWorker::new(&folder.uri, Options::default()));
+            }
+        }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
@@ -346,6 +442,37 @@ impl LanguageServer for Backend {
 }
 
 impl Backend {
+    /// Request the workspace configuration from the client
+    /// and return the options for each workspace folder.
+    /// The check if the client support workspace configuration, should be done before.
+    async fn request_workspace_configuration(&self, uris: Vec<Uri>) -> Vec<Option<Options>> {
+        let length = uris.len();
+        let config_items = uris
+            .into_iter()
+            .map(|uri| ConfigurationItem {
+                scope_uri: Some(uri),
+                section: Some("oxc_language_server".into()),
+            })
+            .collect::<Vec<_>>();
+
+        let Ok(configs) = self.client.configuration(config_items).await else {
+            debug!("failed to get configuration");
+            // return none for each workspace folder
+            return vec![None; length];
+        };
+
+        let mut options = vec![];
+        for config in configs {
+            options.push(serde_json::from_value::<Options>(config).ok());
+        }
+
+        debug_assert!(
+            options.len() == length,
+            "the number of configuration items should be the same as the number of workspace folders"
+        );
+
+        options
+    }
     // clears all diagnostics for workspace folders
     async fn clear_all_diagnostics(&self) {
         let mut cleared_diagnostics = vec![];

@@ -4,7 +4,7 @@ import { VSCodeConfig } from './VSCodeConfig.js';
 
 const conf = workspace.getConfiguration('oxc');
 
-suite('Config', () => {
+suite('VSCodeConfig', () => {
   setup(async () => {
     const keys = ['enable', 'trace.server', 'path.server'];
 
@@ -20,7 +20,7 @@ suite('Config', () => {
   });
 
   test('default values on initialization', () => {
-    const config = new VSCodeConfig(conf);
+    const config = new VSCodeConfig();
 
     strictEqual(config.enable, true);
     strictEqual(config.trace, 'off');
@@ -28,7 +28,7 @@ suite('Config', () => {
   });
 
   test('updating values updates the workspace configuration', async () => {
-    const config = new VSCodeConfig(conf);
+    const config = new VSCodeConfig();
 
     await Promise.all([
       config.updateEnable(false),

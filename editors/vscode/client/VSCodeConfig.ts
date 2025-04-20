@@ -1,21 +1,23 @@
-import { workspace, WorkspaceConfiguration } from 'vscode';
+import { workspace } from 'vscode';
 import { ConfigService } from './ConfigService';
-
-export const oxlintConfigFileName = '.oxlintrc.json';
 
 export class VSCodeConfig implements VSCodeConfigInterface {
   private _enable!: boolean;
   private _trace!: TraceLevel;
   private _binPath: string | undefined;
 
-  constructor(configuration: WorkspaceConfiguration) {
-    this.refresh(configuration);
+  constructor() {
+    this.refresh();
   }
 
-  public refresh(configuration: WorkspaceConfiguration): void {
-    this._enable = configuration.get<boolean>('enable') ?? true;
-    this._trace = configuration.get<TraceLevel>('trace.server') || 'off';
-    this._binPath = configuration.get<string>('path.server');
+  private get configuration() {
+    return workspace.getConfiguration(ConfigService.namespace);
+  }
+
+  public refresh(): void {
+    this._enable = this.configuration.get<boolean>('enable') ?? true;
+    this._trace = this.configuration.get<TraceLevel>('trace.server') || 'off';
+    this._binPath = this.configuration.get<string>('path.server');
   }
 
   get enable(): boolean {
@@ -24,9 +26,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
 
   updateEnable(value: boolean): PromiseLike<void> {
     this._enable = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('enable', value);
+    return this.configuration.update('enable', value);
   }
 
   get trace(): TraceLevel {
@@ -35,9 +35,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
 
   updateTrace(value: TraceLevel): PromiseLike<void> {
     this._trace = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('trace.server', value);
+    return this.configuration.update('trace.server', value);
   }
 
   get binPath(): string | undefined {
@@ -46,9 +44,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
 
   updateBinPath(value: string | undefined): PromiseLike<void> {
     this._binPath = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('path.server', value);
+    return this.configuration.update('path.server', value);
   }
 }
 

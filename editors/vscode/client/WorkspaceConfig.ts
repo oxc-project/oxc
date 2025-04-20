@@ -1,6 +1,7 @@
-import { workspace, WorkspaceConfiguration } from 'vscode';
+import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from 'vscode';
 import { ConfigService } from './ConfigService';
-import { oxlintConfigFileName } from './VSCodeConfig';
+
+export const oxlintConfigFileName = '.oxlintrc.json';
 
 export type Trigger = 'onSave' | 'onType';
 
@@ -37,18 +38,43 @@ export class WorkspaceConfig {
   private _runTrigger: Trigger = 'onType';
   private _flags: Record<string, string> = {};
 
-  constructor(configuration: WorkspaceConfiguration) {
-    this.refresh(configuration);
+  constructor(private readonly workspace: WorkspaceFolder) {
+    this.refresh();
   }
 
-  public refresh(configuration: WorkspaceConfiguration): void {
-    const flags = configuration.get<Record<string, string>>('flags') ?? {};
+  private get configuration() {
+    return workspace.getConfiguration(ConfigService.namespace, this.workspace);
+  }
+
+  public refresh(): void {
+    const flags = this.configuration.get<Record<string, string>>('flags') ?? {};
     const useNestedConfigs = !('disable_nested_config' in flags);
 
-    this._runTrigger = configuration.get<Trigger>('lint.run') || 'onType';
-    this._configPath = configuration.get<string | null>('configPath') ||
+    this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
+    this._configPath = this.configuration.get<string | null>('configPath') ||
       (useNestedConfigs ? null : oxlintConfigFileName);
     this._flags = flags;
+  }
+
+  public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
+    if (event.affectsConfiguration(`${ConfigService.namespace}.configPath`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.lint.run`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
+      return true;
+    }
+    return false;
+  }
+
+  public effectsConfigPathChange(event: ConfigurationChangeEvent): boolean {
+    return event.affectsConfiguration(`${ConfigService.namespace}.configPath`, this.workspace);
+  }
+
+  public get isCustomConfigPath(): boolean {
+    return this.configPath !== null && this.configPath !== oxlintConfigFileName;
   }
 
   get runTrigger(): Trigger {
@@ -57,9 +83,7 @@ export class WorkspaceConfig {
 
   updateRunTrigger(value: Trigger): PromiseLike<void> {
     this._runTrigger = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('lint.run', value);
+    return this.configuration.update('lint.run', value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get configPath(): string | null {
@@ -68,9 +92,7 @@ export class WorkspaceConfig {
 
   updateConfigPath(value: string): PromiseLike<void> {
     this._configPath = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('configPath', value);
+    return this.configuration.update('configPath', value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get flags(): Record<string, string> {
@@ -79,9 +101,7 @@ export class WorkspaceConfig {
 
   updateFlags(value: Record<string, string>): PromiseLike<void> {
     this._flags = value;
-    return workspace
-      .getConfiguration(ConfigService.namespace)
-      .update('flags', value);
+    return this.configuration.update('flags', value, ConfigurationTarget.WorkspaceFolder);
   }
 
   public toLanguageServerConfig(): WorkspaceConfigInterface {

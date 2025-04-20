@@ -55,8 +55,8 @@ impl WorkspaceWorker {
         }
     }
 
-    pub fn get_root_uri(&self) -> Option<Uri> {
-        self.root_uri.get().cloned()
+    pub fn get_root_uri(&self) -> Uri {
+        self.root_uri.get().unwrap().clone()
     }
 
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
@@ -408,27 +408,25 @@ impl WorkspaceWorker {
 
     pub async fn did_change_configuration(
         &self,
-        options: serde_json::value::Value,
+        options: &Options,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
-        let changed_options = serde_json::from_value::<Options>(options).unwrap_or_default();
-
         let current_option = &self.options.lock().await.clone();
 
         debug!(
             "
         configuration changed:
-        incoming: {changed_options:?}
+        incoming: {options:?}
         current: {current_option:?}
         "
         );
 
-        *self.options.lock().await = changed_options.clone();
+        *self.options.lock().await = options.clone();
 
-        if changed_options.use_nested_configs() != current_option.use_nested_configs() {
+        if options.use_nested_configs() != current_option.use_nested_configs() {
             self.refresh_nested_configs().await;
         }
 
-        if Self::needs_linter_restart(current_option, &changed_options) {
+        if Self::needs_linter_restart(current_option, options) {
             self.refresh_linter_config().await;
             return Some(self.revalidate_diagnostics().await);
         }
@@ -466,7 +464,7 @@ mod tests {
         let worker =
             WorkspaceWorker::new(&Uri::from_str("file:///root/").unwrap(), Options::default());
 
-        assert_eq!(worker.get_root_uri(), Some(Uri::from_str("file:///root/").unwrap()));
+        assert_eq!(worker.get_root_uri(), Uri::from_str("file:///root/").unwrap());
     }
 
     #[test]

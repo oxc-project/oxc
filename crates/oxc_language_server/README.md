@@ -53,6 +53,11 @@ The server will revalidate the diagnostics for all open files and send one or mo
 
 Note: When nested configuration is active, the client should send all `.oxlintrc.json` configurations to the server after the [initialized](#initialized) response.
 
+#### [workspace/didChangeWorkspaceFolders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_didChangeWorkspaceFolders)
+
+The server expects this requests when adding or removing workspace folders.
+The server will requests the specific workspace, if the client support it.
+
 #### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 
 Executes a [Command](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand) if it exists. See [Server Capabilities](#server-capabilities)
@@ -86,3 +91,12 @@ Returns a list of [CodeAction](https://microsoft.github.io/language-server-proto
 #### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
 
 Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
+
+## Optional LSP Specifications from Client
+
+### Workspace
+
+#### [workspace/configuration](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_configuration)
+
+Will be requested some workspace configurations. The server expect the order of receiving items will match the order of the items requested.
+Only will be requested when the `ClientCapabilities` has `workspace.configuration` set to true.

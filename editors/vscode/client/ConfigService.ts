@@ -1,7 +1,7 @@
-import { ConfigurationChangeEvent, workspace } from 'vscode';
+import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
-import { WorkspaceConfig } from './WorkspaceConfig';
+import { oxlintConfigFileName, WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
 
 export class ConfigService implements IDisposable {
   public static readonly namespace = 'oxc';
@@ -9,16 +9,20 @@ export class ConfigService implements IDisposable {
 
   public vsCodeConfig: VSCodeConfig;
 
-  private _workspaceConfig: WorkspaceConfig;
+  private workspaceConfigs: Map<string, WorkspaceConfig> = new Map();
 
   public onConfigChange:
     | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
     | undefined;
 
   constructor() {
-    const conf = workspace.getConfiguration(ConfigService.namespace);
-    this.vsCodeConfig = new VSCodeConfig(conf);
-    this._workspaceConfig = new WorkspaceConfig(conf);
+    this.vsCodeConfig = new VSCodeConfig();
+    const workspaceFolders = workspace.workspaceFolders;
+    if (workspaceFolders) {
+      for (const folder of workspaceFolders) {
+        this.addWorkspaceConfig(folder);
+      }
+    }
     this.onConfigChange = undefined;
 
     const disposeChangeListener = workspace.onDidChangeConfiguration(
@@ -27,19 +31,82 @@ export class ConfigService implements IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
-  public get rootServerConfig(): WorkspaceConfig {
-    return this._workspaceConfig;
+  // ToDo: refactor it so we do not rely on this function
+  // this is only used for the initialize options on the server which is a custom object between the client and server
+  // we can change it to support multiple workspaces and avoid sending `workspace/configuration` request to the client.
+  // Make sure to still support the old way on server side for other clients.
+  public get rootLanguageServerConfig(): WorkspaceConfigInterface {
+    // will be true when the user uses `code file.ts` in cli
+    if (workspace.workspaceFolders === undefined) {
+      // fallback to the default config
+      return {
+        configPath: null,
+        run: 'onType',
+        flags: {},
+      };
+    }
+
+    return this.workspaceConfigs.get(workspace.workspaceFolders[0].uri.path)!.toLanguageServerConfig();
   }
 
-  public refresh(): void {
-    const conf = workspace.getConfiguration(ConfigService.namespace);
-    this.vsCodeConfig.refresh(conf);
-    this.rootServerConfig.refresh(conf);
+  public addWorkspaceConfig(workspace: WorkspaceFolder): WorkspaceConfig {
+    let workspaceConfig = new WorkspaceConfig(workspace);
+    this.workspaceConfigs.set(workspace.uri.path, workspaceConfig);
+    return workspaceConfig;
+  }
+
+  public removeWorkspaceConfig(workspace: WorkspaceFolder): void {
+    this.workspaceConfigs.delete(workspace.uri.path);
+  }
+
+  public getWorkspaceConfig(workspace: Uri): WorkspaceConfig | undefined {
+    return this.workspaceConfigs.get(workspace.path);
+  }
+
+  public effectsWorkspaceConfigChange(event: ConfigurationChangeEvent): boolean {
+    for (const workspaceConfig of this.workspaceConfigs.values()) {
+      if (workspaceConfig.effectsConfigChange(event)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public effectsWorkspaceConfigPathChange(event: ConfigurationChangeEvent): boolean {
+    for (const workspaceConfig of this.workspaceConfigs.values()) {
+      if (workspaceConfig.effectsConfigPathChange(event)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public getOxlintCustomConfigs(): string[] {
+    const customConfigs: string[] = [];
+    for (const [path, config] of this.workspaceConfigs.entries()) {
+      if (config.configPath && config.configPath !== oxlintConfigFileName) {
+        customConfigs.push(`${path}/${config.configPath}`);
+      }
+    }
+    return customConfigs;
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
+    let isConfigChanged = false;
+
     if (event.affectsConfiguration(ConfigService.namespace)) {
-      this.refresh();
+      this.vsCodeConfig.refresh();
+      isConfigChanged = true;
+    }
+
+    for (const workspaceConfig of this.workspaceConfigs.values()) {
+      if (workspaceConfig.effectsConfigChange(event)) {
+        workspaceConfig.refresh();
+        isConfigChanged = true;
+      }
+    }
+
+    if (isConfigChanged) {
       await this.onConfigChange?.(event);
     }
   }

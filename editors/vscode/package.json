@@ -76,6 +76,7 @@
         "oxc.enable": {
           "type": "boolean",
           "default": true,
+          "scope": "window",
           "description": "enable oxc language server"
         },
         "oxc.trace.server": {
@@ -94,23 +95,23 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "oxc.configPath": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "scope": "window",
-          "default": null,
-          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
-        },
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
           "description": "Path to Oxc language server binary. Mostly for testing the language server."
         },
+        "oxc.configPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null,
+          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
+        },
         "oxc.flags": {
           "type": "object",
-          "scope": "window",
+          "scope": "resource",
           "default": {},
           "description": "Specific Oxlint flags to pass to the language server."
         }
