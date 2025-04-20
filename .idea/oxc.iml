@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/apps/oxfmt/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/apps/oxlint/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_allocator/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_ast/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_ast_macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_ast_visit/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_cfg/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_cfg/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_codegen/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_codegen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_codegen/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_compat/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_data_structures/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_diagnostics/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_ecmascript/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_estree/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_formatter/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_formatter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_formatter/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_isolated_declarations/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_isolated_declarations/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_isolated_declarations/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_language_server/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_linter/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_linter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_linter/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_macros/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_mangler/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_minifier/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_minifier/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_minifier/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_napi/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_parser/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_parser/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_regular_expression/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_regular_expression/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_semantic/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_semantic/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_semantic/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_span/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_syntax/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer_plugins/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer_plugins/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_transformer_plugins/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/oxc_traverse/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/napi/minify/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/napi/parser/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/napi/playground/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/napi/transform/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/ast_tools/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/benchmark/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/benchmark/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/common/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/compat_data/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/coverage/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/linter_codegen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/minsize/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/prettier_conformance/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/rulegen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/track_memory_allocations/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/transform_checker/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/transform_conformance/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/transform_conformance/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/website_common/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/website_formatter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tasks/website_linter/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

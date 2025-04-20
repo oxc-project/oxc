@@ -3,9 +3,10 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
+        ArrowFunctionExpression, CallExpression, Expression, Function, JSXAttributeItem,
+        JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXMemberExpression, JSXMemberExpressionObject, JSXOpeningElement, Statement,
+        StaticMemberExpression,
     },
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -347,6 +348,150 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
     }
 
     false
+}
+
+/// Checks if a function call is a Higher-Order Component (HOC)
+pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
+    // Check built-in HOCs
+    if matches!(callee_name, "memo" | "forwardRef")
+        || callee_name.ends_with("memo")
+        || callee_name.ends_with("forwardRef")
+    {
+        return true;
+    }
+
+    // Check component wrapper functions from settings
+    ctx.settings().react.is_component_wrapper_function(callee_name)
+}
+
+/// Finds the innermost function with JSX in a chain of HOC calls
+#[derive(Debug)]
+pub enum InnermostFunction<'a> {
+    Function(&'a Function<'a>),
+    #[expect(dead_code, reason = "False positive: field is read in pattern matching")]
+    ArrowFunction(&'a ArrowFunctionExpression<'a>),
+}
+
+pub fn find_innermost_function_with_jsx<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'_>,
+) -> Option<InnermostFunction<'a>> {
+    match expr {
+        Expression::CallExpression(call) => {
+            // Check if this is a HOC call
+            if let Some(callee_name) = call.callee_name()
+                && is_hoc_call(callee_name, ctx)
+            {
+                // This is a HOC, recursively check the first argument
+                if let Some(first_arg) = call.arguments.first()
+                    && let Some(inner_expr) = first_arg.as_expression()
+                {
+                    return find_innermost_function_with_jsx(inner_expr, ctx);
+                }
+            }
+            None
+        }
+        Expression::FunctionExpression(func) => {
+            // Check if this function contains JSX
+            if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
+        }
+        Expression::ArrowFunctionExpression(arrow_func) => {
+            // Check if this arrow function contains JSX
+            if expression_contains_jsx(expr) {
+                Some(InnermostFunction::ArrowFunction(arrow_func))
+            } else {
+                // Check if this arrow function returns another function that contains JSX
+                if arrow_func.expression {
+                    // Expression-bodied arrow function: () => () => <div />
+                    if arrow_func.body.statements.len() == 1
+                        && let Statement::ExpressionStatement(expr_stmt) =
+                            &arrow_func.body.statements[0]
+                    {
+                        return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
+                    }
+                } else {
+                    // Block-bodied arrow function: () => { return () => <div /> }
+                    for stmt in &arrow_func.body.statements {
+                        if let Statement::ReturnStatement(ret_stmt) = stmt
+                            && let Some(expr) = &ret_stmt.argument
+                        {
+                            return find_innermost_function_with_jsx(expr, ctx);
+                        }
+                    }
+                }
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Checks if an expression contains JSX elements
+pub fn contains_jsx(expr: &Expression) -> bool {
+    match expr {
+        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+        Expression::CallExpression(call) => {
+            if crate::utils::is_create_element_call(call) {
+                return true;
+            }
+            call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
+        }
+        Expression::ParenthesizedExpression(inner) => contains_jsx(&inner.expression),
+        Expression::StaticMemberExpression(member) => contains_jsx(&member.object),
+        Expression::ConditionalExpression(cond) => {
+            contains_jsx(&cond.consequent) || contains_jsx(&cond.alternate)
+        }
+        Expression::LogicalExpression(logical) => {
+            contains_jsx(&logical.left) || contains_jsx(&logical.right)
+        }
+        Expression::SequenceExpression(seq) => seq.expressions.iter().any(contains_jsx),
+        _ => false,
+    }
+}
+
+/// Checks if a function contains JSX in its return statements
+pub fn function_contains_jsx(func: &Function) -> bool {
+    if let Some(body) = &func.body {
+        for stmt in &body.statements {
+            if let Statement::ReturnStatement(ret_stmt) = stmt
+                && let Some(expr) = &ret_stmt.argument
+                && contains_jsx(expr)
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Checks if a function-like expression (function or arrow function) contains JSX
+pub fn expression_contains_jsx(expr: &Expression) -> bool {
+    match expr {
+        Expression::FunctionExpression(func) => function_contains_jsx(func),
+        Expression::ArrowFunctionExpression(arrow_func) => {
+            if arrow_func.expression {
+                // Expression-bodied arrow function: () => <div />
+                if arrow_func.body.statements.len() == 1
+                    && let Statement::ExpressionStatement(expr_stmt) =
+                        &arrow_func.body.statements[0]
+                {
+                    return contains_jsx(&expr_stmt.expression);
+                }
+            } else {
+                // Block-bodied arrow function: () => { return <div /> }
+                for stmt in &arrow_func.body.statements {
+                    if let Statement::ReturnStatement(ret_stmt) = stmt
+                        && let Some(expr) = &ret_stmt.argument
+                        && contains_jsx(expr)
+                    {
+                        return true;
+                    }
+                }
+            }
+            false
+        }
+        _ => false,
+    }
 }
 
 #[cfg(test)]

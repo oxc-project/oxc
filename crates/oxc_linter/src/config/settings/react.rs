@@ -74,6 +74,21 @@ pub struct ReactPluginSettings {
     #[serde(default)]
     #[schemars(with = "Option<String>")]
     pub version: Option<ReactVersion>,
+
+    /// Functions that wrap React components and should be treated as HOCs.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "componentWrapperFunctions": ["observer", "withRouter"]
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    #[serde(rename = "componentWrapperFunctions")]
+    component_wrapper_functions: Vec<CompactStr>,
     // TODO: More properties should be added
 }
 
@@ -85,6 +100,10 @@ impl ReactPluginSettings {
 
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
+    }
+
+    pub fn is_component_wrapper_function(&self, name: &str) -> bool {
+        self.component_wrapper_functions.iter().any(|func| func == name)
     }
 }
 

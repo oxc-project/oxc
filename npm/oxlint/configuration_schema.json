@@ -4,14 +4,6 @@
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```",
   "type": "object",
   "properties": {
-    "$schema": {
-      "description": "Schema URI for editor tooling.",
-      "type": [
-        "string",
-        "null"
-      ],
-      "markdownDescription": "Schema URI for editor tooling."
-    },
     "categories": {
       "default": {},
       "allOf": [
@@ -61,18 +53,14 @@
     },
     "jsPlugins": {
       "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExternalPluginEntry"
-          },
-          "uniqueItems": true
-        }
+      "type": [
+        "array",
+        "null"
       ],
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
       "markdownDescription": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
     },
     "overrides": {
@@ -118,9 +106,10 @@
           "rootDir": []
         },
         "react": {
+          "version": null,
           "formComponents": [],
           "linkComponents": [],
-          "version": null
+          "componentWrapperFunctions": []
         },
         "jsdoc": {
           "ignorePrivate": false,
@@ -143,7 +132,6 @@
       ]
     }
   },
-  "additionalProperties": false,
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
@@ -229,37 +217,6 @@
         "$ref": "#/definitions/DummyRule"
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-    },
-    "ExternalPluginEntry": {
-      "anyOf": [
-        {
-          "description": "Path or package name of the plugin",
-          "type": "string",
-          "markdownDescription": "Path or package name of the plugin"
-        },
-        {
-          "description": "Plugin with custom name/alias",
-          "type": "object",
-          "required": [
-            "name",
-            "specifier"
-          ],
-          "properties": {
-            "name": {
-              "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
-              "type": "string",
-              "markdownDescription": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts."
-            },
-            "specifier": {
-              "description": "Path or package name of the plugin",
-              "type": "string",
-              "markdownDescription": "Path or package name of the plugin"
-            }
-          },
-          "additionalProperties": false,
-          "markdownDescription": "Plugin with custom name/alias"
-        }
-      ]
     },
     "GlobSet": {
       "description": "A set of glob patterns.",
@@ -519,18 +476,14 @@
         },
         "jsPlugins": {
           "description": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/ExternalPluginEntry"
-              },
-              "uniqueItems": true
-            }
+          "type": [
+            "array",
+            "null"
           ],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
           "markdownDescription": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
         },
         "plugins": {
@@ -554,8 +507,7 @@
             }
           ]
         }
-      },
-      "additionalProperties": false
+      }
     },
     "OxlintOverrides": {
       "type": "array",
@@ -612,9 +564,10 @@
         },
         "react": {
           "default": {
+            "version": null,
             "formComponents": [],
             "linkComponents": [],
-            "version": null
+            "componentWrapperFunctions": []
           },
           "allOf": [
             {
@@ -639,6 +592,15 @@
       "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
       "type": "object",
       "properties": {
+        "componentWrapperFunctions": {
+          "description": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n```"
+        },
         "formComponents": {
           "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```",
           "default": [],
@@ -658,13 +620,13 @@
           "markdownDescription": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```"
         },
         "version": {
-          "description": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
+          "description": "React version to use for version-specific behavior.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"16.14.0\"\n}\n}\n}\n```",
           "default": null,
           "type": [
             "string",
             "null"
           ],
-          "markdownDescription": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
+          "markdownDescription": "React version to use for version-specific behavior.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"16.14.0\"\n}\n}\n}\n```"
         }
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
@@ -706,7 +668,7 @@
       ]
     },
     "VitestPluginSettings": {
-      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
+      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
         "typecheck": {
@@ -716,7 +678,7 @@
           "markdownDescription": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios."
         }
       },
-      "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference."
+      "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s\nconfiguration for a full reference."
     }
   },
   "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```"
