@@ -289,7 +289,7 @@ fn test() {
         ),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         (
             r#"var contentContainer = <div className="content"></div>;"#,
             r#"var contentContainer = <div className="content" />;"#,
@@ -357,6 +357,6 @@ fn test() {
         ),
     ];
     Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail)
-        .expect_fix(_fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
