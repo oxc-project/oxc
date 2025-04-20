@@ -90,7 +90,7 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 
             let Some(name) = callee.static_property_name() else { return false };
 
-            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.binary_search(&name).is_ok()
+            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }
         Expression::ArrayExpression(_) => true,
         _ => false,

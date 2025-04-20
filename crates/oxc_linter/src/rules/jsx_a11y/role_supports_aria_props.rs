@@ -78,7 +78,7 @@ impl Rule for RoleSupportsAriaProps {
         );
         let is_implicit = role_value.is_some() && role.is_none();
         if let Some(role_value) = role_value {
-            if VALID_ARIA_ROLES.binary_search(&role_value).is_err() {
+            if !VALID_ARIA_ROLES.contains(role_value) {
                 return;
             }
             for attr in &jsx_el.attributes {
@@ -157,7 +157,7 @@ fn get_implicit_role<'a>(
         _ => "",
     };
 
-    VALID_ARIA_ROLES.binary_search(&implicit_role).is_ok().then_some(implicit_role)
+    VALID_ARIA_ROLES.contains(implicit_role).then_some(implicit_role)
 }
 
 const ALERT_ETC_PROPS: &[AriaProperty] = &[

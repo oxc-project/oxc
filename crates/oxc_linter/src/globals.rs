@@ -190,7 +190,7 @@ pub fn is_valid_aria_property(name: &str) -> bool {
 /// set of valid ARIA role definitions
 /// Reference: <https://www.w3.org/TR/wai-aria/#role_definitions>
 /// Reference: <https://github.com/A11yance/aria-query/blob/v5.3.2/src/rolesMap.js>
-pub const VALID_ARIA_ROLES: [&str; 125] = [
+pub const VALID_ARIA_ROLES: phf::Set<&'static str> = phf::phf_set![
     "alert",
     "alertdialog",
     "application",
@@ -318,7 +318,7 @@ pub const VALID_ARIA_ROLES: [&str; 125] = [
     "treeitem",
 ];
 
-pub const HTML_TAG: [&str; 149] = [
+pub const HTML_TAG: phf::Set<&'static str> = phf::phf_set![
     "a",
     "abbr",
     "acronym",
