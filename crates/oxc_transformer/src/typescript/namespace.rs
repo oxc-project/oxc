@@ -430,7 +430,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-        redeclarations.first().map_or_else(|| false, |rd| rd.span != id.span)
+        // Find first value declaration because only value declaration will emit JS code.
+        redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
     }
 }
 

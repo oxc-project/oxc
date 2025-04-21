@@ -7226,7 +7226,10 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(6)]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitEnumReferenceViaImportEquals.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Translation"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
@@ -7235,27 +7238,30 @@ rebuilt        : ScopeId(1): ["TranslationKeyEnum", "_Translation"]
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3)]
 rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "Translation":
+after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Translation":
+after transform: SymbolId(0): Span { start: 17, end: 28 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Translation":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
+Symbol redeclarations mismatch for "Translation":
+after transform: SymbolId(0): [Span { start: 17, end: 28 }, Span { start: 101, end: 112 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): Span { start: 129, end: 147 }
-rebuilt        : SymbolId(1): Span { start: 198, end: 216 }
+rebuilt        : SymbolId(2): Span { start: 198, end: 216 }
 Symbol reference IDs mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(1): []
+rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): [Span { start: 129, end: 147 }, Span { start: 198, end: 216 }]
-rebuilt        : SymbolId(1): []
-Reference symbol mismatch for "Translation":
-after transform: SymbolId(0) "Translation"
-rebuilt        : <None>
-Reference symbol mismatch for "Translation":
-after transform: SymbolId(0) "Translation"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Translation"]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitExactOptionalPropertyTypesNodeNotReused.ts
 semantic error: Scope children mismatch:
@@ -7637,18 +7643,24 @@ tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflictsWithA
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNamespaceMergedWithInterfaceNestedFunction.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Bar"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "Bar":
-after transform: SymbolId(1) "Bar"
-rebuilt        : <None>
-Reference symbol mismatch for "Bar":
-after transform: SymbolId(1) "Bar"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Bar"]
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Bar":
+after transform: SymbolId(1): Span { start: 51, end: 54 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Bar":
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
+Symbol redeclarations mismatch for "Bar":
+after transform: SymbolId(1): [Span { start: 51, end: 54 }, Span { start: 87, end: 90 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedAnonymousMappedType.ts
 semantic error: Scope children mismatch:
@@ -17506,7 +17518,10 @@ after transform: ["A"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces1.ts
-semantic error: Scope flags mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["_A"]
+rebuilt        : ScopeId(1): ["B", "_A"]
+Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
@@ -17521,18 +17536,27 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
+Symbol flags mismatch for "B":
+after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "B":
+after transform: SymbolId(1): Span { start: 33, end: 34 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "B":
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
+Symbol redeclarations mismatch for "B":
+after transform: SymbolId(1): [Span { start: 33, end: 34 }, Span { start: 107, end: 108 }]
+rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["A"]
-rebuilt        : ["B"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces2.ts
-semantic error: Scope flags mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["_A"]
+rebuilt        : ScopeId(1): ["B", "_A"]
+Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
@@ -17547,15 +17571,21 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
+Symbol flags mismatch for "B":
+after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "B":
+after transform: SymbolId(1): Span { start: 33, end: 34 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "B":
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
+Symbol redeclarations mismatch for "B":
+after transform: SymbolId(1): [Span { start: 33, end: 34 }, Span { start: 100, end: 101 }]
+rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["A"]
-rebuilt        : ["B"]
+rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces3.ts
 semantic error: Bindings mismatch:
@@ -17622,7 +17652,10 @@ after transform: SymbolId(1): [Span { start: 30, end: 31 }, Span { start: 134, e
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces5.ts
-semantic error: Scope flags mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["_A"]
+rebuilt        : ScopeId(1): ["B", "_A"]
+Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
@@ -17637,15 +17670,15 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["B"]
+Symbol flags mismatch for "B":
+after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "B":
+after transform: SymbolId(1): Span { start: 26, end: 27 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "B":
+after transform: SymbolId(1): [Span { start: 26, end: 27 }, Span { start: 100, end: 101 }]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interface0.ts
 semantic error: Scope children mismatch:
