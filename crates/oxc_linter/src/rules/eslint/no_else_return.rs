@@ -206,7 +206,6 @@ fn is_safe_from_name_collisions(
     }
 }
 
-#[expect(clippy::cast_possible_truncation)]
 fn no_else_return_diagnostic_fix(
     ctx: &LintContext,
     last_return_span: Span,
@@ -225,12 +224,7 @@ fn no_else_return_diagnostic_fix(
         return;
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        // find the "else" word start
-        let else_word_start = ctx
-            .source_range(else_keyword_span)
-            .find("else")
-            .map_or(else_keyword_span.start, |pos| else_keyword_span.start + pos as u32);
-        let target_span = Span::new(else_word_start, else_content_span.end);
+        let target_span = Span::new(else_keyword_span.start, else_content_span.end);
 
         // Capture the contents of the `else` statement, removing curly braces
         // for block statements
@@ -642,7 +636,7 @@ fn test() {
         ("if(0)return;else r", "if(0)return;r", None),
         (
             "function foo1() { if (true) { return x; } else { return y; } }",
-            "function foo1() { if (true) { return x; }  return y;  }",
+            "function foo1() { if (true) { return x; } return y;  }",
             None,
         ),
         (
@@ -652,72 +646,70 @@ fn test() {
         ),
         (
             "function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }",
-            "function foo2() { if (true) { var x = bar; return x; }  var y = baz; return y;  }",
+            "function foo2() { if (true) { var x = bar; return x; } var y = baz; return y;  }",
             None,
         ),
         (
             "function foo3() { if (true) return x; else return y; }",
-            "function foo3() { if (true) return x; return y; }",
+            "function foo3() { if (true) return x;return y; }",
             None,
         ),
         (
             "function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }",
-            "function foo4() { if (true) { if (false) return x; return y; }  return z;  }",
+            "function foo4() { if (true) { if (false) return x;return y; } return z;  }",
             None,
         ),
         (
             "function foo5() { if (true) { if (false) { if (true) return x; else { w = y; } } else { w = x; } } else { return z; } }",
-            "function foo5() { if (true) { if (false) { if (true) return x;  w = y;  } else { w = x; } } else { return z; } }",
+            "function foo5() { if (true) { if (false) { if (true) return x; w = y;  } else { w = x; } } else { return z; } }",
             None,
         ),
         (
             "function foo6() { if (true) { if (false) { if (true) return x; else return y; } } else { return z; } }",
-            "function foo6() { if (true) { if (false) { if (true) return x; return y; } } else { return z; } }",
+            "function foo6() { if (true) { if (false) { if (true) return x;return y; } } else { return z; } }",
             None,
         ),
         (
             "function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }",
-            "function foo7() { if (true) { if (false) { if (true) return x; return y; } return w; }  return z;  }",
+            "function foo7() { if (true) { if (false) { if (true) return x;return y; } return w; } return z;  }",
             None,
         ),
         (
             "function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }",
-            "function foo8() { if (true) { if (false) { if (true) return x; return y; }  w = x;  } else { return z; } }",
+            "function foo8() { if (true) { if (false) { if (true) return x;return y; } w = x;  } else { return z; } }",
             None,
         ),
         (
             "function foo9() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }",
-            "function foo9() {if (x) { return true; } else if (y) { return true; }  notAReturn();  }",
+            "function foo9() {if (x) { return true; } else if (y) { return true; } notAReturn();  }",
             None,
         ),
         (
             "function foo9a() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }",
-            "function foo9a() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }",
+            "function foo9a() {if (x) { return true; }if (y) { return true; } else { notAReturn(); } }",
             Some(serde_json::json!([{ "allowElseIf": false }])),
         ),
         (
             "function foo9b() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }",
-            "function foo9b() {if (x) { return true; } if (y) { return true; }  notAReturn();  }",
+            "function foo9b() {if (x) { return true; } if (y) { return true; } notAReturn();  }",
             Some(serde_json::json!([{ "allowElseIf": false }])),
         ),
         (
             "function foo10() { if (foo) return bar; else (foo).bar(); }",
-            "function foo10() { if (foo) return bar; (foo).bar(); }",
+            "function foo10() { if (foo) return bar;(foo).bar(); }",
             None,
         ),
         (
             "function foo13() { if (foo) return bar;
 			else { [1, 2, 3].map(foo) } }",
-            "function foo13() { if (foo) return bar;
-			 [1, 2, 3].map(foo)  }",
+            "function foo13() { if (foo) return bar; [1, 2, 3].map(foo)  }",
             None,
         ),
         (
             "function foo14() { if (foo) return bar
 			else { baz(); }
 			[1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar
-			\n baz(); 
+            "function foo14() { if (foo) return bar\n baz(); 
 			[1, 2, 3].map(foo) }",
             None,
         ),
@@ -725,100 +717,99 @@ fn test() {
             "function foo17() { if (foo) return bar
 			else { baz() }
 			qaz() }",
-            "function foo17() { if (foo) return bar
-			\n baz() 
+            "function foo17() { if (foo) return bar\n baz() 
 			qaz() }",
             None,
         ),
         (
             "function foo19() { if (true) { return x; } else if (false) { return y; } }",
-            "function foo19() { if (true) { return x; } if (false) { return y; } }",
+            "function foo19() { if (true) { return x; }if (false) { return y; } }",
             Some(serde_json::json!([{ "allowElseIf": false }])),
         ),
         (
             "function foo20() {if (x) { return true; } else if (y) { notAReturn() } else { notAReturn(); } }",
-            "function foo20() {if (x) { return true; } if (y) { notAReturn() } else { notAReturn(); } }",
+            "function foo20() {if (x) { return true; }if (y) { notAReturn() } else { notAReturn(); } }",
             Some(serde_json::json!([{ "allowElseIf": false }])),
         ),
         (
             "function foo21() { var x = true; if (x) { return x; } else if (x === false) { return false; } }",
-            "function foo21() { var x = true; if (x) { return x; } if (x === false) { return false; } }",
+            "function foo21() { var x = true; if (x) { return x; }if (x === false) { return false; } }",
             Some(serde_json::json!([{ "allowElseIf": false }])),
         ),
         (
             "function foo() { var a; if (bar) { return true; } else { var a; } }",
-            "function foo() { var a; if (bar) { return true; }  var a;  }",
+            "function foo() { var a; if (bar) { return true; } var a;  }",
             None,
         ),
         (
             "function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }",
-            "function foo() { if (bar) { var a; if (baz) { return true; }  var a;  } }",
+            "function foo() { if (bar) { var a; if (baz) { return true; } var a;  } }",
             None,
         ),
         (
             "function foo() { var a; if (bar) { return true; } else { var a; } }",
-            "function foo() { var a; if (bar) { return true; }  var a;  }",
+            "function foo() { var a; if (bar) { return true; } var a;  }",
             None,
         ),
         (
             "function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }",
-            "function foo() { if (bar) { var a; if (baz) { return true; }  var a;  } }",
+            "function foo() { if (bar) { var a; if (baz) { return true; } var a;  } }",
             None,
         ),
         (
             "function foo() {let a; if (bar) { if (baz) { return true; } else { let a; } } }",
-            "function foo() {let a; if (bar) { if (baz) { return true; }  let a;  } }",
+            "function foo() {let a; if (bar) { if (baz) { return true; } let a;  } }",
             None,
         ),
         (
             "function foo() { try {} catch (a) { if (bar) { if (baz) { return true; } else { let a; } } } }",
-            "function foo() { try {} catch (a) { if (bar) { if (baz) { return true; }  let a;  } } }",
+            "function foo() { try {} catch (a) { if (bar) { if (baz) { return true; } let a;  } } }",
             None,
         ),
         (
             "function foo() { if (bar) { return true; } else { let arguments; } }",
-            "function foo() { if (bar) { return true; }  let arguments;  }",
+            "function foo() { if (bar) { return true; } let arguments;  }",
             None,
         ),
         (
             "function foo() { if (bar) { if (baz) { return true; } else { let arguments; } } }",
-            "function foo() { if (bar) { if (baz) { return true; }  let arguments;  } }",
+            "function foo() { if (bar) { if (baz) { return true; } let arguments;  } }",
             None,
         ),
         (
             "function foo() { if (bar) { if (baz) { return true; } else { let a; } } a; }",
-            "function foo() { if (bar) { if (baz) { return true; }  let a;  } a; }",
+            "function foo() { if (bar) { if (baz) { return true; } let a;  } a; }",
             None,
         ),
         (
             "function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { var a; } }",
-            "function foo() { if (bar) { if (baz) { return true; }  let a;  } if (quux) { var a; } }",
+            "function foo() { if (bar) { if (baz) { return true; } let a;  } if (quux) { var a; } }",
             None,
         ),
         (
             "function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; } else { let a; } } }",
-            "function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; }  let a;  } }",
+            "function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; } let a;  } }",
             None,
         ),
         (
             "function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { function a(){}  } }",
-            "function foo() { if (bar) { if (baz) { return true; }  let a;  } if (quux) { function a(){}  } }",
+            "function foo() { if (bar) { if (baz) { return true; } let a;  } if (quux) { function a(){}  } }",
             None,
         ),
         (
             "function foo() { if (bar) { if (baz) { return true; } else { let a; } } function a(){} }",
-            "function foo() { if (bar) { if (baz) { return true; }  let a;  } function a(){} }",
+            "function foo() { if (bar) { if (baz) { return true; } let a;  } function a(){} }",
             None,
         ),
-        ("if (foo) { return true; } else { let a; }", "if (foo) { return true; }  let a; ", None),
+        ("if (foo) { return true; } else { let a; }", "if (foo) { return true; } let a; ", None),
         (
             "if (a) { return 2 } else { /** bar */ /** foo */ return 4 }",
-            "if (a) { return 2 }  /** bar */ /** foo */ return 4 ",
+            "if (a) { return 2 } /** bar */ /** foo */ return 4 ",
             None,
         ),
         (
             "if (a) { return 2 } else { /** bar */ return 4; /** foo */}",
-            "if (a) { return 2 }  /** bar */ return 4; /** foo */",
+            "if (a) { return 2 } /** bar */ return 4; /** foo */",
             None,
         ),
         (
@@ -831,7 +822,7 @@ fn test() {
             "
                 if (a) {
                     return foo;
-                } 
+                }
                     // comments
                     return baz;",
             None,
@@ -846,7 +837,7 @@ fn test() {
             }",
             "if (a) {
                 return foo;
-            } 
+            }
                 // comments
                 return baz;
                 // comments
@@ -854,6 +845,11 @@ fn test() {
             None,
         ),
     ];
+
+    // let pass = vec![];
+    // let fail = vec![
+    //     ("("if(0)return;else r", "if(0)return; r", None),")
+    // ];
 
     Tester::new(NoElseReturn::NAME, NoElseReturn::PLUGIN, pass, fail)
         .expect_fix(fix)
