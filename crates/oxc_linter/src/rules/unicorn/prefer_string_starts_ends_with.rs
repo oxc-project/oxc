@@ -87,14 +87,14 @@ impl Rule for PreferStringStartsEndsWith {
         };
 
         match err_kind {
-            ErrorKind::StartsWith => {
+            ErrorKind::StartsWith(_) => {
                 ctx.diagnostic_with_fix(starts_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, pattern_text)
+                    do_fix(fixer, err_kind, call_expr)
                 });
             }
-            ErrorKind::EndsWith => {
+            ErrorKind::EndsWith(_) => {
                 ctx.diagnostic_with_fix(ends_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, pattern_text)
+                    do_fix(fixer, err_kind, call_expr)
                 });
             }
         }
@@ -105,13 +105,17 @@ fn do_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     err_kind: ErrorKind,
     call_expr: &CallExpression<'a>,
-    pattern_text: &str,
 ) -> RuleFix<'a> {
     let Some(target_span) = can_replace(call_expr) else { return fixer.noop() };
     let (argument, method) = match err_kind {
-        ErrorKind::StartsWith => (pattern_text.trim_start_matches('^'), "startsWith"),
-        ErrorKind::EndsWith => (pattern_text.trim_end_matches('$'), "endsWith"),
+        ErrorKind::StartsWith(arg) => {
+            (arg.into_iter().map(std::char::from_u32).collect::<Option<String>>(), "startsWith")
+        }
+        ErrorKind::EndsWith(arg) => {
+            (arg.into_iter().map(std::char::from_u32).collect::<Option<String>>(), "endsWith")
+        }
     };
+    let Some(argument) = argument else { return fixer.noop() };
     let fix_text = format!(r#"{}.{}("{}")"#, fixer.source_range(target_span), method, argument);
 
     fixer.replace(call_expr.span, fix_text)
@@ -134,10 +138,9 @@ fn can_replace(call_expr: &CallExpression) -> Option<Span> {
     }
 }
 
-#[derive(Clone, Copy)]
 enum ErrorKind {
-    StartsWith,
-    EndsWith,
+    StartsWith(Vec<u32>),
+    EndsWith(Vec<u32>),
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
@@ -156,21 +159,24 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
     let pattern_terms = alternatives.first().map(|it| &it.body)?;
 
     if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.first() {
-        if boundary_assert.kind == BoundaryAssertionKind::Start
-            && pattern_terms.iter().skip(1).all(|term| matches!(term, Term::Character(_)))
-        {
-            return Some(ErrorKind::StartsWith);
+        if boundary_assert.kind == BoundaryAssertionKind::Start {
+            return pattern_terms
+                .iter()
+                .skip(1)
+                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+                .collect::<Option<Vec<_>>>()
+                .map(ErrorKind::StartsWith);
         }
     }
 
     if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.last() {
-        if boundary_assert.kind == BoundaryAssertionKind::End
-            && pattern_terms
+        if boundary_assert.kind == BoundaryAssertionKind::End {
+            return pattern_terms
                 .iter()
                 .take(pattern_terms.len() - 1)
-                .all(|term| matches!(term, Term::Character(_)))
-        {
-            return Some(ErrorKind::EndsWith);
+                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+                .collect::<Option<Vec<_>>>()
+                .map(ErrorKind::EndsWith);
         }
     }
 
@@ -227,6 +233,8 @@ fn test() {
     let fail = vec![
         r"/^foo/.test(bar)",
         r"/foo$/.test(bar)",
+        r"/\$$/.test(bar)",
+        r"/^\^/.test(bar)",
         r"/^!/.test(bar)",
         r"/!$/.test(bar)",
         r"/^ /.test(bar)",

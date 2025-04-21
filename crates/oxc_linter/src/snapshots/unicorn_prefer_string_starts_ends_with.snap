@@ -15,6 +15,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `/foo$/.test(bar)` with `bar.endsWith("foo")`.
 
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /\$$/.test(bar)
+   · ──────────
+   ╰────
+  help: Replace `/\$$/.test(bar)` with `bar.endsWith("$")`.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^\^/.test(bar)
+   · ──────────
+   ╰────
+  help: Replace `/^\^/.test(bar)` with `bar.startsWith("^")`.
+
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
    ╭─[prefer_string_starts_ends_with.tsx:1:1]
  1 │ /^!/.test(bar)
