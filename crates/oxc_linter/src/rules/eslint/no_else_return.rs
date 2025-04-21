@@ -206,6 +206,7 @@ fn is_safe_from_name_collisions(
     }
 }
 
+#[expect(clippy::cast_possible_truncation)]
 fn no_else_return_diagnostic_fix(
     ctx: &LintContext,
     last_return_span: Span,
@@ -228,8 +229,7 @@ fn no_else_return_diagnostic_fix(
         let else_word_start = ctx
             .source_range(else_keyword_span)
             .find("else")
-            .map(|pos| else_keyword_span.start + pos as u32)
-            .unwrap_or(else_keyword_span.start);
+            .map_or(else_keyword_span.start, |pos| else_keyword_span.start + pos as u32);
         let target_span = Span::new(else_word_start, else_content_span.end);
 
         // Capture the contents of the `else` statement, removing curly braces
