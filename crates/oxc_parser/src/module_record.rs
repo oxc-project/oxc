@@ -317,11 +317,8 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        if decl.export_kind.is_type() {
-            return;
-        }
         // ignore all TypeScript syntax as they overload
-        if decl.is_typescript_syntax() {
+        if decl.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax) {
             return;
         }
 

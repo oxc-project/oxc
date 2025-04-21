@@ -1254,8 +1254,8 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
+    fn visit_ts_class_implements_list(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implements_list(self, it);
     }
 
     #[inline]
@@ -2542,7 +2542,7 @@ pub mod walk {
         if let Some(super_type_arguments) = &it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        visitor.visit_ts_class_implementses(&it.implements);
+        visitor.visit_ts_class_implements_list(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -3622,12 +3622,10 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_binding_identifier(&it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        if let Some(extends) = &it.extends {
-            visitor.visit_ts_interface_heritages(extends);
-        }
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_ts_interface_heritages(&it.extends);
         visitor.visit_ts_interface_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -4239,7 +4237,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_class_implementses<'a, V: Visit<'a>>(
+    pub fn walk_ts_class_implements_list<'a, V: Visit<'a>>(
         visitor: &mut V,
         it: &Vec<'a, TSClassImplements<'a>>,
     ) {

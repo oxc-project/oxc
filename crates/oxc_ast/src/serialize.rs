@@ -206,7 +206,7 @@ pub struct TsNull<T>(pub T);
 
 impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -306,7 +306,7 @@ pub struct TsEmptyArray<T>(pub T);
 
 impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray(()).serialize(serializer);
     }
 }
 
@@ -410,7 +410,7 @@ pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -432,7 +432,7 @@ pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -570,7 +570,7 @@ pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
 
 impl ESTree for ElisionConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -636,7 +636,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
 
 /// Serializer for `params` field of `Function`.
 ///
-/// In TS AST, this adds `this_param` to start of the array.
+/// In TS-ESTree, this adds `this_param` to start of the `params` array.
 #[ast_meta]
 #[estree(
     ts_type = "ParamPattern[]",
@@ -673,25 +673,48 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     }
 }
 
-/// Serializer for `extends` field of `TSInterfaceDeclaration`.
+/// Serializer for `key` field of `MethodDefinition`.
 ///
-/// Serialize `extends` as an empty array if it's `None`.
+/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
+/// is represented as an `Identifier`.
+/// In Acorn and Espree, it's a `Literal`.
+/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
 #[ast_meta]
 #[estree(
-    ts_type = "Array<TSInterfaceHeritage>",
+    ts_type = "PropertyKey",
     raw_deser = "
-        const extendsArr = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
-        extendsArr === null ? [] : extendsArr
+        /* IF_JS */
+        DESER[PropertyKey](POS_OFFSET.key)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        let key = DESER[PropertyKey](POS_OFFSET.key);
+        if (THIS.kind === 'constructor') {
+            key = {
+                type: 'Identifier',
+                start: key.start,
+                end: key.end,
+                name: 'constructor',
+                decorators: [],
+                optional: false,
+                typeAnnotation: null,
+            };
+        }
+        key
+        /* END_IF_TS */
     "
 )]
-pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
+pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
 
-impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
+impl ESTree for MethodDefinitionKey<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(extends) = &self.0.extends {
-            extends.serialize(serializer);
+        let method = self.0;
+        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
+            // `key` can only be either an identifier `constructor`, or string `"constructor"`
+            let span = method.key.span();
+            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            method.key.serialize(serializer);
         }
     }
 }
@@ -715,7 +738,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
         if let Some(specifiers) = &self.0.specifiers {
             specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -760,6 +783,11 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     end: THIS.end,
                     left: keyCopy,
                     right: init,
+                    /* IF_TS */
+                    typeAnnotation: null,
+                    optional: false,
+                    decorators: [],
+                    /* END_IF_TS */
                 };
         value
     "
@@ -777,6 +805,9 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
             state.serialize_field("end", &self.0.span.end);
             state.serialize_field("left", &self.0.binding);
             state.serialize_field("right", init);
+            state.serialize_ts_field("typeAnnotation", &Null(()));
+            state.serialize_ts_field("optional", &False(()));
+            state.serialize_ts_field("decorators", &EmptyArray(()));
             state.end();
         } else {
             self.0.binding.serialize(serializer);
@@ -807,7 +838,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -827,7 +858,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -847,7 +878,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -1014,7 +1045,7 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -1079,6 +1110,100 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
             TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
         }
     }
+}
+
+/// Serializer for `params` field of `TSCallSignatureDeclaration`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
+    pub &'b TSCallSignatureDeclaration<'a>,
+);
+
+impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_ref(), &v.params, serializer);
+    }
+}
+
+/// Serializer for `params` field of `TSMethodSignature`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSMethodSignatureFormalParameters<'a, 'b>(pub &'b TSMethodSignature<'a>);
+
+impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+    }
+}
+
+/// Serializer for `params` field of `TSFunctionType`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSFunctionTypeFormalParameters<'a, 'b>(pub &'b TSFunctionType<'a>);
+
+impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+    }
+}
+
+/// Shared serialization logic used by:
+/// - `TSCallSignatureDeclarationFormalParameters`
+/// - `TSMethodSignatureFormalParameters`
+/// - `TSFunctionTypeFormalParameters`
+fn serialize_formal_params_with_this_param<'a, S: Serializer>(
+    this_param: Option<&TSThisParameter<'a>>,
+    params: &FormalParameters<'a>,
+    serializer: S,
+) {
+    let mut seq = serializer.serialize_sequence();
+
+    if let Some(this_param) = this_param {
+        seq.serialize_element(this_param);
+    }
+
+    for item in &params.items {
+        seq.serialize_element(item);
+    }
+
+    if let Some(rest) = &params.rest {
+        seq.serialize_element(&FormalParametersRest(rest));
+    }
+
+    seq.end();
 }
 
 // --------------------

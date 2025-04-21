@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-static VALID_VITEST_FN_CALL_CHAINS: [&str; 1296] = [
+static VALID_VITEST_FN_CALL_CHAINS: phf::Set<&'static str> = phf::phf_set![
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -1300,5 +1300,5 @@ static VALID_VITEST_FN_CALL_CHAINS: [&str; 1296] = [
 ];
 
 pub fn is_valid_vitest_call(members: &[Cow<str>]) -> bool {
-    VALID_VITEST_FN_CALL_CHAINS.binary_search(&members.join(".").as_str()).is_ok()
+    VALID_VITEST_FN_CALL_CHAINS.contains(&members.join("."))
 }

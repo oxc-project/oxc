@@ -38,12 +38,20 @@ fn main() -> Result<(), String> {
         }
     }
 
-    if show_ast || show_estree {
+    if show_ast {
         println!("AST:");
-        if show_estree {
-            Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        println!("{program:#?}");
+    }
+
+    if show_estree {
+        Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        if source_type.is_javascript() {
+            println!("ESTree AST:");
+            println!("{}", program.to_pretty_estree_js_json());
+        } else {
+            println!("TS-ESTree AST:");
+            println!("{}", program.to_pretty_estree_ts_json());
         }
-        println!("{}", program.to_pretty_estree_ts_json());
     }
 
     if ret.errors.is_empty() {

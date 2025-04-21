@@ -153,31 +153,19 @@ fn check_interface_declaration(
     allow_interfaces: AllowInterfaces,
     allow_with_name: &str,
 ) {
-    if matches!(allow_interfaces, AllowInterfaces::Always) {
+    if allow_interfaces == AllowInterfaces::Always {
         return;
     }
     if interface.id.name.as_str() == allow_with_name {
         return;
     }
-    match interface.extends.as_ref() {
-        Some(extends) if extends.len() == 1 => match allow_interfaces {
-            AllowInterfaces::WithSingleExtends => (),
-            _ => ctx.diagnostic(no_empty_object_type_diagnostic(
-                interface.body.span,
-                "Do not use an empty interface declaration.",
-            )),
-        },
-        Some(extends) if extends.is_empty() => {
-            ctx.diagnostic(no_empty_object_type_diagnostic(
-                interface.body.span,
-                "Do not use an empty interface declaration.",
-            ));
-        }
-        None => ctx.diagnostic(no_empty_object_type_diagnostic(
+    if interface.extends.is_empty()
+        || (allow_interfaces == AllowInterfaces::Never && interface.extends.len() == 1)
+    {
+        ctx.diagnostic(no_empty_object_type_diagnostic(
             interface.body.span,
             "Do not use an empty interface declaration.",
-        )),
-        _ => (),
+        ));
     }
 }
 
@@ -209,7 +197,7 @@ fn check_type_literal(
     ));
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 enum AllowInterfaces {
     #[default]
     Never,

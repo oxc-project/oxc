@@ -46,7 +46,7 @@ impl Derive for DeriveESTree {
                     StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant | Meta
                 ),
             ),
-            ("ts", attr_positions!(StructField | EnumVariant | Meta)),
+            ("ts", attr_positions!(StructField | Meta)),
         ]
     }
 
@@ -204,19 +204,16 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     Ok(())
 }
 
-/// Parse `#[ts]` attr on struct field or enum variant.
+/// Parse `#[ts]` attr on struct field or meta type.
 fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
     if !matches!(part, AttrPart::None) {
         return Err(());
     }
 
-    // Location can only be `StructField`, `EnumVariant`, or `Meta`
+    // Location can only be `StructField` or `Meta`
     match location {
         AttrLocation::StructField(struct_def, field_index) => {
             struct_def.fields[field_index].estree.is_ts = true;
-        }
-        AttrLocation::EnumVariant(enum_def, variant_index) => {
-            enum_def.variants[variant_index].estree.is_ts = true;
         }
         AttrLocation::Meta(meta) => meta.estree.is_ts = true,
         _ => unreachable!(),

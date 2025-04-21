@@ -155,21 +155,21 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
 }
 
 /// If callee is calling the `indexOf` or `lastIndexOf` function.
-fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
+fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     const TARGET_METHODS: [&str; 2] = ["indexOf", "lastIndexOf"];
     let callee = callee.get_inner_expression();
 
     if let Some(expr) = callee.as_member_expression() {
-        return expr.static_property_name().and_then(|property| {
-            TARGET_METHODS.iter().find(|method| **method == property).copied()
-        });
+        return expr
+            .static_property_name()
+            .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     if let Expression::ChainExpression(chain) = callee {
         let expr = chain.expression.as_member_expression()?;
-        return expr.static_property_name().and_then(|property| {
-            TARGET_METHODS.iter().find(|method| **method == property).copied()
-        });
+        return expr
+            .static_property_name()
+            .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     None

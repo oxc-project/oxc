@@ -523,6 +523,7 @@ describe('UTF-16 span', () => {
                   "name": "x",
                   "start": 12,
                 },
+                "isType": false,
                 "localName": {
                   "kind": "None",
                 },

@@ -12,7 +12,7 @@ use unicode_width::UnicodeWidthChar;
 use self::call_stack::PrintIndentStack;
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    TextLen, TextRange, TextSize,
+    TextRange, TextSize,
     format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
     prelude::{
         Tag::EndFill,

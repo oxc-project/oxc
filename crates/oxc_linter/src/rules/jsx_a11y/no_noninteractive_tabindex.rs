@@ -132,7 +132,7 @@ impl Rule for NoNoninteractiveTabindex {
 
         let component = &get_element_type(ctx, jsx_el);
 
-        if INTERACTIVE_HTML_ELEMENTS.binary_search(&component.as_ref()).is_ok() {
+        if INTERACTIVE_HTML_ELEMENTS.contains(&component.as_ref()) {
             return;
         }
 
@@ -152,7 +152,7 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        if INTERACTIVE_HTML_ROLES.binary_search(&role.value.as_str()).is_err()
+        if !INTERACTIVE_HTML_ROLES.contains(&role.value.as_str())
             && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
         {
             ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));

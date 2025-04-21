@@ -143,19 +143,6 @@ impl<'a> ParserImpl<'a> {
 
         self.expect(Kind::Using)?;
 
-        // `[no LineTerminator here]`
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::line_terminator_before_using_declaration(
-                self.cur_token().span(),
-            ));
-        }
-
-        // [lookahead ≠ await]
-        if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::await_in_using_declaration(self.cur_token().span()));
-            self.eat(Kind::Await);
-        }
-
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
         loop {

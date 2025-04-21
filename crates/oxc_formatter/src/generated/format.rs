@@ -9,7 +9,7 @@ use crate::{
         Buffer, Format, FormatResult, Formatter,
         trivia::{format_leading_comments, format_trailing_comments},
     },
-    write::{self, FormatWrite},
+    write::FormatWrite,
 };
 
 /// A hack for erasing the lifetime requirement.

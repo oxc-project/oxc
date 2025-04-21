@@ -12,11 +12,6 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     /* ------------------- Enum ------------------ */
-
-    pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
-        self.at(Kind::Enum) || (self.at(Kind::Const) && self.peek_at(Kind::Enum))
-    }
-
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
@@ -160,7 +155,8 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
         let (extends, _) = self.parse_heritage_clause()?;
         let body = self.parse_ts_interface_body()?;
-        let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
+        let extends =
+            extends.map_or_else(|| self.ast.vec(), |e| self.ast.ts_interface_heritages(e));
 
         self.verify_modifiers(
             modifiers,
@@ -171,8 +167,8 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_interface(
             self.end_span(span),
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             modifiers.contains_declare(),
         ))

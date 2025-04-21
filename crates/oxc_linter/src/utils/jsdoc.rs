@@ -12,7 +12,7 @@ pub const CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
     ["abstract", "class", "constructor", "interface", "type", "virtual"];
 
 pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.binary_search(&tag.kind.parsed()).is_ok())
+    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
 pub fn is_missing_special_tag(jsdoc_tags: &[&JSDocTag], resolved_tag_name: &str) -> bool {

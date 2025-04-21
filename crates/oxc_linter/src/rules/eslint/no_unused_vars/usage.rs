@@ -411,6 +411,27 @@ impl<'a> Symbol<'_, 'a> {
                                 return false; // we can short-circuit
                             }
                         }
+                        AssignmentTarget::TSAsExpression(v)
+                            if v.expression.is_member_expression() =>
+                        {
+                            return false;
+                        }
+                        AssignmentTarget::TSSatisfiesExpression(v)
+                            if v.expression.is_member_expression() =>
+                        {
+                            return false;
+                        }
+                        AssignmentTarget::TSNonNullExpression(v)
+                            if v.expression.is_member_expression() =>
+                        {
+                            return false;
+                        }
+                        AssignmentTarget::TSTypeAssertion(v)
+                            if v.expression.is_member_expression() =>
+                        {
+                            return false;
+                        }
+
                         // variable is being used to index another variable, this is
                         // always a usage
                         // todo: check self index?

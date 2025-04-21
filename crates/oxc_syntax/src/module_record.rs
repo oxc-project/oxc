@@ -270,7 +270,6 @@ pub struct ExportEntry<'a> {
     /// export { type foo }
     /// export type { foo } from 'mod'
     /// ```
-    #[estree(skip)]
     pub is_type: bool,
 }
 

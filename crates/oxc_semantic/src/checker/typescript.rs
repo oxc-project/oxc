@@ -240,14 +240,12 @@ pub fn check_ts_interface_declaration<'a>(
     decl: &TSInterfaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(extends) = &decl.extends {
-        for extend in extends {
-            if !matches!(
-                &extend.expression,
-                Expression::Identifier(_) | Expression::StaticMemberExpression(_),
-            ) {
-                ctx.error(invalid_interface_extend(extend.span));
-            }
+    for extend in &decl.extends {
+        if !matches!(
+            &extend.expression,
+            Expression::Identifier(_) | Expression::StaticMemberExpression(_),
+        ) {
+            ctx.error(invalid_interface_extend(extend.span));
         }
     }
 }

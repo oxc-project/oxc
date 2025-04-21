@@ -157,7 +157,7 @@ fn get_implicit_role<'a>(
         _ => "",
     };
 
-    if VALID_ARIA_ROLES.contains(implicit_role) { Some(implicit_role) } else { None }
+    VALID_ARIA_ROLES.contains(implicit_role).then_some(implicit_role)
 }
 
 const ALERT_ETC_PROPS: &[AriaProperty] = &[

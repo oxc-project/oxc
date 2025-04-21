@@ -4373,6 +4373,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:18]
+ 1 │ function f(a, ...b = 0)
+   ·                  ─────
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:24]
  1 │ function f(a, ...b = 0)
@@ -5794,12 +5800,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────
    ╰────
 
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/22/input.js:1:9]
+ 1 │ var {...x = 1} = {}
+   ·         ─────
+   ╰────
+
   × Invalid rest element
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/22/input.js:1:9]
  1 │ var {...x = 1} = {}
    ·         ─────
    ╰────
   help: Expected identifier in rest element
+
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
+ 1 │ function test({...x = 1}) {}
+   ·                   ─────
+   ╰────
 
   × Invalid rest element
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
@@ -11225,7 +11243,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0260/input.js:1:15]
  1 │ function x(...a = 1){}
    ·               ─────

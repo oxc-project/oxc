@@ -406,6 +406,9 @@ function deserializeAssignmentTargetWithDefault(pos) {
     end: deserializeU32(pos + 4),
     left: deserializeAssignmentTarget(pos + 8),
     right: deserializeExpression(pos + 24),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -423,6 +426,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
         end: end,
         left: keyCopy,
         right: init,
+        typeAnnotation: null,
+        optional: false,
+        decorators: [],
       };
   return {
     type: 'Property',
@@ -760,6 +766,8 @@ function deserializeAssignmentPattern(pos) {
     left: deserializeBindingPattern(pos + 8),
     right: deserializeExpression(pos + 40),
     decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -932,14 +940,27 @@ function deserializeClassBody(pos) {
 }
 
 function deserializeMethodDefinition(pos) {
+  const kind = deserializeMethodDefinitionKind(pos + 72);
+  let key = deserializePropertyKey(pos + 48);
+  if (kind === 'constructor') {
+    key = {
+      type: 'Identifier',
+      start: key.start,
+      end: key.end,
+      name: 'constructor',
+      decorators: [],
+      optional: false,
+      typeAnnotation: null,
+    };
+  }
   return {
     type: deserializeMethodDefinitionType(pos + 8),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     static: deserializeBool(pos + 74),
     computed: deserializeBool(pos + 73),
-    key: deserializePropertyKey(pos + 48),
-    kind: deserializeMethodDefinitionKind(pos + 72),
+    key,
+    kind,
     value: deserializeBoxFunction(pos + 64),
     decorators: deserializeVecDecorator(pos + 16),
     override: deserializeBool(pos + 75),
@@ -1740,14 +1761,13 @@ function deserializeTSClassImplements(pos) {
 }
 
 function deserializeTSInterfaceDeclaration(pos) {
-  const extendsArr = deserializeOptionVecTSInterfaceHeritage(pos + 40);
   return {
     type: 'TSInterfaceDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeBindingIdentifier(pos + 8),
-    extends: extendsArr === null ? [] : extendsArr,
-    typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 72),
+    typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 40),
+    extends: deserializeVecTSInterfaceHeritage(pos + 48),
     body: deserializeBoxTSInterfaceBody(pos + 80),
     declare: deserializeBool(pos + 88),
   };
@@ -1791,17 +1811,23 @@ function deserializeTSIndexSignature(pos) {
 }
 
 function deserializeTSCallSignatureDeclaration(pos) {
+  const params = deserializeBoxFormalParameters(pos + 48);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSCallSignatureDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    params: deserializeBoxFormalParameters(pos + 48),
+    params,
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
   };
 }
 
 function deserializeTSMethodSignature(pos) {
+  const params = deserializeBoxFormalParameters(pos + 48);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 40);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSMethodSignature',
     start: deserializeU32(pos),
@@ -1811,7 +1837,7 @@ function deserializeTSMethodSignature(pos) {
     optional: deserializeBool(pos + 25),
     kind: deserializeTSMethodSignatureKind(pos + 26),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 32),
-    params: deserializeBoxFormalParameters(pos + 48),
+    params,
     returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
     accessibility: null,
     readonly: false,
@@ -1929,12 +1955,15 @@ function deserializeTSImportType(pos) {
 }
 
 function deserializeTSFunctionType(pos) {
+  const params = deserializeBoxFormalParameters(pos + 24);
+  const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
+  if (thisParam !== null) params.unshift(thisParam);
   return {
     type: 'TSFunctionType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
-    params: deserializeBoxFormalParameters(pos + 24),
+    params,
     returnType: deserializeBoxTSTypeAnnotation(pos + 32),
   };
 }
@@ -2137,6 +2166,7 @@ function deserializeExportEntry(pos) {
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
+    isType: deserializeBool(pos + 136),
   };
 }
 
@@ -5545,11 +5575,6 @@ function deserializeVecTSInterfaceHeritage(pos) {
     pos += 32;
   }
   return arr;
-}
-
-function deserializeOptionVecTSInterfaceHeritage(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeVecTSInterfaceHeritage(pos);
 }
 
 function deserializeBoxTSInterfaceBody(pos) {

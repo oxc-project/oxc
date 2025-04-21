@@ -1247,7 +1247,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) {
-        match &mut expr.without_parentheses_mut() {
+        match &mut expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
             }

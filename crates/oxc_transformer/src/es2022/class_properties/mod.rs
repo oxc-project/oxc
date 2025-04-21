@@ -323,6 +323,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op in release mode
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        debug_assert_eq!(self.private_field_count, 0);
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_body_on_entry(body, ctx);
     }

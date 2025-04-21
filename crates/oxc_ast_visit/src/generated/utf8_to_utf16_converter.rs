@@ -1247,7 +1247,7 @@ impl Utf8ToUtf16Converter<'_> {
         if let Some(super_type_arguments) = &mut class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        self.visit_ts_class_implementses(&mut class.implements);
+        self.visit_ts_class_implements_list(&mut class.implements);
         self.visit_class_body(&mut class.body);
         // Process span end of `Class` and export statement
         self.convert_offset(&mut class.span.end);

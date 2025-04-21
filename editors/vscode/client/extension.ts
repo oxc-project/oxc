@@ -129,7 +129,9 @@ export async function activate(context: ExtensionContext) {
       try {
         await fsPromises.access(bin);
         return bin;
-      } catch {}
+      } catch (e) {
+        outputChannel.error(`Invalid bin path: ${bin}`, e);
+      }
     }
 
     const workspaceFolders = workspace.workspaceFolders;

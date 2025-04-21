@@ -897,6 +897,7 @@ pub enum TSAccessibility {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
     pub span: Span,
     pub expression: TSTypeName<'a>,
@@ -926,12 +927,11 @@ pub struct TSInterfaceDeclaration<'a> {
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
-    /// Other interfaces/types this interface extends.
-    #[scope(enter_before)]
-    #[estree(via = TSInterfaceDeclarationExtends)]
-    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Type parameters that get bound to the interface.
+    #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    /// Other interfaces/types this interface extends.
+    pub extends: Vec<'a, TSInterfaceHeritage<'a>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
@@ -1017,6 +1017,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<TSThisParameter<'a>>,
+    #[estree(via = TSCallSignatureDeclarationFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1055,6 +1056,7 @@ pub struct TSMethodSignature<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    #[estree(via = TSMethodSignatureFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1365,6 +1367,7 @@ pub struct TSFunctionType<'a> {
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
+    #[estree(via = TSFunctionTypeFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts

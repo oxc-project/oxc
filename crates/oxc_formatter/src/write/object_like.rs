@@ -3,9 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        prelude::{
-            format_dangling_comments, format_with, group, soft_block_indent_with_maybe_space,
-        },
+        prelude::{format_with, group, soft_block_indent_with_maybe_space},
     },
     options::Expand,
     write,

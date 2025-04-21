@@ -10,7 +10,7 @@ where
             let (sign, style) = match change.tag() {
                 ChangeTag::Delete => ("-", Style::new().red()),
                 ChangeTag::Insert => ("+", Style::new().green()),
-                ChangeTag::Equal => (" ", Style::new()),
+                ChangeTag::Equal => continue,
             };
             print!("{}{}", style.apply_to(sign).bold(), style.apply_to(change));
         }

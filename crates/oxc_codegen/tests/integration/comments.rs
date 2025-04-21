@@ -436,6 +436,12 @@ void /* @__PURE__ */ function() {}();
 typeof /* @__PURE__ */ function() {}();
 ! /* @__PURE__ */ function() {}();
 delete /* @__PURE__ */ (() => {})();",
+            "const Foo = /* @__PURE__ */ (((() => {})()))",
+            "const Foo = /* @__PURE__ */ (() => { })() as unknown as { new (): any }",
+            "const Foo = /* @__PURE__ */ (() => {})() satisfies X",
+            "const Foo = /* @__PURE__ */ (() => {})()<X>",
+            "const Foo = /* @__PURE__ */ <Foo>(() => {})()!",
+            "const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y",
         ];
 
         snapshot("pure_comments", &cases);

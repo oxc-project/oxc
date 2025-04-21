@@ -94,7 +94,7 @@ impl Generator for FormatterFormatGenerator {
                     Buffer, Format, FormatResult, Formatter,
                     trivia::{format_leading_comments, format_trailing_comments},
                 },
-                write::{self, FormatWrite},
+                write::FormatWrite,
             };
 
             ///@@line_break

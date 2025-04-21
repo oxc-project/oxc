@@ -6884,8 +6884,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceDeclaration<'_> {
         TSInterfaceDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
-            extends: CloneIn::clone_in(&self.extends, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            extends: CloneIn::clone_in(&self.extends, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
             scope_id: Default::default(),
@@ -6896,8 +6896,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceDeclaration<'_> {
         TSInterfaceDeclaration {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             id: CloneIn::clone_in_with_semantic_ids(&self.id, allocator),
-            extends: CloneIn::clone_in_with_semantic_ids(&self.extends, allocator),
             type_parameters: CloneIn::clone_in_with_semantic_ids(&self.type_parameters, allocator),
+            extends: CloneIn::clone_in_with_semantic_ids(&self.extends, allocator),
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
             declare: CloneIn::clone_in_with_semantic_ids(&self.declare, allocator),
             scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),

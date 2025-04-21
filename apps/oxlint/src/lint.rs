@@ -40,9 +40,8 @@ impl Runner for LintRunner {
 
         if self.options.list_rules {
             if let Some(output) = output_formatter.all_rules() {
-                stdout.write_all(output.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+                print_and_flush_stdout(stdout, &output);
             }
-            stdout.flush().unwrap();
             return CliRunResult::None;
         }
 
@@ -72,9 +71,7 @@ impl Runner for LintRunner {
         let filters = match Self::get_filters(filter) {
             Ok(filters) => filters,
             Err((result, message)) => {
-                stdout.write_all(message.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
-                stdout.flush().unwrap();
-
+                print_and_flush_stdout(stdout, &message);
                 return result;
             }
         };
@@ -83,12 +80,10 @@ impl Runner for LintRunner {
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
         if let Err(err) = config_search_result {
-            stdout
-                .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
-                .or_else(Self::check_for_writer_error)
-                .unwrap();
-            stdout.flush().unwrap();
-
+            print_and_flush_stdout(
+                stdout,
+                &format!("Failed to parse configuration file.\n{err}\n"),
+            );
             return CliRunResult::InvalidOptionConfig;
         }
 
@@ -154,8 +149,7 @@ impl Runner for LintRunner {
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
                 }) {
-                    stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
-                    stdout.flush().unwrap();
+                    print_and_flush_stdout(stdout, &end);
                 }
 
                 return CliRunResult::LintNoFilesFound;
@@ -166,13 +160,14 @@ impl Runner for LintRunner {
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
         let paths = walker.paths();
-
         let number_of_files = paths.len();
 
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
         let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
+
+        let handler = GraphicalReportHandler::new();
 
         if use_nested_config {
             // get all of the unique directories among the paths to use for search for
@@ -203,18 +198,13 @@ impl Runner for LintRunner {
                 let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
                     Ok(builder) => builder,
                     Err(e) => {
-                        let handler = GraphicalReportHandler::new();
-                        let mut err = String::new();
-                        handler
-                            .render_report(&mut err, &OxcDiagnostic::error(e.to_string()))
-                            .unwrap();
-                        stdout
-                            .write_all(
-                                format!("Failed to parse configuration file.\n{err}\n").as_bytes(),
-                            )
-                            .or_else(Self::check_for_writer_error)
-                            .unwrap();
-                        stdout.flush().unwrap();
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse configuration file.\n{}\n",
+                                render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                            ),
+                        );
 
                         return CliRunResult::InvalidOptionConfig;
                     }
@@ -224,16 +214,13 @@ impl Runner for LintRunner {
                 match builder.build() {
                     Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
                     Err(diagnostic) => {
-                        let handler = GraphicalReportHandler::new();
-                        let mut err = String::new();
-                        handler.render_report(&mut err, &diagnostic).unwrap();
-                        stdout
-                            .write_all(
-                                format!("Failed to parse configuration file.\n{err}\n").as_bytes(),
-                            )
-                            .or_else(Self::check_for_writer_error)
-                            .unwrap();
-                        stdout.flush().unwrap();
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse configuration file.\n{}\n",
+                                render_report(&handler, &diagnostic)
+                            ),
+                        );
 
                         return CliRunResult::InvalidOptionConfig;
                     }
@@ -251,15 +238,13 @@ impl Runner for LintRunner {
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
             Ok(builder) => builder,
             Err(e) => {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler.render_report(&mut err, &OxcDiagnostic::error(e.to_string())).unwrap();
-                stdout
-                    .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
-                    .or_else(Self::check_for_writer_error)
-                    .unwrap();
-                stdout.flush().unwrap();
-
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse configuration file.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
                 return CliRunResult::InvalidOptionConfig;
             }
         }
@@ -268,12 +253,8 @@ impl Runner for LintRunner {
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
             if misc_options.print_config {
-                stdout
-                    .write_all(config_file.as_bytes())
-                    .or_else(Self::check_for_writer_error)
-                    .unwrap();
-                stdout.write_all(b"\n").or_else(Self::check_for_writer_error).unwrap();
-                stdout.flush().unwrap();
+                print_and_flush_stdout(stdout, &config_file);
+                print_and_flush_stdout(stdout, "\n");
 
                 return CliRunResult::PrintConfigResult;
             } else if basic_options.init {
@@ -295,20 +276,12 @@ impl Runner for LintRunner {
                 };
 
                 if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
-                    stdout
-                        .write_all(b"Configuration file created\n")
-                        .or_else(Self::check_for_writer_error)
-                        .unwrap();
-                    stdout.flush().unwrap();
+                    print_and_flush_stdout(stdout, "Configuration file created\n");
                     return CliRunResult::ConfigFileInitSucceeded;
                 }
 
                 // failed case
-                stdout
-                    .write_all("Failed to create configuration file\n".as_bytes())
-                    .or_else(Self::check_for_writer_error)
-                    .unwrap();
-                stdout.flush().unwrap();
+                print_and_flush_stdout(stdout, "Failed to create configuration file\n");
                 return CliRunResult::ConfigFileInitFailed;
             }
         }
@@ -326,14 +299,13 @@ impl Runner for LintRunner {
         let lint_config = match config_builder.build() {
             Ok(config) => config,
             Err(diagnostic) => {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler.render_report(&mut err, &diagnostic).unwrap();
-                stdout
-                    .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
-                    .or_else(Self::check_for_writer_error)
-                    .unwrap();
-                stdout.flush().unwrap();
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse configuration file.\n{}\n",
+                        render_report(&handler, &diagnostic)
+                    ),
+                );
 
                 return CliRunResult::InvalidOptionConfig;
             }
@@ -361,11 +333,14 @@ impl Runner for LintRunner {
                 options = options.with_tsconfig(path);
             } else {
                 let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
-                stdout.write_all(format!(
-                    "The tsconfig file {:?} does not exist, Please provide a valid tsconfig file.\n",
-                    path.to_string_lossy().cow_replace('\\', "/")
-                ).as_bytes()).or_else(Self::check_for_writer_error).unwrap();
-                stdout.flush().unwrap();
+
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "The tsconfig file {:?} does not exist, Please provide a valid tsconfig file.\n",
+                        path.to_string_lossy().cow_replace('\\', "/")
+                    ),
+                );
 
                 return CliRunResult::InvalidOptionTsConfig;
             }
@@ -393,8 +368,7 @@ impl Runner for LintRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
         }) {
-            stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
-            stdout.flush().unwrap();
+            print_and_flush_stdout(stdout, &end);
         }
 
         if diagnostic_result.errors_count() > 0 {
@@ -527,15 +501,6 @@ impl LintRunner {
         }
     }
 
-    fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
-        }
-    }
-
     fn adjust_ignore_patterns(
         base: &PathBuf,
         path: &PathBuf,
@@ -559,6 +524,26 @@ impl LintRunner {
                 .collect()
         }
     }
+}
+
+fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
+    stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
+    stdout.flush().unwrap();
+}
+
+fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
+    // Do not panic when the process is killed (e.g. piping into `less`).
+    if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+        Ok(())
+    } else {
+        Err(error)
+    }
+}
+
+fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -> String {
+    let mut err = String::new();
+    handler.render_report(&mut err, diagnostic).unwrap();
+    err
 }
 
 #[cfg(test)]
