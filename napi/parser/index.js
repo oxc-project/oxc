@@ -10,7 +10,7 @@ module.exports.ExportLocalNameKind = bindings.ExportLocalNameKind;
 module.exports.ImportNameKind = bindings.ImportNameKind;
 module.exports.parseWithoutReturn = bindings.parseWithoutReturn;
 module.exports.Severity = bindings.Severity;
-module.exports.callThreadsafeFunction = bindings.callThreadsafeFunction;
+module.exports.linterMain = bindings.linterMain;
 
 module.exports.parseAsync = async function parseAsync(...args) {
   return wrap(await bindings.parseAsync(...args));

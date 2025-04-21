@@ -5,9 +5,9 @@
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-use std::mem;
+use std::{mem, sync::Arc};
 
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{Task, bindgen_prelude::*, threadsafe_function::ThreadsafeFunction};
 use napi_derive::napi;
 
 use oxc::{
@@ -159,28 +159,20 @@ pub fn parse_async(
 }
 
 #[napi]
-pub fn call_threadsafe_function(callback: napi::JsFunction) -> napi::Result<()> {
-    use std::sync::Arc;
-
-    use napi::threadsafe_function::{ThreadsafeFunction, UnknownReturnValue};
-
-    use tokio::runtime::Runtime;
-
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(async {
-        let tsfn: ThreadsafeFunction<u32, UnknownReturnValue, _> = callback
-            .create_threadsafe_function(|ctx| ctx.env.create_uint32(ctx.value + 1).map(|v| vec![v]))
-            .unwrap();
-        let tsfn = Arc::new(tsfn);
-
-        for n in 0..10 {
-            let tsfn = tsfn.clone();
-            tokio::spawn(async move {
-                let _ = tsfn.call_async(Ok(n)).await;
-            });
-        }
-    });
-
+pub async fn linter_main(
+    callback: Arc<ThreadsafeFunction<ParseResult, Promise<u32>>>,
+) -> napi::Result<()> {
+    use futures::future::join_all;
+    let futures = (0..10)
+        .into_iter()
+        .map(async |n| {
+            let source_text = format!("var a = {n};");
+            let parse_result = parse_sync("test.js".into(), source_text, None);
+            let promise = callback.call_async(Ok(parse_result)).await;
+            let ret = promise.unwrap().await;
+            println!("{}", ret.unwrap());
+        })
+        .collect::<Vec<_>>();
+    join_all(futures).await;
     Ok(())
 }

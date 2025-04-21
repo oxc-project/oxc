@@ -9,8 +9,6 @@ export declare class ParseResult {
   get errors(): Array<OxcError>
 }
 
-export declare function callThreadsafeFunction(callback: (...args: any[]) => any): void
-
 export interface Comment {
   type: 'Line' | 'Block'
   value: string
@@ -125,6 +123,8 @@ export declare const enum ImportNameKind {
   /** `import defaultExport from "mod"` */
   Default = 'Default'
 }
+
+export declare function linterMain(callback: ((err: Error | null, arg: ParseResult) => Promise<number>)): Promise<void>
 
 export interface OxcError {
   severity: Severity

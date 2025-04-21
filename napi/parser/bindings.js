@@ -383,12 +383,12 @@ if (!nativeBinding) {
 }
 
 module.exports.ParseResult = nativeBinding.ParseResult
-module.exports.callThreadsafeFunction = nativeBinding.callThreadsafeFunction
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
 module.exports.getBufferOffset = nativeBinding.getBufferOffset
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
+module.exports.linterMain = nativeBinding.linterMain
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseSyncRaw = nativeBinding.parseSyncRaw
