@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 9097/10725 (84.82%)
+Positive Passed: 9096/10725 (84.81%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/accessOverriddenBaseClassMember1.ts
@@ -1668,6 +1668,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModul
 Cannot use `await` as an identifier in an async context
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 `await` is only allowed within async functions and at the top levels of modules
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers.ts
+The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts
 Unexpected estree file content error: 3 != 4
 
