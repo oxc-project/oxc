@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6523/6531 (99.88%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1308/5754 (22.73%)
+Negative Passed: 1309/5754 (22.75%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -2539,8 +2539,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeCas
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeNongenericInstantiationAttempt.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefMissingType.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallElaborationCheckNoCrash1.tsx
 
@@ -13414,6 +13412,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·        ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Duplicated export 'foo'
+   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:1:13]
+ 1 │ export type foo = 5;
+   ·             ─┬─
+   ·              ╰── Export has already been declared here
+ 2 │ /**
+   ╰────
+   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:6:14]
+ 5 │  */
+ 6 │ export const foo = 5;
+   ·              ─┬─
+   ·               ╰── It cannot be redeclared here
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/jsxAttributeMissingInitializer.tsx:1:21]
