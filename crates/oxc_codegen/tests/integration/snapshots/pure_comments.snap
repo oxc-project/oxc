@@ -435,3 +435,35 @@ void /* @__PURE__ */ function() {}();
 typeof /* @__PURE__ */ function() {}();
 !/* @__PURE__ */ function() {}();
 delete /* @__PURE__ */ (() => {})();
+
+########## 25
+const Foo = /* @__PURE__ */ (((() => {})()))
+----------
+const Foo = /* @__PURE__ */ (() => {})();
+
+########## 26
+const Foo = /* @__PURE__ */ (() => { })() as unknown as { new (): any }
+----------
+const Foo = (/* @__PURE__ */ (() => {})() as unknown) as {
+	new (): any
+};
+
+########## 27
+const Foo = /* @__PURE__ */ (() => {})() satisfies X
+----------
+const Foo = ((/* @__PURE__ */ (() => {})()) satisfies X);
+
+########## 28
+const Foo = /* @__PURE__ */ (() => {})()<X>
+----------
+const Foo = /* @__PURE__ */ (() => {})()<X>;
+
+########## 29
+const Foo = /* @__PURE__ */ <Foo>(() => {})()!
+----------
+const Foo = (<Foo>(/* @__PURE__ */ (() => {})())!);
+
+########## 30
+const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y
+----------
+const Foo = (((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y);
