@@ -846,11 +846,6 @@ fn test() {
         ),
     ];
 
-    // let pass = vec![];
-    // let fail = vec![
-    //     ("("if(0)return;else r", "if(0)return; r", None),")
-    // ];
-
     Tester::new(NoElseReturn::NAME, NoElseReturn::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
