@@ -32,7 +32,7 @@ fn test_function_expressions() {
         .test();
     SemanticTester::js("const x = () => {}")
         .has_some_symbol("x")
-        .contains_flags(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable)
+        .contains_flags(SymbolFlags::BlockScopedVariable)
         .test();
 }
 

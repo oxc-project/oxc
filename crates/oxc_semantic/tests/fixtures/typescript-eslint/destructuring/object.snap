@@ -10,49 +10,49 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/o
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "shorthand",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 1,
         "name": "value",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "world",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 3,
         "name": "a",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 4,
         "name": "b",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 5,
         "name": "c",
         "node": "VariableDeclarator(<destructure>)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 6,
         "name": "d",
         "node": "VariableDeclarator(<destructure>)",

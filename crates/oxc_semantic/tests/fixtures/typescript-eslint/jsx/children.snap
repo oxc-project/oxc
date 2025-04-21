@@ -10,7 +10,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/children.ts
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "child",
         "node": "VariableDeclarator(child)",

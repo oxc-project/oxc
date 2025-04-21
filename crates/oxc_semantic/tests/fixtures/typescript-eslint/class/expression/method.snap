@@ -82,21 +82,21 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "A",
         "node": "VariableDeclarator(A)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 7,
         "name": "unresolved1",
         "node": "VariableDeclarator(unresolved1)",
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 8,
         "name": "unresolved2",
         "node": "VariableDeclarator(unresolved2)",
