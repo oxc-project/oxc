@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Bug Fixes
+
+- 1952e30 ast/estree: Serialize class constructor key as `Identifier` in TS-ESTree AST (#10471) (overlookmotel)
+- fbf0ae2 estree: Add missing fixed fields to `AssignmentPattern` (#10490) (Yuji Sugiura)
+- a42d85f estree: `FormalParameters` serializer for TS types (#10462) (Yuji Sugiura)
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+
+### Documentation
+
+- 109cb21 napi/parser: Remove raw transfer from example (#10486) (overlookmotel)
+
+### Refactor
+
+
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Bug Fixes
+
+- 1952e30 ast/estree: Serialize class constructor key as `Identifier` in TS-ESTree AST (#10471) (overlookmotel)
+- fbf0ae2 estree: Add missing fixed fields to `AssignmentPattern` (#10490) (Yuji Sugiura)
+- a42d85f estree: `FormalParameters` serializer for TS types (#10462) (Yuji Sugiura)
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+
+### Documentation
+
+- 109cb21 napi/parser: Remove raw transfer from example (#10486) (overlookmotel)
+
+### Refactor
+
+
 ## [0.64.0] - 2025-04-17
 
 - c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)

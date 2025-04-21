@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+### Bug Fixes
+
+- 45f8cc0 transformer/class-properties: `private_field_count` is incorrect when class only have `accessor` with private field (#10463) (Dunqing)
+- 33a2625 transformer/typescript: Namespaces disappeared and do not transform when a type-only namespace followed by a value module namespace (#10511) (Dunqing)
+- 710a35c transformer/typescript: Variable declaration disappears when declaring type-alias/interface first and then declaring namespace (#10510) (Dunqing)
+
+### Refactor
+
+- a5875da transformer/class-properties: Refactor code for decrementing `private_field_count` (#10464) (overlookmotel)
+- e0ef9a8 transformer/class-properties: Debug assert `private_field_count` is 0 at end of transform (#10457) (overlookmotel)
+
 ## [0.64.0] - 2025-04-17
 
 - 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)

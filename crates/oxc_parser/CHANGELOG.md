@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Features
+
+- 5ba02b0 parser: Set `pure` on typescript wrapped AST nodes (#10520) (Boshen)
+- 588da69 parser: A rest parameter cannot have an initializer (#10467) (Boshen)
+- c8336dd parser: Error for `const { ...a: b } = {}` (#10466) (Boshen)
+
+### Bug Fixes
+
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+- 7664bd0 parser: Fix `using` asi (#10504) (Boshen)
+- b7e0536 parser: Correct AST for `a<b>?.()` (#10461) (Boshen)
+
+### Documentation
+
+- ac23773 parser: Update parser example (#10468) (overlookmotel)
+
+### Refactor
+
+
 ## [0.64.0] - 2025-04-17
 
 - c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)
