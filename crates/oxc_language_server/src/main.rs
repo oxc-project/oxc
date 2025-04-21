@@ -1,3 +1,7 @@
+use code_actions::{
+    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_action,
+    ignore_this_line_code_action, ignore_this_rule_code_action,
+};
 use commands::LSP_COMMANDS;
 use futures::future::join_all;
 use globset::Glob;
@@ -17,20 +21,20 @@ use tower_lsp_server::{
     Client, LanguageServer, LspService, Server, UriExt,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
-        CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
-        ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
-        DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandParams, FileChangeType, InitializeParams,
-        InitializeResult, InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit,
-        Uri, WorkspaceEdit,
+        CodeActionOrCommand, CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        ExecuteCommandParams, FileChangeType, InitializeParams, InitializeResult,
+        InitializedParams, Range, ServerInfo, Uri,
     },
 };
 
-use crate::capabilities::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, Capabilities};
+use crate::capabilities::Capabilities;
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
 mod capabilities;
+mod code_actions;
 mod commands;
 mod linter;
 
@@ -258,170 +262,38 @@ impl LanguageServer for Backend {
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
-        let uri = params.text_document.uri;
+        let uri = &params.text_document.uri;
+        let report_map = self.diagnostics_report_map.pin();
+        let Some(value) = report_map.get(&uri.to_string()) else {
+            return Ok(None);
+        };
+
+        let reports = value.iter().filter(|r| {
+            r.diagnostic.range == params.range || range_overlaps(params.range, r.diagnostic.range)
+        });
+
         let is_source_fix_all_oxc = params
             .context
             .only
             .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
+        if is_source_fix_all_oxc {
+            return Ok(apply_all_fix_code_action(reports, uri)
+                .map(|code_actions| vec![CodeActionOrCommand::CodeAction(code_actions)]));
+        }
+
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-        if let Some(value) = self.diagnostics_report_map.pin().get(&uri.to_string()) {
-            let reports = value.iter().filter(|r| {
-                r.diagnostic.range == params.range
-                    || range_overlaps(params.range, r.diagnostic.range)
-            });
-            let mut quick_fixes: Vec<TextEdit> = vec![];
 
-            for report in reports {
-                // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
-                let mut rule_name: Option<String> = None;
-                if let Some(NumberOrString::String(code)) = &report.diagnostic.code {
-                    let open_paren = code.chars().position(|c| c == '(');
-                    let close_paren = code.chars().position(|c| c == ')');
-                    if open_paren.is_some() && close_paren.is_some() {
-                        rule_name =
-                            Some(code[(open_paren.unwrap() + 1)..close_paren.unwrap()].to_string());
-                    }
-                }
-
-                if let Some(fixed_content) = &report.fixed_content {
-                    // 1) Use `fixed_content.message` if it exists
-                    // 2) Try to parse the report diagnostic message
-                    // 3) Fallback to "Fix this problem"
-                    let title = match fixed_content.message.clone() {
-                        Some(msg) => msg,
-                        None => {
-                            if let Some(code) = report.diagnostic.message.split(':').next() {
-                                format!("Fix this {code} problem")
-                            } else {
-                                "Fix this problem".to_string()
-                            }
-                        }
-                    };
-
-                    // when source.fixAll.oxc we collect all changes at ones
-                    // and return them as one workspace edit.
-                    // it is possible that one fix will change the range for the next fix
-                    // see oxc-project/oxc#10422
-                    if is_source_fix_all_oxc {
-                        quick_fixes.push(TextEdit {
-                            range: fixed_content.range,
-                            new_text: fixed_content.code.clone(),
-                        });
-                    } else {
-                        code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                            title,
-                            kind: Some(CodeActionKind::QUICKFIX),
-                            is_preferred: Some(true),
-                            edit: Some(WorkspaceEdit {
-                                #[expect(clippy::disallowed_types)]
-                                changes: Some(std::collections::HashMap::from([(
-                                    uri.clone(),
-                                    vec![TextEdit {
-                                        range: fixed_content.range,
-                                        new_text: fixed_content.code.clone(),
-                                    }],
-                                )])),
-                                ..WorkspaceEdit::default()
-                            }),
-                            disabled: None,
-                            data: None,
-                            diagnostics: None,
-                            command: None,
-                        }));
-                    }
-                }
-
-                code_actions_vec.push(
-                    // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
-                    //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
-                    //  If it does, it needs to be appended to instead of a completely new line inserted.
-                    CodeActionOrCommand::CodeAction(CodeAction {
-                        title: rule_name.clone().map_or_else(
-                            || "Disable oxlint for this line".into(),
-                            |s| format!("Disable {s} for this line"),
-                        ),
-                        kind: Some(CodeActionKind::QUICKFIX),
-                        is_preferred: Some(false),
-                        edit: Some(WorkspaceEdit {
-                            #[expect(clippy::disallowed_types)]
-                            changes: Some(std::collections::HashMap::from([(
-                                uri.clone(),
-                                vec![TextEdit {
-                                    range: Range {
-                                        start: Position {
-                                            line: report.diagnostic.range.start.line,
-                                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                                            character: 0,
-                                        },
-                                        end: Position {
-                                            line: report.diagnostic.range.start.line,
-                                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                                            character: 0,
-                                        },
-                                    },
-                                    new_text: rule_name.clone().map_or_else(
-                                        || "// eslint-disable-next-line\n".into(),
-                                        |s| format!("// eslint-disable-next-line {s}\n"),
-                                    ),
-                                }],
-                            )])),
-                            ..WorkspaceEdit::default()
-                        }),
-                        disabled: None,
-                        data: None,
-                        diagnostics: None,
-                        command: None,
-                    }),
-                );
-
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                    title: rule_name.clone().map_or_else(
-                        || "Disable oxlint for this file".into(),
-                        |s| format!("Disable {s} for this file"),
-                    ),
-                    kind: Some(CodeActionKind::QUICKFIX),
-                    is_preferred: Some(false),
-                    edit: Some(WorkspaceEdit {
-                        #[expect(clippy::disallowed_types)]
-                        changes: Some(std::collections::HashMap::from([(
-                            uri.clone(),
-                            vec![TextEdit {
-                                range: Range {
-                                    start: Position { line: 0, character: 0 },
-                                    end: Position { line: 0, character: 0 },
-                                },
-                                new_text: rule_name.clone().map_or_else(
-                                    || "// eslint-disable\n".into(),
-                                    |s| format!("// eslint-disable {s}\n"),
-                                ),
-                            }],
-                        )])),
-                        ..WorkspaceEdit::default()
-                    }),
-                    disabled: None,
-                    data: None,
-                    diagnostics: None,
-                    command: None,
-                }));
+        for report in reports {
+            if let Some(fix_action) = apply_fix_code_action(report, uri) {
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_action));
             }
 
-            if is_source_fix_all_oxc && !quick_fixes.is_empty() {
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                    title: "quick fix".to_string(),
-                    kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
-                    is_preferred: Some(true),
-                    edit: Some(WorkspaceEdit {
-                        #[expect(clippy::disallowed_types)]
-                        changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
-                        ..WorkspaceEdit::default()
-                    }),
-                    disabled: None,
-                    data: None,
-                    diagnostics: None,
-                    command: None,
-                }));
-            }
+            code_actions_vec
+                .push(CodeActionOrCommand::CodeAction(ignore_this_line_code_action(report, uri)));
+
+            code_actions_vec
+                .push(CodeActionOrCommand::CodeAction(ignore_this_rule_code_action(report, uri)));
         }
 
         if code_actions_vec.is_empty() {
