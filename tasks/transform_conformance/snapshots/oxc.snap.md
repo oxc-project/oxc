@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 150/245
+Passed: 150/246
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/19)
+# babel-plugin-transform-typescript (4/20)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -328,6 +328,23 @@ after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-only-namespace/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
 
 * preserve-import-=/input.js

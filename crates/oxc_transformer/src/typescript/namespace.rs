@@ -102,9 +102,56 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             return;
         };
 
-        // Empty namespace or only have type declarations.
-        if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace() {
-            return;
+        // Check if this is an empty namespace or only contains type declarations
+        let symbol_id = ident.symbol_id();
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+
+        // If it's a namespace, we need additional checks to determine if it can return early.
+        if flags.is_namespace() {
+            // Don't need further check because NO `ValueModule` namespace redeclaration
+            if !flags.is_value_module() {
+                return;
+            }
+
+            // Input:
+            // ```ts
+            // // SymbolFlags: NameSpaceModule
+            // export namespace Foo {
+            // 	 export type T = 0;
+            // }
+            // // SymbolFlags: ValueModule
+            // export namespace Foo {
+            // 	 export const Bar = 1;
+            // }
+            // ```
+            //
+            // Output:
+            // ```js
+            // // SymbolFlags: ValueModule
+            // export let Foo;
+            // (function(_Foo) {
+            //   const Bar = _Foo.Bar = 1;
+            // })(Foo || (Foo = {}));
+            // ```
+            //
+            // When both `NameSpaceModule` and `ValueModule` are present, we need to check the current
+            // declaration flags. If the current declaration is `NameSpaceModule`, we can return early
+            // because it's a type-only namespace and doesn't emit any JS code, otherwise we need to
+            // continue transforming it.
+
+            // Find the current declaration flag
+            let current_declaration_flags = ctx
+                .scoping()
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .find(|rd| rd.span == ident.span)
+                .unwrap()
+                .flags;
+
+            // Return if the current declaration is a namespace
+            if current_declaration_flags.is_namespace() {
+                return;
+            }
         }
 
         let Some(body) = body else {

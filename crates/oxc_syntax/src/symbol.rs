@@ -260,6 +260,11 @@ impl SymbolFlags {
         self.contains(Self::NameSpaceModule)
     }
 
+    #[inline]
+    pub fn is_value_module(&self) -> bool {
+        self.contains(Self::ValueModule)
+    }
+
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
