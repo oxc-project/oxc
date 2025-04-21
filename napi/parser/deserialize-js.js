@@ -2039,6 +2039,7 @@ function deserializeExportEntry(pos) {
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
+    isType: deserializeBool(pos + 136),
   };
 }
 
