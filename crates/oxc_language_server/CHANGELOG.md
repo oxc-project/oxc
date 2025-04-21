@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.7] - 2025-04-21
+
+### Features
+
+- bb8a078 language_server: Use linter runtime (#10268) (Sysix)
+
+### Bug Fixes
+
+- df488d4 language_server: Workspace edits as one batch when `source.fixAll.oxc` is the context (#10428) (Sysix)
+
+### Performance
+
+- 21f3175 langage_server: Prebuild `IsolatedLintHandler` (#10406) (Sysix)
+
+### Refactor
+
+- 2935103 language_server: Report info as warning instead of error when falling back to default config (#10517) (Sysix)
+
 ## [0.16.6] - 2025-04-14
 
 ### Features
