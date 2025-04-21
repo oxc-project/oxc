@@ -45,6 +45,7 @@ const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Uri>>,
+    capabilities: OnceCell<Capabilities>,
     server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: ConcurrentHashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
@@ -102,13 +103,25 @@ impl LanguageServer for Backend {
             *self.options.lock().await = value;
         }
 
+        let capabilities = Capabilities::from(params.capabilities);
+        self.capabilities.set(capabilities.clone()).map_err(|err| {
+            let message = match err {
+                SetError::AlreadyInitializedError(_) => {
+                    "capabilities are already initialized".into()
+                }
+                SetError::InitializingError(_) => "initializing error".into(),
+            };
+
+            Error { code: ErrorCode::ParseError, message, data: None }
+        })?;
+
         self.init_nested_configs().await;
         let oxlintrc = self.init_linter_config().await;
         self.init_ignore_glob(oxlintrc).await;
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
             offset_encoding: None,
-            capabilities: Capabilities::from(params.capabilities).into(),
+            capabilities: capabilities.into(),
         })
     }
 
@@ -116,7 +129,11 @@ impl LanguageServer for Backend {
         let changed_options =
             if let Ok(options) = serde_json::from_value::<Options>(params.settings) {
                 options
-            } else {
+            } else if self
+                .capabilities
+                .get()
+                .is_some_and(|capabilities| capabilities.workspace_configuration)
+            {
                 // Fallback if some client didn't took changed configuration in params of `workspace/configuration`
                 let Some(options) = self
                     .client
@@ -133,6 +150,10 @@ impl LanguageServer for Backend {
                     return;
                 };
                 options
+            } else {
+                // the client did not give os changes to the configuration and he is not able to respond to `workspace/configuration`
+                // so we fallback to the current configuration
+                self.options.lock().await.clone()
             };
 
         let current_option = &self.options.lock().await.clone();
@@ -565,6 +586,7 @@ async fn main() {
     let (service, socket) = LspService::build(|client| Backend {
         client,
         root_uri: OnceCell::new(),
+        capabilities: OnceCell::new(),
         server_linter: RwLock::new(server_linter),
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
