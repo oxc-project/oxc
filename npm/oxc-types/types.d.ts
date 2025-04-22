@@ -587,7 +587,7 @@ export interface Function extends Span {
   returnType?: TSTypeAnnotation | null;
 }
 
-export type ParamPattern = FormalParameter | FormalParameterRest;
+export type ParamPattern = FormalParameter | TSParameterProperty | FormalParameterRest;
 
 export type FunctionType =
   | 'FunctionDeclaration'
@@ -607,6 +607,16 @@ export type FormalParameter =
     decorators?: Array<Decorator>;
   })
   & BindingPattern;
+
+export interface TSParameterProperty extends Span {
+  type: 'TSParameterProperty';
+  accessibility: TSAccessibility | null;
+  decorators: Array<Decorator>;
+  override: boolean;
+  parameter: FormalParameter;
+  readonly: boolean;
+  static: boolean;
+}
 
 export interface FunctionBody extends Span {
   type: 'BlockStatement';
