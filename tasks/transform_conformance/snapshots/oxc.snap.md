@@ -103,9 +103,6 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * enum-member-reference/input.ts
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Merge"
-Missing ReferenceId: "NestInner"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -136,9 +133,6 @@ rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(14): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8)]
 Symbol flags mismatch for "Merge":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -148,18 +142,12 @@ rebuilt        : SymbolId(3): []
 Symbol scope ID mismatch for "Merge":
 after transform: SymbolId(15): ScopeId(2)
 rebuilt        : SymbolId(4): ScopeId(2)
-Symbol reference IDs mismatch for "Merge":
-after transform: SymbolId(16): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
-rebuilt        : SymbolId(5): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
 Symbol flags mismatch for "NestOuter":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "NestInner":
 after transform: SymbolId(11): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
-Symbol reference IDs mismatch for "NestInner":
-after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
-rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
 
 * export-elimination/input.ts
 Bindings mismatch:

@@ -1558,8 +1558,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 x Output mismatch
 
 * enum/non-constant-member-reference/input.ts
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
@@ -1569,9 +1567,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
 
 * enum/non-foldable-constant/input.ts
 Bindings mismatch:
