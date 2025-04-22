@@ -70,8 +70,7 @@ impl<'a> ClassProperties<'a, '_> {
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.super_class().is_some();
 
-        // Check if class has any properties, private methods, or static blocks.
-        // Locate constructor (if class has one).
+        // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
         let mut has_static_prop = false;
         let mut has_instance_private_method = false;
