@@ -1791,7 +1791,7 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
-#[estree(no_type, via = FormalParameterConverter)]
+#[estree(no_type)]
 pub struct FormalParameter<'a> {
     #[estree(skip)]
     pub span: Span,
