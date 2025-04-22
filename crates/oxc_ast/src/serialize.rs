@@ -605,7 +605,7 @@ impl ESTree for FormalParametersConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
         for item in &self.0.items {
-            seq.serialize_element(item);
+            seq.serialize_element(&FormalParameterItem(item));
         }
 
         if let Some(rest) = &self.0.rest {
@@ -631,6 +631,33 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_ts_field("decorators", &EmptyArray(()));
         state.serialize_ts_field("value", &Null(()));
         state.end();
+    }
+}
+
+struct FormalParameterItem<'a, 'b>(&'b FormalParameter<'a>);
+
+impl ESTree for FormalParameterItem<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let param = self.0;
+
+        if S::INCLUDE_TS_FIELDS {
+            if let Some(a11y) = param.accessibility {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
+                state.serialize_field("start", &param.span.start);
+                state.serialize_field("end", &param.span.end);
+                state.serialize_field("accessibility", &a11y);
+                state.serialize_field("decorators", &param.decorators);
+                state.serialize_field("override", &param.r#override);
+                state.serialize_field("parameter", &param.pattern);
+                state.serialize_field("readonly", &param.readonly);
+                state.serialize_field("static", &False(()));
+                state.end();
+                return;
+            }
+        }
+
+        param.serialize(serializer);
     }
 }
 
@@ -662,7 +689,7 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
         }
 
         for item in &self.0.params.items {
-            seq.serialize_element(item);
+            seq.serialize_element(&FormalParameterItem(item));
         }
 
         if let Some(rest) = &self.0.params.rest {
@@ -1196,7 +1223,7 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     }
 
     for item in &params.items {
-        seq.serialize_element(item);
+        seq.serialize_element(&FormalParameterItem(item));
     }
 
     if let Some(rest) = &params.rest {
