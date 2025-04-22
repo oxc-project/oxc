@@ -26,6 +26,13 @@ fn module_decl() {
 }
 
 #[test]
+fn export_type() {
+    test_same("export type {} from \"mod\";\n");
+    test_same("export type { Foo } from \"mod\";\n");
+    test_same("export { type Foo, type Bar } from \"mod\";\n");
+}
+
+#[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
     test_minify("x in new Error()", "x in new Error;");

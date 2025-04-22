@@ -1038,6 +1038,10 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.needs_semicolon = false;
             }
         } else {
+            if self.export_kind.is_type() {
+                p.print_hard_space();
+                p.print_str("type");
+            }
             p.print_soft_space();
             p.print_ascii_byte(b'{');
             if !self.specifiers.is_empty() {

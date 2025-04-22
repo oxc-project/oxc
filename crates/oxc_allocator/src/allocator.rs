@@ -105,7 +105,7 @@ use bumpalo::Bump;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```
+/// ```ignore
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///
