@@ -641,7 +641,7 @@ impl ESTree for FormalParameterItem<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let param = self.0;
 
-        if S::INCLUDE_TS_FIELDS && (param.accessibility.is_some() || param.readonly) {
+        if S::INCLUDE_TS_FIELDS && param.has_modifier() {
             let mut state = serializer.serialize_struct();
             state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
             state.serialize_field("start", &param.span.start);
