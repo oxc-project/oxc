@@ -581,6 +581,7 @@ impl ESTree for ElisionConverter<'_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
+        // TODO: Serialize items
         if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
             pos = uint32[(POS_OFFSET.rest) >> 2];
             params.push({
@@ -675,6 +676,7 @@ impl ESTree for FormalParameterItem<'_, '_> {
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
         /* END_IF_TS */
+        // TODO: Serialize items, rest
         params
     "
 )]
@@ -1175,6 +1177,7 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
+        // TODO: Serialize items, rest
         params
     "
 )]
@@ -1197,6 +1200,7 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
+        // TODO: Serialize items, rest
         params
     "
 )]
