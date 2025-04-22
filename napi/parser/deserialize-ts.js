@@ -831,7 +831,6 @@ function deserializeFunction(pos) {
   const params = deserializeBoxFormalParameters(pos + 72);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 64);
   if (thisParam !== null) params.unshift(thisParam);
-  // TODO: Serialize items, rest
   return {
     type: deserializeFunctionType(pos + 8),
     start: deserializeU32(pos),
@@ -850,7 +849,6 @@ function deserializeFunction(pos) {
 
 function deserializeFormalParameters(pos) {
   const params = deserializeVecFormalParameter(pos + 16);
-  // TODO: Serialize items
   if (uint32[(pos + 48) >> 2] !== 0 && uint32[(pos + 52) >> 2] !== 0) {
     pos = uint32[(pos + 48) >> 2];
     params.push({
@@ -868,12 +866,31 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos + 40),
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 56),
-    optional: deserializeBool(pos + 64),
-    decorators: deserializeVecDecorator(pos + 8),
-  };
+  const accessibility = deserializeOptionTSAccessibility(pos + 72),
+    readonly = deserializeBool(pos + 73),
+    override = deserializeBool(pos + 74);
+  let param;
+  if (accessibility === null && !readonly && !override) {
+    param = {
+      ...deserializeBindingPatternKind(pos + 40),
+      typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 56),
+      optional: deserializeBool(pos + 64),
+      decorators: deserializeVecDecorator(pos + 8),
+    };
+  } else {
+    param = {
+      type: 'TSParameterProperty',
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+      accessibility,
+      decorators: deserializeVecDecorator(pos + 8),
+      override,
+      parameter: deserializeBindingPattern(pos + 40),
+      readonly,
+      static: false,
+    };
+  }
+  return param;
 }
 
 function deserializeFunctionBody(pos) {
@@ -1830,7 +1847,6 @@ function deserializeTSMethodSignature(pos) {
   const params = deserializeBoxFormalParameters(pos + 48);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 40);
   if (thisParam !== null) params.unshift(thisParam);
-  // TODO: Serialize items, rest
   return {
     type: 'TSMethodSignature',
     start: deserializeU32(pos),
@@ -1961,7 +1977,6 @@ function deserializeTSFunctionType(pos) {
   const params = deserializeBoxFormalParameters(pos + 24);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
   if (thisParam !== null) params.unshift(thisParam);
-  // TODO: Serialize items, rest
   return {
     type: 'TSFunctionType',
     start: deserializeU32(pos),
