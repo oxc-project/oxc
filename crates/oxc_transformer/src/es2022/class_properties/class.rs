@@ -239,6 +239,16 @@ impl<'a> ClassProperties<'a, '_> {
             return;
         }
 
+        // Scope that instance property initializers will be inserted into.
+        // This is usually class constructor, but can also be a `_super` function which is created.
+        let instance_inits_scope_id;
+        // Scope of class constructor, if instance property initializers will be inserted into constructor.
+        // Used for checking for variable name clashes.
+        // e.g. `class C { prop = x(); constructor(x) {} }`
+        // - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
+        // `None` if class has no existing constructor, as then there can't be any clashes.
+        let mut instance_inits_constructor_scope_id = None;
+
         // Determine where to insert instance property initializers in constructor
         let instance_inits_insert_location = if let Some(constructor) = constructor {
             // Existing constructor
@@ -246,16 +256,16 @@ impl<'a> ClassProperties<'a, '_> {
             if has_super_class {
                 let (insert_scopes, insert_location) =
                     Self::replace_super_in_constructor(constructor, ctx);
-                self.instance_inits_scope_id = insert_scopes.insert_in_scope_id;
-                self.instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
+                instance_inits_scope_id = insert_scopes.insert_in_scope_id;
+                instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
                 insert_location
             } else {
                 let constructor_scope_id = constructor.scope_id();
-                self.instance_inits_scope_id = constructor_scope_id;
+                instance_inits_scope_id = constructor_scope_id;
                 // Only record `constructor_scope_id` if constructor's scope has some bindings.
                 // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
                 // because no bindings to clash with.
-                self.instance_inits_constructor_scope_id =
+                instance_inits_constructor_scope_id =
                     if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
                         None
                     } else {
@@ -270,8 +280,7 @@ impl<'a> ClassProperties<'a, '_> {
                 NodeId::DUMMY,
                 ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
             );
-            self.instance_inits_scope_id = constructor_scope_id;
-            self.instance_inits_constructor_scope_id = None;
+            instance_inits_scope_id = constructor_scope_id;
             InstanceInitsInsertLocation::NewConstructor
         };
 
@@ -300,7 +309,13 @@ impl<'a> ClassProperties<'a, '_> {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     if !prop.r#static {
-                        self.convert_instance_property(prop, &mut instance_inits, ctx);
+                        self.convert_instance_property(
+                            prop,
+                            &mut instance_inits,
+                            instance_inits_scope_id,
+                            instance_inits_constructor_scope_id,
+                            ctx,
+                        );
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
@@ -321,7 +336,13 @@ impl<'a> ClassProperties<'a, '_> {
         // Create a constructor if there isn't one.
         match instance_inits_insert_location {
             InstanceInitsInsertLocation::NewConstructor => {
-                self.insert_constructor(body, instance_inits, has_super_class, ctx);
+                Self::insert_constructor(
+                    body,
+                    instance_inits,
+                    has_super_class,
+                    instance_inits_scope_id,
+                    ctx,
+                );
             }
             InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
                 self.insert_inits_into_constructor_as_statements(
@@ -336,11 +357,17 @@ impl<'a> ClassProperties<'a, '_> {
                     constructor.as_mut().unwrap(),
                     instance_inits,
                     &super_binding,
+                    instance_inits_scope_id,
                     ctx,
                 );
             }
             InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(instance_inits, &super_binding, ctx);
+                self.create_super_function_outside_constructor(
+                    instance_inits,
+                    &super_binding,
+                    instance_inits_scope_id,
+                    ctx,
+                );
             }
         }
     }
