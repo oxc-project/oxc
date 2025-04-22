@@ -831,6 +831,7 @@ function deserializeFunction(pos) {
   const params = deserializeBoxFormalParameters(pos + 72);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 64);
   if (thisParam !== null) params.unshift(thisParam);
+  // TODO: Serialize items, rest
   return {
     type: deserializeFunctionType(pos + 8),
     start: deserializeU32(pos),
@@ -849,6 +850,7 @@ function deserializeFunction(pos) {
 
 function deserializeFormalParameters(pos) {
   const params = deserializeVecFormalParameter(pos + 16);
+  // TODO: Serialize items
   if (uint32[(pos + 48) >> 2] !== 0 && uint32[(pos + 52) >> 2] !== 0) {
     pos = uint32[(pos + 48) >> 2];
     params.push({
@@ -1828,6 +1830,7 @@ function deserializeTSMethodSignature(pos) {
   const params = deserializeBoxFormalParameters(pos + 48);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 40);
   if (thisParam !== null) params.unshift(thisParam);
+  // TODO: Serialize items, rest
   return {
     type: 'TSMethodSignature',
     start: deserializeU32(pos),
@@ -1958,6 +1961,7 @@ function deserializeTSFunctionType(pos) {
   const params = deserializeBoxFormalParameters(pos + 24);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
   if (thisParam !== null) params.unshift(thisParam);
+  // TODO: Serialize items, rest
   return {
     type: 'TSFunctionType',
     start: deserializeU32(pos),
