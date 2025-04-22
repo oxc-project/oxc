@@ -152,7 +152,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
 /// Unlike `InstanceInitializerVisitor`, does not check for symbol clashes.
 ///
 /// Therefore only needs to walk until find a node which has a scope. No point continuing to traverse
-/// inside that scope, as by definition and nested scopes can't be first level.
+/// inside that scope, as by definition any nested scopes can't be first level.
 ///
 /// The visitors here are for the only types which can be the first scope reached when starting
 /// traversal from an `Expression`.
