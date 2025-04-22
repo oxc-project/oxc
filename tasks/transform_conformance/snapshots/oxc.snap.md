@@ -106,6 +106,9 @@ rebuilt        : ScopeId(0): []
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Merge"
 Missing ReferenceId: "NestInner"
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Bindings mismatch:
 after transform: ScopeId(1): ["Foo", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["Foo"]
@@ -113,32 +116,23 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
-after transform: ScopeId(2): ["Merge", "x"]
-rebuilt        : ScopeId(2): ["Merge"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["Merge", "y"]
+after transform: ScopeId(2): ["Merge", "x", "y"]
 rebuilt        : ScopeId(3): ["Merge"]
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
+after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
-after transform: ScopeId(4): ["NestOuter", "a", "b"]
+after transform: ScopeId(3): ["NestOuter", "a", "b"]
 rebuilt        : ScopeId(4): ["NestOuter"]
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
+after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
-after transform: ScopeId(6): ["NestInner", "a", "b"]
+after transform: ScopeId(5): ["NestInner", "a", "b"]
 rebuilt        : ScopeId(6): ["NestInner"]
 Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
+after transform: ScopeId(5): ScopeFlags(0x0)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(7)]
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -151,6 +145,9 @@ rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Merge":
 after transform: SymbolId(5): [Span { start: 70, end: 75 }, Span { start: 103, end: 108 }]
 rebuilt        : SymbolId(3): []
+Symbol scope ID mismatch for "Merge":
+after transform: SymbolId(15): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(2)
 Symbol reference IDs mismatch for "Merge":
 after transform: SymbolId(16): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
 rebuilt        : SymbolId(5): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]

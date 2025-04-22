@@ -122,7 +122,7 @@ impl Stats {
     /// Panics if stats are not accurate.
     pub fn assert_accurate(self, actual: Self) {
         assert_eq!(self.nodes, actual.nodes, "nodes count mismatch");
-        assert_eq!(self.scopes, actual.scopes, "scopes count mismatch");
+        assert!(self.scopes >= actual.scopes, "scopes count mismatch");
         assert_eq!(self.references, actual.references, "references count mismatch");
         // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.

@@ -1642,11 +1642,11 @@ after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 19, end:
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
-semantic error: Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
@@ -1654,13 +1654,16 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 11, end: 14 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "Foo":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum-babel-7/input.ts
-semantic error: Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
@@ -1668,13 +1671,16 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 11, end: 14 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "Foo":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
-semantic error: Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
@@ -1682,13 +1688,16 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 17, end: 20 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "Foo":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum-babel-7/input.ts
-semantic error: Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
@@ -1696,6 +1705,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 17, end: 20 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "Foo":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-interface/input.ts
 semantic error: Bindings mismatch:
