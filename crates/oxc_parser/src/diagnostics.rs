@@ -577,6 +577,13 @@ pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDia
         .with_label(modifier.span)
 }
 
+/// TS(2206)
+#[cold]
+pub fn type_modifier_on_named_type_import(span: Span) -> OxcDiagnostic {
+    ts_error("2206", "The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.")
+             .with_label(span)
+}
+
 /// TS(2207)
 #[cold]
 pub fn type_modifier_on_named_type_export(span: Span) -> OxcDiagnostic {

@@ -80,7 +80,7 @@ impl<'a> ParserImpl<'a> {
             // import "source"
             None
         } else {
-            Some(self.parse_import_declaration_specifiers()?)
+            Some(self.parse_import_declaration_specifiers(import_kind)?)
         };
 
         let source = self.parse_literal_string()?;
@@ -103,6 +103,7 @@ impl<'a> ParserImpl<'a> {
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
     fn parse_import_declaration_specifiers(
         &mut self,
+        import_kind: ImportOrExportKind,
     ) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
         let mut specifiers = self.ast.vec();
         // import defaultExport from "module-name";
@@ -114,7 +115,7 @@ impl<'a> ParserImpl<'a> {
                     Kind::Star => specifiers.push(self.parse_import_namespace_specifier()?),
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
-                        let mut import_specifiers = self.parse_import_specifiers()?;
+                        let mut import_specifiers = self.parse_import_specifiers(import_kind)?;
                         specifiers.append(&mut import_specifiers);
                     }
                     _ => return Err(self.unexpected()),
@@ -125,7 +126,7 @@ impl<'a> ParserImpl<'a> {
             specifiers.push(self.parse_import_namespace_specifier()?);
         // import { export1 , export2 as alias2 , [...] } from "module-name";
         } else if self.at(Kind::LCurly) {
-            let mut import_specifiers = self.parse_import_specifiers()?;
+            let mut import_specifiers = self.parse_import_specifiers(import_kind)?;
             specifiers.append(&mut import_specifiers);
         }
 
@@ -152,14 +153,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
+    fn parse_import_specifiers(
+        &mut self,
+        import_kind: ImportOrExportKind,
+    ) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
         self.expect(Kind::LCurly)?;
         let list = self.context(Context::empty(), self.ctx, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
                 Kind::Comma,
                 /* trailing_separator */ true,
-                Self::parse_import_specifier,
+                |parser| parser.parse_import_specifier(import_kind),
             )
         })?;
         self.expect(Kind::RCurly)?;
@@ -456,7 +460,10 @@ impl<'a> ParserImpl<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
+    pub(crate) fn parse_import_specifier(
+        &mut self,
+        parent_import_kind: ImportOrExportKind,
+    ) -> Result<ImportDeclarationSpecifier<'a>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -474,6 +481,11 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        // `import type { type bar } from 'foo';`
+        if parent_import_kind == ImportOrExportKind::Type && import_kind == ImportOrExportKind::Type
+        {
+            self.error(diagnostics::type_modifier_on_named_type_import(self.cur_token().span()));
+        }
         if import_kind == ImportOrExportKind::Type {
             self.bump_any();
         }

@@ -1,11 +1,12 @@
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
     AstNode,
@@ -116,10 +117,15 @@ fn do_fix<'a>(
         }
     };
     let Some(argument) = argument else { return fixer.noop() };
-    let fix_text = format!(r#"{}.{}("{}")"#, fixer.source_range(target_span), method, argument);
-
-    fixer.replace(call_expr.span, fix_text)
+    let mut content = fixer.codegen();
+    let alloc = Allocator::default();
+    let ast = AstBuilder::new(&alloc);
+    content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
+    content.print_expression(&ast.expression_string_literal(SPAN, argument, None));
+    content.print_str(r")");
+    fixer.replace(call_expr.span, content)
 }
+
 fn can_replace(call_expr: &CallExpression) -> Option<Span> {
     if call_expr.arguments.len() != 1 {
         return None;
@@ -279,16 +285,24 @@ fn test() {
     ];
 
     let fix = vec![
-        ("/^foo/.test(x)", r#"x.startsWith("foo")"#, None),
-        ("/foo$/.test(x)", r#"x.endsWith("foo")"#, None),
-        ("/^foo/.test(x.y)", r#"x.y.startsWith("foo")"#, None),
-        ("/foo$/.test(x.y)", r#"x.y.endsWith("foo")"#, None),
-        ("/^foo/.test('x')", r#"'x'.startsWith("foo")"#, None),
-        ("/foo$/.test('x')", r#"'x'.endsWith("foo")"#, None),
-        ("/^foo/.test(`x${y}`)", r#"`x${y}`.startsWith("foo")"#, None),
-        ("/foo$/.test(`x${y}`)", r#"`x${y}`.endsWith("foo")"#, None),
-        ("/^foo/.test(String(x))", r#"String(x).startsWith("foo")"#, None),
-        ("/foo$/.test(String(x))", r#"String(x).endsWith("foo")"#, None),
+        ("/^foo/.test(x)", r"x.startsWith('foo')", None),
+        ("/foo$/.test(x)", r"x.endsWith('foo')", None),
+        ("/^foo/.test(x.y)", r"x.y.startsWith('foo')", None),
+        ("/foo$/.test(x.y)", r"x.y.endsWith('foo')", None),
+        ("/^foo/.test('x')", r"'x'.startsWith('foo')", None),
+        ("/foo$/.test('x')", r"'x'.endsWith('foo')", None),
+        ("/^foo/.test(`x${y}`)", r"`x${y}`.startsWith('foo')", None),
+        ("/foo$/.test(`x${y}`)", r"`x${y}`.endsWith('foo')", None),
+        ("/^foo/.test(String(x))", r"String(x).startsWith('foo')", None),
+        ("/foo$/.test(String(x))", r"String(x).endsWith('foo')", None),
+        // https://github.com/oxc-project/oxc/issues/10523
+        (
+            r"const makePosix = str => /^\\\\\?\\/.test(str)",
+            r"const makePosix = str => str.startsWith('\\\\?\\')",
+            None,
+        ),
+        ("/^'/.test('foo')", r"'foo'.startsWith('\'')", None),
+        (r#"/^"/.test('foo')"#, r#"'foo'.startsWith('"')"#, None),
         // should not get fixed
         ("/^foo/.test(new String('bar'))", "/^foo/.test(new String('bar'))", None),
         ("/^foo/.test(x as string)", "/^foo/.test(x as string)", None),
