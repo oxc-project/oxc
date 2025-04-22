@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 9096/10725 (84.81%)
+Positive Passed: 9095/10725 (84.80%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/accessOverriddenBaseClassMember1.ts
@@ -56,6 +56,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentToInst
 The left-hand side of an assignment expression must be a variable or a property access.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentToParenthesizedExpression1.ts
 Cannot assign to this expression
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/assignmentToReferenceTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionsAndStrictNullChecks.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/autoAsiForStaticsInClassDeclaration.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/autolift4.ts

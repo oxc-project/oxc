@@ -1924,6 +1924,40 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&it.expression);
         self.leave_node(kind);
     }
+
+    fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
+        let kind = AstKind::TSEnumDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.id);
+
+        {
+            let symbol_id = it.id.symbol_id();
+            let last_enum_declaration = self
+                .scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .rev()
+                .skip(1)
+                .find(|rd| rd.flags.is_enum());
+            if let Some(last_enum_declaration) = last_enum_declaration {
+                let enum_declaration = self
+                    .nodes
+                    .kind(last_enum_declaration.declaration)
+                    .as_ts_enum_declaration()
+                    .unwrap();
+                self.current_scope_id = enum_declaration.scope_id();
+                it.set_scope_id(self.current_scope_id);
+                self.unresolved_references.increment_scope_depth();
+            } else {
+                self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+            }
+        }
+
+        self.visit_ts_enum_body(&it.body);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2009,6 +2043,7 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
+
                 // TODO: const enum?
             }
             AstKind::TSEnumMember(enum_member) => {

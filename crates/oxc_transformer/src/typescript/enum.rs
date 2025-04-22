@@ -1,12 +1,10 @@
 use rustc_hash::FxHashMap;
-use std::cell::Cell;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
-use oxc_semantic::{ScopeFlags, ScopeId};
+use oxc_semantic::ScopeId;
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
@@ -231,13 +229,8 @@ impl<'a> TypeScriptEnum<'a> {
                         prev_constant_value = None;
                         let mut new_initializer = initializer.take_in(ast.allocator);
 
-                        IdentifierReferenceRename::new(
-                            param_binding.name,
-                            enum_scope_id,
-                            previous_enum_members.clone(),
-                            ctx,
-                        )
-                        .visit_expression(&mut new_initializer);
+                        IdentifierReferenceRename::new(param_binding, enum_scope_id, ctx)
+                            .visit_expression(&mut new_initializer);
 
                         new_initializer
                     }
@@ -541,85 +534,40 @@ impl<'a> TypeScriptEnum<'a> {
 /// }
 /// ```
 struct IdentifierReferenceRename<'a, 'ctx> {
-    enum_name: Atom<'a>,
-    previous_enum_members: PrevMembers<'a>,
-    scope_stack: NonEmptyStack<ScopeId>,
-    ctx: &'ctx TraverseCtx<'a>,
+    enum_binding: &'ctx BoundIdentifier<'a>,
+    enum_scope_id: ScopeId,
+    // scope_stack: NonEmptyStack<ScopeId>,
+    ctx: &'ctx mut TraverseCtx<'a>,
 }
 
 impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
     fn new(
-        enum_name: Atom<'a>,
+        enum_binding: &'ctx BoundIdentifier<'a>,
         enum_scope_id: ScopeId,
-        previous_enum_members: PrevMembers<'a>,
-        ctx: &'ctx TraverseCtx<'a>,
+        ctx: &'ctx mut TraverseCtx<'a>,
     ) -> Self {
-        IdentifierReferenceRename {
-            enum_name,
-            previous_enum_members,
-            scope_stack: NonEmptyStack::new(enum_scope_id),
-            ctx,
-        }
+        IdentifierReferenceRename { enum_binding, enum_scope_id, ctx }
     }
 }
 
 impl IdentifierReferenceRename<'_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
-        // Don't need to rename the identifier if it's not a member of the enum,
-        if !self.previous_enum_members.contains_key(&ident.name) {
-            return false;
-        }
-
         let scoping = self.ctx.scoping.scoping();
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             // No symbol found, yet the name is found in previous_enum_members.
             // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
-            return true;
+            return false;
         };
 
-        let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
-        // Don't need to rename the identifier when it references a nested enum member:
-        //
-        // ```ts
-        // enum OuterEnum {
-        //   A = 0,
-        //   B = () => {
-        //     enum InnerEnum {
-        //       A = 0,
-        //       B = A,
-        //           ^ This references to `InnerEnum.A` should not be renamed
-        //     }
-        //     return InnerEnum.B;
-        //   }
-        // }
-        // ```
-        *self.scope_stack.first() == symbol_scope_id
-            // The resolved symbol is declared outside the enum,
-            // and we have checked that the name exists in previous_enum_members:
-            //
-            // ```ts
-            // const A = 0;
-            // enum Foo { A }
-            // enum Foo { B = A }
-            //                ^ This should be renamed to Foo.A
-            // ```
-            || !self.scope_stack.contains(&symbol_scope_id)
+        self.enum_scope_id == scoping.symbol_scope_id(symbol_id)
     }
 }
 
 impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
-    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        self.scope_stack.push(scope_id.get().unwrap());
-    }
-
-    fn leave_scope(&mut self) {
-        self.scope_stack.pop();
-    }
-
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
+                let object = self.enum_binding.create_read_expression(self.ctx);
                 let property = self.ctx.ast.identifier_name(SPAN, ident.name);
                 *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }

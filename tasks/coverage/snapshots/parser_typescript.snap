@@ -5425,6 +5425,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  15 │ 
     ╰────
 
+  × Identifier `One` has already been declared
+    ╭─[typescript/tests/cases/compiler/augmentedTypesEnum.ts:20:12]
+ 19 │ 
+ 20 │ enum e5a { One } // error
+    ·            ─┬─
+    ·             ╰── `One` has already been declared here
+ 21 │ enum e5a { One } // error
+    ·            ─┬─
+    ·             ╰── It can not be redeclared here
+ 22 │ 
+    ╰────
+
   × Identifier `e1` has already been declared
    ╭─[typescript/tests/cases/compiler/augmentedTypesEnum2.ts:2:6]
  1 │ // enum then interface
