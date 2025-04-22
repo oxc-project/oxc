@@ -646,11 +646,7 @@ impl ESTree for FormalParameterItem<'_, '_> {
             state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
             state.serialize_field("start", &param.span.start);
             state.serialize_field("end", &param.span.end);
-            if let Some(accessibility) = &param.accessibility {
-                state.serialize_field("accessibility", accessibility);
-            } else {
-                state.serialize_field("accessibility", &Null(()));
-            }
+            state.serialize_field("accessibility", &param.accessibility);
             state.serialize_field("decorators", &param.decorators);
             state.serialize_field("override", &param.r#override);
             state.serialize_field("parameter", &param.pattern);
