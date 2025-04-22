@@ -309,13 +309,7 @@ impl<'a> ClassProperties<'a, '_> {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     if !prop.r#static {
-                        self.convert_instance_property(
-                            prop,
-                            &mut instance_inits,
-                            instance_inits_scope_id,
-                            instance_inits_constructor_scope_id,
-                            ctx,
-                        );
+                        self.convert_instance_property(prop, &mut instance_inits, ctx);
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
@@ -331,6 +325,14 @@ impl<'a> ClassProperties<'a, '_> {
                 ClassElement::StaticBlock(_) => {}
             }
         }
+
+        // Reparent property initializers scope to `instance_inits_scope_id`.
+        self.reparent_initializers_scope(
+            instance_inits.as_slice(),
+            instance_inits_scope_id,
+            instance_inits_constructor_scope_id,
+            ctx,
+        );
 
         // Insert instance initializers into constructor.
         // Create a constructor if there isn't one.

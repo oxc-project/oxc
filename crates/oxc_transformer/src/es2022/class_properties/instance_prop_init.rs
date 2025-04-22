@@ -18,30 +18,32 @@ use oxc_traverse::TraverseCtx;
 use super::ClassProperties;
 
 impl<'a> ClassProperties<'a, '_> {
-    /// Transform instance property initializer.
+    /// Reparent property initializers scope.
     ///
     /// Instance property initializers move from the class body into either class constructor,
     /// or a `_super` function. Change parent scope of first-level scopes in initializer to reflect this.
-    pub(super) fn transform_instance_initializer(
+    pub(super) fn reparent_initializers_scope(
         &mut self,
-        value: &Expression<'a>,
+        inits: &[Expression<'a>],
         instance_inits_scope_id: ScopeId,
         instance_inits_constructor_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
-            // Re-parent first-level scopes, and check for symbol clashes
-            let mut updater = InstanceInitializerVisitor::new(
-                instance_inits_scope_id,
-                constructor_scope_id,
-                self,
-                ctx,
-            );
-            updater.visit_expression(value);
-        } else {
-            // No symbol clashes possible. Just re-parent first-level scopes (faster).
-            let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
-            updater.visit_expression(value);
+        for init in inits {
+            if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
+                // Re-parent first-level scopes, and check for symbol clashes
+                let mut updater = InstanceInitializerVisitor::new(
+                    instance_inits_scope_id,
+                    constructor_scope_id,
+                    self,
+                    ctx,
+                );
+                updater.visit_expression(init);
+            } else {
+                // No symbol clashes possible. Just re-parent first-level scopes (faster).
+                let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
+                updater.visit_expression(init);
+            }
         }
     }
 }
