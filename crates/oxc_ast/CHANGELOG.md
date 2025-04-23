@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 43ad4e9 ast: Box `this_param` in `TSCallSignatureDeclaration` (#10558) (Yuji Sugiura)
+- 8eb3c0a ast/estree: Fix raw deser for `FormalParameter` (#10548) (overlookmotel)
+- f19b287 estree: Add `TSParameterProperty` (#10534) (Yuji Sugiura)
+
 ## [0.65.0] - 2025-04-21
 
 - 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)

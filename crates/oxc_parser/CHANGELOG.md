@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+### Features
+
+- 7d5ad7d parser: Report error when `import type { type }` is used (#10528) (camc314)
+- 6e40fac parser: Report error when `export type { type }` is used (#10524) (camc314)
+
 ## [0.65.0] - 2025-04-21
 
 - 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
