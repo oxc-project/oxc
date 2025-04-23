@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10619/10725 (99.01%)
-Positive Passed: 9326/10725 (86.96%)
+Positive Passed: 9327/10725 (86.97%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessorBodyInTypeContext.ts
@@ -750,7 +750,6 @@ Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParameterAssignmentCompatibility.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParameterNotLast.ts
 A rest parameter must be last in a parameter list
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern1.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts
 A rest element cannot have an initializer.
 tasks/coverage/typescript/tests/cases/compiler/reuseTypeAnnotationImportTypeInGlobalThisTypeArgument.ts

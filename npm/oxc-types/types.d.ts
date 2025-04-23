@@ -544,6 +544,8 @@ export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
   properties: Array<BindingProperty | BindingRestElement>;
   decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface BindingProperty extends Span {

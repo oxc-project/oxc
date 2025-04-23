@@ -781,6 +781,8 @@ function deserializeObjectPattern(pos) {
     end: deserializeU32(pos + 4),
     properties,
     decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 

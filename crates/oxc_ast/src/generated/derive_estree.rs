@@ -1300,6 +1300,8 @@ impl ESTree for ObjectPattern<'_> {
             &AppendTo { array: &self.properties, after: &self.rest },
         );
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
+        state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
+        state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
         state.end();
     }
 }
