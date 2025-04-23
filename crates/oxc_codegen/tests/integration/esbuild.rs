@@ -333,52 +333,89 @@ fn test_nullish() {
 
 #[test]
 fn test_string() {
-    test("let x = ''", "let x = \"\";\n");
-    test("let x = '\\b'", "let x = \"\\b\";\n");
-    test("let x = '\\f'", "let x = \"\\f\";\n");
-    test("let x = '\t'", "let x = \"\t\";\n");
-    test("let x = '\\v'", "let x = \"\\v\";\n");
-    test("let x = '\\n'", "let x = \"\\n\";\n");
-    test("let x = '\\r'", "let x = \"\\r\";\n");
-    test("let x = '\\r\\n'", "let x = \"\\r\\n\";\n");
-    test("let x = '\\''", "let x = \"'\";\n");
-    test("let x = '\"'", "let x = \"\\\"\";\n");
-    test("let x = '`'", "let x = \"`\";\n");
-    test("let x = '\\'\"'", "let x = \"'\\\"\";\n");
-    test("let x = '\\'`'", "let x = \"'`\";\n");
-    test("let x = '\"`'", "let x = \"\\\"`\";\n");
-    test("let x = '\\\\'", "let x = \"\\\\\";\n");
-    test("let x = '\x00'", "let x = \"\\0\";\n");
-    test("let x = '\x00!'", "let x = \"\\0!\";\n");
-    test("let x = '\x001'", "let x = \"\\x001\";\n");
-    test("let x = '\\0'", "let x = \"\\0\";\n");
-    test("let x = '\\0!'", "let x = \"\\0!\";\n");
-    test("let x = '\x07'", "let x = \"\\x07\";\n");
-    test("let x = '\x07!'", "let x = \"\\x07!\";\n");
-    test("let x = '\x071'", "let x = \"\\x071\";\n");
-    test("let x = '\\7'", "let x = \"\\x07\";\n");
-    test("let x = '\\7!'", "let x = \"\\x07!\";\n");
-    test("let x = '\\01'", "let x = \"\x01\";\n");
-    test("let x = '\x10'", "let x = \"\x10\";\n");
-    test("let x = '\\x10'", "let x = \"\x10\";\n");
-    test("let x = '\x1B'", "let x = \"\\x1B\";\n");
-    test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
-    test("let x = '\\x41'", "let x = \"A\";\n");
-    test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
-    test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
-    test("let x = '\\U000123AB'", "let x = \"U000123AB\";\n");
-    test("let x = '\\u{123AB}'", "let x = \"\u{123ab}\";\n");
-    test("let x = '\\u{41}'", "let x = \"A\";\n");
-    test("let x = '\\uD808\\uDFAB'", "let x = \"\u{123ab}\";\n");
-    test("let x = '\\uD808'", "let x = \"\\ud808\";\n"); // lone surrogate
-    test("let x = '\\uD808X'", "let x = \"\\ud808X\";\n");
-    test("let x = '\\uDFAB'", "let x = \"\\udfab\";\n");
-    test("let x = '\\uDFABX'", "let x = \"\\udfabX\";\n");
+    // No `minify` option
 
-    test("let x = '\\x80'", "let x = \"\u{80}\";\n");
-    test("let x = '\\xFF'", "let x = \"ÿ\";\n");
-    test("let x = '\\xF0\\x9F\\x8D\\x95'", "let x = \"ð\u{9f}\u{8d}\u{95}\";\n");
-    test("let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = \"𐐂\\udc03\\ud804\";\n"); // surrogates
+    // Prints double-quoted strings as in original
+    test("let x = \"\"", "let x = \"\";\n");
+    test("let x = \"abc\"", "let x = \"abc\";\n");
+    test("let x = \"\t\"", "let x = \"\t\";\n");
+    test("let x = \"\\t\"", "let x = \"\\t\";\n");
+
+    // Converts single quote to double
+    test("let x = ''", "let x = \"\";\n");
+    test("let x = 'abc'", "let x = \"abc\";\n");
+    test("let x = '\"'", "let x = \"\\\"\";\n");
+    test("let x = 'abc\"'", "let x = \"abc\\\"\";\n");
+    test("let x = 'abc\"\"\"'", "let x = \"abc\\\"\\\"\\\"\";\n");
+    test("let x = '\"def'", "let x = \"\\\"def\";\n");
+    test("let x = '\"\"\"def'", "let x = \"\\\"\\\"\\\"def\";\n");
+    test("let x = 'abc\"def'", "let x = \"abc\\\"def\";\n");
+    test("let x = 'abc\"\"\"def\"\"\"ghi'", "let x = \"abc\\\"\\\"\\\"def\\\"\\\"\\\"ghi\";\n");
+    // Does not double-escape already-escaped quotes
+    test("let x = '\\\"'", "let x = \"\\\"\";\n");
+    test("let x = 'abc\\\"\\\"'", "let x = \"abc\\\"\\\"\";\n");
+    test("let x = '\\\"\\\"def'", "let x = \"\\\"\\\"def\";\n");
+    test("let x = 'abc\\\"\\\"def'", "let x = \"abc\\\"\\\"def\";\n");
+    test("let x = '\\r\\n\"'", "let x = \"\\r\\n\\\"\";\n");
+    test("let x = '\\\\\"'", "let x = \"\\\\\\\"\";\n");
+    test("let x = '\\\\\\\"'", "let x = \"\\\\\\\"\";\n");
+    // Does not escape other characters
+    test("let x = '\t'", "let x = \"\t\";\n");
+    // Prints other escapes as in original
+    test("let x = '\\t'", "let x = \"\\t\";\n");
+    test("let x = '\\x41'", "let x = \"\\x41\";\n");
+    test("let x = '\\u{41}'", "let x = \"\\u{41}\";\n");
+    test("let x = '\\uD800'", "let x = \"\\uD800\";\n");
+    test("let x = '\\uD801\\uDC02'", "let x = \"\\uD801\\uDC02\";\n");
+
+    // `minify` option
+
+    // Escapes characters and chooses best quote character
+    test_minify("let x = ''", "let x=``;");
+    test_minify("let x = '\\b'", "let x=`\\b`;");
+    test_minify("let x = '\\f'", "let x=`\\f`;");
+    test_minify("let x = '\t'", "let x=`\t`;");
+    test_minify("let x = '\\v'", "let x=`\\v`;");
+    test_minify("let x = '\\n'", "let x=`\n`;");
+    test_minify("let x = '\\r'", "let x=`\\r`;");
+    test_minify("let x = '\\r\\n'", "let x=`\\r\n`;");
+    test_minify("let x = '\\''", "let x=`'`;");
+    test_minify("let x = '\"'", "let x=`\"`;");
+    test_minify("let x = '`'", "let x=\"`\";");
+    test_minify("let x = '\\'\"'", "let x=`'\"`;");
+    test_minify("let x = '\\'`'", "let x=\"'`\";");
+    test_minify("let x = '\"`'", "let x='\"`';");
+    test_minify("let x = '\\\\'", "let x=`\\\\`;");
+    test_minify("let x = '\x00'", "let x=`\\0`;");
+    test_minify("let x = '\x00!'", "let x=`\\0!`;");
+    test_minify("let x = '\x001'", "let x=`\\x001`;");
+    test_minify("let x = '\\0'", "let x=`\\0`;");
+    test_minify("let x = '\\0!'", "let x=`\\0!`;");
+    test_minify("let x = '\x07'", "let x=`\\x07`;");
+    test_minify("let x = '\x07!'", "let x=`\\x07!`;");
+    test_minify("let x = '\x071'", "let x=`\\x071`;");
+    test_minify("let x = '\\7'", "let x=`\\x07`;");
+    test_minify("let x = '\\7!'", "let x=`\\x07!`;");
+    test_minify("let x = '\\01'", "let x=`\x01`;");
+    test_minify("let x = '\x10'", "let x=`\x10`;");
+    test_minify("let x = '\\x10'", "let x=`\x10`;");
+    test_minify("let x = '\x1B'", "let x=`\\x1B`;");
+    test_minify("let x = '\\x1B'", "let x=`\\x1B`;");
+    test_minify("let x = '\\x41'", "let x=`A`;");
+    test_minify("let x = '\u{ABCD}'", "let x=`\u{ABCD}`;");
+    test_minify("let x = '\\uABCD'", "let x=`\u{ABCD}`;");
+    test_minify("let x = '\\U000123AB'", "let x=`U000123AB`;");
+    test_minify("let x = '\\u{123AB}'", "let x=`\u{123ab}`;");
+    test_minify("let x = '\\u{41}'", "let x=`A`;");
+    test_minify("let x = '\\uD808\\uDFAB'", "let x=`\u{123ab}`;");
+    test_minify("let x = '\\uD808'", "let x=`\\ud808`;"); // lone surrogate
+    test_minify("let x = '\\uD808X'", "let x=`\\ud808X`;");
+    test_minify("let x = '\\uDFAB'", "let x=`\\udfab`;");
+    test_minify("let x = '\\uDFABX'", "let x=`\\udfabX`;");
+    test_minify("let x = '\\x80'", "let x=`\u{80}`;");
+    test_minify("let x = '\\xFF'", "let x=`ÿ`;");
+    test_minify("let x = '\\xF0\\x9F\\x8D\\x95'", "let x=`ð\u{9f}\u{8d}\u{95}`;");
+    test_minify("let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x=`𐐂\\udc03\\ud804`;"); // surrogates
 }
 
 #[test]
