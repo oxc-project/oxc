@@ -19,6 +19,19 @@ use oxc_ast_macros::ast;
 #[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
 
+impl Idx for ReferenceId {
+    #[expect(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for ReferenceId {
     type Cloned = Self;
 
@@ -31,19 +44,6 @@ impl<'alloc> CloneIn<'alloc> for ReferenceId {
     #[inline(always)]
     fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
         *self
-    }
-}
-
-impl Idx for ReferenceId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
     }
 }
 

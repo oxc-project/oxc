@@ -16,21 +16,6 @@ use oxc_ast_macros::ast;
 #[estree(skip)]
 pub struct ScopeId(NonMaxU32);
 
-impl<'alloc> CloneIn<'alloc> for ScopeId {
-    type Cloned = Self;
-
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips scope_id field
-        unreachable!();
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
-    }
-}
-
 impl ScopeId {
     /// Create `ScopeId` from `u32`.
     ///
@@ -63,6 +48,21 @@ impl Idx for ScopeId {
 
     fn index(self) -> usize {
         self.0.get() as usize
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for ScopeId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips scope_id field
+        unreachable!();
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
     }
 }
 
