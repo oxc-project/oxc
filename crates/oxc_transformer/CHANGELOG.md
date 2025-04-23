@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 84742d8 transformer/module_runner: Fix export default live binding (#10560) (hi-ogawa)
+- 6c115c7 transformer/module_runner: Fix execution order of re-export (#10362) (hi-ogawa)
+- b9d84b0 transformer/typescript: Remove `StringLiteral::raw` when rewriting extensions (#10554) (overlookmotel)
+
+### Performance
+
+- 3418ae5 transformer/class-properties: Re-use `InstanceInitializerVisitor` (#10543) (overlookmotel)
+- 7fcf0ac transformer/typescript: Reduce allocations renaming extensions (#10555) (overlookmotel)
+
+### Documentation
+
+- 1a9530c transformer/class-properties: Fix typo (#10542) (overlookmotel)
+
+### Refactor
+
+- 7e71282 transformer/class-properties: Correct outdated comment (#10546) (overlookmotel)
+- 596978b transformer/class-properties: Simplify to get `constructor` method only once (#10493) (Dunqing)
+- f13fe0a transformer/class-properties: Defer re-parenting initializers scopes until all instance properties are transformed (#10495) (Dunqing)
+- c83dad6 transformer/class-properties: Streamline handling scope of instance property initializer (#10492) (Dunqing)
+
 ## [0.65.0] - 2025-04-21
 
 ### Bug Fixes

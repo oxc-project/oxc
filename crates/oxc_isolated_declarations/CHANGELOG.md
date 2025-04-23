@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 7284f16 isolated-declarations: Leading comments of `ExportDefaultDeclaration` and `TSExportAssignment` appear in incorrect places (#10559) (Dunqing)
+- 4c316a5 isolated_declarations: Fix broken snapshot files (#10561) (Boshen)
+
 ## [0.64.0] - 2025-04-17
 
 - 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
