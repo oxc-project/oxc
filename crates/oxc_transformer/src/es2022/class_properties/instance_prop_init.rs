@@ -29,19 +29,21 @@ impl<'a> ClassProperties<'a, '_> {
         instance_inits_constructor_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for init in inits {
-            if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
-                // Re-parent first-level scopes, and check for symbol clashes
-                let mut updater = InstanceInitializerVisitor::new(
-                    instance_inits_scope_id,
-                    constructor_scope_id,
-                    self,
-                    ctx,
-                );
+        if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
+            // Re-parent first-level scopes, and check for symbol clashes
+            let mut updater = InstanceInitializerVisitor::new(
+                instance_inits_scope_id,
+                constructor_scope_id,
+                self,
+                ctx,
+            );
+            for init in inits {
                 updater.visit_expression(init);
-            } else {
-                // No symbol clashes possible. Just re-parent first-level scopes (faster).
-                let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
+            }
+        } else {
+            // No symbol clashes possible. Just re-parent first-level scopes (faster).
+            let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
+            for init in inits {
                 updater.visit_expression(init);
             }
         }
