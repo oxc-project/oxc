@@ -85,14 +85,14 @@ describe('hasModuleSyntax', () => {
 
 describe('export type', () => {
   const code = [
-    { source: "export type * from 'mod'", isType: true },
-    { source: "export type * as ns from 'mod'", isType: true },
-    { source: 'export type { foo }', isType: true },
-    { source: 'export { type foo }', isType: true },
-    { source: "export type { foo } from 'mod'", isType: true },
-    { source: 'export type Foo = {}', isType: true },
-    { source: 'export interface Bar {}', isType: true },
-    { source: 'export namespace Baz {}', isType: true },
+    ["export type * from 'mod'", true],
+    ["export type * as ns from 'mod'", true],
+    ['export type { foo }', true],
+    ['export { type foo }', true],
+    ["export type { foo } from 'mod'", true],
+    ['export type Foo = {}', true],
+    ['export interface Bar {}', true],
+    ['export namespace Baz {}', true],
   ];
   test.each(code)('%s', (source, isType) => {
     const ret = parseSync('test.ts', source);
