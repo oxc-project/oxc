@@ -93,7 +93,7 @@ describe('export type', () => {
     ['export type Foo = {}', true],
     ['export interface Bar {}', true],
     ['export namespace Baz {}', false], // namespace isn't considered a typed export
-  ];
+  ] as const;
   test.each(inputs)('%s', (source, isType) => {
     const ret = parseSync('test.ts', source);
     expect(ret.module.staticExports.length).toBe(1);
