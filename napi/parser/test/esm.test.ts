@@ -84,7 +84,7 @@ describe('hasModuleSyntax', () => {
 });
 
 describe('export type', () => {
-  const code = [
+  const inputs = [
     ["export type * from 'mod'", true],
     ["export type * as ns from 'mod'", true],
     ['export type { foo }', true],
@@ -92,9 +92,9 @@ describe('export type', () => {
     ["export type { foo } from 'mod'", true],
     ['export type Foo = {}', true],
     ['export interface Bar {}', true],
-    ['export namespace Baz {}', true],
+    ['export namespace Baz {}', false], // namespace isn't considered a typed export
   ];
-  test.each(code)('%s', (source, isType) => {
+  test.each(inputs)('%s', (source, isType) => {
     const ret = parseSync('test.ts', source);
     expect(ret.module.staticExports.length).toBe(1);
     expect(ret.module.staticExports[0].entries.length).toBe(1);
