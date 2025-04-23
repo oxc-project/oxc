@@ -1830,7 +1830,7 @@ function deserializeTSIndexSignature(pos) {
 }
 
 function deserializeTSCallSignatureDeclaration(pos) {
-  const params = deserializeBoxFormalParameters(pos + 48);
+  const params = deserializeBoxFormalParameters(pos + 24);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
   if (thisParam !== null) params.unshift(thisParam);
   return {
@@ -1839,7 +1839,7 @@ function deserializeTSCallSignatureDeclaration(pos) {
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
     params,
-    returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
+    returnType: deserializeOptionBoxTSTypeAnnotation(pos + 32),
   };
 }
 
@@ -5638,11 +5638,6 @@ function deserializeVecTSIndexSignatureName(pos) {
     pos += 32;
   }
   return arr;
-}
-
-function deserializeOptionTSThisParameter(pos) {
-  if (uint8[pos] === 0) return null;
-  return deserializeTSThisParameter(pos + 8);
 }
 
 function deserializeOptionTSModuleDeclarationBody(pos) {

@@ -1161,13 +1161,13 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, readonly) == 48);
     assert!(offset_of!(TSIndexSignature, r#static) == 49);
 
-    assert!(size_of::<TSCallSignatureDeclaration>() == 64);
+    assert!(size_of::<TSCallSignatureDeclaration>() == 40);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 16);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 48);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 56);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 24);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 32);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
@@ -2554,13 +2554,13 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, readonly) == 28);
     assert!(offset_of!(TSIndexSignature, r#static) == 29);
 
-    assert!(size_of::<TSCallSignatureDeclaration>() == 44);
+    assert!(size_of::<TSCallSignatureDeclaration>() == 24);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 12);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 36);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 40);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 16);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 20);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
