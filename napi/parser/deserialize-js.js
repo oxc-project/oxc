@@ -1761,17 +1761,31 @@ function deserializeTSTypePredicate(pos) {
 }
 
 function deserializeTSModuleDeclaration(pos) {
-  const kind = deserializeTSModuleDeclarationKind(pos + 80);
-  return {
-    type: 'TSModuleDeclaration',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    id: deserializeTSModuleDeclarationName(pos + 8),
-    body: deserializeOptionTSModuleDeclarationBody(pos + 64),
-    kind,
-    declare: deserializeBool(pos + 81),
-    global: kind === 'global',
-  };
+  const kind = deserializeTSModuleDeclarationKind(pos + 80),
+    global = kind === 'global',
+    start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
+    declare = deserializeBool(pos + 81);
+  let id = deserializeTSModuleDeclarationName(pos + 8),
+    body = deserializeOptionTSModuleDeclarationBody(pos + 64);
+
+  // Flatten `body`, and nest `id`
+  if (body !== null && body.type === 'TSModuleDeclaration') {
+    id = {
+      type: 'TSQualifiedName',
+      start: body.id.start,
+      end: id.end,
+      left: body.id,
+      right: id,
+    };
+    body = Object.hasOwn(body, 'body') ? body.body : null;
+  }
+
+  // Skip `body` field if `null`
+  const node = body === null
+    ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
+    : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+  return node;
 }
 
 function deserializeTSModuleBlock(pos) {

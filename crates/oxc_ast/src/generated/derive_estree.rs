@@ -3034,16 +3034,7 @@ impl ESTree for TSTypePredicateName<'_> {
 
 impl ESTree for TSModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("id", &self.id);
-        state.serialize_field("body", &self.body);
-        state.serialize_field("kind", &self.kind);
-        state.serialize_field("declare", &self.declare);
-        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(self));
-        state.end();
+        crate::serialize::TSModuleDeclarationConverter(self).serialize(serializer)
     }
 }
 

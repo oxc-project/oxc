@@ -1125,6 +1125,135 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     }
 }
 
+/// Converter for `TSModuleDeclaration`.
+///
+/// Our AST represents `module X.Y.Z {}` as 3 x nested `TSModuleDeclaration`s.
+/// TS-ESTree represents it as a single `TSModuleDeclaration`,
+/// with a nested tree of `TSQualifiedName`s as `id`.
+#[ast_meta]
+#[estree(raw_deser = "
+    const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
+        global = kind === 'global',
+        start = DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end),
+        declare = DESER[bool](POS_OFFSET.declare);
+    let id = DESER[TSModuleDeclarationName](POS_OFFSET.id),
+        body = DESER[Option<TSModuleDeclarationBody>](POS_OFFSET.body);
+
+    // Flatten `body`, and nest `id`
+    if (body !== null && body.type === 'TSModuleDeclaration') {
+        id = {
+            type: 'TSQualifiedName',
+            start: body.id.start,
+            end: id.end,
+            left: body.id,
+            right: id,
+        };
+        body = Object.hasOwn(body, 'body') ? body.body : null;
+    }
+
+    // Skip `body` field if `null`
+    const node = body === null
+        ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
+        : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+    node
+")]
+pub struct TSModuleDeclarationConverter<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+
+impl ESTree for TSModuleDeclarationConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let module = self.0;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        state.serialize_field("start", &module.span.start);
+        state.serialize_field("end", &module.span.end);
+
+        match &module.body {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_module)) => {
+                // Nested modules e.g. `module X.Y.Z {}`.
+                // Collect all IDs in a `Vec`, in order they appear (i.e. [`X`, `Y`, `Z`]).
+                // Also get the inner `TSModuleBlock`.
+                let mut parts = Vec::with_capacity(4);
+
+                let TSModuleDeclarationName::Identifier(id) = &module.id else { unreachable!() };
+                parts.push(id);
+
+                let mut body = None;
+                let mut inner_module = inner_module.as_ref();
+                loop {
+                    let TSModuleDeclarationName::Identifier(id) = &inner_module.id else {
+                        unreachable!()
+                    };
+                    parts.push(id);
+
+                    match &inner_module.body {
+                        Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_inner_module)) => {
+                            inner_module = inner_inner_module.as_ref();
+                        }
+                        Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                            body = Some(block.as_ref());
+                            break;
+                        }
+                        None => break,
+                    }
+                }
+
+                // Serialize `parts` as a nested tree of `TSQualifiedName`s
+                state.serialize_field("id", &TSModuleDeclarationIdParts(&parts));
+
+                // Skip `body` field if it's `None`
+                if let Some(body) = body {
+                    state.serialize_field("body", body);
+                }
+            }
+            Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                // No nested modules.
+                // Serialize as usual, with `id` being either a `BindingIdentifier` or `StringLiteral`.
+                state.serialize_field("id", &module.id);
+                state.serialize_field("body", block);
+            }
+            None => {
+                // No body. Skip `body` field.
+                state.serialize_field("id", &module.id);
+            }
+        }
+
+        state.serialize_field("kind", &module.kind);
+        state.serialize_field("declare", &module.declare);
+        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(module));
+        state.end();
+    }
+}
+
+struct TSModuleDeclarationIdParts<'a, 'b>(&'b [&'b BindingIdentifier<'a>]);
+
+impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let parts = self.0;
+        assert!(!parts.is_empty());
+
+        let span_start = parts[0].span.start;
+        let (&last, rest) = parts.split_last().unwrap();
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+        state.serialize_field("start", &span_start);
+        state.serialize_field("end", &last.span.end);
+
+        if rest.len() == 1 {
+            // Only one part remaining (e.g. `X`). Serialize as `Identifier`.
+            state.serialize_field("left", &rest[0]);
+        } else {
+            // Multiple parts remaining (e.g. `X.Y`). Recurse to serialize as `TSQualifiedName`.
+            state.serialize_field("left", &TSModuleDeclarationIdParts(rest));
+        }
+
+        state.serialize_field("right", last);
+        state.end();
+    }
+}
+
 /// Serializer for `global` field of `TSModuleDeclaration`.
 #[ast_meta]
 #[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]

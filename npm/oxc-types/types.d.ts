@@ -1316,18 +1316,14 @@ export type TSTypePredicateName = IdentifierName | TSThisType;
 
 export interface TSModuleDeclaration extends Span {
   type: 'TSModuleDeclaration';
-  id: TSModuleDeclarationName;
-  body: TSModuleDeclarationBody | null;
+  id: BindingIdentifier | StringLiteral | TSQualifiedName;
+  body: TSModuleBlock | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
   global: boolean;
 }
 
 export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
-
-export type TSModuleDeclarationName = BindingIdentifier | StringLiteral;
-
-export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';
