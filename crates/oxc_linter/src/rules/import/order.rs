@@ -13,7 +13,6 @@ struct OrderConfig {
     #[serde(rename = "pathGroups")]
     path_groups: Option<Vec<PathGroup>>,
     #[serde(rename = "newlines-between")]
-    newlines_between: Option<CompactStr>,
     alphabetize: Option<Alphabetize>,
 }
 
@@ -245,13 +244,13 @@ fn sort_imports(
                     let case_insensitive = alpha.case_insensitive.unwrap_or(false);
 
                     let a_spec = if case_insensitive {
-                        a.specifier.to_lowercase()
+                        a.specifier.cow_to_lowercase().to_string()
                     } else {
                         a.specifier.clone()
                     };
 
                     let b_spec = if case_insensitive {
-                        b.specifier.to_lowercase()
+                        b.specifier.cow_to_lowercase().to_string()
                     } else {
                         b.specifier.clone()
                     };
@@ -287,7 +286,6 @@ fn get_group_rank(
                         GroupValue::Single(g) => {
                             if group_from_str(g) == Some(path_group.group.clone()) {
                                 let position_modifier = match path_group.position.as_deref() {
-                                    Some("before") => 0,
                                     Some("after") => 1,
                                     _ => 0,
                                 };
@@ -298,7 +296,6 @@ fn get_group_rank(
                             for g in gs {
                                 if group_from_str(g) == Some(path_group.group.clone()) {
                                     let position_modifier = match path_group.position.as_deref() {
-                                        Some("before") => 0,
                                         Some("after") => 1,
                                         _ => 0,
                                     };
@@ -335,7 +332,10 @@ fn get_group_rank(
 
     // If group is not in configured groups, put it at the end
     // But ensure consistent ordering among non-configured groups
-    if !found {
+    if found {
+        // Should never reach here if found is true
+        usize::MAX
+    } else {
         // Return a consistent rank based on the predefined order
         // This ensures stable sorting among non-configured groups
         match group {
@@ -349,9 +349,7 @@ fn get_group_rank(
             PredefinedGroup::Type => groups.len() * 2 + 7,
             PredefinedGroup::Unknown => groups.len() * 2 + 8,
         }
-    } else {
-        // Should never reach here if found is true
-        usize::MAX
+
     }
 }
 
