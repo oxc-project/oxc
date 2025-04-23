@@ -85,16 +85,19 @@ describe('hasModuleSyntax', () => {
 
 describe('export type', () => {
   const code = [
-    "export type * from 'mod'",
-    "export type * as ns from 'mod'",
-    'export type { foo }',
-    'export { type foo }',
-    "export type { foo } from 'mod'",
+    { source: "export type * from 'mod'", isType: true },
+    { source: "export type * as ns from 'mod'", isType: true },
+    { source: 'export type { foo }', isType: true },
+    { source: 'export { type foo }', isType: true },
+    { source: "export type { foo } from 'mod'", isType: true },
+    { source: 'export type Foo = {}', isType: true },
+    { source: 'export interface Bar {}', isType: true },
+    { source: 'export namespace Baz {}', isType: true },
   ];
-  test.each(code)('%s', (s) => {
-    const ret = parseSync('test.ts', s);
+  test.each(code)('%s', (source, isType) => {
+    const ret = parseSync('test.ts', source);
     expect(ret.module.staticExports.length).toBe(1);
     expect(ret.module.staticExports[0].entries.length).toBe(1);
-    expect(ret.module.staticExports[0].entries[0].isType).toBe(true);
+    expect(ret.module.staticExports[0].entries[0].isType).toBe(isType);
   });
 });
