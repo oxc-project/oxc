@@ -2,6 +2,7 @@ use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -349,7 +350,6 @@ fn get_group_rank(
             PredefinedGroup::Type => groups.len() * 2 + 7,
             PredefinedGroup::Unknown => groups.len() * 2 + 8,
         }
-
     }
 }
 
@@ -453,7 +453,7 @@ fn matches_pattern(source: &str, pattern: &str) -> bool {
         let with_temp_stars = escaped.cow_replace("**", "__DOUBLE_STAR__");
         let with_single_stars = with_temp_stars.cow_replace('*', "[^/]*");
         let regex_pattern = with_single_stars.cow_replace("__DOUBLE_STAR__", ".*");
-        return regex::Regex::new(&format!("^{regex_pattern}$"))
+        return Regex::new(&format!("^{regex_pattern}$"))
             .map(|re| re.is_match(source))
             .unwrap_or(false);
     }
