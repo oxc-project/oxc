@@ -1392,12 +1392,7 @@ impl ESTree for FormalParameters<'_> {
 
 impl ESTree for FormalParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        self.pattern.kind.serialize(FlatStructSerializer(&mut state));
-        state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
-        state.serialize_ts_field("optional", &self.pattern.optional);
-        state.serialize_ts_field("decorators", &self.decorators);
-        state.end();
+        crate::serialize::FormalParameterConverter(self).serialize(serializer)
     }
 }
 

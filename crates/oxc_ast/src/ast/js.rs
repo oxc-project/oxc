@@ -1793,8 +1793,15 @@ pub struct FormalParameters<'a> {
 #[plural(FormalParameterList)]
 #[estree(
     no_type,
+    via = FormalParameterConverter,
     add_ts_def = "
-        interface TSParameterProperty extends Span {
+        type FormalParameter =
+            & ({
+                decorators?: Array<Decorator>;
+            })
+            & BindingPattern;
+
+        export interface TSParameterProperty extends Span {
             type: 'TSParameterProperty';
             accessibility: TSAccessibility | null;
             decorators: Array<Decorator>;

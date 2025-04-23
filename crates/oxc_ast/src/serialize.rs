@@ -5,9 +5,9 @@ use cow_utils::CowUtils;
 use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
-    PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
-    ser::AppendToConcat,
+    CompactJSSerializer, CompactTSSerializer, ESTree, FlatStructSerializer, JsonSafeString,
+    LoneSurrogatesString, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer,
+    StructSerializer, ser::AppendToConcat,
 };
 use oxc_span::GetSpan;
 
@@ -581,7 +581,6 @@ impl ESTree for ElisionConverter<'_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
-        // TODO: Serialize items
         if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
             pos = uint32[(POS_OFFSET.rest) >> 2];
             params.push({
@@ -606,7 +605,7 @@ impl ESTree for FormalParametersConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
         for item in &self.0.items {
-            seq.serialize_element(&FormalParameterItem(item));
+            seq.serialize_element(item);
         }
 
         if let Some(rest) = &self.0.rest {
@@ -635,28 +634,77 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
-struct FormalParameterItem<'a, 'b>(&'b FormalParameter<'a>);
+/// Converter for `FormalParameter`.
+///
+/// In TS-ESTree AST, if `accessibility` is `Some`, or `readonly` or `override` is `true`,
+/// is serialized as `TSParameterProperty` instead, which has a different object shape.
+#[ast_meta]
+#[estree(
+    ts_type = "FormalParameter | TSParameterProperty",
+    raw_deser = "
+        /* IF_JS */
+        DESER[BindingPatternKind](POS_OFFSET.pattern.kind)
+        /* END_IF_JS */
 
-impl ESTree for FormalParameterItem<'_, '_> {
+        /* IF_TS */
+        const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
+            readonly = DESER[bool](POS_OFFSET.readonly),
+            override = DESER[bool](POS_OFFSET.override);
+        let param;
+        if (accessibility === null && !readonly && !override) {
+            param = {
+                ...DESER[BindingPatternKind](POS_OFFSET.pattern.kind),
+                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation),
+                optional: DESER[bool](POS_OFFSET.pattern.optional),
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+            };
+        } else {
+            param = {
+                type: 'TSParameterProperty',
+                start: DESER[u32](POS_OFFSET.span.start),
+                end: DESER[u32](POS_OFFSET.span.end),
+                accessibility,
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+                override,
+                parameter: DESER[BindingPattern](POS_OFFSET.pattern),
+                readonly,
+                static: false,
+            };
+        }
+        param
+        /* END_IF_TS */
+    "
+)]
+pub struct FormalParameterConverter<'a, 'b>(pub &'b FormalParameter<'a>);
+
+impl ESTree for FormalParameterConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let param = self.0;
 
-        if S::INCLUDE_TS_FIELDS && param.has_modifier() {
-            let mut state = serializer.serialize_struct();
-            state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
-            state.serialize_field("start", &param.span.start);
-            state.serialize_field("end", &param.span.end);
-            state.serialize_field("accessibility", &param.accessibility);
-            state.serialize_field("decorators", &param.decorators);
-            state.serialize_field("override", &param.r#override);
-            state.serialize_field("parameter", &param.pattern);
-            state.serialize_field("readonly", &param.readonly);
-            state.serialize_field("static", &False(()));
-            state.end();
-            return;
+        if S::INCLUDE_TS_FIELDS {
+            if param.has_modifier() {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
+                state.serialize_field("start", &param.span.start);
+                state.serialize_field("end", &param.span.end);
+                state.serialize_field("accessibility", &param.accessibility);
+                state.serialize_field("decorators", &param.decorators);
+                state.serialize_field("override", &param.r#override);
+                state.serialize_field("parameter", &param.pattern);
+                state.serialize_field("readonly", &param.readonly);
+                state.serialize_field("static", &False(()));
+                state.end();
+            } else {
+                let mut state = serializer.serialize_struct();
+                param.pattern.kind.serialize(FlatStructSerializer(&mut state));
+                state.serialize_field("typeAnnotation", &param.pattern.type_annotation);
+                state.serialize_field("optional", &param.pattern.optional);
+                state.serialize_field("decorators", &param.decorators);
+                state.end();
+            }
+        } else {
+            param.pattern.kind.serialize(serializer);
         }
-
-        param.serialize(serializer);
     }
 }
 
@@ -672,7 +720,6 @@ impl ESTree for FormalParameterItem<'_, '_> {
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
         /* END_IF_TS */
-        // TODO: Serialize items, rest
         params
     "
 )]
@@ -689,7 +736,7 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
         }
 
         for item in &self.0.params.items {
-            seq.serialize_element(&FormalParameterItem(item));
+            seq.serialize_element(item);
         }
 
         if let Some(rest) = &self.0.params.rest {
@@ -1173,7 +1220,6 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
-        // TODO: Serialize items, rest
         params
     "
 )]
@@ -1196,7 +1242,6 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
         if (thisParam !== null) params.unshift(thisParam);
-        // TODO: Serialize items, rest
         params
     "
 )]
@@ -1225,7 +1270,7 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     }
 
     for item in &params.items {
-        seq.serialize_element(&FormalParameterItem(item));
+        seq.serialize_element(item);
     }
 
     if let Some(rest) = &params.rest {
