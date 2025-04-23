@@ -593,6 +593,8 @@ impl ESTree for ElisionConverter<'_> {
                     POS_OFFSET<BindingRestElement>.argument.type_annotation
                 ),
                 optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+                decorators: [],
+                value: null,
                 /* END_IF_TS */
             });
         }
