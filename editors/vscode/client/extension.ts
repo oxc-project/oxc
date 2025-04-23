@@ -253,10 +253,6 @@ export async function activate(context: ExtensionContext) {
     // update the initializationOptions for a possible restart
     client.clientOptions.initializationOptions = { settings };
 
-    if (client.isRunning()) {
-      client.sendNotification('workspace/didChangeConfiguration', { settings });
-    }
-
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
@@ -264,6 +260,8 @@ export async function activate(context: ExtensionContext) {
       if (client.isRunning()) {
         await client.restart();
       }
+    } else if (client.isRunning()) {
+      client.sendNotification('workspace/didChangeConfiguration', { settings });
     }
   };
 
