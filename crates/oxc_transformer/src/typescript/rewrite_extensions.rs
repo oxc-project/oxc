@@ -46,6 +46,7 @@ impl TypeScriptRewriteExtensions {
             value.push_str(replace);
             ctx.ast.atom(&value)
         };
+        source.raw = None;
     }
 }
 
