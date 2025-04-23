@@ -13005,10 +13005,10 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -13107,10 +13107,10 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -13154,10 +13154,10 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 

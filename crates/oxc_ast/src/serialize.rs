@@ -1206,7 +1206,7 @@ pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
 impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let v = self.0;
-        serialize_formal_params_with_this_param(v.this_param.as_ref(), &v.params, serializer);
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
     }
 }
 

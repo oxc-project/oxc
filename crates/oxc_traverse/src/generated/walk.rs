@@ -4758,10 +4758,10 @@ unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-        as *mut Option<TSThisParameter>)
+        as *mut Option<Box<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSCallSignatureDeclarationThisParam);
-        walk_ts_this_parameter(traverser, field as *mut _, ctx);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSCallSignatureDeclarationParams);
     walk_formal_parameters(
