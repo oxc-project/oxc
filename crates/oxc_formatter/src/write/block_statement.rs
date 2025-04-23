@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use super::FormatWrite;
@@ -9,27 +9,47 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for BlockStatement<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text("{")])?;
-
-        if is_empty_block(self) {
+        write!(f, "{")?;
+        if is_empty_block(self, f) {
             let comments = f.comments();
             let has_dangling_comments = comments.has_dangling_comments(self.span);
             if has_dangling_comments {
-            } else if is_non_collapsible() {
-                write!(f, [hard_line_break()])?;
+                write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
+            } else if is_non_collapsible(f) {
+                write!(f, hard_line_break())?;
             }
         } else {
-            write!(f, [text("{")])?;
+            write!(f, block_indent(&self.body))?;
         }
-
-        write!(f, [text("}")])
+        write!(f, "}")
     }
 }
 
-fn is_empty_block(block: &BlockStatement<'_>) -> bool {
-    true
+fn is_empty_block(block: &BlockStatement<'_>, f: &Formatter<'_, '_>) -> bool {
+    block.body.is_empty()
+        || block.body.iter().all(|s| {
+            matches!(s, Statement::EmptyStatement(_))
+                && !f.comments().has_comments(s.span())
+                && !f.comments().is_suppressed(s.span())
+        })
 }
 
-fn is_non_collapsible() -> bool {
-    false
+/// Formatting of curly braces for an:
+/// * empty block: same line `{}`,
+/// * empty block that is the 'cons' or 'alt' of an if statement: two lines `{\n}`
+/// * non empty block: put each stmt on its own line: `{\nstmt1;\nstmt2;\n}`
+/// * non empty block with comments (trailing comments on {, or leading comments on })
+fn is_non_collapsible(f: &Formatter<'_, '_>) -> bool {
+    match f.parent_kind() {
+        AstKind::FunctionBody(_)
+        | AstKind::ForStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::DoWhileStatement(_)
+        | AstKind::TSModuleDeclaration(_) => false,
+        AstKind::CatchClause(_) => {
+            // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`
+            matches!(f.parent_parent_kind(), Some(AstKind::TryStatement(try_stmt)) if try_stmt.finalizer.is_some())
+        }
+        _ => true,
+    }
 }

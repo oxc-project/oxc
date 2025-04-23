@@ -3,7 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::log;
+use crate::logln;
 
 use super::add_header;
 
@@ -34,7 +34,7 @@ fn format(source_text: &str) -> String {
         // Formatting failed. Return unformatted code, to aid debugging.
         let error =
             String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
-        log!("FAILED TO FORMAT JS/TS code:\n{error}");
+        logln!("FAILED TO FORMAT JS/TS code:\n{error}");
         source_text.to_string()
     }
 }

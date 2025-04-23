@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+### Documentation
+
+- 63d4aa6 allocator: Fix quotes in comment (#10353) (overlookmotel)
+
+### Refactor
+
+- e4c80b4 allocator/vec2: Import `handle_alloc_error` function from `allocator_api2` instead of writing a custom one (#9860) (Dunqing)
+
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- c198578 allocator: Add `TakeIn::take_in_box` method (#10169) (Dunqing)
+
 ## [0.62.0] - 2025-04-01
 
 ### Features

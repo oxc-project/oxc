@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+### Bug Fixes
+
+- 45f8cc0 transformer/class-properties: `private_field_count` is incorrect when class only have `accessor` with private field (#10463) (Dunqing)
+- 33a2625 transformer/typescript: Namespaces disappeared and do not transform when a type-only namespace followed by a value module namespace (#10511) (Dunqing)
+- 710a35c transformer/typescript: Variable declaration disappears when declaring type-alias/interface first and then declaring namespace (#10510) (Dunqing)
+
+### Refactor
+
+- a5875da transformer/class-properties: Refactor code for decrementing `private_field_count` (#10464) (overlookmotel)
+- e0ef9a8 transformer/class-properties: Debug assert `private_field_count` is 0 at end of transform (#10457) (overlookmotel)
+
+## [0.64.0] - 2025-04-17
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 08a1d4b transformer: Eliminate `ExportSpecifier` where refers to a `declare` declaration (#10356) (Dunqing)
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 17d26d9 transformer/decorator-metadata: Serialize type reference nodes causing imports cannot be removed (#10360) (Dunqing)
+- 4e36b84 transformer/jsx: Do not report "duplicate __source/__self prop found" error when `development` is disabled (#10393) (Dunqing)
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+- e0b6c8c transformer/react: Correct comment (#10323) (overlookmotel)
+
+### Performance
+
+- ebe3496 transformer/class-properties: Return early if no private fields are found (#10418) (Dunqing)
+- 880647b transformer/decorator-metadata: Return `Object` as early as possible if there is a `TSTypeReference` within `TSUnionType` (#10361) (Dunqing)
+- 267922b transformer/jsx: Speed up decoding `JSXText` strings (#9741) (overlookmotel)
+- 25e4c53 transformer/object-rest-spread: Pass `Box` to `make_object_spread` (#10446) (overlookmotel)
+- 595c5df transformer/object_rest_spread: Use `ArenaVec` to store values that will be used in constructing AST (#10434) (Dunqing)
+
+### Refactor
+
+- 3ebd494 transformer/class-properties: Re-order fields and expand comments (#10447) (overlookmotel)
+- 7508a43 transformer/typescript: Remove unnecessary specific handling of `TSModuleDeclaration` transformation (#10359) (Dunqing)
+- 032377d transformer/typescript: Do not need to go through `TSModuleDeclaration` if is a `NamespaceModule` (#10366) (Dunqing)
+- 4c14d0b transformer/typescript: Simplify `TypeScriptAnnotations::has_value_reference` method (#10349) (Dunqing)
+
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 78f1b3a transformer: Enable `using` by default (#10286) (Boshen)
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+- d0001eb transformer/typescript: Redeclaration of `namespace` with `enum` causes syntax error (#10172) (Dunqing)
+- 778b044 transformer/using: Transform using declarations in try block (#10211) (camc314)
+
+### Performance
+
+- f5b53d4 transformer: Do not update options from comments when `only_remove_type_imports` is enabled (#10167) (Dunqing)
+
+### Refactor
+
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 - cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)

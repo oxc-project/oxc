@@ -26,7 +26,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(NameSpaceModule | ValueModule)",
+        "flags": "SymbolFlags(ValueModule)",
         "id": 0,
         "name": "Foo",
         "node": "TSModuleDeclaration(Foo)",

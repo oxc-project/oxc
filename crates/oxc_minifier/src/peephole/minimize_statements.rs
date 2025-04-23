@@ -1,4 +1,4 @@
-use std::ops::ControlFlow;
+use std::{iter, ops::ControlFlow};
 
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
@@ -39,7 +39,7 @@ impl<'a> PeepholeOptimizations {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        let mut new_stmts = ctx.ast.vec_from_iter(stmts.drain(..));
+        let mut new_stmts = stmts.take_in(ctx.ast.allocator);
         for i in 0..new_stmts.len() {
             let stmt = new_stmts[i].take_in(ctx.ast.allocator);
             if is_control_flow_dead
@@ -329,7 +329,7 @@ impl<'a> PeepholeOptimizations {
                 self.handle_for_in_statement(for_in_stmt, result, state, ctx);
             }
             Statement::ForOfStatement(for_of_stmt) => {
-                self.handle_for_of_statement(for_of_stmt, result, state, ctx);
+                self.handle_for_of_statement(for_of_stmt, result, state);
             }
             Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt, state),
             stmt => result.push(stmt),
@@ -508,11 +508,12 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if can_move_branch_condition_outside_scope {
-                    let mut body = ctx.ast.vec();
-                    if let Some(alternate) = if_stmt.alternate.take() {
-                        body.push(alternate);
-                    }
-                    body.extend(stmts.drain(i + 1..));
+                    let drained_stmts = stmts.drain(i + 1..);
+                    let mut body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ctx.ast.vec_from_iter(iter::once(alternate).chain(drained_stmts))
+                    } else {
+                        ctx.ast.vec_from_iter(drained_stmts)
+                    };
 
                     self.minimize_statements(&mut body, state, ctx);
                     let span =
@@ -642,10 +643,10 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 } else if prev_var_decl.kind.is_var() {
-                    for_stmt.init = Some(ForStatementInit::VariableDeclaration(
-                        prev_var_decl.take_in_box(ctx.ast.allocator),
-                    ));
-                    result.pop();
+                    let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
+                        unreachable!()
+                    };
+                    for_stmt.init = Some(ForStatementInit::VariableDeclaration(prev_var_decl));
                     state.changed = true;
                 }
             }
@@ -709,10 +710,13 @@ impl<'a> PeepholeOptimizations {
                             &prev_var_decl_item.id.kind
                         {
                             if id.name == decl_id.name {
-                                for_in_stmt.left = ForStatementLeft::VariableDeclaration(
-                                    prev_var_decl.take_in_box(ctx.ast.allocator),
-                                );
-                                result.pop();
+                                let Some(Statement::VariableDeclaration(prev_var_decl)) =
+                                    result.pop()
+                                else {
+                                    unreachable!()
+                                };
+                                for_in_stmt.left =
+                                    ForStatementLeft::VariableDeclaration(prev_var_decl);
                                 state.changed = true;
                             }
                         }
@@ -729,7 +733,6 @@ impl<'a> PeepholeOptimizations {
         mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
     ) {
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
@@ -749,10 +752,11 @@ impl<'a> PeepholeOptimizations {
                         &prev_var_decl_item.id.kind
                     {
                         if id.name == decl_id.name {
-                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(
-                                prev_var_decl.take_in_box(ctx.ast.allocator),
-                            );
-                            result.pop();
+                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
+                            else {
+                                unreachable!()
+                            };
+                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
                             state.changed = true;
                         }
                     }

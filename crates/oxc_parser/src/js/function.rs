@@ -111,7 +111,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_function(
         &mut self,
-        span: Span,
+        span: u32,
         id: Option<BindingIdentifier<'a>>,
         r#async: bool,
         generator: bool,
@@ -232,7 +232,7 @@ impl<'a> ParserImpl<'a> {
     /// at `function`
     pub(crate) fn parse_ts_function_impl(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
@@ -254,7 +254,7 @@ impl<'a> ParserImpl<'a> {
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
     pub(crate) fn parse_function_expression(
         &mut self,
-        span: Span,
+        span: u32,
         r#async: bool,
     ) -> Result<Expression<'a>> {
         let func_kind = FunctionKind::Expression;
@@ -309,7 +309,7 @@ impl<'a> ParserImpl<'a> {
 
         let has_yield = self.ctx.has_yield();
         if !has_yield {
-            self.error(diagnostics::yield_expression(Span::new(span.start, span.start + 5)));
+            self.error(diagnostics::yield_expression(Span::new(span, span + 5)));
         }
 
         let mut delegate = false;

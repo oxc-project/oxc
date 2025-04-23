@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.16.5"
+version = "0.16.7"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,6 +16,7 @@ description.workspace = true
 [features]
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
+language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
 
 [lints]
 workspace = true
@@ -29,6 +30,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_data_structures = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }

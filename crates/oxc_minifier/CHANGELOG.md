@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.64.0] - 2025-04-17
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+### Bug Fixes
+
+- 48c711a minifier: Panic when compressing `a ? b() : b()` (#10311) (翠 / green)
+
+### Performance
+
+- 8db9dc5 minifier/minimize_statements: Reduce allocations of `Vec` (#10435) (Dunqing)
+
+### Refactor
+
+
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 603abdc minifier: Compress assignment to prefix increment (#10244) (Ulrich Stark)
+- aaafdbf minifier: Fold `String::trimStart` / `String::trimEnd` (#10261) (sapphi-red)
+- af7a298 minifier: Support advanced `String::indexOf` evaluation (#10186) (sapphi-red)
+- bc5411d minifier: Compress `if (foo, !!bar)` to `if (foo, bar)` (#10164) (sapphi-red)
+- 395b545 minifier: Compress `foo == true` into `foo == 1` (#10163) (sapphi-red)
+
+### Bug Fixes
+
+- c35d01a minifier: Keep side effect in `String::replace` argument (#10185) (sapphi-red)
+- bac8ca0 minifier: Non-constant argument passed to `String::substring` (#10184) (sapphi-red)
+
+### Performance
+
+- 876b6ea minifier: Reduce allocations (#10301) (overlookmotel)
+- 0186383 minifier: Avoid cloning `Cow` and allocating `Atom` (#10177) (overlookmotel)
+
+### Refactor
+
+- 9ffb613 minifier: Prefer `is_empty()` over `len() == 0` (#10199) (overlookmotel)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+### Testing
+
+- 3a64819 minifier: `String::replace` for objects with `Symbol.replace` (#10260) (sapphi-red)
+
 ## [0.62.0] - 2025-04-01
 
 - 4077868 ecmascript: [**BREAKING**] Introduce MayHaveSideEffectsContext (#10126) (sapphi-red)

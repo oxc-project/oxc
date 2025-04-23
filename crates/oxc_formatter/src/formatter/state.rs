@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
+use oxc_span::Span;
 
-use super::{FormatContext, GroupId, SyntaxNode, SyntaxToken, UniqueGroupIdBuilder};
+use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -60,13 +61,12 @@ impl<'ast> FormatState<'ast> {
 
     #[cfg(not(debug_assertions))]
     #[inline]
-    pub fn track_token(&mut self, _token: &SyntaxToken) {}
+    pub fn track_token(&mut self, span: Span) {}
 
     /// Tracks the given token as formatted
     #[cfg(debug_assertions)]
     #[inline]
-    pub fn track_token(&mut self, token: &SyntaxToken) {
-        todo!()
+    pub fn track_token(&mut self, span: Span) {
         // self.printed_tokens.track_token(token);
     }
 

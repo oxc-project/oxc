@@ -125,7 +125,12 @@ bitflags! {
         const TypeParameter           = 1 << 13;
         const NameSpaceModule         = 1 << 14;
         const ValueModule             = 1 << 15;
-        // In a dts file or there is a declare flag
+        /// Declared with `declare` modifier, like `declare function x() {}`.
+        //
+        // This flag is not part of TypeScript's `SymbolFlags`, it comes from TypeScript's `NodeFlags`. We introduced it into
+        // here because `NodeFlags` is incomplete and we only can access to `NodeFlags` in the Semantic, but we also need to
+        // access it in the Transformer.
+        // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
@@ -152,6 +157,8 @@ bitflags! {
         const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
         const TypeParameterExcludes = Self::Type.bits() & !Self::TypeParameter.bits();
         const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
+        const ValueModuleExcludes = Self::Value.bits() & !(Self::Function.bits() | Self::Class.bits() | Self::RegularEnum.bits() | Self::ValueModule.bits());
+        const NamespaceModuleExcludes = 0;
         // TODO: include value module in regular enum excludes
         const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() | Self::ValueModule.bits() );
         const EnumMemberExcludes = Self::EnumMember.bits();
@@ -214,6 +221,11 @@ impl SymbolFlags {
     }
 
     #[inline]
+    pub fn is_const_enum(&self) -> bool {
+        self.intersects(Self::ConstEnum)
+    }
+
+    #[inline]
     pub fn is_enum_member(&self) -> bool {
         self.contains(Self::EnumMember)
     }
@@ -238,10 +250,25 @@ impl SymbolFlags {
         self.contains(Self::TypeImport)
     }
 
+    #[inline]
+    pub fn is_ambient(&self) -> bool {
+        self.contains(Self::Ambient)
+    }
+
+    #[inline]
+    pub fn is_namespace(&self) -> bool {
+        self.contains(Self::NameSpaceModule)
+    }
+
+    #[inline]
+    pub fn is_value_module(&self) -> bool {
+        self.contains(Self::ValueModule)
+    }
+
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import)
+        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NameSpaceModule)
     }
 
     /// If true, then the symbol can be referenced by a value reference

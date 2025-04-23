@@ -1,11 +1,13 @@
+use std::cmp;
+
 use cow_utils::CowUtils;
 
 use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
-    PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
-    ser::AppendToConcat,
+    CompactJSSerializer, CompactTSSerializer, ESTree, FlatStructSerializer, JsonSafeString,
+    LoneSurrogatesString, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer,
+    StructSerializer, ser::AppendToConcat,
 };
 use oxc_span::GetSpan;
 
@@ -80,18 +82,47 @@ impl Program<'_> {
 /// This is required because unlike Acorn, TS-ESLint excludes whitespace and comments
 /// from the `Program` start span.
 /// See <https://github.com/oxc-project/oxc/pull/10134> for more info.
+///
+/// Special case where first statement is an `ExportNamedDeclaration` or `ExportDefaultDeclaration`
+/// exporting a class with decorators, where one of the decorators is before `export`.
+/// In these cases, the span of the statement starts after the span of the decorators.
+/// e.g. `@dec export class C {}` - `ExportNamedDeclaration` span start is 5, `Decorator` span start is 0.
+/// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
     const body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
-    let start = DESER[u32](POS_OFFSET.span.start);
+
+    /* IF_JS */
+    const start = DESER[u32](POS_OFFSET.span.start);
+    /* END_IF_JS */
+
+    const end = DESER[u32](POS_OFFSET.span.end);
+
     /* IF_TS */
-    if (body.length > 0) start = body[0].start;
+    let start;
+    if (body.length > 0) {
+        const first = body[0];
+        start = first.start;
+        if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+            const {declaration} = first;
+            if (
+                declaration !== null && declaration.type === 'ClassDeclaration'
+                && declaration.decorators.length > 0
+            ) {
+                const decoratorStart = declaration.decorators[0].start;
+                if (decoratorStart < start) start = decoratorStart;
+            }
+        }
+    } else {
+        start = end;
+    }
     /* END_IF_TS */
+
     const program = {
         type: 'Program',
         start,
-        end: DESER[u32](POS_OFFSET.span.end),
+        end,
         body,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
@@ -103,17 +134,8 @@ pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
 impl ESTree for ProgramConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let program = self.0;
-        let span_start = if S::INCLUDE_TS_FIELDS {
-            if let Some(first_directive) = program.directives.first() {
-                first_directive.span.start
-            } else if let Some(first_stmt) = program.body.first() {
-                first_stmt.span().start
-            } else {
-                program.span.start
-            }
-        } else {
-            program.span.start
-        };
+        let span_start =
+            if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Program"));
@@ -126,6 +148,39 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
         state.end();
+    }
+}
+
+fn get_ts_start_span(program: &Program<'_>) -> u32 {
+    if let Some(first_directive) = program.directives.first() {
+        return first_directive.span.start;
+    }
+
+    let Some(first_stmt) = program.body.first() else {
+        // Program contains no statements or directives. Span start = span end.
+        return program.span.end;
+    };
+
+    match first_stmt {
+        Statement::ExportNamedDeclaration(decl) => {
+            let start = decl.span.start;
+            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration {
+                if let Some(decorator) = class.decorators.first() {
+                    return cmp::min(start, decorator.span.start);
+                }
+            }
+            start
+        }
+        Statement::ExportDefaultDeclaration(decl) => {
+            let start = decl.span.start;
+            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration {
+                if let Some(decorator) = class.decorators.first() {
+                    return cmp::min(start, decorator.span.start);
+                }
+            }
+            start
+        }
+        _ => first_stmt.span().start,
     }
 }
 
@@ -151,7 +206,7 @@ pub struct TsNull<T>(pub T);
 
 impl<T> ESTree for TsNull<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -251,7 +306,7 @@ pub struct TsEmptyArray<T>(pub T);
 
 impl<T> ESTree for TsEmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray(()).serialize(serializer);
     }
 }
 
@@ -355,7 +410,7 @@ pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -377,7 +432,7 @@ pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -417,20 +472,61 @@ impl ESTree for RegExpFlagsConverter<'_> {
     }
 }
 
+/// Converter for `TemplateElement`.
+///
+/// Decode `cooked` if it contains lone surrogates.
+///
+/// Also adjust span in TS AST.
+/// TS-ESLint produces a different span from Acorn:
+/// ```js
+/// const template = `abc${x}def${x}ghi`;
+/// // Acorn:         ^^^    ^^^    ^^^
+/// // TS-ESLint:    ^^^^^^ ^^^^^^ ^^^^^
+/// ```
+// TODO: Raise an issue on TS-ESLint and see if they'll change span to match Acorn.
+#[ast_meta]
+#[estree(raw_deser = r#"
+    const tail = DESER[bool](POS_OFFSET.tail),
+        start = DESER[u32](POS_OFFSET.span.start) /* IF_TS */ - 1 /* END_IF_TS */,
+        end = DESER[u32](POS_OFFSET.span.end) /* IF_TS */ + 2 - tail /* END_IF_TS */,
+        value = DESER[TemplateElementValue](POS_OFFSET.value);
+    if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
+        value.cooked = value.cooked
+            .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+    }
+    { type: 'TemplateElement', start, end, value, tail }
+"#)]
+pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
+
+impl ESTree for TemplateElementConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateElement"));
+
+        let mut span = element.span;
+        if S::INCLUDE_TS_FIELDS {
+            span.start -= 1;
+            span.end += if element.tail { 1 } else { 2 };
+        }
+        state.serialize_field("start", &span.start);
+        state.serialize_field("end", &span.end);
+
+        state.serialize_field("value", &TemplateElementValue(element));
+        state.serialize_field("tail", &element.tail);
+        state.end();
+    }
+}
+
 /// Serializer for `value` field of `TemplateElement`.
 ///
 /// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
+///
+/// Implementation for `raw_deser` is included in `TemplateElementConverter` above.
 #[ast_meta]
 #[estree(
     ts_type = "TemplateElementValue",
-    raw_deser = r#"
-        let value = DESER[TemplateElementValue](POS_OFFSET.value);
-        if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
-            value.cooked = value.cooked
-                .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-        }
-        value
-    "#
+    raw_deser = "(() => { throw new Error('Should not appear in deserializer code'); })()"
 )]
 pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
 
@@ -474,7 +570,7 @@ pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
 
 impl ESTree for ElisionConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
+        Null(()).serialize(serializer);
     }
 }
 
@@ -538,9 +634,83 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Converter for `FormalParameter`.
+///
+/// In TS-ESTree AST, if `accessibility` is `Some`, or `readonly` or `override` is `true`,
+/// is serialized as `TSParameterProperty` instead, which has a different object shape.
+#[ast_meta]
+#[estree(
+    ts_type = "FormalParameter | TSParameterProperty",
+    raw_deser = "
+        /* IF_JS */
+        DESER[BindingPatternKind](POS_OFFSET.pattern.kind)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
+            readonly = DESER[bool](POS_OFFSET.readonly),
+            override = DESER[bool](POS_OFFSET.override);
+        let param;
+        if (accessibility === null && !readonly && !override) {
+            param = {
+                ...DESER[BindingPatternKind](POS_OFFSET.pattern.kind),
+                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation),
+                optional: DESER[bool](POS_OFFSET.pattern.optional),
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+            };
+        } else {
+            param = {
+                type: 'TSParameterProperty',
+                start: DESER[u32](POS_OFFSET.span.start),
+                end: DESER[u32](POS_OFFSET.span.end),
+                accessibility,
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+                override,
+                parameter: DESER[BindingPattern](POS_OFFSET.pattern),
+                readonly,
+                static: false,
+            };
+        }
+        param
+        /* END_IF_TS */
+    "
+)]
+pub struct FormalParameterConverter<'a, 'b>(pub &'b FormalParameter<'a>);
+
+impl ESTree for FormalParameterConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let param = self.0;
+
+        if S::INCLUDE_TS_FIELDS {
+            if param.has_modifier() {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
+                state.serialize_field("start", &param.span.start);
+                state.serialize_field("end", &param.span.end);
+                state.serialize_field("accessibility", &param.accessibility);
+                state.serialize_field("decorators", &param.decorators);
+                state.serialize_field("override", &param.r#override);
+                state.serialize_field("parameter", &param.pattern);
+                state.serialize_field("readonly", &param.readonly);
+                state.serialize_field("static", &False(()));
+                state.end();
+            } else {
+                let mut state = serializer.serialize_struct();
+                param.pattern.kind.serialize(FlatStructSerializer(&mut state));
+                state.serialize_field("typeAnnotation", &param.pattern.type_annotation);
+                state.serialize_field("optional", &param.pattern.optional);
+                state.serialize_field("decorators", &param.decorators);
+                state.end();
+            }
+        } else {
+            param.pattern.kind.serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `params` field of `Function`.
 ///
-/// In TS AST, this adds `this_param` to start of the array.
+/// In TS-ESTree, this adds `this_param` to start of the `params` array.
 #[ast_meta]
 #[estree(
     ts_type = "ParamPattern[]",
@@ -577,25 +747,48 @@ impl ESTree for FunctionFormalParameters<'_, '_> {
     }
 }
 
-/// Serializer for `extends` field of `TSInterfaceDeclaration`.
+/// Serializer for `key` field of `MethodDefinition`.
 ///
-/// Serialize `extends` as an empty array if it's `None`.
+/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
+/// is represented as an `Identifier`.
+/// In Acorn and Espree, it's a `Literal`.
+/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
 #[ast_meta]
 #[estree(
-    ts_type = "Array<TSInterfaceHeritage>",
+    ts_type = "PropertyKey",
     raw_deser = "
-        const extendsArr = DESER[Option<Vec<TSInterfaceHeritage>>](POS_OFFSET.extends);
-        extendsArr === null ? [] : extendsArr
+        /* IF_JS */
+        DESER[PropertyKey](POS_OFFSET.key)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        let key = DESER[PropertyKey](POS_OFFSET.key);
+        if (THIS.kind === 'constructor') {
+            key = {
+                type: 'Identifier',
+                start: key.start,
+                end: key.end,
+                name: 'constructor',
+                decorators: [],
+                optional: false,
+                typeAnnotation: null,
+            };
+        }
+        key
+        /* END_IF_TS */
     "
 )]
-pub struct TSInterfaceDeclarationExtends<'a, 'b>(pub &'b TSInterfaceDeclaration<'a>);
+pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
 
-impl ESTree for TSInterfaceDeclarationExtends<'_, '_> {
+impl ESTree for MethodDefinitionKey<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(extends) = &self.0.extends {
-            extends.serialize(serializer);
+        let method = self.0;
+        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
+            // `key` can only be either an identifier `constructor`, or string `"constructor"`
+            let span = method.key.span();
+            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            method.key.serialize(serializer);
         }
     }
 }
@@ -619,7 +812,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
         if let Some(specifiers) = &self.0.specifiers {
             specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -664,6 +857,11 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     end: THIS.end,
                     left: keyCopy,
                     right: init,
+                    /* IF_TS */
+                    typeAnnotation: null,
+                    optional: false,
+                    decorators: [],
+                    /* END_IF_TS */
                 };
         value
     "
@@ -681,32 +879,12 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
             state.serialize_field("end", &self.0.span.end);
             state.serialize_field("left", &self.0.binding);
             state.serialize_field("right", init);
+            state.serialize_ts_field("typeAnnotation", &Null(()));
+            state.serialize_ts_field("optional", &False(()));
+            state.serialize_ts_field("decorators", &EmptyArray(()));
             state.end();
         } else {
             self.0.binding.serialize(serializer);
-        }
-    }
-}
-
-/// Serializer for `options` field of `ImportExpression`.
-///
-/// Serialize only the first expression in `options`, or `null` if `options` is empty.
-#[ast_meta]
-#[estree(
-    ts_type = "Expression | null",
-    raw_deser = "
-        const options = DESER[Vec<Expression>](POS_OFFSET.options);
-        options.length === 0 ? null : options[0]
-    "
-)]
-pub struct ImportExpressionOptions<'a>(pub &'a ImportExpression<'a>);
-
-impl ESTree for ImportExpressionOptions<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.options.first() {
-            expression.serialize(serializer);
-        } else {
-            ().serialize(serializer);
         }
     }
 }
@@ -734,7 +912,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -754,7 +932,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -774,7 +952,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray(()).serialize(serializer);
         }
     }
 }
@@ -782,6 +960,52 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // --------------------
 // JSX
 // --------------------
+
+/// Serializer for `opening_element` field of `JSXElement`.
+///
+/// `selfClosing` field of `JSXOpeningElement` depends on whether `JSXElement` has a `closing_element`.
+#[ast_meta]
+#[estree(
+    ts_type = "JSXOpeningElement",
+    raw_deser = "
+        const openingElement = DESER[Box<JSXOpeningElement>](POS_OFFSET.opening_element);
+        if (THIS.closingElement === null) openingElement.selfClosing = true;
+        openingElement
+    "
+)]
+pub struct JSXElementOpening<'a, 'b>(pub &'b JSXElement<'a>);
+
+impl ESTree for JSXElementOpening<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        let opening_element = element.opening_element.as_ref();
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
+        state.serialize_field("start", &opening_element.span.start);
+        state.serialize_field("end", &opening_element.span.end);
+        state.serialize_field("attributes", &opening_element.attributes);
+        state.serialize_field("name", &opening_element.name);
+        state.serialize_field("selfClosing", &element.closing_element.is_none());
+        state.serialize_ts_field("typeArguments", &opening_element.type_arguments);
+        state.end();
+    }
+}
+
+/// Converter for `selfClosing` field of `JSXOpeningElement`.
+///
+/// This converter is not used for serialization - `JSXElementOpening` above handles serialization.
+/// This type is only required to add `selfClosing: boolean` to TS type def,
+/// and provide default value of `false` for raw transfer deserializer.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "false")]
+pub struct JSXOpeningElementSelfClosing<'a, 'b>(#[expect(dead_code)] pub &'b JSXOpeningElement<'a>);
+
+impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
+    fn serialize<S: Serializer>(&self, _serializer: S) {
+        unreachable!()
+    }
+}
 
 /// Serializer for `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
 ///
@@ -821,19 +1045,68 @@ impl ESTree for JSXElementThisExpression<'_> {
     }
 }
 
+/// Converter for `JSXOpeningFragment`.
+///
+/// Add `attributes` and `selfClosing` fields in JS AST, but not in TS AST.
+/// Acorn-JSX has these fields, but TS-ESLint parser does not.
+///
+/// The extra fields are added to the type as `TsEmptyArray` and `TsFalse`,
+/// which are incorrect, as these fields appear only in the *JS* AST, not the TS one.
+/// But that results in the fields being optional in TS type definition.
+//
+// TODO: Find a better way to do this.
 #[ast_meta]
-#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
-pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+#[estree(raw_deser = "
+    const node = {
+        type: 'JSXOpeningFragment',
+        start: DESER[u32](POS_OFFSET.span.start),
+        end: DESER[u32](POS_OFFSET.span.end),
+        /* IF_JS */
+        attributes: [],
+        selfClosing: false,
+        /* END_IF_JS */
+    };
+    node
+")]
+pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
 
-impl ESTree for JSXOpeningFragmentAttributes<'_> {
+impl ESTree for JSXOpeningFragmentConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
+        state.serialize_field("start", &self.0.span.start);
+        state.serialize_field("end", &self.0.span.end);
+        if !S::INCLUDE_TS_FIELDS {
+            state.serialize_field("attributes", &EmptyArray(()));
+            state.serialize_field("selfClosing", &False(()));
+        }
+        state.end();
     }
 }
 
 // --------------------
 // TS
 // --------------------
+
+/// Serializer for `computed` field of `TSEnumMember`.
+///
+/// `true` if `id` field is one of the computed variants of `TSEnumMemberName`.
+//
+// TODO: Not ideal to have to include the enum discriminant's value here explicitly.
+// Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
+
+impl ESTree for TSEnumMemberComputed<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        matches!(
+            self.0.id,
+            TSEnumMemberName::ComputedString(_) | TSEnumMemberName::ComputedTemplateString(_)
+        )
+        .serialize(serializer);
+    }
+}
 
 /// Serializer for `directive` field of `ExpressionStatement`.
 /// This field is always `null`, and only appears in the TS AST, not JS ESTree.
@@ -846,31 +1119,7 @@ pub struct ExpressionStatementDirective<'a, 'b>(
 
 impl ESTree for ExpressionStatementDirective<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        ().serialize(serializer);
-    }
-}
-
-/// Serializer for `implements` field of `Class`.
-///
-/// This field is only used in TS AST.
-/// `None` is serialized as empty array (`[]`).
-#[ast_meta]
-#[estree(
-    ts_type = "Array<TSClassImplements>",
-    raw_deser = "
-        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
-        classImplements === null ? [] : classImplements
-    "
-)]
-pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
-
-impl ESTree for ClassImplements<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(implements) = &self.0.implements {
-            implements.serialize(serializer);
-        } else {
-            [(); 0].serialize(serializer);
-        }
+        Null(()).serialize(serializer);
     }
 }
 
@@ -885,39 +1134,150 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     }
 }
 
-/// Serializer for `body` field of `TSEnumDeclaration`.
-/// This field is derived from `members` field.
-///
-/// `Span` indicates within braces `{ ... }`.
-/// ```ignore
-/// enum Foo { ... }
-/// |              | TSEnumDeclaration.span
-///          |     | TSEnumBody.span
-///        ^^ id_end + 1 for space
-/// ```
-/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
-/// We may need to reconsider adding `TSEnumBody` as Rust AST.
+/// Serializer for `key` and `constraint` field of `TSMappedType`.
 #[ast_meta]
 #[estree(
-    ts_type = "TSEnumBody",
+    ts_type = "TSTypeParameter['name']",
     raw_deser = "
-        const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
-        const bodyStart = THIS.id.end + 1;
-        {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
+        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
+        typeParameter.name
     "
 )]
-pub struct TSEnumDeclarationBody<'a, 'b>(pub &'b TSEnumDeclaration<'a>);
+pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
 
-impl ESTree for TSEnumDeclarationBody<'_, '_> {
+impl ESTree for TSMappedTypeKey<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
-        let body_start = self.0.id.span.end + 1;
-        state.serialize_field("start", &body_start);
-        state.serialize_field("end", &self.0.span.end);
-        state.serialize_field("members", &self.0.members);
-        state.end();
+        self.0.type_parameter.name.serialize(serializer);
     }
+}
+
+// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
+// They will be concatenated in the generated code.
+#[ast_meta]
+#[estree(ts_type = "TSTypeParameter['constraint']", raw_deser = "typeParameter.constraint")]
+pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeConstraint<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.type_parameter.constraint.serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(
+    ts_type = "true | '+' | '-' | null",
+    raw_deser = "
+        const operator = DESER[u8](POS);
+        [true, '+', '-', null][operator]
+    "
+)]
+pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifierOperator);
+
+impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSMappedTypeModifierOperator::True => true.serialize(serializer),
+            TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
+            TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
+            // This is typed as `undefined` (= key is not present) in TS-ESTree.
+            // But we serialize it as `null` to align result in snapshot tests.
+            TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
+        }
+    }
+}
+
+/// Serializer for `params` field of `TSCallSignatureDeclaration`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
+    pub &'b TSCallSignatureDeclaration<'a>,
+);
+
+impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+    }
+}
+
+/// Serializer for `params` field of `TSMethodSignature`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSMethodSignatureFormalParameters<'a, 'b>(pub &'b TSMethodSignature<'a>);
+
+impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+    }
+}
+
+/// Serializer for `params` field of `TSFunctionType`.
+///
+/// These add `this_param` to start of the `params` array.
+#[ast_meta]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        if (thisParam !== null) params.unshift(thisParam);
+        params
+    "
+)]
+pub struct TSFunctionTypeFormalParameters<'a, 'b>(pub &'b TSFunctionType<'a>);
+
+impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let v = self.0;
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+    }
+}
+
+/// Shared serialization logic used by:
+/// - `TSCallSignatureDeclarationFormalParameters`
+/// - `TSMethodSignatureFormalParameters`
+/// - `TSFunctionTypeFormalParameters`
+fn serialize_formal_params_with_this_param<'a, S: Serializer>(
+    this_param: Option<&TSThisParameter<'a>>,
+    params: &FormalParameters<'a>,
+    serializer: S,
+) {
+    let mut seq = serializer.serialize_sequence();
+
+    if let Some(this_param) = this_param {
+        seq.serialize_element(this_param);
+    }
+
+    for item in &params.items {
+        seq.serialize_element(item);
+    }
+
+    if let Some(rest) = &params.rest {
+        seq.serialize_element(&FormalParametersRest(rest));
+    }
+
+    seq.end();
 }
 
 // --------------------

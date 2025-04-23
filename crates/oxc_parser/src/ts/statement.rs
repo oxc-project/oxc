@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use crate::{
     ParserImpl, diagnostics,
@@ -12,27 +12,15 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     /* ------------------- Enum ------------------ */
-
-    pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
-        self.at(Kind::Enum) || (self.at(Kind::Const) && self.peek_at(Kind::Enum))
-    }
-
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier()?;
-        self.expect(Kind::LCurly)?;
-        let members = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_enum_member,
-        )?;
-        self.expect(Kind::RCurly)?;
+        let body = self.parse_ts_enum_body()?;
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
@@ -42,10 +30,23 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_enum(
             span,
             id,
-            members,
+            body,
             modifiers.contains_const(),
             modifiers.contains_declare(),
         ))
+    }
+
+    pub(crate) fn parse_ts_enum_body(&mut self) -> Result<TSEnumBody<'a>> {
+        let span = self.start_span();
+        self.expect(Kind::LCurly)?;
+        let members = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_enum_member,
+        )?;
+        self.expect(Kind::RCurly)?;
+        Ok(self.ast.ts_enum_body(self.end_span(span), members))
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
@@ -66,16 +67,9 @@ impl<'a> ParserImpl<'a> {
                 Ok(TSEnumMemberName::String(self.alloc(literal)))
             }
             Kind::LBrack => match self.parse_computed_property_name()? {
-                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::String(literal)),
+                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::ComputedString(literal)),
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                    Ok(self.ast.ts_enum_member_name_string(
-                        template.span,
-                        template.quasi().unwrap(),
-                        Some(Atom::from(
-                            Span::new(template.span.start + 1, template.span.end - 1)
-                                .source_text(self.source_text),
-                        )),
-                    ))
+                    Ok(TSEnumMemberName::ComputedTemplateString(template))
                 }
                 Expression::NumericLiteral(literal) => {
                     Err(diagnostics::enum_member_cannot_have_numeric_name(literal.span()))
@@ -114,7 +108,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Type)?;
@@ -153,7 +147,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Interface)?; // bump interface
@@ -161,7 +155,8 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
         let (extends, _) = self.parse_heritage_clause()?;
         let body = self.parse_ts_interface_body()?;
-        let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
+        let extends =
+            extends.map_or_else(|| self.ast.vec(), |e| self.ast.ts_interface_heritages(e));
 
         self.verify_modifiers(
             modifiers,
@@ -172,8 +167,8 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_interface(
             self.end_span(span),
             id,
-            extends,
             type_parameters,
+            extends,
             body,
             modifiers.contains_declare(),
         ))
@@ -284,7 +279,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
-        span: Span,
+        span: u32,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
@@ -333,7 +328,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_declaration_statement(
         &mut self,
-        start_span: Span,
+        start_span: u32,
     ) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration()?;
@@ -348,7 +343,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
@@ -408,7 +403,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_declare_function(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
@@ -438,7 +433,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_import_equals_declaration(
         &mut self,
-        span: Span,
+        span: u32,
     ) -> Result<Declaration<'a>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
             ImportOrExportKind::Type
@@ -492,7 +487,7 @@ impl<'a> ParserImpl<'a> {
             return Ok(());
         }
 
-        let mut decorators = vec![];
+        let mut decorators = self.ast.vec();
         while self.at(Kind::At) {
             let decorator = self.parse_decorator()?;
             decorators.push(decorator);

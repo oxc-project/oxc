@@ -177,6 +177,11 @@ impl TriviaBuilder {
         } else if s.starts_with("webpack") {
             comment.annotation = CommentAnnotation::Webpack;
             return;
+        } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
+            .iter()
+            .any(|ss| s.starts_with(ss))
+        {
+            comment.annotation = CommentAnnotation::CoverageIgnore;
         } else {
             if s.contains("@license") || s.contains("@preserve") {
                 comment.annotation = CommentAnnotation::Legal;

@@ -16,6 +16,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    globals::is_valid_aria_property,
     rule::Rule,
     utils::get_jsx_attribute_name,
 };
@@ -308,23 +309,6 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onPointerUpCapture",
 };
 
-const ARIA_PROPERTIES: Set<&'static str> = phf_set! {
-    // See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes
-    // Global attributes
-    "aria-atomic", "aria-braillelabel", "aria-brailleroledescription", "aria-busy", "aria-controls", "aria-current",
-    "aria-describedby", "aria-description", "aria-details",
-    "aria-disabled", "aria-dropeffect", "aria-errormessage", "aria-flowto", "aria-grabbed", "aria-haspopup",
-    "aria-hidden", "aria-invalid", "aria-keyshortcuts", "aria-label", "aria-labelledby", "aria-live",
-    "aria-owns", "aria-relevant", "aria-roledescription",
-    // Widget attributes
-    "aria-autocomplete", "aria-checked", "aria-expanded", "aria-level", "aria-modal", "aria-multiline", "aria-multiselectable",
-    "aria-orientation", "aria-placeholder", "aria-pressed", "aria-readonly", "aria-required", "aria-selected",
-    "aria-sort", "aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-valuetext",
-    // Relationship attributes
-    "aria-activedescendant", "aria-colcount", "aria-colindex", "aria-colindextext", "aria-colspan",
-    "aria-posinset", "aria-rowcount", "aria-rowindex", "aria-rowindextext", "aria-rowspan", "aria-setsize",
-};
-
 const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "accept-charset" => "acceptCharset",
     "class" => "className",
@@ -527,7 +511,7 @@ impl Rule for NoUnknownProperty {
                     }
                     return;
                 }
-                if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
+                if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
                     return;
                 }
                 let name = normalize_attribute_case(&actual_name);

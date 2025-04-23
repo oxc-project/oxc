@@ -205,7 +205,7 @@ fn test_enums() {
         enum_decl_scope_id,
         "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
     );
-    assert_eq!(enum_decl.members.len(), 3);
+    assert_eq!(enum_decl.body.members.len(), 3);
 }
 
 #[test]

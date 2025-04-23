@@ -187,7 +187,7 @@ impl TraverseScoping {
     /// the resulting scopes will be:
     /// ```ts
     /// parentScope1: {
-    ///     newScope: {   
+    ///     newScope: {
     ///         childScope: { }
     ///     }
     ///     childScope2: { }

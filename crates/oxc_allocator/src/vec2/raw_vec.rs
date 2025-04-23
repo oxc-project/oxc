@@ -23,7 +23,7 @@
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
-use allocator_api2::alloc::{AllocError, Allocator};
+use allocator_api2::alloc::{AllocError, Allocator, handle_alloc_error};
 use bumpalo::Bump;
 
 pub use core::alloc::Layout;
@@ -676,11 +676,6 @@ fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
 // only one location which panics rather than a bunch throughout the module.
 fn capacity_overflow() -> ! {
     panic!("capacity overflow")
-}
-
-// Copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/alloc.rs#L29-L31
-fn handle_alloc_error(layout: Layout) -> ! {
-    panic!("encountered allocation error: {:?}", layout)
 }
 
 // Copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L482-L486

@@ -3,7 +3,6 @@ use oxc_ast::{
     ast::{Argument, Expression, FormalParameter},
 };
 use oxc_span::Atom;
-use phf::{phf_set, set::Set};
 
 /// Check if the given node is registering an endpoint handler or middleware to
 /// a route or Express application object. If it is, it
@@ -24,7 +23,7 @@ pub fn as_endpoint_registration<'a, 'n>(
     let call = node.as_call_expression()?;
     let callee = call.callee.as_member_expression()?;
     let method_name = callee.static_property_name()?;
-    if !ROUTER_HANDLER_METHOD_NAMES.contains(method_name) {
+    if ROUTER_HANDLER_METHOD_NAMES.binary_search(&method_name).is_err() {
         return None;
     }
     if call.arguments.is_empty() {
@@ -74,53 +73,31 @@ pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
     }
 }
 
-const ROUTER_HANDLER_METHOD_NAMES: Set<&'static str> = phf_set! {
-    "get",
-    "post",
-    "put",
-    "delete",
-    "patch",
-    "options",
-    "head",
-    "use",
-    "all",
-};
+const ROUTER_HANDLER_METHOD_NAMES: [&str; 9] =
+    ["all", "delete", "get", "head", "options", "patch", "post", "put", "use"];
 
-const COMMON_REQUEST_NAMES: Set<&'static str> = phf_set! {
-    "r",
-    "req",
-    "request",
-};
+const COMMON_REQUEST_NAMES: [&str; 3] = ["r", "req", "request"];
 fn is_req_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier_name().is_some_and(|id| COMMON_REQUEST_NAMES.contains(id.as_str()))
+    param
+        .pattern
+        .get_identifier_name()
+        .is_some_and(|id| COMMON_REQUEST_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_RESPONSE_NAMES: Set<&'static str> = phf_set! {
-    "s",
-    "res",
-    "response",
-};
+const COMMON_RESPONSE_NAMES: [&str; 3] = ["s", "res", "response"];
 fn is_res_param(param: &FormalParameter) -> bool {
     param
         .pattern
         .get_identifier_name()
-        .is_some_and(|id| COMMON_RESPONSE_NAMES.contains(id.as_str()))
+        .is_some_and(|id| COMMON_RESPONSE_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_NEXT_NAMES: Set<&'static str> = phf_set! {
-    "n",
-    "next",
-};
+const COMMON_NEXT_NAMES: [&str; 2] = ["n", "next"];
 fn is_next_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier_name().is_some_and(|id| COMMON_NEXT_NAMES.contains(id.as_str()))
+    param.pattern.get_identifier_name().is_some_and(|id| COMMON_NEXT_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_ERROR_NAMES: Set<&'static str> = phf_set! {
-    "e",
-    "err",
-    "error",
-    "exception",
-};
+const COMMON_ERROR_NAMES: [&str; 4] = ["e", "err", "error", "exception"];
 fn is_error_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(id.as_str()))
+    param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(&id.as_str()))
 }

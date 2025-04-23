@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
+use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
@@ -20,16 +20,15 @@ pub struct ParserCheckpoint<'a> {
 
 impl<'a> ParserImpl<'a> {
     #[inline]
-    pub(crate) fn start_span(&self) -> Span {
-        let token = self.cur_token();
-        Span::new(token.start, 0)
+    pub(crate) fn start_span(&self) -> u32 {
+        self.token.start
     }
 
     #[inline]
-    pub(crate) fn end_span(&self, mut span: Span) -> Span {
-        span.end = self.prev_token_end;
-        debug_assert!(span.end >= span.start);
-        span
+    pub(crate) fn end_span(&self, start: u32) -> Span {
+        let end = self.prev_token_end;
+        debug_assert!(end >= start);
+        Span::new(start, end)
     }
 
     /// Get current token
@@ -328,8 +327,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        let decorators = std::mem::take(&mut self.state.decorators);
-        self.ast.vec_from_iter(decorators)
+        self.state.decorators.take_in(self.ast.allocator)
     }
 
     pub(crate) fn parse_normal_list<F, T>(

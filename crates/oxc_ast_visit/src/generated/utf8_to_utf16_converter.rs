@@ -512,18 +512,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_export_named_declaration(&mut self, it: &mut ExportNamedDeclaration<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_export_named_declaration(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
-    fn visit_export_default_declaration(&mut self, it: &mut ExportDefaultDeclaration<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_export_default_declaration(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
     fn visit_export_all_declaration(&mut self, it: &mut ExportAllDeclaration<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_export_all_declaration(self, it);
@@ -671,6 +659,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     fn visit_ts_enum_declaration(&mut self, it: &mut TSEnumDeclaration<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_enum_declaration(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ts_enum_body(&mut self, it: &mut TSEnumBody<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_enum_body(self, it);
         self.convert_offset(&mut it.span.end);
     }
 
@@ -1127,6 +1121,28 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
+        // Special case logic for `@dec export class C {}`
+        if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
+            self.visit_export_class(class, &mut decl.span);
+        } else {
+            self.convert_offset(&mut decl.span.start);
+            walk_mut::walk_export_named_declaration(self, decl);
+            self.convert_offset(&mut decl.span.end);
+        }
+    }
+
+    fn visit_export_default_declaration(&mut self, decl: &mut ExportDefaultDeclaration<'a>) {
+        // Special case logic for `@dec export default class {}`
+        if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
+            self.visit_export_class(class, &mut decl.span);
+        } else {
+            self.convert_offset(&mut decl.span.start);
+            walk_mut::walk_export_default_declaration(self, decl);
+            self.convert_offset(&mut decl.span.end);
+        }
+    }
+
     fn visit_export_specifier(&mut self, it: &mut ExportSpecifier<'a>) {
         self.convert_offset(&mut it.span.start);
         match (&mut it.local, &mut it.exported) {
@@ -1185,5 +1201,56 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         }
         self.visit_template_element(it.quasis.last_mut().unwrap());
         self.convert_offset(&mut it.span.end);
+    }
+}
+
+impl Utf8ToUtf16Converter<'_> {
+    /// Visit `ExportNamedDeclaration` or `ExportDefaultDeclaration` containing a `Class`.
+    /// e.g. `export class C {}`, `export default class {}`
+    ///
+    /// These need special handing because decorators before the `export` keyword
+    /// have `Span`s which are before the start of the export statement.
+    /// e.g. `@dec export class C {}`, `@dec export default class {}`.
+    /// So they need to be processed first.
+    fn visit_export_class(&mut self, class: &mut Class<'_>, export_decl_span: &mut Span) {
+        // Process decorators.
+        // Process decorators before the `export` keyword first.
+        // These have spans which are before the export statement span start.
+        // Then process export statement and `Class` start, then remaining decorators,
+        // which have spans within the span of `Class`.
+        let mut decl_start = export_decl_span.start;
+        for decorator in &mut class.decorators {
+            if decorator.span.start > decl_start {
+                // Process span start of export statement and `Class`
+                self.convert_offset(&mut export_decl_span.start);
+                self.convert_offset(&mut class.span.start);
+                // Prevent this branch being taken again
+                decl_start = u32::MAX;
+            }
+            self.visit_decorator(decorator);
+        }
+        // If didn't already, process span start of export statement and `Class`
+        if decl_start < u32::MAX {
+            self.convert_offset(&mut export_decl_span.start);
+            self.convert_offset(&mut class.span.start);
+        }
+        // Process rest of the class
+        if let Some(id) = &mut class.id {
+            self.visit_binding_identifier(id);
+        }
+        if let Some(type_parameters) = &mut class.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_class) = &mut class.super_class {
+            self.visit_expression(super_class);
+        }
+        if let Some(super_type_arguments) = &mut class.super_type_arguments {
+            self.visit_ts_type_parameter_instantiation(super_type_arguments);
+        }
+        self.visit_ts_class_implements_list(&mut class.implements);
+        self.visit_class_body(&mut class.body);
+        // Process span end of `Class` and export statement
+        self.convert_offset(&mut class.span.end);
+        self.convert_offset(&mut export_decl_span.end);
     }
 }

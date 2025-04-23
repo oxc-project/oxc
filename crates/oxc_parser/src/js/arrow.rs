@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
 use super::Tristate;
@@ -12,7 +12,7 @@ struct ArrowFunctionHead<'a> {
     params: Box<'a, FormalParameters<'a>>,
     return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
-    span: Span,
+    span: u32,
     has_return_colon: bool,
 }
 
@@ -213,7 +213,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
-        span: Span,
+        span: u32,
         ident: Expression<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
@@ -229,7 +229,7 @@ impl<'a> ParserImpl<'a> {
                 }
                 _ => unreachable!(),
             };
-            let params_span = self.end_span(ident.span);
+            let params_span = self.end_span(ident.span.start);
             let ident = BindingPatternKind::BindingIdentifier(ident);
             let pattern = self.ast.binding_pattern(ident, NONE, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);

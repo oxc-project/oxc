@@ -589,7 +589,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_return(
                     SPAN,
-                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
+                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope)),
                 )),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);

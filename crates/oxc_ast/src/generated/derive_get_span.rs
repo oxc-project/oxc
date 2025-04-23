@@ -1488,6 +1488,13 @@ impl GetSpan for TSEnumDeclaration<'_> {
     }
 }
 
+impl GetSpan for TSEnumBody<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for TSEnumMember<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1500,6 +1507,8 @@ impl GetSpan for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetSpan::span(&**it),
             Self::String(it) => GetSpan::span(&**it),
+            Self::ComputedString(it) => GetSpan::span(&**it),
+            Self::ComputedTemplateString(it) => GetSpan::span(&**it),
         }
     }
 }

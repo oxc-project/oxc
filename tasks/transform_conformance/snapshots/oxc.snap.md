@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 143/235
+Passed: 150/246
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -15,6 +15,7 @@ Passed: 143/235
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
+* babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 * regexp
 
@@ -43,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/17)
+# babel-plugin-transform-typescript (4/20)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -174,7 +175,7 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Name":
-after transform: SymbolId(7): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(7): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Name":
 after transform: SymbolId(7): Span { start: 116, end: 120 }
@@ -202,16 +203,13 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 31, end: 33 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 * namespace/import-=/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["V", "X", "_N"]
-rebuilt        : ScopeId(1): ["V", "_N"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -222,13 +220,13 @@ Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 31, end: 33 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 130, end: 132 }
@@ -242,13 +240,13 @@ Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 34, end: 36 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 145, end: 147 }
@@ -274,7 +272,7 @@ Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "x":
-after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule)
+after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "x":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
@@ -283,11 +281,71 @@ Symbol redeclarations mismatch for "x":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "y":
-after transform: SymbolId(2): SymbolFlags(RegularEnum | NameSpaceModule)
+after transform: SymbolId(2): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
+
+* namespace/redeclaration-with-interface/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-alias/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 12, end: 15 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-only-namespace/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
+rebuilt        : SymbolId(0): []
 
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
@@ -336,7 +394,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (37/40)
+# babel-plugin-transform-react-jsx (42/45)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
@@ -366,7 +424,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/70)
+# legacy-decorators (2/71)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -377,6 +435,38 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/imports/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["Cls", "_ref"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "Cls":
+after transform: SymbolId(6): Span { start: 135, end: 138 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Cls":
+after transform: SymbolId(10): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 135, end: 138 }
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(8): ReferenceFlags(Type)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(9): ReferenceFlags(Type)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference symbol mismatch for "dec":
+after transform: SymbolId(2) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
+rebuilt        : ["Foo", "Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
 Bindings mismatch:
@@ -399,6 +489,12 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
+Reference flags mismatch for "UnboundTypeReference":
+after transform: ReferenceId(2): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+Reference flags mismatch for "UnboundTypeReference":
+after transform: ReferenceId(3): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(4), ReferenceId(5)]

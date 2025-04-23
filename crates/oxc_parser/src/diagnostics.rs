@@ -183,6 +183,24 @@ pub fn const_class_member(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+// 'extends' clause already seen. ts(1172)
+#[cold]
+pub fn extends_clause_already_seen(span: Span) -> OxcDiagnostic {
+    ts_error("1172", "'extends' clause already seen").with_label(span)
+}
+
+// 'extends' clause must precede 'implements' clause. ts(1173)
+#[cold]
+pub fn extends_clause_must_precede_implements(span: Span) -> OxcDiagnostic {
+    ts_error("1173", "'extends' clause must precede 'implements' clause").with_label(span)
+}
+
+// 'implements' clause already seen. ts(1175)
+#[cold]
+pub fn implements_clause_already_seen(span: Span) -> OxcDiagnostic {
+    ts_error("1175", "'implements' clause already seen").with_label(span)
+}
+
 #[cold]
 pub fn binding_rest_element_last(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element must be last in a destructuring pattern").with_label(span)
@@ -418,16 +436,6 @@ pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnost
 }
 
 #[cold]
-pub fn line_terminator_before_using_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Line terminator not permitted before using declaration.").with_label(span)
-}
-
-#[cold]
-pub fn await_in_using_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Await is not allowed in using declarations.").with_label(span)
-}
-
-#[cold]
 pub fn invalid_identifier_in_using_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations may not have binding patterns.").with_label(span)
 }
@@ -496,6 +504,22 @@ pub fn private_in_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
 }
 
+#[cold]
+pub fn import_arguments(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
+}
+
+/// TS(2566)
+#[cold]
+pub fn rest_element_property_name(span: Span) -> OxcDiagnostic {
+    ts_error("2566", "A rest element cannot have a property name.").with_label(span)
+}
+
+#[cold]
+pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]
@@ -551,6 +575,20 @@ pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
+}
+
+/// TS(2206)
+#[cold]
+pub fn type_modifier_on_named_type_import(span: Span) -> OxcDiagnostic {
+    ts_error("2206", "The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.")
+             .with_label(span)
+}
+
+/// TS(2207)
+#[cold]
+pub fn type_modifier_on_named_type_export(span: Span) -> OxcDiagnostic {
+    ts_error("2207", "The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.")
+         .with_label(span)
 }
 
 // ================================== TS ENUMS =================================

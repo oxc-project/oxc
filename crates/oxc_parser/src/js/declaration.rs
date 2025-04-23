@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
 use crate::{
@@ -36,13 +36,13 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_statement(&mut self) -> Result<Statement<'a>> {
         let mut decl = self.parse_using_declaration(StatementContext::StatementList)?;
         self.asi()?;
-        decl.span = self.end_span(decl.span);
+        decl.span = self.end_span(decl.span.start);
         Ok(Statement::VariableDeclaration(self.alloc(decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
         decl_parent: VariableDeclarationParent,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
@@ -142,19 +142,6 @@ impl<'a> ParserImpl<'a> {
         let is_await = self.eat(Kind::Await);
 
         self.expect(Kind::Using)?;
-
-        // `[no LineTerminator here]`
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::line_terminator_before_using_declaration(
-                self.cur_token().span(),
-            ));
-        }
-
-        // [lookahead ≠ await]
-        if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::await_in_using_declaration(self.cur_token().span()));
-            self.eat(Kind::Await);
-        }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();

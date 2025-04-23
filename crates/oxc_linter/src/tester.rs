@@ -486,7 +486,7 @@ impl Tester {
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let mut lint_service = LintService::from_linter(linter, options);
         let (sender, _receiver) = mpsc::channel();
-        let result = lint_service.run_source(&allocator, source_text, false, &sender);
+        let result = lint_service.run_test_source(&allocator, source_text, false, &sender);
 
         if result.is_empty() {
             return TestResult::Passed;

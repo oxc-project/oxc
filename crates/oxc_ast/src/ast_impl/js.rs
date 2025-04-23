@@ -4,7 +4,6 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
@@ -853,27 +852,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> ArrayAssignmentTarget<'a> {
-    /// Creates a new array assignment target (like `[a, b]` in the code `[a, b] = [1, 2]`)
-    /// using the given elements.
-    pub fn new_with_elements(
-        span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    ) -> Self {
-        Self { span, elements, rest: None, trailing_comma: None }
-    }
-}
-
-impl<'a> ObjectAssignmentTarget<'a> {
-    /// Creates a new object assignment target (like `{a, b}` in the code `({a, b} = obj)`) using
-    /// the given properties.
-    pub fn new_with_properties(
-        span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    ) -> Self {
-        Self { span, properties, rest: None }
-    }
-
+impl ObjectAssignmentTarget<'_> {
     /// Returns `true` if this object assignment target is empty.
     ///
     /// ## Example
@@ -1030,7 +1009,14 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            _ => None,
+            Declaration::TSModuleDeclaration(decl) => {
+                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                    Some(ident)
+                } else {
+                    None
+                }
+            }
+            Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1760,11 +1746,11 @@ impl<'a> ModuleDeclaration<'a> {
     /// - `import thing from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export * from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export default thing` => `None`
-    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
         match self {
-            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,

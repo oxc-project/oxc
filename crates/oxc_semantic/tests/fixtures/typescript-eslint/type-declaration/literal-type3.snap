@@ -68,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flags": "SymbolFlags(Function)",
+        "flags": "SymbolFlags(Function | Ambient)",
         "id": 2,
         "name": "setAlignment",
         "node": "Function(setAlignment)",

@@ -72,7 +72,7 @@ impl Rule for Scope {
             return;
         }
 
-        if !HTML_TAG.contains(&element_type) {
+        if !HTML_TAG.contains(element_type.as_ref()) {
             return;
         }
 

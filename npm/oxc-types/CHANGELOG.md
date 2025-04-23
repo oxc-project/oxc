@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+### Bug Fixes
+
+- fbf0ae2 estree: Add missing fixed fields to `AssignmentPattern` (#10490) (Yuji Sugiura)
+
+### Refactor
+
+
+## [0.64.0] - 2025-04-17
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+
+### Bug Fixes
+
+- f3ddefb ast/estree: Add missing fields to `AssignmentTargetRest` in TS-ESTree AST (#10456) (overlookmotel)
+- 4817c7e ast/estree: Add fields to `AssignmentTargetPattern` in TS-ESTree AST (#10423) (overlookmotel)
+- b3094b3 ast/estree: Add `optional` field to `AssignmentTargetProperty` in TS-ESTree AST (#10412) (overlookmotel)
+- a7fd30f ast/estree: Add fields to `BindingRestElement` in TS-ESTree AST (#10411) (overlookmotel)
+- cc07efd ast/estree: Fix `JSXOpeningFragment` (#10208) (therewillbecode)
+- 2520b25 estree: Align `TSMappedType` fields (#10392) (Yuji Sugiura)
+- 3ed3669 estree: Rename `JSDocXxxType` to `TSJSDocXxxType` (#10358) (Yuji Sugiura)
+- b54fb3e estree: Rename `TSInstantiationExpression`.`type_parameters` to `type_arguments` (#10327) (Yuji Sugiura)
+
+### Refactor
+
+- 294d24b ast/estree: Simplify serialization for `JSXOpeningFragment` (#10316) (overlookmotel)
+
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- e42c040 ast/estree: Add TS fields to `LabelIdentifier` (#10295) (overlookmotel)
+- 06fc07c ast/estree: Fix `TSImportType` (#10200) (therewillbecode)
+- 760188e ast/estree: Fix `BindingProperty` (#10193) (therewillbecode)
+- f547d76 ast/estree: Add `TSEnumBody` to `TSEnumDeclaration.body` (#10017) (Yuji Sugiura)
+- 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
+- 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
+- bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes

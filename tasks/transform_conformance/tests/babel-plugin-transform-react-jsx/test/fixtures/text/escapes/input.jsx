@@ -1,0 +1,308 @@
+// Valid
+<div>
+  &nbsp;
+  &iexcl;
+  &cent;
+  &pound;
+  &curren;
+  &yen;
+  &brvbar;
+  &sect;
+  &uml;
+  &copy;
+</div>;
+<div>
+  &ordf;
+  &laquo;
+  &not;
+  &shy;
+  &reg;
+  &macr;
+  &deg;
+  &plusmn;
+  &sup2;
+  &sup3;
+</div>;
+<div>
+  &acute;
+  &micro;
+  &para;
+  &middot;
+  &cedil;
+  &sup1;
+  &ordm;
+  &raquo;
+  &frac14;
+  &frac12;
+</div>;
+<div>
+  &frac34;
+  &iquest;
+  &Agrave;
+  &Aacute;
+  &Acirc;
+  &Atilde;
+  &Auml;
+  &Aring;
+  &AElig;
+  &Ccedil;
+</div>;
+<div>
+  &Egrave;
+  &Eacute;
+  &Ecirc;
+  &Euml;
+  &Igrave;
+  &Iacute;
+  &Icirc;
+  &Iuml;
+  &ETH;
+  &Ntilde;
+</div>;
+<div>
+  &Ograve;
+  &Oacute;
+  &Ocirc;
+  &Otilde;
+  &Ouml;
+  &times;
+  &Oslash;
+  &Ugrave;
+  &Uacute;
+  &Ucirc;
+</div>;
+<div>
+  &Uuml;
+  &Yacute;
+  &THORN;
+  &szlig;
+  &agrave;
+  &aacute;
+  &acirc;
+  &atilde;
+  &auml;
+  &aring;
+</div>;
+<div>
+  &aelig;
+  &ccedil;
+  &egrave;
+  &eacute;
+  &ecirc;
+  &euml;
+  &igrave;
+  &iacute;
+  &icirc;
+  &iuml;
+</div>;
+<div>
+  &eth;
+  &ntilde;
+  &ograve;
+  &oacute;
+  &ocirc;
+  &otilde;
+  &ouml;
+  &divide;
+  &oslash;
+  &ugrave;
+</div>;
+<div>
+  &uacute;
+  &ucirc;
+  &uuml;
+  &yacute;
+  &thorn;
+  &yuml;
+  &fnof;
+  &Alpha;
+  &Beta;
+  &Gamma;
+</div>;
+<div>
+  &Delta;
+  &Epsilon;
+  &Zeta;
+  &Eta;
+  &Theta;
+  &Iota;
+  &Kappa;
+  &Lambda;
+  &Mu;
+  &Nu;
+</div>;
+<div>
+  &Xi;
+  &Omicron;
+  &Pi;
+  &Rho;
+  &Sigma;
+  &Tau;
+  &Upsilon;
+  &Phi;
+  &Chi;
+  &Psi;
+</div>;
+<div>
+  &Omega;
+  &alpha;
+  &beta;
+  &gamma;
+  &delta;
+  &epsilon;
+  &zeta;
+  &eta;
+  &theta;
+  &iota;
+</div>;
+<div>
+  &kappa;
+  &lambda;
+  &mu;
+  &nu;
+  &xi;
+  &omicron;
+  &pi;
+  &rho;
+  &sigmaf;
+  &sigma;
+</div>;
+<div>
+  &tau;
+  &upsilon;
+  &phi;
+  &chi;
+  &psi;
+  &omega;
+  &thetasym;
+  &upsih;
+  &piv;
+  &bull;
+</div>;
+<div>
+  &hellip;
+  &prime;
+  &Prime;
+  &oline;
+  &frasl;
+  &weierp;
+  &image;
+  &real;
+  &trade;
+  &alefsym;
+</div>;
+<div>
+  &larr;
+  &uarr;
+  &rarr;
+  &darr;
+  &harr;
+  &crarr;
+  &lArr;
+  &uArr;
+  &rArr;
+  &dArr;
+</div>;
+<div>
+  &hArr;
+  &forall;
+  &part;
+  &exist;
+  &empty;
+  &nabla;
+  &isin;
+  &notin;
+  &ni;
+  &prod;
+</div>;
+<div>
+  &sum;
+  &minus;
+  &lowast;
+  &radic;
+  &prop;
+  &infin;
+  &ang;
+  &and;
+  &or;
+  &cap;
+</div>;
+<div>
+  &cup;
+  &int;
+  &there4;
+  &sim;
+  &cong;
+  &asymp;
+  &ne;
+  &equiv;
+  &le;
+  &ge;
+</div>;
+<div>
+  &sub;
+  &sup;
+  &nsub;
+  &sube;
+  &supe;
+  &oplus;
+  &otimes;
+  &perp;
+  &sdot;
+  &lceil;
+</div>;
+<div>
+  &rceil;
+  &lfloor;
+  &rfloor;
+  &lang;
+  &rang;
+  &loz;
+  &spades;
+  &clubs;
+  &hearts;
+  &diams;
+</div>;
+<div>
+  &quot;
+  &amp;
+  &lt;
+  &gt;
+  &OElig;
+  &oelig;
+  &Scaron;
+  &scaron;
+  &Yuml;
+  &circ;
+</div>;
+<div>
+  &tilde;
+  &ensp;
+  &emsp;
+  &thinsp;
+  &zwnj;
+  &zwj;
+  &lrm;
+  &rlm;
+  &ndash;
+  &mdash;
+</div>;
+<div>
+  &lsquo;
+  &rsquo;
+  &sbquo;
+  &ldquo;
+  &rdquo;
+  &bdquo;
+  &dagger;
+  &Dagger;
+  &permil;
+  &lsaquo;
+</div>;
+<div>
+  &rsaquo;
+  &euro;
+</div>;
+
+// Invalid
+<div>&donkey;</div>

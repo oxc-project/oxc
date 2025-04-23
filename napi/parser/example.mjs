@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 import { parseSync } from './index.js';
 
 // usage:
-// node napi/parser/example.mjs test.ts --experimentalRawTransfer
+// node napi/parser/example.mjs test.ts
 
 process.chdir(path.join(import.meta.dirname, '../..'));
 
@@ -18,9 +18,6 @@ function main() {
       },
       astType: {
         type: 'string',
-      },
-      experimentalRawTransfer: {
-        type: 'boolean',
       },
     },
   });

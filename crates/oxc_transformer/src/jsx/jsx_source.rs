@@ -174,7 +174,7 @@ impl<'a> JsxSource<'a, '_> {
         };
 
         let properties = ctx.ast.vec_from_array([filename, line_number, column_number]);
-        ctx.ast.expression_object(SPAN, properties, None)
+        ctx.ast.expression_object(SPAN, properties)
     }
 
     pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {

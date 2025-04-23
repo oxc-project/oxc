@@ -1,7 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
-use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -158,13 +157,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_implements_clause(&mut self) -> Result<Vec<'a, TSClassImplements<'a>>> {
         self.expect(Kind::Implements)?;
         let first = self.parse_ts_implement_name()?;
-        let mut implements = self.ast.vec();
-        implements.push(first);
-
+        let mut implements = self.ast.vec1(first);
         while self.eat(Kind::Comma) {
             implements.push(self.parse_ts_implement_name()?);
         }
-
         Ok(implements)
     }
 
@@ -390,11 +386,7 @@ impl<'a> ParserImpl<'a> {
                 Ok(TSType::TSThisType(self.alloc(this_type)))
             }
             Kind::Typeof => {
-                if self.peek_at(Kind::Import) {
-                    self.parse_ts_import_type()
-                } else {
-                    self.parse_type_query()
-                }
+                self.parse_type_query()
             }
             Kind::LCurly => {
                 if self.lookahead(Self::is_start_of_mapped_type) {
@@ -405,7 +397,9 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
-            Kind::Import => self.parse_ts_import_type(),
+            Kind::Import => self.parse_ts_import_type().map(
+                TSType::TSImportType
+            ),
             Kind::Asserts => {
                 let peek_token = self.peek_token();
                 if peek_token.kind.is_identifier_name() && !peek_token.is_on_new_line {
@@ -637,15 +631,24 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_query(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.bump_any(); // `bump `typeof`
-        let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
-        let entity_name = TSTypeQueryExprName::from(entity_name);
-        let type_arguments =
-            if self.cur_token().is_on_new_line { None } else { self.try_parse_type_arguments()? };
+        let (entity_name, type_arguments) = if self.at(Kind::Import) {
+            let entity_name = TSTypeQueryExprName::TSImportType(self.parse_ts_import_type()?);
+            (entity_name, None)
+        } else {
+            let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
+            let entity_name = TSTypeQueryExprName::from(entity_name);
+            let type_arguments = if self.cur_token().is_on_new_line {
+                None
+            } else {
+                self.try_parse_type_arguments()?
+            };
+            (entity_name, type_arguments)
+        };
         Ok(self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments))
     }
 
     fn parse_this_type_predicate(&mut self, this_ty: TSThisType) -> Result<TSType<'a>> {
-        let span = this_ty.span;
+        let span = this_ty.span.start;
         self.bump_any(); // bump `is`
         // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
@@ -921,7 +924,7 @@ impl<'a> ParserImpl<'a> {
         }
         let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
-            if ty.span.start == ty.type_annotation.span().start {
+            if ty.postfix {
                 Ok(self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation))
             } else {
                 Ok(TSTupleElement::JSDocNullableType(ty))
@@ -975,9 +978,8 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_type_literal_type(span, literal))
     }
 
-    fn parse_ts_import_type(&mut self) -> Result<TSType<'a>> {
+    fn parse_ts_import_type(&mut self) -> Result<Box<'a, TSImportType<'a>>> {
         let span = self.start_span();
-        let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
@@ -986,13 +988,12 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
         let type_arguments = self.parse_type_arguments_of_type_reference()?;
-        Ok(self.ast.ts_type_import_type(
+        Ok(self.ast.alloc_ts_import_type(
             self.end_span(span),
             argument,
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 
@@ -1064,16 +1065,11 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_or_type_predicate(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
-        let type_predicate_variable = if self.cur_kind().is_identifier_name() {
-            self.try_parse(Self::parse_type_predicate_prefix)
-        } else {
-            None
-        };
+        let type_predicate_variable = self.try_parse(Self::parse_type_predicate_prefix);
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;
-        if let Some(id) = type_predicate_variable {
+        if let Some(parameter_name) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
-            let parameter_name = TSTypePredicateName::Identifier(self.alloc(id));
             return Ok(self.ast.ts_type_type_predicate(
                 self.end_span(span),
                 parameter_name,
@@ -1084,12 +1080,17 @@ impl<'a> ParserImpl<'a> {
         Ok(ty)
     }
 
-    fn parse_type_predicate_prefix(&mut self) -> Result<IdentifierName<'a>> {
-        let id = self.parse_identifier_name()?;
+    fn parse_type_predicate_prefix(&mut self) -> Result<TSTypePredicateName<'a>> {
+        let parameter_name = if self.at(Kind::This) {
+            TSTypePredicateName::This(self.parse_this_type_node())
+        } else {
+            let ident_name = self.parse_identifier_name()?;
+            TSTypePredicateName::Identifier(self.alloc(ident_name))
+        };
         let token = self.cur_token();
         if token.kind == Kind::Is && !token.is_on_new_line {
             self.bump_any();
-            return Ok(id);
+            return Ok(parameter_name);
         }
         Err(self.unexpected())
     }
@@ -1229,7 +1230,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_index_signature_declaration(
         &mut self,
-        span: Span,
+        span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
@@ -1313,20 +1314,18 @@ impl<'a> ParserImpl<'a> {
     fn parse_js_doc_unknown_or_nullable_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump `?`
-        let type_annotation = self.parse_ts_type()?;
-        let span = self.end_span(span);
         if matches!(
             self.cur_kind(),
             Kind::Comma | Kind::RCurly | Kind::RParen | Kind::RAngle | Kind::Eq | Kind::Pipe
         ) {
-            Ok(self.ast.ts_type_js_doc_unknown_type(span))
-        } else {
-            Ok(self.ast.ts_type_js_doc_nullable_type(
-                span,
-                type_annotation,
-                /* postfix */ false,
-            ))
+            return Ok(self.ast.ts_type_js_doc_unknown_type(self.end_span(span)));
         }
+        let type_annotation = self.parse_ts_type()?;
+        Ok(self.ast.ts_type_js_doc_nullable_type(
+            self.end_span(span),
+            type_annotation,
+            /* postfix */ false,
+        ))
     }
 
     fn parse_js_doc_non_nullable_type(&mut self) -> Result<TSType<'a>> {

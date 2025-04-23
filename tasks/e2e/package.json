@@ -16,7 +16,7 @@
     "happy-dom": "^17.4.4",
     "immer": "^10.1.1",
     "jquery": "^3.7.1",
-    "lit": "github:lit/dist#v3.2.1",
+    "lit": "github:lit/dist#v3.3.0",
     "lodash": "^4.17.21",
     "luxon": "^3.6.1",
     "memfs": "^4.17.0",

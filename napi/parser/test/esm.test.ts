@@ -82,3 +82,19 @@ describe('hasModuleSyntax', () => {
     expect(ret.module.hasModuleSyntax).toBe(false);
   });
 });
+
+describe('export type', () => {
+  const code = [
+    "export type * from 'mod'",
+    "export type * as ns from 'mod'",
+    'export type { foo }',
+    'export { type foo }',
+    "export type { foo } from 'mod'",
+  ];
+  test.each(code)('%s', (s) => {
+    const ret = parseSync('test.ts', s);
+    expect(ret.module.staticExports.length).toBe(1);
+    expect(ret.module.staticExports[0].entries.length).toBe(1);
+    expect(ret.module.staticExports[0].entries[0].isType).toBe(true);
+  });
+});

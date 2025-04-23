@@ -741,7 +741,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let decorations = ctx.ast.vec_from_iter(
             decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
-        ctx.ast.expression_array(SPAN, decorations, None)
+        ctx.ast.expression_array(SPAN, decorations)
     }
 
     /// Get all decorators of a class method.
@@ -787,7 +787,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             self.transform_decorators_of_parameters(&mut decorations, params, ctx);
         }
 
-        Some(ctx.ast.expression_array(SPAN, decorations, None))
+        Some(ctx.ast.expression_array(SPAN, decorations))
     }
 
     /// * class_alias_binding is `Some`: `Class = _Class = expr`

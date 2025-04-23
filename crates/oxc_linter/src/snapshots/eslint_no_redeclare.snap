@@ -208,3 +208,23 @@ source: crates/oxc_linter/src/tester.rs
    ·          │  ╰── It can not be redeclare here.
    ·          ╰── 'a' is already defined.
    ╰────
+
+  ⚠ eslint(no-redeclare): 'undefined' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:17]
+ 1 │ export function undefined(): void; export function undefined() { }
+   ·                 ─────────
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'undefined' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:52]
+ 1 │ export function undefined(): void; export function undefined() { }
+   ·                                                    ─────────
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'foo' is already defined.
+   ╭─[no_redeclare.tsx:1:6]
+ 1 │ type foo = 1; export function foo(): void; export function foo() { }
+   ·      ─┬─                                                   ─┬─
+   ·       │                                                     ╰── It can not be redeclare here.
+   ·       ╰── 'foo' is already defined.
+   ╰────

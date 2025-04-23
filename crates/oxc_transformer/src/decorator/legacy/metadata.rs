@@ -89,7 +89,7 @@
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
-use oxc_semantic::ReferenceFlags;
+use oxc_semantic::{Reference, ReferenceFlags};
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 self.serialize_type_annotation(rest.argument.type_annotation.as_ref(), ctx),
             ));
         }
-        ctx.ast.expression_array(SPAN, elements, None)
+        ctx.ast.expression_array(SPAN, elements)
     }
 
     /// Serializes the return type of a node for use with decorator type metadata.
@@ -362,16 +362,18 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             // `A` -> `typeof A !== "undefined" && A`
             TSTypeName::IdentifierReference(ident) => {
                 let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                let ident1 = binding.create_read_expression(ctx);
-                let ident2 = binding.create_read_expression(ctx);
+                let flags = Self::get_reference_flags(&binding, ctx);
+                let ident1 = binding.create_expression(flags, ctx);
+                let ident2 = binding.create_expression(flags, ctx);
                 Self::create_checked_value(ident1, ident2, ctx)
             }
             TSTypeName::QualifiedName(qualified) => {
                 if let TSTypeName::IdentifierReference(ident) = &qualified.left {
                     // `A.B` -> `typeof A !== "undefined" && A.B`
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                    let ident1 = binding.create_read_expression(ctx);
-                    let ident2 = binding.create_read_expression(ctx);
+                    let flags = Self::get_reference_flags(&binding, ctx);
+                    let ident1 = binding.create_expression(flags, ctx);
+                    let ident2 = binding.create_expression(flags, ctx);
                     let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
                     Self::create_checked_value(ident2, member, ctx)
                 } else {
@@ -456,6 +458,10 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 TSType::TSAnyKeyword(_) => {
                     return Self::global_object(ctx);
                 }
+                // Unlike TypeScript, we don't have a way to determine what the referent is,
+                // so return `Object` early, because once have a type reference, the final
+                // type is `Object` anyway.
+                TSType::TSTypeReference(_) => return Self::global_object(ctx),
                 _ => {}
             }
 
@@ -492,6 +498,29 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     #[inline]
     fn equate_serialized_type_nodes(a: &Expression<'a>, b: &Expression<'a>) -> bool {
         a.content_eq(b)
+    }
+
+    fn get_reference_flags(
+        binding: &MaybeBoundIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ReferenceFlags {
+        if let Some(symbol_id) = binding.symbol_id {
+            if ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_value) {
+                // If the symbol has a value reference, we can use it as a value reference
+                ReferenceFlags::Read
+            } else {
+                // Otherwise, we can only use it as a type reference because the TypeScript plugin will
+                // remove imports by checking references of `Symbol` whether it contains a
+                // `ReferenceFlags::Read`. If it doesn't, that means the symbol can be removed. That's
+                // why we need to use `Type` flag here, which hints the TypeScript plugin this Reference
+                // is only used as a type reference. If no `ReferenceFlags::Read` is found, we can
+                // safely remove the import.
+                ReferenceFlags::Type
+            }
+        } else {
+            // Unresolved reference
+            ReferenceFlags::Type | ReferenceFlags::Read
+        }
     }
 
     #[inline]

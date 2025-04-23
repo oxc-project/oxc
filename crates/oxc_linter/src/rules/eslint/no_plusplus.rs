@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::UpdateOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -107,15 +107,15 @@ impl Rule for NoPlusplus {
         }
 
         let ident = expr.argument.get_identifier_name();
-
-        if let Some(ident) = ident {
+        if ident.is_some() {
             let operator = match expr.operator {
                 UpdateOperator::Increment => "+=",
                 UpdateOperator::Decrement => "-=",
             };
+            let source = expr.argument.span().source_text(ctx.source_text());
             ctx.diagnostic_with_suggestion(
                 no_plusplus_diagnostic(expr.span, expr.operator),
-                |fixer| fixer.replace(expr.span, format!("{ident} {operator} 1")),
+                |fixer| fixer.replace(expr.span, format!("{source} {operator} 1")),
             );
         } else {
             ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator));
@@ -265,6 +265,7 @@ fn test() {
             "let x = 0; let y = { foo: x += 1 };",
             None,
         ),
+        ("a.b++;", "a.b += 1;", None),
     ];
 
     Tester::new(NoPlusplus::NAME, NoPlusplus::PLUGIN, pass, fail)

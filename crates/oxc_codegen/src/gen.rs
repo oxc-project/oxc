@@ -77,20 +77,20 @@ impl Gen for Directive<'_> {
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
         let directive = self.directive.as_str();
 
-        let mut chars = directive.chars();
+        let mut bytes = directive.as_bytes().iter();
         let mut quote = p.quote;
-        while let Some(c) = chars.next() {
-            match c {
-                '"' => {
+        while let Some(&b) = bytes.next() {
+            match b {
+                b'"' => {
                     quote = Quote::Single;
                     break;
                 }
-                '\'' => {
+                b'\'' => {
                     quote = Quote::Double;
                     break;
                 }
-                '\\' => {
-                    chars.next();
+                b'\\' => {
+                    bytes.next();
                 }
                 _ => {}
             }
@@ -643,16 +643,7 @@ impl Gen for TryStatement<'_> {
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
         if let Some(handler) = &self.handler {
-            p.print_soft_space();
-            p.print_str("catch");
-            if let Some(param) = &handler.param {
-                p.print_soft_space();
-                p.print_str("(");
-                param.pattern.print(p, ctx);
-                p.print_str(")");
-            }
-            p.print_soft_space();
-            p.print_block_statement(&handler.body, ctx);
+            handler.r#gen(p, ctx);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -661,6 +652,22 @@ impl Gen for TryStatement<'_> {
             p.print_block_statement(finalizer, ctx);
         }
         p.print_soft_newline();
+    }
+}
+
+impl Gen for CatchClause<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_soft_space();
+        p.print_statement_comments(self.span.start);
+        p.print_str("catch");
+        if let Some(param) = &self.param {
+            p.print_soft_space();
+            p.print_str("(");
+            param.pattern.print(p, ctx);
+            p.print_str(")");
+        }
+        p.print_soft_space();
+        p.print_block_statement(&self.body, ctx);
     }
 }
 
@@ -1007,11 +1014,6 @@ impl Gen for ExportNamedDeclaration<'_> {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export");
-        if self.export_kind.is_type()
-            && !self.declaration.as_ref().is_some_and(oxc_ast::ast::Declaration::is_type)
-        {
-            p.print_str(" type ");
-        }
         if let Some(decl) = &self.declaration {
             p.print_hard_space();
             match decl {
@@ -1036,6 +1038,10 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.needs_semicolon = false;
             }
         } else {
+            if self.export_kind.is_type() {
+                p.print_hard_space();
+                p.print_str("type");
+            }
             p.print_soft_space();
             p.print_ascii_byte(b'{');
             if !self.specifiers.is_empty() {
@@ -1929,24 +1935,24 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
+        for (i, item) in self.elements.iter().enumerate() {
+            if i != 0 {
                 p.print_comma();
                 p.print_soft_space();
             }
             if let Some(item) = item {
                 item.print(p, ctx);
             }
+            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+                p.print_comma();
+            }
         }
         if let Some(target) = &self.rest {
             if !self.elements.is_empty() {
-                p.print_comma();
+                p.print_soft_space();
             }
             p.add_source_mapping(self.span);
             target.print(p, ctx);
-        }
-        if self.trailing_comma.is_some() {
-            p.print_comma();
         }
         p.print_ascii_byte(b']');
         p.add_source_mapping_end(self.span);
@@ -1961,6 +1967,7 @@ impl Gen for ObjectAssignmentTarget<'_> {
         if let Some(target) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
+                p.print_soft_space();
             }
             p.add_source_mapping(self.span);
             target.print(p, ctx);
@@ -2087,8 +2094,8 @@ impl GenExpr for ImportExpression<'_> {
                 || p.has_comment(self.source.span().start)
                 || self
                     .options
-                    .first()
-                    .is_some_and(|argument| p.has_comment(argument.span().start)));
+                    .as_ref()
+                    .is_some_and(|options| p.has_comment(options.span().start)));
 
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
@@ -2108,7 +2115,7 @@ impl GenExpr for ImportExpression<'_> {
                 p.print_indent();
             }
             self.source.print_expr(p, Precedence::Comma, Context::empty());
-            if !self.options.is_empty() {
+            if let Some(options) = &self.options {
                 p.print_comma();
                 if has_comment {
                     p.print_soft_newline();
@@ -2116,7 +2123,7 @@ impl GenExpr for ImportExpression<'_> {
                 } else {
                     p.print_soft_space();
                 }
-                p.print_expressions(&self.options, Precedence::Comma, Context::empty());
+                options.gen_expr(p, Precedence::Comma, Context::empty());
             }
             if has_comment {
                 // Handle `/* comment */);`
@@ -2273,7 +2280,7 @@ impl GenExpr for TSNonNullExpression<'_> {
 impl GenExpr for TSInstantiationExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.expression.print_expr(p, precedence, ctx);
-        self.type_parameters.print(p, ctx);
+        self.type_arguments.print(p, ctx);
         if p.options.minify {
             p.print_hard_space();
         }
@@ -2339,9 +2346,9 @@ impl Gen for Class<'_> {
                     super_type_parameters.print(p, ctx);
                 }
             }
-            if let Some(implements) = self.implements.as_ref() {
+            if !self.implements.is_empty() {
                 p.print_str(" implements ");
-                p.print_list(implements, ctx);
+                p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
             self.body.print(p, ctx);
@@ -2508,12 +2515,15 @@ impl Gen for JSXAttributeItem<'_> {
     }
 }
 
-impl Gen for JSXOpeningElement<'_> {
+impl Gen for JSXElement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span);
+        // Opening element.
+        // Cannot `impl Gen for JSXOpeningElement` because it needs to know value of `self.closing_element`
+        // to determine whether to print a trailing `/`.
+        p.add_source_mapping(self.opening_element.span);
         p.print_ascii_byte(b'<');
-        self.name.print(p, ctx);
-        for attr in &self.attributes {
+        self.opening_element.name.print(p, ctx);
+        for attr in &self.opening_element.attributes {
             match attr {
                 JSXAttributeItem::Attribute(_) => {
                     p.print_hard_space();
@@ -2524,31 +2534,23 @@ impl Gen for JSXOpeningElement<'_> {
             }
             attr.print(p, ctx);
         }
-        if self.self_closing {
+        if self.closing_element.is_none() {
             p.print_soft_space();
             p.print_str("/");
         }
         p.print_ascii_byte(b'>');
-    }
-}
 
-impl Gen for JSXClosingElement<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span);
-        p.print_str("</");
-        self.name.print(p, ctx);
-        p.print_ascii_byte(b'>');
-    }
-}
-
-impl Gen for JSXElement<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.opening_element.print(p, ctx);
+        // Children
         for child in &self.children {
             child.print(p, ctx);
         }
+
+        // Closing element
         if let Some(closing_element) = &self.closing_element {
-            closing_element.print(p, ctx);
+            p.add_source_mapping(closing_element.span);
+            p.print_str("</");
+            closing_element.name.print(p, ctx);
+            p.print_ascii_byte(b'>');
         }
     }
 }
@@ -2783,6 +2785,11 @@ impl Gen for AccessorProperty<'_> {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             p.print_str("static");
+            p.print_soft_space();
+        }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
             p.print_soft_space();
         }
         p.print_space_before_identifier();
@@ -3532,9 +3539,6 @@ impl Gen for TSTypeQueryExprName<'_> {
 
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.is_type_of {
-            p.print_str("typeof ");
-        }
         p.print_str("import(");
         self.argument.print(p, ctx);
         if let Some(options) = &self.options {
@@ -3700,11 +3704,9 @@ impl Gen for TSInterfaceDeclaration<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        if let Some(extends) = &self.extends {
-            if !extends.is_empty() {
-                p.print_str(" extends ");
-                p.print_list(extends, ctx);
-            }
+        if !self.extends.is_empty() {
+            p.print_str(" extends ");
+            p.print_list(&self.extends, ctx);
         }
         p.print_soft_space();
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
@@ -3741,6 +3743,12 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_str("enum ");
         self.id.print(p, ctx);
         p.print_space_before_identifier();
+        self.body.print(p, ctx);
+    }
+}
+
+impl Gen for TSEnumBody<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for (index, member) in self.members.iter().enumerate() {
                 p.print_leading_comments(member.span().start);
@@ -3760,7 +3768,21 @@ impl Gen for TSEnumMember<'_> {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
+            TSEnumMemberName::ComputedString(decl) => {
+                p.print_ascii_byte(b'[');
+                p.print_string_literal(decl, false);
+                p.print_ascii_byte(b']');
+            }
+            TSEnumMemberName::ComputedTemplateString(decl) => {
+                let quasi = decl.quasis.first().unwrap();
+                p.add_source_mapping(quasi.span);
+
+                p.print_str("[`");
+                p.print_str(quasi.value.raw.as_str());
+                p.print_str("`]");
+            }
         }
+
         if let Some(init) = &self.initializer {
             p.print_soft_space();
             p.print_equal();

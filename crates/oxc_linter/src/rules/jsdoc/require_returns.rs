@@ -4,9 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{JSDoc, JSDocTag};
+use oxc_semantic::JSDoc;
 use oxc_span::Span;
-use phf::phf_set;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -14,7 +13,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        default_true, get_function_nearest_jsdoc_node, is_duplicated_special_tag,
+        is_missing_special_tag, should_ignore_as_avoid, should_ignore_as_custom_skip,
         should_ignore_as_internal, should_ignore_as_private,
     },
 };
@@ -230,45 +230,16 @@ impl Rule for RequireReturns {
             let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
             let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-            if is_missing_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
+            if is_missing_special_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(missing_returns_diagnostic(*func_span));
                 continue;
             }
 
-            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
+            if let Some(span) = is_duplicated_special_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(duplicate_returns_diagnostic(span));
             }
         }
     }
-}
-
-const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
-    "abstract", "virtual", "class", "constructor", "type", "interface"
-};
-fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(tag.kind.parsed()))
-}
-
-fn is_missing_returns_tag(jsdoc_tags: &[&JSDocTag], resolved_returns_tag_name: &str) -> bool {
-    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_returns_tag_name)
-}
-
-fn is_duplicated_returns_tag(
-    jsdoc_tags: &Vec<&JSDocTag>,
-    resolved_returns_tag_name: &str,
-) -> Option<Span> {
-    let mut returns_found = false;
-    for tag in jsdoc_tags {
-        if tag.kind.parsed() == resolved_returns_tag_name {
-            if returns_found {
-                return Some(tag.kind.span);
-            }
-
-            returns_found = true;
-        }
-    }
-
-    None
 }
 
 /// - Some(true): `Promise` with value

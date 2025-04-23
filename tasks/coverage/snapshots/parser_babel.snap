@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1555/1673 (92.95%)
+Negative Passed: 1557/1673 (93.07%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
@@ -112,8 +112,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access-babel-7/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
@@ -4373,6 +4371,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:18]
+ 1 │ function f(a, ...b = 0)
+   ·                  ─────
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:24]
  1 │ function f(a, ...b = 0)
@@ -5794,12 +5798,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────
    ╰────
 
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/22/input.js:1:9]
+ 1 │ var {...x = 1} = {}
+   ·         ─────
+   ╰────
+
   × Invalid rest element
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/22/input.js:1:9]
  1 │ var {...x = 1} = {}
    ·         ─────
    ╰────
   help: Expected identifier in rest element
+
+  × A rest element cannot have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
+ 1 │ function test({...x = 1}) {}
+   ·                   ─────
+   ╰────
 
   × Invalid rest element
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
@@ -5908,11 +5924,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─────────────
    ╰────
 
-  × Expected `)` but found `string`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/multiple-args/input.js:1:26]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/multiple-args/input.js:1:1]
  1 │ import('hello', 'world', '!');
-   ·                          ─┬─
-   ·                           ╰── `)` expected
+   · ────────────────────────
    ╰────
 
   × import() requires a specifier.
@@ -5947,11 +5962,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─────────────
    ╰────
 
-  × Expected `)` but found `string`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:26]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:1]
  1 │ import('hello', 'world', '!');
-   ·                          ─┬─
-   ·                           ╰── `)` expected
+   · ────────────────────────
    ╰────
 
   × import() requires a specifier.
@@ -11227,7 +11241,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0260/input.js:1:15]
  1 │ function x(...a = 1){}
    ·               ─────
@@ -12920,6 +12934,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
+  × TS(2207): The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts:1:15]
+ 1 │ export type { type foo } from "foo";
+   ·               ────
+   ╰────
+
   × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
  1 │ const if = {};
@@ -12943,6 +12963,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-named-type-as-keyword/input.ts:1:18]
  1 │ import { type as if } from "mod";
    ·                  ──
+   ╰────
+
+  × TS(2206): The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts:1:15]
+ 1 │ import type { type foo } from "foo";
+   ·               ────
    ╰────
 
   × Identifier expected. 'if' is a reserved word that cannot be used here.

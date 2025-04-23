@@ -66,29 +66,53 @@ impl Rule for NoRedeclare {
             .get(0)
             .and_then(|config| config.get("builtinGlobals"))
             .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
+            .unwrap_or(true);
 
         Self { built_in_globals }
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let name = ctx.scoping().symbol_name(symbol_id);
+        let decl_span = ctx.scoping().symbol_span(symbol_id);
         let is_builtin = self.built_in_globals
             && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
-
-        let decl_span = ctx.scoping().symbol_span(symbol_id);
 
         if is_builtin {
             ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
         }
 
-        for window in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
-            let first = &window[0];
-            let second = &window[1];
+        if ctx.source_type().is_typescript() {
+            let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
+                if is_builtin {
+                    if rd.span != decl_span {
+                        ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
+                    }
+                    return false;
+                }
+                if rd.flags.is_function() {
+                    let node = ctx.nodes().get_node(rd.declaration);
+                    if let Some(func) = node.kind().as_function() {
+                        return !func.is_ts_declare_function();
+                    }
+                }
+                true
+            });
+
+            if let Some(first) = iter.next() {
+                iter.fold(first, |prev, next| {
+                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
+                    next
+                });
+            }
+
+            return;
+        }
+
+        for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
             if is_builtin {
-                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, second.span));
+                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
             } else {
-                ctx.diagnostic(no_redeclare_diagnostic(name, first.span, second.span));
+                ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
             }
         }
     }
@@ -122,6 +146,9 @@ fn test() {
         ("var self = 1", Some(serde_json::json!([{ "builtinGlobals": false }]))),
         ("var globalThis = foo", Some(serde_json::json!([{ "builtinGlobals": false }]))),
         ("var globalThis = foo", Some(serde_json::json!([{ "builtinGlobals": false }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/10396>
+        ("export function foo(): void; export function foo() { }", None),
+        ("function foo(arg: string): void; function foo(arg: number): any {}", None),
     ];
 
     let fail = vec![
@@ -139,31 +166,21 @@ fn test() {
         ("class C { static { var a; { var a; } } }", None),
         ("class C { static { { var a; } var a; } }", None),
         ("class C { static { { var a; } { var a; } } }", None),
-        (
-            "var Object = 0; var Object = 0; var globalThis = 0;",
-            Some(serde_json::json!([{ "builtinGlobals": true }])),
-        ),
-        (
-            "var a; var {a = 0, b: Object = 0} = {};",
-            Some(serde_json::json!([{ "builtinGlobals": true }])),
-        ),
-        (
-            "var a; var {a = 0, b: globalThis = 0} = {};",
-            Some(serde_json::json!([{ "builtinGlobals": true }])),
-        ),
+        ("var Object = 0; var Object = 0; var globalThis = 0;", None),
+        ("var a; var {a = 0, b: Object = 0} = {};", None),
+        ("var a; var {a = 0, b: globalThis = 0} = {};", None),
         ("function f() { var a; var a; }", None),
         ("function f(a, b = 1) { var a; var b;}", None),
         ("function f() { var a; if (test) { var a; } }", None),
         ("for (var a, a;;);", None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/10396>
+        ("export function undefined(): void; export function undefined() { }", None),
+        ("type foo = 1; export function foo(): void; export function foo() { }", None),
     ];
 
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail).test_and_snapshot();
 
-    let fail = vec![(
-        "var foo;",
-        Some(serde_json::json!([{ "builtinGlobals": true }])),
-        Some(serde_json::json!({ "globals": { "foo": false }})),
-    )];
+    let fail = vec![("var foo;", None, Some(serde_json::json!({ "globals": { "foo": false }})))];
 
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, vec![], fail).test();
 }

@@ -128,11 +128,11 @@ fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<
                 return None;
             };
 
-            if SECOND_INDEX_METHODS.contains(expr.property.name.as_str()) {
+            if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
                 return find_index_param_name_by_position(call_expr, 1);
             }
 
-            if THIRD_INDEX_METHODS.contains(expr.property.name.as_str()) {
+            if THIRD_INDEX_METHODS.contains(&expr.property.name.as_str()) {
                 return find_index_param_name_by_position(call_expr, 2);
             }
         }
@@ -156,31 +156,16 @@ fn find_index_param_name_by_position<'a>(
     })
 }
 
-const SECOND_INDEX_METHODS: phf::Set<&'static str> = phf::phf_set! {
-    // things.map((thing, index) => (<Hello key={index} />));
-    "map",
-    // things.forEach((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "forEach",
-    // things.filter((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "filter",
-    // things.some((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "some",
-    // things.every((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "every",
-    // things.find((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "find",
-    // things.findIndex((thing, index) => {otherThings.push(<Hello key={index} />);});
-    "findIndex",
-    // things.flatMap((thing, index) => (<Hello key={index} />));
-    "flatMap",
-};
+// things[`${method_name}`]((thing, index) => (<Hello key={index} />));
+const SECOND_INDEX_METHODS: [&str; 8] =
+    ["every", "filter", "find", "findIndex", "flatMap", "forEach", "map", "some"];
 
-const THIRD_INDEX_METHODS: phf::Set<&'static str> = phf::phf_set! {
+const THIRD_INDEX_METHODS: [&str; 2] = [
     // things.reduce((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
     "reduce",
     // things.reduceRight((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
     "reduceRight",
-};
+];
 
 impl Rule for NoArrayIndexKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

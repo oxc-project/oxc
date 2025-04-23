@@ -421,11 +421,8 @@ impl<'a> PeepholeOptimizations {
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     if !pending_spread_elements.is_empty() {
                         // flush pending spread elements
-                        transformed_elements.push(ctx.ast.expression_object(
-                            prop.span(),
-                            pending_spread_elements,
-                            None,
-                        ));
+                        transformed_elements
+                            .push(ctx.ast.expression_object(prop.span(), pending_spread_elements));
                         pending_spread_elements = ctx.ast.vec();
                     }
 
@@ -450,11 +447,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         if !pending_spread_elements.is_empty() {
-            transformed_elements.push(ctx.ast.expression_object(
-                object_expr.span,
-                pending_spread_elements,
-                None,
-            ));
+            transformed_elements
+                .push(ctx.ast.expression_object(object_expr.span, pending_spread_elements));
         }
 
         if transformed_elements.is_empty() {
@@ -704,7 +698,6 @@ impl<'a> PeepholeOptimizations {
                 Argument::SpreadElement(e) => ctx.ast.expression_array(
                     e.span,
                     ctx.ast.vec1(ArrayExpressionElement::SpreadElement(e)),
-                    None,
                 ),
                 match_expression!(Argument) => arg.into_expression(),
             };

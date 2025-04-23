@@ -135,7 +135,7 @@ fn is_invalid_fetch_options<'a>(
                             let enum_member_res: Option<CompactStr> = match decl.kind() {
                                 AstKind::TSEnumDeclaration(enum_decl) => {
                                     let member_string_lit: Option<CompactStr> =
-                                        enum_decl.members.iter().find_map(|m| {
+                                        enum_decl.body.members.iter().find_map(|m| {
                                             if let Some(Expression::StringLiteral(str_lit)) =
                                                 &m.initializer
                                             {

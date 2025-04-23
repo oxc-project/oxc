@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::PathBuf,
+    path::Path,
     sync::{Arc, mpsc},
 };
 
@@ -63,7 +63,7 @@ impl WalkCollector {
 impl ConfigWalker {
     /// Will not canonicalize paths.
     /// # Panics
-    pub fn new(path: &PathBuf) -> Self {
+    pub fn new(path: &Path) -> Self {
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
         // * it is super rare to have symlinked source code

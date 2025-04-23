@@ -7,7 +7,7 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![expect(unused_variables, clippy::semicolon_if_nothing_returned)]
+#![expect(unused_variables, clippy::semicolon_if_nothing_returned, clippy::match_same_arms)]
 
 use std::cell::Cell;
 
@@ -773,6 +773,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_enum_body(&mut self, it: &mut TSEnumBody<'a>) {
+        walk_ts_enum_body(self, it);
+    }
+
+    #[inline]
     fn visit_ts_enum_member(&mut self, it: &mut TSEnumMember<'a>) {
         walk_ts_enum_member(self, it);
     }
@@ -1244,8 +1249,8 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
+    fn visit_ts_class_implements_list(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implements_list(self, it);
     }
 
     #[inline]
@@ -1463,9 +1468,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_array_expression_elements(&mut it.elements);
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1503,9 +1505,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_object_property_kinds(&mut it.properties);
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1855,9 +1854,6 @@ pub mod walk_mut {
         }
         if let Some(rest) = &mut it.rest {
             visitor.visit_assignment_target_rest(rest);
-        }
-        if let Some(trailing_comma) = &mut it.trailing_comma {
-            visitor.visit_span(trailing_comma);
         }
         visitor.leave_node(kind);
     }
@@ -2632,9 +2628,7 @@ pub mod walk_mut {
         if let Some(super_type_arguments) = &mut it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        if let Some(implements) = &mut it.implements {
-            visitor.visit_ts_class_implementses(implements);
-        }
+        visitor.visit_ts_class_implements_list(&mut it.implements);
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -2773,7 +2767,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.source);
-        visitor.visit_expressions(&mut it.options);
+        if let Some(options) = &mut it.options {
+            visitor.visit_expression(options);
+        }
         visitor.leave_node(kind);
     }
 
@@ -3329,8 +3325,17 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_ts_enum_members(&mut it.members);
+        visitor.visit_ts_enum_body(&mut it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_enum_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSEnumBody<'a>) {
+        let kind = AstType::TSEnumBody;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_enum_members(&mut it.members);
         visitor.leave_node(kind);
     }
 
@@ -3355,6 +3360,8 @@ pub mod walk_mut {
         match it {
             TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedString(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedTemplateString(it) => visitor.visit_template_literal(it),
         }
     }
 
@@ -3812,12 +3819,10 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        if let Some(extends) = &mut it.extends {
-            visitor.visit_ts_interface_heritages(extends);
-        }
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_ts_interface_heritages(&mut it.extends);
         visitor.visit_ts_interface_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -4308,7 +4313,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
-        visitor.visit_ts_type_parameter_instantiation(&mut it.type_parameters);
+        visitor.visit_ts_type_parameter_instantiation(&mut it.type_arguments);
         visitor.leave_node(kind);
     }
 
@@ -4465,7 +4470,7 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
+    pub fn walk_ts_class_implements_list<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSClassImplements<'a>>,
     ) {

@@ -1,0 +1,146 @@
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+
+use crate::{
+    format_args,
+    formatter::{Buffer, FormatResult, Formatter, prelude::*},
+    write,
+};
+
+use super::{
+    FormatWrite,
+    type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
+};
+
+impl<'a> FormatWrite<'a> for Class<'a> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let Self {
+            decorators, id, type_parameters, super_class, implements, body, r#abstract, ..
+        } = self;
+
+        let group_mode = should_group(self, f);
+
+        write!(f, decorators)?;
+
+        if *r#abstract {
+            write!(f, ["abstract", space()])?;
+        }
+
+        write!(f, "class")?;
+
+        let indent_only_heritage = (implements.is_empty() || !super_class.is_some())
+            && type_parameters.as_ref().is_some_and(|type_parameters| {
+                !f.comments().has_trailing_line_comment(type_parameters.span.end)
+            });
+
+        let type_parameters_id = if indent_only_heritage && !implements.is_empty() {
+            Some(f.group_id("type_parameters"))
+        } else {
+            None
+        };
+
+        let head = format_with(|f| {
+            if let Some(id) = &id {
+                write!(f, [space(), id])?;
+            }
+
+            if let Some(type_parameters) = &type_parameters {
+                write!(
+                    f,
+                    FormatTsTypeParameters::new(
+                        type_parameters,
+                        FormatTsTypeParametersOptions {
+                            group_id: type_parameters_id,
+                            is_type_or_interface_decl: false
+                        }
+                    )
+                )?;
+            }
+
+            Ok(())
+        });
+
+        let format_heritage_clauses = format_with(|f| {
+            if let Some(extends) = super_class {
+                let extends = format_once(|f| write!(f, [space(), "extends", space(), extends]));
+                if group_mode {
+                    write!(f, [soft_line_break_or_space(), group(&extends)])?;
+                } else {
+                    write!(f, extends)?;
+                }
+            }
+
+            if !implements.is_empty() {
+                if indent_only_heritage {
+                    write!(
+                        f,
+                        [
+                            if_group_breaks(&space()).with_group_id(type_parameters_id),
+                            if_group_fits_on_line(&soft_line_break_or_space())
+                                .with_group_id(type_parameters_id)
+                        ]
+                    )?;
+                } else {
+                    write!(f, [soft_line_break_or_space()])?;
+                }
+
+                write!(f, implements)?;
+            }
+
+            Ok(())
+        });
+
+        if group_mode {
+            let indented = format_with(|f| {
+                if indent_only_heritage {
+                    write!(f, [head, indent(&format_heritage_clauses)])
+                } else {
+                    write!(f, indent(&format_args!(head, format_heritage_clauses)))
+                }
+            });
+
+            let heritage_id = f.group_id("heritageGroup");
+            write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()])?;
+
+            if !body.body.is_empty() {
+                write!(f, [if_group_breaks(&hard_line_break()).with_group_id(Some(heritage_id))])?;
+            }
+        } else {
+            write!(f, [head, format_heritage_clauses, space()])?;
+        }
+
+        if body.body.is_empty() {
+            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
+        } else {
+            write!(f, body)
+        }
+    }
+}
+
+fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
+    let comments = f.comments();
+
+    if let Some(id) = &class.id {
+        if comments.has_trailing_comments(id.span.end) {
+            return true;
+        }
+    }
+
+    if let Some(type_parameters) = &class.type_parameters {
+        if comments.has_trailing_comments(type_parameters.span.end) {
+            return true;
+        }
+    }
+
+    if let Some(extends) = &class.super_class {
+        if comments.has_trailing_comments(extends.span().end) {
+            return true;
+        }
+    }
+
+    if !class.implements.is_empty() {
+        return true;
+    }
+
+    false
+}

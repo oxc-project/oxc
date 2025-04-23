@@ -756,18 +756,16 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match name {
-            "Object" if args.is_empty() => {
-                Some(ctx.ast.expression_object(span, ctx.ast.vec(), None))
-            }
+            "Object" if args.is_empty() => Some(ctx.ast.expression_object(span, ctx.ast.vec())),
             "Array" => {
                 // `new Array` -> `[]`
                 if args.is_empty() {
-                    Some(ctx.ast.expression_array(span, ctx.ast.vec(), None))
+                    Some(ctx.ast.expression_array(span, ctx.ast.vec()))
                 } else if args.len() == 1 {
                     let arg = args[0].as_expression_mut()?;
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        Some(ctx.ast.expression_array(span, ctx.ast.vec(), None))
+                        Some(ctx.ast.expression_array(span, ctx.ast.vec()))
                     }
                     // `new Array(8)` -> `Array(8)`
                     else if let Expression::NumericLiteral(n) = arg {
@@ -782,11 +780,9 @@ impl<'a> PeepholeOptimizations {
                                     ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
                                 })
                                 .take(n_int);
-                                return Some(ctx.ast.expression_array(
-                                    span,
-                                    ctx.ast.vec_from_iter(elisions),
-                                    None,
-                                ));
+                                return Some(
+                                    ctx.ast.expression_array(span, ctx.ast.vec_from_iter(elisions)),
+                                );
                             }
                         }
                         let callee = ctx.ast.expression_identifier(n.span, "Array");
@@ -798,7 +794,7 @@ impl<'a> PeepholeOptimizations {
                         let elements = ctx
                             .ast
                             .vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator)));
-                        Some(ctx.ast.expression_array(span, elements, None))
+                        Some(ctx.ast.expression_array(span, elements))
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
@@ -813,7 +809,7 @@ impl<'a> PeepholeOptimizations {
                             ArrayExpressionElement::from(arg.take_in(ctx.ast.allocator))
                         }),
                     );
-                    Some(ctx.ast.expression_array(span, elements, None))
+                    Some(ctx.ast.expression_array(span, elements))
                 }
             }
             _ => None,

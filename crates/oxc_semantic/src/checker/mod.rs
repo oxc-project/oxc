@@ -96,11 +96,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
-            js::check_formal_parameters(params, ctx);
             ts::check_formal_parameters(params, ctx);
         }
         AstKind::ArrayPattern(pat) => {
-            js::check_array_pattern(pat, ctx);
             ts::check_array_pattern(pat, ctx);
         }
 

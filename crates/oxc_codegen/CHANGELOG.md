@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.65.0] - 2025-04-21
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Features
+
+- 5ba02b0 parser: Set `pure` on typescript wrapped AST nodes (#10520) (Boshen)
+
+### Refactor
+
+
+## [0.64.0] - 2025-04-17
+
+- c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+- 2c66ac2 codegen: Preserve code coverage ignore comments (e.g. `v8 ignore`) (#10338) (Boshen)
+
+### Bug Fixes
+
+- 82ba30b codegen: Fix spaces before `AssignmentTargetRest` (#10443) (overlookmotel)
+- b54fb3e estree: Rename `TSInstantiationExpression`.`type_parameters` to `type_arguments` (#10327) (Yuji Sugiura)
+- 5850a0d parse: `type x = typeof import('')` -> ` TSTypeQuery(TSImportType)` (#10317) (Boshen)
+- 41d8e9d parser: `ExportNamedDeclaration.exportKind` should be `type` for `declare` declaration (#10389) (Yuji Sugiura)
+
+### Performance
+
+- 426f8cb codegen: Reduce checks printing strings (#10341) (overlookmotel)
+
+### Refactor
+
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+
+### Performance
+
+- 6c9b094 codegen: Optimize `Codegen::print_list` method (#10242) (Dunqing)
+- 775abac codegen: Speed up printing `StringLiteral`s (#10046) (overlookmotel)
+
+### Refactor
+
+- f7ff816 codegen: Improve code with `split_first` (#10285) (Boshen)
+- ca8f174 codegen: Do not print useless comma for TSEnumMember (#10213) (Yuji Sugiura)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+### Testing
+
+- 7672620 parser: Tests for lone surrogates and lossy escape characters (#10175) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes

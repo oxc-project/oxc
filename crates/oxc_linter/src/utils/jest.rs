@@ -10,7 +10,6 @@ use oxc_ast::{
 use oxc_index::Idx;
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
-use phf::phf_set;
 
 use crate::LintContext;
 
@@ -21,12 +20,12 @@ pub use crate::utils::jest::parse_jest_fn::{
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
 
-pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
+const JEST_METHOD_NAMES: [&str; 18] = [
     "afterAll",
     "afterEach",
-    "bench",
     "beforeAll",
     "beforeEach",
+    "bench",
     "describe",
     "expect",
     "expectTypeOf",
@@ -34,12 +33,12 @@ pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "fit",
     "it",
     "jest",
-    "vi",
+    "pending",
     "test",
+    "vi",
     "xdescribe",
     "xit",
     "xtest",
-    "pending"
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

@@ -1,7 +1,7 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.7.1",
+  "packageManager": "pnpm@10.9.0",
   "volta": {
     "node": "22.14.0"
   },
@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
-    "emnapi": "1.4.0",
+    "emnapi": "1.4.3",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

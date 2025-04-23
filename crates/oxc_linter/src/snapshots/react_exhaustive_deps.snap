@@ -2239,3 +2239,12 @@ source: crates/oxc_linter/src/tester.rs
  9 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleFrame'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             setTimeout(handleFrame)
+ 10 │           }, [])
+    ·              ──
+ 11 │ 
+    ╰────
+  help: Either include it or remove the dependency array.

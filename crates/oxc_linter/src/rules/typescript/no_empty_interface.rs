@@ -58,17 +58,10 @@ impl Rule for NoEmptyInterface {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSInterfaceDeclaration(interface) = node.kind() {
             if interface.body.body.is_empty() {
-                match &interface.extends {
-                    None => {
-                        ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
-                    }
-
-                    Some(extends) if extends.len() == 1 => {
-                        if !self.allow_single_extends {
-                            ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
-                        }
-                    }
-                    _ => {}
+                if interface.extends.is_empty() {
+                    ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
+                } else if interface.extends.len() == 1 && !self.allow_single_extends {
+                    ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
                 }
             }
         }

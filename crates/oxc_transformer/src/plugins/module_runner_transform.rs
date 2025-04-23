@@ -99,6 +99,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 }
 
 const SSR_MODULE_EXPORTS_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exports__");
+const SSR_EXPORT_DEFAULT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_export_default__");
 const SSR_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import__");
 const SSR_DYNAMIC_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_dynamic_import__");
 const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll__");
@@ -138,48 +139,48 @@ impl<'a> ModuleRunnerTransform<'a> {
         let mut new_stmts: ArenaVec<'a, Statement<'a>> =
             ctx.ast.vec_with_capacity(program.body.len() * 2);
 
-        let mut hoist_index = None;
         let mut hoist_imports = Vec::with_capacity(program.body.len());
+        let mut hoist_exports = Vec::with_capacity(program.body.len());
 
         for stmt in program.body.drain(..) {
             match stmt {
                 Statement::ImportDeclaration(import) => {
                     let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
                     let import_statement = self.transform_import(span, source, specifiers, ctx);
-                    // Needs to hoist import statements to the above of the other statements
-                    if hoist_index.is_some() {
-                        hoist_imports.push(import_statement);
-                    } else {
-                        new_stmts.push(import_statement);
-                    }
-                    continue;
+                    hoist_imports.push(import_statement);
                 }
                 Statement::ExportAllDeclaration(export) => {
-                    self.transform_export_all_declaration(&mut new_stmts, export, ctx);
-                    continue;
+                    self.transform_export_all_declaration(
+                        &mut hoist_imports,
+                        &mut hoist_exports,
+                        export,
+                        ctx,
+                    );
                 }
                 Statement::ExportNamedDeclaration(export) => {
-                    self.transform_export_named_declaration(&mut new_stmts, export, ctx);
+                    self.transform_export_named_declaration(
+                        &mut new_stmts,
+                        &mut hoist_imports,
+                        &mut hoist_exports,
+                        export,
+                        ctx,
+                    );
                 }
                 Statement::ExportDefaultDeclaration(export) => {
-                    Self::transform_export_default_declaration(&mut new_stmts, export, ctx);
+                    Self::transform_export_default_declaration(
+                        &mut new_stmts,
+                        &mut hoist_exports,
+                        export,
+                        ctx,
+                    );
                 }
                 _ => {
                     new_stmts.push(stmt);
                 }
             }
-
-            // Found that non-import statements, we should start hoisting import statements after this
-            if hoist_index.is_none() {
-                hoist_index.replace(new_stmts.len() - 1);
-            }
         }
 
-        if let Some(index) = hoist_index {
-            if !hoist_imports.is_empty() {
-                new_stmts.splice(index..index, hoist_imports);
-            }
-        }
+        new_stmts.splice(0..0, hoist_exports.into_iter().chain(hoist_imports));
 
         program.body = new_stmts;
     }
@@ -354,8 +355,8 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// ```js
     /// export function foo() {}
     /// // to
-    /// function foo() {}
     /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get() { return foo; }});
+    /// function foo() {}
     /// ```
     ///
     /// - Export specifiers
@@ -370,9 +371,9 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// ```js
     /// export { foo, bar } from 'vue';
     /// // to
-    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
     /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get() { return __vite_ssr_import_0__.foo; }});
     /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return __vite_ssr_import_0__.bar; }});
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
     /// ```
     ///
     /// - Export specifiers with renaming
@@ -384,6 +385,8 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn transform_export_named_declaration(
         &mut self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportNamedDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -397,7 +400,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     variable.bound_names(&mut |ident| {
                         let binding = BoundIdentifier::from_binding_ident(ident);
                         let ident = binding.create_read_expression(ctx);
-                        new_stmts.push(Self::create_export(span, ident, binding.name, ctx));
+                        hoist_exports.push(Self::create_export(span, ident, binding.name, ctx));
                     });
                     // Should be inserted before the exports
                     new_stmts.insert(new_stmts_index, Statement::from(declaration));
@@ -421,7 +424,8 @@ impl<'a> ModuleRunnerTransform<'a> {
                     );
                 }
             };
-            new_stmts.extend([Statement::from(declaration), export_expression]);
+            new_stmts.push(Statement::from(declaration));
+            hoist_exports.push(export_expression);
         } else {
             // If the source is Some, then we need to import the module first and then export them.
             let import_binding = source.map(|source| {
@@ -437,11 +441,11 @@ impl<'a> ModuleRunnerTransform<'a> {
                     Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
                     Self::create_imported_names_object(imported_names, ctx),
                 ]);
-                new_stmts.push(Self::create_import(SPAN, pattern, arguments, ctx));
+                hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
                 binding
             });
 
-            new_stmts.extend(specifiers.into_iter().map(|specifier| {
+            hoist_exports.extend(specifiers.into_iter().map(|specifier| {
                 let ExportSpecifier { span, exported, local, .. } = specifier;
                 let expr = if let Some(import_binding) = &import_binding {
                     let object = import_binding.create_read_expression(ctx);
@@ -478,12 +482,13 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// ```js
     /// export * as foo from 'vue';
     /// // to
-    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
     /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
     /// ```
     fn transform_export_all_declaration(
         &mut self,
-        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportAllDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -497,18 +502,21 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let ident = binding.create_read_expression(ctx);
 
-        let export = if let Some(exported) = exported {
+        if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
             // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
-            Self::create_export(span, ident, exported.name(), ctx)
+            let export = Self::create_export(span, ident, exported.name(), ctx);
+            hoist_imports.push(import);
+            hoist_exports.push(export);
         } else {
             let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
             let arguments = ctx.ast.vec1(Argument::from(ident));
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
-            ctx.ast.statement_expression(span, call)
-        };
-        new_stmts.extend([import, export]);
+            let export = ctx.ast.statement_expression(span, call);
+            // names from `export *` cannot be known, so add it right after the import.
+            hoist_imports.extend([import, export]);
+        }
     }
 
     /// Transform export default declaration (`export default function foo() {}`).
@@ -534,11 +542,13 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// export default function () {}
     /// export default {}
     /// // to
-    /// __vite_ssr_exports__.default = function () {}
-    /// __vite_ssr_exports__.default = {}
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return __vite_ssr_export_default__ } });
+    /// const __vite_ssr_export_default__ = function () {}
+    /// const __vite_ssr_export_default__ = {}
     /// ```
     fn transform_export_default_declaration(
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -547,28 +557,26 @@ impl<'a> ModuleRunnerTransform<'a> {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    new_stmts.extend([
-                        Statement::FunctionDeclaration(func),
-                        Self::create_export(span, ident, DEFAULT, ctx),
-                    ]);
+                    new_stmts.push(Statement::FunctionDeclaration(func));
+                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
                 } else {
                     func.r#type = FunctionType::FunctionExpression;
                     let right = Expression::FunctionExpression(func);
                     new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
+                    hoist_exports.push(Self::create_export_default(span, ctx));
                 }
                 return;
             }
             ExportDefaultDeclarationKind::ClassDeclaration(mut class) => {
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    new_stmts.extend([
-                        Statement::ClassDeclaration(class),
-                        Self::create_export(span, ident, DEFAULT, ctx),
-                    ]);
+                    new_stmts.push(Statement::ClassDeclaration(class));
+                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
                 } else {
                     class.r#type = ClassType::ClassExpression;
                     let right = Expression::ClassExpression(class);
                     new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
+                    hoist_exports.push(Self::create_export_default(span, ctx));
                 }
                 return;
             }
@@ -580,6 +588,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         };
 
         new_stmts.push(Self::create_export_default_assignment(span, expr, ctx));
+        hoist_exports.push(Self::create_export_default(span, ctx));
     }
 
     /// Transform import specifiers, and return an imported names object.
@@ -660,7 +669,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Argument<'a> {
-        let value = ctx.ast.expression_array(SPAN, elements, None);
+        let value = ctx.ast.expression_array(SPAN, elements);
         let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
         let imported_names = ctx.ast.object_property_kind_object_property(
             SPAN,
@@ -671,7 +680,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             false,
         );
-        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names), None))
+        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names)))
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -763,7 +772,6 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Self::create_object_property("configurable", None, ctx),
                 Self::create_object_property("get", Some(getter), ctx),
             ]),
-            None,
         );
 
         let arguments = ctx.ast.vec_from_array([
@@ -779,20 +787,30 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx.ast.statement_expression(span, Self::create_define_property(arguments, ctx))
     }
 
-    // __vite_ssr_exports__.default = right;
+    fn create_export_default(span: Span, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
+        Self::create_export(
+            span,
+            ctx.create_unbound_ident_expr(SPAN, SSR_EXPORT_DEFAULT_KEY, ReferenceFlags::Read),
+            DEFAULT,
+            ctx,
+        )
+    }
+
+    // const __vite_ssr_export_default__ = right;
     fn create_export_default_assignment(
         span: Span,
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let object =
-            ctx.create_unbound_ident_expr(SPAN, SSR_MODULE_EXPORTS_KEY, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, DEFAULT);
-        let member = ctx.ast.member_expression_static(SPAN, object, property, false);
-        let target = AssignmentTarget::from(member);
-        let operator = AssignmentOperator::Assign;
-        let assignment = ctx.ast.expression_assignment(SPAN, operator, target, right);
-        ctx.ast.statement_expression(span, assignment)
+        let binding = ctx.generate_binding_in_current_scope(
+            SSR_EXPORT_DEFAULT_KEY,
+            SymbolFlags::BlockScopedVariable,
+        );
+        let pattern = binding.create_binding_pattern(ctx);
+        let kind = VariableDeclarationKind::Const;
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, Some(right), false);
+        let declaration = ctx.ast.declaration_variable(span, kind, ctx.ast.vec1(declarator), false);
+        Statement::from(declaration)
     }
 }
 
@@ -870,6 +888,7 @@ mod test {
             .code
     }
 
+    #[track_caller]
     fn test_same(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
         let result = transform(source_text, false).unwrap().code;
@@ -880,6 +899,7 @@ mod test {
         }
     }
 
+    #[track_caller]
     fn test_same_jsx(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
         let result = transform(source_text, true).unwrap().code;
@@ -890,6 +910,7 @@ mod test {
         }
     }
 
+    #[track_caller]
     fn test_same_and_deps(source_text: &str, expected: &str, deps: &[&str], dynamic_deps: &[&str]) {
         let expected = format_expected_code(expected);
         let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
@@ -953,14 +974,16 @@ function foo() {
     fn export_function_declaration() {
         test_same(
             "export function foo() {}",
-            "function foo() {}
+            "
 Object.defineProperty(__vite_ssr_exports__, 'foo', {
   enumerable: true,
   configurable: true,
   get() {
     return foo;
   }
-});",
+});
+function foo() {}
+",
         );
     }
 
@@ -968,14 +991,16 @@ Object.defineProperty(__vite_ssr_exports__, 'foo', {
     fn export_class_declaration() {
         test_same(
             "export class foo {}",
-            "class foo {}
+            "
 Object.defineProperty(__vite_ssr_exports__, 'foo', {
   enumerable: true,
   configurable: true,
   get() {
     return foo;
   }
-});",
+});
+class foo {}
+",
         );
     }
 
@@ -983,7 +1008,7 @@ Object.defineProperty(__vite_ssr_exports__, 'foo', {
     fn export_var_declaration() {
         test_same(
             "export const a = 1, b = 2",
-            "const a = 1, b = 2;
+            "
 Object.defineProperty(__vite_ssr_exports__, 'a', {
   enumerable: true,
   configurable: true,
@@ -997,7 +1022,9 @@ Object.defineProperty(__vite_ssr_exports__, 'b', {
   get() {
     return b;
   }
-});",
+});
+const a = 1, b = 2;
+",
         );
     }
 
@@ -1005,7 +1032,7 @@ Object.defineProperty(__vite_ssr_exports__, 'b', {
     fn export_named() {
         test_same(
             "const a = 1, b = 2; export { a, b as c }",
-            "const a = 1, b = 2;
+            "
 Object.defineProperty(__vite_ssr_exports__, 'a', {
   enumerable: true,
   configurable: true,
@@ -1019,7 +1046,9 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
   get() {
     return b;
   }
-});",
+});
+const a = 1, b = 2;
+",
         );
     }
 
@@ -1027,7 +1056,7 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
     fn export_named_from() {
         test_same(
             "export { ref, computed as c } from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref', 'computed'] });
+            "
 Object.defineProperty(__vite_ssr_exports__, 'ref', {
   enumerable: true,
   configurable: true,
@@ -1041,7 +1070,9 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
   get() {
     return __vite_ssr_import_0__.computed;
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref', 'computed'] });
+",
         );
     }
 
@@ -1053,7 +1084,6 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
             export { createApp }
             ",
             "
-            const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
             Object.defineProperty(__vite_ssr_exports__, 'createApp', {
               enumerable: true,
               configurable: true,
@@ -1061,6 +1091,7 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
                 return __vite_ssr_import_0__.createApp;
               }
             });
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
             ",
         );
     }
@@ -1080,14 +1111,16 @@ __vite_ssr_exportAll__(__vite_ssr_import_1__);",
     fn export_star_as_from() {
         test_same(
             "export * as foo from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+            "
 Object.defineProperty(__vite_ssr_exports__, 'foo', {
   enumerable: true,
   configurable: true,
   get() {
     return __vite_ssr_import_0__;
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+",
         );
     }
 
@@ -1095,28 +1128,32 @@ Object.defineProperty(__vite_ssr_exports__, 'foo', {
     fn re_export_by_imported_name() {
         test_same(
             "import * as foo from 'foo'; export * as foo from 'foo'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo');
-const __vite_ssr_import_1__ = await __vite_ssr_import__('foo');
+            "
 Object.defineProperty(__vite_ssr_exports__, 'foo', {
   enumerable: true,
   configurable: true,
   get() {
     return __vite_ssr_import_1__;
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('foo');
+const __vite_ssr_import_1__ = await __vite_ssr_import__('foo');
+",
         );
 
         test_same(
             "import { foo } from 'foo'; export { foo } from 'foo'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
-const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+            "
 Object.defineProperty(__vite_ssr_exports__, 'foo', {
   enumerable: true,
   configurable: true,
   get() {
     return __vite_ssr_import_1__.foo;
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+",
         );
     }
 
@@ -1124,53 +1161,73 @@ Object.defineProperty(__vite_ssr_exports__, 'foo', {
     fn export_arbitrary_namespace() {
         test_same(
             "export * as \"arbitrary string\" from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+            "
 Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
   enumerable: true,
   configurable: true,
   get() {
     return __vite_ssr_import_0__;
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+",
         );
 
         test_same(
             "const something = \"Something\"; export { something as \"arbitrary string\" }",
-            "const something = 'Something';
+            "
 Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
   enumerable: true,
   configurable: true,
   get() {
     return something;
   }
-});",
+});
+const something = 'Something';
+",
         );
 
         test_same(
             "export { \"arbitrary string2\" as \"arbitrary string\" } from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['arbitrary string2'] });
+            "
 Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
   enumerable: true,
   configurable: true,
   get() {
     return __vite_ssr_import_0__['arbitrary string2'];
   }
-});",
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['arbitrary string2'] });
+",
         );
     }
 
     #[test]
     fn export_default() {
-        test_same("export default {}", "__vite_ssr_exports__.default = {};");
+        test_same(
+            "export default {}",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
+const __vite_ssr_export_default__ = {};
+",
+        );
     }
 
     #[test]
     fn export_then_import_minified() {
         test_same(
             "export * from 'vue';import {createApp} from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+            "
+const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
 __vite_ssr_exportAll__(__vite_ssr_import_0__);
-const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });",
+const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
+",
         );
     }
 
@@ -1192,14 +1249,16 @@ __vite_ssr_import_0__.default.resolve('server.js');",
     fn dynamic_import() {
         test_same_and_deps(
             "export const i = () => import('./foo')",
-            "const i = () => __vite_ssr_dynamic_import__('./foo');
+            "
 Object.defineProperty(__vite_ssr_exports__, 'i', {
   enumerable: true,
   configurable: true,
   get() {
     return i;
   }
-});",
+});
+const i = () => __vite_ssr_dynamic_import__('./foo');
+",
             &[],
             &["./foo"],
         );
@@ -1406,8 +1465,6 @@ class A extends __vite_ssr_import_0__.Foo {}",
             export class B extends Foo {}
             ",
             "
-            const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
-            class A extends __vite_ssr_import_0__.Foo {}
             Object.defineProperty(__vite_ssr_exports__, 'default', {
               enumerable: true,
               configurable: true,
@@ -1415,7 +1472,6 @@ class A extends __vite_ssr_import_0__.Foo {}",
                 return A;
               }
             });
-            class B extends __vite_ssr_import_0__.Foo {}
             Object.defineProperty(__vite_ssr_exports__, 'B', {
               enumerable: true,
               configurable: true,
@@ -1423,6 +1479,9 @@ class A extends __vite_ssr_import_0__.Foo {}",
                 return B;
               }
             });
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
+            class A extends __vite_ssr_import_0__.Foo {}
+            class B extends __vite_ssr_import_0__.Foo {}
             ",
         );
     }
@@ -1431,29 +1490,58 @@ class A extends __vite_ssr_import_0__.Foo {}",
     #[test]
     fn should_handle_default_export_variants() {
         // default anonymous functions
-        test_same("export default function() {}", "__vite_ssr_exports__.default = function() {};");
+        test_same(
+            "export default function() {}",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
+const __vite_ssr_export_default__ = function() {};
+",
+        );
 
         // default anonymous class
-        test_same("export default class {}", "__vite_ssr_exports__.default = class {};");
+        test_same(
+            "export default class {}",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
+const __vite_ssr_export_default__ = class {};
+",
+        );
 
         // default named functions
         test_same(
-            "export default function foo() {}\nfoo.prototype = Object.prototype;",
-            "function foo() {}
+            "
+export default function foo() {}
+foo.prototype = Object.prototype;
+",
+            "
 Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return foo;
-  }
+enumerable: true,
+configurable: true,
+get() {
+return foo;
+}
 });
-foo.prototype = Object.prototype;",
+function foo() {}
+foo.prototype = Object.prototype;
+",
         );
 
         // default named classes
         test_same(
             "export default class A {}\nexport class B extends A {}",
-            "class A {}
+            "
 Object.defineProperty(__vite_ssr_exports__, 'default', {
   enumerable: true,
   configurable: true,
@@ -1461,14 +1549,16 @@ Object.defineProperty(__vite_ssr_exports__, 'default', {
     return A;
   }
 });
-class B extends A {}
 Object.defineProperty(__vite_ssr_exports__, 'B', {
   enumerable: true,
   configurable: true,
   get() {
     return B;
   }
-});",
+});
+class A {}
+class B extends A {}
+",
         );
     }
 
@@ -1769,8 +1859,7 @@ function Bar({ Slot = __vite_ssr_import_0__.default.createElement(__vite_ssr_imp
             "export function fn1() {
     }export function fn2() {
     }",
-            "function fn1() {
-}
+            "
 Object.defineProperty(__vite_ssr_exports__, 'fn1', {
   enumerable: true,
   configurable: true,
@@ -1778,15 +1867,16 @@ Object.defineProperty(__vite_ssr_exports__, 'fn1', {
     return fn1;
   }
 });
-function fn2() {
-}
 Object.defineProperty(__vite_ssr_exports__, 'fn2', {
   enumerable: true,
   configurable: true,
   get() {
     return fn2;
   }
-});",
+});
+function fn1() {}
+function fn2() {}
+",
         );
     }
 
@@ -1798,15 +1888,37 @@ Object.defineProperty(__vite_ssr_exports__, 'fn2', {
         //   return Math.random()
         // }
         test_same(
-            "export default (function getRandom() {
-      return Math.random();
-    });",
-            "__vite_ssr_exports__.default = function getRandom() {
+            "
+export default (function getRandom() {
   return Math.random();
-};",
+});
+",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
+const __vite_ssr_export_default__ = function getRandom() {
+  return Math.random();
+};
+",
         );
 
-        test_same("export default (class A {});", "__vite_ssr_exports__.default = class A {};");
+        test_same(
+            "export default (class A {});",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
+const __vite_ssr_export_default__ = class A {};",
+        );
     }
 
     // https://github.com/vitejs/vite/issues/8002
@@ -1875,7 +1987,15 @@ console.log(\"it can parse the hashbang\");",
         }
       }
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });
+            "
+Object.defineProperty(__vite_ssr_exports__, 'Test', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return Test;
+  }
+});
+const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });
 if (false) {
   const foo = 'foo';
   console.log(foo);
@@ -1900,13 +2020,7 @@ class Test {
     }
   }
 }
-Object.defineProperty(__vite_ssr_exports__, 'Test', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return Test;
-  }
-});",
+",
         );
     }
 
@@ -2024,15 +2138,19 @@ __vite_ssr_dynamic_import__('./bar.json', { with: { type: 'json' } });",
         // and `foo` is `bar`, the logging order should be:
         // "mod a", "mod foo", "mod b", "bar1", "bar2"
         test_same(
-            "console.log(foo + 1)
+            "
+    console.log(foo + 1)
     export * from './a'
     import { foo } from './foo'
     export * from './b'
     console.log(foo + 2)",
-            "const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
+            "
+const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
+const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');
+__vite_ssr_exportAll__(__vite_ssr_import_2__);
 console.log(__vite_ssr_import_1__.foo + 1);
-const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');__vite_ssr_exportAll__(__vite_ssr_import_0__);
-const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');__vite_ssr_exportAll__(__vite_ssr_import_2__);
 console.log(__vite_ssr_import_1__.foo + 2);",
         );
     }
@@ -2040,13 +2158,20 @@ console.log(__vite_ssr_import_1__.foo + 2);",
     #[test]
     fn identity_function_is_declared_before_used() {
         test_same(
-            "import { foo } from './foo'
+            "
+    import { foo } from './foo'
     export default foo()
     export * as bar from './bar'
-    console.log(bar)",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });
-__vite_ssr_exports__.default = (0, __vite_ssr_import_0__.foo)();
-const __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');
+    console.log(bar)
+",
+            "
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+       enumerable: true,
+       configurable: true,
+       get() {
+               return __vite_ssr_export_default__;
+       }
+});
 Object.defineProperty(__vite_ssr_exports__, 'bar', {
   enumerable: true,
   configurable: true,
@@ -2054,7 +2179,11 @@ Object.defineProperty(__vite_ssr_exports__, 'bar', {
     return __vite_ssr_import_1__;
   }
 });
-console.log(bar);",
+const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });
+const __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');
+const __vite_ssr_export_default__ = (0, __vite_ssr_import_0__.foo)();
+console.log(bar);
+",
         );
     }
 
@@ -2230,8 +2359,6 @@ const c = () => {
         export * as A from "a";
         "#;
         let expected = "
-        const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
-        const __vite_ssr_import_1__ = await __vite_ssr_import__('b', { importedNames: ['b'] });
         Object.defineProperty(__vite_ssr_exports__, 'b', {
           enumerable: true,
           configurable: true,
@@ -2239,18 +2366,13 @@ const c = () => {
                   return __vite_ssr_import_1__.b;
           }
         });
-        const __vite_ssr_import_2__ = await __vite_ssr_import__('c');
-        __vite_ssr_exportAll__(__vite_ssr_import_2__);
-        const __vite_ssr_import_3__ = await __vite_ssr_import__('d');
         Object.defineProperty(__vite_ssr_exports__, 'd', {
-        enumerable: true,
-        configurable: true,
-        get() {
-                return __vite_ssr_import_3__;
-        }
+          enumerable: true,
+          configurable: true,
+          get() {
+                  return __vite_ssr_import_3__;
+          }
         });
-        __vite_ssr_dynamic_import__('e');
-        const __vite_ssr_import_4__ = await __vite_ssr_import__('a');
         Object.defineProperty(__vite_ssr_exports__, 'A', {
                enumerable: true,
                configurable: true,
@@ -2258,6 +2380,13 @@ const c = () => {
                        return __vite_ssr_import_4__;
                }
         });
+        const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
+        const __vite_ssr_import_1__ = await __vite_ssr_import__('b', { importedNames: ['b'] });
+        const __vite_ssr_import_2__ = await __vite_ssr_import__('c');
+        __vite_ssr_exportAll__(__vite_ssr_import_2__);
+        const __vite_ssr_import_3__ = await __vite_ssr_import__('d');
+        const __vite_ssr_import_4__ = await __vite_ssr_import__('a');
+        __vite_ssr_dynamic_import__('e');
         ";
         test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
     }

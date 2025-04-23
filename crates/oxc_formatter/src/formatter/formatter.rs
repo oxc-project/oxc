@@ -40,6 +40,11 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state_mut().context_mut()
     }
 
+    /// Returns the source text.
+    pub fn source_text(&self) -> &'ast str {
+        self.context().source_text()
+    }
+
     /// Creates a new group id that is unique to this document. The passed debug name is used in the
     /// [std::fmt::Debug] of the document if this is a debug build.
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
@@ -252,6 +257,11 @@ impl<'ast> Formatter<'_, 'ast> {
     pub fn parent_kind(&self) -> &AstKind<'ast> {
         let stack = &self.state().stack;
         stack.as_slice().get(stack.len() - 2).unwrap()
+    }
+
+    pub fn parent_parent_kind(&self) -> Option<&AstKind<'ast>> {
+        let stack = &self.state().stack;
+        stack.as_slice().get(stack.len() - 3)
     }
 }
 
