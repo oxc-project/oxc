@@ -88,7 +88,7 @@ impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(&*allocator.alloc_str(s))
+        Self::from(allocator.alloc_str(s))
     }
 }
 
