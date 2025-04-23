@@ -860,6 +860,8 @@ function deserializeFormalParameters(pos) {
         pos + 24,
       ),
       optional: deserializeBool(pos + 32),
+      decorators: [],
+      value: null,
     });
   }
   return params;
