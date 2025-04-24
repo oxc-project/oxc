@@ -44,6 +44,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Get current source text
+    #[inline]
     pub(crate) fn cur_src(&self) -> &'a str {
         let range = self.cur_token().span();
         // SAFETY:
@@ -53,11 +54,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Get current string
+    #[inline]
     pub(crate) fn cur_string(&self) -> &'a str {
         self.lexer.get_string(self.token)
     }
 
     /// Get current template string
+    #[inline]
     pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
         self.lexer.get_template_string(self.token)
     }
@@ -187,6 +190,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// # Errors
+    #[inline]
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) {
         if !self.at(kind) {
             let range = self.cur_token().span();

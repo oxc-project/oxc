@@ -15,6 +15,7 @@ pub struct FatalError {
 }
 
 impl<'a> ParserImpl<'a> {
+    #[cold]
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
@@ -33,6 +34,7 @@ impl<'a> ParserImpl<'a> {
     /// # Panics
     ///
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
+    #[cold]
     #[must_use]
     pub(crate) fn unexpected<T: Dummy<'a>>(&mut self) -> T {
         self.set_unexpected();
@@ -40,6 +42,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Push a Syntax Error
+    #[cold]
     pub(crate) fn error(&mut self, error: OxcDiagnostic) {
         self.errors.push(error);
     }
@@ -50,6 +53,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance lexer's cursor to end of file.
+    #[cold]
     pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
@@ -57,6 +61,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[cold]
     pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
         self.set_fatal_error(error);
         Dummy::dummy(self.ast.allocator)
