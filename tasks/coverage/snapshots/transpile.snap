@@ -3,7 +3,7 @@ commit: 15392346
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
 Positive Passed: 19/20 (95.00%)
-Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
+- Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
 
 #### "typescript/tests/cases/transpile/declarationComputedPropertyNames.ts" ####
 //// [declarationComputedPropertyNames.ts] ////
