@@ -31,6 +31,7 @@ fn no_empty_function_diagnostic<S: AsRef<str>>(
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyFunction {
+    /// Locations and kinds of functions that are allowed to be empty.
     allow: Allowed,
 }
 bitflags! {
@@ -268,7 +269,7 @@ impl NoEmptyFunction {
         #[cfg(debug_assertions)]
         unreachable!();
         #[cfg(not(debug_assertions))]
-        ("function", None)
+        ("function", None).into()
     }
 
     fn is_allowed_method(&self, method: &MethodDefinition) -> bool {
