@@ -366,25 +366,26 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let path = normalize_path(Path::new("tasks/coverage").join(self.path()));
         match self.test_result() {
             TestResult::ParseError(error, _) => {
-                writer.write_all(format!("- Expect to Parse: {path}\n").as_bytes())?;
-                writer.write_all(format!("  - {error}").as_bytes())?;
+                writer.write_all(format!("Expect to Parse: {path}\n").as_bytes())?;
+                writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(case, ast_string, expected_ast_string) => {
-                writer.write_all(format!("- {case}: {path}\n",).as_bytes())?;
+                writer.write_all(format!("{case}: {path}\n",).as_bytes())?;
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
                     println!("{case}: {path}");
                 }
             }
             TestResult::GenericError(case, error) => {
-                writer.write_all(format!("- {case} Error: {path}\n",).as_bytes())?;
-                writer.write_all(format!("  - {error}\n").as_bytes())?;
+                writer.write_all(format!("{case} Error: {path}\n",).as_bytes())?;
+                writer.write_all(format!("{error}\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
-                writer.write_all(format!("- Expect Syntax Error: {path}\n").as_bytes())?;
+                writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
+        writer.write_all(b"\n")?;
         Ok(())
     }
 
