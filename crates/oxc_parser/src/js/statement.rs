@@ -150,7 +150,25 @@ impl<'a> ParserImpl<'a> {
             {
                 self.parse_using_statement()
             }
-            _ if self.is_ts && self.at_start_of_ts_declaration() => {
+            Kind::Async
+            | Kind::Interface
+            | Kind::Type
+            | Kind::Module
+            | Kind::Namespace
+            | Kind::Declare
+            | Kind::Const
+            | Kind::Enum
+            | Kind::Import
+            | Kind::Private
+            | Kind::Protected
+            | Kind::Public
+            | Kind::Abstract
+            | Kind::Accessor
+            | Kind::Static
+            | Kind::Readonly
+            | Kind::Global
+                if self.is_ts && self.at_start_of_ts_declaration() =>
+            {
                 self.parse_ts_declaration_statement(start_span)
             }
             _ => self.parse_expression_or_labeled_statement(),

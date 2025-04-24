@@ -506,7 +506,7 @@ impl<'a> ParserImpl<'a> {
         self.lookahead(Self::at_start_of_ts_declaration_worker)
     }
 
-    /// Check if the parser is at a start of a declaration
+    /// Check if the parser is at a start of a ts declaration
     fn at_start_of_ts_declaration_worker(&mut self) -> bool {
         loop {
             match self.cur_kind() {
