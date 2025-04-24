@@ -1,31 +1,30 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
-    ast::{IdentifierName, IdentifierReference, MethodDefinitionKind},
+    ast::{FunctionType, MethodDefinitionKind, PropertyKind, TSAccessibility},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
+use serde_json::Value;
+use std::borrow::Cow;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_empty_function_diagnostic<S: AsRef<str>>(
-    span: Span,
-    fn_kind: &str,
-    fn_name: Option<S>,
-) -> OxcDiagnostic {
+fn no_empty_function_diagnostic(span: Span, fn_kind: &str, fn_name: Option<&str>) -> OxcDiagnostic {
     let message = match fn_name {
-        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{}`", name.as_ref())),
-        None => Cow::Borrowed("Unexpected empty function"),
+        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{name}`.")),
+        None => Cow::Owned(format!("Unexpected empty {fn_kind}.")),
     };
+
     OxcDiagnostic::warn(message)
         .with_help(format!("Consider removing this {fn_kind} or adding logic to it."))
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoEmptyFunction;
+pub struct NoEmptyFunction {
+    allow: Vec<CompactStr>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -62,85 +61,338 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyFunction {
+    fn from_configuration(value: Value) -> Self {
+        let obj = value.get(0);
+
+        Self {
+            allow: obj
+                .and_then(|obj| obj.get("allow"))
+                .and_then(Value::as_array)
+                .map(|v| v.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
+                .unwrap_or_default(),
+        }
+    }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::FunctionBody(fb) = node.kind() else {
             return;
         };
-        if fb.is_empty() && !ctx.has_comments_between(fb.span) {
-            let (kind, fn_name) = get_function_name_and_kind(node, ctx);
-            ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
+        if !fb.is_empty() || ctx.has_comments_between(fb.span) {
+            return;
+        }
+        let Some(function) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
+
+        match function.kind() {
+            AstKind::Function(f) => {
+                match f.r#type {
+                    FunctionType::FunctionDeclaration => {
+                        let Some(f_name) = f.name() else {
+                            return;
+                        };
+                        let (check_kind, fn_kind) = {
+                            if f.r#async {
+                                ("asyncFunctions", "async function")
+                            } else if f.generator {
+                                ("generatorFunctions", "generator function")
+                            } else {
+                                ("functions", "function")
+                            }
+                        };
+                        if !allowed_func(&self.allow, check_kind) {
+                            ctx.diagnostic(no_empty_function_diagnostic(
+                                fb.span,
+                                fn_kind,
+                                Some(f_name.into()),
+                            ));
+                        }
+                    }
+                    FunctionType::FunctionExpression => {
+                        let Some(func_expr_parent) = ctx.nodes().parent_kind(function.id()) else {
+                            return;
+                        };
+                        match func_expr_parent {
+                            AstKind::ObjectProperty(prop) => {
+                                let key_name = prop.key.name();
+                                let key_name_str = key_name.as_deref();
+                                match prop.kind {
+                                    PropertyKind::Init => {
+                                        if prop.method {
+                                            let (check_kind, fn_kind) = if f.r#async {
+                                                // e.g. "const a = { async foo() { } }"
+                                                ("asyncMethods", "async method")
+                                            } else if f.generator {
+                                                ("generatorMethods", "generator method")
+                                            } else {
+                                                // e.g. "const a = { foo() { } }"
+                                                ("methods", "method")
+                                            };
+                                            if !allowed_func(&self.allow, check_kind) {
+                                                ctx.diagnostic(no_empty_function_diagnostic(
+                                                    fb.span,
+                                                    fn_kind,
+                                                    key_name_str,
+                                                ));
+                                            }
+                                        } else {
+                                            let check_kind = if f.r#async {
+                                                "asyncFunctions"
+                                            } else if f.generator {
+                                                "generatorFunctions"
+                                            } else {
+                                                // e.g. "const a = { foo: function() { }  }"
+                                                "functions"
+                                            };
+                                            if !allowed_func(&self.allow, check_kind) {
+                                                ctx.diagnostic(no_empty_function_diagnostic(
+                                                    fb.span,
+                                                    "method",
+                                                    key_name_str,
+                                                ));
+                                            }
+                                        }
+                                    }
+                                    PropertyKind::Get => {
+                                        // e.g. "const a = { get foo() { } }"
+                                        if !allowed_func(&self.allow, "getters") {
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                "getter",
+                                                key_name_str,
+                                            ));
+                                        }
+                                    }
+                                    PropertyKind::Set => {
+                                        if !allowed_func(&self.allow, "setters") {
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                "setter",
+                                                key_name_str,
+                                            ));
+                                        }
+                                    }
+                                }
+                            }
+                            AstKind::MethodDefinition(method) => {
+                                let key_name = method.key.name();
+                                let key_name_str = key_name.as_deref();
+                                match method.kind {
+                                    MethodDefinitionKind::Method => {
+                                        let kind = if method.r#static {
+                                            "static method"
+                                        } else {
+                                            "method"
+                                        };
+                                        let check_kind = if method.r#override {
+                                            "overrideMethods"
+                                        } else if !method.decorators.is_empty() {
+                                            "decoratedFunctions"
+                                        } else if f.r#async {
+                                            "asyncMethods"
+                                        } else if f.generator {
+                                            "generatorMethods"
+                                        } else {
+                                            "methods"
+                                        };
+
+                                        if !allowed_func(&self.allow, check_kind) {
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                kind,
+                                                key_name_str,
+                                            ));
+                                        }
+                                    }
+                                    MethodDefinitionKind::Constructor => {
+                                        let check_kind = match method.accessibility {
+                                            Some(TSAccessibility::Private) => "privateConstructors",
+                                            Some(TSAccessibility::Protected) => {
+                                                "protectedConstructors"
+                                            }
+                                            _ => "constructors",
+                                        };
+                                        if !allowed_func(&self.allow, check_kind) {
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                "constructor",
+                                                None,
+                                            ));
+                                        }
+                                    }
+                                    MethodDefinitionKind::Get => {
+                                        if !allowed_func(&self.allow, "getters") {
+                                            let kind = if method.r#static {
+                                                "static getter"
+                                            } else {
+                                                "getter"
+                                            };
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                kind,
+                                                key_name_str,
+                                            ));
+                                        }
+                                    }
+                                    MethodDefinitionKind::Set => {
+                                        if !allowed_func(&self.allow, "setters") {
+                                            let kind = if method.r#static {
+                                                "static setter"
+                                            } else {
+                                                "setter"
+                                            };
+                                            ctx.diagnostic(no_empty_function_diagnostic(
+                                                fb.span,
+                                                kind,
+                                                key_name_str,
+                                            ));
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            AstKind::ArrowFunctionExpression(arrow_func)
+                if !allowed_func(&self.allow, "arrowFunctions") =>
+            {
+                let kind =
+                    if arrow_func.r#async { "async arrow function" } else { "arrow function" };
+                ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, None));
+            }
+            _ => {}
         }
     }
 }
 
-fn get_function_name_and_kind<'a>(
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) -> (&'static str, Option<Cow<'a, str>>) {
-    for parent in ctx.nodes().ancestor_kinds(node.id()).skip(1) {
-        match parent {
-            AstKind::Function(f) => {
-                if let Some(name) = f.name() {
-                    let kind = if f.generator { "generator function" } else { "function" };
-                    return (kind, Some(name.into()));
-                }
-            }
-            AstKind::ArrowFunctionExpression(_) => {}
-            AstKind::IdentifierName(IdentifierName { name, .. })
-            | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
-                return ("function", Some(Cow::Borrowed(name.as_str())));
-            }
-            AstKind::PropertyDefinition(prop) => {
-                return ("function", prop.key.name());
-            }
-            AstKind::MethodDefinition(method) => {
-                let kind = match method.kind {
-                    MethodDefinitionKind::Method => {
-                        if method.r#static {
-                            "static method"
-                        } else {
-                            "method"
-                        }
-                    }
-                    MethodDefinitionKind::Get => "getter",
-                    MethodDefinitionKind::Set => "setter",
-                    MethodDefinitionKind::Constructor => "constructor",
-                };
-                return (kind, method.key.name());
-            }
-            AstKind::VariableDeclarator(decl) => {
-                return ("function", decl.id.get_identifier_name().map(Into::into));
-            }
-            _ => return ("function", None),
-        }
-    }
-    #[cfg(debug_assertions)]
-    unreachable!();
-    #[cfg(not(debug_assertions))]
-    ("function", None)
+fn allowed_func(allow: &[CompactStr], operator: &str) -> bool {
+    allow.iter().any(|s| s == operator)
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
-        "
-        function foo() {
-            // empty
-        }
-        ",
-        "
+        ("const foo = () => {  };", Some(json!([{ "allow": ["arrowFunctions"] }]))),
+        (
+            r"
+                function foo() {}
+                const bar = function() {};
+                const obj = {
+                    foo: function() {}
+                };
+            ",
+            Some(json!([{ "allow": ["functions"] }])),
+        ),
+        (
+            r"
+                function* foo() {}
+                const bar = function*() {};
+                const obj = {
+                    foo: function*() {}
+                };
+            ",
+            Some(json!([{ "allow": ["generatorFunctions"] }])),
+        ),
+        (
+            r"
+                const obj = {
+                    foo() {}
+                };
+                class A {
+                    foo() {}
+                    static foo() {}
+                }
+            ",
+            Some(json!([{ "allow": ["methods"] }])),
+        ),
+        (
+            r"
+                const obj = {
+                    *foo() {}
+                };
+                class A {
+                    *foo() {}
+                    static *foo() {}
+                }
+            ",
+            Some(json!([{ "allow": ["generatorMethods"] }])),
+        ),
+        (
+            r"
+                const obj = {
+                    get foo() {}
+                };
+                class A {
+                    get foo() {}
+                    static get foo() {}
+                }
+            ",
+            Some(json!([{ "allow": ["getters"] }])),
+        ),
+        (
+            r"
+                const obj = {
+                    set foo(value) {}
+                };
+                class A {
+                    set foo(value) {}
+                    static set foo(value) {}
+                }
+            ",
+            Some(json!([{ "allow": ["setters"] }])),
+        ),
+        (
+            r"
+                class A {
+                    constructor() {}
+                }
+            ",
+            Some(json!([{ "allow": ["constructors"] }])),
+        ),
+        ("async function a() {  }", Some(json!([{ "allow": ["asyncFunctions"] }]))),
+        (
+            r"
+                const obj = {
+                    async foo() {}
+                };
+                class A {
+                    async foo() {}
+                    static async foo() {}
+                }
+            ",
+            Some(json!([{ "allow": ["asyncMethods"] }])),
+        ),
+        (
+            "
+                function foo() {
+                    // empty
+                }
+            ",
+            None,
+        ),
+        (
+            "
         function* baz() {
             // empty
         }
         ",
-        "
+            None,
+        ),
+        (
+            "
         const bar = () => {
             // empty
         };
         ",
-        "
+            None,
+        ),
+        (
+            "
         const obj = {
             foo: function() {
                 // empty
@@ -153,7 +405,10 @@ fn test() {
             }
         };
         ",
-        "
+            None,
+        ),
+        (
+            "
         class A {
             constructor() {
                 // empty
@@ -184,13 +439,16 @@ fn test() {
             }
         }
         ",
+            None,
+        ),
     ];
 
     let fail = vec![
-        "function foo() {}",
-        "const bar = () => {};",
-        "function* baz() {}",
-        "
+        ("function foo() {}", None),
+        ("const bar = () => {};", None),
+        ("function* baz() {}", None),
+        (
+            "
         const obj = {
             foo: function() {
             },
@@ -200,7 +458,10 @@ fn test() {
             }
         };
         ",
-        "
+            None,
+        ),
+        (
+            "
         class A {
             constructor() {
             }
@@ -221,8 +482,28 @@ fn test() {
             static set baz(value) {
             }
         }
-    ",
+        ",
+            None,
+        ),
     ];
+
+    // let pass = vec![
+    //     (
+    //         r"
+    //             const obj = {
+    //                 *foo() {}
+    //             };
+    //             class A {
+    //                 *foo() {}
+    //                 static *foo() {}
+    //             }
+    //         ",
+    //         Some(json!([{ "allow": ["generatorMethods"] }]))
+    //     ),
+    // ];
+    // let fail = vec![
+    //     // ("const bar = () => {};", None),
+    // ];
 
     Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
 }
