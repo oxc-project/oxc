@@ -901,6 +901,7 @@ pub enum TSAccessibility {
 #[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
     pub span: Span,
+    #[estree(via = TSClassImplementsExpression)]
     pub expression: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }

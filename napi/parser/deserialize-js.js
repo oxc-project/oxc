@@ -1622,11 +1622,36 @@ function deserializeTSTypeAliasDeclaration(pos) {
 }
 
 function deserializeTSClassImplements(pos) {
+  let expression = deserializeTSTypeName(pos + 8);
+  if (expression.type === 'TSQualifiedName') {
+    let parent = expression = {
+      type: 'MemberExpression',
+      start: expression.start,
+      end: expression.end,
+      object: expression.left,
+      property: expression.right,
+      computed: false,
+      optional: false,
+    };
+
+    while (parent.object.type === 'TSQualifiedName') {
+      const object = parent.object;
+      parent = parent.object = {
+        type: 'MemberExpression',
+        start: object.start,
+        end: object.end,
+        object: object.left,
+        property: object.right,
+        computed: false,
+        optional: false,
+      };
+    }
+  }
   return {
     type: 'TSClassImplements',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    expression: deserializeTSTypeName(pos + 8),
+    expression,
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }

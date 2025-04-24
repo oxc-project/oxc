@@ -1216,7 +1216,7 @@ export type TSAccessibility = 'private' | 'protected' | 'public';
 
 export interface TSClassImplements extends Span {
   type: 'TSClassImplements';
-  expression: TSTypeName;
+  expression: IdentifierReference | ThisExpression | MemberExpression;
   typeArguments: TSTypeParameterInstantiation | null;
 }
 

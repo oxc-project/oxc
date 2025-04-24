@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 11245/11404 (98.61%)
-Positive Passed: 11074/11404 (97.11%)
+Positive Passed: 11091/11404 (97.26%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 
@@ -46,17 +46,11 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/bigintWithLib.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/bigintWithoutLib.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/bluebirdStaticThis.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts
 Expected `{` but found `EOF`
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/classdecl.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/complicatedPrivacy.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-errors.ts
 Missing initializer in const declaration
@@ -77,18 +71,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWi
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
 Classes can't have a field named 'constructor'
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileModuleContinuation.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause2.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declareAlreadySeen.ts
 declare' modifier already seen.
@@ -181,8 +163,6 @@ A rest parameter cannot be optional
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/fileWithNextLine3.ts
 A 'return' statement can only be used within a function body.
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericClassImplementingGenericInterfaceFromAnotherModule.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
@@ -221,8 +201,6 @@ Unexpected token
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/indexerSignatureWithRestParam.ts
 Unexpected token
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration3.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationAbstractModifier.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -290,8 +268,6 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithoutJsExtensions.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-invalidContexts.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
@@ -355,12 +331,8 @@ Type parameters cannot appear on a constructor declaration
 serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/parsingDeepParenthensizedExpression.ts
 recursion limit exceeded at line 3334 column 269
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyClassImplementsClauseDeclFile.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyImportParseErrors.ts
 'export' modifier cannot be used here.
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveClassReferenceTest.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/regularExpressionScanning.ts
 Unexpected flag a in regular expression literal
@@ -395,8 +367,6 @@ Unexpected token
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticPrototypeProperty.ts
 Classes may not have a static property named prototype
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -657,8 +627,6 @@ Expected `,` but found `Identifier`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts
 Expected `from` but found `Identifier`
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/implementsClause.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts
 Expected `,` but found `Identifier`
 
@@ -679,8 +647,6 @@ Expected `from` but found `=`
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts
 Unexpected token
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryDeclarationsLocalTypes.tsx
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
 Expected `>` but found `<`

@@ -1342,6 +1342,79 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
     }
 }
 
+/// Serializer for `expression` field of `TSClassImplements`.
+///
+/// Our AST represents `X.Y` in `class C implements X.Y {}` as a `TSQualifiedName`.
+/// TS-ESTree represents `X.Y` as a `MemberExpression`.
+///
+/// Where there are more parts e.g. `class C implements X.Y.Z {}`, the `TSQualifiedName`s (Oxc)
+/// or `MemberExpression`s (TS-ESTree) are nested.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierReference | ThisExpression | MemberExpression",
+    raw_deser = "
+        let expression = DESER[TSTypeName](POS_OFFSET.expression);
+        if (expression.type === 'TSQualifiedName') {
+            let parent = expression = {
+                type: 'MemberExpression',
+                start: expression.start,
+                end: expression.end,
+                object: expression.left,
+                property: expression.right,
+                computed: false,
+                optional: false,
+            };
+
+            while (parent.object.type === 'TSQualifiedName') {
+                const object = parent.object;
+                parent = parent.object = {
+                    type: 'MemberExpression',
+                    start: object.start,
+                    end: object.end,
+                    object: object.left,
+                    property: object.right,
+                    computed: false,
+                    optional: false,
+                };
+            }
+        }
+        expression
+    "
+)]
+pub struct TSClassImplementsExpression<'a, 'b>(pub &'b TSClassImplements<'a>);
+
+impl ESTree for TSClassImplementsExpression<'_, '_> {
+    #[inline] // Because it just delegates
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        TSTypeNameAsMemberExpression(&self.0.expression).serialize(serializer);
+    }
+}
+
+struct TSTypeNameAsMemberExpression<'a, 'b>(&'b TSTypeName<'a>);
+
+impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSTypeName::IdentifierReference(ident) => {
+                TSTypeNameIdentifierReference(ident).serialize(serializer);
+            }
+            TSTypeName::QualifiedName(name) => {
+                // Convert to `TSQualifiedName` to `MemberExpression`.
+                // Recursively convert `left` to `MemberExpression` too if it's a `TSQualifiedName`.
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("MemberExpression"));
+                state.serialize_field("start", &name.span.start);
+                state.serialize_field("end", &name.span.end);
+                state.serialize_field("object", &TSTypeNameAsMemberExpression(&name.left));
+                state.serialize_field("property", &name.right);
+                state.serialize_field("computed", &false);
+                state.serialize_field("optional", &false);
+                state.end();
+            }
+        }
+    }
+}
+
 /// Serializer for `params` field of `TSCallSignatureDeclaration`.
 ///
 /// These add `this_param` to start of the `params` array.
