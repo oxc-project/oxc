@@ -86,12 +86,12 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
 };
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{ModuleKind, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -429,31 +429,22 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
+        let mut program = self.parse_program();
         let mut panicked = false;
-        let mut program = match self.parse_program() {
-            Ok(program) => program,
-            Err(error) => {
-                panicked = true;
-                if let Some(fatal_error) = self.fatal_error.take() {
-                    if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
-                        // Noop
-                    } else {
-                        self.error(fatal_error.error);
-                    }
-                } else {
-                    self.error(error);
-                }
-                self.ast.program(
-                    Span::default(),
-                    self.source_type,
-                    self.source_text,
-                    self.ast.vec(),
-                    None,
-                    self.ast.vec(),
-                    self.ast.vec(),
-                )
+
+        if let Some(fatal_error) = self.fatal_error.take() {
+            panicked = true;
+            self.errors.truncate(fatal_error.errors_len);
+            if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
+                // Noop
+            } else {
+                self.error(fatal_error.error);
             }
-        };
+
+            program = Program::dummy(self.ast.allocator);
+            program.source_type = self.source_type;
+            program.source_text = self.source_text;
+        }
 
         self.check_unfinished_errors();
 
@@ -508,7 +499,10 @@ impl<'a> ParserImpl<'a> {
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
-        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let expr = self.parse_expr();
+        if let Some(FatalError { error, .. }) = self.fatal_error.take() {
+            return Err(vec![error]);
+        }
         self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
         if !errors.is_empty() {
@@ -518,17 +512,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Result<Program<'a>> {
+    fn parse_program(&mut self) -> Program<'a> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
 
         let hashbang = self.parse_hashbang();
         let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true)?;
+            self.parse_directives_and_statements(/* is_top_level */ true);
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
-        Ok(self.ast.program(
+        self.ast.program(
             span,
             self.source_type,
             self.source_text,
@@ -536,7 +530,7 @@ impl<'a> ParserImpl<'a> {
             hashbang,
             directives,
             statements,
-        ))
+        )
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {

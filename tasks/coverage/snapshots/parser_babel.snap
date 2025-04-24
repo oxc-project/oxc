@@ -1,8 +1,8 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2303/2322 (99.18%)
-Positive Passed: 2282/2322 (98.28%)
+AST Parsed     : 2306/2322 (99.31%)
+Positive Passed: 2285/2322 (98.41%)
 Negative Passed: 1557/1673 (93.07%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
@@ -254,21 +254,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:31]
- 1 │ async( x = class { #x = await });
-   ·                               ─
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:31]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:33]
  1 │ async( x = class { #x = await }) => {}
-   ·                               ─
+   ·                                 ▲
    ╰────
+  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
@@ -280,29 +273,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  4 │   }
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js:1:26]
- 1 │ async( x = class { [await] = x })
-   ·                          ─
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js:1:30]
- 1 │ async( x = class { x = await });
-   ·                              ─
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:30]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:32]
  1 │ async( x = class { x = await }) => {}
-   ·                              ─
+   ·                                ▲
    ╰────
+  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
@@ -1696,32 +1674,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 3e
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/349/input.js:1:1]
- 1 │ 3e
-   · ──
-   ╰────
-
   × Unexpected end of file
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/350/input.js:1:4]
  1 │ 3e+
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/350/input.js:1:1]
- 1 │ 3e+
-   · ───
-   ╰────
-
   × Unexpected end of file
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/351/input.js:1:4]
  1 │ 3e-
-   ╰────
-
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/351/input.js:1:1]
- 1 │ 3e-
-   · ───
    ╰────
 
   × Invalid characters after number
@@ -5718,11 +5678,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:22]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:41]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                      ─
+   ·                                         ▲
    ╰────
+  help: Try insert a semicolon here
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:10]
+ 1 │ async ({ x = [ await ], y = { await } }) => {}
+   ·          ─────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:25]
+ 1 │ async ({ x = [ await ], y = { await } }) => {}
+   ·                         ─────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Line terminator not permitted before arrow
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/newline-before-arrow/input.js:2:1]
@@ -8448,11 +8423,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:26]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:34]
  1 │ async( x = class { [await] = x }) => {}
-   ·                          ─
+   ·                                  ▲
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected new.target expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target-invalid/input.js:1:9]
@@ -9815,12 +9791,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ▲
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0004/input.js:1:1]
- 1 │ 3e
-   · ──
-   ╰────
-
   × Invalid Character `
   │ `
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0005/input.js:1:4]
@@ -9828,23 +9798,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ▲
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0005/input.js:1:1]
- 1 │ 3e+
-   · ───
-   ╰────
-
   × Invalid Character `
   │ `
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0006/input.js:1:4]
  1 │ 3e-
    ·    ▲
-   ╰────
-
-  × Invalid Number invalid float
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0006/input.js:1:1]
- 1 │ 3e-
-   · ───
    ╰────
 
   × Invalid characters after number

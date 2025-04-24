@@ -11,21 +11,21 @@ pub struct FatalError {
     /// The fatal error
     pub error: OxcDiagnostic,
     /// Length of `errors` at time fatal error is recorded
-    #[expect(unused)]
     pub errors_len: usize,
 }
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn set_unexpected(&mut self) -> OxcDiagnostic {
+    pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined) {
             if let Some(error) = self.lexer.errors.pop() {
-                return self.set_fatal_error(error);
+                self.set_fatal_error(error);
+                return;
             }
         }
         let error = diagnostics::unexpected_token(self.cur_token().span());
-        self.set_fatal_error(error)
+        self.set_fatal_error(error);
     }
 
     /// Return error info at current token
@@ -33,9 +33,10 @@ impl<'a> ParserImpl<'a> {
     /// # Panics
     ///
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    pub(crate) fn unexpected(&mut self) -> OxcDiagnostic {
-        self.set_unexpected()
-        // Dummy::dummy(self.ast.allocator)
+    #[must_use]
+    pub(crate) fn unexpected<T: Dummy<'a>>(&mut self) -> T {
+        self.set_unexpected();
+        Dummy::dummy(self.ast.allocator)
     }
 
     /// Push a Syntax Error
@@ -49,18 +50,15 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance lexer's cursor to end of file.
-    pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) -> OxcDiagnostic {
+    pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
-            self.fatal_error =
-                Some(FatalError { error: error.clone(), errors_len: self.errors.len() });
+            self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
         }
-        error
     }
 
-    #[expect(unused)]
     pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
-        let _ = self.set_fatal_error(error);
+        self.set_fatal_error(error);
         Dummy::dummy(self.ast.allocator)
     }
 

@@ -12316,12 +12316,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `<` but found `EOF`
+  × Unexpected token
     ╭─[typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx:11:18]
  10 │ 
  11 │ let y = <   Baz >Hello
-    ·                  ──┬──
-    ·                    ╰── `<` expected
+    ·                  ─────
     ╰────
 
   × 'with' statements are not allowed
@@ -13219,6 +13218,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
  3 │ export default var a = 10;
    ·                ───
+   ╰────
+
+  × Duplicated default export
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:1:8]
+ 1 │ export default class a {
+   ·        ───────
+ 2 │ }
+ 3 │ export default var a = 10;
+   ·        ───────
    ╰────
 
   × The keyword 'let' is reserved
@@ -15199,14 +15207,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected `{` but found `Unknown`
-   ╭─[typescript/tests/cases/compiler/parseErrorInHeritageClause1.ts:1:19]
- 1 │ class C extends A ¬ {
-   ·                   ┬
-   ·                   ╰── `{` expected
- 2 │ }
-   ╰────
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:17]
  1 │ type F1 = {
@@ -15434,20 +15434,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ─
    ╰────
 
-  × Expected `<` but found `EOF`
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
-   ·                     ─┬─
-   ·                      ╰── `<` expected
+   ·                     ───
    ╰────
 
-  × Expected `<` but found `EOF`
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
  1 │ const x = "oops";
  2 │ const y = + <> x;
-   ·               ─┬─
-   ·                ╰── `<` expected
+   ·               ───
    ╰────
 
   × Unexpected token
@@ -17741,6 +17739,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ f `123qdawdrqw${
    ╰────
 
+  × Unterminated string
+   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:20]
+ 4 │ // Incomplete call, enough parameters.
+ 5 │ f `123qdawdrqw${ }${
+   ·                    ─
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:18]
  4 │ // Incomplete call, enough parameters.
@@ -17752,6 +17757,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
+   ╰────
+
+  × Unterminated string
+   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions4.ts:5:27]
+ 4 │ // Incomplete call, but too many parameters.
+ 5 │ f `123qdawdrqw${ 1 }${ }${ 
+   ·                           ─
    ╰────
 
   × Unexpected token
@@ -18419,12 +18431,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
@@ -18507,12 +18520,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
@@ -18648,12 +18662,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:28]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                           ─
+   ·                            ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]
@@ -21585,11 +21600,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·           ─
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:11]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:17]
  1 │ var v = { *<T>() { } }
-   ·           ─
+   ·                 ▲
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration4_es6.ts:2:5]
@@ -25904,15 +25920,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     return;
    ╰────
 
-  × Expected `}` but found `Unknown`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:2:5]
- 1 │ function f() {
- 2 │     ¬
-   ·     ┬
-   ·     ╰── `}` expected
- 3 │     return;
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block3.ts:4:12]
  3 │ 
@@ -25945,15 +25952,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ module M {
  2 │    ¬
    ·    ─
- 3 │    class C {
-   ╰────
-
-  × Expected `}` but found `Unknown`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
- 1 │ module M {
- 2 │    ¬
-   ·    ┬
-   ·    ╰── `}` expected
  3 │    class C {
    ╰────
 
@@ -27233,11 +27231,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ foo(a, \
    ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:8]
- 1 │ foo(a \
-   ╰────
-
   × Expected `,` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:7]
  1 │ foo(a \
@@ -27263,11 +27256,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·  ─
    ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:13]
- 1 │ var v: X<T \
-   ╰────
-
   × Expected `,` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:12]
  1 │ var v: X<T \
@@ -27290,12 +27278,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens4.ts:1:2]
  1 │ \  /regexp/;
    ·  ─
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens4.ts:1:12]
- 1 │ \  /regexp/;
-   ·            ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -28342,21 +28324,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ 1e
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral4.ts:1:1]
- 1 │ 1e
-   · ──
-   ╰────
-
   × Unexpected end of file
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral6.ts:1:4]
  1 │ 1e+
-   ╰────
-
-  × Invalid Number invalid float
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral6.ts:1:1]
- 1 │ 1e+
-   · ───
    ╰────
 
   × The keyword 'public' is reserved
@@ -28378,21 +28348,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ 1e
    ╰────
 
-  × Invalid Number invalid float
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral4.ts:1:1]
- 1 │ 1e
-   · ──
-   ╰────
-
   × Unexpected end of file
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral6.ts:1:4]
  1 │ 1e+
-   ╰────
-
-  × Invalid Number invalid float
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral6.ts:1:1]
- 1 │ 1e+
-   · ───
    ╰────
 
   × Unterminated multiline comment
