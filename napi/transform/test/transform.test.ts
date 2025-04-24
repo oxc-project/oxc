@@ -250,7 +250,7 @@ describe('define plugin', () => {
     const code = `function load(url, successCallback, errorCallback) {
 	var xhr = new XMLHttpRequest();
 	xhr.send(null);
-}`
+}`;
     const ret = transform('test.ts', code, {
       define: {
         'XMLHttpRequest': 'undefined',
@@ -261,7 +261,7 @@ describe('define plugin', () => {
 	var xhr = new undefined();
 	xhr.send(null);
 }
-`
+`,
     );
   });
 });
