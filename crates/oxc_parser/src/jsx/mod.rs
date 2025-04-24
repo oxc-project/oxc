@@ -195,7 +195,7 @@ impl<'a> ParserImpl<'a> {
         let mut span = Span::new(span, 0);
         let mut property = None;
 
-        while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
+        while self.eat(Kind::Dot) && !self.has_fatal_error() {
             // <foo.bar.baz>
             if let Some(prop) = property {
                 object =
@@ -206,7 +206,8 @@ impl<'a> ParserImpl<'a> {
             let ident = self.parse_jsx_identifier()?;
             // `<foo.bar- />` is a syntax error.
             if ident.name.contains('-') {
-                return Err(diagnostics::unexpected_token(ident.span));
+                let error = diagnostics::unexpected_token(ident.span);
+                return Err(self.set_fatal_error(error));
             }
             property = Some(ident);
             span = self.end_span(span.start);
@@ -227,7 +228,7 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXChild` `JSXChildren_opt`
     fn parse_jsx_children(&mut self) -> Result<Vec<'a, JSXChild<'a>>> {
         let mut children = self.ast.vec();
-        while !self.at(Kind::Eof) {
+        while !self.has_fatal_error() {
             if let Some(child) = self.parse_jsx_child()? {
                 children.push(child);
             } else {
@@ -306,7 +307,8 @@ impl<'a> ParserImpl<'a> {
         self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
             let expr = p.parse_expr();
             if let Ok(Expression::SequenceExpression(seq)) = &expr {
-                return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
+                let error = diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span);
+                return Err(p.set_fatal_error(error));
             }
             expr
         })
@@ -328,7 +330,9 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> Result<Vec<'a, JSXAttributeItem<'a>>> {
         let mut attributes = self.ast.vec();
-        while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash) {
+        while !matches!(self.cur_kind(), Kind::LAngle | Kind::RAngle | Kind::Slash)
+            && !self.has_fatal_error()
+        {
             let attribute = match self.cur_kind() {
                 Kind::LCurly => {
                     self.parse_jsx_spread_attribute().map(JSXAttributeItem::SpreadAttribute)

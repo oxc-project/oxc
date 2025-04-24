@@ -85,7 +85,8 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             p.error(diagnostics::binding_rest_element_trailing_comma(*span));
                         }
                     } else {
-                        return Err(diagnostics::spread_last_element(elem.span));
+                        let error = diagnostics::spread_last_element(elem.span);
+                        return Err(p.set_fatal_error(error));
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),

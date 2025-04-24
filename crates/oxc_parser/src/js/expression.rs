@@ -73,12 +73,13 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier<'a>> {
         let cur = self.cur_kind();
         if !cur.is_binding_identifier() {
-            let err = if cur.is_reserved_keyword() {
-                diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str())
+            return Err(if cur.is_reserved_keyword() {
+                let error =
+                    diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str());
+                self.set_fatal_error(error)
             } else {
                 self.unexpected()
-            };
-            return Err(err);
+            });
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
@@ -211,7 +212,8 @@ impl<'a> ParserImpl<'a> {
 
         if expressions.is_empty() {
             self.expect(Kind::RParen)?;
-            return Err(diagnostics::empty_parenthesized_expression(self.end_span(span)));
+            let error = diagnostics::empty_parenthesized_expression(self.end_span(span));
+            return Err(self.set_fatal_error(error));
         }
 
         let expr_span = self.end_span(expr_span);
@@ -477,7 +479,6 @@ impl<'a> ParserImpl<'a> {
                 self.re_lex_template_substitution_tail();
                 loop {
                     match self.cur_kind() {
-                        Kind::Eof => self.expect(Kind::TemplateTail)?,
                         Kind::TemplateTail => {
                             quasis.push(self.parse_template_element(tagged));
                             break;
@@ -485,6 +486,7 @@ impl<'a> ParserImpl<'a> {
                         Kind::TemplateMiddle => {
                             quasis.push(self.parse_template_element(tagged));
                         }
+                        _ if self.has_fatal_error() => self.expect(Kind::TemplateTail)?,
                         _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr =
@@ -737,7 +739,7 @@ impl<'a> ParserImpl<'a> {
                         | Kind::TemplateHead
                         | Kind::LBrack => break,
                         _ => {
-                            return Err(diagnostics::unexpected_token(self.cur_token().span()));
+                            return Err(self.unexpected());
                         }
                     }
                 }
@@ -1050,7 +1052,8 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::In)?;
             let right = self.parse_binary_expression_or_higher(Precedence::Lowest)?;
             if let Expression::PrivateInExpression(private_in_expr) = right {
-                return Err(diagnostics::private_in_private(private_in_expr.span));
+                let error = diagnostics::private_in_private(private_in_expr.span);
+                return Err(self.set_fatal_error(error));
             }
             self.ast.expression_private_in(self.end_span(lhs_span), left, right)
         } else {

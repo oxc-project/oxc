@@ -7,15 +7,17 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserImpl, diagnostics,
+    error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
+    fatal_error: Option<FatalError>,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -169,7 +171,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
             let span = Span::new(self.prev_token_end, self.prev_token_end);
-            return Err(diagnostics::auto_semicolon_insertion(span));
+            let error = diagnostics::auto_semicolon_insertion(span);
+            return Err(self.set_fatal_error(error));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -186,10 +189,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// # Errors
-    pub(crate) fn expect_without_advance(&self, kind: Kind) -> Result<()> {
+    pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
+            let error = diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range);
+            return Err(self.set_fatal_error(error));
         }
         Ok(())
     }
@@ -271,22 +275,25 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos } = checkpoint;
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+            checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
+        self.fatal_error = fatal_error;
     }
 
     /// # Errors
@@ -343,7 +350,7 @@ impl<'a> ParserImpl<'a> {
         let mut list = self.ast.vec();
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
             match f(self)? {
@@ -373,7 +380,7 @@ impl<'a> ParserImpl<'a> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
             if first {
@@ -408,7 +415,7 @@ impl<'a> ParserImpl<'a> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
             if first {

@@ -293,6 +293,7 @@ impl<'a> Lexer<'a> {
         let start = self.offset();
         let c = self.consume_char();
         self.error(diagnostics::invalid_character(c, Span::new(start, self.offset())));
-        Kind::Undetermined
+        self.advance_to_end();
+        Kind::Eof
     }
 }

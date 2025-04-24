@@ -520,6 +520,11 @@ pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
 }
 
+#[cold]
+pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("import() requires a specifier.").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

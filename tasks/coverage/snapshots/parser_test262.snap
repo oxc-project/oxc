@@ -12720,15 +12720,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ var C = class {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ var C = class {
@@ -12736,15 +12727,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ var C = class {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -12761,15 +12743,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ var C = class {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -12827,15 +12800,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ var C = class {
@@ -12843,15 +12807,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -12869,15 +12824,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ var C = class {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ var C = class {
@@ -12886,15 +12832,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ var C = class {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ var C = class {
@@ -12902,15 +12839,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ var C = class {
- 29 │   static # x;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -12927,15 +12855,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ var C = class {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -31113,15 +31032,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ class C {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ class C {
@@ -31129,15 +31039,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ class C {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -31154,15 +31055,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ class C {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -31220,15 +31112,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ class C {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ class C {
@@ -31236,15 +31119,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ class C {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -31262,15 +31136,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ class C {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ class C {
@@ -31279,15 +31144,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ class C {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ class C {
@@ -31295,15 +31151,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ class C {
- 29 │   static # x;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -31320,15 +31167,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ class C {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -34453,11 +34291,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] in [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34467,11 +34305,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] in [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34959,11 +34797,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] of [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34973,11 +34811,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] of [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element

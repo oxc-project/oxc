@@ -17,8 +17,8 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
         if self.eat(Kind::RParen) {
-            return Err(oxc_diagnostics::OxcDiagnostic::error("import() requires a specifier.")
-                .with_label(self.end_span(span)));
+            let error = diagnostics::import_requires_a_specifier(self.end_span(span));
+            return Err(self.set_fatal_error(error));
         }
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
@@ -31,7 +31,8 @@ impl<'a> ParserImpl<'a> {
         // Allow trailing comma
         self.bump(Kind::Comma);
         if !self.eat(Kind::RParen) {
-            return Err(diagnostics::import_arguments(self.end_span(span)));
+            let error = diagnostics::import_arguments(self.end_span(span));
+            return Err(self.set_fatal_error(error));
         }
         self.ctx = self.ctx.and_in(has_in);
         let expr =

@@ -68,6 +68,7 @@
 
 mod context;
 mod cursor;
+mod error_handler;
 mod modifiers;
 mod module_record;
 mod state;
@@ -96,7 +97,8 @@ use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     context::{Context, StatementContext},
-    lexer::{Kind, Lexer, Token},
+    error_handler::FatalError,
+    lexer::{Lexer, Token},
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -367,6 +369,8 @@ struct ParserImpl<'a> {
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
 
+    fatal_error: Option<FatalError>,
+
     /// The current parsing token
     token: Token,
 
@@ -408,6 +412,7 @@ impl<'a> ParserImpl<'a> {
             source_type,
             source_text,
             errors: vec![],
+            fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(allocator),
@@ -424,11 +429,21 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (mut program, panicked) = match self.parse_program() {
-            Ok(program) => (program, false),
+        let mut panicked = false;
+        let mut program = match self.parse_program() {
+            Ok(program) => program,
             Err(error) => {
-                self.error(self.overlong_error().unwrap_or(error));
-                let program = self.ast.program(
+                panicked = true;
+                if let Some(fatal_error) = self.fatal_error.take() {
+                    if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
+                        // Noop
+                    } else {
+                        self.error(fatal_error.error);
+                    }
+                } else {
+                    self.error(error);
+                }
+                self.ast.program(
                     Span::default(),
                     self.source_type,
                     self.source_text,
@@ -436,12 +451,19 @@ impl<'a> ParserImpl<'a> {
                     None,
                     self.ast.vec(),
                     self.ast.vec(),
-                );
-                (program, true)
+                )
             }
         };
 
         self.check_unfinished_errors();
+
+        if let Some(overlong_error) = self.overlong_error() {
+            panicked = true;
+            self.lexer.errors.clear();
+            self.errors.clear();
+            self.error(overlong_error);
+        }
+
         let mut is_flow_language = false;
         let mut errors = vec![];
         // only check for `@flow` if the file failed to parse.
@@ -560,29 +582,6 @@ impl<'a> ParserImpl<'a> {
             return Some(diagnostics::overlong_source());
         }
         None
-    }
-
-    /// Return error info at current token
-    /// # Panics
-    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected(&mut self) -> OxcDiagnostic {
-        // The lexer should have reported a more meaningful diagnostic
-        // when it is a undetermined kind.
-        if self.cur_kind() == Kind::Undetermined {
-            if let Some(error) = self.lexer.errors.pop() {
-                return error;
-            }
-        }
-        diagnostics::unexpected_token(self.cur_token().span())
-    }
-
-    /// Push a Syntax Error
-    fn error(&mut self, error: OxcDiagnostic) {
-        self.errors.push(error);
-    }
-
-    fn errors_count(&self) -> usize {
-        self.errors.len() + self.lexer.errors.len()
     }
 
     #[inline]

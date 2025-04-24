@@ -53,7 +53,8 @@ impl<'a> ParserImpl<'a> {
         )?;
         if let Some(rest) = &rest {
             if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                return Err(diagnostics::invalid_binding_rest_element(rest.argument.span()));
+                let error = diagnostics::invalid_binding_rest_element(rest.argument.span());
+                return Err(self.set_fatal_error(error));
             }
         }
         self.expect(Kind::RCurly)?;

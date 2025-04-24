@@ -1,7 +1,7 @@
 commit: 15392346
 
 parser_typescript Summary:
-AST Parsed     : 6522/6531 (99.86%)
+AST Parsed     : 6523/6531 (99.88%)
 Positive Passed: 6511/6531 (99.69%)
 Negative Passed: 1308/5754 (22.73%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
@@ -12316,11 +12316,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
     ╭─[typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx:11:18]
  10 │ 
  11 │ let y = <   Baz >Hello
-    ·                  ─────
+    ·                  ──┬──
+    ·                    ╰── `<` expected
     ╰────
 
   × 'with' statements are not allowed
@@ -15433,18 +15434,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ─
    ╰────
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── `<` expected
    ╰────
 
-  × Unexpected token
+  × Expected `<` but found `EOF`
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
  1 │ const x = "oops";
  2 │ const y = + <> x;
-   ·               ───
+   ·               ─┬─
+   ·                ╰── `<` expected
    ╰────
 
   × Unexpected token
@@ -25901,6 +25904,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     return;
    ╰────
 
+  × Expected `}` but found `Unknown`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:2:5]
+ 1 │ function f() {
+ 2 │     ¬
+   ·     ┬
+   ·     ╰── `}` expected
+ 3 │     return;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block3.ts:4:12]
  3 │ 
@@ -25933,6 +25945,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ module M {
  2 │    ¬
    ·    ─
+ 3 │    class C {
+   ╰────
+
+  × Expected `}` but found `Unknown`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
+ 1 │ module M {
+ 2 │    ¬
+   ·    ┬
+   ·    ╰── `}` expected
  3 │    class C {
    ╰────
 
@@ -27208,11 +27229,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens17.ts:1:9]
- 1 │ foo(a, \
-   ╰────
-
-  × Expected `)` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens17.ts:1:9]
  1 │ foo(a, \
    ╰────
