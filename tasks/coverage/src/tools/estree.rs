@@ -270,8 +270,13 @@ impl Case for EstreeTypescriptCase {
         self.base.test_result()
     }
 
+    fn always_strict(&self) -> bool {
+        self.base.always_strict()
+    }
+
     fn skip_test_case(&self) -> bool {
-        matches!(fs::exists(&self.estree_file_path), Ok(false))
+        // Skip cases where expected to fail to parse, or no JSON file for case in `acorn-test262`
+        self.base.should_fail() || matches!(fs::exists(&self.estree_file_path), Ok(false))
     }
 
     fn run(&mut self) {
