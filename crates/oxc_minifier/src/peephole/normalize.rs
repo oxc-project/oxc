@@ -243,18 +243,21 @@ impl<'a> Normalize {
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
     }
 
-    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &TraverseCtx<'a>) {
+    fn set_no_side_effects(
+        pure: &mut bool,
+        callee: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<()> {
         if !*pure {
-            if let Some(ident) = callee.get_identifier_reference() {
-                if let Some(symbol_id) =
-                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                {
-                    if ctx.scoping().no_side_effects().contains(&symbol_id) {
-                        *pure = true;
-                    }
-                }
+            let ident = callee.get_identifier_reference()?;
+            // The `reference_id` may be `None`(e.g. after `ReplaceGlobalDefines` plugin) after previous passes.
+            let symbol_id = ctx.scoping().get_reference(ident.reference_id.get()?).symbol_id()?;
+
+            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+                *pure = true;
             }
         }
+        Some(())
     }
 }
 

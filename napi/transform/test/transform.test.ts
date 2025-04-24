@@ -244,6 +244,26 @@ describe('define plugin', () => {
     });
     expect(ret.code).toEqual('console.log({ __TEST_DEFINE__: "replaced" });\n');
   });
+
+  it('should not panic when transform a local variable to a global variable', () => {
+    // https://github.com/rolldown/rolldown/issues/4261
+    const code = `function load(url, successCallback, errorCallback) {
+	var xhr = new XMLHttpRequest();
+	xhr.send(null);
+}`
+    const ret = transform('test.ts', code, {
+      define: {
+        'XMLHttpRequest': 'undefined',
+      },
+    });
+    expect(ret.code).toEqual(
+      `function load(url, successCallback, errorCallback) {
+	var xhr = new undefined();
+	xhr.send(null);
+}
+`
+    );
+  });
 });
 
 describe('inject plugin', () => {
