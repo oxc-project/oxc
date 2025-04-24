@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use similar::TextDiff;
+
 use oxc::{
     allocator::Allocator,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
@@ -124,32 +126,9 @@ impl Case for EstreeTest262Case {
             return;
         }
 
-        // Mismatch found.
-        // Write diff to `acorn-test262-diff` directory, unless running on CI.
-        let is_ci = std::option_env!("CI") == Some("true");
-        if !is_ci {
-            self.write_diff(&oxc_json, &acorn_json);
-        }
-
+        // Mismatch found
+        write_diff(self.path(), &oxc_json, &acorn_json);
         self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
-    }
-}
-
-impl EstreeTest262Case {
-    /// Write diff to `acorn-test262-diff` directory.
-    fn write_diff(&self, oxc_json: &str, acorn_json: &str) {
-        let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
-            .join(self.path().strip_prefix("test262").unwrap())
-            .with_extension("diff");
-        std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-        write!(
-            std::fs::File::create(diff_path).unwrap(),
-            "{}",
-            similar::TextDiff::from_lines(acorn_json, oxc_json)
-                .unified_diff()
-                .missing_newline_hint(false)
-        )
-        .unwrap();
     }
 }
 
@@ -257,30 +236,15 @@ impl Case for AcornJsxCase {
             return;
         }
 
-        // Mismatch found.
-        // Write diff to `acorn-test262-diff` directory, unless running on CI.
-        let is_ci = std::option_env!("CI") == Some("true");
-        if !is_ci {
-            let diff_path = Path::new("./tasks/coverage/acorn-test262-diff/acorn-jsx")
-                .join(self.path.file_name().unwrap())
-                .with_extension("diff");
-            std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-            write!(
-                std::fs::File::create(diff_path).unwrap(),
-                "{}",
-                similar::TextDiff::from_lines(&acorn_json, &oxc_json)
-                    .unified_diff()
-                    .missing_newline_hint(false)
-            )
-            .unwrap();
-        }
+        // Mismatch found
+        let diff_path = Path::new("acorn-jsx").join(self.path.file_name().unwrap());
+        write_diff(&diff_path, &oxc_json, &acorn_json);
 
         self.result = TestResult::Mismatch("Mismatch", oxc_json, acorn_json);
     }
 }
 
 pub struct EstreeTypescriptCase {
-    path: PathBuf,
     base: TypeScriptCase,
     estree_file_path: PathBuf,
 }
@@ -291,7 +255,7 @@ impl Case for EstreeTypescriptCase {
             .join("./acorn-test262/test-typescript")
             .join(path.strip_prefix("typescript").unwrap())
             .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
-        Self { path: path.clone(), base: TypeScriptCase::new(path, code), estree_file_path }
+        Self { base: TypeScriptCase::new(path, code), estree_file_path }
     }
 
     fn code(&self) -> &str {
@@ -384,23 +348,8 @@ impl Case for EstreeTypescriptCase {
             let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
             let estree_json = serde_json::to_string_pretty(&estree_json_value).unwrap();
 
-            // Mismatch found.
-            // Write diff to `acorn-test262-diff` directory only when SAVE_DIFF=true since it's slow
-            if std::option_env!("SAVE_DIFF") == Some("true") {
-                let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
-                    .join(&self.path)
-                    .with_extension("diff");
-                std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-                write!(
-                    std::fs::File::create(diff_path).unwrap(),
-                    "{}",
-                    similar::TextDiff::from_lines(&estree_json, &oxc_json)
-                        .unified_diff()
-                        .missing_newline_hint(false)
-                )
-                .unwrap();
-            }
-
+            // Mismatch found
+            write_diff(self.path(), &oxc_json, &estree_json);
             self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json);
             return;
         }
@@ -438,4 +387,23 @@ fn convert_to_typescript_eslint_order(ast: &mut serde_json::Value) {
         }
         _ => {}
     }
+}
+
+/// Write diff to `acorn-test262-diff` directory, unless running on CI.
+fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
+    let is_ci = std::option_env!("CI") == Some("true");
+    if is_ci {
+        return;
+    }
+
+    let diff_path =
+        Path::new("./tasks/coverage/acorn-test262-diff").join(path).with_extension("diff");
+    fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
+
+    write!(
+        fs::File::create(diff_path).unwrap(),
+        "{}",
+        TextDiff::from_lines(expected_json, oxc_json).unified_diff().missing_newline_hint(false)
+    )
+    .unwrap();
 }
