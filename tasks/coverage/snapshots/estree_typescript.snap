@@ -1,28 +1,19 @@
 commit: 15392346
 
 estree_typescript Summary:
-AST Parsed     : 10623/10729 (99.01%)
-Positive Passed: 10151/10729 (94.61%)
+AST Parsed     : 11245/11404 (98.61%)
+Positive Passed: 11065/11404 (97.03%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessorBodyInTypeContext.ts
 Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/allowJscheckJsTypeParameterNoCrash.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/ambientRequireFunction.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientPropertyDeclarationInJs.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
 A 'return' statement can only be used within a function body.
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
-2 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 `await` is only allowed within async functions and at the top levels of modules
@@ -57,19 +48,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/bigintWithoutLib.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/bluebirdStaticThis.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/checkJsTypeDefNoUnusedLocalMarked.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment2.ts
-1 != 4
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularGetAccessor.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/classExtendingAny.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts
 Expected `{` but found `EOF`
@@ -93,9 +75,6 @@ Lexical declaration cannot appear in a single-statement context
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constInClassExpression.ts
 A class member cannot have the 'const' keyword.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceof.ts
-1 != 2
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
@@ -111,27 +90,18 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalMod
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitBundlerConditions.ts
-3 != 4
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitJsReExportDefault.ts
-1 != 2
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofThisInClass.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
-2 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declareAlreadySeen.ts
 declare' modifier already seen.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/defaultPropsEmptyCurlyBecomesAnyForJs.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorInJsFile.ts
+Expected `,` but found `:`
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorInJsFile1.ts
+Expected `,` but found `:`
 
 serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
 number out of range at line 28 column 25
@@ -148,15 +118,6 @@ Missing initializer in const declaration
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst6.ts
 Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/elidedJSImport1.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/elidedJSImport2.ts
-1 != 3
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebang1.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebang2.ts
@@ -167,12 +128,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebangAn
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/enumIdentifierLiterals.ts
 An enum member cannot have a numeric name.
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnly.ts
-1 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnlyDeclaration.ts
-1 != 5
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts
 Expected `=` but found `,`
@@ -198,9 +153,6 @@ Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts
 Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionSymbolPropertyJs.ts
-1 != 2
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportAlreadySeen.ts
 'export' modifier cannot be used here.
 
@@ -216,16 +168,7 @@ Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAsyncFunction2.ts
 Cannot use `await` as an identifier in an async context
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultWithJSDoc1.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultWithJSDoc2.ts
-1 != 2
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/extendsUntypedModule.ts
-1 != 3
 
 serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
 number out of range at line 32 column 27
@@ -244,50 +187,11 @@ A 'return' statement can only be used within a function body.
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericClassImplementingGenericInterfaceFromAnotherModule.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/genericDefaultsJs.ts
-1 != 2
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit1.ts
-3 != 10
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit2.ts
-3 != 10
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit3.ts
-3 != 10
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit4.ts
-3 != 10
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importDeclFromTypeNodeInJsSource.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importHelpersCommonJSJavaScript.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importHelpersVerbatimModuleSyntax.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember10.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember11.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember12.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember8.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember9.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/importTypeResolutionJSDocEOF.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/importAssertionNonstring.ts
+Unexpected token
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/indexSignatureMustHaveTypeAnnotation.ts
 Unexpected token
@@ -324,131 +228,71 @@ Unexpected token
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration3.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationsAllowJs.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationAbstractModifier.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationEmitExportedClassWithExtends.ts
-3 != 4
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationAmbientVarDeclarationSyntax.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsWithDefaultAsNamespaceLikeMerge.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationConstructorOverloadSyntax.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsDocDeclarationEmitDoesNotUseNodeModulesPathWithoutError.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEnumSyntax.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsEmitIntersectionProperty.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationExportAssignmentSyntax.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationFunctionOverloadSyntax.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation2.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts
+Expected `from` but found `=`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation3.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsExtendsImplicitAny.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationMethodOverloadSyntax.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationModuleSyntax.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType2.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationNonNullAssertion.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType3.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationOptionalParameter.ts
+Expected `,` but found `?`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationPublicParameterModifier.ts
+Expected `,` but found `Identifier`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationReturnTypeSyntaxOfFunction.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateVariable.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeAliasSyntax.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateVariableErrorReported.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitBlockedCorrectly.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts
+Expected `,` but found `:`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitDeclarations.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeParameterSyntaxOfClass.ts
+Expected `{` but found `<`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitTrippleSlashReference.ts
-1 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeParameterSyntaxOfClassExpression.ts
+Expected `{` but found `<`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithNoOut.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeParameterSyntaxOfFunction.ts
+Expected `(` but found `<`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithOut.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationTypeSyntaxOfVar.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithOutDir.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationExternalPackageError.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationLetDeclarationOrder.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationLetDeclarationOrder2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationNoErrorWithoutDeclarationsWithJsFileReferenceWithNoOut.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationNoErrorWithoutDeclarationsWithJsFileReferenceWithOut.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithEnabledCompositeOption.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithJsEmitPathSameAsInput.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJs.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJsWithInlineSourceMap.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJsWithOutDir.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOut.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOutFileNameSameAsInputJsFile.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithoutOut.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsFileImportPreservedWhenUsed.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsNoImplicitAnyNoCascadingReferenceErrors.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsdocImportTypeNodeNamespace.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/jsdocReferenceGlobalTypeInCommonJs.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithoutJsExtensions.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
 
@@ -464,80 +308,17 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/literalsInComputedProperties1.ts
 An enum member cannot have a numeric name.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/maxNodeModuleJsDepthDefaultsToZero.ts
-2 != 4
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/misspelledNewMetaProperty.ts
 The only valid meta property for new is new.target
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modifiersInObjectLiterals.ts
 'public' modifier cannot be used here.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleNoneDynamicImport.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/modulePreserve4.ts
-5 != 12
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/modulePreserveImportHelpers.ts
-2 != 4
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserve4.ts
+Expected `from` but found `=`
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported3.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_withAmbientPresent.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_withPaths.ts
-3 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModule.ts
-3 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModulePath.ts
-3 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModule_withPaths.ts
-3 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_jsModule.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_classicPrefersTs.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_explicitNodeModulesImport.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_explicitNodeModulesImport_implicitAny.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeScopedPackage.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_relativeImportJsFile.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_relativeImportJsFile_noImplicitAny.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/multiLinePropertyAccessAndArrowFunctionIndent1.ts
 A 'return' statement can only be used within a function body.
@@ -546,12 +327,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowingUnionToUnion.t
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts
 Missing initializer in destructuring declaration
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/nodeNextImportModeImplicitIndexResolution2.ts
-4 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/nodeNextModuleResolution2.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/numberVsBigIntOperations.ts
 Missing initializer in const declaration
@@ -572,57 +347,30 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNonNullable
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNullableTypes.ts
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts
+Unexpected token
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts
+Unexpected token
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parserConstructorDeclaration12.ts
 Type parameters cannot appear on a constructor declaration
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_differentRootTypes.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_multipleAliases.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_noAliasWithRoot.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_noAliasWithRoot_realRootFile.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_withExtension.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_withExtension_MapedToNodeModules.ts
-1 != 2
+serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/parsingDeepParenthensizedExpression.ts
+recursion limit exceeded at line 3334 column 269
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyClassImplementsClauseDeclFile.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyImportParseErrors.ts
 'export' modifier cannot be used here.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/reactImportDropped.ts
-1 != 3
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveClassReferenceTest.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/recursiveResolveDeclaredMembers.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/regularExpressionScanning.ts
 Unexpected flag a in regular expression literal
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/requireAsFunctionInExternalModule.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/resolveNameWithNamspace.ts
-2 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParamAsOptional.ts
 A rest parameter cannot be optional
@@ -636,9 +384,6 @@ A rest parameter must be last in a parameter list
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts
 A rest element cannot have an initializer.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/reuseTypeAnnotationImportTypeInGlobalThisTypeArgument.ts
-2 != 4
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/shebang.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/shebangBeforeReferences.ts
@@ -649,12 +394,6 @@ Invalid assignment in object literal
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyAssignmentsInDestructuring_ES6.ts
 Invalid assignment in object literal
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports4.ts
-1 != 3
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 Unexpected token
 
@@ -663,36 +402,12 @@ Classes may not have a static property named prototype
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordInClassDeclaration.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable01.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable02.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/thisInTypeQuery.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/topLevelBlockExpando.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/tslibMissingHelper.ts
-3 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/tslibMultipleMissingHelper.ts
-5 != 7
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/tslibNotFoundDifferentModules.ts
-3 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers2.ts
-1 != 3
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeofThisInMethodSignature.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/compiler/untypedModuleImport_withAugmentation2.ts
-2 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInMethod4.ts
 Missing initializer in const declaration
@@ -717,9 +432,6 @@ Cannot use `await` as an identifier in an async context
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration12_es5.ts
 Cannot use `await` as an identifier in an async context
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration16_es5.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration5_es5.ts
 Cannot use `await` as an identifier in an async context
@@ -769,6 +481,9 @@ Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-3.ts
 Unexpected token
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts
+Unexpected token
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorLocals.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorParameters.ts
@@ -782,9 +497,6 @@ Classes may not have a static property named prototype
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
 Classes may not have a static property named prototype
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/thisPropertyOverridesAccessors.ts
-1 != 2
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts
 Expected `,` but found `is`
 
@@ -796,9 +508,6 @@ Unexpected token
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/enums/awaitAndYield.ts
 `await` is only allowed within async functions and at the top levels of modules
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisVarDeclaration.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts
 The only valid meta property for import is import.meta
@@ -897,22 +606,19 @@ A 'yield' expression is only allowed in a generator body.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck32.ts
 A 'yield' expression is only allowed in a generator body.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/yieldExpressionInControlFlow.ts
-1 != 2
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts
 Unexpected trailing comma after rest element
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts
 A rest parameter must be last in a parameter list
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts
+Unexpected token
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/callWithMissingVoidUndefinedUnknownAnyInJs.ts
-2 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts
 Unexpected token
@@ -933,26 +639,11 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJsImportBindingElementNarrowType.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts
 Missing initializer in const declaration
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension3.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension4.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
-4 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emitModuleCommonJS.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nonTSExtensions.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts
 Cannot use `await` as an identifier in an async context
@@ -966,177 +657,45 @@ Cannot use `await` as an identifier in an async context
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 `await` is only allowed within async functions and at the top levels of modules
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace_js.ts
+Expected `from` but found `*`
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers.ts
 The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts
-3 != 4
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts
+Expected `,` but found `Identifier`
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts
+Expected `from` but found `Identifier`
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/implementsClause.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts
+Expected `,` but found `Identifier`
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts
 A rest parameter must be last in a parameter list
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkExportsObjectAssignProperty.ts
-1 != 4
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes6.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkExportsObjectAssignPrototypeProperty.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassesErr.ts
+Expected `{` but found `<`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocTypeTag4.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsEnums.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkObjectDefineProperty.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts
+Expected `from` but found `=`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassAccessor.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassImplementsGenericsSerialization.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassStatic2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences3.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag13.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag15.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag16.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag18.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag19.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag20.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag21.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag23.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag3.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag4.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag5.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag6.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag7.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag8.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag9.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_withTypeParameter.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_interface.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_interface_multiple.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_namespacedInterface.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_signatures.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportType.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportType2.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToCommonjsModule.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToESModule.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocParseBackquotedParamName.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocThisType.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImport.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTag.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagCast.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocVariadicType.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/linkTagEmit1.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagOnCallExpression.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagOnFunctionUsingArguments.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/syntaxErrors.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefCrossModule.ts
-1 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefMultipleTypeParameters.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts
+Unexpected token
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryDeclarationsLocalTypes.tsx
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
+Expected `>` but found `<`
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError1.tsx
 JSX expressions may not use the comma operator
@@ -1148,211 +707,21 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEnti
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerConditionsExcludesNode.ts
-3 != 5
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerDirectoryModule.ts
-2 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts
+Expected `from` but found `=`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerImportESM.ts
-1 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts
+Unexpected token
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerImportTsExtensions.ts
-10 != 11
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts
+Expected `from` but found `=`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerNodeModules1.ts
-2 != 7
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerSyntaxRestrictions.ts
-4 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/conditionalExportsResolutionFallback.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/declarationNotFoundPackageBundlesTypes.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/extensionLoadingPriority.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/node10Alternateresult_noTypes.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/nodeModulesAtTypesPriority.ts
-4 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
-1 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain_isNonRecursive.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeCache.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash1.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash2.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash3.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash4.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash5.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTypeOnlyImport1.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolvesWithoutExportsDiagnostic1.ts
-2 != 7
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/selfNameModuleAugmentation.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
-3 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_allowJs.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_noImplicitAny.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_noImplicitAny_relativePath.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_noImplicitAny_scoped.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_noImplicitAny_typesForPackageExist.ts
-3 != 7
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_withAugmentation.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName2.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsCjsFromJs.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsConditionalPackageExports.ts
-1 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsDynamicImport.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts
-1 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions1.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions2.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions3.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackageExports.ts
-1 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExports.ts
-1 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExportsExclude.ts
-1 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExportsTrailers.ts
-1 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModules1.ts
-4 != 12
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSResolvingToESM1_emptyPackageJson.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSResolvingToESM2_cjsPackageJson.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSResolvingToESM3_modulePackageJson.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSResolvingToESM4_noPackageJson.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesConditionalPackageExports.ts
-2 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts
-4 != 12
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
-2 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
-2 != 5
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsDoubleAsterisk.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts
-4 != 12
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssertions.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributes.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportResolutionIntoExport.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportResolutionNoCycle.ts
-1 != 3
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts
+Expected `from` but found `=`
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesJson.ts
-2 != 4
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackageExports.ts
-2 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackageImports.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackagePatternExports.ts
-2 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackagePatternExportsExclude.ts
-3 != 9
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackagePatternExportsTrailers.ts
-2 != 6
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesResolveJsonModule.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTypesVersionPackageExports.ts
-5 != 9
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodePackageSelfName.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/node/nodePackageSelfNameScoped.ts
-1 != 3
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override5.ts
 override' modifier already seen.
@@ -1363,35 +732,23 @@ override' modifier already seen.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors10.ts
 'public' modifier cannot be used here.
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression10.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression10.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression11.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression13.ts
+Empty parenthesized expression
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression12.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression14.ts
+Expected `,` but found `:`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression13.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression15.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression14.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression16.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression15.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression16.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression17.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression8.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression9.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression17.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts
 Computed property names are not allowed in enums.
@@ -1540,89 +897,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement22.ts
 The left-hand side of a `for...of` statement may not be `async`
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/chainedPrototypeAssignment.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/classCanExtendConstructorFunction.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctions2.ts
-1 != 3
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorNameInAccessor.ts
 Constructor can't have get/set modifier
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorNameInGenerator.ts
 Constructor can't be a generator
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/enumMergeWithExpando.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts
+Cannot use `await` as an identifier in an async context
 
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/importingExportingTypes.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassStaticMembersFromAssignments.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration2.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration3.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/jsObjectsMarkedAsOpenEnded.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias2.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment7.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportWithExportPropertyAssignment.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportWithExportPropertyAssignment2.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportWithExportPropertyAssignment3.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportWithExportPropertyAssignment4.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeWithInterfaceMethod.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/reExportJsFromTs.ts
-1 != 2
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/requireAssertsFromTypescript.ts
-2 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromParamTagForFunction.ts
-1 != 14
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment17.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment19.ts
-1 != 3
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromTypescript.ts
-1 != 2
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSGrammarErrors3.ts
+`await` is only allowed within async functions and at the top levels of modules
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of12.ts
 Unexpected token
@@ -1641,9 +926,6 @@ Generators can only be declared at the top level or inside a block
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts
 Generators can only be declared at the top level or inside a block
-
-Unexpected estree file content Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeInJSDoc.ts
-1 != 2
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/import/importWithTypeArguments.ts
 Expected `from` but found `<`
