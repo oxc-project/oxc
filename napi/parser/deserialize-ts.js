@@ -3948,7 +3948,9 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     default:
@@ -4048,7 +4050,9 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
@@ -4066,7 +4070,9 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:

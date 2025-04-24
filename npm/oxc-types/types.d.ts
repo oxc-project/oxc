@@ -1176,7 +1176,7 @@ export interface TSTypeReference extends Span {
   typeArguments: TSTypeParameterInstantiation | null;
 }
 
-export type TSTypeName = IdentifierReference | TSQualifiedName;
+export type TSTypeName = IdentifierReference | ThisExpression | TSQualifiedName;
 
 export interface TSQualifiedName extends Span {
   type: 'TSQualifiedName';

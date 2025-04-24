@@ -1317,6 +1317,31 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
     }
 }
 
+/// Serializer for `IdentifierReference` variant of `TSTypeName`.
+///
+/// Where is an identifier called `this`, TS-ESTree presents it as a `ThisExpression`.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierReference | ThisExpression",
+    raw_deser = "
+        let id = DESER[IdentifierReference](POS);
+        if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+        id
+    "
+)]
+pub struct TSTypeNameIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
+
+impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let ident = self.0;
+        if ident.name == "this" {
+            ThisExpression { span: ident.span }.serialize(serializer);
+        } else {
+            ident.serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `params` field of `TSCallSignatureDeclaration`.
 ///
 /// These add `this_param` to start of the `params` array.

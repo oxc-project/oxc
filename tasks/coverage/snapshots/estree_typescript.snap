@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 11245/11404 (98.61%)
-Positive Passed: 11065/11404 (97.03%)
+Positive Passed: 11074/11404 (97.11%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 A class member cannot have the 'const' keyword.
 
@@ -48,8 +48,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/bigintWithoutLib.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/bluebirdStaticThis.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularGetAccessor.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
@@ -91,8 +89,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalMod
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofThisInClass.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declareAlreadySeen.ts
 declare' modifier already seen.
@@ -405,10 +401,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordI
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/thisInTypeQuery.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeofThisInMethodSignature.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInMethod4.ts
 Missing initializer in const declaration
 
@@ -483,10 +475,6 @@ Unexpected token
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts
 Unexpected token
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorLocals.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorParameters.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/propertyNamedConstructor.ts
 Classes can't have a field named 'constructor'
@@ -951,16 +939,10 @@ A rest element must be last in a destructuring pattern
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/rest/restElementMustBeLast.ts
 A rest element must be last in a destructuring pattern
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofThis.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofThisWithImplicitThis.ts
-
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags02.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts
 Missing initializer in const declaration
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInFunctions4.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts
 
