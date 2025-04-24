@@ -462,33 +462,30 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore] // TODO: Fix this test panics on Windows
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(
-            &Uri::from_file_path("/path/to/root").unwrap(),
-            Options::default(),
-        );
+        let worker =
+            WorkspaceWorker::new(&Uri::from_str("file://root/").unwrap(), Options::default());
 
-        assert_eq!(worker.get_root_uri(), Some(Uri::from_file_path("/path/to/root").unwrap()));
+        assert_eq!(worker.get_root_uri(), Some(Uri::from_str("file://root/").unwrap()));
     }
+
     #[test]
-    #[ignore] // TODO: Fix this test panics on Windows
     fn test_is_responsible() {
         let worker = WorkspaceWorker::new(
-            &Uri::from_file_path("/path/to/root").unwrap(),
+            &Uri::from_str("file://path/to/root").unwrap(),
             Options::default(),
         );
 
         assert!(
-            worker.is_responsible_for_uri(&Uri::from_file_path("/path/to/root/file.js").unwrap())
+            worker.is_responsible_for_uri(&Uri::from_str("file://path/to/root/file.js").unwrap())
         );
         assert!(
             worker.is_responsible_for_uri(
-                &Uri::from_file_path("/path/to/root/folder/file.js").unwrap()
+                &Uri::from_str("file://path/to/root/folder/file.js").unwrap()
             )
         );
         assert!(
-            !worker.is_responsible_for_uri(&Uri::from_file_path("/path/to/other/file.js").unwrap())
+            !worker.is_responsible_for_uri(&Uri::from_str("file://path/to/other/file.js").unwrap())
         );
     }
 }
