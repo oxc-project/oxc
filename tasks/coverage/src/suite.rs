@@ -377,14 +377,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 }
             }
             TestResult::GenericError(case, error) => {
-                writer.write_all(format!("{path}\n").as_bytes())?;
-                writer.write_all(format!("{case} error: {error}\n\n").as_bytes())?;
+                writer.write_all(format!("{case} Error: {path}\n",).as_bytes())?;
+                writer.write_all(format!("{error}\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
+        writer.write_all(b"\n")?;
         Ok(())
     }
 

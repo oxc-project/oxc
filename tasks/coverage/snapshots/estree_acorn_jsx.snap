@@ -5,6 +5,10 @@ AST Parsed     : 39/39 (100.00%)
 Positive Passed: 35/39 (89.74%)
 Negative Passed: 9/9 (100.00%)
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/010.jsx
+
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/013.jsx
+
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/020.jsx
+
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/046.jsx
+
