@@ -804,11 +804,22 @@ impl Scoping {
     ///
     /// Panics in debug mode if either of the above are not satisfied.
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
-        // Rename symbol
-        // FIXME: remove `to_string`
-        let old_name = self.set_symbol_name(symbol_id, new_name).to_string();
-        // Rename binding
-        self.rename_binding(scope_id, symbol_id, &old_name, new_name);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            // Rename symbol name, same as `Self::set_symbol_name`
+            let old_name = mem::replace(
+                &mut cell.symbol_names[symbol_id.index()],
+                Atom::from_in(new_name, allocator),
+            );
+
+            // Rename binding, same as `Self::rename_binding`, we cannot call it directly
+            // because the `old_name` borrowed `cell`.
+            let bindings = &mut cell.bindings[scope_id];
+            let old_symbol_id = bindings.remove(old_name.as_str());
+            debug_assert_eq!(old_symbol_id, Some(symbol_id));
+            let new_name = allocator.alloc_str(new_name);
+            let existing_symbol_id = bindings.insert(new_name, symbol_id);
+            debug_assert!(existing_symbol_id.is_none());
+        });
     }
 
     pub fn delete_typescript_bindings(&mut self) {
