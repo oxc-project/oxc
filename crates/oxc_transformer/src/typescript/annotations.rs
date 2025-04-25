@@ -53,8 +53,8 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
-            remove_class_fields_without_initializer: options
-                .remove_class_fields_without_initializer,
+            remove_class_fields_without_initializer: !options.allow_declare_fields
+                || options.remove_class_fields_without_initializer,
         }
     }
 }
