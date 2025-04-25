@@ -1,11 +1,8 @@
-use std::{borrow::Cow, path::PathBuf, str::FromStr};
+use std::{borrow::Cow, str::FromStr};
 
 use oxc_linter::MessageWithPosition;
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
-    },
+use tower_lsp_server::lsp_types::{
+    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
 };
 
 use oxc_diagnostics::Severity;
@@ -32,13 +29,12 @@ fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
 
 fn message_with_position_to_lsp_diagnostic(
     message: &MessageWithPosition<'_>,
-    path: &PathBuf,
+    uri: &Uri,
 ) -> lsp_types::Diagnostic {
     let severity = match message.severity {
         Severity::Error => Some(lsp_types::DiagnosticSeverity::ERROR),
         _ => Some(lsp_types::DiagnosticSeverity::WARNING),
     };
-    let uri = lsp_types::Uri::from_file_path(path).unwrap();
 
     let related_information = message.labels.as_ref().map(|spans| {
         spans
@@ -103,10 +99,10 @@ fn message_with_position_to_lsp_diagnostic(
 
 pub fn message_with_position_to_lsp_diagnostic_report(
     message: &MessageWithPosition<'_>,
-    path: &PathBuf,
+    uri: &Uri,
 ) -> DiagnosticReport {
     DiagnosticReport {
-        diagnostic: message_with_position_to_lsp_diagnostic(message, path),
+        diagnostic: message_with_position_to_lsp_diagnostic(message, uri),
         fixed_content: message.fix.as_ref().map(|infos| FixedContent {
             message: infos.span.message().map(std::string::ToString::to_string),
             code: infos.content.to_string(),
