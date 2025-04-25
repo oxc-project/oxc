@@ -16,8 +16,8 @@ import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vsc
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
-import { oxlintConfigFileName } from './Config';
 import { ConfigService } from './ConfigService';
+import { oxlintConfigFileName } from './VSCodeConfig';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -71,18 +71,18 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     async () => {
-      await configService.config.updateEnable(!configService.config.enable);
+      await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
       if (client === undefined) {
         return;
       }
 
       if (client.isRunning()) {
-        if (!configService.config.enable) {
+        if (!configService.vsCodeConfig.enable) {
           await client.stop();
         }
       } else {
-        if (configService.config.enable) {
+        if (configService.vsCodeConfig.enable) {
           await client.start();
         }
       }
@@ -124,7 +124,7 @@ export async function activate(context: ExtensionContext) {
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
-    let bin = configService.config.binPath;
+    let bin = configService.vsCodeConfig.binPath;
     if (bin) {
       try {
         await fsPromises.access(bin);
@@ -178,7 +178,7 @@ export async function activate(context: ExtensionContext) {
     debug: run,
   };
 
-  const fileWatchers = createFileEventWatchers(configService.config.configPath);
+  const fileWatchers = createFileEventWatchers(configService.rootServerConfig.configPath);
   context.subscriptions.push(...fileWatchers);
 
   // If the extension is launched in debug mode then the debug server options are used
@@ -202,7 +202,7 @@ export async function activate(context: ExtensionContext) {
       fileEvents: fileWatchers,
     },
     initializationOptions: {
-      settings: configService.config.toLanguageServerConfig(),
+      settings: configService.rootServerConfig.toLanguageServerConfig(),
     },
     outputChannel,
     traceOutputChannel: outputChannel,
@@ -243,8 +243,8 @@ export async function activate(context: ExtensionContext) {
   });
 
   configService.onConfigChange = async function onConfigChange(event) {
-    let settings = this.config.toLanguageServerConfig();
-    updateStatsBar(this.config.enable);
+    let settings = this.rootServerConfig.toLanguageServerConfig();
+    updateStatsBar(this.vsCodeConfig.enable);
 
     if (client === undefined) {
       return;
@@ -255,7 +255,7 @@ export async function activate(context: ExtensionContext) {
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
+      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(settings.configPath);
 
       if (client.isRunning()) {
         await client.restart();
@@ -284,9 +284,8 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(configService.config.enable);
 
-  if (configService.config.enable) {
+  if (configService.vsCodeConfig.enable) {
     await client.start();
   }
 }
