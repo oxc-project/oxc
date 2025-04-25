@@ -3,6 +3,17 @@ use oxc_span::Span;
 
 use super::{Kind, Token};
 
+// TODO: move this somewhere else
+macro_rules! starts_with {
+    ($expression:expr, $pat:literal) => {{
+        if $expression.len() < $pat.len() {
+            false
+        } else {
+            $expression.as_bytes()[..$pat.len()] == *$pat
+        }
+    }};
+}
+
 #[derive(Debug)]
 pub struct TriviaBuilder {
     // This is a set of unique comments. Duplicated
@@ -147,12 +158,12 @@ impl TriviaBuilder {
     fn parse_annotation(&mut self, comment: &mut Comment, source_text: &str) {
         let mut s = comment.content_span().source_text(source_text);
 
-        if s.starts_with('!') {
+        if starts_with!(s, b"!") {
             comment.annotation = CommentAnnotation::Legal;
             return;
         }
 
-        if comment.is_block() && s.starts_with('*') {
+        if comment.is_block() && starts_with!(s, b"*") {
             // Ignore webpack comment `/*****/`
             if !s.bytes().all(|c| c == b'*') {
                 comment.annotation = CommentAnnotation::Jsdoc;
@@ -163,18 +174,18 @@ impl TriviaBuilder {
         s = s.trim_ascii_start();
 
         if let Some(ss) = s.strip_prefix('@') {
-            if ss.starts_with("vite") {
+            if starts_with!(ss, b"vite") {
                 comment.annotation = CommentAnnotation::Vite;
                 return;
             }
-            if ss.starts_with("license") || ss.starts_with("preserve") {
+            if starts_with!(ss, b"license") || starts_with!(ss, b"preserve") {
                 comment.annotation = CommentAnnotation::Legal;
                 return;
             }
             s = ss;
         } else if let Some(ss) = s.strip_prefix('#') {
             s = ss;
-        } else if s.starts_with("webpack") {
+        } else if starts_with!(s, b"webpack") {
             comment.annotation = CommentAnnotation::Webpack;
             return;
         } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
@@ -190,11 +201,11 @@ impl TriviaBuilder {
         }
 
         let Some(s) = s.strip_prefix("__") else { return };
-        if s.starts_with("PURE__") {
+        if starts_with!(s, b"PURE__") {
             comment.annotation = CommentAnnotation::Pure;
             self.has_pure_comment = true;
         }
-        if s.starts_with("NO_SIDE_EFFECTS__") {
+        if starts_with!(s, b"NO_SIDE_EFFECTS__") {
             comment.annotation = CommentAnnotation::NoSideEffects;
             self.has_no_side_effects_comment = true;
         }
