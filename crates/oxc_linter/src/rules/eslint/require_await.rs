@@ -106,34 +106,30 @@ impl Rule for RequireAwait {
                             );
                         } else {
                             let parent_parent_ndoe = ctx.nodes().parent_kind(parent.id());
-                            match parent_parent_ndoe {
-                                Some(
-                                    AstKind::ObjectProperty(ObjectProperty { span, key, .. })
-                                    | AstKind::MethodDefinition(MethodDefinition {
-                                        span, key, ..
-                                    }),
-                                ) => {
-                                    let need_delete_span = get_delete_span(ctx, span.start);
-                                    let check_span =
-                                        if matches!(key, PropertyKey::StaticIdentifier(_)) {
-                                            key.span()
-                                        } else {
-                                            func.span
-                                        };
-                                    ctx.diagnostic_with_dangerous_fix(
-                                        require_await_diagnostic(check_span),
-                                        |fixer| fixer.delete_range(need_delete_span),
-                                    );
-                                }
-                                _ => {
-                                    let need_delete_span = get_delete_span(ctx, func.span.start);
-                                    ctx.diagnostic_with_dangerous_fix(
-                                        require_await_diagnostic(
-                                            func.id.as_ref().map_or(func.span, |ident| ident.span),
-                                        ),
-                                        |fixer| fixer.delete_range(need_delete_span),
-                                    );
-                                }
+                            if let Some(
+                                AstKind::ObjectProperty(ObjectProperty { span, key, .. })
+                                | AstKind::MethodDefinition(MethodDefinition { span, key, .. }),
+                            ) = parent_parent_ndoe
+                            {
+                                let need_delete_span = get_delete_span(ctx, span.start);
+                                let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))
+                                {
+                                    key.span()
+                                } else {
+                                    func.span
+                                };
+                                ctx.diagnostic_with_dangerous_fix(
+                                    require_await_diagnostic(check_span),
+                                    |fixer| fixer.delete_range(need_delete_span),
+                                );
+                            } else {
+                                let need_delete_span = get_delete_span(ctx, func.span.start);
+                                ctx.diagnostic_with_dangerous_fix(
+                                    require_await_diagnostic(
+                                        func.id.as_ref().map_or(func.span, |ident| ident.span),
+                                    ),
+                                    |fixer| fixer.delete_range(need_delete_span),
+                                );
                             }
                         }
                     }
@@ -280,6 +276,15 @@ fn test() {
         (
             "async /** comments */ function name() { doSomething() }",
             "/** comments */ function name() { doSomething() }",
+        ),
+        ("async          function foo() { doSomething() }", "function foo() { doSomething() }"),
+        (
+            "async     /** cc */     function foo() { doSomething() }",
+            "/** cc */     function foo() { doSomething() }",
+        ),
+        (
+            "let a = { c: async () => { let c }, t:async()=>{ let r } }",
+            "let a = { c: () => { let c }, t:()=>{ let r } }",
         ),
     ];
 
