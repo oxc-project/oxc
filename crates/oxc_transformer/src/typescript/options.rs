@@ -40,7 +40,12 @@ pub struct TypeScriptOptions {
     #[serde(default = "default_as_true")]
     pub allow_namespaces: bool,
 
-    // When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    /// When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    ///
+    /// ## Deprecated
+    ///
+    /// Allowing `declare` fields is built-in support in Oxc without any option. If you want to remove class fields
+    /// without initializer, you can use `remove_class_fields_without_initializer: true` instead.
     #[serde(default = "default_as_true")]
     pub allow_declare_fields: bool,
 

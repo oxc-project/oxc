@@ -258,6 +258,12 @@ pub struct TypeScriptOptions {
     pub jsx_pragma_frag: Option<String>,
     pub only_remove_type_imports: Option<bool>,
     pub allow_namespaces: Option<bool>,
+    /// When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    ///
+    /// @deprecated
+    ///
+    /// Allowing `declare` fields is built-in support in Oxc without any option. If you want to remove class fields
+    /// without initializer, you can use `remove_class_fields_without_initializer: true` instead.
     pub allow_declare_fields: Option<bool>,
     /// When enabled, class fields without initializers are removed.
     ///
