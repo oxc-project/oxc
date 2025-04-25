@@ -188,8 +188,6 @@ pub trait CompilerInterface {
             let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
             Compressor::new(&allocator, CompressOptions::default())
                 .dead_code_elimination_with_scoping(ret.scoping, &mut program);
-            // symbols = ret.symbols;
-            // scopes = ret.scopes;
         }
 
         /* Compress */
