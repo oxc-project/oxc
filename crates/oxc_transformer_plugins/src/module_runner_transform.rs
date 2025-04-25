@@ -58,10 +58,6 @@ use oxc_span::SPAN;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx, traverse_mut};
 
-use crate::utils::ast_builder::{
-    create_compute_property_access, create_member_callee, create_property_access,
-};
-
 #[derive(Debug, Default)]
 pub struct ModuleRunnerTransform<'a> {
     /// Uid for generating import binding names.
@@ -814,11 +810,42 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 }
 
+/// `object` -> `object['a']`.
+fn create_compute_property_access<'a>(
+    span: Span,
+    object: Expression<'a>,
+    property: &str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
+}
+
+/// `object` -> `object.call`.
+pub fn create_member_callee<'a>(
+    object: Expression<'a>,
+    property: &'static str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+}
+
+/// `object` -> `object.a`.
+pub fn create_property_access<'a>(
+    span: Span,
+    object: Expression<'a>,
+    property: &str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+}
+
 #[cfg(test)]
 mod test {
     use std::path::Path;
 
-    use oxc_ast::AstBuilder;
     use rustc_hash::FxHashSet;
     use similar::TextDiff;
 
@@ -829,9 +856,7 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
     use oxc_tasks_common::print_diff_in_terminal;
-    use oxc_traverse::traverse_mut;
-
-    use crate::{JsxOptions, JsxRuntime, TransformOptions, context::TransformCtx, jsx::Jsx};
+    use oxc_transformer::{JsxRuntime, TransformOptions, Transformer};
 
     use super::ModuleRunnerTransform;
 
@@ -848,12 +873,11 @@ mod test {
         let mut program = ret.program;
         let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
         if is_jsx {
-            let mut jsx_options = JsxOptions::enable();
-            jsx_options.runtime = JsxRuntime::Classic;
-            jsx_options.jsx_plugin = true;
-            let ctx = TransformCtx::new(Path::new(""), &TransformOptions::default());
-            let mut jsx = Jsx::new(jsx_options, None, AstBuilder::new(&allocator), &ctx);
-            scoping = traverse_mut(&mut jsx, &allocator, &mut program, scoping);
+            let mut options = TransformOptions::default();
+            options.jsx.runtime = JsxRuntime::Classic;
+            let ret = Transformer::new(&allocator, Path::new(""), &options)
+                .build_with_scoping(scoping, &mut program);
+            scoping = ret.scoping;
         }
         let (deps, dynamic_deps) =
             ModuleRunnerTransform::new().transform(&allocator, &mut program, scoping);

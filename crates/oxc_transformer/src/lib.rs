@@ -36,7 +36,6 @@ mod regexp;
 mod typescript;
 
 mod decorator;
-mod plugins;
 
 use common::Common;
 use context::TransformCtx;
@@ -72,7 +71,6 @@ pub use crate::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
-    plugins::*,
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };

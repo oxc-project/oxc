@@ -10,9 +10,10 @@ use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
-use oxc_transformer::{
+use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
+use oxc_transformer_plugins::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
-    ReplaceGlobalDefinesConfig, TransformOptions, Transformer, TransformerReturn,
+    ReplaceGlobalDefinesConfig,
 };
 
 #[derive(Default)]
