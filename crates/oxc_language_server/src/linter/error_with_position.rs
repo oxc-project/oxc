@@ -7,6 +7,10 @@ use tower_lsp_server::lsp_types::{
 
 use oxc_diagnostics::Severity;
 
+// max range for LSP integer is 2^31 - 1
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
+const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
+
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
@@ -60,13 +64,13 @@ fn message_with_position_to_lsp_diagnostic(
 
     let range = related_information.as_ref().map_or(
         Range {
-            start: Position { line: u32::MAX, character: u32::MAX },
-            end: Position { line: u32::MAX, character: u32::MAX },
+            start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+            end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
         },
         |infos: &Vec<DiagnosticRelatedInformation>| {
             let mut ret_range = Range {
-                start: Position { line: u32::MAX, character: u32::MAX },
-                end: Position { line: u32::MAX, character: u32::MAX },
+                start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+                end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
             };
             for info in infos {
                 if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {

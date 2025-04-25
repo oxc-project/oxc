@@ -112,6 +112,13 @@ mod test {
     }
 
     #[test]
+    fn test_invalid_syntax_file() {
+        Tester::new()
+            .with_snapshot_suffix("invalid_syntax_file")
+            .test_and_snapshot_single_file("fixtures/linter/invalid_syntax/debugger.ts");
+    }
+
+    #[test]
     fn test_cross_module_debugger() {
         let config_store: oxc_linter::ConfigStore = ConfigStoreBuilder::from_oxlintrc(
             false,
