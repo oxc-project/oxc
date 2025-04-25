@@ -252,6 +252,8 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
             optimize_const_enums: false,
+            // TODO: Implement
+            remove_class_fields_without_initializer: false,
             rewrite_import_extensions: options.rewrite_import_extensions.and_then(|value| {
                 match value {
                     Either::A(v) => {

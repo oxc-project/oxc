@@ -44,6 +44,41 @@ pub struct TypeScriptOptions {
     #[serde(default = "default_as_true")]
     pub allow_declare_fields: bool,
 
+    /// When enabled, class fields without initializers are removed.
+    ///
+    /// For example:
+    /// ```ts
+    /// class Foo {
+    ///    x: number;
+    ///    y: number = 0;
+    /// }
+    /// ```
+    /// // transform into
+    /// ```js
+    /// class Foo {
+    ///    x: number;
+    /// }
+    /// ```
+    ///
+    /// The option is used to align with the behavior of TypeScript's `useDefineForClassFields: false` option.
+    /// When you want to enable this, you also need to set [`crate::CompilerAssumptions::set_public_class_fields`]
+    /// to `true`. The `set_public_class_fields: true` + `remove_class_fields_without_initializer: true` is
+    /// equivalent to `useDefineForClassFields: false` in TypeScript.
+    ///
+    /// When `set_public_class_fields` is true and class-properties plugin is enabled, the above example transforms into:
+    ///
+    /// ```js
+    /// class Foo {
+    ///   constructor() {
+    ///     this.y = 0;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Defaults to `false`.
+    #[serde(default)]
+    pub remove_class_fields_without_initializer: bool,
+
     /// Unused.
     pub optimize_const_enums: bool,
 
@@ -66,6 +101,7 @@ impl Default for TypeScriptOptions {
             only_remove_type_imports: false,
             allow_namespaces: default_as_true(),
             allow_declare_fields: default_as_true(),
+            remove_class_fields_without_initializer: false,
             optimize_const_enums: false,
             rewrite_import_extensions: None,
         }
