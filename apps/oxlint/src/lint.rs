@@ -1133,4 +1133,11 @@ mod test {
             .with_cwd("fixtures/cross_module_extended_config".into())
             .test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_import_plugin_being_enabled_correctly() {
+        // https://github.com/oxc-project/oxc/pull/10597
+        let args = &["--import-plugin", "-D", "import/no-cycle"];
+        Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
+    }
 }
