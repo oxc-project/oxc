@@ -12,7 +12,6 @@ struct OrderConfig {
     groups: Option<Vec<GroupValue>>,
     #[serde(rename = "pathGroups")]
     path_groups: Option<Vec<PathGroup>>,
-    #[serde(rename = "newlines-between")]
     alphabetize: Option<Alphabetize>,
 }
 
