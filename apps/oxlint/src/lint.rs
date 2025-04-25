@@ -59,7 +59,7 @@ impl Runner for LintRunner {
             ..
         } = self.options;
 
-        let use_nested_config = !disable_nested_config &&
+        let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none();
@@ -171,7 +171,7 @@ impl Runner for LintRunner {
 
         let handler = GraphicalReportHandler::new();
 
-        if use_nested_config {
+        if search_for_nested_configs {
             // get all of the unique directories among the paths to use for search for
             // oxlint config files in those directories and their ancestors
             // e.g. `/some/file.js` will check `/some` and `/`
@@ -290,10 +290,10 @@ impl Runner for LintRunner {
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
-        let use_cross_module = if use_nested_config {
-            nested_configs.values().any(|config| config.plugins().has_import())
-        } else {
+        let use_cross_module = if nested_configs.is_empty() {
             config_builder.plugins().has_import()
+        } else {
+            nested_configs.values().any(|config| config.plugins().has_import())
         };
         let mut options =
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
@@ -319,12 +319,12 @@ impl Runner for LintRunner {
             _ => None,
         };
 
-        let linter = if use_nested_config {
-            Linter::new_with_nested_configs(LintOptions::default(), lint_config, nested_configs)
+        let linter = if nested_configs.is_empty() {
+            Linter::new(LintOptions::default(), lint_config)
                 .with_fix(fix_options.fix_kind())
                 .with_report_unused_directives(report_unused_directives)
         } else {
-            Linter::new(LintOptions::default(), lint_config)
+            Linter::new_with_nested_configs(LintOptions::default(), lint_config, nested_configs)
                 .with_fix(fix_options.fix_kind())
                 .with_report_unused_directives(report_unused_directives)
         };
@@ -1132,5 +1132,12 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/cross_module_extended_config".into())
             .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_import_plugin_being_enabled_correctly() {
+        // https://github.com/oxc-project/oxc/pull/10597
+        let args = &["--import-plugin", "-D", "import/no-cycle"];
+        Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
     }
 }
