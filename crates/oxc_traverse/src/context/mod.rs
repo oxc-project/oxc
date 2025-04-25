@@ -640,21 +640,6 @@ impl<'a> TraverseCtx<'a> {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
     }
-
-    /// Rename symbol.
-    ///
-    /// Preserves original order of bindings for scope.
-    ///
-    /// The following must be true for successful operation:
-    /// * Binding exists in specified scope for `symbol_id`.
-    /// * No binding already exists in scope for `new_name`.
-    ///
-    /// Panics in debug mode if either of the above are not satisfied.
-    ///
-    /// This is a shortcut for `ctx.scoping.rename_symbol`.
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
-        self.scoping.rename_symbol(symbol_id, scope_id, new_name);
-    }
 }
 
 // Methods used internally within crate

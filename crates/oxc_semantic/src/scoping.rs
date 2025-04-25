@@ -796,6 +796,21 @@ impl Scoping {
         });
     }
 
+    /// Rename symbol.
+    ///
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `symbol_id`.
+    /// * No binding already exists in scope for `new_name`.
+    ///
+    /// Panics in debug mode if either of the above are not satisfied.
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
+        // Rename symbol
+        // FIXME: remove `to_string`
+        let old_name = self.set_symbol_name(symbol_id, new_name).to_string();
+        // Rename binding
+        self.rename_binding(scope_id, symbol_id, &old_name, new_name);
+    }
+
     pub fn delete_typescript_bindings(&mut self) {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for bindings in &mut cell.bindings {
