@@ -3,7 +3,6 @@ use lazy_regex::Regex;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule};
@@ -196,12 +195,6 @@ impl Rule for Order {
         // Make a sorted clone to determine the ideal order
         let mut sorted_imports = imports.clone();
         sort_imports(&mut sorted_imports, groups, path_groups, alphabetize);
-
-        // Create a mapping from original import to its expected position
-        let mut import_positions: FxHashMap<usize, usize> = FxHashMap::default();
-        for (expected_pos, import) in sorted_imports.iter().enumerate() {
-            import_positions.insert(import.original_index, expected_pos);
-        }
 
         // Check if the original order matches the sorted order
         for (original, sorted) in imports.iter().zip(&sorted_imports) {
