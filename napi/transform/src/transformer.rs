@@ -189,6 +189,45 @@ pub struct CompilerAssumptions {
     pub no_document_all: Option<bool>,
     pub object_rest_no_symbols: Option<bool>,
     pub pure_getters: Option<bool>,
+    /// When using public class fields, assume that they don't shadow any getter in the current class,
+    /// in its subclasses or in its superclass. Thus, it's safe to assign them rather than using
+    /// `Object.defineProperty`.
+    ///
+    /// For example:
+    ///
+    /// Input:
+    /// ```js
+    /// class Test {
+    ///  field = 2;
+    ///
+    ///  static staticField = 3;
+    /// }
+    /// ```
+    ///
+    /// When `set_public_class_fields` is `true`, the output will be:
+    /// ```js
+    /// class Test {
+    ///  constructor() {
+    ///    this.field = 2;
+    ///  }
+    /// }
+    /// Test.staticField = 3;
+    /// ```
+    ///
+    /// Otherwise, the output will be:
+    /// ```js
+    /// import _defineProperty from "@oxc-project/runtime/helpers/defineProperty";
+    /// class Test {
+    ///   constructor() {
+    ///     _defineProperty(this, "field", 2);
+    ///   }
+    /// }
+    /// _defineProperty(Test, "staticField", 3);
+    /// ```
+    ///
+    /// NOTE: For TypeScript, if you wanted behavior is equivalent to `useDefineForClassFields: false`, you should
+    /// set both `set_public_class_fields` and [`crate::TypeScriptOptions::remove_class_fields_without_initializer`]
+    /// to `true`.
     pub set_public_class_fields: Option<bool>,
 }
 
