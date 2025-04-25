@@ -1,3 +1,4 @@
+use memchr::memchr_iter;
 use oxc_ast::ast::{Comment, CommentAnnotation, CommentKind, CommentPosition};
 use oxc_span::Span;
 
@@ -183,7 +184,7 @@ impl TriviaBuilder {
         {
             comment.annotation = CommentAnnotation::CoverageIgnore;
         } else {
-            if s.contains("@license") || s.contains("@preserve") {
+            if contains_license_or_preserve_comment(s) {
                 comment.annotation = CommentAnnotation::Legal;
             }
             return;
@@ -199,6 +200,38 @@ impl TriviaBuilder {
             self.has_no_side_effects_comment = true;
         }
     }
+}
+
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn contains_license_or_preserve_comment(s: &str) -> bool {
+    let hay = s.as_bytes();
+
+    if hay.len() < 9 {
+        return false;
+    }
+
+    let search_len = hay.len() - 8;
+
+    for i in memchr_iter(b'@', &hay[..search_len]) {
+        match hay[i + 1] {
+            // spellchecker:off
+            b'l' => {
+                if &hay[i + 2..i + 1 + 7] == b"icense" {
+                    return true;
+                }
+            }
+            b'p' => {
+                if &hay[i + 2..i + 1 + 8] == b"reserve" {
+                    return true;
+                }
+            }
+            // spellchecker:on
+            _ => {}
+        }
+    }
+
+    false
 }
 
 #[cfg(test)]
@@ -429,6 +462,10 @@ token /* Trailing 1 */
             ("/** jsdoc */", CommentAnnotation::Jsdoc),
             ("/**/", CommentAnnotation::None),
             ("/***/", CommentAnnotation::None),
+            ("/*@*/", CommentAnnotation::None),
+            ("/*@xreserve*/", CommentAnnotation::None),
+            ("/*@preserve*/", CommentAnnotation::Legal),
+            ("/*@voidzeroignoreme*/", CommentAnnotation::None),
             ("/****/", CommentAnnotation::None),
             ("/* @vite-ignore */", CommentAnnotation::Vite),
             ("/* @vite-xxx */", CommentAnnotation::Vite),
