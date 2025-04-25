@@ -340,3 +340,61 @@ describe('worker', () => {
     expect(code).toBe(0);
   });
 });
+
+describe('typescript', () => {
+  describe('options', () => {
+    test('removeClassFieldsWithoutInitializer', () => {
+      const code = `
+        class Foo {
+          a: number;
+          b: number = 1;
+        }
+      `;
+      const ret = transform('test.ts', code, {
+        typescript: {
+          removeClassFieldsWithoutInitializer: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "class Foo {
+        	b = 1;
+        }
+        "
+      `);
+    });
+
+    test('align `useDefineForClassFields: false`', () => {
+      const code = `
+        class Foo {
+          a: number;
+          b: number = 1;
+          @dec
+          c: number;
+        }
+      `;
+      const ret = transform('test.ts', code, {
+        assumptions: {
+          setPublicClassFields: true,
+        },
+        target: 'es2020',
+        typescript: {
+          removeClassFieldsWithoutInitializer: true,
+        },
+        decorator: {
+          legacy: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Foo {
+        	constructor() {
+        		this.b = 1;
+        		this.c = void 0;
+        	}
+        }
+        _decorate([dec], Foo.prototype, "c", void 0);
+        "
+      `);
+    });
+  });
+});

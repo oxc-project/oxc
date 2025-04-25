@@ -428,6 +428,41 @@ export interface TypeScriptOptions {
   allowNamespaces?: boolean
   allowDeclareFields?: boolean
   /**
+   * When enabled, class fields without initializers are removed.
+   *
+   * For example:
+   * ```ts
+   * class Foo {
+   *    x: number;
+   *    y: number = 0;
+   * }
+   * ```
+   * // transform into
+   * ```js
+   * class Foo {
+   *    x: number;
+   * }
+   * ```
+   *
+   * The option is used to align with the behavior of TypeScript's `useDefineForClassFields: false` option.
+   * When you want to enable this, you also need to set [`crate::CompilerAssumptions::set_public_class_fields`]
+   * to `true`. The `set_public_class_fields: true` + `remove_class_fields_without_initializer: true` is
+   * equivalent to `useDefineForClassFields: false` in TypeScript.
+   *
+   * When `set_public_class_fields` is true and class-properties plugin is enabled, the above example transforms into:
+   *
+   * ```js
+   * class Foo {
+   *   constructor() {
+   *     this.y = 0;
+   *   }
+   * }
+   * ```
+   *
+   * Defaults to `false`.
+   */
+  removeClassFieldsWithoutInitializer?: boolean
+  /**
    * Also generate a `.d.ts` declaration file for TypeScript files.
    *
    * The source file must be compliant with all
