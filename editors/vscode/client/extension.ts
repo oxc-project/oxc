@@ -3,6 +3,7 @@ import { promises as fsPromises } from 'node:fs';
 import {
   commands,
   ExtensionContext,
+  FileSystemWatcher,
   RelativePattern,
   StatusBarAlignment,
   StatusBarItem,
@@ -37,6 +38,8 @@ const enum LspCommands {
 let client: LanguageClient | undefined;
 
 let myStatusBarItem: StatusBarItem;
+
+const globalWatchers: FileSystemWatcher[] = [];
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
@@ -113,15 +116,22 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
+  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
+  const fileWatchers = createFileEventWatchers(configService.rootServerConfig.configPath);
+
   context.subscriptions.push(
     applyAllFixesFile,
     restartCommand,
     showOutputCommand,
     toggleEnable,
     configService,
+    outputChannel,
+    {
+      dispose: () => {
+        globalWatchers.forEach((watcher) => watcher.dispose());
+      },
+    },
   );
-
-  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
     let bin = configService.vsCodeConfig.binPath;
@@ -178,9 +188,6 @@ export async function activate(context: ExtensionContext) {
     debug: run,
   };
 
-  const fileWatchers = createFileEventWatchers(configService.rootServerConfig.configPath);
-  context.subscriptions.push(...fileWatchers);
-
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
@@ -214,7 +221,8 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
-  client.onNotification(ShowMessageNotification.type, (params) => {
+
+  const onNotificationDispose = client.onNotification(ShowMessageNotification.type, (params) => {
     switch (params.type) {
       case MessageType.Debug:
         outputChannel.debug(params.message);
@@ -236,11 +244,15 @@ export async function activate(context: ExtensionContext) {
     }
   });
 
-  workspace.onDidDeleteFiles((event) => {
+  context.subscriptions.push(onNotificationDispose);
+
+  const onDeleteFilesDispose = workspace.onDidDeleteFiles((event) => {
     for (const fileUri of event.files) {
       client?.diagnostics?.delete(fileUri);
     }
   });
+
+  context.subscriptions.push(onDeleteFilesDispose);
 
   configService.onConfigChange = async function onConfigChange(event) {
     let settings = this.rootServerConfig.toLanguageServerConfig();
@@ -261,7 +273,7 @@ export async function activate(context: ExtensionContext) {
         await client.restart();
       }
     } else if (client.isRunning()) {
-      client.sendNotification('workspace/didChangeConfiguration', { settings });
+      await client.sendNotification('workspace/didChangeConfiguration', { settings });
     }
   };
 
@@ -285,6 +297,7 @@ export async function activate(context: ExtensionContext) {
     myStatusBarItem.backgroundColor = bgColor;
   }
 
+  updateStatsBar(configService.vsCodeConfig.enable);
   if (configService.vsCodeConfig.enable) {
     await client.start();
   }
@@ -299,15 +312,25 @@ export async function deactivate(): Promise<void> {
 }
 
 // FileSystemWatcher are not ready on the start and can take some seconds on bigger repositories
-// ToDo: create test to make sure this will never break
-function createFileEventWatchers(configRelativePath: string | null) {
+function createFileEventWatchers(configRelativePath: string | null): FileSystemWatcher[] {
+  // cleanup old watchers
+  globalWatchers.forEach((watcher) => watcher.dispose());
+  globalWatchers.length = 0;
+
+  // create new watchers
+  let localWatchers;
   if (configRelativePath !== null) {
-    return (workspace.workspaceFolders || []).map((workspaceFolder) =>
+    localWatchers = (workspace.workspaceFolders || []).map((workspaceFolder) =>
       workspace.createFileSystemWatcher(new RelativePattern(workspaceFolder, configRelativePath))
     );
+  } else {
+    localWatchers = [
+      workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
+    ];
   }
 
-  return [
-    workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
-  ];
+  // assign watchers to global variable, so we can cleanup them on next call
+  globalWatchers.push(...localWatchers);
+
+  return localWatchers;
 }
