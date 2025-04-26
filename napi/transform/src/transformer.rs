@@ -19,9 +19,12 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ModuleRunnerTransform, ProposalOptions,
-        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
+        RewriteExtensionsMode,
+    },
+    transformer_plugins::{
+        InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
+        ReplaceGlobalDefinesConfig,
     },
 };
 use oxc_napi::OxcError;

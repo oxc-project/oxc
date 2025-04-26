@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tower_lsp_server::{UriExt, lsp_types::Uri};
+use tower_lsp_server::lsp_types::Uri;
 
 use oxc_linter::Linter;
 
@@ -35,7 +35,7 @@ impl ServerLinter {
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
-        self.isolated_linter.run_single(&uri.to_file_path().unwrap(), content)
+        self.isolated_linter.run_single(uri, content)
     }
 }
 
@@ -107,6 +107,15 @@ mod test {
         Tester::new().test_and_snapshot_single_file("fixtures/linter/astro/debugger.astro");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/vue/debugger.vue");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/svelte/debugger.svelte");
+        // ToDo: fix Tester to work only with Uris and do not access the file system
+        // Tester::new().test_and_snapshot_single_file("fixtures/linter/nextjs/%5B%5B..rest%5D%5D/debugger.ts");
+    }
+
+    #[test]
+    fn test_invalid_syntax_file() {
+        Tester::new()
+            .with_snapshot_suffix("invalid_syntax_file")
+            .test_and_snapshot_single_file("fixtures/linter/invalid_syntax/debugger.ts");
     }
 
     #[test]

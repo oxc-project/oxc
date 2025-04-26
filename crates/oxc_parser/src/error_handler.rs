@@ -40,6 +40,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Push a Syntax Error
+    #[cold]
     pub(crate) fn error(&mut self, error: OxcDiagnostic) {
         self.errors.push(error);
     }
@@ -50,6 +51,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance lexer's cursor to end of file.
+    #[cold]
     pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
@@ -57,6 +59,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[cold]
     pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
         self.set_fatal_error(error);
         Dummy::dummy(self.ast.allocator)

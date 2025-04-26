@@ -1514,13 +1514,14 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "oxc_transformer",
+ "oxc_transformer_plugins",
 ]
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5482acf27be53699af8214b9067b71117f34d74974db4b0feef1c09b556c274"
+checksum = "bf11cf76199836fa65eb981c7cee15baaaa3812ddec4210e2f38f6b96d413e34"
 dependencies = [
  "nom",
  "rustc-hash",
@@ -1955,7 +1956,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
- "oxc_transformer",
+ "oxc_transformer_plugins",
  "rustc-hash",
  "similar-asserts",
 ]
@@ -2226,16 +2227,39 @@ dependencies = [
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_semantic",
- "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
- "oxc_tasks_common",
  "oxc_traverse",
  "pico-args",
  "rustc-hash",
  "serde",
  "serde_json",
  "sha1",
+]
+
+[[package]]
+name = "oxc_transformer_plugins"
+version = "0.66.0"
+dependencies = [
+ "cow-utils",
+ "insta",
+ "itoa",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_ecmascript",
+ "oxc_minifier",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_sourcemap",
+ "oxc_span",
+ "oxc_syntax",
+ "oxc_tasks_common",
+ "oxc_transformer",
+ "oxc_traverse",
+ "rustc-hash",
  "similar",
 ]
 

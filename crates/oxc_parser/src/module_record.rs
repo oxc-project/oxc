@@ -317,11 +317,6 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        // ignore all TypeScript syntax as they overload
-        if decl.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax) {
-            return;
-        }
-
         let module_request =
             decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
 
@@ -338,7 +333,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
 
         if let Some(d) = &decl.declaration {
-            d.bound_names(&mut |ident| {
+            iter_binding_identifiers_of_declaration(d, &mut |ident| {
                 let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
                 let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
                 let export_entry = ExportEntry {
@@ -385,6 +380,17 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
+    }
+}
+
+fn iter_binding_identifiers_of_declaration<'a, F>(decl: &Declaration<'a>, f: &mut F)
+where
+    F: FnMut(&BindingIdentifier<'a>),
+{
+    if let Declaration::VariableDeclaration(decl) = decl {
+        decl.bound_names(f);
+    } else if let Some(ident) = decl.id() {
+        f(ident);
     }
 }
 
