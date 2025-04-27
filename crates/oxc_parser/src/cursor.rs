@@ -2,7 +2,6 @@
 
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::{Decorator, RegExpFlags};
-use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -219,10 +218,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> Result<(u32, RegExpFlags, bool)> {
-        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind())?;
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
+        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        Ok((pattern_end, flags, flags_error))
+        (pattern_end, flags, flags_error)
     }
 
     /// Tell lexer to read a template substitution tail

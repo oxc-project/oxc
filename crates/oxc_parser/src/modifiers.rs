@@ -111,7 +111,7 @@ impl Modifier {
 impl TryFrom<Token> for Modifier {
     type Error = <ModifierKind as TryFrom<Kind>>::Error;
 
-    fn try_from(tok: Token) -> std::result::Result<Self, Self::Error> {
+    fn try_from(tok: Token) -> Result<Self, Self::Error> {
         ModifierKind::try_from(tok.kind).map(|kind| Self { span: tok.span(), kind })
     }
 }
@@ -261,7 +261,7 @@ impl ModifierKind {
 impl TryFrom<Kind> for ModifierKind {
     type Error = ();
 
-    fn try_from(kind: Kind) -> std::result::Result<Self, Self::Error> {
+    fn try_from(kind: Kind) -> Result<Self, Self::Error> {
         match kind {
             Kind::Abstract => Ok(Self::Abstract),
             Kind::Declare => Ok(Self::Declare),

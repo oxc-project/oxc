@@ -2663,7 +2663,21 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/comments/S7.4_A4_T1.js:19:3]
+ 18 │ /* var*/
+ 19 │ x*/
+    ·   ──
+    ╰────
+
   × Unterminated regular expression
+    ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
+ 18 │ // var /*
+ 19 │ x*/
+    ·   ──
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
  18 │ // var /*
  19 │ x*/
@@ -21200,12 +21214,26 @@ Negative Passed: 4519/4519 (100.00%)
     · ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
+ 17 │ 
+ 18 │ //
+    · ───
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
  17 │ 
  18 │ /
     · ──
  19 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
+ 17 │     
+ 18 │ ╭─▶ /
+ 19 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -21215,11 +21243,25 @@ Negative Passed: 4519/4519 (100.00%)
     · ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ls.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
  17 │ 
  18 │ / /
     · ──
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
     ╰────
 
   × Unterminated string
@@ -21988,6 +22030,13 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T2.js:27:1]
+ 26 │ 
+ 27 │ /\/
+    · ────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T3.js:28:1]
  27 │ ///
  28 │ .source;
@@ -22009,12 +22058,26 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
  29 │ 
  30 │ /
     · ──
  31 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22025,6 +22088,13 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:24:1]
+ 23 │     
+ 24 │ ╭─▶ /\
+ 25 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
  22 │ 
@@ -22033,7 +22103,21 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
+ 22 │     
+ 23 │ ╭─▶ /\
+ 24 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
+ 23 │ 
+ 24 │ /a\/
+    · ─────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
  23 │ 
  24 │ /a\/
@@ -22055,12 +22139,26 @@ Negative Passed: 4519/4519 (100.00%)
  34 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:33:1]
+ 32 │     
+ 33 │ ╭─▶ /a
+ 34 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
  33 │ 
  34 │ /a
     · ───
  35 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
+ 33 │     
+ 34 │ ╭─▶ /a
+ 35 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22071,12 +22169,26 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
  28 │ 
  29 │ /a\
     · ────
  30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
     ╰────
 
   × Invalid regular expression: Invalid modifiers
@@ -22492,11 +22604,25 @@ Negative Passed: 4519/4519 (100.00%)
     ·    ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:1]
+ 18 │ 
+ 19 │ /./G;
+    · ────
+    ╰────
+
   × Flag g is mentioned twice in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:6]
  18 │ 
  19 │ /./gig;
     ·      ─
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:1]
+ 18 │ 
+ 19 │ /./gig;
+    · ──────
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23124,12 +23250,32 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <LS> between the two / characters
+ 34 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ / /
     · ──
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between the two / characters
+ 34 │ ╰─▶ */
     ╰────
 
   × Unterminated regular expression
@@ -23140,12 +23286,32 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\\ /
+ 30 │ │   
+ 31 │ │   /*
+ 32 │ │   There is a <LS> between "a\\ " and "/"
+ 33 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ /a\\  /
     · ─────
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /a\\  /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between "a\\ " and "/"
+ 34 │ ╰─▶ */
     ╰────
 
   × Invalid regular expression: Could not parse the entire pattern

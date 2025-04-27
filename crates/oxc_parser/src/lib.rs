@@ -337,7 +337,7 @@ mod parser_parse {
         ///
         /// # Errors
         /// If the source code being parsed has syntax errors.
-        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
                 self.allocator,
@@ -496,7 +496,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();

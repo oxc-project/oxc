@@ -1742,7 +1742,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─
    ╰────
 
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/364/input.js:1:1]
+ 1 │ /
+   · ─
+   ╰────
+
   × Unterminated regular expression
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/365/input.js:1:1]
+ 1 │ /test
+   · ─────
+   ╰────
+
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/365/input.js:1:1]
  1 │ /test
    · ─────
@@ -1839,6 +1851,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ var x = /
    ·         ──
  2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/380/input.js:1:9]
+ 1 │ ╭─▶ var x = /
+ 2 │ ╰─▶ /
    ╰────
 
   × Unterminated string
@@ -2221,6 +2239,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ /a\
    · ────
  2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/441/input.js:1:1]
+ 1 │ ╭─▶ /a\
+ 2 │ ╰─▶ /
    ╰────
 
   × Unexpected token
@@ -3958,6 +3982,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/regex/duplicate-flags/input.js:1:6]
  1 │ /./gii;
    ·      ─
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/regex/duplicate-flags/input.js:1:1]
+ 1 │ /./gii;
+   · ──────
    ╰────
 
   × Unexpected token
@@ -9997,7 +10027,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──
    ╰────
 
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0038/input.js:1:1]
+ 1 │ /
+   · ──
+   ╰────
+
   × Unterminated regular expression
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0039/input.js:1:1]
+ 1 │ /test
+   · ──────
+   ╰────
+
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0039/input.js:1:1]
  1 │ /test
    · ──────
@@ -10008,6 +10050,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ /test
    · ──────
  2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0040/input.js:1:1]
+ 1 │ ╭─▶ /test
+ 2 │ ╰─▶ /
    ╰────
 
   × Invalid Unicode escape sequence
@@ -10182,6 +10230,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ var x = /
    ·         ──
  2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0062/input.js:1:9]
+ 1 │ ╭─▶ var x = /
+ 2 │ ╰─▶ /
    ╰────
 
   × Unterminated string
@@ -10721,6 +10775,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ /a\
    · ────
  2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0157/input.js:1:1]
+ 1 │ ╭─▶ /a\
+ 2 │ ╰─▶ /
    ╰────
 
   × Unexpected token

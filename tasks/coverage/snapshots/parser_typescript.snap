@@ -16103,223 +16103,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid regular expression: Unknown modifiers
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:5]
- 4 │     // Pattern modifiers
- 5 │     /(?med-ium:bar)/,
-   ·        ─
- 6 │     // Capturing groups
-   ╰────
-
-  × Invalid regular expression: Invalid indexed reference
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:13:8]
- 12 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/,
- 13 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/u,
-    ·           ───
- 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
-    ╰────
-
-  × Invalid regular expression: Group specifier is empty
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:15:12]
- 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
- 15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
-    ·               ──────────
- 16 │     // Quantifiers
-    ╰────
-
-  × Invalid regular expression: Numbers out of order in braced quantifier
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:17:31]
- 16 │     // Quantifiers
- 17 │     /{}{1,2}_{3}.{4,}?(foo){008}${32,16}\b{064,128}.+&*?\???\n{,256}{\\{,/,
-    ·                                  ───────
- 18 │     // Character classes
-    ╰────
-
-  × Invalid regular expression: Character class atom range out of order
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:19:13]
- 18 │     // Character classes
- 19 │     /[-A-Za-z-z-aZ-A\d_-\d-.-.\r-\n\w-\W]/,
-    ·                ──
- 20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
-    ╰────
-
-  × Invalid regular expression: Invalid unicode property name and/or value
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:21:28]
- 20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
- 21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
-    ·                               ───────
- 22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid unicode property name and/or value
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:22:28]
- 21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
- 22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
-    ·                               ───────
- 23 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/,
-    ╰────
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:24:22]
- 23 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/,
- 24 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/u,
-    ·                         ─────
- 25 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/v,
-    ╰────
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:25:22]
- 24 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/u,
- 25 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/v,
-    ·                         ─────
- 26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
-    ╰────
-
-  × Invalid regular expression: Invalid unicode property `RGI_Emoji`
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:27:6]
- 26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
- 27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
-    ·         ─────────
- 28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
-    ╰────
-  help: Enable `UnicodeSetsMode` to use this property
-
-  × Invalid regular expression: Invalid property name `RGI_Emoji`(negative + property of strings)
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:28:16]
- 27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
- 28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
-    ·                   ─────────────
- 29 │     // Character escapes
-    ╰────
-
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:31:4]
- 30 │     /\c[\c0\ca\cQ\c\C]\c1\C/,
- 31 │     /\c[\c0\ca\cQ\c\C]\c1\C/u,
-    ·       ▲
- 32 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/,
-    ╰────
-
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:33:4]
- 32 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/,
- 33 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/u,
-    ·       ▲
- 34 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/v,
-    ╰────
-
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:34:4]
- 33 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/u,
- 34 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/v,
-    ·       ▲
- 35 │     // Unicode sets notation
-    ╰────
-
-  × Invalid regular expression: Character class atom range out of order
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:36:5]
- 35 │     // Unicode sets notation
- 36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
-    ·        ──
- 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
-    ╰────
-
-  × Invalid regular expression: Character class atom range out of order
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:37:5]
- 36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
- 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
-    ·        ──
- 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
-    ╰────
-
-  × Invalid regular expression: Unexpected character inside of class subtraction
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:38:8]
- 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
- 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
-    ·           ▲
- 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
-    ╰────
-
-  × Invalid regular expression: Unexpected character inside of class intersection
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:39:56]
- 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
- 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
-    ·                                                           ▲
- 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:40:3]
- 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
- 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
-    ·      ─────────────────────────
- 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:41:3]
- 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
- 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
-    ·      ─────────────────────────
- 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:42:3]
- 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
- 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
-    ·      ───────────────────────
- 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:43:3]
- 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
- 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
-    ·      ─────────────────────────────
- 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:44:3]
- 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
- 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
-    ·      ─────────────────────────────
- 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:45:3]
- 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
- 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
-    ·      ───────────────────────────
- 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:46:3]
- 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
- 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
-    ·      ─────────────────────────────────────────────
- 47 │     /[^[[\q{foo|bar|baz}]]--\q{foo}--\q{bar}--\q{baz}][^[^[^\p{L}]]--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
-    ╰────
-
-  × Invalid regular expression: Invalid character class with strings unicode property
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:47:3]
- 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
- 47 │     /[^[[\q{foo|bar|baz}]]--\q{foo}--\q{bar}--\q{baz}][^[^[^\p{L}]]--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
-    ·      ─────────────────────────────────────────────────
- 48 │ ];
-    ╰────
-
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:2]
- 2 │     // Flags
- 3 │     /foo/visualstudiocode,
-   ·     ─────────────────────
- 4 │     // Pattern modifiers
-   ╰────
-
   × Invalid regular expression: Invalid unicode property name and/or value
    ╭─[typescript/tests/cases/compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts:1:19]
  1 │ const regex = /\p{ascii}\p{Sc=Unknown}\p{sc=unknownX}\p{Script_Declensions=Inherited}\p{scx=inherit}/u;
@@ -18205,6 +17988,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Unterminated regular expression
+   ╭─[typescript/tests/cases/compiler/unterminatedRegexAtEndOfSource1.ts:1:9]
+ 1 │ var a = /
+   ·         ─
+   ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/unterminatedRegexAtEndOfSource1.ts:1:9]
  1 │ var a = /
    ·         ─
@@ -26821,6 +26610,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ────
    ╰────
 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
+ 1 │ / b;
+   · ────
+   ╰────
+
   × Expected `(` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ObjectTypes/parserObjectType5.ts:3:7]
  2 │    A: B
@@ -27112,6 +26907,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:16]
  1 │ if (1) /regexp/a.foo();
    ·                ─
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:8]
+ 1 │ if (1) /regexp/a.foo();
+   ·        ─────────
    ╰────
 
   × Unterminated regular expression
