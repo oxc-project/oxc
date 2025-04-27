@@ -152,4 +152,14 @@ Hello, world!
 "
         );
     }
+
+    #[test]
+    fn test_stringification() {
+        let w = HtmlWriter::default();
+        w.html("span", "class=\"foo\"", |html| html.writeln("Hello, world!")).unwrap();
+        let html = w.take();
+        assert_eq!(html, "<span class=\"foo\">\nHello, world!\n</span>\n");
+        let html = w.take();
+        assert_eq!(html, "");
+    }
 }

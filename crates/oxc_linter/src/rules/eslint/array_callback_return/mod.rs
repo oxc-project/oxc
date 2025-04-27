@@ -34,7 +34,7 @@ fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct ArrayCallbackReturn {
     /// When set to true, rule will also report forEach callbacks that return a value.
     check_for_each: bool,

@@ -17,7 +17,7 @@ fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct Eqeqeq {
     compare_type: CompareType,
     null_type: NullType,

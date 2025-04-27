@@ -19,6 +19,7 @@ doctest = false
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
 handlebars = { workspace = true }
+itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
 oxlint = { path = "../../apps/oxlint" }
 pico-args = { workspace = true }
@@ -26,7 +27,6 @@ project-root = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-itertools = { workspace = true }
 
 [dev-dependencies]
 oxc_allocator = { workspace = true }

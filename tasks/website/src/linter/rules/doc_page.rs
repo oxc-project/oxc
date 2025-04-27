@@ -9,7 +9,7 @@ use std::{
 use oxc_linter::{LintPlugins, table::RuleTableRow};
 use schemars::{
     JsonSchema, SchemaGenerator,
-    schema::{Schema, SchemaObject},
+    schema::{InstanceType, Schema, SchemaObject, SingleOrVec},
 };
 
 use crate::linter::json_schema::{self, Renderer};
@@ -18,19 +18,9 @@ use super::HtmlWriter;
 
 #[derive(Debug)]
 pub(super) struct Context {
-    pub page: HtmlWriter,
-    pub schemas: SchemaGenerator,
+    page: HtmlWriter,
+    schemas: SchemaGenerator,
     renderer: json_schema::Renderer,
-}
-impl AsMut<SchemaGenerator> for Context {
-    fn as_mut(&mut self) -> &mut SchemaGenerator {
-        &mut self.schemas
-    }
-}
-impl AsRef<HtmlWriter> for Context {
-    fn as_ref(&self) -> &HtmlWriter {
-        &self.page
-    }
 }
 
 impl Context {
@@ -50,6 +40,8 @@ impl Context {
             autofix,
             category,
         } = rule;
+        let resolved =
+            schema.as_ref().map(|schema| self.schemas.dereference(schema).unwrap_or(schema));
 
         self.page.reserve(
             documentation.map_or(0, str::len) + name.len() + APPROX_FIX_CATEGORY_AND_PLUGIN_LEN,
@@ -89,8 +81,14 @@ impl Context {
         }
 
         // rule configuration
-        if let Some(Schema::Object(schema)) = schema {
-            writeln!(self.page, "\n## Configuration\n{}", self.rule_config(schema))?;
+        if let Some(Schema::Object(schema)) = resolved {
+            if *name == "eqeqeq" {
+                println!("eqeqeq here");
+            }
+            let config_section = self.rule_config(schema);
+            if !config_section.trim().is_empty() {
+                writeln!(self.page, "\n## Configuration\n{config_section}")?;
+            }
         }
 
         // how to use
@@ -101,8 +99,32 @@ impl Context {
     }
 
     fn rule_config(&self, schema: &SchemaObject) -> String {
-        let section = self.renderer.render_schema(2, "", schema);
-        section.to_md(&self.renderer)
+        let mut section = self.renderer.render_schema(2, "", schema);
+        if section.default.is_none() {
+            if let Some(SingleOrVec::Single(ty)) = &schema.instance_type {
+                match &**ty {
+                    InstanceType::Boolean => {
+                        section.default = Some(format!("{}", <bool>::default()));
+                    }
+                    InstanceType::Array => {
+                        section.default = Some("[]".to_string());
+                    }
+                    _ => {}
+                }
+            }
+        }
+        let mut rendered = section.to_md(&self.renderer);
+        if rendered.trim().is_empty() {
+            return rendered;
+        }
+
+        if schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::Object)) {
+            rendered = format!(
+                "\nThis rule accepts a configuration object with the following properties:\n\n{rendered}\n"
+            );
+        }
+
+        rendered
     }
 }
 

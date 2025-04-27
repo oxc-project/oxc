@@ -71,7 +71,7 @@ pub(super) struct Section {
     title: String,
     instance_type: Option<String>,
     description: String,
-    default: Option<String>,
+    pub(super) default: Option<String>,
     sections: Vec<Section>,
 }
 impl Section {

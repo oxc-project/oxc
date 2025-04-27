@@ -55,7 +55,7 @@ impl From<&str> for NamedExports {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct FuncStyle {
     style: Style,
     allow_arrow_functions: bool,
