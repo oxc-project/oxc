@@ -89,7 +89,7 @@
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
-use oxc_semantic::{Reference, ReferenceFlags};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -505,18 +505,10 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> ReferenceFlags {
         if let Some(symbol_id) = binding.symbol_id {
-            if ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_value) {
-                // If the symbol has a value reference, we can use it as a value reference
-                ReferenceFlags::Read
-            } else {
-                // Otherwise, we can only use it as a type reference because the TypeScript plugin will
-                // remove imports by checking references of `Symbol` whether it contains a
-                // `ReferenceFlags::Read`. If it doesn't, that means the symbol can be removed. That's
-                // why we need to use `Type` flag here, which hints the TypeScript plugin this Reference
-                // is only used as a type reference. If no `ReferenceFlags::Read` is found, we can
-                // safely remove the import.
-                ReferenceFlags::Type
-            }
+            let flags = ctx.scoping().symbol_flags(symbol_id);
+            // `design::*type` would be called by `reflect-metadata` APIs, use `Read` flag
+            // to avoid TypeScript remove it because only used as types.
+            if flags.is_value() { ReferenceFlags::Read } else { ReferenceFlags::Type }
         } else {
             // Unresolved reference
             ReferenceFlags::Type | ReferenceFlags::Read

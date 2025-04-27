@@ -1,3 +1,4 @@
+import { Foo } from "mod";
 var _ref;
 
 let Cls = class Cls {
@@ -18,5 +19,3 @@ Cls = babelHelpers.decorate(
 	],
 	Cls,
 );
-
-export {};
