@@ -32,6 +32,5 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-compact_str = { workspace = true }
 itoa = { workspace = true }
 rustc-hash = { workspace = true }

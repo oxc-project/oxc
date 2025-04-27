@@ -1039,11 +1039,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         let binding = self.arguments_var_stack.last_or_init(|| {
             if let Some(symbol_id) = symbol_id {
                 let arguments_name = ctx.generate_uid_name("arguments");
-                let arguments_name_atom = ctx.ast.atom(&arguments_name);
-                Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
+                Self::rename_arguments_symbol(symbol_id, arguments_name.into_compact_str(), ctx);
                 // Record the symbol ID as a renamed `arguments` variable.
                 self.renamed_arguments_symbol_ids.insert(symbol_id);
-                BoundIdentifier::new(arguments_name_atom, symbol_id)
+                BoundIdentifier::new(arguments_name, symbol_id)
             } else {
                 // We cannot determine the final scope ID of the `arguments` variable insertion,
                 // because the `arguments` variable will be inserted to a new scope which haven't been created yet,
@@ -1081,9 +1080,9 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         self.arguments_var_stack.last_or_init(|| {
             let arguments_name = ctx.generate_uid_name("arguments");
-            ident.name = ctx.ast.atom(&arguments_name);
+            ident.name = arguments_name;
             let symbol_id = ident.symbol_id();
-            Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
+            Self::rename_arguments_symbol(symbol_id, arguments_name.into_compact_str(), ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
             BoundIdentifier::new(ident.name, symbol_id)

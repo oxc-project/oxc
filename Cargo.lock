@@ -2267,7 +2267,6 @@ dependencies = [
 name = "oxc_traverse"
 version = "0.66.0"
 dependencies = [
- "compact_str",
  "itoa",
  "oxc_allocator",
  "oxc_ast",

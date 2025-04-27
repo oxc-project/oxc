@@ -114,7 +114,7 @@ pub use scoping::TraverseScoping;
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     pub ancestry: TraverseAncestry<'a>,
-    pub scoping: TraverseScoping,
+    pub scoping: TraverseScoping<'a>,
     pub ast: AstBuilder<'a>,
 }
 
@@ -328,7 +328,7 @@ impl<'a> TraverseCtx<'a> {
     /// the resulting scopes will be:
     /// ```ts
     /// parentScope1: {
-    ///     newScope: {   
+    ///     newScope: {
     ///         childScope: { }
     ///     }
     ///     childScope2: { }
@@ -396,8 +396,8 @@ impl<'a> TraverseCtx<'a> {
     /// There are some potential "gotchas".
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_name`.
-    pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
-        self.scoping.generate_uid_name(name)
+    pub fn generate_uid_name(&mut self, name: &str) -> Atom<'a> {
+        self.scoping.generate_uid_name(name, self.ast.allocator)
     }
 
     /// Generate UID.
@@ -413,9 +413,8 @@ impl<'a> TraverseCtx<'a> {
     ) -> BoundIdentifier<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
-        let name_atom = self.ast.atom(&name);
         let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
-        BoundIdentifier::new(name_atom, symbol_id)
+        BoundIdentifier::new(name, symbol_id)
     }
 
     /// Generate UID in current scope.
