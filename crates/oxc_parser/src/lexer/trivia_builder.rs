@@ -214,15 +214,19 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
     let search_len = hay.len() - 8;
 
     for i in memchr_iter(b'@', &hay[..search_len]) {
-        match hay[i + 1] {
+        debug_assert!(i < search_len);
+        // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 1` is safe
+        match unsafe { hay.get_unchecked(i + 1) } {
             // spellchecker:off
             b'l' => {
-                if &hay[i + 2..i + 1 + 7] == b"icense" {
+                // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 7` is safe
+                if unsafe { hay.get_unchecked(i + 2..i + 1 + 7) } == b"icense" {
                     return true;
                 }
             }
             b'p' => {
-                if &hay[i + 2..i + 1 + 8] == b"reserve" {
+                // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 8` is safe
+                if unsafe { hay.get_unchecked(i + 2..i + 1 + 8) } == b"reserve" {
                     return true;
                 }
             }
