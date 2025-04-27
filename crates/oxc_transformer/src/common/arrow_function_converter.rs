@@ -1018,7 +1018,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-        ctx.rename_symbol(symbol_id, scope_id, name.as_str());
+        ctx.scoping_mut().rename_symbol(symbol_id, scope_id, name.as_str());
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.
