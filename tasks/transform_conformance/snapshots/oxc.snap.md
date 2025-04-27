@@ -438,22 +438,22 @@ rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "Zoo", "_ref", "dec"]
 rebuilt        : ScopeId(0): ["Cls", "Foo", "_ref"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "Cls":
-after transform: SymbolId(6): Span { start: 135, end: 138 }
+after transform: SymbolId(7): Span { start: 145, end: 148 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Cls":
-after transform: SymbolId(10): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 135, end: 138 }
+after transform: SymbolId(13): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 145, end: 148 }
 Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
+after transform: SymbolId(3) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]

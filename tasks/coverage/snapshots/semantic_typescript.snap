@@ -36082,19 +36082,13 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "BulkEditPreviewProvider":
 after transform: SymbolId(1): Span { start: 106, end: 129 }
-rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "BulkEditPreviewProvider":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18)]
-rebuilt        : SymbolId(6): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(22)]
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14)]
+rebuilt        : SymbolId(5): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(18)]
 Symbol span mismatch for "BulkEditPreviewProvider":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(7): Span { start: 106, end: 129 }
-Reference symbol mismatch for "IFoo":
-after transform: SymbolId(0) "IFoo"
-rebuilt        : <None>
-Reference symbol mismatch for "IFoo":
-after transform: SymbolId(0) "IFoo"
-rebuilt        : <None>
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 106, end: 129 }
 Reference symbol mismatch for "IFoo":
 after transform: SymbolId(0) "IFoo"
 rebuilt        : <None>
@@ -36695,35 +36689,23 @@ rebuilt        : ["Function", "Object", "decorator"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadataWithTypeOnlyImport.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "Service", "_decorate", "_decorateMetadata", "_ref", "decorator"]
-rebuilt        : ScopeId(0): ["MyComponent", "_decorate", "_decorateMetadata", "_ref"]
+after transform: ScopeId(0): ["MyComponent", "Service", "_decorate", "_decorateMetadata", "decorator"]
+rebuilt        : ScopeId(0): ["MyComponent", "_decorate", "_decorateMetadata"]
 Symbol span mismatch for "MyComponent":
 after transform: SymbolId(2): Span { start: 89, end: 100 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "MyComponent":
-after transform: SymbolId(7): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(4): Span { start: 89, end: 100 }
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 89, end: 100 }
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(1) "decorator"
 rebuilt        : <None>
-Reference symbol mismatch for "Service":
-after transform: SymbolId(0) "Service"
-rebuilt        : <None>
-Reference flags mismatch for "Service":
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(14): ReferenceFlags(Read)
-Reference symbol mismatch for "Service":
-after transform: SymbolId(0) "Service"
-rebuilt        : <None>
-Reference flags mismatch for "Service":
-after transform: ReferenceId(4): ReferenceFlags(Type)
-rebuilt        : ReferenceId(15): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "Object"]
-rebuilt        : ["Function", "Object", "Service", "decorator"]
+rebuilt        : ["Function", "Object", "decorator"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadataWithTypeOnlyImport2.ts
 Symbol flags mismatch for "Services":
