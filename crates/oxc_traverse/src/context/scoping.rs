@@ -7,7 +7,7 @@ use oxc_allocator::{Allocator, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::SPAN;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -437,13 +437,12 @@ impl<'a> TraverseScoping<'a> {
     /// * No binding already exists in scope for `new_name`.
     ///
     /// Panics in debug mode if either of the above are not satisfied.
-    #[expect(clippy::needless_pass_by_value)]
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
         // Rename symbol
         // FIXME: remove `to_string`
-        let old_name = self.scoping.set_symbol_name(symbol_id, new_name.as_str()).to_string();
+        let old_name = self.scoping.set_symbol_name(symbol_id, new_name).to_string();
         // Rename binding
-        self.scoping.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
+        self.scoping.rename_binding(scope_id, symbol_id, &old_name, new_name);
     }
 }
 

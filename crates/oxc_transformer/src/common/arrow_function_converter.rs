@@ -96,7 +96,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{CompactStr, GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -1016,9 +1016,9 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     /// Rename the `arguments` symbol to a new name.
-    fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
+    fn rename_arguments_symbol(symbol_id: SymbolId, name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-        ctx.rename_symbol(symbol_id, scope_id, name);
+        ctx.rename_symbol(symbol_id, scope_id, name.as_str());
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.
@@ -1039,7 +1039,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let binding = self.arguments_var_stack.last_or_init(|| {
             if let Some(symbol_id) = symbol_id {
                 let arguments_name = ctx.generate_uid_name("arguments");
-                Self::rename_arguments_symbol(symbol_id, arguments_name.into_compact_str(), ctx);
+                Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
                 // Record the symbol ID as a renamed `arguments` variable.
                 self.renamed_arguments_symbol_ids.insert(symbol_id);
                 BoundIdentifier::new(arguments_name, symbol_id)
@@ -1082,7 +1082,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             let arguments_name = ctx.generate_uid_name("arguments");
             ident.name = arguments_name;
             let symbol_id = ident.symbol_id();
-            Self::rename_arguments_symbol(symbol_id, arguments_name.into_compact_str(), ctx);
+            Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
             BoundIdentifier::new(ident.name, symbol_id)

@@ -4,7 +4,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_semantic::Scoping;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -652,7 +652,7 @@ impl<'a> TraverseCtx<'a> {
     /// Panics in debug mode if either of the above are not satisfied.
     ///
     /// This is a shortcut for `ctx.scoping.rename_symbol`.
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
         self.scoping.rename_symbol(symbol_id, scope_id, new_name);
     }
 }
