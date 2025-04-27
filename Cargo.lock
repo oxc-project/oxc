@@ -3429,6 +3429,7 @@ dependencies = [
  "bpaf",
  "handlebars",
  "insta",
+ "itertools",
  "markdown",
  "oxc_allocator",
  "oxc_diagnostics",
