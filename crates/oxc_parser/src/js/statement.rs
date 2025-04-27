@@ -366,10 +366,6 @@ impl<'a> ParserImpl<'a> {
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self);
-            if self.fatal_error.is_some() {
-                let span = self.end_span(expr_span);
-                self.fatal_error.as_mut().unwrap().error = diagnostics::unexpected_token(span);
-            }
             let for_stmt_left = ForStatementLeft::from(target);
             if !r#await && is_async_of {
                 self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
