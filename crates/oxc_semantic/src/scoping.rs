@@ -180,15 +180,10 @@ impl Scoping {
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
-        self.cell
-            .with_dependent_mut(|allocator, cell| {
-                mem::replace(
-                    &mut cell.symbol_names[symbol_id.index()],
-                    Atom::from_in(name, allocator),
-                )
-            })
-            .as_str()
+    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.symbol_names[symbol_id.index()] = Atom::from_in(name, allocator);
+        });
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
@@ -805,7 +800,7 @@ impl Scoping {
     /// Panics in debug mode if either of the above are not satisfied.
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            // Rename symbol name, same as `Self::set_symbol_name`
+            // Rename symbol name.
             let old_name = mem::replace(
                 &mut cell.symbol_names[symbol_id.index()],
                 Atom::from_in(new_name, allocator),
