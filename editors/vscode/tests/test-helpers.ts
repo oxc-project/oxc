@@ -1,4 +1,5 @@
-import { commands, Diagnostic, extensions, languages, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import { Func } from 'mocha';
+import { commands, Diagnostic, extensions, languages, Uri, window, workspace, WorkspaceEdit, WorkspaceFolder } from 'vscode';
 import path = require('path');
 
 type OxlintConfigPlugins = string[];
@@ -29,19 +30,48 @@ export type OxlintConfig = {
   ignorePatterns?: OxlintConfigIgnorePatterns;
 };
 
-export const WORKSPACE_FOLDER = workspace.workspaceFolders![0];
+export const WORKSPACE_FOLDER: WorkspaceFolder = workspace.workspaceFolders![0];
+export const WORKSPACE_SECOND_FOLDER: WorkspaceFolder | undefined = workspace.workspaceFolders![1];
+
 export const WORKSPACE_DIR = WORKSPACE_FOLDER.uri;
+export const WORKSPACE_SECOND_DIR = WORKSPACE_SECOND_FOLDER?.uri;
+
 
 const rootOxlintConfigUri = Uri.joinPath(WORKSPACE_DIR, '.oxlintrc.json');
+
+export function testSingleFolderMode(title: string, fn: Func) {
+  if (process.env['SINGLE_FOLDER_WORKSPACE'] !== 'true') {
+    return;
+  }
+
+  test(`${title} (single folder workspace)`, fn);
+}
+
+export function testMultiFolderMode(title: string, fn: Func) {
+  if (process.env['MULTI_FOLDER_WORKSPACE'] !== 'true') {
+    return;
+  }
+
+  test(`${title} (multi folder workspace)`, fn);
+}
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function activateExtension(): Promise<void> {
+export async function activateExtension(full: boolean = true): Promise<void> {
   const ext = extensions.getExtension('oxc.oxc-vscode')!;
   if (!ext.isActive) {
     await ext.activate();
+  }
+
+  if (full) {
+    await loadFixture('debugger');
+    const fileUri = Uri.joinPath(WORKSPACE_DIR, 'fixtures', 'debugger.js');
+    await window.showTextDocument(fileUri);
+    // wait for initialized requests
+    await sleep(500);
+    await commands.executeCommand('workbench.action.closeActiveEditor');
   }
 }
 

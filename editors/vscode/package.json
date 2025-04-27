@@ -150,7 +150,7 @@
     "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "lint": "npx oxlint --tsconfig=tsconfig.json",
-    "test": "esbuild client/*.spec.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap && vscode-test",
+    "test": "esbuild tests/*.spec.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node --target=node16 --sourcemap && vscode-test",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
