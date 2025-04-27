@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Features
+
+- e228840 parser: Fast forward lexer to EOF if errors are encountered (#10579) (Boshen)
+
+### Bug Fixes
+
+- a9785e3 parser,linter: Consider typescript declarations for named exports (#10532) (Ulrich Stark)
+
+### Performance
+
+- e6d5a44 lexer: Use `get_unchecked` for byte access in comment parsing (#10635) (camc314)
+- f89aec6 parser: Improve perf of checking for licence/legal comments (#10616) (Cameron)
+- 7059ffa parser: Mark error paths as cold (#10614) (Don Isaac)
+- 3fafc0d parser: Fast path for parsing ts declarations (#10596) (Boshen)
+- 4f56b2c parser: Remove `-> Result<T>` from all parsing methods (#10588) (Boshen)
+
+### Refactor
+
+- 76ea6a9 parser: Remove return `Result` from `read_regex` (#10598) (Boshen)
+
 ## [0.66.0] - 2025-04-23
 
 ### Features
