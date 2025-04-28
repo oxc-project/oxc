@@ -621,12 +621,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return true;
             }
         }
-    } else if check_return_statement_and_bodyless(parent) {
-        return false;
     }
 
-    for ancestor in ctx.nodes().ancestor_ids(node.id()).skip(1) {
-        match ctx.nodes().kind(ancestor) {
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+        match ancestor.kind() {
             AstKind::ArrowFunctionExpression(func) => {
                 if func.return_type.is_some() {
                     return true;
@@ -667,14 +665,6 @@ fn all_return_statements_are_functions(node: &AstNode) -> bool {
                 false
             }
         }
-        _ => false,
-    }
-}
-
-fn check_return_statement_and_bodyless(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::ReturnStatement(_) => true,
-        AstKind::ArrowFunctionExpression(func) => func.body.statements.is_empty(),
         _ => false,
     }
 }
@@ -1503,6 +1493,15 @@ fn test() {
         	const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
         	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "export function define(): (callback: (() => void)) => void {
+                return () => {xxxxxxx }
+            }
+        	",
+            None,
             None,
             None,
         ),
