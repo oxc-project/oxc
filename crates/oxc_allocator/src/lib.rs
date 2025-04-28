@@ -13,6 +13,7 @@
 //! See [`Allocator`] docs for information on efficient use of [`Allocator`].
 
 #![warn(missing_docs)]
+#![cfg_attr(feature = "nightly", feature(allocator_api))]
 
 mod address;
 mod allocator;
