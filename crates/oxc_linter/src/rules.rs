@@ -38,6 +38,7 @@ mod import {
 
 mod eslint {
     pub mod array_callback_return;
+    pub mod block_scoped_var;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -561,6 +562,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_deprecated,
     // import::no_unused_modules,
     eslint::array_callback_return,
+    eslint::block_scoped_var,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
