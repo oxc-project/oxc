@@ -464,7 +464,15 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template) => {
                 if allowed.is_never() && template.is_no_substitution_template() {
                     let string = template.quasi().unwrap();
-                    if is_allowed_string_like(ctx, string.as_str(), container, node.id(), is_prop) {
+                    if contains_quote_characters(string.as_str())
+                        || is_allowed_string_like(
+                            ctx,
+                            string.as_str(),
+                            container,
+                            node.id(),
+                            is_prop,
+                        )
+                    {
                         return;
                     }
                     report_unnecessary_curly(ctx, container, template.span);
@@ -822,6 +830,7 @@ fn test() {
         ),
         ("<App label={`${label}`} />", Some(json!(["never"]))),
         ("<App>{`${label}`}</App>", Some(json!(["never"]))),
+        (r#"<div>{`Nobody's "here"`}</div>"#, None),
     ];
 
     let fail = vec![
