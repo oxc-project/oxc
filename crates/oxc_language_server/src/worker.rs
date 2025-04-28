@@ -461,7 +461,6 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 mod tests {
     use super::*;
 
-    #[ignore]
     #[test]
     fn test_get_root_uri() {
         let worker =
