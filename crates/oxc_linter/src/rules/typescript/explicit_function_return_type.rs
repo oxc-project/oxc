@@ -420,6 +420,14 @@ impl ExplicitFunctionReturnType {
         let AstKind::ArrowFunctionExpression(func) = node.kind() else { return false };
         let Some(expr) = func.get_expression() else { return false };
 
+        let mut expr = expr;
+        loop {
+            expr = match expr {
+                Expression::TSSatisfiesExpression(e) => &e.expression,
+                _ => break,
+            };
+        }
+
         match expr {
             Expression::TSAsExpression(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
@@ -606,7 +614,10 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 }
 
 fn is_function(expr: &Expression) -> bool {
-    matches!(expr, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
+    matches!(
+        expr.get_inner_expression(),
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+    )
 }
 
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -1145,9 +1156,56 @@ fn test() {
         ),
         (
             "
-        	new Promise(resolve => {});
-        	new Foo(1, () => {});
-        	",
+        	interface R {
+                type: string;
+                value: number;
+                }
+
+                const func = (value: number) => ({ type: 'X', value }) as const satisfies R;
+                ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+                interface R {
+                    type: string;
+                    value: number;
+                    }
+
+                    const func = (value: number) =>
+                    ({ type: 'X', value }) as const satisfies R satisfies R;
+                    ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+                    interface R {
+                        type: string;
+                        value: number;
+                        }
+
+                        const func = (value: number) =>
+                        ({ type: 'X', value }) as const satisfies R satisfies R satisfies R;
+                        ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+            new Promise(resolve => {});
+            new Foo(1, () => {});
+            ",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
