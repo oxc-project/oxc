@@ -150,13 +150,7 @@ fn unicode_escape() {
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
     test("console.log('안녕하세요');", "console.log(\"안녕하세요\");\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log(\"🧑‍🤝‍🧑\");\n");
-    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\uD800\\uD801\");\n");
-
-    test_minify("console.log('你好');", "console.log(`你好`);");
-    test_minify("console.log('こんにちは');", "console.log(`こんにちは`);");
-    test_minify("console.log('안녕하세요');", "console.log(`안녕하세요`);");
-    test_minify("console.log('🧑‍🤝‍🧑');", "console.log(`🧑‍🤝‍🧑`);");
-    test_minify("console.log(\"\\uD800\\uD801\")", "console.log(`\\ud800\\ud801`);");
+    test("console.log(\"\\uD800\\uD801\")", "console.log(\"\\ud800\\ud801\");\n");
 }
 
 #[test]
@@ -517,59 +511,53 @@ fn getter_setter() {
 
 #[test]
 fn string() {
-    // Uses quotes as requested in options
-    let single_quote = CodegenOptions { single_quote: true, ..CodegenOptions::default() };
-    test_options("let x = \"'\";", "let x = '\\'';\n", single_quote);
-    let double_quote = CodegenOptions { single_quote: false, ..CodegenOptions::default() };
-    test_options("let x = '\\\"';", "let x = \"\\\"\";\n", double_quote);
-
     // `${` only escaped when quote is backtick
-    test("let x = '${}';", "let x = \"${}\";\n");
-    test_minify("let x = '${}';", "let x=\"${}\";");
+    test("let x = \"${}\";", "let x = \"${}\";\n");
+    test_minify("let x = \"${}\";", "let x=\"${}\";");
     test("let x = '\"\"${}';", "let x = \"\\\"\\\"${}\";\n");
     test_minify("let x = '\"\"${}';", "let x='\"\"${}';");
-    test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"\\'\\'${}\";\n");
+    test("let x = '\"\"\\'\\'${}';", "let x = \"\\\"\\\"''${}\";\n");
     test_minify("let x = '\"\"\\'\\'${}';", "let x=`\"\"''\\${}`;");
     test_minify("let x = '\\'\\'\\'\"\"\"${}';", "let x=`'''\"\"\"\\${}`;");
 
     // Lossy replacement character
-    test("let x = '�\\u{FFFD}';", "let x = \"�\\u{FFFD}\";\n");
+    test("let x = \"�\\u{FFFD}\";", "let x = \"��\";\n");
     test_minify("let x = \"�\\u{FFFD}\";", "let x=`��`;");
     test(
-        "let x = '� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �';",
-        "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";\n",
+        "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
+        "let x = \"� ��� � ��� �\";\n",
     );
     test_minify(
-        "let x = '� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �';",
+        "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
         "let x=`� ��� � ��� �`;",
     );
     // Lone surrogates
     test(
-        "let x = '\\uD800 \\uDBFF \\uDC00 \\uDFFF';",
-        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";\n",
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
+        "let x = \"\\ud800 \\udbff \\udc00 \\udfff\";\n",
     );
     test_minify(
-        "let x = '\\uD800 \\uDBFF \\uDC00 \\uDFFF';",
+        "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
         "let x=`\\ud800 \\udbff \\udc00 \\udfff`;",
     );
-    test("let x = '\\uD800\\u{41}';", "let x = \"\\uD800\\u{41}\";\n");
-    test_minify("let x = '\\uD800\\u{41}';", "let x=`\\ud800A`;");
+    test("let x = \"\\uD800\u{41}\";", "let x = \"\\ud800A\";\n");
+    test_minify("let x = \"\\uD800\u{41}\";", "let x=`\\ud800A`;");
     // Invalid pairs
     test(
-        "let x = '\\uD800\\uDBFF \\uDC00\\uDFFF';",
-        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";\n",
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
+        "let x = \"\\ud800\\udbff \\udc00\\udfff\";\n",
     );
     test_minify(
-        "let x = '\\uD800\\uDBFF \\uDC00\\uDFFF';",
+        "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
         "let x=`\\ud800\\udbff \\udc00\\udfff`;",
     );
     // Lone surrogates and lossy replacement characters
     test(
-        "let x = '��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}';",
-        "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";\n",
+        "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";",
+        "let x = \"����\\ud800\\udbff����\\udc00\\udfff����\";\n",
     );
     test_minify(
-        "let x = '��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}';",
+        "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";",
         "let x=`����\\ud800\\udbff����\\udc00\\udfff����`;",
     );
 

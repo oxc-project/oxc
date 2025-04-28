@@ -49,7 +49,7 @@ impl Lexer<'_> {
         } else {
             self.source.advance_to_end();
             self.error(diagnostics::unterminated_string(self.unterminated_range()));
-            Kind::Undetermined
+            Kind::Eof
         }
     }
 
@@ -80,7 +80,7 @@ impl Lexer<'_> {
                     lexer: self,
                     table: JSX_CHILD_END_TABLE,
                     handle_eof: {
-                        return Kind::Undetermined;
+                        return Kind::Eof;
                     },
                 };
 
@@ -94,7 +94,7 @@ impl Lexer<'_> {
                             next_byte as char,
                             if next_byte == b'}' { "rbrace" } else { "gt" },
                         ));
-                        Kind::Undetermined
+                        Kind::Eof
                     })
                 }
             }

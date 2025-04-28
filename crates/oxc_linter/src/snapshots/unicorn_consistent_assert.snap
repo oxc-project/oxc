@@ -1,0 +1,198 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'node:assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'assert/strict';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'node:assert/strict';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import customAssert from 'assert';
+ 2 │             customAssert(foo)
+   ·             ────────────
+   ╰────
+  help: Prefer customAssert.ok(...) over customAssert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import customAssert from 'node:assert';
+ 2 │             customAssert(foo)
+   ·             ────────────
+   ╰────
+  help: Prefer customAssert.ok(...) over customAssert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+ 3 │             assert(bar)
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:3:10]
+ 2 │             assert(foo)
+ 3 │             assert(bar)
+   ·             ──────
+ 4 │             assert(baz)
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:4:10]
+ 3 │             assert(bar)
+ 4 │             assert(baz)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import {strict} from 'assert';
+ 2 │             strict(foo)
+   ·             ──────
+   ╰────
+  help: Prefer strict.ok(...) over strict(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import {strict as assert} from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:5:10]
+ 4 │             import i, {default as j} from 'assert/strict';
+ 5 │             a(foo);
+   ·             ─
+ 6 │             b(foo);
+   ╰────
+  help: Prefer a.ok(...) over a(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:6:10]
+ 5 │             a(foo);
+ 6 │             b(foo);
+   ·             ─
+ 7 │             c(foo);
+   ╰────
+  help: Prefer b.ok(...) over b(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:7:10]
+ 6 │             b(foo);
+ 7 │             c(foo);
+   ·             ─
+ 8 │             d(foo);
+   ╰────
+  help: Prefer c.ok(...) over c(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:8:10]
+ 7 │             c(foo);
+ 8 │             d(foo);
+   ·             ─
+ 9 │             e(foo);
+   ╰────
+  help: Prefer d.ok(...) over d(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:9:10]
+  8 │             d(foo);
+  9 │             e(foo);
+    ·             ─
+ 10 │             f(foo);
+    ╰────
+  help: Prefer e.ok(...) over e(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:10:10]
+  9 │             e(foo);
+ 10 │             f(foo);
+    ·             ─
+ 11 │             g(foo);
+    ╰────
+  help: Prefer f.ok(...) over f(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:11:10]
+ 10 │             f(foo);
+ 11 │             g(foo);
+    ·             ─
+ 12 │             h(foo);
+    ╰────
+  help: Prefer g.ok(...) over g(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:12:10]
+ 11 │             g(foo);
+ 12 │             h(foo);
+    ·             ─
+ 13 │             i(foo);
+    ╰────
+  help: Prefer h.ok(...) over h(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:13:10]
+ 12 │             h(foo);
+ 13 │             i(foo);
+    ·             ─
+ 14 │             j(foo);
+    ╰────
+  help: Prefer i.ok(...) over i(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+    ╭─[consistent_assert.tsx:14:10]
+ 13 │             i(foo);
+ 14 │             j(foo);
+    ·             ─
+    ╰────
+  help: Prefer j.ok(...) over j(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:2:10]
+ 1 │ import assert from 'node:assert';
+ 2 │             assert?.(foo)
+   ·             ──────
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)
+
+  ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
+   ╭─[consistent_assert.tsx:5:6]
+ 4 │                     /* comment */
+ 5 │                     assert
+   ·                     ──────
+ 6 │                     /* comment */
+   ╰────
+  help: Prefer assert.ok(...) over assert(...)

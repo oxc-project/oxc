@@ -1,8 +1,9 @@
+import { Foo } from "mod";
 var _ref;
 
 let Cls = class Cls {
-	constructor(param, param2) {
-		console.log(param, param2);
+	constructor(param, param2, param3, param4) {
+		console.log(param, param2, param3, param4);
 	}
 };
 
@@ -13,10 +14,10 @@ Cls = babelHelpers.decorate(
 				? _ref
 				: Object,
 			Object,
+			Object,
+			Object,
 		]),
 		babelHelpers.decorateParam(0, dec),
 	],
 	Cls,
 );
-
-export {};

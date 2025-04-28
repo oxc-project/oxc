@@ -172,31 +172,31 @@ fn test() {
 
     let fail_jest = vec![
         "for (const [input, expected] of data) {
-			  it(\\`results in $\\{expected}\\`, () => {
+			  it(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
         "for (const [input, expected] of data) {
-			  describe(\\`when the input is $\\{input}\\`, () => {
-			    it(\\`results in $\\{expected}\\`, () => {
+			  describe(`when the input is ${input}`, () => {
+			    it(`results in ${expected}`, () => {
 			      expect(fn(input)).toBe(expected)
 			    });
 			  });
 			}",
         "for (const [input, expected] of data) {
-			  describe(\\`when the input is $\\{input}\\`, () => {
-			    it(\\`results in $\\{expected}\\`, () => {
+			  describe(`when the input is ${input}`, () => {
+			    it(`results in ${expected}`, () => {
 			      expect(fn(input)).toBe(expected)
 			    });
 			  });
 			}
 			for (const [input, expected] of data) {
-			  it.skip(\\`results in $\\{expected}\\`, () => {
+			  it.skip(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
         "for (const [input, expected] of data) {
-			  it.skip(\\`results in $\\{expected}\\`, () => {
+			  it.skip(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
@@ -204,12 +204,12 @@ fn test() {
 			  expect(true).toBe(false);
 			});
 			for (const [input, expected] of data) {
-			  it.skip(\\`results in $\\{expected}\\`, () => {
+			  it.skip(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
         "for (const [input, expected] of data) {
-			  it.skip(\\`results in $\\{expected}\\`, () => {
+			  it.skip(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}
@@ -220,7 +220,7 @@ fn test() {
 			  expect(true).toBe(false);
 			});
 			for (const [input, expected] of data) {
-			  it.skip(\\`results in $\\{expected}\\`, () => {
+			  it.skip(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}
@@ -228,36 +228,36 @@ fn test() {
 			  expect(true).toBe(false);
 			});",
         "for (const [input, expected] of data) {
-			  it(\\`results in $\\{expected}\\`, () => {
+			  it(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
-			  it(\\`results in $\\{expected}\\`, () => {
-			    expect(fn(input)).toBe(expected)
-			  });
-			}",
-        "for (const [input, expected] of data) {
-			  it(\\`results in $\\{expected}\\`, () => {
-			    expect(fn(input)).toBe(expected)
-			  });
-			}
-			for (const [input, expected] of data) {
-			  it(\\`results in $\\{expected}\\`, () => {
+			  it(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
         "for (const [input, expected] of data) {
-			  it(\\`results in $\\{expected}\\`, () => {
+			  it(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}
 			for (const [input, expected] of data) {
-			  test(\\`results in $\\{expected}\\`, () => {
+			  it(`results in ${expected}`, () => {
+			    expect(fn(input)).toBe(expected)
+			  });
+			}",
+        "for (const [input, expected] of data) {
+			  it(`results in ${expected}`, () => {
+			    expect(fn(input)).toBe(expected)
+			  });
+			}
+			for (const [input, expected] of data) {
+			  test(`results in ${expected}`, () => {
 			    expect(fn(input)).toBe(expected)
 			  });
 			}",
         "for (const [input, expected] of data) {
 			  beforeEach(() => setupSomething(input));
-			  test(\\`results in $\\{expected}\\`, () => {
+			  test(`results in ${expected}`, () => {
 			    expect(doSomething()).toBe(expected)
 			  });
 			}",

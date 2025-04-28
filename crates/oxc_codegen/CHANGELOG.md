@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+- 10e1018 codegen: [**BREAKING**] Print `StringLiteral` `raw` if `minify` option disabled (#10553) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- 3ebf220 codegen: Generate missing `type` in `export type {} from 'mod'` (#10539) (Boshen)
+
+### Performance
+
+- 6a045c8 codegen: Speed up printing `Directive`s (#10551) (overlookmotel)
+
+### Testing
+
+- 14bb2be codegen: Add more tests for strings (#10552) (overlookmotel)
+
 ## [0.65.0] - 2025-04-21
 
 - 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use tower_lsp_server::{UriExt, lsp_types::Uri};
+use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
+use oxc_linter::Linter;
 
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::isolated_lint_handler::IsolatedLintHandler;
@@ -15,7 +15,10 @@ pub struct ServerLinter {
 }
 
 impl ServerLinter {
+    #[cfg(test)]
     pub fn new(options: IsolatedLintHandlerOptions) -> Self {
+        use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions};
+
         let config_store =
             ConfigStoreBuilder::default().build().expect("Failed to build config store");
         let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);
@@ -32,7 +35,7 @@ impl ServerLinter {
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
-        self.isolated_linter.run_single(&uri.to_file_path().unwrap(), content)
+        self.isolated_linter.run_single(uri, content)
     }
 }
 
@@ -42,7 +45,7 @@ mod test {
 
     use super::*;
     use crate::linter::tester::Tester;
-    use oxc_linter::{LintFilter, LintFilterKind, Oxlintrc};
+    use oxc_linter::{ConfigStoreBuilder, LintFilter, LintFilterKind, LintOptions, Oxlintrc};
     use rustc_hash::FxHashMap;
 
     #[test]
@@ -104,6 +107,15 @@ mod test {
         Tester::new().test_and_snapshot_single_file("fixtures/linter/astro/debugger.astro");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/vue/debugger.vue");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/svelte/debugger.svelte");
+        // ToDo: fix Tester to work only with Uris and do not access the file system
+        // Tester::new().test_and_snapshot_single_file("fixtures/linter/nextjs/%5B%5B..rest%5D%5D/debugger.ts");
+    }
+
+    #[test]
+    fn test_invalid_syntax_file() {
+        Tester::new()
+            .with_snapshot_suffix("invalid_syntax_file")
+            .test_and_snapshot_single_file("fixtures/linter/invalid_syntax/debugger.ts");
     }
 
     #[test]

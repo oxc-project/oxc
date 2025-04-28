@@ -311,7 +311,6 @@ suite('E2E Diagnostics', () => {
     const content = await workspace.fs.readFile(fileUri);
 
     strictEqual(content.toString(), originalContent);
-
     await workspace.getConfiguration('oxc').update('flags', {
       fix_kind: 'all',
     });

@@ -38,23 +38,19 @@ impl IsolatedLintHandler {
         Self { linter, options }
     }
 
-    pub fn run_single(
-        &self,
-        path: &Path,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        if !Self::should_lint_path(path) {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        let path = uri.to_file_path()?;
+
+        if !Self::should_lint_path(&path) {
             return None;
         }
 
         let allocator = Allocator::default();
 
-        Some(self.lint_path(&allocator, path, content).map_or(vec![], |errors| {
-            let path_buf = &path.to_path_buf();
-
+        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
             let mut diagnostics: Vec<DiagnosticReport> = errors
                 .iter()
-                .map(|e| message_with_position_to_lsp_diagnostic_report(e, path_buf))
+                .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
                 .collect();
 
             // a diagnostics connected from related_info to original diagnostic
@@ -64,10 +60,7 @@ impl IsolatedLintHandler {
                     continue;
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
-                        uri: Uri::from_file_path(path).unwrap(),
-                        range: d.diagnostic.range,
-                    },
+                    location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
                     message: "original diagnostic".to_string(),
                 }]);
                 for r in related_info {

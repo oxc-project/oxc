@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 150/246
+Passed: 154/250
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/20)
+# babel-plugin-transform-typescript (7/23)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -424,7 +424,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/71)
+# legacy-decorators (3/72)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -438,35 +438,26 @@ rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
-rebuilt        : ScopeId(0): ["Cls", "_ref"]
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "Zoo", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["Cls", "Foo", "_ref"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "Cls":
-after transform: SymbolId(6): Span { start: 135, end: 138 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+after transform: SymbolId(7): Span { start: 145, end: 148 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Cls":
-after transform: SymbolId(10): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 135, end: 138 }
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(8): ReferenceFlags(Type)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(9): ReferenceFlags(Type)
-rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+after transform: SymbolId(13): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 145, end: 148 }
 Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
+after transform: SymbolId(3) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
-rebuilt        : ["Foo", "Object", "babelHelpers", "console", "dec"]
+rebuilt        : ["Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
 Bindings mismatch:

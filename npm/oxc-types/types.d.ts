@@ -544,6 +544,8 @@ export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
   properties: Array<BindingProperty | BindingRestElement>;
   decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface BindingProperty extends Span {
@@ -1174,7 +1176,7 @@ export interface TSTypeReference extends Span {
   typeArguments: TSTypeParameterInstantiation | null;
 }
 
-export type TSTypeName = IdentifierReference | TSQualifiedName;
+export type TSTypeName = IdentifierReference | ThisExpression | TSQualifiedName;
 
 export interface TSQualifiedName extends Span {
   type: 'TSQualifiedName';
@@ -1214,7 +1216,7 @@ export type TSAccessibility = 'private' | 'protected' | 'public';
 
 export interface TSClassImplements extends Span {
   type: 'TSClassImplements';
-  expression: TSTypeName;
+  expression: IdentifierReference | ThisExpression | MemberExpression;
   typeArguments: TSTypeParameterInstantiation | null;
 }
 
@@ -1314,18 +1316,14 @@ export type TSTypePredicateName = IdentifierName | TSThisType;
 
 export interface TSModuleDeclaration extends Span {
   type: 'TSModuleDeclaration';
-  id: TSModuleDeclarationName;
-  body: TSModuleDeclarationBody | null;
+  id: BindingIdentifier | StringLiteral | TSQualifiedName;
+  body: TSModuleBlock | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
   global: boolean;
 }
 
 export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
-
-export type TSModuleDeclarationName = BindingIdentifier | StringLiteral;
-
-export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';
