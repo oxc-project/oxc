@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use constcat::concat_slices;
 use similar::TextDiff;
 
 use oxc::{
@@ -274,17 +275,11 @@ impl Case for EstreeTypescriptCase {
     }
 
     fn skip_test_case(&self) -> bool {
-        // Skip cases where expected to fail to parse
-        if self.base.should_fail() {
-            return true;
-        }
-
         // Skip cases which are failing in parser conformance tests.
         // Some of these should parse correctly, but the cause is not related to ESTree serialization,
         // so they're not relevant here. If we fix them, that'll register in the parser snapshot.
         // TODO: If we fix any of these in parser, remove them from the list below.
-        #[expect(clippy::items_after_statements)]
-        static IGNORE_PATHS: &[&str] = &[
+        const PARSE_ERROR_PATHS: &[&str] = &[
             // Fails because fixture is not loaded as an ESM module (bug in tester)
             "typescript/tests/cases/compiler/arrayFromAsync.ts",
             // Differences between TS's recoverable parser and Oxc's non-recoverable parser
@@ -294,6 +289,31 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
             "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
         ];
+
+        // Skip tests where fixture starts with a hashbang.
+        // We intentionally diverge from TS-ESTree, by including an extra `hashbang` field on `Program`.
+        // `acorn-test262` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
+        // in order to match Oxc's output.
+        // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
+        // field is (correctly) not `null` in these cases.
+        // `napi/parser` contains tests for correct parsing of hashbangs.
+        const HASHBANG_PATHS: &[&str] = &[
+            "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
+            "typescript/tests/cases/compiler/shebang.ts",
+            "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
+        ];
+
+        static IGNORE_PATHS: &[&str] = concat_slices!([&str]: PARSE_ERROR_PATHS, HASHBANG_PATHS);
+
+        // Skip cases where expected to fail to parse
+        if self.base.should_fail() {
+            return true;
+        }
+
+        // Skip ignored cases
         if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
             return true;
         }
