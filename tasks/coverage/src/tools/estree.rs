@@ -322,22 +322,20 @@ impl Case for EstreeTypescriptCase {
 
             let oxc_json = program.to_pretty_estree_ts_json();
 
-            // Compare as objects to ignore field order differences for now
+            // Compare as objects to ignore field order differences for now.
+            //
+            // Also ignore failure to parse ESTree JSON. These failures are just due to `serde` being
+            // unable to handle lone surrogates in strings and numbers which are to big to fit in an `f64`.
+            // These should match once we switch to comparing ASTs as JSON strings.
+            let Ok(estree_json_value) = serde_json::from_str::<serde_json::Value>(estree_json)
+            else {
+                continue;
+            };
             let mut oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
                 Ok(v) => v,
                 Err(e) => {
                     self.base.result =
                         TestResult::GenericError("serde_json::from_str(oxc_json)", e.to_string());
-                    return;
-                }
-            };
-            let estree_json_value = match serde_json::from_str::<serde_json::Value>(estree_json) {
-                Ok(v) => v,
-                Err(e) => {
-                    self.base.result = TestResult::GenericError(
-                        "serde_json::from_str(estree_json)",
-                        e.to_string(),
-                    );
                     return;
                 }
             };
