@@ -266,16 +266,8 @@ fn test() {
         ),
         (r#"Number.parseInt("10")"#, r#"Number.parseInt("10", 10)"#, Some(json!(["always"]))),
         (r#"Number.parseInt("10",)"#, r#"Number.parseInt("10", 10,)"#, Some(json!(["always"]))),
-        (
-            r#"Number.parseInt?.("10")"#,
-            r#"Number.parseInt?.("10", 10)"#,
-            Some(json!(["always"])),
-        ),
-        (
-            "parseInt(10, /** 213123 */)",
-            "parseInt(10, /** 213123 */ 10,)",
-            Some(json!(["always"])),
-        )
+        (r#"Number.parseInt?.("10")"#, r#"Number.parseInt?.("10", 10)"#, Some(json!(["always"]))),
+        ("parseInt(10, /** 213123 */)", "parseInt(10, /** 213123 */ 10,)", Some(json!(["always"]))),
     ];
 
     Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
