@@ -1853,12 +1853,22 @@ function deserializeTSTypeQuery(pos) {
 }
 
 function deserializeTSImportType(pos) {
+  let options = deserializeOptionBoxObjectExpression(pos + 24);
+  if (options !== null && options.properties.length === 1) {
+    const prop = options.properties[0];
+    if (
+      !prop.method && !prop.shorthand && !prop.computed &&
+      prop.key.type === 'Identifier' && prop.key.name === 'assert'
+    ) {
+      prop.key.name = 'with';
+    }
+  }
   return {
     type: 'TSImportType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     argument: deserializeTSType(pos + 8),
-    options: deserializeOptionBoxObjectExpression(pos + 24),
+    options,
     qualifier: deserializeOptionTSTypeName(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
   };
