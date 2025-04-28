@@ -114,8 +114,7 @@ impl Info {
         let mut filename = String::new();
         let mut message = String::new();
         let mut severity = Severity::Warning;
-        let rule_id = diagnostic.code().map(|code| code.to_string());
-
+        let mut rule_id = None;
         if let Some(mut labels) = diagnostic.labels() {
             if let Some(source) = diagnostic.source_code() {
                 if let Some(label) = labels.next() {
@@ -139,11 +138,11 @@ impl Info {
                             severity = Severity::Error;
                         }
                         let msg = diagnostic.to_string();
-
                         // Our messages usually comes with `eslint(rule): message`
-                        message = msg
-                            .split_once(':')
-                            .map_or_else(|| msg.to_string(), |(_, msg)| msg.trim().to_string());
+                        (rule_id, message) = msg.split_once(':').map_or_else(
+                            || (None, msg.to_string()),
+                            |(id, msg)| (Some(id.to_string()), msg.trim().to_string()),
+                        );
                     }
                 }
             }
