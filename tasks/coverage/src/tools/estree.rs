@@ -79,8 +79,7 @@ impl Case for EstreeTest262Case {
             "test262/test/language/statements/for-of/head-lhs-cover.js",
         ];
 
-        let path = &*self.path().to_string_lossy();
-        if IGNORE_PATHS.contains(&path) {
+        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
             return true;
         }
         */
@@ -275,8 +274,32 @@ impl Case for EstreeTypescriptCase {
     }
 
     fn skip_test_case(&self) -> bool {
-        // Skip cases where expected to fail to parse, or no JSON file for case in `acorn-test262`
-        self.base.should_fail() || matches!(fs::exists(&self.estree_file_path), Ok(false))
+        // Skip cases where expected to fail to parse
+        if self.base.should_fail() {
+            return true;
+        }
+
+        // Skip cases which are failing in parser conformance tests.
+        // Some of these should parse correctly, but the cause is not related to ESTree serialization,
+        // so they're not relevant here. If we fix them, that'll register in the parser snapshot.
+        // TODO: If we fix any of these in parser, remove them from the list below.
+        #[expect(clippy::items_after_statements)]
+        static IGNORE_PATHS: &[&str] = &[
+            // Fails because fixture is not loaded as an ESM module (bug in tester)
+            "typescript/tests/cases/compiler/arrayFromAsync.ts",
+            // Differences between TS's recoverable parser and Oxc's non-recoverable parser
+            "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+            "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+            // Decorators - probably should be parsed correctly (bug in parser)
+            "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
+            "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+        ];
+        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
+            return true;
+        }
+
+        // Skip cases where no JSON file for case in `acorn-test262`
+        matches!(fs::exists(&self.estree_file_path), Ok(false))
     }
 
     fn run(&mut self) {
