@@ -1,3 +1,4 @@
+use crate::{ContextHost, FrameworkFlags};
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,6 +98,10 @@ impl Rule for ForwardRefUsesRef {
         };
 
         check_forward_ref_inner(first_arg_as_exp, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().contains(FrameworkFlags::React)
     }
 }
 
