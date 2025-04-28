@@ -770,6 +770,7 @@ pub struct TSTypeReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeName<'a> {
+    #[estree(via = TSTypeNameIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
 }
@@ -900,6 +901,7 @@ pub enum TSAccessibility {
 #[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
     pub span: Span,
+    #[estree(via = TSClassImplementsExpression)]
     pub expression: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
@@ -1016,7 +1018,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     #[estree(via = TSCallSignatureDeclarationFormalParameters)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -1173,14 +1175,19 @@ pub enum TSTypePredicateName<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(global = TSModuleDeclarationGlobal))]
+#[estree(
+    via = TSModuleDeclarationConverter,
+    add_fields(global = TSModuleDeclarationGlobal),
+)]
 pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     /// The name of the module/namespace being declared.
     ///
     /// Note that for `declare global {}`, no symbol will be created for the module name.
+    #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
+    #[estree(ts_type = "TSModuleBlock | null")]
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration.
     ///
@@ -1235,6 +1242,7 @@ pub enum TSModuleDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1243,12 +1251,12 @@ pub enum TSModuleDeclarationName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSModuleDeclarationBody<'a> {
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]

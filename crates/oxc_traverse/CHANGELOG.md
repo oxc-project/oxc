@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Performance
+
+- bdcbeb4 traverse: Use `ArenaString` instead `CompactString` to store UID name (#10562) (Dunqing)
+
+### Refactor
+
+- b31ab87 traverse: Take `&str` instead of `CompactStr` in `TraverseScoping::rename_symbol` (#10610) (Dunqing)
+- f35efd3 traverse, semantic: Move `rename_symbol` from `TraverseScoping` to `Scoping` (#10611) (Dunqing)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 43ad4e9 ast: Box `this_param` in `TSCallSignatureDeclaration` (#10558) (Yuji Sugiura)
+
+### Styling
+
+- e10dfc8 traverse: Remove excess whitespace (#10544) (overlookmotel)
+
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Refactor
+
+
 ## [0.64.0] - 2025-04-17
 
 - c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)

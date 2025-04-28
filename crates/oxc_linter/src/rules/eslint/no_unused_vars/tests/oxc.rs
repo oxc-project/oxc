@@ -73,6 +73,7 @@ fn test_vars_simple() {
         ("console.log(function a() {} ? b : c)", None),
         ("console.log(a ? function b() {} : c)", None),
         ("console.log(a ? b : function c() {})", None),
+        ("cb => (cb(), 0)", None),
     ];
     let fail = vec![
         ("let a = 1", None),
@@ -1118,9 +1119,6 @@ fn test_type_references() {
         export type C = B<A<number>>;
         ",
         "const x: number = 1; function foo(): typeof x { return x }; foo()",
-        // not handled by typescript-eslint. Maybe we'll add this one day
-        "function foo(): typeof foo { }",
-        "function foo(): typeof foo { return foo }",
         // ---
         "type T = number; console.log(3 as T);",
         "type T = number; console.log(((3) as T));",
@@ -1193,6 +1191,8 @@ fn test_type_references() {
 
         // Same is true for interfaces
         "interface LinkedList<T> { next: LinkedList<T> | undefined }",
+        "function foo(): typeof foo { }",
+        "function foo(): typeof foo { return foo }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

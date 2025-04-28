@@ -68,7 +68,7 @@ impl Rule for NewForBuiltins {
                     return;
                 };
 
-                if ENFORCE_NEW_FOR_BUILTINS.binary_search(&builtin_name).is_ok() {
+                if ENFORCE_NEW_FOR_BUILTINS.contains(builtin_name) {
                     if builtin_name == "Object" {
                         let parent_kind = ctx.nodes().parent_kind(node.id());
                         if let Some(AstKind::BinaryExpression(bin_expr)) = parent_kind {
@@ -115,7 +115,7 @@ fn is_expr_global_builtin<'a, 'b>(
     }
 }
 
-const ENFORCE_NEW_FOR_BUILTINS: [&str; 28] = [
+const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf::phf_set![
     "Array",
     "ArrayBuffer",
     "BigInt64Array",

@@ -26,6 +26,7 @@ oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
 unicode-width = "0.2"
 

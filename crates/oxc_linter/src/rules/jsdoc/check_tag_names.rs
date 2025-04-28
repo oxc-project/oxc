@@ -58,7 +58,7 @@ struct CheckTagnamesConfig {
     typed: bool,
 }
 
-const VALID_BLOCK_TAGS: [&str; 74] = [
+const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "abstract",
     "access",
     "alias",
@@ -88,12 +88,10 @@ const VALID_BLOCK_TAGS: [&str; 74] = [
     "hideconstructor",
     "ignore",
     "implements",
-    "import",
     "inheritdoc",
     "inner",
     "instance",
     "interface",
-    "internal",
     "kind",
     "lends",
     "license",
@@ -109,7 +107,6 @@ const VALID_BLOCK_TAGS: [&str; 74] = [
     "module",
     "name",
     "namespace",
-    "overload",
     "override",
     "package",
     "param",
@@ -120,12 +117,10 @@ const VALID_BLOCK_TAGS: [&str; 74] = [
     "readonly",
     "requires",
     "returns",
-    "satisfies",
     "see",
     "since",
     "static",
     "summary",
-    "template",
     "this",
     "throws",
     "todo",
@@ -135,6 +130,12 @@ const VALID_BLOCK_TAGS: [&str; 74] = [
     "variation",
     "version",
     "yields",
+    // JSDoc TS specific
+    "import",
+    "internal",
+    "overload",
+    "satisfies",
+    "template",
 ];
 
 const JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
@@ -242,7 +243,7 @@ impl Rule for CheckTagNames {
 
                 // Additional check for `typed` mode
                 if config.typed {
-                    if ALWAYS_INVALID_TAGS_IF_TYPED.binary_search(&tag_name).is_ok() {
+                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
                         ctx.diagnostic(check_tag_names_diagnostic(
                             tag.kind.span,
                             &format!("`@{tag_name}` is redundant when using a type system."),
@@ -255,9 +256,7 @@ impl Rule for CheckTagNames {
                         continue;
                     }
 
-                    if !is_ambient
-                        && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.binary_search(&tag_name).is_ok()
-                    {
+                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
                         ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.")));
                         continue;
                     }
@@ -265,7 +264,7 @@ impl Rule for CheckTagNames {
 
                 // If invalid or unknown, report
                 let is_valid = (config.jsx_tags && JSX_TAGS.contains(&tag_name))
-                    || VALID_BLOCK_TAGS.binary_search(&tag_name).is_ok();
+                    || VALID_BLOCK_TAGS.contains(tag_name);
                 if !is_valid {
                     ctx.diagnostic(check_tag_names_diagnostic(
                         tag.kind.span,

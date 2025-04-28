@@ -51,7 +51,8 @@ impl Lexer<'_> {
             self.consume_char();
         } else {
             self.unexpected_err();
-            return Kind::Undetermined;
+            self.advance_to_end();
+            return Kind::Eof;
         }
 
         while let Some(b) = self.peek_byte() {
@@ -67,7 +68,8 @@ impl Lexer<'_> {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
-                        return Kind::Undetermined;
+                        self.advance_to_end();
+                        return Kind::Eof;
                     }
                 }
                 b if kind.matches_number_byte(b) => {
@@ -222,6 +224,7 @@ impl Lexer<'_> {
             }
         }
         self.error(diagnostics::invalid_number_end(Span::new(offset, self.offset())));
-        Kind::Undetermined
+        self.advance_to_end();
+        Kind::Eof
     }
 }

@@ -285,7 +285,11 @@ impl NoUnusedVars {
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
                     }
-                    _ => diagnostic::declared(symbol, &self.vars_ignore_pattern),
+                    _ => diagnostic::declared(
+                        symbol,
+                        &self.vars_ignore_pattern,
+                        symbol.has_reference_used_as_type_query(),
+                    ),
                 };
 
                 ctx.diagnostic_with_suggestion(report, |fixer| {
@@ -309,30 +313,34 @@ impl NoUnusedVars {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
             AstKind::TSModuleDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
             AstKind::TSInterfaceDeclaration(_) => {
                 if symbol.is_in_declared_module() {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
             AstKind::TSTypeParameter(_) => {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
             AstKind::CatchParameter(_) => {
-                ctx.diagnostic(diagnostic::declared(symbol, &self.caught_errors_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(
+                    symbol,
+                    &self.caught_errors_ignore_pattern,
+                    false,
+                ));
             }
-            _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None)),
+            _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
         }
     }
 
@@ -342,8 +350,7 @@ impl NoUnusedVars {
         let flags = symbol.flags();
 
         // 1. ignore enum members. Only enums get checked
-        // 2. ignore all ambient TS declarations, e.g. `declare class Foo {}`
-        if flags.intersects(SymbolFlags::EnumMember.union(SymbolFlags::Ambient))
+        if flags.intersects(SymbolFlags::EnumMember)
             // ambient namespaces
             || flags == AMBIENT_NAMESPACE_FLAGS
             || (symbol.is_in_ts() && symbol.is_in_declare_global())

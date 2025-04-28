@@ -18,7 +18,7 @@
 #![allow(rustdoc::broken_intra_doc_links)]
 
 mod arguments;
-mod buffer;
+pub mod buffer;
 mod builders;
 pub mod comments;
 mod context;
@@ -56,15 +56,14 @@ pub use format_element::FormatElement;
 pub use group_id::GroupId;
 use oxc_ast::ast::Program;
 
-pub use self::comments::{CommentStyle, Comments, SourceComment};
-use self::printer::{Printer, PrinterOptions};
+pub use self::comments::{Comments, SourceComment};
+use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
     context::FormatContext,
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     state::{FormatState, FormatStateSnapshot},
-    syntax_element_key::SyntaxElementKey,
     syntax_node::SyntaxNode,
     syntax_token::SyntaxToken,
     syntax_trivia_piece_comments::SyntaxTriviaPieceComments,

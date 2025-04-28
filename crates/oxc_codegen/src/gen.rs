@@ -77,20 +77,20 @@ impl Gen for Directive<'_> {
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
         let directive = self.directive.as_str();
 
-        let mut chars = directive.chars();
+        let mut bytes = directive.as_bytes().iter();
         let mut quote = p.quote;
-        while let Some(c) = chars.next() {
-            match c {
-                '"' => {
+        while let Some(&b) = bytes.next() {
+            match b {
+                b'"' => {
                     quote = Quote::Single;
                     break;
                 }
-                '\'' => {
+                b'\'' => {
                     quote = Quote::Double;
                     break;
                 }
-                '\\' => {
-                    chars.next();
+                b'\\' => {
+                    bytes.next();
                 }
                 _ => {}
             }
@@ -1038,6 +1038,10 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.needs_semicolon = false;
             }
         } else {
+            if self.export_kind.is_type() {
+                p.print_hard_space();
+                p.print_str("type");
+            }
             p.print_soft_space();
             p.print_ascii_byte(b'{');
             if !self.specifiers.is_empty() {

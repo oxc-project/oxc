@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Refactor
+
+- d22c1ae syntax: Move `CloneIn` impls (#10571) (overlookmotel)
+
+## [0.65.0] - 2025-04-21
+
+### Bug Fixes
+
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+- 33a2625 transformer/typescript: Namespaces disappeared and do not transform when a type-only namespace followed by a value module namespace (#10511) (Dunqing)
+
 ## [0.64.0] - 2025-04-17
 
 ### Features

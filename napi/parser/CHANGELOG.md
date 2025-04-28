@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Bug Fixes
+
+- 24ab2f3 ast/estree: Convert `TSClassImplements::expression` to `MemberExpression` in TS-ESTree AST (#10607) (overlookmotel)
+- 0825834 ast/estree: Correct `this` in `TSTypeName` in TS-ESTree AST (#10603) (overlookmotel)
+- d1f5abb ast/estree: Fix TS-ESTree AST for `TSModuleDeclaration` (#10574) (overlookmotel)
+- 66e384c ast/estree: Add missing fields to `ObjectPattern` in TS-ESTree AST (#10570) (overlookmotel)
+- a9785e3 parser,linter: Consider typescript declarations for named exports (#10532) (Ulrich Stark)
+
+### Refactor
+
+- 936f885 napi/parser: Refactor `wrap` files (#10480) (overlookmotel)
+
+## [0.67.0] - 2025-04-27
+
+### Bug Fixes
+
+- 24ab2f3 ast/estree: Convert `TSClassImplements::expression` to `MemberExpression` in TS-ESTree AST (#10607) (overlookmotel)
+- 0825834 ast/estree: Correct `this` in `TSTypeName` in TS-ESTree AST (#10603) (overlookmotel)
+- d1f5abb ast/estree: Fix TS-ESTree AST for `TSModuleDeclaration` (#10574) (overlookmotel)
+- 66e384c ast/estree: Add missing fields to `ObjectPattern` in TS-ESTree AST (#10570) (overlookmotel)
+- a9785e3 parser,linter: Consider typescript declarations for named exports (#10532) (Ulrich Stark)
+
+### Refactor
+
+- 936f885 napi/parser: Refactor `wrap` files (#10480) (overlookmotel)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 43ad4e9 ast: Box `this_param` in `TSCallSignatureDeclaration` (#10558) (Yuji Sugiura)
+- 8eb3c0a ast/estree: Fix raw deser for `FormalParameter` (#10548) (overlookmotel)
+- f19b287 estree: Add `TSParameterProperty` (#10534) (Yuji Sugiura)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 43ad4e9 ast: Box `this_param` in `TSCallSignatureDeclaration` (#10558) (Yuji Sugiura)
+- 8eb3c0a ast/estree: Fix raw deser for `FormalParameter` (#10548) (overlookmotel)
+- f19b287 estree: Add `TSParameterProperty` (#10534) (Yuji Sugiura)
+
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Bug Fixes
+
+- 1952e30 ast/estree: Serialize class constructor key as `Identifier` in TS-ESTree AST (#10471) (overlookmotel)
+- fbf0ae2 estree: Add missing fixed fields to `AssignmentPattern` (#10490) (Yuji Sugiura)
+- a42d85f estree: `FormalParameters` serializer for TS types (#10462) (Yuji Sugiura)
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+
+### Documentation
+
+- 109cb21 napi/parser: Remove raw transfer from example (#10486) (overlookmotel)
+
+### Refactor
+
+
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Bug Fixes
+
+- 1952e30 ast/estree: Serialize class constructor key as `Identifier` in TS-ESTree AST (#10471) (overlookmotel)
+- fbf0ae2 estree: Add missing fixed fields to `AssignmentPattern` (#10490) (Yuji Sugiura)
+- a42d85f estree: `FormalParameters` serializer for TS types (#10462) (Yuji Sugiura)
+- 4f1343b parser: Fix missing type export in module information (#10516) (Ulrich Stark)
+
+### Documentation
+
+- 109cb21 napi/parser: Remove raw transfer from example (#10486) (overlookmotel)
+
+### Refactor
+
+
 ## [0.64.0] - 2025-04-17
 
 - c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)

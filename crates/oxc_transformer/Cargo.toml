@@ -1,6 +1,6 @@
 [package]
 name = "oxc_transformer"
-version = "0.64.0"
+version = "0.67.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -49,7 +49,4 @@ sha1 = { workspace = true }
 insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
-oxc_sourcemap = { workspace = true }
-oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
-similar = { workspace = true }

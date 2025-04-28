@@ -788,9 +788,7 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos + 40),
-  };
+  return deserializeBindingPatternKind(pos + 40);
 }
 
 function deserializeFunctionBody(pos) {
@@ -1624,11 +1622,36 @@ function deserializeTSTypeAliasDeclaration(pos) {
 }
 
 function deserializeTSClassImplements(pos) {
+  let expression = deserializeTSTypeName(pos + 8);
+  if (expression.type === 'TSQualifiedName') {
+    let parent = expression = {
+      type: 'MemberExpression',
+      start: expression.start,
+      end: expression.end,
+      object: expression.left,
+      property: expression.right,
+      computed: false,
+      optional: false,
+    };
+
+    while (parent.object.type === 'TSQualifiedName') {
+      const object = parent.object;
+      parent = parent.object = {
+        type: 'MemberExpression',
+        start: object.start,
+        end: object.end,
+        object: object.left,
+        property: object.right,
+        computed: false,
+        optional: false,
+      };
+    }
+  }
   return {
     type: 'TSClassImplements',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    expression: deserializeTSTypeName(pos + 8),
+    expression,
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
@@ -1684,7 +1707,7 @@ function deserializeTSIndexSignature(pos) {
 }
 
 function deserializeTSCallSignatureDeclaration(pos) {
-  const params = deserializeBoxFormalParameters(pos + 48);
+  const params = deserializeBoxFormalParameters(pos + 24);
   const thisParam = deserializeOptionBoxTSThisParameter(pos + 16);
   if (thisParam !== null) params.unshift(thisParam);
   return {
@@ -1693,7 +1716,7 @@ function deserializeTSCallSignatureDeclaration(pos) {
     end: deserializeU32(pos + 4),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 8),
     params,
-    returnType: deserializeOptionBoxTSTypeAnnotation(pos + 56),
+    returnType: deserializeOptionBoxTSTypeAnnotation(pos + 32),
   };
 }
 
@@ -1763,17 +1786,31 @@ function deserializeTSTypePredicate(pos) {
 }
 
 function deserializeTSModuleDeclaration(pos) {
-  const kind = deserializeTSModuleDeclarationKind(pos + 80);
-  return {
-    type: 'TSModuleDeclaration',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    id: deserializeTSModuleDeclarationName(pos + 8),
-    body: deserializeOptionTSModuleDeclarationBody(pos + 64),
-    kind,
-    declare: deserializeBool(pos + 81),
-    global: kind === 'global',
-  };
+  const kind = deserializeTSModuleDeclarationKind(pos + 80),
+    global = kind === 'global',
+    start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
+    declare = deserializeBool(pos + 81);
+  let id = deserializeTSModuleDeclarationName(pos + 8),
+    body = deserializeOptionTSModuleDeclarationBody(pos + 64);
+
+  // Flatten `body`, and nest `id`
+  if (body !== null && body.type === 'TSModuleDeclaration') {
+    id = {
+      type: 'TSQualifiedName',
+      start: body.id.start,
+      end: id.end,
+      left: body.id,
+      right: id,
+    };
+    body = Object.hasOwn(body, 'body') ? body.body : null;
+  }
+
+  // Skip `body` field if `null`
+  const node = body === null
+    ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
+    : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+  return node;
 }
 
 function deserializeTSModuleBlock(pos) {
@@ -2039,6 +2076,7 @@ function deserializeExportEntry(pos) {
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
+    isType: deserializeBool(pos + 136),
   };
 }
 
@@ -3783,7 +3821,9 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     default:
@@ -3883,7 +3923,9 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
@@ -3901,7 +3943,9 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
@@ -5491,11 +5535,6 @@ function deserializeVecTSIndexSignatureName(pos) {
     pos += 32;
   }
   return arr;
-}
-
-function deserializeOptionTSThisParameter(pos) {
-  if (uint8[pos] === 0) return null;
-  return deserializeTSThisParameter(pos + 8);
 }
 
 function deserializeOptionTSModuleDeclarationBody(pos) {

@@ -520,6 +520,11 @@ pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
 }
 
+#[cold]
+pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("import() requires a specifier.").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]
@@ -575,6 +580,20 @@ pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
+}
+
+/// TS(2206)
+#[cold]
+pub fn type_modifier_on_named_type_import(span: Span) -> OxcDiagnostic {
+    ts_error("2206", "The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.")
+             .with_label(span)
+}
+
+/// TS(2207)
+#[cold]
+pub fn type_modifier_on_named_type_export(span: Span) -> OxcDiagnostic {
+    ts_error("2207", "The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.")
+         .with_label(span)
 }
 
 // ================================== TS ENUMS =================================

@@ -88,7 +88,7 @@ declare_oxc_lint!(
     Eqeqeq,
     eslint,
     pedantic,
-    conditional_fix
+    conditional_fix_dangerous,
 );
 
 impl Rule for Eqeqeq {
@@ -166,20 +166,23 @@ impl Rule for Eqeqeq {
             Span::new(operator_start, operator_end)
         };
 
-        // If the comparison is a `typeof` comparison or both sides are literals with the same type, then it's safe to fix.
-        if is_type_of_binary_bool || are_literals_and_same_type_bool {
-            ctx.diagnostic_with_fix(
-                eqeqeq_diagnostic(operator, preferred_operator, operator_span),
-                |fixer| {
-                    let start = binary_expr.left.span().end;
-                    let end = binary_expr.right.span().start;
-                    let span = Span::new(start, end);
-                    fixer.replace(span, preferred_operator_with_padding)
-                },
-            );
+        let fix_kind = if is_type_of_binary_bool || are_literals_and_same_type_bool {
+            FixKind::SafeFix
         } else {
-            ctx.diagnostic(eqeqeq_diagnostic(operator, preferred_operator, operator_span));
-        }
+            FixKind::DangerousFix
+        };
+
+        ctx.diagnostic_with_fix_of_kind(
+            eqeqeq_diagnostic(operator, preferred_operator, operator_span),
+            fix_kind,
+            |fixer| {
+                let start = binary_expr.left.span().end;
+                let end = binary_expr.right.span().start;
+                let span = Span::new(start, end);
+
+                fixer.replace(span, preferred_operator_with_padding)
+            },
+        );
     }
 }
 
@@ -300,9 +303,8 @@ fn test() {
         ("'foo'=='foo'", "'foo' === 'foo'", None),
         ("typeof a == b", "typeof a === b", None),
         ("1000  !=  1000", "1000 !== 1000", None),
-        // The following cases will not be fixed
-        ("(1000 + 1)  !=  1000", "(1000 + 1)  !=  1000", None),
-        ("a == b", "a == b", None),
+        ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
+        ("a == b", "a === b", None),
     ];
 
     Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

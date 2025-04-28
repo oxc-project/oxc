@@ -5,16 +5,14 @@ use tower_lsp_server::lsp_types::{
     WorkspaceServerCapabilities,
 };
 
-use crate::commands::LSP_COMMANDS;
+use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
 
-pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
-    CodeActionKind::new("source.fixAll.oxc");
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Capabilities {
     pub code_action_provider: bool,
     pub workspace_apply_edit: bool,
     pub workspace_execute_command: bool,
+    pub workspace_configuration: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -31,18 +29,22 @@ impl From<ClientCapabilities> for Capabilities {
             value.workspace.as_ref().is_some_and(|workspace| workspace.apply_edit.is_some());
         let workspace_execute_command =
             value.workspace.as_ref().is_some_and(|workspace| workspace.execute_command.is_some());
+        let workspace_configuration = value
+            .workspace
+            .as_ref()
+            .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
 
-        Self { code_action_provider, workspace_apply_edit, workspace_execute_command }
+        Self {
+            code_action_provider,
+            workspace_apply_edit,
+            workspace_execute_command,
+            workspace_configuration,
+        }
     }
 }
 
 impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
-        let commands = LSP_COMMANDS
-            .iter()
-            .filter_map(|c| if c.available(value.clone()) { Some(c.command_id()) } else { None })
-            .collect();
-
         Self {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
             workspace: Some(WorkspaceServerCapabilities {
@@ -67,7 +69,10 @@ impl From<Capabilities> for ServerCapabilities {
                 None
             },
             execute_command_provider: if value.workspace_execute_command {
-                Some(ExecuteCommandOptions { commands, ..Default::default() })
+                Some(ExecuteCommandOptions {
+                    commands: vec![FIX_ALL_COMMAND_ID.to_string()],
+                    ..Default::default()
+                })
             } else {
                 None
             },

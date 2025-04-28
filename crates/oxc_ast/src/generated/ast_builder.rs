@@ -12388,18 +12388,19 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn ts_signature_call_signature_declaration<T1, T2, T3>(
+    pub fn ts_signature_call_signature_declaration<T1, T2, T3, T4>(
         self,
         span: Span,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
     ) -> TSSignature<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         TSSignature::TSCallSignatureDeclaration(self.alloc_ts_call_signature_declaration(
             span,
@@ -12643,23 +12644,24 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn ts_call_signature_declaration<T1, T2, T3>(
+    pub fn ts_call_signature_declaration<T1, T2, T3, T4>(
         self,
         span: Span,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
     ) -> TSCallSignatureDeclaration<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         TSCallSignatureDeclaration {
             span,
             type_parameters: type_parameters.into_in(self.allocator),
-            this_param,
+            this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
         }
@@ -12677,18 +12679,19 @@ impl<'a> AstBuilder<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn alloc_ts_call_signature_declaration<T1, T2, T3>(
+    pub fn alloc_ts_call_signature_declaration<T1, T2, T3, T4>(
         self,
         span: Span,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
     ) -> Box<'a, TSCallSignatureDeclaration<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         Box::new_in(
             self.ts_call_signature_declaration(

@@ -1,14 +1,13 @@
 use std::str;
 
-use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Allocator, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::SPAN;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -23,16 +22,16 @@ use crate::{BoundIdentifier, scopes_collector::ChildScopeCollector};
 ///
 /// `current_scope_id` is the ID of current scope during traversal.
 /// `walk_*` functions update this field when entering/exiting a scope.
-pub struct TraverseScoping {
+pub struct TraverseScoping<'a> {
     scoping: Scoping,
-    uid_names: Option<FxHashSet<CompactStr>>,
+    uid_names: Option<FxHashSet<&'a str>>,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,
     current_block_scope_id: ScopeId,
 }
 
 // Public methods
-impl TraverseScoping {
+impl<'a> TraverseScoping<'a> {
     /// Get current scope ID
     #[inline]
     pub fn current_scope_id(&self) -> ScopeId {
@@ -187,7 +186,7 @@ impl TraverseScoping {
     /// the resulting scopes will be:
     /// ```ts
     /// parentScope1: {
-    ///     newScope: {   
+    ///     newScope: {
     ///         childScope: { }
     ///     }
     ///     childScope2: { }
@@ -257,7 +256,7 @@ impl TraverseScoping {
     /// Generate binding.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
-    pub fn generate_binding<'a>(
+    pub fn generate_binding(
         &mut self,
         name: Atom<'a>,
         scope_id: ScopeId,
@@ -270,7 +269,7 @@ impl TraverseScoping {
     /// Generate binding in current scope.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
-    pub fn generate_binding_in_current_scope<'a>(
+    pub fn generate_binding_in_current_scope(
         &mut self,
         name: Atom<'a>,
         flags: SymbolFlags,
@@ -354,17 +353,17 @@ impl TraverseScoping {
     /// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
     /// `___2` etc. They'll all be unique within the program.
     #[expect(clippy::missing_panics_doc)]
-    pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
+    pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Atom<'a> {
         // If `uid_names` is not already populated, initialize it
         if self.uid_names.is_none() {
-            self.uid_names = Some(self.get_uid_names());
+            self.uid_names = Some(self.get_uid_names(allocator));
         }
         let uid_names = self.uid_names.as_mut().unwrap();
 
         let base = get_uid_name_base(name);
-        let uid = get_unique_name(base, uid_names);
-        uid_names.insert(uid.clone());
-        uid
+        let uid = get_unique_name(base, uid_names, allocator).into_bump_str();
+        uid_names.insert(uid);
+        Atom::from(uid)
     }
 
     /// Create a reference bound to a `SymbolId`
@@ -430,26 +429,10 @@ impl TraverseScoping {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.delete_reference(ident.reference_id(), &ident.name);
     }
-
-    /// Rename symbol.
-    ///
-    /// The following must be true for successful operation:
-    /// * Binding exists in specified scope for `symbol_id`.
-    /// * No binding already exists in scope for `new_name`.
-    ///
-    /// Panics in debug mode if either of the above are not satisfied.
-    #[expect(clippy::needless_pass_by_value)]
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
-        // Rename symbol
-        // FIXME: remove `to_string`
-        let old_name = self.scoping.set_symbol_name(symbol_id, new_name.as_str()).to_string();
-        // Rename binding
-        self.scoping.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
-    }
 }
 
 // Methods used internally within crate
-impl TraverseScoping {
+impl<'a> TraverseScoping<'a> {
     /// Create new `TraverseScoping`
     pub(super) fn new(scoping: Scoping) -> Self {
         Self {
@@ -492,14 +475,14 @@ impl TraverseScoping {
     ///
     /// Once this set is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
-    fn get_uid_names(&self) -> FxHashSet<CompactStr> {
+    fn get_uid_names(&self, allocator: &'a Allocator) -> FxHashSet<&'a str> {
         self.scoping
             .root_unresolved_references()
             .keys()
             .copied()
             .chain(self.scoping.symbol_names())
             .filter(|name| name.as_bytes().first() == Some(&b'_'))
-            .map(CompactStr::from)
+            .map(|str| allocator.alloc_str(str))
             .collect()
     }
 
@@ -526,8 +509,12 @@ fn get_uid_name_base(name: &str) -> &str {
     unsafe { str::from_utf8_unchecked(bytes) }
 }
 
-fn get_unique_name(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactStr {
-    CompactStr::from(get_unique_name_impl(base, uid_names))
+fn get_unique_name<'a>(
+    base: &str,
+    uid_names: &FxHashSet<&'a str>,
+    allocator: &'a Allocator,
+) -> ArenaString<'a> {
+    get_unique_name_impl(base, uid_names, allocator)
 }
 
 // TODO: We could make this function more performant, especially when it checks a lot of names
@@ -538,17 +525,21 @@ fn get_unique_name(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactStr 
 // we could calculate an "unfinished" hash not including the last block, and then just add the final
 // block to "finish" the hash on each iteration. With `FxHash` this would be straight line code and only
 // a few operations.
-fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactString {
-    // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
+fn get_unique_name_impl<'a>(
+    base: &str,
+    uid_names: &FxHashSet<&'a str>,
+    allocator: &'a Allocator,
+) -> ArenaString<'a> {
+    // Create `ArenaString` prepending name with `_`, and with 1 byte excess capacity.
     // The extra byte is to avoid reallocation if need to add a digit on the end later,
     // which will not be too uncommon.
     // Having to add 2 digits will be uncommon, so we don't allocate 2 extra bytes for 2 digits.
-    let mut name = CompactString::with_capacity(base.len() + 2);
+    let mut name = ArenaString::with_capacity_in(base.len() + 2, allocator);
     name.push('_');
     name.push_str(base);
 
     // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
-    // operations to a minimum for postfixes up to 99 - reusing a single `CompactString`,
+    // operations to a minimum for postfixes up to 99 - reusing a single `ArenaString`,
     // rather than generating a new string on each attempt.
     // For speed we manipulate the string as bytes.
     // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
@@ -625,9 +616,13 @@ fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> Compac
     let mut buffer = ItoaBuffer::new();
     for n in 100..=u32::MAX {
         let digits = buffer.format(n);
+        /*
         // SAFETY: `base_len` is always shorter than current `name.len()`, on a UTF-8 char boundary,
         // and `name` contains at least `base_len` initialized bytes
         unsafe { name.set_len(base_len) };
+        */
+        // workaround for `set_len` does not exist in `ArenaString`
+        name.truncate(base_len);
         name.push_str(digits);
         if !uid_names.contains(name.as_str()) {
             return name;
@@ -757,8 +752,9 @@ fn test_get_unique_name() {
         ),
     ];
 
+    let allocator = Allocator::default();
     for (used, name, expected) in cases {
-        let used = used.iter().map(|name| CompactStr::from(*name)).collect();
-        assert_eq!(get_unique_name(name, &used), expected);
+        let used = used.iter().copied().collect::<FxHashSet<_>>();
+        assert_eq!(get_unique_name(name, &used, &allocator), *expected);
     }
 }

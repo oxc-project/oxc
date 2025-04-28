@@ -133,7 +133,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
         }
         callee @ match_member_expression!(Expression) => {
             if let Some(ident) = callee.to_member_expression().static_property_name() {
-                return TYPE_CHECKING_IDENTIFIERS.binary_search(&ident).is_ok();
+                return TYPE_CHECKING_IDENTIFIERS.contains(ident);
             }
             false
         }
@@ -143,13 +143,13 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
 
 fn is_type_checking_member_expr(member_expr: &MemberExpression) -> bool {
     if let Some(ident) = member_expr.static_property_name() {
-        return TYPE_CHECKING_IDENTIFIERS.binary_search(&ident).is_ok();
+        return TYPE_CHECKING_IDENTIFIERS.contains(ident);
     }
 
     false
 }
 
-const TYPE_CHECKING_IDENTIFIERS: [&str; 36] = [
+const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set![
     "isArray",
     "isArrayBuffer",
     "isArrayLike",
@@ -447,15 +447,16 @@ fn test() {
         //             throw new TypeError;
         //         }
         //         "#,
-        r#"
+        r"
             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
                 throw new Error();
             }
-        r#"
+        ",
+        r"
             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
+        ",
         r"
             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();

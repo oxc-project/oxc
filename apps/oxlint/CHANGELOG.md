@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.8] - 2025-04-27
+
+### Bug Fixes
+
+- 723b4c6 linter: Cross_module of LintService not being enabled despite enabled import plugin (#10597) (Ulrich Stark)
+- 9a02066 oxlint: Current dir as arg (#9382) (Ben Jones)
+
+## [0.16.7] - 2025-04-21
+
+### Bug Fixes
+
+- 4e1f536 linter: Config path resolution when path contains '..' syntax (#10367) (Florian Bopp)
+
+### Refactor
+
+- 5ab4d40 linter: Simplify error handling (#10404) (camchenry)
+
 ## [0.16.6] - 2025-04-14
 
 ### Bug Fixes

@@ -1,11 +1,11 @@
 import { deepStrictEqual, strictEqual } from 'assert';
 import { Uri, workspace, WorkspaceEdit } from 'vscode';
-import { Config } from './Config.js';
+import { WorkspaceConfig } from './WorkspaceConfig.js';
 
 suite('Config', () => {
   setup(async () => {
     const wsConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'enable', 'trace.server', 'configPath', 'path.server', 'flags'];
+    const keys = ['lint.run', 'configPath', 'flags'];
 
     await Promise.all(keys.map(key => wsConfig.update(key, undefined)));
   });
@@ -19,13 +19,9 @@ suite('Config', () => {
   });
 
   test('default values on initialization', () => {
-    const config = new Config();
-
+    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
     strictEqual(config.runTrigger, 'onType');
-    strictEqual(config.enable, true);
-    strictEqual(config.trace, 'off');
     strictEqual(config.configPath, null);
-    strictEqual(config.binPath, '');
     deepStrictEqual(config.flags, {});
   });
 
@@ -34,7 +30,7 @@ suite('Config', () => {
     await wsConfig.update('configPath', '');
     await wsConfig.update('flags', {});
 
-    const config = new Config();
+    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
 
     deepStrictEqual(config.flags, {});
     strictEqual(config.configPath, null);
@@ -45,31 +41,25 @@ suite('Config', () => {
     await wsConfig.update('configPath', undefined);
     await wsConfig.update('flags', { disable_nested_config: '' });
 
-    const config = new Config();
+    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
 
     deepStrictEqual(config.flags, { disable_nested_config: '' });
     strictEqual(config.configPath, '.oxlintrc.json');
   });
 
   test('updating values updates the workspace configuration', async () => {
-    const config = new Config();
+    const config = new WorkspaceConfig(workspace.getConfiguration('oxc'));
 
     await Promise.all([
       config.updateRunTrigger('onSave'),
-      config.updateEnable(false),
-      config.updateTrace('messages'),
       config.updateConfigPath('./somewhere'),
-      config.updateBinPath('./binary'),
       config.updateFlags({ test: 'value' }),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc');
 
     strictEqual(wsConfig.get('lint.run'), 'onSave');
-    strictEqual(wsConfig.get('enable'), false);
-    strictEqual(wsConfig.get('trace.server'), 'messages');
     strictEqual(wsConfig.get('configPath'), './somewhere');
-    strictEqual(wsConfig.get('path.server'), './binary');
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
   });
 });

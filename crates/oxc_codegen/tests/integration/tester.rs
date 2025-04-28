@@ -7,7 +7,7 @@ use oxc_span::SourceType;
 pub fn test_with_parse_options(source_text: &str, expected: &str, parse_options: ParseOptions) {
     let allocator = Allocator::default();
     let ret =
-        Parser::new(&allocator, source_text, SourceType::jsx()).with_options(parse_options).parse();
+        Parser::new(&allocator, source_text, SourceType::tsx()).with_options(parse_options).parse();
     let result = CodeGenerator::new().build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text}");
 }
@@ -24,7 +24,7 @@ pub fn test_same(source_text: &str) {
 
 #[track_caller]
 pub fn test_options(source_text: &str, expected: &str, options: CodegenOptions) {
-    test_options_with_source_type(source_text, expected, SourceType::jsx(), options);
+    test_options_with_source_type(source_text, expected, SourceType::tsx(), options);
 }
 
 #[track_caller]

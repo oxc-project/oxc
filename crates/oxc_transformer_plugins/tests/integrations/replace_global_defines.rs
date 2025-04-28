@@ -1,19 +1,24 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
+use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
 use crate::codegen;
 
+#[track_caller]
 pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
+    let ret = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
+    // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
+    Compressor::new(&allocator, CompressOptions::default())
+        .dead_code_elimination_with_scoping(ret.scoping, &mut program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
@@ -22,6 +27,7 @@ pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfi
     assert_eq!(result, expected, "for source {source_text}");
 }
 
+#[track_caller]
 fn test_same(source_text: &str, config: ReplaceGlobalDefinesConfig) {
     test(source_text, source_text, config);
 }
@@ -29,7 +35,7 @@ fn test_same(source_text: &str, config: ReplaceGlobalDefinesConfig) {
 #[test]
 fn simple() {
     let config = ReplaceGlobalDefinesConfig::new(&[("id", "text"), ("str", "'text'")]).unwrap();
-    test("id, str", "text, 'text'", config);
+    test("const _ = [id, str]", "const _ = [text, 'text']", config);
 }
 
 #[test]
@@ -49,13 +55,13 @@ fn shadowed() {
 fn dot() {
     let config =
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "production")]).unwrap();
-    test("process.env.NODE_ENV", "production", config.clone());
-    test("process.env", "process.env", config.clone());
-    test("process.env.foo.bar", "process.env.foo.bar", config.clone());
-    test("process", "process", config.clone());
+    test("const _ = process.env.NODE_ENV", "const _ = production", config.clone());
+    test("const _ = process.env", "const _ = process.env", config.clone());
+    test("const _ = process.env.foo.bar", "const _ = process.env.foo.bar", config.clone());
+    test("const _ = process", "const _ = process", config.clone());
 
     // computed member expression
-    test("process['env'].NODE_ENV", "production", config);
+    test("const _ = process['env'].NODE_ENV", "const _ = production", config);
 }
 
 #[test]
@@ -65,9 +71,9 @@ fn dot_with_overlap() {
         ("import.meta.env", "__foo__"),
     ])
     .unwrap();
-    test("import.meta.env", "__foo__", config.clone());
-    test("import.meta.env.FOO", "import.meta.env.FOO", config.clone());
-    test("import.meta.env.NODE_ENV", "__foo__.NODE_ENV", config.clone());
+    test("const _ = import.meta.env", "const _ = __foo__", config.clone());
+    test("const _ = import.meta.env.FOO", "const _ = import.meta.env.FOO", config.clone());
+    test("const _ = import.meta.env.NODE_ENV", "const _ = __foo__.NODE_ENV", config.clone());
 
     test("import.meta.env = 0", "__foo__ = 0", config.clone());
     test("import.meta.env.NODE_ENV = 0", "__foo__.NODE_ENV = 0", config.clone());
@@ -99,8 +105,8 @@ fn dot_nested() {
 #[test]
 fn dot_with_postfix_wildcard() {
     let config = ReplaceGlobalDefinesConfig::new(&[("import.meta.env.*", "undefined")]).unwrap();
-    test("import.meta.env.result", "undefined", config.clone());
-    test("import.meta.env", "import.meta.env", config);
+    test("const _ = import.meta.env.result", "const _ = undefined", config.clone());
+    test("const _ = import.meta.env", "const _ = import.meta.env", config);
 }
 
 #[test]
@@ -112,22 +118,22 @@ fn dot_with_postfix_mixed() {
         ("import.meta", "1"),
     ])
     .unwrap();
-    test("import.meta.env.result", "undefined", config.clone());
-    test("import.meta.env.result.many.nested", "undefined", config.clone());
-    test("import.meta.env", "env", config.clone());
-    test("import.meta.somethingelse", "metaProperty", config.clone());
-    test("import.meta", "1", config);
+    test("const _ = import.meta.env.result", "const _ = undefined", config.clone());
+    test("const _ = import.meta.env.result.many.nested", "const _ = undefined", config.clone());
+    test("const _ = import.meta.env", "const _ = env", config.clone());
+    test("const _ = import.meta.somethingelse", "const _ = metaProperty", config.clone());
+    test("const _ = import.meta", "const _ = 1", config);
 }
 
 #[test]
 fn optional_chain() {
     let config = ReplaceGlobalDefinesConfig::new(&[("a.b.c", "1")]).unwrap();
-    test("a.b.c", "1", config.clone());
-    test("a?.b.c", "1", config.clone());
-    test("a.b?.c", "1", config.clone());
-    test("a['b']['c']", "1", config.clone());
-    test("a?.['b']['c']", "1", config.clone());
-    test("a['b']?.['c']", "1", config.clone());
+    test("const _ = a.b.c", "const _ = 1", config.clone());
+    test("const _ = a?.b.c", "const _ = 1", config.clone());
+    test("const _ = a.b?.c", "const _ = 1", config.clone());
+    test("const _ = a['b']['c']", "const _ = 1", config.clone());
+    test("const _ = a?.['b']['c']", "const _ = 1", config.clone());
+    test("const _ = a['b']?.['c']", "const _ = 1", config.clone());
 
     test_same("a[b][c]", config.clone());
     test_same("a?.[b][c]", config.clone());
@@ -173,25 +179,17 @@ fn this_expr() {
         ReplaceGlobalDefinesConfig::new(&[("this", "1"), ("this.foo", "2"), ("this.foo.bar", "3")])
             .unwrap();
     test(
-        "this, this.foo, this.foo.bar, this.foo.baz, this.bar",
-        "1, 2, 3, 2 .baz, 1 .bar;\n",
+        "const _ = this, this.foo, this.foo.bar, this.foo.baz, this.bar",
+        "const _ = 1, 2, 3, 2 .baz, 1 .bar;\n",
         config.clone(),
     );
 
     test(
         r"
-// This code should be the same as above
-(() => {
-	ok(
-		this,
-		this.foo,
-		this.foo.bar,
-		this.foo.baz,
-		this.bar,
-	);
-})();
+        // This code should be the same as above
+        (() => { ok( this, this.foo, this.foo.bar, this.foo.baz, this.bar,) })();
     ",
-        "(() => {\n\tok(1, 2, 3, 2 .baz, 1 .bar);\n})();\n",
+        "ok(1, 2, 3, 2 .baz, 1 .bar);",
         config.clone(),
     );
 

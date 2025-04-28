@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 150/243
+Passed: 154/250
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/17)
+# babel-plugin-transform-typescript (7/23)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -287,6 +287,66 @@ Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 
+* namespace/redeclaration-with-interface/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-alias/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 12, end: 15 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-only-namespace/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
+rebuilt        : SymbolId(0): []
+
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(1): [ReferenceId(1)]
@@ -364,7 +424,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/71)
+# legacy-decorators (3/72)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -378,35 +438,26 @@ rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
-rebuilt        : ScopeId(0): ["Cls", "_ref"]
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "Zoo", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["Cls", "Foo", "_ref"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "Cls":
-after transform: SymbolId(6): Span { start: 135, end: 138 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+after transform: SymbolId(7): Span { start: 145, end: 148 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Cls":
-after transform: SymbolId(10): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 135, end: 138 }
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(8): ReferenceFlags(Type)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(9): ReferenceFlags(Type)
-rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+after transform: SymbolId(13): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 145, end: 148 }
 Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
+after transform: SymbolId(3) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
-rebuilt        : ["Foo", "Object", "babelHelpers", "console", "dec"]
+rebuilt        : ["Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
 Bindings mismatch:

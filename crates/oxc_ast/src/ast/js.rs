@@ -1576,7 +1576,7 @@ pub struct AssignmentPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(decorators = TsEmptyArray))]
+#[estree(add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull))]
 pub struct ObjectPattern<'a> {
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
@@ -1679,7 +1679,7 @@ pub struct BindingRestElement<'a> {
 // https://github.com/estree/estree/blob/master/es5.md#patterns
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
 #[estree(
-    add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
+    add_ts_def = "type ParamPattern = FormalParameter | TSParameterProperty | FormalParameterRest",
     add_fields(expression = False),
     field_order(
         r#type, span, id, expression, generator, r#async, params, body,
@@ -1780,7 +1780,7 @@ pub enum FunctionType {
 pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
-    #[estree(ts_type = "Array<FormalParameter | FormalParameterRest>")]
+    #[estree(ts_type = "Array<FormalParameter | TSParameterProperty | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
@@ -1791,7 +1791,27 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
-#[estree(no_type)]
+#[estree(
+    no_type,
+    via = FormalParameterConverter,
+    add_ts_def = "
+        type FormalParameter =
+            & ({
+                decorators?: Array<Decorator>;
+            })
+            & BindingPattern;
+
+        export interface TSParameterProperty extends Span {
+            type: 'TSParameterProperty';
+            accessibility: TSAccessibility | null;
+            decorators: Array<Decorator>;
+            override: boolean;
+            parameter: FormalParameter;
+            readonly: boolean;
+            static: boolean;
+        }
+    "
+)]
 pub struct FormalParameter<'a> {
     #[estree(skip)]
     pub span: Span,

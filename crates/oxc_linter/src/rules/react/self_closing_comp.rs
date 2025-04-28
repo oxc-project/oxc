@@ -60,7 +60,7 @@ declare_oxc_lint!(
     SelfClosingComp,
     react,
     style,
-    pending
+    fix
 );
 
 impl Rule for SelfClosingComp {
@@ -116,12 +116,17 @@ impl Rule for SelfClosingComp {
         let mut is_dom_comp = false;
         if !is_comp {
             if let Some(tag_name) = jsx_el.opening_element.name.get_identifier_name() {
-                is_dom_comp = HTML_TAG.binary_search(&tag_name.as_str()).is_ok();
+                is_dom_comp = HTML_TAG.contains(tag_name.as_str());
             }
         }
 
         if self.html && is_dom_comp || self.component && !is_dom_comp {
-            ctx.diagnostic(self_closing_comp_diagnostic(jsx_closing_elem.span));
+            ctx.diagnostic_with_fix(self_closing_comp_diagnostic(jsx_closing_elem.span), |fixer| {
+                fixer.replace(
+                    Span::new(jsx_el.opening_element.span.end - 1, jsx_closing_elem.span.end),
+                    " />",
+                )
+            });
         }
     }
 
@@ -284,7 +289,7 @@ fn test() {
         ),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         (
             r#"var contentContainer = <div className="content"></div>;"#,
             r#"var contentContainer = <div className="content" />;"#,
@@ -351,5 +356,7 @@ fn test() {
             Some(serde_json::json!([{ "html": true }])),
         ),
     ];
-    Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -35,6 +35,7 @@ pub enum FormatElement {
     /// string with its start position in the input document.
     DynamicText {
         /// There's no need for the text to be mutable, using `Box<str>` safes 8 bytes over `String`.
+        // TODO: Do not allocate.
         text: Box<str>,
         /// The start position of the dynamic token in the unformatted source code
         source_position: TextSize,

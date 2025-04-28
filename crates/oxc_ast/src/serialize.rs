@@ -5,9 +5,9 @@ use cow_utils::CowUtils;
 use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, LoneSurrogatesString,
-    PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
-    ser::AppendToConcat,
+    CompactJSSerializer, CompactTSSerializer, ESTree, FlatStructSerializer, JsonSafeString,
+    LoneSurrogatesString, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer,
+    StructSerializer, ser::AppendToConcat,
 };
 use oxc_span::GetSpan;
 
@@ -593,6 +593,8 @@ impl ESTree for ElisionConverter<'_> {
                     POS_OFFSET<BindingRestElement>.argument.type_annotation
                 ),
                 optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+                decorators: [],
+                value: null,
                 /* END_IF_TS */
             });
         }
@@ -634,6 +636,80 @@ impl ESTree for FormalParametersRest<'_, '_> {
     }
 }
 
+/// Converter for `FormalParameter`.
+///
+/// In TS-ESTree AST, if `accessibility` is `Some`, or `readonly` or `override` is `true`,
+/// is serialized as `TSParameterProperty` instead, which has a different object shape.
+#[ast_meta]
+#[estree(
+    ts_type = "FormalParameter | TSParameterProperty",
+    raw_deser = "
+        /* IF_JS */
+        DESER[BindingPatternKind](POS_OFFSET.pattern.kind)
+        /* END_IF_JS */
+
+        /* IF_TS */
+        const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
+            readonly = DESER[bool](POS_OFFSET.readonly),
+            override = DESER[bool](POS_OFFSET.override);
+        let param;
+        if (accessibility === null && !readonly && !override) {
+            param = {
+                ...DESER[BindingPatternKind](POS_OFFSET.pattern.kind),
+                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation),
+                optional: DESER[bool](POS_OFFSET.pattern.optional),
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+            };
+        } else {
+            param = {
+                type: 'TSParameterProperty',
+                start: DESER[u32](POS_OFFSET.span.start),
+                end: DESER[u32](POS_OFFSET.span.end),
+                accessibility,
+                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+                override,
+                parameter: DESER[BindingPattern](POS_OFFSET.pattern),
+                readonly,
+                static: false,
+            };
+        }
+        param
+        /* END_IF_TS */
+    "
+)]
+pub struct FormalParameterConverter<'a, 'b>(pub &'b FormalParameter<'a>);
+
+impl ESTree for FormalParameterConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let param = self.0;
+
+        if S::INCLUDE_TS_FIELDS {
+            if param.has_modifier() {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
+                state.serialize_field("start", &param.span.start);
+                state.serialize_field("end", &param.span.end);
+                state.serialize_field("accessibility", &param.accessibility);
+                state.serialize_field("decorators", &param.decorators);
+                state.serialize_field("override", &param.r#override);
+                state.serialize_field("parameter", &param.pattern);
+                state.serialize_field("readonly", &param.readonly);
+                state.serialize_field("static", &False(()));
+                state.end();
+            } else {
+                let mut state = serializer.serialize_struct();
+                param.pattern.kind.serialize(FlatStructSerializer(&mut state));
+                state.serialize_field("typeAnnotation", &param.pattern.type_annotation);
+                state.serialize_field("optional", &param.pattern.optional);
+                state.serialize_field("decorators", &param.decorators);
+                state.end();
+            }
+        } else {
+            param.pattern.kind.serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `params` field of `Function`.
 ///
 /// In TS-ESTree, this adds `this_param` to start of the `params` array.
@@ -643,7 +719,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         /* IF_TS */
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         /* END_IF_TS */
         params
@@ -1049,6 +1125,135 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     }
 }
 
+/// Converter for `TSModuleDeclaration`.
+///
+/// Our AST represents `module X.Y.Z {}` as 3 x nested `TSModuleDeclaration`s.
+/// TS-ESTree represents it as a single `TSModuleDeclaration`,
+/// with a nested tree of `TSQualifiedName`s as `id`.
+#[ast_meta]
+#[estree(raw_deser = "
+    const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
+        global = kind === 'global',
+        start = DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end),
+        declare = DESER[bool](POS_OFFSET.declare);
+    let id = DESER[TSModuleDeclarationName](POS_OFFSET.id),
+        body = DESER[Option<TSModuleDeclarationBody>](POS_OFFSET.body);
+
+    // Flatten `body`, and nest `id`
+    if (body !== null && body.type === 'TSModuleDeclaration') {
+        id = {
+            type: 'TSQualifiedName',
+            start: body.id.start,
+            end: id.end,
+            left: body.id,
+            right: id,
+        };
+        body = Object.hasOwn(body, 'body') ? body.body : null;
+    }
+
+    // Skip `body` field if `null`
+    const node = body === null
+        ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
+        : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+    node
+")]
+pub struct TSModuleDeclarationConverter<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+
+impl ESTree for TSModuleDeclarationConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let module = self.0;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        state.serialize_field("start", &module.span.start);
+        state.serialize_field("end", &module.span.end);
+
+        match &module.body {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_module)) => {
+                // Nested modules e.g. `module X.Y.Z {}`.
+                // Collect all IDs in a `Vec`, in order they appear (i.e. [`X`, `Y`, `Z`]).
+                // Also get the inner `TSModuleBlock`.
+                let mut parts = Vec::with_capacity(4);
+
+                let TSModuleDeclarationName::Identifier(id) = &module.id else { unreachable!() };
+                parts.push(id);
+
+                let mut body = None;
+                let mut inner_module = inner_module.as_ref();
+                loop {
+                    let TSModuleDeclarationName::Identifier(id) = &inner_module.id else {
+                        unreachable!()
+                    };
+                    parts.push(id);
+
+                    match &inner_module.body {
+                        Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_inner_module)) => {
+                            inner_module = inner_inner_module.as_ref();
+                        }
+                        Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                            body = Some(block.as_ref());
+                            break;
+                        }
+                        None => break,
+                    }
+                }
+
+                // Serialize `parts` as a nested tree of `TSQualifiedName`s
+                state.serialize_field("id", &TSModuleDeclarationIdParts(&parts));
+
+                // Skip `body` field if it's `None`
+                if let Some(body) = body {
+                    state.serialize_field("body", body);
+                }
+            }
+            Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                // No nested modules.
+                // Serialize as usual, with `id` being either a `BindingIdentifier` or `StringLiteral`.
+                state.serialize_field("id", &module.id);
+                state.serialize_field("body", block);
+            }
+            None => {
+                // No body. Skip `body` field.
+                state.serialize_field("id", &module.id);
+            }
+        }
+
+        state.serialize_field("kind", &module.kind);
+        state.serialize_field("declare", &module.declare);
+        state.serialize_field("global", &crate::serialize::TSModuleDeclarationGlobal(module));
+        state.end();
+    }
+}
+
+struct TSModuleDeclarationIdParts<'a, 'b>(&'b [&'b BindingIdentifier<'a>]);
+
+impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let parts = self.0;
+        assert!(!parts.is_empty());
+
+        let span_start = parts[0].span.start;
+        let (&last, rest) = parts.split_last().unwrap();
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+        state.serialize_field("start", &span_start);
+        state.serialize_field("end", &last.span.end);
+
+        if rest.len() == 1 {
+            // Only one part remaining (e.g. `X`). Serialize as `Identifier`.
+            state.serialize_field("left", &rest[0]);
+        } else {
+            // Multiple parts remaining (e.g. `X.Y`). Recurse to serialize as `TSQualifiedName`.
+            state.serialize_field("left", &TSModuleDeclarationIdParts(rest));
+        }
+
+        state.serialize_field("right", last);
+        state.end();
+    }
+}
+
 /// Serializer for `global` field of `TSModuleDeclaration`.
 #[ast_meta]
 #[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
@@ -1112,6 +1317,104 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
     }
 }
 
+/// Serializer for `IdentifierReference` variant of `TSTypeName`.
+///
+/// Where is an identifier called `this`, TS-ESTree presents it as a `ThisExpression`.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierReference | ThisExpression",
+    raw_deser = "
+        let id = DESER[IdentifierReference](POS);
+        if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+        id
+    "
+)]
+pub struct TSTypeNameIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
+
+impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let ident = self.0;
+        if ident.name == "this" {
+            ThisExpression { span: ident.span }.serialize(serializer);
+        } else {
+            ident.serialize(serializer);
+        }
+    }
+}
+
+/// Serializer for `expression` field of `TSClassImplements`.
+///
+/// Our AST represents `X.Y` in `class C implements X.Y {}` as a `TSQualifiedName`.
+/// TS-ESTree represents `X.Y` as a `MemberExpression`.
+///
+/// Where there are more parts e.g. `class C implements X.Y.Z {}`, the `TSQualifiedName`s (Oxc)
+/// or `MemberExpression`s (TS-ESTree) are nested.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierReference | ThisExpression | MemberExpression",
+    raw_deser = "
+        let expression = DESER[TSTypeName](POS_OFFSET.expression);
+        if (expression.type === 'TSQualifiedName') {
+            let parent = expression = {
+                type: 'MemberExpression',
+                start: expression.start,
+                end: expression.end,
+                object: expression.left,
+                property: expression.right,
+                computed: false,
+                optional: false,
+            };
+
+            while (parent.object.type === 'TSQualifiedName') {
+                const object = parent.object;
+                parent = parent.object = {
+                    type: 'MemberExpression',
+                    start: object.start,
+                    end: object.end,
+                    object: object.left,
+                    property: object.right,
+                    computed: false,
+                    optional: false,
+                };
+            }
+        }
+        expression
+    "
+)]
+pub struct TSClassImplementsExpression<'a, 'b>(pub &'b TSClassImplements<'a>);
+
+impl ESTree for TSClassImplementsExpression<'_, '_> {
+    #[inline] // Because it just delegates
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        TSTypeNameAsMemberExpression(&self.0.expression).serialize(serializer);
+    }
+}
+
+struct TSTypeNameAsMemberExpression<'a, 'b>(&'b TSTypeName<'a>);
+
+impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSTypeName::IdentifierReference(ident) => {
+                TSTypeNameIdentifierReference(ident).serialize(serializer);
+            }
+            TSTypeName::QualifiedName(name) => {
+                // Convert to `TSQualifiedName` to `MemberExpression`.
+                // Recursively convert `left` to `MemberExpression` too if it's a `TSQualifiedName`.
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("MemberExpression"));
+                state.serialize_field("start", &name.span.start);
+                state.serialize_field("end", &name.span.end);
+                state.serialize_field("object", &TSTypeNameAsMemberExpression(&name.left));
+                state.serialize_field("property", &name.right);
+                state.serialize_field("computed", &false);
+                state.serialize_field("optional", &false);
+                state.end();
+            }
+        }
+    }
+}
+
 /// Serializer for `params` field of `TSCallSignatureDeclaration`.
 ///
 /// These add `this_param` to start of the `params` array.
@@ -1120,7 +1423,7 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "
@@ -1132,7 +1435,7 @@ pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
 impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let v = self.0;
-        serialize_formal_params_with_this_param(v.this_param.as_ref(), &v.params, serializer);
+        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
     }
 }
 
@@ -1144,7 +1447,7 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "
@@ -1166,7 +1469,7 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "

@@ -24,13 +24,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = match prop.value.take() {
-            Some(value) => {
-                self.transform_instance_initializer(&value, ctx);
-                value
-            }
-            None => ctx.ast.void_0(SPAN),
-        };
+        let value = prop.value.take().unwrap_or_else(|| ctx.ast.void_0(SPAN));
 
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             self.create_private_instance_init_assignment(ident, value, ctx)
