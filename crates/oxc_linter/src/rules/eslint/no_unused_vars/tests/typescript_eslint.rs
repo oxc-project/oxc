@@ -1013,7 +1013,7 @@ fn test() {
         // https://github.com/typescript-eslint/typescript-eslint/issues/5152
         (
             "
-        function foo<T>(value: T): T {
+        export function foo<T>(value: T): T {
           return { value };
         }
         export type Foo<T> = typeof foo<T>;
@@ -1380,6 +1380,28 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        type _Foo = 1;
+        export const x: _Foo = 1;
+            ",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUnusedIgnorePattern": false }])),
+        ),
+        (
+            "
+        export const foo: number = 1;
+        export type Foo = typeof foo;
+            ",
+            None,
+        ),
+        (
+            "
+        import { foo } from 'foo';
+        export type Foo = typeof foo;
+        export const bar = (): Foo => foo;
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1697,6 +1719,63 @@ fn test() {
             None,
         ),
         ("const foo: number = 1;", None),
+        (
+            "
+         const foo: number = 1;
+         export type Foo = typeof foo;
+             ",
+            None,
+        ),
+        (
+            "
+        declare const foo: number;
+        export type Foo = typeof foo;
+            ",
+            None,
+        ),
+        (
+            "
+        const foo: number = 1;
+        export type Foo = typeof foo | string;
+            ",
+            None,
+        ),
+        (
+            "
+        const foo: number = 1;
+        export type Foo = (typeof foo | string) & { __brand: 'foo' };
+            ",
+            None,
+        ),
+        (
+            "
+        const foo = {
+          bar: {
+            baz: 123,
+          },
+        };
+        export type Bar = typeof foo.bar;
+            ",
+            None,
+        ),
+        (
+            "
+        const foo = {
+          bar: {
+            baz: 123,
+          },
+        };
+        export type Bar = (typeof foo)['bar'];
+            ",
+            None,
+        ),
+        (
+            "
+        import { foo } from 'foo';
+        export type Bar = typeof foo;
+            ",
+            None,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
