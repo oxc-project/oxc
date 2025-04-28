@@ -2,6 +2,7 @@ import { defineConfig } from '@vscode/test-cli';
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
+// create dir if not exists
 if (!existsSync('./test_workspace')) {
   mkdirSync('./test_workspace');
 }
