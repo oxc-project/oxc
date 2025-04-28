@@ -399,20 +399,8 @@ impl<'a> Lexer<'a> {
         self.token.escaped = true;
     }
 
-    pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
-        if token.escaped {
-            return self.escaped_templates[&token.start];
-        }
-        let raw = &self.source.whole()[token.start as usize..token.end as usize];
-        Some(match token.kind {
-            Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
-                &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
-            }
-            Kind::TemplateHead | Kind::TemplateMiddle => {
-                &raw[1..raw.len() - 2] // omit leading "`" or "}" and trailing "${"
-            }
-            _ => raw,
-        })
+    pub(crate) fn get_template_string(&self, span_start: u32) -> Option<&'a str> {
+        self.escaped_templates[&span_start]
     }
 }
 
