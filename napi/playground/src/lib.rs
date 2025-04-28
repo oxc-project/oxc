@@ -242,9 +242,8 @@ impl Oxc {
         self.codegen_text = codegen_result.code;
         self.codegen_sourcemap_text = codegen_result.map.map(|map| map.to_json_string());
         self.ir = format!("{:#?}", program.body);
-        let mut errors = vec![];
         let comments =
-            convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+            convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut []);
         self.ast_json = program.to_pretty_estree_ts_json();
         self.comments = comments;
 
