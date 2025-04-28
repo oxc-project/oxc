@@ -76,7 +76,7 @@ fn is_strict_assert_module(import_decl: &ImportDeclaration) -> bool {
     ["assert/strict", "node:assert/strict"].contains(&module_name)
 }
 
-fn find_assert_imports<'a>(import_decl: &ImportDeclaration<'a>) -> Vec<SymbolId> {
+fn find_assert_imports(import_decl: &ImportDeclaration<'_>) -> Vec<SymbolId> {
     let mut assert_imports: Vec<SymbolId> = Vec::new();
 
     if let Some(specifiers) = &import_decl.specifiers {
@@ -88,12 +88,12 @@ fn find_assert_imports<'a>(import_decl: &ImportDeclaration<'a>) -> Vec<SymbolId>
                 ImportDeclarationSpecifier::ImportSpecifier(named_specifier) => {
                     let imported = &named_specifier.imported;
                     if imported.name() == "default"
-                        || (is_assert_module(&import_decl) && imported.name() == "strict")
+                        || (is_assert_module(import_decl) && imported.name() == "strict")
                     {
                         assert_imports.push(named_specifier.local.symbol_id());
                     }
                 }
-                _ => {}
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {}
             }
         }
     }
@@ -101,7 +101,7 @@ fn find_assert_imports<'a>(import_decl: &ImportDeclaration<'a>) -> Vec<SymbolId>
     assert_imports
 }
 
-fn check_assert_calls<'a>(symbol_id: SymbolId, ctx: &LintContext<'a>) {
+fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
     let references = ctx.semantic().symbol_references(symbol_id);
 
     for reference in references {
@@ -127,7 +127,7 @@ fn check_assert_calls<'a>(symbol_id: SymbolId, ctx: &LintContext<'a>) {
                     |fixer| fixer.insert_text_after(&ident.span, ".ok"),
                 );
             }
-            _ => continue,
+            _ => {},
         }
     }
 }
