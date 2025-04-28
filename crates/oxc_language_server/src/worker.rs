@@ -480,13 +480,12 @@ mod tests {
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
         );
+        assert!(worker.is_responsible_for_uri(
+            &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
+        ));
         assert!(
-            worker.is_responsible_for_uri(
-                &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
-            )
-        );
-        assert!(
-            !worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
+            !worker
+                .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
     }
 }
