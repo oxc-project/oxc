@@ -2283,23 +2283,7 @@ impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        // This is the case for a general iterator.
-        //
-        // This function should be the moral equivalent of:
-        //
-        //      for item in iterator {
-        //          self.push(item);
-        //      }
-        let iterator = iter.into_iter();
-        let (lower, _) = iterator.size_hint();
-        // Hot path.
-        if lower == 1 {
-            for item in iterator {
-                self.push(item);
-            }
-        } else {
-            self.extend_desugared(iterator);
-        }
+        self.extend_desugared(iter.into_iter());
     }
 }
 
@@ -2308,17 +2292,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     // they have no further optimizations to apply
     fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
         while let Some(element) = iterator.next() {
-            // #[cold]
-            // fn reserve_slow<T>(vec: &mut Vec<T>, iterator: &impl Iterator<Item = T>) {
-            // }
-
             let len = self.len();
             if len == self.buf.cap() {
                 let (lower, _) = iterator.size_hint();
                 self.reserve(lower.saturating_add(1));
-                // reserve_slow(self, iterator.by_ref());
             }
-
             unsafe {
                 ptr::write(self.as_mut_ptr().add(len), element);
                 // Since next() executes user code which can panic we have to bump the length
