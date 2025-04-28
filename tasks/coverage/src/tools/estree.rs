@@ -282,15 +282,14 @@ impl Case for EstreeTypescriptCase {
     fn run(&mut self) {
         let estree_file_content = fs::read_to_string(&self.estree_file_path).unwrap();
 
-        let estree_units: Vec<String> = estree_file_content
+        let estree_units = estree_file_content
             .split("__ESTREE_TEST__")
             .skip(1)
             .map(|s| {
                 let s = s.strip_prefix(":PASS:\n```json\n").unwrap();
-                let s = s.strip_suffix("\n```\n").unwrap();
-                s.to_string()
+                s.strip_suffix("\n```\n").unwrap()
             })
-            .collect();
+            .collect::<Vec<_>>();
 
         if estree_units.len() != self.base.units.len() {
             // likely a bug in acorn-test262 script
@@ -323,11 +322,7 @@ impl Case for EstreeTypescriptCase {
 
             let oxc_json = program.to_pretty_estree_ts_json();
 
-            if oxc_json == estree_json {
-                continue;
-            }
-
-            // compare as object to ignore order difference for now
+            // Compare as objects to ignore field order differences for now
             let mut oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
                 Ok(v) => v,
                 Err(e) => {
@@ -336,7 +331,7 @@ impl Case for EstreeTypescriptCase {
                     return;
                 }
             };
-            let estree_json_value = match serde_json::from_str::<serde_json::Value>(&estree_json) {
+            let estree_json_value = match serde_json::from_str::<serde_json::Value>(estree_json) {
                 Ok(v) => v,
                 Err(e) => {
                     self.base.result = TestResult::GenericError(
@@ -349,11 +344,12 @@ impl Case for EstreeTypescriptCase {
             if oxc_json_value == estree_json_value {
                 continue;
             }
+
+            // Mismatch found
             convert_to_typescript_eslint_order(&mut oxc_json_value);
             let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
             let estree_json = serde_json::to_string_pretty(&estree_json_value).unwrap();
 
-            // Mismatch found
             write_diff(self.path(), &oxc_json, &estree_json);
             self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json);
             return;
