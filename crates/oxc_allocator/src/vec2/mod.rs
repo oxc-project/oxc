@@ -2280,8 +2280,7 @@ impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
 }
 
 impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
+    #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         // This is the case for a general iterator.
         //
@@ -2308,15 +2307,15 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     // they have no further optimizations to apply
     fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
         while let Some(element) = iterator.next() {
-            #[cold]
-            fn reserve_slow<T>(vec: &mut Vec<T>, iterator: &impl Iterator<Item = T>) {
-                let (lower, _) = iterator.size_hint();
-                vec.reserve(lower.saturating_add(1));
-            }
+            // #[cold]
+            // fn reserve_slow<T>(vec: &mut Vec<T>, iterator: &impl Iterator<Item = T>) {
+            // }
 
             let len = self.len();
             if len == self.buf.cap() {
-                reserve_slow(self, iterator.by_ref());
+                let (lower, _) = iterator.size_hint();
+                self.reserve(lower.saturating_add(1));
+                // reserve_slow(self, iterator.by_ref());
             }
 
             unsafe {
