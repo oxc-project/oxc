@@ -95,11 +95,7 @@ impl<'a> Dummy<'a> for ArrayExpression<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            elements: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), elements: Dummy::dummy(allocator) }
     }
 }
 
@@ -126,11 +122,7 @@ impl<'a> Dummy<'a> for ObjectExpression<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            properties: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), properties: Dummy::dummy(allocator) }
     }
 }
 
@@ -461,7 +453,7 @@ impl<'a> Dummy<'a> for AssignmentTargetPattern<'a> {
     ///
     /// Has cost of making 1 allocation (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::ObjectAssignmentTarget(Dummy::dummy(allocator))
+        Self::ArrayAssignmentTarget(Dummy::dummy(allocator))
     }
 }
 
@@ -474,7 +466,6 @@ impl<'a> Dummy<'a> for ArrayAssignmentTarget<'a> {
             span: Dummy::dummy(allocator),
             elements: Dummy::dummy(allocator),
             rest: Dummy::dummy(allocator),
-            trailing_comma: Dummy::dummy(allocator),
         }
     }
 }
@@ -1345,6 +1336,7 @@ impl<'a> Dummy<'a> for AccessorProperty<'a> {
             value: Dummy::dummy(allocator),
             computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
+            r#override: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
@@ -1650,7 +1642,7 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
 impl<'a> Dummy<'a> for JSXElement<'a> {
     /// Create a dummy [`JSXElement`].
     ///
-    /// Has cost of making 2 allocations (80 bytes).
+    /// Has cost of making 2 allocations (72 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1668,7 +1660,6 @@ impl<'a> Dummy<'a> for JSXOpeningElement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            self_closing: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
             attributes: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
@@ -1898,11 +1889,20 @@ impl<'a> Dummy<'a> for TSEnumDeclaration<'a> {
         Self {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
-            members: Dummy::dummy(allocator),
+            body: Dummy::dummy(allocator),
             r#const: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for TSEnumBody<'a> {
+    /// Create a dummy [`TSEnumBody`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { span: Dummy::dummy(allocator), members: Dummy::dummy(allocator) }
     }
 }
 
@@ -2345,8 +2345,8 @@ impl<'a> Dummy<'a> for TSInterfaceDeclaration<'a> {
         Self {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
-            extends: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
+            extends: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
@@ -2620,7 +2620,6 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
-            is_type_of: Dummy::dummy(allocator),
         }
     }
 }
@@ -2811,7 +2810,7 @@ impl<'a> Dummy<'a> for TSInstantiationExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
-            type_parameters: Dummy::dummy(allocator),
+            type_arguments: Dummy::dummy(allocator),
         }
     }
 }

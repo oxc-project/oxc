@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use phf::{Set, phf_set};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -118,7 +117,7 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(lit.value.as_str()) {
+            if !VALID_TYPES.contains(&lit.value.as_str()) {
                 ctx.diagnostic(invalid_value(None, sibling.span()));
             }
             return;
@@ -126,7 +125,7 @@ impl Rule for ValidTypeof {
 
         if let Expression::TemplateLiteral(template) = sibling {
             if template.expressions.is_empty() {
-                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(value.as_str())) {
+                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(&value.as_str())) {
                     ctx.diagnostic(invalid_value(None, sibling.span()));
                 }
                 return;
@@ -174,16 +173,8 @@ impl Rule for ValidTypeof {
     }
 }
 
-const VALID_TYPES: Set<&'static str> = phf_set! {
-    "symbol",
-    "undefined",
-    "object",
-    "boolean",
-    "number",
-    "string",
-    "function",
-    "bigint",
-};
+const VALID_TYPES: [&str; 8] =
+    ["bigint", "boolean", "function", "number", "object", "string", "symbol", "undefined"];
 
 #[test]
 fn test() {

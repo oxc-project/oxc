@@ -213,7 +213,7 @@ impl Rule for NoReturnWrap {
                         check_callback_fn(ctx, self.allow_reject, inner_obj);
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }

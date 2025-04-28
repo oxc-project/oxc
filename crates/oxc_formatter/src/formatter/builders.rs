@@ -1,6 +1,4 @@
-// use biome_rowan::{Language, SyntaxNode, SyntaxToken, TokenText};
-use std::cell::Cell;
-use std::{marker::PhantomData, num::NonZeroU8};
+use std::{borrow::Cow, cell::Cell, num::NonZeroU8};
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
@@ -266,7 +264,6 @@ impl std::fmt::Debug for Line {
 #[inline]
 pub fn text(text: &'static str) -> StaticText {
     debug_assert_no_newlines(text);
-
     StaticText { text }
 }
 
@@ -289,8 +286,8 @@ impl std::fmt::Debug for StaticText {
 
 /// Creates a text from a dynamic string and a range of the input source
 pub fn dynamic_text(text: &str, position: TextSize) -> DynamicText<'_> {
-    debug_assert_no_newlines(text);
-
+    // FIXME
+    // debug_assert_no_newlines(text);
     DynamicText { text, position }
 }
 
@@ -315,57 +312,51 @@ impl std::fmt::Debug for DynamicText<'_> {
     }
 }
 
-// /// String that is the same as in the input source text if `text` is [`Cow::Borrowed`] or
-// /// some replaced content if `text` is [`Cow::Owned`].
-// pub fn syntax_token_cow_slice<'a, L: Language>(
-//     text: Cow<'a, str>,
-//     token: &'a SyntaxToken<L>,
-//     start: TextSize,
-// ) -> SyntaxTokenCowSlice<'a, L> {
-//     debug_assert_no_newlines(&text);
-//
-//     SyntaxTokenCowSlice { text, token, start }
-// }
+/// String that is the same as in the input source text if `text` is [`Cow::Borrowed`] or
+/// some replaced content if `text` is [`Cow::Owned`].
+pub fn syntax_token_cow_slice(text: Cow<'_, str>, span: Span) -> SyntaxTokenCowSlice<'_> {
+    debug_assert_no_newlines(&text);
+    SyntaxTokenCowSlice { text, span }
+}
 
-// pub struct SyntaxTokenCowSlice<'a, L: Language> {
-//     text: Cow<'a, str>,
-//     token: &'a SyntaxToken<L>,
-//     start: TextSize,
-// }
+pub struct SyntaxTokenCowSlice<'a> {
+    text: Cow<'a, str>,
+    span: Span,
+}
 
-// impl<L: Language> Format for SyntaxTokenCowSlice<'_, L> {
-//     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-//         match &self.text {
-//             Cow::Borrowed(text) => {
-//                 let range = TextRange::at(self.start, text.text_len());
-//                 debug_assert_eq!(
-//                     *text,
-//                     &self.token.text()[range - self.token.text_range().start()],
-//                     "The borrowed string doesn't match the specified token substring. Does the borrowed string belong to this token and range?"
-//                 );
-//
-//                 let relative_range = range - self.token.text_range().start();
-//                 let slice = self.token.token_text().slice(relative_range);
-//
-//                 f.write_element(FormatElement::LocatedTokenText {
-//                     slice,
-//                     source_position: self.start,
-//                 })
-//             }
-//             Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
-//                 text: text.to_string().into_boxed_str(),
-//                 source_position: self.start,
-//             }),
-//         }
-//     }
-// }
-//
-// impl<L: Language> std::fmt::Debug for SyntaxTokenCowSlice<'_, L> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         std::write!(f, "SyntaxTokenCowSlice({})", self.text)
-//     }
-// }
-//
+impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+        match &self.text {
+            Cow::Borrowed(text) => {
+                // let range = TextRange::at(self.start, text.text_len());
+                // debug_assert_eq!(
+                // *text,
+                // &self.token.text()[range - self.token.text_range().start()],
+                // "The borrowed string doesn't match the specified token substring. Does the borrowed string belong to this token and range?"
+                // );
+
+                // let relative_range = range - self.token.text_range().start();
+                // let slice = self.token.token_text().slice(relative_range);
+
+                f.write_element(FormatElement::LocatedTokenText {
+                    slice: TokenText::new((*text).to_string(), self.span),
+                    source_position: self.span.start,
+                })
+            }
+            Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
+                text: text.to_string().into_boxed_str(),
+                source_position: self.span.start,
+            }),
+        }
+    }
+}
+
+impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::write!(f, "SyntaxTokenCowSlice({})", self.text)
+    }
+}
+
 /// Copies a source text 1:1 into the output text.
 pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
     let slice = span.source_text(source_text);
@@ -1724,8 +1715,8 @@ pub fn group<'ast>(content: &impl Format<'ast>) -> Group<'_, 'ast> {
 }
 
 #[derive(Copy, Clone)]
-pub struct Group<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+pub struct Group<'fmt, 'ast> {
+    content: Argument<'fmt, 'ast>,
     group_id: Option<GroupId>,
     should_expand: bool,
 }
@@ -2051,7 +2042,7 @@ impl<'ast> Format<'ast> for IfGroupBreaks<'_, 'ast> {
         f.write_element(FormatElement::Tag(StartConditionalContent(
             Condition::new(self.mode).with_group_id(self.group_id),
         )))?;
-        Arguments::from(&self.content).fmt(f)?;
+        self.content.fmt(f)?;
         f.write_element(FormatElement::Tag(EndConditionalContent))
     }
 }
@@ -2188,15 +2179,14 @@ impl std::fmt::Debug for IndentIfGroupBreaks<'_, '_> {
 #[derive(Copy, Clone)]
 pub struct FormatWith<T> {
     formatter: T,
-    context: PhantomData<T>,
 }
 
-impl<T> Format<'_> for FormatWith<T>
+impl<'ast, T> Format<'ast> for FormatWith<T>
 where
-    T: Fn(&mut Formatter) -> FormatResult<()>,
+    T: Fn(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         (self.formatter)(f)
     }
 }
@@ -2245,11 +2235,11 @@ impl<T> std::fmt::Debug for FormatWith<T> {
 /// # Ok(())
 /// # }
 /// ```
-pub const fn format_with<T>(formatter: T) -> FormatWith<T>
+pub const fn format_with<'ast, T>(formatter: T) -> FormatWith<T>
 where
-    T: Fn(&mut Formatter) -> FormatResult<()>,
+    T: Fn(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
-    FormatWith { formatter, context: PhantomData }
+    FormatWith { formatter }
 }
 
 /// Creates an inline `Format` object that can only be formatted once.
@@ -2319,24 +2309,23 @@ where
 /// // Formatting the value more than once panics
 /// format!(SimpleFormatContext::default(), [value]);
 /// ```
-pub const fn format_once<T>(formatter: T) -> FormatOnce<T>
+pub const fn format_once<'ast, T>(formatter: T) -> FormatOnce<T>
 where
-    T: FnOnce(&mut Formatter) -> FormatResult<()>,
+    T: FnOnce(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
-    FormatOnce { formatter: Cell::new(Some(formatter)), context: PhantomData }
+    FormatOnce { formatter: Cell::new(Some(formatter)) }
 }
 
 pub struct FormatOnce<T> {
     formatter: Cell<Option<T>>,
-    context: PhantomData<T>,
 }
 
-impl<T> Format<'_> for FormatOnce<T>
+impl<'ast, T> Format<'ast> for FormatOnce<T>
 where
-    T: FnOnce(&mut Formatter) -> FormatResult<()>,
+    T: FnOnce(&mut Formatter<'_, 'ast>) -> FormatResult<()>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         let formatter = self.formatter.take().expect("Tried to format a `format_once` at least twice. This is not allowed. You may want to use `format_with` or `format.memoized` instead.");
 
         (formatter)(f)
@@ -2432,16 +2421,14 @@ where
     pub fn entry(&mut self, span: Span, source_text: &str, content: &dyn Format<'ast>) {
         self.result = self.result.and_then(|()| {
             if self.has_elements {
-                if has_lines_before(span, source_text) {
-                    write!(self.fmt, [empty_line()])?;
+                if self.has_lines_before(span, source_text) {
+                    write!(self.fmt, empty_line())?;
                 } else {
                     self.separator.fmt(self.fmt)?;
                 }
             }
-
             self.has_elements = true;
-
-            write!(self.fmt, [content])
+            write!(self.fmt, content)
         });
     }
 
@@ -2449,8 +2436,7 @@ where
     pub fn entry_no_separator(&mut self, content: &dyn Format<'ast>) {
         self.result = self.result.and_then(|()| {
             self.has_elements = true;
-
-            write!(self.fmt, [content])
+            write!(self.fmt, content)
         });
     }
 
@@ -2469,13 +2455,27 @@ where
     pub fn finish(&mut self) -> FormatResult<()> {
         self.result
     }
+
+    /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
+    pub fn has_lines_before(&self, span: Span, source_text: &str) -> bool {
+        // Count the newlines in the leading trivia of the next node
+        let start = if let Some(comment) = self.fmt.comments().leading_comments(span.start).first()
+        {
+            comment.span.start
+        } else {
+            span.start
+        };
+        source_text[..start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
+            > 1
+    }
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-pub fn has_lines_before(span: Span, source_text: &str) -> bool {
+pub fn get_lines_before(span: Span) -> usize {
+    // TODO:
     // Count the newlines in the leading trivia of the next node
-    source_text[..span.start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
-        > 1
+    // if let Some(token) = next_node.first_token() { get_lines_before_token(&token) } else { 0 }
+    0
 }
 
 /// Builder to fill as many elements as possible on a single line.

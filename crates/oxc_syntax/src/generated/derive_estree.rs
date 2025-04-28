@@ -52,6 +52,7 @@ impl ESTree for ExportEntry<'_> {
         state.serialize_field("importName", &self.import_name);
         state.serialize_field("exportName", &self.export_name);
         state.serialize_field("localName", &self.local_name);
+        state.serialize_field("isType", &self.is_type);
         state.end();
     }
 }

@@ -1,51 +1,57 @@
 use std::{
     fs,
-    path::Path,
-    rc::Rc,
+    path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 
 use log::debug;
 use rustc_hash::FxHashSet;
-use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range};
+use tower_lsp_server::{
+    UriExt,
+    lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
+};
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    LINTABLE_EXTENSIONS, Linter, ModuleRecord,
-    loader::{JavaScriptSource, Loader},
+    LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
+    loader::Loader,
 };
-use oxc_parser::{ParseOptions, Parser};
-use oxc_semantic::SemanticBuilder;
 
-use crate::DiagnosticReport;
-use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
-use crate::linter::offset_to_position;
+use super::error_with_position::{
+    DiagnosticReport, message_with_position_to_lsp_diagnostic_report,
+};
+
+/// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
+#[derive(Debug, Clone)]
+pub struct IsolatedLintHandlerOptions {
+    pub use_cross_module: bool,
+    pub root_path: PathBuf,
+}
 
 pub struct IsolatedLintHandler {
-    linter: Arc<Linter>,
-    loader: Loader,
+    linter: Linter,
+    options: IsolatedLintHandlerOptions,
 }
 
 impl IsolatedLintHandler {
-    pub fn new(linter: Arc<Linter>) -> Self {
-        Self { linter, loader: Loader }
+    pub fn new(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
+        Self { linter, options }
     }
 
-    pub fn run_single(
-        &self,
-        path: &Path,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        if !Self::should_lint_path(path) {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        let path = uri.to_file_path()?;
+
+        if !Self::should_lint_path(&path) {
             return None;
         }
 
-        Some(self.lint_path(path, content).map_or(vec![], |errors| {
-            let path_buf = &path.to_path_buf();
+        let allocator = Allocator::default();
 
-            let mut diagnostics: Vec<DiagnosticReport> =
-                errors.into_iter().map(|e| e.into_diagnostic_report(path_buf)).collect();
+        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
+            let mut diagnostics: Vec<DiagnosticReport> = errors
+                .iter()
+                .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
+                .collect();
 
             // a diagnostics connected from related_info to original diagnostic
             let mut inverted_diagnostics = vec![];
@@ -54,10 +60,7 @@ impl IsolatedLintHandler {
                     continue;
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
-                        uri: lsp_types::Url::from_file_path(path).unwrap(),
-                        range: d.diagnostic.range,
-                    },
+                    location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
                     message: "original diagnostic".to_string(),
                 }]);
                 for r in related_info {
@@ -90,99 +93,31 @@ impl IsolatedLintHandler {
         }))
     }
 
-    fn lint_path(
+    fn lint_path<'a>(
         &self,
+        allocator: &'a Allocator,
         path: &Path,
         source_text: Option<String>,
-    ) -> Option<Vec<ErrorWithPosition>> {
+    ) -> Option<Vec<MessageWithPosition<'a>>> {
         if !Loader::can_load(path) {
             debug!("extension not supported yet.");
             return None;
         }
         let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
-        let javascript_sources = match self.loader.load_str(path, &source_text) {
-            Ok(s) => s,
-            Err(e) => {
-                debug!("failed to load {path:?}: {e}");
-                return None;
-            }
-        };
 
         debug!("lint {path:?}");
-        let mut diagnostics = vec![];
-        for source in javascript_sources {
-            let JavaScriptSource {
-                source_text: javascript_source_text, source_type, start, ..
-            } = source;
-            let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, javascript_source_text, source_type)
-                .with_options(ParseOptions {
-                    allow_return_outside_function: true,
-                    parse_regular_expression: true,
-                    ..ParseOptions::default()
-                })
-                .parse();
 
-            if !ret.errors.is_empty() {
-                let reports = ret
-                    .errors
-                    .into_iter()
-                    .map(|diagnostic| ErrorReport {
-                        error: Error::from(diagnostic),
-                        fixed_content: None,
-                    })
-                    .collect();
-                return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            }
+        let lint_service_options = LintServiceOptions::new(
+            self.options.root_path.clone(),
+            vec![Arc::from(path.as_os_str())],
+        )
+        .with_cross_module(self.options.use_cross_module);
+        // ToDo: do not clone the linter
+        let path_arc = Arc::from(path.as_os_str());
+        let mut lint_service = LintService::new(self.linter.clone(), lint_service_options);
+        let result = lint_service.run_source(allocator, &path_arc, &source_text);
 
-            let semantic_ret = SemanticBuilder::new()
-                .with_cfg(true)
-                .with_scope_tree_child_ids(true)
-                .with_check_syntax_error(true)
-                .build(&ret.program);
-
-            if !semantic_ret.errors.is_empty() {
-                let reports = semantic_ret
-                    .errors
-                    .into_iter()
-                    .map(|diagnostic| ErrorReport {
-                        error: Error::from(diagnostic),
-                        fixed_content: None,
-                    })
-                    .collect();
-                return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
-            }
-
-            let mut semantic = semantic_ret.semantic;
-            semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
-            let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
-            let result = self.linter.run(path, Rc::new(semantic), module_record);
-
-            let reports = result
-                .into_iter()
-                .map(|msg| {
-                    let fixed_content = msg.fix.map(|f| FixedContent {
-                        message: f.message.map(|m| m.to_string()),
-                        code: f.content.to_string(),
-                        range: Range {
-                            start: offset_to_position(
-                                (f.span.start + start) as usize,
-                                source_text.as_str(),
-                            ),
-                            end: offset_to_position(
-                                (f.span.end + start) as usize,
-                                source_text.as_str(),
-                            ),
-                        },
-                    });
-
-                    ErrorReport { error: Error::from(msg.error), fixed_content }
-                })
-                .collect::<Vec<ErrorReport>>();
-            diagnostics.extend(Self::wrap_diagnostics(path, &source_text, reports, start));
-        }
-
-        Some(diagnostics)
+        Some(result)
     }
 
     fn should_lint_path(path: &Path) -> bool {
@@ -193,26 +128,5 @@ impl IsolatedLintHandler {
         path.extension()
             .and_then(std::ffi::OsStr::to_str)
             .is_some_and(|ext| wanted_exts.contains(ext))
-    }
-
-    fn wrap_diagnostics(
-        path: &Path,
-        source_text: &str,
-        reports: Vec<ErrorReport>,
-        start: u32,
-    ) -> Vec<ErrorWithPosition> {
-        let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
-
-        reports
-            .into_iter()
-            .map(|report| {
-                ErrorWithPosition::new(
-                    report.error.with_source_code(Arc::clone(&source)),
-                    source_text,
-                    report.fixed_content,
-                    start as usize,
-                )
-            })
-            .collect()
     }
 }

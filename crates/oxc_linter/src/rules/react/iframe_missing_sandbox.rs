@@ -1,5 +1,3 @@
-use phf::{Set, phf_set};
-
 use oxc_ast::{
     AstKind,
     ast::{
@@ -37,23 +35,22 @@ fn invalid_sandbox_combination_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const ALLOWED_VALUES: Set<&'static str> = phf_set! {
-    "",
-    "allow-downloads-without-user-activation",
-    "allow-downloads",
-    "allow-forms",
-    "allow-modals",
-    "allow-orientation-lock",
-    "allow-pointer-lock",
-    "allow-popups",
-    "allow-popups-to-escape-sandbox",
-    "allow-presentation",
-    "allow-same-origin",
-    "allow-scripts",
-    "allow-storage-access-by-user-activation",
-    "allow-top-navigation",
-    "allow-top-navigation-by-user-activation"
-};
+const ALLOWED_VALUES: [&str; 14] = [
+    "downloads-without-user-activation",
+    "downloads",
+    "forms",
+    "modals",
+    "orientation-lock",
+    "pointer-lock",
+    "popups",
+    "popups-to-escape-sandbox",
+    "presentation",
+    "same-origin",
+    "scripts",
+    "storage-access-by-user-activation",
+    "top-navigation",
+    "top-navigation-by-user-activation",
+];
 
 #[derive(Debug, Default, Clone)]
 pub struct IframeMissingSandbox;
@@ -172,12 +169,13 @@ impl Rule for IframeMissingSandbox {
         }
     }
 }
+
 fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
     let attrs = literal.value.split(' ');
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {
-        if !ALLOWED_VALUES.contains(trimmed_atr) {
+        if !is_allowed_value(trimmed_atr) {
             ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
         }
         if trimmed_atr == "allow-scripts" {
@@ -190,6 +188,18 @@ fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
     if has_allow_scripts && has_allow_same_origin {
         ctx.diagnostic(invalid_sandbox_combination_prop(literal.span));
     }
+}
+
+fn is_allowed_value(value: &str) -> bool {
+    if value.is_empty() {
+        return true;
+    }
+
+    if value.len() < 11 || !value.starts_with("allow-") {
+        return false;
+    }
+
+    ALLOWED_VALUES.contains(&&value[6..])
 }
 
 fn validate_sandbox_property(object_property: &ObjectProperty, ctx: &LintContext) {

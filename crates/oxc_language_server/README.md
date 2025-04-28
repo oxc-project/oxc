@@ -28,6 +28,11 @@ Initialization Options:
 | `configPath` | `<string>` \| `null`   | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration              |
 | `flags`      | `Map<string, string>`  | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
 
+#### Flags
+
+- `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
+- `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
+
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 
 ### [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)

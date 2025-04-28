@@ -1,6 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of private method uses e.g. `this.#method()`.
 
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::ScopeFlags;
@@ -46,7 +47,8 @@ impl<'a> ClassProperties<'a, '_> {
             return None;
         };
 
-        let mut function = ctx.ast.move_function(value);
+        let mut function = value.take_in_box(ctx.ast.allocator);
+
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writeable_private_prop(ident)
         } else {
@@ -75,7 +77,6 @@ impl<'a> ClassProperties<'a, '_> {
         PrivateMethodVisitor::new(*r#static, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
-        let function = ctx.ast.alloc(function);
         Some(Statement::FunctionDeclaration(function))
     }
 

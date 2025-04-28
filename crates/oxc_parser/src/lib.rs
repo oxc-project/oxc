@@ -68,6 +68,7 @@
 
 mod context;
 mod cursor;
+mod error_handler;
 mod modifiers;
 mod module_record;
 mod state;
@@ -85,18 +86,19 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
 };
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{ModuleKind, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     context::{Context, StatementContext},
-    lexer::{Kind, Lexer, Token},
+    error_handler::FatalError,
+    lexer::{Lexer, Token},
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -335,7 +337,7 @@ mod parser_parse {
         ///
         /// # Errors
         /// If the source code being parsed has syntax errors.
-        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
                 self.allocator,
@@ -366,6 +368,8 @@ struct ParserImpl<'a> {
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
+
+    fatal_error: Option<FatalError>,
 
     /// The current parsing token
     token: Token,
@@ -408,9 +412,10 @@ impl<'a> ParserImpl<'a> {
             source_type,
             source_text,
             errors: vec![],
+            fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::default(),
+            state: ParserState::new(allocator),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator),
@@ -424,24 +429,32 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (mut program, panicked) = match self.parse_program() {
-            Ok(program) => (program, false),
-            Err(error) => {
-                self.error(self.overlong_error().unwrap_or(error));
-                let program = self.ast.program(
-                    Span::default(),
-                    self.source_type,
-                    self.source_text,
-                    self.ast.vec(),
-                    None,
-                    self.ast.vec(),
-                    self.ast.vec(),
-                );
-                (program, true)
+        let mut program = self.parse_program();
+        let mut panicked = false;
+
+        if let Some(fatal_error) = self.fatal_error.take() {
+            panicked = true;
+            self.errors.truncate(fatal_error.errors_len);
+            if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
+                // Noop
+            } else {
+                self.error(fatal_error.error);
             }
-        };
+
+            program = Program::dummy(self.ast.allocator);
+            program.source_type = self.source_type;
+            program.source_text = self.source_text;
+        }
 
         self.check_unfinished_errors();
+
+        if let Some(overlong_error) = self.overlong_error() {
+            panicked = true;
+            self.lexer.errors.clear();
+            self.errors.clear();
+            self.error(overlong_error);
+        }
+
         let mut is_flow_language = false;
         let mut errors = vec![];
         // only check for `@flow` if the file failed to parse.
@@ -483,10 +496,13 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
-        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let expr = self.parse_expr();
+        if let Some(FatalError { error, .. }) = self.fatal_error.take() {
+            return Err(vec![error]);
+        }
         self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
         if !errors.is_empty() {
@@ -496,17 +512,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Result<Program<'a>> {
+    fn parse_program(&mut self) -> Program<'a> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
 
         let hashbang = self.parse_hashbang();
         let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true)?;
+            self.parse_directives_and_statements(/* is_top_level */ true);
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
-        Ok(self.ast.program(
+        self.ast.program(
             span,
             self.source_type,
             self.source_text,
@@ -514,7 +530,7 @@ impl<'a> ParserImpl<'a> {
             hashbang,
             directives,
             statements,
-        ))
+        )
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
@@ -560,29 +576,6 @@ impl<'a> ParserImpl<'a> {
             return Some(diagnostics::overlong_source());
         }
         None
-    }
-
-    /// Return error info at current token
-    /// # Panics
-    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected(&mut self) -> OxcDiagnostic {
-        // The lexer should have reported a more meaningful diagnostic
-        // when it is a undetermined kind.
-        if self.cur_kind() == Kind::Undetermined {
-            if let Some(error) = self.lexer.errors.pop() {
-                return error;
-            }
-        }
-        diagnostics::unexpected_token(self.cur_token().span())
-    }
-
-    /// Push a Syntax Error
-    fn error(&mut self, error: OxcDiagnostic) {
-        self.errors.push(error);
-    }
-
-    fn errors_count(&self) -> usize {
-        self.errors.len() + self.lexer.errors.len()
     }
 
     #[inline]

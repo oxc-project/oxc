@@ -4,6 +4,9 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
+#[cfg(feature = "language_server")]
+use crate::service::offset_to_position::SpanPositionMessage;
+
 bitflags! {
     /// Flags describing an automatic code fix.
     ///
@@ -237,8 +240,15 @@ impl<'a> RuleFix<'a> {
 
     #[inline]
     pub fn into_fix(self, source_text: &str) -> Fix<'a> {
+        // If there is only one fix, use the message from that fix.
+        let message = match &self.fix {
+            CompositeFix::Single(fix) if fix.message.as_ref().is_some_and(|m| !m.is_empty()) => {
+                fix.message.clone()
+            }
+            _ => self.message,
+        };
         let mut fix = self.fix.normalize_fixes(source_text);
-        fix.message = self.message;
+        fix.message = message;
         fix
     }
 
@@ -281,6 +291,12 @@ pub struct Fix<'a> {
     pub span: Span,
 }
 
+#[cfg(feature = "language_server")]
+pub struct FixWithPosition<'a> {
+    pub content: Cow<'a, str>,
+    pub span: SpanPositionMessage<'a>,
+}
+
 impl<'new> CloneIn<'new> for Fix<'_> {
     type Cloned = Fix<'new>;
 
@@ -318,6 +334,11 @@ impl<'a> Fix<'a> {
     #[inline]
     pub const fn empty() -> Self {
         Self { content: Cow::Borrowed(""), message: None, span: SPAN }
+    }
+
+    pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
+        self.message = Some(message.into());
+        self
     }
 }
 

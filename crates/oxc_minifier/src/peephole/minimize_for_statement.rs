@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -36,9 +37,9 @@ impl<'a> PeepholeOptimizations {
             }
 
             let span = for_stmt.body.span();
-            let (first, body) = match ctx.ast.move_statement(&mut for_stmt.body) {
+            let (first, body) = match for_stmt.body.take_in(ctx.ast.allocator) {
                 Statement::BlockStatement(mut block_stmt) => (
-                    ctx.ast.move_statement(block_stmt.body.get_mut(0).unwrap()),
+                    block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast.allocator),
                     Some(Statement::BlockStatement(block_stmt)),
                 ),
                 stmt => (stmt, None),
@@ -46,7 +47,7 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
 
-            let expr = match ctx.ast.move_expression(&mut if_stmt.test) {
+            let expr = match if_stmt.test.take_in(ctx.ast.allocator) {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
@@ -54,7 +55,7 @@ impl<'a> PeepholeOptimizations {
             };
 
             if let Some(test) = &mut for_stmt.test {
-                let left = ctx.ast.move_expression(test);
+                let left = test.take_in(ctx.ast.allocator);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
                 *test = Self::try_fold_and_or(&mut logical_expr, ctx)
@@ -78,9 +79,9 @@ impl<'a> PeepholeOptimizations {
             }
 
             let span = for_stmt.body.span();
-            let (first, body) = match ctx.ast.move_statement(&mut for_stmt.body) {
+            let (first, body) = match for_stmt.body.take_in(ctx.ast.allocator) {
                 Statement::BlockStatement(mut block_stmt) => (
-                    ctx.ast.move_statement(block_stmt.body.get_mut(0).unwrap()),
+                    block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast.allocator),
                     Some(Statement::BlockStatement(block_stmt)),
                 ),
                 stmt => (stmt, None),
@@ -88,10 +89,10 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
 
-            let expr = ctx.ast.move_expression(&mut if_stmt.test);
+            let expr = if_stmt.test.take_in(ctx.ast.allocator);
 
             if let Some(test) = &mut for_stmt.test {
-                let left = ctx.ast.move_expression(test);
+                let left = test.take_in(ctx.ast.allocator);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
                 *test = Self::try_fold_and_or(&mut logical_expr, ctx)
@@ -100,7 +101,7 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.test = Some(expr);
             }
 
-            let consequent = ctx.ast.move_statement(&mut if_stmt.consequent);
+            let consequent = if_stmt.consequent.take_in(ctx.ast.allocator);
             for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
             state.changed = true;
         }
@@ -119,7 +120,7 @@ impl<'a> PeepholeOptimizations {
                 } else if block_stmt.body.len() == 2
                     && !Self::statement_cares_about_scope(&block_stmt.body[1])
                 {
-                    return ctx.ast.move_statement(&mut block_stmt.body[1]);
+                    return block_stmt.body[1].take_in(ctx.ast.allocator);
                 } else {
                     block_stmt.body.remove(0);
                 }

@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod exports_last;
+    pub mod group_exports;
     pub mod no_absolute_path;
     pub mod no_anonymous_default_export;
     pub mod no_empty_named_blocks;
@@ -325,6 +326,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
@@ -705,6 +707,7 @@ oxc_macros::declare_all_lint_rules! {
     import::export,
     import::exports_last,
     import::first,
+    import::group_exports,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,
@@ -963,6 +966,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_assert,
     unicorn::consistent_date_clone,
     unicorn::consistent_empty_array_spread,
     unicorn::consistent_existence_index_check,

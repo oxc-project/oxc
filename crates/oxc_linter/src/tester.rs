@@ -171,6 +171,7 @@ pub struct Tester {
     rule_path: PathBuf,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
+    lint_options: LintOptions,
     /// Intentionally not an empty array when no fix test cases are provided.
     /// We check that rules that report a fix capability have fix test cases.
     /// Providing `Some(vec![])` allows for intentional disabling of this behavior.
@@ -206,6 +207,7 @@ impl Tester {
             rule_path,
             expect_pass,
             expect_fail,
+            lint_options: LintOptions::default(),
             expect_fix: None,
             snapshot: String::new(),
             snapshot_suffix: None,
@@ -286,6 +288,11 @@ impl Tester {
 
     pub fn with_node_plugin(mut self, yes: bool) -> Self {
         self.plugins.set(LintPlugins::NODE, yes);
+        self
+    }
+
+    pub fn with_lint_options(mut self, lint_options: LintOptions) -> Self {
+        self.lint_options = lint_options;
         self
     }
 
@@ -448,7 +455,7 @@ impl Tester {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let linter = Linter::new(
-            LintOptions::default(),
+            self.lint_options,
             eslint_config
                 .as_ref()
                 .map_or_else(ConfigStoreBuilder::empty, |v| {
@@ -479,7 +486,7 @@ impl Tester {
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let mut lint_service = LintService::from_linter(linter, options);
         let (sender, _receiver) = mpsc::channel();
-        let result = lint_service.run_source(&allocator, source_text, false, &sender);
+        let result = lint_service.run_test_source(&allocator, source_text, false, &sender);
 
         if result.is_empty() {
             return TestResult::Passed;

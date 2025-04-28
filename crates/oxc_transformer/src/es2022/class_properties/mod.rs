@@ -203,7 +203,7 @@ use serde::Deserialize;
 
 use oxc_ast::ast::*;
 use oxc_span::Atom;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -228,7 +228,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClassPropertiesOptions {
-    pub(crate) loose: bool,
+    pub loose: bool,
 }
 
 /// Class properties transform.
@@ -261,18 +261,11 @@ pub struct ClassProperties<'a, 'ctx> {
     /// This problem only affects class expressions. Class declarations aren't affected,
     /// as their exit-phase transform happens in `exit_class`.
     classes_stack: ClassesStack<'a>,
+    /// Count of private fields in current class and parent classes.
+    private_field_count: usize,
 
     // ----- State used only during enter phase -----
     //
-    /// Scope that instance property initializers will be inserted into.
-    /// This is usually class constructor, but can also be a `_super` function which is created.
-    instance_inits_scope_id: ScopeId,
-    /// Scope of class constructor, if instance property initializers will be inserted into constructor.
-    /// Used for checking for variable name clashes.
-    /// e.g. `class C { prop = x(); constructor(x) {} }`
-    /// - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
-    /// `None` if class has no existing constructor, as then there can't be any clashes.
-    instance_inits_constructor_scope_id: Option<ScopeId>,
     /// Symbols in constructor which clash with instance prop initializers.
     /// Keys are symbols' IDs.
     /// Values are initially the original name of binding, later on the name of new UID name.
@@ -307,9 +300,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             transform_static_blocks,
             ctx,
             classes_stack: ClassesStack::new(),
-            // Temporary values - overwritten when entering class
-            instance_inits_scope_id: ScopeId::new(0),
-            instance_inits_constructor_scope_id: None,
+            private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
             insert_before: vec![],
@@ -320,6 +311,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op in release mode
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        debug_assert_eq!(self.private_field_count, 0);
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_body_on_entry(body, ctx);
     }
@@ -339,6 +336,13 @@ impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
+        // If we're not inside a class which has private fields, `#prop` can't be present here,
+        // so exit early - fast path for common case.
+        if self.private_field_count == 0 {
+            return;
+        }
+
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {

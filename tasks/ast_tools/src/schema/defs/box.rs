@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
+use super::{Containers, Def, Derives, Schema, TypeDef, TypeId, extensions::layout::Layout};
 
 /// Type definition for a `Box`.
 #[derive(Debug)]
@@ -9,13 +9,20 @@ pub struct BoxDef {
     pub id: TypeId,
     pub name: String,
     pub inner_type_id: TypeId,
+    pub containers: Containers,
     pub layout: Layout,
 }
 
 impl BoxDef {
     /// Create new [`BoxDef`].
     pub fn new(name: String, inner_type_id: TypeId) -> Self {
-        Self { id: TypeId::DUMMY, name, inner_type_id, layout: Layout::default() }
+        Self {
+            id: TypeId::DUMMY,
+            name,
+            inner_type_id,
+            containers: Containers::default(),
+            layout: Layout::default(),
+        }
     }
 
     /// Get inner type.

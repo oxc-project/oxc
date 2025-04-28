@@ -24,7 +24,9 @@ impl Generator for FormatterFormatGenerator {
             .types
             .iter()
             .filter(|type_def| match type_def {
-                TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
+                TypeDef::Struct(struct_def) => {
+                    struct_def.visit.has_visitor() && !struct_def.builder.skip
+                }
                 TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
                 _ => false,
             })
@@ -38,13 +40,31 @@ impl Generator for FormatterFormatGenerator {
                     _ => unreachable!(),
                 };
 
+                let leading = if type_def.is_enum() {
+                    quote! {}
+                } else {
+                    quote! {
+                        format_leading_comments(self.span.start).fmt(f)?;
+                    }
+                };
+
+                let trailing = if type_def.is_enum() {
+                    quote! {}
+                } else {
+                    quote! {
+                        format_trailing_comments(self.span.end).fmt(f)?;
+                    }
+                };
+
                 if has_kind {
                     quote! {
                         ///@@line_break
                         impl<'a> Format<'a> for #type_ty {
                             fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                                 f.state_mut().stack.push(AstKind::#type_ident(hack(self)));
+                                #leading
                                 let result = self.write(f);
+                                #trailing
                                 unsafe { f.state_mut().stack.pop_unchecked() };
                                 result
                             }
@@ -70,8 +90,10 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Buffer, Format, FormatResult, Formatter},
-                write,
+                formatter::{
+                    Buffer, Format, FormatResult, Formatter,
+                    trivia::{format_leading_comments, format_trailing_comments},
+                },
                 write::FormatWrite,
             };
 

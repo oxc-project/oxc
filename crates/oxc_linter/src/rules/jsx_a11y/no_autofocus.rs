@@ -105,7 +105,7 @@ impl Rule for NoAutofocus {
         let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
         if self.ignore_non_dom {
-            if HTML_TAG.contains(&element_type) {
+            if HTML_TAG.contains(element_type.as_ref()) {
                 if let JSXAttributeItem::Attribute(attr) = autofocus {
                     ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                         fixer.delete(&attr.span)

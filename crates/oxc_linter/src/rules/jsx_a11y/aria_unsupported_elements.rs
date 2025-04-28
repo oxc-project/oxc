@@ -3,11 +3,10 @@ use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{
     AstNode, LintContext,
-    globals::RESERVED_HTML_TAG,
+    globals::{RESERVED_HTML_TAG, is_valid_aria_property},
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name},
 };
@@ -51,7 +50,7 @@ impl Rule for AriaUnsupportedElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let el_type = get_element_type(ctx, jsx_el);
-            if RESERVED_HTML_TAG.contains(&el_type) {
+            if RESERVED_HTML_TAG.contains(&el_type.as_ref()) {
                 for attr in &jsx_el.attributes {
                     let attr = match attr {
                         JSXAttributeItem::Attribute(attr) => attr,
@@ -59,7 +58,7 @@ impl Rule for AriaUnsupportedElements {
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name);
                     let attr_name = attr_name.cow_to_ascii_lowercase();
-                    if INVALID_ATTRIBUTES.contains(&attr_name) {
+                    if attr_name == "role" || is_valid_aria_property(&attr_name) {
                         ctx.diagnostic_with_fix(
                             aria_unsupported_elements_diagnostic(attr.span, &attr_name),
                             |fixer| fixer.delete(&attr.span),
@@ -70,58 +69,6 @@ impl Rule for AriaUnsupportedElements {
         }
     }
 }
-
-const INVALID_ATTRIBUTES: phf::Set<&'static str> = phf_set! {
-    "aria-activedescendant",
-    "aria-atomic",
-    "aria-autocomplete",
-    "aria-busy",
-    "aria-checked",
-    "aria-colcount",
-    "aria-colindex",
-    "aria-colspan",
-    "aria-controls",
-    "aria-current",
-    "aria-describedby",
-    "aria-details",
-    "aria-disabled",
-    "aria-dropeffect",
-    "aria-errormessage",
-    "aria-expanded",
-    "aria-flowto",
-    "aria-grabbed",
-    "aria-haspopup",
-    "aria-hidden",
-    "aria-invalid",
-    "aria-keyshortcuts",
-    "aria-label",
-    "aria-labelledby",
-    "aria-level",
-    "aria-live",
-    "aria-modal",
-    "aria-multiline",
-    "aria-multiselectable",
-    "aria-orientation",
-    "aria-owns",
-    "aria-placeholder",
-    "aria-posinset",
-    "aria-pressed",
-    "aria-readonly",
-    "aria-relevant",
-    "aria-required",
-    "aria-roledescription",
-    "aria-rowcount",
-    "aria-rowindex",
-    "aria-rowspan",
-    "aria-selected",
-    "aria-setsize",
-    "aria-sort",
-    "aria-valuemax",
-    "aria-valuemin",
-    "aria-valuenow",
-    "aria-valuetext",
-    "role",
-};
 
 #[test]
 fn test() {

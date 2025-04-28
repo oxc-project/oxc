@@ -35,6 +35,7 @@ pub enum FormatElement {
     /// string with its start position in the input document.
     DynamicText {
         /// There's no need for the text to be mutable, using `Box<str>` safes 8 bytes over `String`.
+        // TODO: Do not allocate.
         text: Box<str>,
         /// The start position of the dynamic token in the unformatted source code
         source_position: TextSize,
@@ -68,9 +69,9 @@ pub enum FormatElement {
 impl std::fmt::Debug for FormatElement {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            FormatElement::Space | FormatElement::HardSpace => write!(fmt, "Space"),
+            FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
-            FormatElement::ExpandParent => write!(fmt, "ExpandParent"),
+            FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::StaticText { text } => {
                 fmt.debug_tuple("StaticText").field(text).finish()
             }
@@ -80,7 +81,7 @@ impl std::fmt::Debug for FormatElement {
             FormatElement::LocatedTokenText { slice, .. } => {
                 fmt.debug_tuple("LocatedTokenText").field(slice).finish()
             }
-            FormatElement::LineSuffixBoundary => write!(fmt, "LineSuffixBoundary"),
+            FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
             }

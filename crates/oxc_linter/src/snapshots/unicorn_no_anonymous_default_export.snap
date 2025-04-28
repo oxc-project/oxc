@@ -270,9 +270,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
+   ╭─[no_anonymous_default_export.tsx:1:27]
  1 │ @decorator export default class {}
-   · ──────────────────────────────────
+   ·                           ────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
@@ -288,7 +288,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:1]
+   ╭─[no_anonymous_default_export.tsx:1:48]
  1 │ @decorator @decorator(class {}) export default class {}
-   · ───────────────────────────────────────────────────────
+   ·                                                ────────
    ╰────

@@ -73,6 +73,7 @@ fn test_vars_simple() {
         ("console.log(function a() {} ? b : c)", None),
         ("console.log(a ? function b() {} : c)", None),
         ("console.log(a ? b : function c() {})", None),
+        ("cb => (cb(), 0)", None),
     ];
     let fail = vec![
         ("let a = 1", None),
@@ -1200,6 +1201,30 @@ fn test_type_references() {
         .with_snapshot_suffix("oxc-type-references")
         .change_rule_path_extension("ts")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_ts_in_assignment() {
+    let pass = vec![
+        r"export const onClick = (value, key) => {
+             const obj: Record<string, string> = {};
+             (obj[key] as any) = value;
+        }",
+        r"export const onClick = (value, key) => {
+             const obj: Record<string, string> = {};
+             (obj[key] satisfies any) = value;
+        }",
+        r"export const onClick = (value, key) => {
+             const obj: Record<string, string> = {};
+             (obj[key]!) = value;
+        }",
+    ];
+    let fail = vec![];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-assignment-ts")
+        .test();
 }
 
 // #[test]

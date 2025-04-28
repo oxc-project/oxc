@@ -240,14 +240,12 @@ pub fn check_ts_interface_declaration<'a>(
     decl: &TSInterfaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(extends) = &decl.extends {
-        for extend in extends {
-            if !matches!(
-                &extend.expression,
-                Expression::Identifier(_) | Expression::StaticMemberExpression(_),
-            ) {
-                ctx.error(invalid_interface_extend(extend.span));
-            }
+    for extend in &decl.extends {
+        if !matches!(
+            &extend.expression,
+            Expression::Identifier(_) | Expression::StaticMemberExpression(_),
+        ) {
+            ctx.error(invalid_interface_extend(extend.span));
         }
     }
 }
@@ -269,7 +267,6 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
             AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
                 // export namespace N {}
                 // We need to check the parent of the parent
-                continue;
             }
             _ => {
                 ctx.error(not_allowed_namespace_declaration(decl.span));
@@ -285,7 +282,7 @@ fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
 
-    decl.members.iter().for_each(|member| {
+    decl.body.members.iter().for_each(|member| {
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(

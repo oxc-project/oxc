@@ -6,7 +6,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::phf_set;
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
@@ -114,7 +113,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
             }
 
             if let Expression::Identifier(ident) = member_expr_obj {
-                if IGNORED_SLICE_CALLEE.contains(ident.name.as_str()) {
+                if IGNORED_SLICE_CALLEE.contains(&ident.name.as_str()) {
                     return;
                 }
             }
@@ -136,7 +135,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
         }
         // `array.toSpliced()`
         "toSpliced" => {
-            if call_expr.arguments.len() != 0 {
+            if !call_expr.arguments.is_empty() {
                 return;
             }
 
@@ -160,7 +159,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             };
 
-            if string_lit.value != "" {
+            if !string_lit.value.is_empty() {
                 return;
             }
 
@@ -179,13 +178,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     }
 }
 
-const IGNORED_SLICE_CALLEE: phf::Set<&'static str> = phf_set! {
-    "arrayBuffer",
-    "blob",
-    "buffer",
-    "file",
-    "this",
-};
+const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file", "this"];
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(

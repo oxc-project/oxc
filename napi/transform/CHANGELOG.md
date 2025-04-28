@@ -4,6 +4,76 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Features
+
+- b8414db napi/transform: Support enabling `removeClassFieldsWithoutInitializer` (#10581) (Dunqing)
+- 42ca96a transformer, napi/transform: Deprecate `allowDeclareFields` option (#10584) (Dunqing)
+- 6bff64e transformer/typescript: Support `removeClassFieldsWithoutInitializer` option (#10576) (Dunqing)
+- 1962bc6 transformer_plugins: Split out `oxc_transformer_plugins` crate (#10617) (Boshen)
+
+### Documentation
+
+- 73cd730 transformer: Add documentation for `CompilerAssumptions::set_public_class_fields` (#10582) (Dunqing)
+
+## [0.67.0] - 2025-04-27
+
+### Features
+
+- b8414db napi/transform: Support enabling `removeClassFieldsWithoutInitializer` (#10581) (Dunqing)
+- 42ca96a transformer, napi/transform: Deprecate `allowDeclareFields` option (#10584) (Dunqing)
+- 6bff64e transformer/typescript: Support `removeClassFieldsWithoutInitializer` option (#10576) (Dunqing)
+- 1962bc6 transformer_plugins: Split out `oxc_transformer_plugins` crate (#10617) (Boshen)
+
+### Documentation
+
+- 73cd730 transformer: Add documentation for `CompilerAssumptions::set_public_class_fields` (#10582) (Dunqing)
+
+## [0.65.0] - 2025-04-21
+
+### Documentation
+
+- 78cdb1c transform: Correct tsc's `--isolatedDeclarations` flag (#10502) (ocavue)
+
+## [0.65.0] - 2025-04-21
+
+### Documentation
+
+- 78cdb1c transform: Correct tsc's `--isolatedDeclarations` flag (#10502) (ocavue)
+
+## [0.64.0] - 2025-04-17
+
+### Features
+
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+
+## [0.64.0] - 2025-04-17
+
+### Features
+
+- dfef8b5 transformer: Enable `using` by default (#10333) (Boshen)
+
+### Bug Fixes
+
+- 1ff75bc transformer/module_runner: Hoist export (#10347) (hi-ogawa)
+
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 78f1b3a transformer: Enable `using` by default (#10286) (Boshen)
+
+## [0.63.0] - 2025-04-08
+
+### Features
+
+- 78f1b3a transformer: Enable `using` by default (#10286) (Boshen)
+
 ## [0.61.0] - 2025-03-20
 
 ### Features

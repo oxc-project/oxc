@@ -287,9 +287,8 @@ impl Oxc {
                 .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
                 .parse();
 
-            let mut formatter = Formatter::new(&allocator, FormatOptions::default());
-
             if run_options.formatter_format.unwrap_or_default() {
+                let formatter = Formatter::new(&allocator, FormatOptions::default());
                 self.formatter_formatted_text = formatter.build(&ret.program);
             }
 

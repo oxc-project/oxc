@@ -2,5 +2,8 @@
   "categories": {
     "correctness": "error",
     "perf": "error"
-  }
+  },
+  "ignorePatterns": [
+    "**/fixtures"
+  ]
 }

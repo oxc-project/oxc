@@ -178,7 +178,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
         for inner in &outer.elements {
             // inner item is array
             if let ArrayExpressionElement::ArrayExpression(inner) = inner {
-                if inner.elements.len() > 0
+                if !inner.elements.is_empty()
                     && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
                 {
                     if let Some(expr) = inner.elements[0].as_expression() {

@@ -4,6 +4,84 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.8] - 2025-04-27
+
+### Bug Fixes
+
+- f3eac51 language_server: Fix max integer values for range position (#10623) (Alexander S.)
+- d309e07 language_server: Fix panics when paths contains specials characters like `[` or `]` (#10622) (Alexander S.)
+- 91ce77a language_server: Temporary ignore tests that panic on Windows (#10583) (Yuji Sugiura)
+
+### Refactor
+
+- f6c6969 language_server: Make linter independent of `Backend` (#10497) (Sysix)
+- db05a15 language_server: Do not request for worspace configuration when the client does not support it (#10507) (Sysix)
+- 9f9e0e5 language_server: Move code actions into own file (#10479) (Sysix)
+
+### Testing
+
+- 9f43a58 language_server: Fix broken tests in windows (#10600) (Sysix)
+
+## [0.16.7] - 2025-04-21
+
+### Features
+
+- bb8a078 language_server: Use linter runtime (#10268) (Sysix)
+
+### Bug Fixes
+
+- df488d4 language_server: Workspace edits as one batch when `source.fixAll.oxc` is the context (#10428) (Sysix)
+
+### Performance
+
+- 21f3175 langage_server: Prebuild `IsolatedLintHandler` (#10406) (Sysix)
+
+### Refactor
+
+- 2935103 language_server: Report info as warning instead of error when falling back to default config (#10517) (Sysix)
+
+## [0.16.6] - 2025-04-14
+
+### Features
+
+- 0370363 language_server: Switch `tower-lsp` to `tower-lsp-server` (#10298) (Boshen)
+
+### Bug Fixes
+
+- 664342b language_server: Diable nested configuration when config path is provided (#10385) (Sysix)
+
+### Performance
+
+- e0057c3 language_server: Only restart internal linter once when multiple config changes detected (#10256) (Sysix)
+
+### Refactor
+
+- a95ba40 language_server: Make server more error resistance by falling back to default config (#10257) (Sysix)
+
+### Testing
+
+- 4a6bb21 language_server: Add test for `import` plugin integration (#10364) (Sysix)
+
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 32b9d1e language_server: Add `fix_kind` flag (#10226) (Sysix)
+- dab1bd8 language_server: Search for nested configurations by initialization (#10120) (Sysix)
+
+### Bug Fixes
+
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.16.4] - 2025-04-01
 
 - da6336c language_server: [**BREAKING**] Remove `enable` configuration, the client should shutdown the server instead (#9990) (Sysix)

@@ -7,7 +7,7 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -250,7 +250,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
+        arguments.insert(0, Argument::from(expr.take_in(ctx.ast.allocator)));
         *expr = ctx.ast.expression_call(
             SPAN,
             binding.create_read_expression(ctx),
@@ -503,7 +503,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                ctx.ast.move_expression(expr),
+                expr.take_in(ctx.ast.allocator),
             );
         }
 
@@ -589,7 +589,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_return(
                     SPAN,
-                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
+                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope)),
                 )),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);

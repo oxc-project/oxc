@@ -63,7 +63,7 @@ impl Rule for NoLoneBlocks {
 
         if stmt.body.is_empty() {
             let is_comment_in_stmt =
-                ctx.comments_range(stmt.span.start..stmt.span.end).last().is_some();
+                ctx.comments_range(stmt.span.start..stmt.span.end).next_back().is_some();
 
             if !is_comment_in_stmt
                 && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_))

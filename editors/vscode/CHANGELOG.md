@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.8] - 2025-04-27
+
+### Bug Fixes
+
+- 966fb03 editor: Fix memory leaks when server or watchers restarted (#10628) (Sysix)
+
+### Performance
+
+- 3c27d0d editor: Avoid sending `workspace/didChangeConfiguration` request when the server needs a restarts (#10550) (Sysix)
+
+### Refactor
+
+- e903ba2 editor: Split Config to VSCodeConfig and WorkspaceConfig (#10572) (Sysix)
+
+## [0.16.7] - 2025-04-21
+
+### Features
+
+- bb8a078 language_server: Use linter runtime (#10268) (Sysix)
+
+### Bug Fixes
+
+- df488d4 language_server: Workspace edits as one batch when `source.fixAll.oxc` is the context (#10428) (Sysix)
+
+### Refactor
+
+- 8731f14 editor: Output error when custom server path is not accessible (#10518) (Sysix)
+
+### Testing
+
+- 83baf8b editor: Correct test diagnostic for import plugin (#10453) (Sysix)
+
+## [0.16.6] - 2025-04-14
+
+### Testing
+
+- 62f7d76 editor: Refactor tests to use fixtures (#10381) (Sysix)
+
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 32b9d1e language_server: Add `fix_kind` flag (#10226) (Sysix)
+- dab1bd8 language_server: Search for nested configurations by initialization (#10120) (Sysix)
+
+### Documentation
+
+- f115f71 editor: Add readme block for possible configurations (#10243) (Sysix)
+
+### Testing
+
+- 297d07f editor: Add e2e tests for creating oxlint configurations on the fly (#10138) (Sysix)
+- 29be469 editor: Add test for code actions (#10168) (camchenry)
+- ba817a9 editor: Add E2E Diagnostics test (#10133) (Sysix)
+
 ## [0.16.4] - 2025-04-01
 
 - da6336c language_server: [**BREAKING**] Remove `enable` configuration, the client should shutdown the server instead (#9990) (Sysix)

@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 use std::{
+    fmt::Write as _,
     fs::{self, File},
     io::{self, Write},
     path::Path,
@@ -16,7 +17,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
-use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
+use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
 
 #[test]
@@ -67,24 +68,28 @@ pub fn run() -> Result<(), io::Error> {
     let mut out = String::new();
 
     let width = 10;
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |\n",
+    writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
         "",
         "Oxc",
         "ESBuild",
         "Oxc",
         "ESBuild",
         width = width,
-    ));
-    out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture\n",
+    )
+    .unwrap();
+    writeln!(
+        out,
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture",
         "Original",
         "minified",
         "minified",
         "gzip",
         "gzip",
         width = width,
-    ));
+    )
+    .unwrap();
 
     let fixture_width = files
         .files()

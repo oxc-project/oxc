@@ -236,6 +236,9 @@ const AST_VISIT_CRATE_PATH: &str = "crates/oxc_ast_visit";
 /// Path to `oxc_ast_macros` crate
 const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 
+/// Path to `oxc_traverse` crate
+const TRAVERSE_CRATE_PATH: &str = "crates/oxc_traverse";
+
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
@@ -265,6 +268,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AstBuilderGenerator,
     &generators::GetIdGenerator,
     &generators::VisitGenerator,
+    &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
     &generators::RawTransferGenerator,
     &generators::TypescriptGenerator,

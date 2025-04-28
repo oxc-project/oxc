@@ -6,72 +6,84 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const index = foo.indexOf('bar'); if (index < 0) {}
    ·                                       ─────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:43]
  1 │ const index = foo.lastIndexOf('bar'); if (index < 0) {}
    ·                                           ─────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:41]
  1 │ const index = foo.findIndex('bar'); if (index < 0) {}
    ·                                         ─────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:45]
  1 │ const index = foo.findLastIndex('bar'); if (index < 0) {}
    ·                                             ─────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:39]
  1 │ const index = foo.indexOf('bar'); if (index >= 0) {}
    ·                                       ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:43]
  1 │ const index = foo.lastIndexOf('bar'); if (index >= 0) {}
    ·                                           ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:41]
  1 │ const index = foo.findIndex('bar'); if (index >= 0) {}
    ·                                         ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:45]
  1 │ const index = foo.findLastIndex('bar'); if (index >= 0) {}
    ·                                             ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:39]
  1 │ const index = foo.indexOf('bar'); if (index > -1) {}
    ·                                       ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:43]
  1 │ const index = foo.lastIndexOf('bar'); if (index > -1) {}
    ·                                           ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:41]
  1 │ const index = foo.findIndex('bar'); if (index > -1) {}
    ·                                         ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:45]
  1 │ const index = foo.findLastIndex('bar'); if (index > -1) {}
    ·                                             ──────────
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:5:15]
@@ -80,6 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
  6 │             }
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:4:10]
@@ -88,6 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  5 │             index2 >= 0;
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:5:10]
@@ -96,6 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
  6 │         
    ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
     ╭─[consistent_existence_index_check.tsx:5:17]
@@ -115,6 +130,7 @@ source: crates/oxc_linter/src/tester.rs
  17 │ ╰─▶                     ))
  18 │                         /* comment 8 */
     ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
     ╭─[consistent_existence_index_check.tsx:5:11]
@@ -133,9 +149,11 @@ source: crates/oxc_linter/src/tester.rs
  16 │ ╰─▶                 ))
  17 │                 ));
     ╰────
+  help: Replace index check with strict equality check
 
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:43]
  1 │ const index = _.indexOf([1, 2, 1, 2], 2); index < 0;
    ·                                           ─────────
    ╰────
+  help: Replace index check with strict equality check

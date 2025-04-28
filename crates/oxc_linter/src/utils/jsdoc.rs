@@ -2,11 +2,40 @@ use oxc_ast::{
     AstKind,
     ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
 };
-use oxc_semantic::{JSDoc, Semantic};
+use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, config::JSDocPluginSettings};
+
+pub const CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
+    ["abstract", "class", "constructor", "interface", "type", "virtual"];
+
+pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
+    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
+}
+
+pub fn is_missing_special_tag(jsdoc_tags: &[&JSDocTag], resolved_tag_name: &str) -> bool {
+    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
+}
+
+pub fn is_duplicated_special_tag(
+    jsdoc_tags: &Vec<&JSDocTag>,
+    resolved_returns_tag_name: &str,
+) -> Option<Span> {
+    let mut returns_found = false;
+    for tag in jsdoc_tags {
+        if tag.kind.parsed() == resolved_returns_tag_name {
+            if returns_found {
+                return Some(tag.kind.span);
+            }
+
+            returns_found = true;
+        }
+    }
+
+    None
+}
 
 /// JSDoc is often attached on the parent node of a function.
 ///

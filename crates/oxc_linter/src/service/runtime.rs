@@ -22,6 +22,9 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
+#[cfg(feature = "language_server")]
+use oxc_allocator::CloneIn;
+
 use super::LintServiceOptions;
 use crate::{
     Fixer, Linter, Message,
@@ -30,12 +33,22 @@ use crate::{
     utils::read_to_string,
 };
 
+#[cfg(feature = "language_server")]
+use crate::fixer::{FixWithPosition, MessageWithPosition};
+#[cfg(feature = "language_server")]
+use crate::service::offset_to_position::{SpanPositionMessage, offset_to_position};
+
 pub struct Runtime {
     cwd: Box<Path>,
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
+
+    // The language server uses more up to date source_text provided by `workspace/didChange` request.
+    // This is required to support `run: "onType"` configuration
+    #[cfg(feature = "language_server")]
+    source_text_cache: FxHashMap<Arc<OsStr>, String>,
 
     #[cfg(test)]
     pub(super) test_source: std::sync::RwLock<Option<String>>,
@@ -137,6 +150,8 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
+            #[cfg(feature = "language_server")]
+            source_text_cache: FxHashMap::default(),
             #[cfg(test)]
             test_source: std::sync::RwLock::new(None),
         }
@@ -167,7 +182,6 @@ impl Runtime {
         })
     }
 
-    #[cfg_attr(not(test), expect(clippy::unused_self))]
     fn get_source_type_and_text(
         &self,
         path: &Path,
@@ -187,6 +201,14 @@ impl Runtime {
         {
             return Some(Ok((source_type, test_source.clone())));
         }
+
+        // The language server uses more up to date source_text provided by `workspace/didChange` request.
+        // This is required to support `run: "onType"` configuration
+        #[cfg(feature = "language_server")]
+        if let Some(source_text) = self.source_text_cache.get(path.as_os_str()) {
+            return Some(Ok((source_type, source_text.clone())));
+        }
+
         let file_result = read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
@@ -503,8 +525,129 @@ impl Runtime {
         });
     }
 
-    #[cfg(test)]
+    // clippy: the source field is checked and assumed to be less than 4GB, and
+    // we assume that the fix offset will not exceed 2GB in either direction
+    // language_server: the language server needs line and character position
+    // the struct not using `oxc_diagnostic::Error, because we are just collecting information
+    // and returning it to the client to let him display it.
+    #[expect(clippy::cast_possible_truncation)]
+    #[cfg(feature = "language_server")]
     pub(super) fn run_source<'a>(
+        &mut self,
+        allocator: &'a oxc_allocator::Allocator,
+        path: &Arc<OsStr>,
+        source_text: &str,
+    ) -> Vec<MessageWithPosition<'a>> {
+        use std::sync::Mutex;
+
+        // the language server can have more up to date source_text then the filesystem
+        #[cfg(feature = "language_server")]
+        {
+            self.source_text_cache.insert(Arc::clone(path), source_text.to_owned());
+        }
+
+        let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
+        let (sender, _receiver) = mpsc::channel();
+        rayon::scope(|scope| {
+            self.resolve_modules(scope, true, &sender, |me, mut module| {
+                module.content.with_dependent_mut(|_owner, dependent| {
+                    assert_eq!(module.section_module_records.len(), dependent.len());
+
+                    for (record_result, section) in
+                        module.section_module_records.into_iter().zip(dependent.drain(..))
+                    {
+                        match record_result {
+                            Err(diagnostics) => {
+                                messages
+                                    .lock()
+                                    .unwrap()
+                                    .extend(diagnostics.into_iter().map(std::convert::Into::into));
+                            }
+                            Ok(module_record) => {
+                                let section_message = me.linter.run(
+                                    Path::new(&module.path),
+                                    Rc::new(section.semantic.unwrap()),
+                                    Arc::clone(&module_record),
+                                );
+
+                                messages.lock().unwrap().extend(section_message.iter().map(
+                                    |message| {
+                                        let message = message.clone_in(allocator);
+
+                                        let labels = &message.error.labels.clone().map(|labels| {
+                                            labels
+                                                .into_iter()
+                                                .map(|labeled_span| {
+                                                    let offset = labeled_span.offset() as u32;
+                                                    let start_position = offset_to_position(
+                                                        offset + section.source.start,
+                                                        source_text,
+                                                    );
+                                                    let end_position = offset_to_position(
+                                                        offset
+                                                            + section.source.start
+                                                            + labeled_span.len() as u32,
+                                                        source_text,
+                                                    );
+                                                    let message = labeled_span
+                                                        .label()
+                                                        .map(|label| Cow::Owned(label.to_string()));
+
+                                                    SpanPositionMessage::new(
+                                                        start_position,
+                                                        end_position,
+                                                    )
+                                                    .with_message(message)
+                                                })
+                                                .collect::<Vec<_>>()
+                                        });
+
+                                        MessageWithPosition {
+                                            message: message.error.message.clone(),
+                                            severity: message.error.severity,
+                                            help: message.error.help.clone(),
+                                            url: message.error.url.clone(),
+                                            code: message.error.code.clone(),
+                                            labels: labels.clone(),
+                                            fix: message.fix.map(|fix| FixWithPosition {
+                                                content: fix.content,
+                                                span: SpanPositionMessage::new(
+                                                    offset_to_position(fix.span.start, source_text),
+                                                    offset_to_position(fix.span.end, source_text),
+                                                )
+                                                .with_message(
+                                                    fix.message
+                                                        .as_ref()
+                                                        .map(|label| Cow::Owned(label.to_string())),
+                                                ),
+                                            }),
+                                        }
+                                    },
+                                ));
+                            }
+                        }
+                    }
+                });
+            });
+        });
+
+        // ToDo: oxc_diagnostic::Error is not compatible with MessageWithPosition
+        // send use OxcDiagnostic or even better the MessageWithPosition struct
+        // while let Ok(diagnostics) = receiver.recv() {
+        //     if let Some(diagnostics) = diagnostics {
+        //         messages.lock().unwrap().extend(
+        //             diagnostics.1
+        //                 .into_iter()
+        //                 .map(|report| MessageWithPosition::from(report))
+        //         );
+        //     }
+        // }
+
+        messages.into_inner().unwrap()
+    }
+
+    #[cfg(test)]
+    pub(super) fn run_test_source<'a>(
         &mut self,
         allocator: &'a Allocator,
         source_text: &str,

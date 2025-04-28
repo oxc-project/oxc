@@ -3,11 +3,12 @@ use std::sync::{
 };
 
 use lazy_regex::Regex;
+use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use oxc_ast::{AstKind, ast::MethodDefinitionKind};
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
 
@@ -19,6 +20,12 @@ use crate::{
         should_ignore_as_avoid, should_ignore_as_internal, should_ignore_as_private,
     },
 };
+
+fn require_param_diagnostic(violations: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing JSDoc `@param` declaration for function parameters.")
+        .with_help("Add `@param` tag with name.")
+        .with_labels(violations)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireParam(Box<RequireParamConfig>);
@@ -149,10 +156,14 @@ impl Rule for RequireParam {
             }
         }
 
+        // If there is a `@type` tag for this function, then `@param` is not required
+        if jsdocs.iter().any(has_type_tag) {
+            return;
+        }
+
         // If JSDoc is found but safely ignored, skip
         if jsdocs
             .iter()
-            .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
             .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
             .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
@@ -175,6 +186,7 @@ impl Rule for RequireParam {
             });
 
         let mut violations = vec![];
+
         for (idx, param) in params_to_check.iter().enumerate() {
             match param {
                 ParamKind::Single(param) => {
@@ -246,15 +258,7 @@ impl Rule for RequireParam {
         }
 
         if !violations.is_empty() {
-            let labels = violations
-                .iter()
-                .map(|span| LabeledSpan::new_with_span(None, *span))
-                .collect::<Vec<_>>();
-            ctx.diagnostic(
-                OxcDiagnostic::warn("Missing JSDoc `@param` declaration for function parameters.")
-                    .with_help("Add `@param` tag with name.")
-                    .with_labels(labels),
-            );
+            ctx.diagnostic(require_param_diagnostic(violations));
         }
     }
 }
@@ -286,7 +290,8 @@ fn collect_tags<'a>(
     collected
 }
 
-fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
+/// Returns true if the JSDoc has a `@type` tag in it
+fn has_type_tag(jsdoc: &JSDoc) -> bool {
     jsdoc.tags().iter().any(|tag| "type" == tag.kind.parsed())
 }
 
@@ -298,7 +303,7 @@ fn is_name_equal(a: &str, b: &str) -> bool {
 
     loop {
         match (a_chars.next(), b_chars.next()) {
-            (Some(ac), Some(bc)) if ac == bc => continue,
+            (Some(ac), Some(bc)) if ac == bc => {}
             (None, None) => return true, // Both done
             _ => return false,           // Either one is done, or not equal
         }
@@ -747,6 +752,15 @@ fn test() {
 			          return a + b;
 			        }
 			      ", None, None), // {        "parser": typescriptEslintParser,      }
+        // https://github.com/oxc-project/oxc/issues/10253
+        ("
+            /** @typedef {import('../types.d.ts').FileURL} FileURL */
+
+            /**
+             * @type {import('node:module').ResolveHook}
+             */
+            async function resolveJSONC(specifier, ctx, nextResolve) {}
+        ", None, None)
     ];
 
     let fail = vec![

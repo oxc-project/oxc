@@ -180,6 +180,18 @@ pub struct StaticExportEntry {
     pub export_name: ExportExportName,
     /// The name that is used to locally access the exported value from within the importing module.
     pub local_name: ExportLocalName,
+    /// Whether the export is a TypeScript `export type`.
+    ///
+    /// Examples:
+    ///
+    /// ```ts
+    /// export type * from 'mod';
+    /// export type * as ns from 'mod';
+    /// export type { foo };
+    /// export { type foo }:
+    /// export type { foo } from 'mod';
+    /// ```
+    pub is_type: bool,
 }
 
 #[napi(object)]

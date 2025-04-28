@@ -37,10 +37,13 @@ pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
     /// Opening tag of the element.
+    #[estree(via = JSXElementOpening)]
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
-    /// Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// Closing tag of the element.
+    /// [`None`] for self-closing tags.
     pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
-    /// Children of the element. This can be text, other elements, or expressions.
+    /// Children of the element.
+    /// This can be text, other elements, or expressions.
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
@@ -62,18 +65,13 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, attributes, name, self_closing, type_arguments))]
+#[estree(
+    add_fields(selfClosing = JSXOpeningElementSelfClosing),
+    field_order(span, attributes, name, selfClosing, type_arguments),
+)]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
-    /// Is this tag self-closing?
-    ///
-    /// ## Examples
-    /// ```tsx
-    /// <Foo />  // <- self_closing = true
-    /// <Foo>    // <- self_closing = false
-    /// ```
-    pub self_closing: bool,
     /// The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     pub name: JSXElementName<'a>,
     /// List of JSX attributes. In React-like applications, these become props.
@@ -130,7 +128,7 @@ pub struct JSXFragment<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(attributes = JSXOpeningFragmentAttributes, selfClosing = False))]
+#[estree(via = JSXOpeningFragmentConverter, add_fields(attributes = TsEmptyArray, selfClosing = TsFalse))]
 pub struct JSXOpeningFragment {
     /// Node location in source code
     pub span: Span,

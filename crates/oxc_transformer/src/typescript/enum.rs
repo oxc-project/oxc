@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -98,15 +98,19 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
         );
 
-        let has_potential_side_effect = decl.members.iter().any(|member| {
+        let has_potential_side_effect = decl.body.members.iter().any(|member| {
             matches!(
                 member.initializer,
                 Some(Expression::NewExpression(_) | Expression::CallExpression(_))
             )
         });
 
-        let statements =
-            self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
+        let statements = self.transform_ts_enum_members(
+            decl.scope_id(),
+            &mut decl.body.members,
+            &param_binding,
+            ctx,
+        );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
@@ -133,7 +137,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_expr = ast.expression_object(SPAN, ast.vec(), None);
+            let object_expr = ast.expression_object(SPAN, ast.vec());
             ast.vec1(Argument::from(object_expr))
         } else {
             // }(Foo || {});
@@ -144,7 +148,7 @@ impl<'a> TypeScriptEnum<'a> {
                 enum_symbol_id,
                 ReferenceFlags::Read,
             );
-            let right = ast.expression_object(SPAN, ast.vec(), None);
+            let right = ast.expression_object(SPAN, ast.vec());
             let expression = ast.expression_logical(SPAN, left, op, right);
             ast.vec1(Argument::from(expression))
         };
@@ -213,10 +217,7 @@ impl<'a> TypeScriptEnum<'a> {
         let mut prev_member_name = None;
 
         for member in members.iter_mut() {
-            let member_name = match &member.id {
-                TSEnumMemberName::Identifier(id) => id.name,
-                TSEnumMemberName::String(str) => str.value,
-            };
+            let member_name = member.id.static_name();
 
             let init = if let Some(initializer) = &mut member.initializer {
                 let constant_value =
@@ -228,7 +229,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.move_expression(initializer);
+                        let mut new_initializer = initializer.take_in(ast.allocator);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,

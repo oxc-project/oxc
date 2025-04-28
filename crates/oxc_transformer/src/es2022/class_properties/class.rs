@@ -2,7 +2,7 @@
 //! Transform of class itself.
 
 use indexmap::map::Entry;
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::{Address, GetAddress, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -70,15 +70,13 @@ impl<'a> ClassProperties<'a, '_> {
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.super_class().is_some();
 
-        // Check if class has any properties, private methods, or static blocks.
-        // Locate constructor (if class has one).
+        // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
         let mut has_static_prop = false;
         let mut has_instance_private_method = false;
         let mut has_static_private_method_or_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
-        let mut constructor = None;
         for element in &mut body.body {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -99,22 +97,15 @@ impl<'a> ClassProperties<'a, '_> {
                     } else {
                         instance_prop_count += 1;
                     }
-
-                    continue;
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
                     if self.transform_static_blocks {
                         has_static_private_method_or_static_block = true;
-                        continue;
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor {
-                        if method.value.body.is_some() {
-                            constructor = Some(method);
-                        }
-                    } else if let PropertyKey::PrivateIdentifier(ident) = &method.key {
+                    if let PropertyKey::PrivateIdentifier(ident) = &method.key {
                         if method.r#static {
                             has_static_private_method_or_static_block = true;
                         } else {
@@ -166,6 +157,8 @@ impl<'a> ClassProperties<'a, '_> {
                 }
             }
         }
+
+        self.private_field_count += private_props.len();
 
         // Exit if nothing to transform
         if instance_prop_count == 0
@@ -240,42 +233,6 @@ impl<'a> ClassProperties<'a, '_> {
             return;
         }
 
-        // Determine where to insert instance property initializers in constructor
-        let instance_inits_insert_location = if let Some(constructor) = constructor {
-            // Existing constructor
-            let constructor = constructor.value.as_mut();
-            if has_super_class {
-                let (insert_scopes, insert_location) =
-                    Self::replace_super_in_constructor(constructor, ctx);
-                self.instance_inits_scope_id = insert_scopes.insert_in_scope_id;
-                self.instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
-                insert_location
-            } else {
-                let constructor_scope_id = constructor.scope_id();
-                self.instance_inits_scope_id = constructor_scope_id;
-                // Only record `constructor_scope_id` if constructor's scope has some bindings.
-                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
-                // because no bindings to clash with.
-                self.instance_inits_constructor_scope_id =
-                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
-                        None
-                    } else {
-                        Some(constructor_scope_id)
-                    };
-                InstanceInitsInsertLocation::ExistingConstructor(0)
-            }
-        } else {
-            // No existing constructor - create scope for one
-            let constructor_scope_id = ctx.scoping_mut().add_scope(
-                Some(class_scope_id),
-                NodeId::DUMMY,
-                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
-            );
-            self.instance_inits_scope_id = constructor_scope_id;
-            self.instance_inits_constructor_scope_id = None;
-            InstanceInitsInsertLocation::NewConstructor
-        };
-
         // Extract instance properties initializers.
         //
         // We leave the properties themselves in place, but take the initializers.
@@ -318,11 +275,68 @@ impl<'a> ClassProperties<'a, '_> {
             }
         }
 
+        // Scope that instance property initializers will be inserted into.
+        // This is usually class constructor, but can also be a `_super` function which is created.
+        let instance_inits_scope_id;
+        // Scope of class constructor, if instance property initializers will be inserted into constructor.
+        // Used for checking for variable name clashes.
+        // e.g. `class C { prop = x(); constructor(x) {} }`
+        // - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
+        // `None` if class has no existing constructor, as then there can't be any clashes.
+        let mut instance_inits_constructor_scope_id = None;
+
+        // Determine where to insert instance property initializers in constructor
+        let instance_inits_insert_location = if let Some(constructor) = constructor.as_deref_mut() {
+            if has_super_class {
+                let (insert_scopes, insert_location) =
+                    Self::replace_super_in_constructor(constructor, ctx);
+                instance_inits_scope_id = insert_scopes.insert_in_scope_id;
+                instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
+                insert_location
+            } else {
+                let constructor_scope_id = constructor.scope_id();
+                instance_inits_scope_id = constructor_scope_id;
+                // Only record `constructor_scope_id` if constructor's scope has some bindings.
+                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
+                // because no bindings to clash with.
+                instance_inits_constructor_scope_id =
+                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
+                        None
+                    } else {
+                        Some(constructor_scope_id)
+                    };
+                InstanceInitsInsertLocation::ExistingConstructor(0)
+            }
+        } else {
+            // No existing constructor - create scope for one
+            let constructor_scope_id = ctx.scoping_mut().add_scope(
+                Some(class_scope_id),
+                NodeId::DUMMY,
+                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
+            );
+            instance_inits_scope_id = constructor_scope_id;
+            InstanceInitsInsertLocation::NewConstructor
+        };
+
+        // Reparent property initializers scope to `instance_inits_scope_id`.
+        self.reparent_initializers_scope(
+            instance_inits.as_slice(),
+            instance_inits_scope_id,
+            instance_inits_constructor_scope_id,
+            ctx,
+        );
+
         // Insert instance initializers into constructor.
         // Create a constructor if there isn't one.
         match instance_inits_insert_location {
             InstanceInitsInsertLocation::NewConstructor => {
-                self.insert_constructor(body, instance_inits, has_super_class, ctx);
+                Self::insert_constructor(
+                    body,
+                    instance_inits,
+                    has_super_class,
+                    instance_inits_scope_id,
+                    ctx,
+                );
             }
             InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
                 self.insert_inits_into_constructor_as_statements(
@@ -337,11 +351,17 @@ impl<'a> ClassProperties<'a, '_> {
                     constructor.as_mut().unwrap(),
                     instance_inits,
                     &super_binding,
+                    instance_inits_scope_id,
                     ctx,
                 );
             }
             InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(instance_inits, &super_binding, ctx);
+                self.create_super_function_outside_constructor(
+                    instance_inits,
+                    &super_binding,
+                    instance_inits_scope_id,
+                    ctx,
+                );
             }
         }
     }
@@ -388,9 +408,13 @@ impl<'a> ClassProperties<'a, '_> {
         } else {
             debug_assert!(class_details.bindings.temp.is_none());
         }
-
         // Pop off stack. We're done!
-        self.classes_stack.pop();
+        let class_details = self.classes_stack.pop();
+        if let Some(private_props) = &class_details.private_props {
+            // Note: `private_props` can be non-empty even if `is_transform_required == false`,
+            // if class contains private accessors, which we don't transform yet
+            self.private_field_count -= private_props.len();
+        }
     }
 
     fn transform_class_declaration_on_exit_impl(
@@ -541,7 +565,12 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         // Pop off stack. We're done!
-        self.classes_stack.pop();
+        let class_details = self.classes_stack.pop();
+        if let Some(private_props) = &class_details.private_props {
+            // Note: `private_props` can be non-empty even if `is_transform_required == false`,
+            // if class contains private accessors, which we don't transform yet
+            self.private_field_count -= private_props.len();
+        }
     }
 
     fn transform_class_expression_on_exit_impl(
@@ -670,7 +699,7 @@ impl<'a> ClassProperties<'a, '_> {
             }
 
             // `_Class = class {}`
-            let class_expr = ctx.ast.move_expression(expr);
+            let class_expr = expr.take_in(ctx.ast.allocator);
             let assignment = create_assignment(binding, class_expr, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -699,7 +728,7 @@ impl<'a> ClassProperties<'a, '_> {
                 return;
             }
 
-            let class_expr = ctx.ast.move_expression(expr);
+            let class_expr = expr.take_in(ctx.ast.allocator);
             exprs.push(class_expr);
         }
 

@@ -234,6 +234,7 @@ impl CatchErrorName {
                     }
 
                     declaration_fix
+                        .with_message(format!("Rename `{}` to `{}`", binding_ident.name, self.name))
                 },
             );
         }

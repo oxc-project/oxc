@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
@@ -36,7 +36,6 @@ mod regexp;
 mod typescript;
 
 mod decorator;
-mod plugins;
 
 use common::Common;
 use context::TransformCtx;
@@ -60,12 +59,18 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
+    es2017::ES2017Options,
+    es2018::ES2018Options,
+    es2019::ES2019Options,
+    es2020::ES2020Options,
+    es2021::ES2021Options,
+    es2022::{ClassPropertiesOptions, ES2022Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
-    plugins::*,
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
@@ -114,12 +119,20 @@ impl<'a> Transformer<'a> {
 
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
-        jsx::update_options_with_comments(
-            &program.comments,
-            &mut self.typescript,
-            &mut self.jsx,
-            &self.ctx,
-        );
+
+        // Update options from comments when source type is JSX or TypeScript which has enabled `only_remove_type_imports`.
+        // Because if `only_remove_type_imports` is enabled, no imports will be removed, so that we don't care about
+        // TypeScript's `jsx_pragma` and `jsx_pragma_frag` options.
+        if program.source_type.is_jsx()
+            && (!program.source_type.is_typescript() || !self.typescript.only_remove_type_imports)
+        {
+            jsx::update_options_with_comments(
+                &program.comments,
+                &mut self.typescript,
+                &mut self.jsx,
+                &self.ctx,
+            );
+        }
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
@@ -186,6 +199,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
         }
+        self.x2_es2022.exit_program(program, ctx);
         self.x2_es2018.exit_program(program, ctx);
         self.common.exit_program(program, ctx);
     }
@@ -290,16 +304,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             explicit_resource_management.exit_static_block(block, ctx);
         }
         self.x2_es2022.exit_static_block(block, ctx);
-    }
-
-    fn enter_ts_module_declaration(
-        &mut self,
-        decl: &mut TSModuleDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_ts_module_declaration(decl, ctx);
-        }
     }
 
     #[inline]
@@ -531,7 +535,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

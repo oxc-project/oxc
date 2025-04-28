@@ -19,9 +19,12 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ModuleRunnerTransform, ProposalOptions,
-        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
+        RewriteExtensionsMode,
+    },
+    transformer_plugins::{
+        InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
+        ReplaceGlobalDefinesConfig,
     },
 };
 use oxc_napi::OxcError;
@@ -174,7 +177,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions { explicit_resource_management: false },
+            proposals: ProposalOptions::default(),
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
@@ -189,6 +192,45 @@ pub struct CompilerAssumptions {
     pub no_document_all: Option<bool>,
     pub object_rest_no_symbols: Option<bool>,
     pub pure_getters: Option<bool>,
+    /// When using public class fields, assume that they don't shadow any getter in the current class,
+    /// in its subclasses or in its superclass. Thus, it's safe to assign them rather than using
+    /// `Object.defineProperty`.
+    ///
+    /// For example:
+    ///
+    /// Input:
+    /// ```js
+    /// class Test {
+    ///  field = 2;
+    ///
+    ///  static staticField = 3;
+    /// }
+    /// ```
+    ///
+    /// When `set_public_class_fields` is `true`, the output will be:
+    /// ```js
+    /// class Test {
+    ///  constructor() {
+    ///    this.field = 2;
+    ///  }
+    /// }
+    /// Test.staticField = 3;
+    /// ```
+    ///
+    /// Otherwise, the output will be:
+    /// ```js
+    /// import _defineProperty from "@oxc-project/runtime/helpers/defineProperty";
+    /// class Test {
+    ///   constructor() {
+    ///     _defineProperty(this, "field", 2);
+    ///   }
+    /// }
+    /// _defineProperty(Test, "staticField", 3);
+    /// ```
+    ///
+    /// NOTE: For TypeScript, if you wanted behavior is equivalent to `useDefineForClassFields: false`, you should
+    /// set both `set_public_class_fields` and [`crate::TypeScriptOptions::remove_class_fields_without_initializer`]
+    /// to `true`.
     pub set_public_class_fields: Option<bool>,
 }
 
@@ -219,7 +261,46 @@ pub struct TypeScriptOptions {
     pub jsx_pragma_frag: Option<String>,
     pub only_remove_type_imports: Option<bool>,
     pub allow_namespaces: Option<bool>,
+    /// When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    ///
+    /// @deprecated
+    ///
+    /// Allowing `declare` fields is built-in support in Oxc without any option. If you want to remove class fields
+    /// without initializer, you can use `remove_class_fields_without_initializer: true` instead.
     pub allow_declare_fields: Option<bool>,
+    /// When enabled, class fields without initializers are removed.
+    ///
+    /// For example:
+    /// ```ts
+    /// class Foo {
+    ///    x: number;
+    ///    y: number = 0;
+    /// }
+    /// ```
+    /// // transform into
+    /// ```js
+    /// class Foo {
+    ///    x: number;
+    /// }
+    /// ```
+    ///
+    /// The option is used to align with the behavior of TypeScript's `useDefineForClassFields: false` option.
+    /// When you want to enable this, you also need to set [`crate::CompilerAssumptions::set_public_class_fields`]
+    /// to `true`. The `set_public_class_fields: true` + `remove_class_fields_without_initializer: true` is
+    /// equivalent to `useDefineForClassFields: false` in TypeScript.
+    ///
+    /// When `set_public_class_fields` is true and class-properties plugin is enabled, the above example transforms into:
+    ///
+    /// ```js
+    /// class Foo {
+    ///   constructor() {
+    ///     this.y = 0;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Defaults to `false`.
+    pub remove_class_fields_without_initializer: Option<bool>,
     /// Also generate a `.d.ts` declaration file for TypeScript files.
     ///
     /// The source file must be compliant with all
@@ -252,6 +333,9 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
             optimize_const_enums: false,
+            remove_class_fields_without_initializer: options
+                .remove_class_fields_without_initializer
+                .unwrap_or(ops.remove_class_fields_without_initializer),
             rewrite_import_extensions: options.rewrite_import_extensions.and_then(|value| {
                 match value {
                     Either::A(v) => {

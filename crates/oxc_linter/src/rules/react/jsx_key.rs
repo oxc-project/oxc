@@ -13,6 +13,8 @@ use crate::{
     rule::Rule,
 };
 
+const TARGET_METHODS: [&str; 3] = ["flatMap", "from", "map"];
+
 fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
 }
@@ -211,7 +213,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Some(v) = callee.as_member_expression() {
                     if let Some((span, ident)) = v.static_property_info() {
-                        if TARGET_METHODS.contains(ident) {
+                        if TARGET_METHODS.contains(&ident) {
                             return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
@@ -295,15 +297,6 @@ fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> OxcDiagnostic {
         InsideArrayOrIterator::Iterator(v) => missing_key_prop_for_element_in_iterator(*v, span),
     }
 }
-
-const TARGET_METHODS: phf::Set<&'static str> = phf::phf_set! {
-    // <array>.map(() => <jsx />)
-    "map",
-    // <array>.map(() => <jsx />)
-    "flatMap",
-    // Array.from(<array>, () => <jsx />)
-    "from"
-};
 
 #[test]
 fn test() {

@@ -60,7 +60,7 @@ impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {
+                if arrow_expr.r#async || arrow_expr.params.items.is_empty() {
                     return;
                 }
 
@@ -81,7 +81,7 @@ impl Rule for PreferNativeCoercionFunctions {
                 }
             }
             AstKind::Function(func) => {
-                if func.r#async || func.generator || func.params.items.len() == 0 {
+                if func.r#async || func.generator || func.params.items.is_empty() {
                     return;
                 }
                 if let Some(parent) = ctx.nodes().parent_node(node.id()) {
@@ -102,11 +102,11 @@ impl Rule for PreferNativeCoercionFunctions {
     }
 }
 
-fn check_function(
-    arg: &FormalParameters,
-    function_body: &FunctionBody,
+fn check_function<'a>(
+    arg: &'a FormalParameters,
+    function_body: &'a FunctionBody,
     is_arrow: bool,
-) -> Option<&'static str> {
+) -> Option<&'a str> {
     let first_parameter_name = get_first_parameter_name(arg)?;
 
     if function_body.statements.len() != 1 {
@@ -160,15 +160,15 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
     None
 }
 
-fn is_matching_native_coercion_function_call(
-    expr: &Expression,
-    first_arg_name: &str,
-) -> Option<&'static str> {
+fn is_matching_native_coercion_function_call<'a>(
+    expr: &'a Expression,
+    first_arg_name: &'a str,
+) -> Option<&'a str> {
     let Expression::CallExpression(call_expr) = expr else {
         return None;
     };
 
-    if call_expr.optional || call_expr.arguments.len() == 0 {
+    if call_expr.optional || call_expr.arguments.is_empty() {
         return None;
     }
 
@@ -176,7 +176,11 @@ fn is_matching_native_coercion_function_call(
         return None;
     };
 
-    let fn_name = NATIVE_COERCION_FUNCTION_NAMES.get_key(callee_ident.name.as_str())?;
+    let fn_name = callee_ident.name.as_str();
+
+    if !NATIVE_COERCION_FUNCTION_NAMES.contains(&fn_name) {
+        return None;
+    }
 
     let Argument::Identifier(arg_ident) = &call_expr.arguments[0] else {
         return None;
@@ -224,7 +228,7 @@ fn check_array_callback_methods(
     let Some(method_name) = callee_member_expr.static_property_name() else {
         return false;
     };
-    if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(method_name) {
+    if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(&method_name) {
         return false;
     }
 
@@ -243,23 +247,11 @@ fn check_array_callback_methods(
     first_param_name == returned_ident
 }
 
-const NATIVE_COERCION_FUNCTION_NAMES: phf::Set<&'static str> = phf::phf_set! {
-    "String",
-    "Number",
-    "BigInt",
-    "Boolean",
-    "Symbol"
-};
+const NATIVE_COERCION_FUNCTION_NAMES: [&str; 5] =
+    ["BigInt", "Boolean", "Number", "String", "Symbol"];
 
-const ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: phf::Set<&'static str> = phf::phf_set! {
-    "every",
-    "filter",
-    "find",
-    "findLast",
-    "findIndex",
-    "findLastIndex",
-    "some"
-};
+const ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: [&str; 7] =
+    ["every", "filter", "find", "findIndex", "findLast", "findLastIndex", "some"];
 
 #[test]
 fn test() {

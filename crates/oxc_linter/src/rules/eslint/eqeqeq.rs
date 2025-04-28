@@ -23,21 +23,72 @@ pub struct Eqeqeq {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Requires the use of the === and !== operators
+    ///
+    /// Requires the use of the `===` and `!==` operators.
     ///
     /// ### Why is this bad?
+    ///
     /// Using non-strict equality operators leads to hard to track bugs due to type coercion.
     ///
-    /// ### Example
-    /// ```javascript
-    /// let a = []
-    /// let b = false
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```js
+    /// const a = [];
+    /// const b = true;
     /// a == b
+    /// ```
+    /// The above will evaluate to `true`, but that is almost surely not what you want.
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```js
+    /// const a = [];
+    /// const b = true;
+    /// a === b
+    /// ```
+    /// The above will evaluate to `false` (an array is not boolean true).
+    ///
+    /// ### Options
+    ///
+    /// #### null
+    ///
+    /// ```json
+    ///   "eslint/eqeqeq": ["error", "always", {"null": "ignore"}]
+    /// ```
+    ///
+    /// Allow nullish comparison (`foo == null`). The alternative (`foo === null || foo === undefined`) is verbose and has no other benefit.
+    ///
+    /// #### smart
+    ///
+    /// ```json
+    ///   "eslint/eqeqeq": ["error", "smart"]
+    /// ```
+    ///
+    /// Allow `==` when comparing:
+    ///
+    /// * the result from `typeof`
+    /// * literal values
+    /// * nullish
+    ///
+    /// Examples of **incorrect** code for this option:
+    /// ```js
+    /// a == b
+    /// [] == true
+    /// ```
+    ///
+    /// Examples of **correct** code for this option:
+    /// ```js
+    /// typeof foo == 'undefined'
+    /// 'foo' == 'bar'
+    /// 42 == 42
+    /// foo == null
     /// ```
     Eqeqeq,
     eslint,
     pedantic,
-    conditional_fix
+    conditional_fix_dangerous,
 );
 
 impl Rule for Eqeqeq {
@@ -115,20 +166,23 @@ impl Rule for Eqeqeq {
             Span::new(operator_start, operator_end)
         };
 
-        // If the comparison is a `typeof` comparison or both sides are literals with the same type, then it's safe to fix.
-        if is_type_of_binary_bool || are_literals_and_same_type_bool {
-            ctx.diagnostic_with_fix(
-                eqeqeq_diagnostic(operator, preferred_operator, operator_span),
-                |fixer| {
-                    let start = binary_expr.left.span().end;
-                    let end = binary_expr.right.span().start;
-                    let span = Span::new(start, end);
-                    fixer.replace(span, preferred_operator_with_padding)
-                },
-            );
+        let fix_kind = if is_type_of_binary_bool || are_literals_and_same_type_bool {
+            FixKind::SafeFix
         } else {
-            ctx.diagnostic(eqeqeq_diagnostic(operator, preferred_operator, operator_span));
-        }
+            FixKind::DangerousFix
+        };
+
+        ctx.diagnostic_with_fix_of_kind(
+            eqeqeq_diagnostic(operator, preferred_operator, operator_span),
+            fix_kind,
+            |fixer| {
+                let start = binary_expr.left.span().end;
+                let end = binary_expr.right.span().start;
+                let span = Span::new(start, end);
+
+                fixer.replace(span, preferred_operator_with_padding)
+            },
+        );
     }
 }
 
@@ -249,9 +303,8 @@ fn test() {
         ("'foo'=='foo'", "'foo' === 'foo'", None),
         ("typeof a == b", "typeof a === b", None),
         ("1000  !=  1000", "1000 !== 1000", None),
-        // The following cases will not be fixed
-        ("(1000 + 1)  !=  1000", "(1000 + 1)  !=  1000", None),
-        ("a == b", "a == b", None),
+        ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
+        ("a == b", "a === b", None),
     ];
 
     Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

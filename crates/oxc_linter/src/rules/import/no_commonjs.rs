@@ -219,7 +219,7 @@ impl Rule for NoCommonjs {
                 }
 
                 if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
-                    if template_literal.expressions.len() != 0 {
+                    if !template_literal.expressions.is_empty() {
                         return;
                     }
                 }

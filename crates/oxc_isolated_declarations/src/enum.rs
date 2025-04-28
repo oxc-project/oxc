@@ -25,7 +25,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
-        for member in &decl.members {
+        for member in &decl.body.members {
             let value = if let Some(initializer) = &member.initializer {
                 let computed_value =
                     self.computed_constant_value(initializer, &decl.id.name, &prev_members);
@@ -44,10 +44,7 @@ impl<'a> IsolatedDeclarations<'a> {
             prev_initializer_value.clone_from(&value);
 
             if let Some(value) = &value {
-                let member_name = match &member.id {
-                    TSEnumMemberName::Identifier(id) => id.name,
-                    TSEnumMemberName::String(str) => str.value,
-                };
+                let member_name = member.id.static_name();
                 prev_members.insert(member_name, value.clone());
             }
 
@@ -87,7 +84,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(self.ast.declaration_ts_enum(
             decl.span,
             decl.id.clone_in(self.ast.allocator),
-            members,
+            self.ast.ts_enum_body(decl.body.span, members),
             decl.r#const,
             self.is_declare(),
         ))

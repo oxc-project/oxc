@@ -105,7 +105,7 @@ use bumpalo::Bump;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```
+/// ```ignore
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///
@@ -284,7 +284,7 @@ impl Allocator {
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc mut str {
+    pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
         self.bump.alloc_str(src)
     }
 

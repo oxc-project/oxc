@@ -52,8 +52,6 @@ impl Rule for NoSetterReturn {
                 ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
             } else if flags.is_function() {
                 break;
-            } else {
-                continue;
             }
         }
     }

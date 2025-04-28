@@ -1,7 +1,9 @@
 #![warn(missing_docs)]
-use std::{borrow::Cow, fmt};
+use std::{
+    borrow::Cow,
+    fmt::{self, Display},
+};
 
-use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
@@ -370,20 +372,20 @@ impl<'a> Expression<'a> {
     }
 }
 
-impl fmt::Display for IdentifierName<'_> {
+impl Display for IdentifierName<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl fmt::Display for IdentifierReference<'_> {
+impl Display for IdentifierReference<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl fmt::Display for BindingIdentifier<'_> {
+impl Display for BindingIdentifier<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
@@ -850,27 +852,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> ArrayAssignmentTarget<'a> {
-    /// Creates a new array assignment target (like `[a, b]` in the code `[a, b] = [1, 2]`)
-    /// using the given elements.
-    pub fn new_with_elements(
-        span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    ) -> Self {
-        Self { span, elements, rest: None, trailing_comma: None }
-    }
-}
-
-impl<'a> ObjectAssignmentTarget<'a> {
-    /// Creates a new object assignment target (like `{a, b}` in the code `({a, b} = obj)`) using
-    /// the given properties.
-    pub fn new_with_properties(
-        span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    ) -> Self {
-        Self { span, properties, rest: None }
-    }
-
+impl ObjectAssignmentTarget<'_> {
     /// Returns `true` if this object assignment target is empty.
     ///
     /// ## Example
@@ -1027,7 +1009,14 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            _ => None,
+            Declaration::TSModuleDeclaration(decl) => {
+                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                    Some(ident)
+                } else {
+                    None
+                }
+            }
+            Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1099,10 +1088,9 @@ impl VariableDeclarationKind {
     }
 }
 
-impl fmt::Display for VariableDeclarationKind {
+impl Display for VariableDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self.as_str();
-        write!(f, "{s}")
+        self.as_str().fmt(f)
     }
 }
 
@@ -1758,11 +1746,11 @@ impl<'a> ModuleDeclaration<'a> {
     /// - `import thing from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export * from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export default thing` => `None`
-    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
         match self {
-            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
@@ -1846,14 +1834,13 @@ impl ExportDefaultDeclarationKind<'_> {
     }
 }
 
-impl fmt::Display for ModuleExportName<'_> {
+impl Display for ModuleExportName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::IdentifierName(identifier) => identifier.name.to_string(),
-            Self::IdentifierReference(identifier) => identifier.name.to_string(),
-            Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
-        };
-        write!(f, "{s}")
+        match self {
+            Self::IdentifierName(identifier) => identifier.name.fmt(f),
+            Self::IdentifierReference(identifier) => identifier.name.fmt(f),
+            Self::StringLiteral(literal) => write!(f, r#""{}""#, literal.value),
+        }
     }
 }
 

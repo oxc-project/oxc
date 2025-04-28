@@ -205,7 +205,7 @@ impl<'alloc> String<'alloc> {
             //
             // If `str` is empty, `len` is 0.
             // If `total_len == 0`, `dst` is a dangling pointer, *not* valid for read or write of a `u8`.
-            // `copy_nonoverlapping` requires that `src` and `dst must both
+            // `copy_nonoverlapping` requires that `src` and `dst` must both
             // "be valid for reads of `count * size_of::<T>()` bytes".
             // However, safety docs for `std::ptr` (https://doc.rust-lang.org/std/ptr/index.html#safety)
             // state that:

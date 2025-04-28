@@ -446,7 +446,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             for kind in ctx.nodes.ancestor_kinds(node.id()).skip(1) {
                 match kind {
                     // Nested labeled statement
-                    AstKind::LabeledStatement(_) => continue,
+                    AstKind::LabeledStatement(_) => {}
                     AstKind::ForOfStatement(_)
                     | AstKind::ForInStatement(_)
                     | AstKind::ForStatement(_)
@@ -969,28 +969,6 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
             PropertyKind::Set => check_setter(function, ctx),
             PropertyKind::Get => check_getter(function, ctx),
             PropertyKind::Init => {}
-        }
-    }
-}
-
-fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span)
-}
-
-pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
-    if let Some(rest) = &params.rest {
-        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-            ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
-        }
-    }
-}
-
-pub fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
-    // function foo([...x = []]) { }
-    //                    ^^^^ A rest element cannot have an initializer
-    if let Some(rest) = &pattern.rest {
-        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-            ctx.error(a_rest_parameter_cannot_have_an_initializer(pat.span));
         }
     }
 }

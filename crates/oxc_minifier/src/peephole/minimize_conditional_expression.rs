@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{ContentEq, GetSpan};
@@ -32,15 +33,15 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(sequence_expr) => {
                 if sequence_expr.expressions.len() > 1 {
                     let span = expr.span();
-                    let mut sequence = ctx.ast.move_expression(&mut expr.test);
+                    let mut sequence = expr.test.take_in(ctx.ast.allocator);
                     let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                         unreachable!()
                     };
                     let expr = self.minimize_conditional(
                         span,
                         sequence_expr.expressions.pop().unwrap(),
-                        ctx.ast.move_expression(&mut expr.consequent),
-                        ctx.ast.move_expression(&mut expr.alternate),
+                        expr.consequent.take_in(ctx.ast.allocator),
+                        expr.alternate.take_in(ctx.ast.allocator),
                         ctx,
                     );
                     sequence_expr.expressions.push(expr);
@@ -50,9 +51,9 @@ impl<'a> PeepholeOptimizations {
             // "!a ? b : c" => "a ? c : b"
             Expression::UnaryExpression(test_expr) => {
                 if test_expr.operator.is_not() {
-                    let test = ctx.ast.move_expression(&mut test_expr.argument);
-                    let consequent = ctx.ast.move_expression(&mut expr.alternate);
-                    let alternate = ctx.ast.move_expression(&mut expr.consequent);
+                    let test = test_expr.argument.take_in(ctx.ast.allocator);
+                    let consequent = expr.alternate.take_in(ctx.ast.allocator);
+                    let alternate = expr.consequent.take_in(ctx.ast.allocator);
                     return Some(
                         self.minimize_conditional(expr.span, test, consequent, alternate, ctx),
                     );
@@ -65,8 +66,8 @@ impl<'a> PeepholeOptimizations {
                         return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::Or,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut expr.alternate),
+                            expr.test.take_in(ctx.ast.allocator),
+                            expr.alternate.take_in(ctx.ast.allocator),
                             ctx,
                         ));
                     }
@@ -77,8 +78,8 @@ impl<'a> PeepholeOptimizations {
                         return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::And,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut expr.consequent),
+                            expr.test.take_in(ctx.ast.allocator),
+                            expr.consequent.take_in(ctx.ast.allocator),
                             ctx,
                         ));
                     }
@@ -91,9 +92,9 @@ impl<'a> PeepholeOptimizations {
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
                 ) {
                     test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
-                    let test = ctx.ast.move_expression(&mut expr.test);
-                    let consequent = ctx.ast.move_expression(&mut expr.consequent);
-                    let alternate = ctx.ast.move_expression(&mut expr.alternate);
+                    let test = expr.test.take_in(ctx.ast.allocator);
+                    let consequent = expr.consequent.take_in(ctx.ast.allocator);
+                    let alternate = expr.alternate.take_in(ctx.ast.allocator);
                     return Some(
                         self.minimize_conditional(expr.span, test, alternate, consequent, ctx),
                     );
@@ -109,13 +110,13 @@ impl<'a> PeepholeOptimizations {
         {
             match (left.value, right.value) {
                 (true, false) => {
-                    let test = ctx.ast.move_expression(&mut expr.test);
+                    let test = expr.test.take_in(ctx.ast.allocator);
                     let test = self.minimize_not(expr.span, test, ctx);
                     let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
                 (false, true) => {
-                    let test = ctx.ast.move_expression(&mut expr.test);
+                    let test = expr.test.take_in(ctx.ast.allocator);
                     let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
@@ -131,12 +132,12 @@ impl<'a> PeepholeOptimizations {
                     self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut consequent.test),
+                        expr.test.take_in(ctx.ast.allocator),
+                        consequent.test.take_in(ctx.ast.allocator),
                         ctx,
                     ),
-                    ctx.ast.move_expression(&mut consequent.consequent),
-                    ctx.ast.move_expression(&mut consequent.alternate),
+                    consequent.consequent.take_in(ctx.ast.allocator),
+                    consequent.alternate.take_in(ctx.ast.allocator),
                 ));
             }
         }
@@ -149,12 +150,12 @@ impl<'a> PeepholeOptimizations {
                     self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut alternate.test),
+                        expr.test.take_in(ctx.ast.allocator),
+                        alternate.test.take_in(ctx.ast.allocator),
                         ctx,
                     ),
-                    ctx.ast.move_expression(&mut expr.consequent),
-                    ctx.ast.move_expression(&mut alternate.alternate),
+                    expr.consequent.take_in(ctx.ast.allocator),
+                    alternate.alternate.take_in(ctx.ast.allocator),
                 ));
             }
         }
@@ -170,11 +171,11 @@ impl<'a> PeepholeOptimizations {
                         self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::Or,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut alternate.expressions[0]),
+                            expr.test.take_in(ctx.ast.allocator),
+                            alternate.expressions[0].take_in(ctx.ast.allocator),
                             ctx,
                         ),
-                        ctx.ast.move_expression(&mut expr.consequent),
+                        expr.consequent.take_in(ctx.ast.allocator),
                     ]),
                 ));
             }
@@ -191,11 +192,11 @@ impl<'a> PeepholeOptimizations {
                         self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::And,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut consequent.expressions[0]),
+                            expr.test.take_in(ctx.ast.allocator),
+                            consequent.expressions[0].take_in(ctx.ast.allocator),
                             ctx,
                         ),
-                        ctx.ast.move_expression(&mut expr.alternate),
+                        expr.alternate.take_in(ctx.ast.allocator),
                     ]),
                 ));
             }
@@ -209,12 +210,12 @@ impl<'a> PeepholeOptimizations {
                     self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut logical_expr.left),
+                        expr.test.take_in(ctx.ast.allocator),
+                        logical_expr.left.take_in(ctx.ast.allocator),
                         ctx,
                     ),
                     LogicalOperator::Or,
-                    ctx.ast.move_expression(&mut expr.alternate),
+                    expr.alternate.take_in(ctx.ast.allocator),
                 ));
             }
         }
@@ -229,12 +230,12 @@ impl<'a> PeepholeOptimizations {
                     self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut logical_expr.left),
+                        expr.test.take_in(ctx.ast.allocator),
+                        logical_expr.left.take_in(ctx.ast.allocator),
                         ctx,
                     ),
                     LogicalOperator::And,
-                    ctx.ast.move_expression(&mut expr.consequent),
+                    expr.consequent.take_in(ctx.ast.allocator),
                 ));
             }
         }
@@ -243,7 +244,9 @@ impl<'a> PeepholeOptimizations {
         if let (Expression::CallExpression(consequent), Expression::CallExpression(alternate)) =
             (&mut expr.consequent, &mut expr.alternate)
         {
-            if consequent.arguments.len() == alternate.arguments.len()
+            // `a ? b() : b()` is handled later
+            if !consequent.arguments.is_empty() &&
+                consequent.arguments.len() == alternate.arguments.len()
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
@@ -261,25 +264,25 @@ impl<'a> PeepholeOptimizations {
                 if matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
-                    let callee = ctx.ast.move_expression(&mut consequent.callee);
+                    let callee = consequent.callee.take_in(ctx.ast.allocator);
                     let consequent_first_arg = {
                         let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
                             unreachable!()
                         };
-                        ctx.ast.move_expression(&mut el.argument)
+                        el.argument.take_in(ctx.ast.allocator)
                     };
                     let alternate_first_arg = {
                         let Argument::SpreadElement(el) = &mut alternate.arguments[0] else {
                             unreachable!()
                         };
-                        ctx.ast.move_expression(&mut el.argument)
+                        el.argument.take_in(ctx.ast.allocator)
                     };
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
                     args[0] = ctx.ast.argument_spread_element(
                         expr.span,
                         ctx.ast.expression_conditional(
                             expr.test.span(),
-                            ctx.ast.move_expression(&mut expr.test),
+                            expr.test.take_in(ctx.ast.allocator),
                             consequent_first_arg,
                             alternate_first_arg,
                         ),
@@ -290,16 +293,16 @@ impl<'a> PeepholeOptimizations {
                 if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
-                    let callee = ctx.ast.move_expression(&mut consequent.callee);
+                    let callee = consequent.callee.take_in(ctx.ast.allocator);
 
                     let consequent_first_arg =
-                        ctx.ast.move_expression(consequent.arguments[0].to_expression_mut());
+                        consequent.arguments[0].to_expression_mut().take_in(ctx.ast.allocator);
                     let alternate_first_arg =
-                        ctx.ast.move_expression(alternate.arguments[0].to_expression_mut());
+                        alternate.arguments[0].to_expression_mut().take_in(ctx.ast.allocator);
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
                     let cond_expr = self.minimize_conditional(
                         expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
+                        expr.test.take_in(ctx.ast.allocator),
                         consequent_first_arg,
                         alternate_first_arg,
                         ctx,
@@ -353,13 +356,13 @@ impl<'a> PeepholeOptimizations {
                         if maybe_same_id_expr.is_specific_id(&target_id_name) {
                             return Some(ctx.ast.expression_logical(
                                 expr.span,
-                                ctx.ast.move_expression(value_expr),
+                                value_expr.take_in(ctx.ast.allocator),
                                 LogicalOperator::Coalesce,
-                                ctx.ast.move_expression(if is_negate {
-                                    &mut expr.alternate
+                                if is_negate {
+                                    expr.alternate.take_in(ctx.ast.allocator)
                                 } else {
-                                    &mut expr.consequent
-                                }),
+                                    expr.consequent.take_in(ctx.ast.allocator)
+                                },
                             ));
                         }
 
@@ -379,7 +382,7 @@ impl<'a> PeepholeOptimizations {
                                 ctx,
                             ) {
                                 return Some(
-                                    ctx.ast.move_expression(expr_to_inject_optional_chaining),
+                                    expr_to_inject_optional_chaining.take_in(ctx.ast.allocator),
                                 );
                             }
                         }
@@ -391,13 +394,13 @@ impl<'a> PeepholeOptimizations {
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(&ctx) {
-                return Some(ctx.ast.move_expression(&mut expr.consequent));
+                return Some(expr.consequent.take_in(ctx.ast.allocator));
             }
 
             // "a ? b : b" => "a, b"
             let expressions = ctx.ast.vec_from_array([
-                ctx.ast.move_expression(&mut expr.test),
-                ctx.ast.move_expression(&mut expr.consequent),
+                expr.test.take_in(ctx.ast.allocator),
+                expr.consequent.take_in(ctx.ast.allocator),
             ]);
             return Some(ctx.ast.expression_sequence(expr.span, expressions));
         }
@@ -436,15 +439,15 @@ impl<'a> PeepholeOptimizations {
         }
         let cond_expr = self.minimize_conditional(
             expr.span,
-            ctx.ast.move_expression(&mut expr.test),
-            ctx.ast.move_expression(&mut consequent.right),
-            ctx.ast.move_expression(&mut alternate.right),
+            expr.test.take_in(ctx.ast.allocator),
+            consequent.right.take_in(ctx.ast.allocator),
+            alternate.right.take_in(ctx.ast.allocator),
             ctx,
         );
         Some(ctx.ast.expression_assignment(
             expr.span,
             consequent.operator,
-            ctx.ast.move_assignment_target(&mut alternate.left),
+            alternate.left.take_in(ctx.ast.allocator),
             cond_expr,
         ))
     }
@@ -467,7 +470,7 @@ impl<'a> PeepholeOptimizations {
             if !matches!(expr, Expression::ChainExpression(_)) {
                 *expr = ctx.ast.expression_chain(
                     expr.span(),
-                    ctx.ast.move_expression(expr).into_chain_element().unwrap(),
+                    expr.take_in(ctx.ast.allocator).into_chain_element().unwrap(),
                 );
             }
             true
@@ -487,7 +490,7 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = ctx.ast.move_expression(expr_to_inject);
+                    e.object = expr_to_inject.take_in(ctx.ast.allocator);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -502,7 +505,7 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = ctx.ast.move_expression(expr_to_inject);
+                    e.object = expr_to_inject.take_in(ctx.ast.allocator);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -517,7 +520,7 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.callee = ctx.ast.move_expression(expr_to_inject);
+                    e.callee = expr_to_inject.take_in(ctx.ast.allocator);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -533,7 +536,7 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = ctx.ast.move_expression(expr_to_inject);
+                        e.object = expr_to_inject.take_in(ctx.ast.allocator);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -548,7 +551,7 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::ComputedMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = ctx.ast.move_expression(expr_to_inject);
+                        e.object = expr_to_inject.take_in(ctx.ast.allocator);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -563,7 +566,7 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::CallExpression(e) => {
                     if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.callee = ctx.ast.move_expression(expr_to_inject);
+                        e.callee = expr_to_inject.take_in(ctx.ast.allocator);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -651,6 +654,7 @@ mod test {
         test("var a, b; a ? b(c, d) : b(e, d)", "var a, b; b(a ? c : e, d)");
         test("var a, b; a ? b(...c) : b(...e)", "var a, b; b(...a ? c : e)");
         test("var a, b; a ? b(c) : b(e)", "var a, b; b(a ? c : e)");
+        test("var a, b; a ? b() : b()", "var a, b; b()");
         test("var a, b; a === 0 ? b(c) : b(e)", "var a, b; b(a === 0 ? c : e)");
         test_same("var a; a === 0 ? b(c) : b(e)"); // accessing global `b` may assign a different value to `a`
         test_same("var b; a === 0 ? b(c) : b(e)"); // accessing global `a` may assign a different value to `b`

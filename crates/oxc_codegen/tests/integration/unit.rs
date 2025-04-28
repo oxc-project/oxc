@@ -26,6 +26,13 @@ fn module_decl() {
 }
 
 #[test]
+fn export_type() {
+    test_same("export type {} from \"mod\";\n");
+    test_same("export type { Foo } from \"mod\";\n");
+    test_same("export { type Foo, type Bar } from \"mod\";\n");
+}
+
+#[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
     test_minify("x in new Error()", "x in new Error;");
@@ -188,6 +195,10 @@ fn comma() {
 #[test]
 fn assignment() {
     test("(let[0] = 100);", "(let)[0] = 100;\n");
+    test("[a, ...rest] = arr;", "[a, ...rest] = arr;\n");
+    test("[...rest] = arr;", "[...rest] = arr;\n");
+    test("({a, ...rest} = obj);", "({a, ...rest} = obj);\n");
+    test("({...rest} = obj);", "({...rest} = obj);\n");
     test_minify("a = b ? c : d", "a=b?c:d;");
     test_minify("[a,b] = (1, 2)", "[a,b]=(1,2);");
     // `{a,b}` is a block, must wrap the whole expression to be an assignment expression

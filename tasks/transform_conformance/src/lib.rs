@@ -6,6 +6,7 @@ mod exec;
 mod test_case;
 
 use std::{
+    fmt::Write,
     fs,
     path::{Path, PathBuf},
 };
@@ -145,6 +146,14 @@ impl TestRunner {
             let num_of_tests = test_cases.len();
             total += num_of_tests;
 
+            // `--override` option will override the output of test cases
+            // and write it down to `../overrides` folder.
+            for test_case in &test_cases {
+                if self.options.r#override {
+                    test_case.write_override_output();
+                }
+            }
+
             // Run the test
             let (passed, failed): (Vec<TestCase>, Vec<TestCase>) =
                 test_cases.into_iter().partition(|test_case| test_case.errors.is_empty());
@@ -154,13 +163,8 @@ impl TestRunner {
             if failed.is_empty() {
                 all_passed.push(case);
             } else {
-                snapshot.push_str("# ");
-                snapshot.push_str(&case);
-                snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
+                writeln!(snapshot, "# {case} ({}/{})", passed.len(), num_of_tests).unwrap();
                 for test_case in failed {
-                    if self.options.r#override {
-                        test_case.write_override_output();
-                    }
                     snapshot.push_str("* ");
                     snapshot.push_str(&normalize_path(
                         test_case.path.strip_prefix(&case_root).unwrap(),

@@ -1,6 +1,9 @@
 //! Literals
 
-use std::{borrow::Cow, fmt};
+use std::{
+    borrow::Cow,
+    fmt::{self, Display},
+};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_data_structures::inline_string::InlineString;
@@ -16,14 +19,14 @@ impl BooleanLiteral {
     }
 }
 
-impl fmt::Display for BooleanLiteral {
+impl Display for BooleanLiteral {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.as_str().fmt(f)
     }
 }
 
-impl fmt::Display for NullLiteral {
+impl Display for NullLiteral {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "null".fmt(f)
@@ -64,7 +67,7 @@ impl NumericLiteral<'_> {
     }
 }
 
-impl fmt::Display for NumericLiteral<'_> {
+impl Display for NumericLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // We have 2 choices here:
         // 1. Only use the `value` field. or
@@ -103,7 +106,7 @@ impl AsRef<str> for StringLiteral<'_> {
     }
 }
 
-impl fmt::Display for StringLiteral<'_> {
+impl Display for StringLiteral<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)
@@ -122,13 +125,13 @@ impl BigIntLiteral<'_> {
     }
 }
 
-impl fmt::Display for BigIntLiteral<'_> {
+impl Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.raw.fmt(f)
     }
 }
 
-impl fmt::Display for RegExp<'_> {
+impl Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
     }
@@ -195,10 +198,10 @@ impl ContentEq for RegExpPattern<'_> {
     }
 }
 
-impl fmt::Display for RegExpPattern<'_> {
+impl Display for RegExpPattern<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
+            Self::Raw(it) | Self::Invalid(it) => it.fmt(f),
             Self::Pattern(it) => it.fmt(f),
         }
     }
@@ -265,9 +268,9 @@ impl TryFrom<u8> for RegExpFlags {
     }
 }
 
-impl fmt::Display for RegExpFlags {
+impl Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.to_inline_string().as_str())
+        self.to_inline_string().as_str().fmt(f)
     }
 }
 

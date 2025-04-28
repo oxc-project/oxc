@@ -1,8 +1,6 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{
-    ToInt32,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -93,9 +91,9 @@ impl<'a> PeepholeOptimizations {
         loop {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
-                    let right = ctx.ast.move_expression(&mut logical_expr.left);
+                    let right = logical_expr.left.take_in(ctx.ast.allocator);
                     a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = ctx.ast.move_expression(&mut logical_expr.right);
+                    b = logical_expr.right.take_in(ctx.ast.allocator);
                     continue;
                 }
             }
@@ -152,9 +150,9 @@ impl<'a> PeepholeOptimizations {
                     _ => return None,
                 }
                 Some(if b.value {
-                    ctx.ast.move_expression(&mut e.left)
+                    e.left.take_in(ctx.ast.allocator)
                 } else {
-                    let argument = ctx.ast.move_expression(&mut e.left);
+                    let argument = e.left.take_in(ctx.ast.allocator);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
             }
@@ -249,7 +247,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
+        expr.right = logical_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
@@ -271,47 +269,32 @@ impl<'a> PeepholeOptimizations {
         }
 
         expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        expr.right = binary_expr.right.take_in(ctx.ast.allocator);
         true
     }
 
-    /// Compress `a = a + b` to `a += b`
+    /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
+    #[expect(clippy::float_cmp)]
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let target = expr.left.as_simple_assignment_target_mut()?;
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {
             return None;
         }
-        match &expr.right {
-            Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
-                // The `_` will not be placed to the target code.
-                let target = std::mem::replace(
-                    target,
-                    ctx.ast
-                        .simple_assignment_target_assignment_target_identifier(target.span(), "_"),
-                );
-                Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
-            }
-            Expression::UnaryExpression(un)
-                if matches!(un.operator, UnaryOperator::UnaryNegation) =>
-            {
-                let Expression::NumericLiteral(num) = &un.argument else { return None };
-                (num.value.to_int_32() == 1).then(|| {
-                    // The `_` will not be placed to the target code.
-                    let target = std::mem::replace(
-                        target,
-                        ctx.ast.simple_assignment_target_assignment_target_identifier(
-                            target.span(),
-                            "_",
-                        ),
-                    );
-                    ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
-                })
-            }
-            _ => None,
-        }
+        let Expression::NumericLiteral(num) = &expr.right else {
+            return None;
+        };
+        let target = expr.left.as_simple_assignment_target_mut()?;
+        let operator = if num.value == 1.0 {
+            UpdateOperator::Decrement
+        } else if num.value == -1.0 {
+            UpdateOperator::Increment
+        } else {
+            return None;
+        };
+        let target = target.take_in(ctx.ast.allocator);
+        Some(ctx.ast.expression_update(expr.span, operator, true, target))
     }
 }
 

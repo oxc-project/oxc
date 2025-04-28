@@ -146,7 +146,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     fn derive_span(&self) -> Span {
         for kind in self.iter_self_and_parents().map(AstNode::kind) {
             match kind {
-                AstKind::BindingIdentifier(_) => continue,
+                AstKind::BindingIdentifier(_) => {}
                 AstKind::BindingRestElement(rest) => return rest.span,
                 AstKind::VariableDeclarator(decl) => return self.clean_binding_id(&decl.id),
                 AstKind::FormalParameter(param) => return self.clean_binding_id(&param.pattern),
@@ -197,9 +197,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::ArrayExpression(_)
                 | AstKind::ParenthesizedExpression(_)
                 | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_) => {
-                    continue;
-                }
+                | AstKind::TSSatisfiesExpression(_) => {}
                 _ => {
                     return false;
                 }

@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 7284f16 isolated-declarations: Leading comments of `ExportDefaultDeclaration` and `TSExportAssignment` appear in incorrect places (#10559) (Dunqing)
+- 4c316a5 isolated_declarations: Fix broken snapshot files (#10561) (Boshen)
+
+## [0.64.0] - 2025-04-17
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+
+### Refactor
+
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Refactor
+
+- ca8f174 codegen: Do not print useless comma for TSEnumMember (#10213) (Yuji Sugiura)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Refactor

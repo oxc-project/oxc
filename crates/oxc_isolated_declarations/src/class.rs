@@ -332,7 +332,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             method_annotations.insert(name, annotation);
                         }
                     }
-                    _ => continue,
+                    _ => {}
                 }
             }
         }
@@ -515,6 +515,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         None,
                         property.computed,
                         property.r#static,
+                        property.r#override,
                         property.definite,
                         type_annotation,
                         property.accessibility,

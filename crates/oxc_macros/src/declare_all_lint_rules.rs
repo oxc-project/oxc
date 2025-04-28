@@ -30,7 +30,7 @@ impl Parse for LintRuleMeta {
 
         let enum_name = syn::parse_str(&combined)?;
         let rule_name = syn::parse_str(
-            &path.segments.iter().last().unwrap().ident.to_string().to_case(Case::Pascal),
+            &path.segments.iter().next_back().unwrap().ident.to_string().to_case(Case::Pascal),
         )?;
         Ok(Self { rule_name, enum_name, path })
     }

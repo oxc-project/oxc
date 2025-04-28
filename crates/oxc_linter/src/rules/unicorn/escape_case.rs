@@ -53,7 +53,7 @@ fn is_hex(iter: &Chars, count: usize) -> bool {
     let mut iter = iter.clone();
     for _ in 0..count {
         match iter.next() {
-            Some(c) if c.is_ascii_hexdigit() => continue,
+            Some(c) if c.is_ascii_hexdigit() => {}
             _ => return false,
         }
     }

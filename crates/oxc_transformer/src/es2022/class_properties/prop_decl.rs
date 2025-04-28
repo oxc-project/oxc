@@ -24,13 +24,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = match prop.value.take() {
-            Some(value) => {
-                self.transform_instance_initializer(&value, ctx);
-                value
-            }
-            None => ctx.ast.void_0(SPAN),
-        };
+        let value = prop.value.take().unwrap_or_else(|| ctx.ast.void_0(SPAN));
 
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             self.create_private_instance_init_assignment(ident, value, ctx)
@@ -184,7 +178,7 @@ impl<'a> ClassProperties<'a, '_> {
             false,
             false,
         );
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property), None);
+        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property));
 
         // Insert after class
         let class_details = self.current_class();
@@ -350,7 +344,6 @@ impl<'a> ClassProperties<'a, '_> {
                     false,
                 ),
             ]),
-            None,
         );
 
         let private_props = self.current_class().private_props.as_ref().unwrap();

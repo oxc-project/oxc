@@ -7,7 +7,7 @@ use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
 use syn::parse2;
 
-use crate::log;
+use crate::logln;
 
 use super::add_header;
 
@@ -18,7 +18,7 @@ pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
         Ok(file) => file,
         Err(err) => {
             // Parsing failed. Return unformatted code, to aid debugging.
-            log!("FAILED TO PARSE Rust code:\n{err}");
+            logln!("FAILED TO PARSE Rust code:\n{err}");
             return tokens.to_string();
         }
     };
@@ -51,7 +51,7 @@ pub fn rust_fmt(source_text: &str) -> String {
         // Formatting failed. Return unformatted code, to aid debugging.
         let error =
             String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
-        log!("FAILED TO FORMAT Rust code:\n{error}");
+        logln!("FAILED TO FORMAT Rust code:\n{error}");
         source_text.to_string()
     }
 }

@@ -10,5 +10,5 @@ pub use super::{
         *,
     },
     formatter::Formatter,
-    trivia::format_leading_comments,
+    trivia::{format_dangling_comments, format_leading_comments},
 };

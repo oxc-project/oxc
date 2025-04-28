@@ -49,11 +49,10 @@ const _: () = {
     assert!(align_of::<ThisExpression>() == 8);
     assert!(offset_of!(ThisExpression, span) == 0);
 
-    assert!(size_of::<ArrayExpression>() == 56);
+    assert!(size_of::<ArrayExpression>() == 40);
     assert!(align_of::<ArrayExpression>() == 8);
     assert!(offset_of!(ArrayExpression, span) == 0);
     assert!(offset_of!(ArrayExpression, elements) == 8);
-    assert!(offset_of!(ArrayExpression, trailing_comma) == 40);
 
     assert!(size_of::<ArrayExpressionElement>() == 16);
     assert!(align_of::<ArrayExpressionElement>() == 8);
@@ -62,11 +61,10 @@ const _: () = {
     assert!(align_of::<Elision>() == 8);
     assert!(offset_of!(Elision, span) == 0);
 
-    assert!(size_of::<ObjectExpression>() == 56);
+    assert!(size_of::<ObjectExpression>() == 40);
     assert!(align_of::<ObjectExpression>() == 8);
     assert!(offset_of!(ObjectExpression, span) == 0);
     assert!(offset_of!(ObjectExpression, properties) == 8);
-    assert!(offset_of!(ObjectExpression, trailing_comma) == 40);
 
     assert!(size_of::<ObjectPropertyKind>() == 16);
     assert!(align_of::<ObjectPropertyKind>() == 8);
@@ -223,12 +221,11 @@ const _: () = {
     assert!(size_of::<AssignmentTargetPattern>() == 16);
     assert!(align_of::<AssignmentTargetPattern>() == 8);
 
-    assert!(size_of::<ArrayAssignmentTarget>() == 80);
+    assert!(size_of::<ArrayAssignmentTarget>() == 64);
     assert!(align_of::<ArrayAssignmentTarget>() == 8);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 40);
-    assert!(offset_of!(ArrayAssignmentTarget, trailing_comma) == 64);
 
     assert!(size_of::<ObjectAssignmentTarget>() == 64);
     assert!(align_of::<ObjectAssignmentTarget>() == 8);
@@ -656,16 +653,17 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 64);
     assert!(offset_of!(AccessorProperty, computed) == 80);
     assert!(offset_of!(AccessorProperty, r#static) == 81);
-    assert!(offset_of!(AccessorProperty, definite) == 82);
+    assert!(offset_of!(AccessorProperty, r#override) == 82);
+    assert!(offset_of!(AccessorProperty, definite) == 83);
     assert!(offset_of!(AccessorProperty, type_annotation) == 88);
     assert!(offset_of!(AccessorProperty, accessibility) == 96);
 
-    assert!(size_of::<ImportExpression>() == 64);
+    assert!(size_of::<ImportExpression>() == 48);
     assert!(align_of::<ImportExpression>() == 8);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
     assert!(offset_of!(ImportExpression, options) == 24);
-    assert!(offset_of!(ImportExpression, phase) == 56);
+    assert!(offset_of!(ImportExpression, phase) == 40);
 
     assert!(size_of::<ImportDeclaration>() == 112);
     assert!(align_of::<ImportDeclaration>() == 8);
@@ -809,13 +807,12 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 16);
     assert!(offset_of!(JSXElement, children) == 24);
 
-    assert!(size_of::<JSXOpeningElement>() == 72);
+    assert!(size_of::<JSXOpeningElement>() == 64);
     assert!(align_of::<JSXOpeningElement>() == 8);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
-    assert!(offset_of!(JSXOpeningElement, name) == 16);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 32);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 64);
+    assert!(offset_of!(JSXOpeningElement, name) == 8);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 24);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 56);
 
     assert!(size_of::<JSXClosingElement>() == 24);
     assert!(align_of::<JSXClosingElement>() == 8);
@@ -912,14 +909,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16);
 
-    assert!(size_of::<TSEnumDeclaration>() == 80);
+    assert!(size_of::<TSEnumDeclaration>() == 88);
     assert!(align_of::<TSEnumDeclaration>() == 8);
     assert!(offset_of!(TSEnumDeclaration, span) == 0);
     assert!(offset_of!(TSEnumDeclaration, id) == 8);
-    assert!(offset_of!(TSEnumDeclaration, members) == 40);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 72);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 73);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 76);
+    assert!(offset_of!(TSEnumDeclaration, body) == 40);
+    assert!(offset_of!(TSEnumDeclaration, r#const) == 80);
+    assert!(offset_of!(TSEnumDeclaration, declare) == 81);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 84);
+
+    assert!(size_of::<TSEnumBody>() == 40);
+    assert!(align_of::<TSEnumBody>() == 8);
+    assert!(offset_of!(TSEnumBody, span) == 0);
+    assert!(offset_of!(TSEnumBody, members) == 8);
 
     assert!(size_of::<TSEnumMember>() == 40);
     assert!(align_of::<TSEnumMember>() == 8);
@@ -1128,8 +1130,8 @@ const _: () = {
     assert!(align_of::<TSInterfaceDeclaration>() == 8);
     assert!(offset_of!(TSInterfaceDeclaration, span) == 0);
     assert!(offset_of!(TSInterfaceDeclaration, id) == 8);
-    assert!(offset_of!(TSInterfaceDeclaration, extends) == 40);
-    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 72);
+    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 40);
+    assert!(offset_of!(TSInterfaceDeclaration, extends) == 48);
     assert!(offset_of!(TSInterfaceDeclaration, body) == 80);
     assert!(offset_of!(TSInterfaceDeclaration, declare) == 88);
     assert!(offset_of!(TSInterfaceDeclaration, scope_id) == 92);
@@ -1159,13 +1161,13 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, readonly) == 48);
     assert!(offset_of!(TSIndexSignature, r#static) == 49);
 
-    assert!(size_of::<TSCallSignatureDeclaration>() == 64);
+    assert!(size_of::<TSCallSignatureDeclaration>() == 40);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 16);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 48);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 56);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 24);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 32);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
@@ -1256,14 +1258,13 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 16);
     assert!(align_of::<TSTypeQueryExprName>() == 8);
 
-    assert!(size_of::<TSImportType>() == 64);
+    assert!(size_of::<TSImportType>() == 56);
     assert!(align_of::<TSImportType>() == 8);
     assert!(offset_of!(TSImportType, span) == 0);
     assert!(offset_of!(TSImportType, argument) == 8);
     assert!(offset_of!(TSImportType, options) == 24);
     assert!(offset_of!(TSImportType, qualifier) == 32);
     assert!(offset_of!(TSImportType, type_arguments) == 48);
-    assert!(offset_of!(TSImportType, is_type_of) == 56);
 
     assert!(size_of::<TSFunctionType>() == 48);
     assert!(align_of::<TSFunctionType>() == 8);
@@ -1358,7 +1359,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 8);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 24);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 24);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);
@@ -1441,11 +1442,10 @@ const _: () = {
     assert!(align_of::<ThisExpression>() == 4);
     assert!(offset_of!(ThisExpression, span) == 0);
 
-    assert!(size_of::<ArrayExpression>() == 36);
+    assert!(size_of::<ArrayExpression>() == 24);
     assert!(align_of::<ArrayExpression>() == 4);
     assert!(offset_of!(ArrayExpression, span) == 0);
     assert!(offset_of!(ArrayExpression, elements) == 8);
-    assert!(offset_of!(ArrayExpression, trailing_comma) == 24);
 
     assert!(size_of::<ArrayExpressionElement>() == 12);
     assert!(align_of::<ArrayExpressionElement>() == 4);
@@ -1454,11 +1454,10 @@ const _: () = {
     assert!(align_of::<Elision>() == 4);
     assert!(offset_of!(Elision, span) == 0);
 
-    assert!(size_of::<ObjectExpression>() == 36);
+    assert!(size_of::<ObjectExpression>() == 24);
     assert!(align_of::<ObjectExpression>() == 4);
     assert!(offset_of!(ObjectExpression, span) == 0);
     assert!(offset_of!(ObjectExpression, properties) == 8);
-    assert!(offset_of!(ObjectExpression, trailing_comma) == 24);
 
     assert!(size_of::<ObjectPropertyKind>() == 8);
     assert!(align_of::<ObjectPropertyKind>() == 4);
@@ -1615,12 +1614,11 @@ const _: () = {
     assert!(size_of::<AssignmentTargetPattern>() == 8);
     assert!(align_of::<AssignmentTargetPattern>() == 4);
 
-    assert!(size_of::<ArrayAssignmentTarget>() == 52);
+    assert!(size_of::<ArrayAssignmentTarget>() == 40);
     assert!(align_of::<ArrayAssignmentTarget>() == 4);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 24);
-    assert!(offset_of!(ArrayAssignmentTarget, trailing_comma) == 40);
 
     assert!(size_of::<ObjectAssignmentTarget>() == 40);
     assert!(align_of::<ObjectAssignmentTarget>() == 4);
@@ -2048,16 +2046,17 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 36);
     assert!(offset_of!(AccessorProperty, computed) == 44);
     assert!(offset_of!(AccessorProperty, r#static) == 45);
-    assert!(offset_of!(AccessorProperty, definite) == 46);
+    assert!(offset_of!(AccessorProperty, r#override) == 46);
+    assert!(offset_of!(AccessorProperty, definite) == 47);
     assert!(offset_of!(AccessorProperty, type_annotation) == 48);
     assert!(offset_of!(AccessorProperty, accessibility) == 52);
 
-    assert!(size_of::<ImportExpression>() == 36);
+    assert!(size_of::<ImportExpression>() == 28);
     assert!(align_of::<ImportExpression>() == 4);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
     assert!(offset_of!(ImportExpression, options) == 16);
-    assert!(offset_of!(ImportExpression, phase) == 32);
+    assert!(offset_of!(ImportExpression, phase) == 24);
 
     assert!(size_of::<ImportDeclaration>() == 64);
     assert!(align_of::<ImportDeclaration>() == 4);
@@ -2201,13 +2200,12 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 12);
     assert!(offset_of!(JSXElement, children) == 16);
 
-    assert!(size_of::<JSXOpeningElement>() == 40);
+    assert!(size_of::<JSXOpeningElement>() == 36);
     assert!(align_of::<JSXOpeningElement>() == 4);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
-    assert!(offset_of!(JSXOpeningElement, name) == 12);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 20);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 36);
+    assert!(offset_of!(JSXOpeningElement, name) == 8);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 16);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 32);
 
     assert!(size_of::<JSXClosingElement>() == 16);
     assert!(align_of::<JSXClosingElement>() == 4);
@@ -2304,14 +2302,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16);
 
-    assert!(size_of::<TSEnumDeclaration>() == 52);
+    assert!(size_of::<TSEnumDeclaration>() == 60);
     assert!(align_of::<TSEnumDeclaration>() == 4);
     assert!(offset_of!(TSEnumDeclaration, span) == 0);
     assert!(offset_of!(TSEnumDeclaration, id) == 8);
-    assert!(offset_of!(TSEnumDeclaration, members) == 28);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 44);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 45);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 48);
+    assert!(offset_of!(TSEnumDeclaration, body) == 28);
+    assert!(offset_of!(TSEnumDeclaration, r#const) == 52);
+    assert!(offset_of!(TSEnumDeclaration, declare) == 53);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 56);
+
+    assert!(size_of::<TSEnumBody>() == 24);
+    assert!(align_of::<TSEnumBody>() == 4);
+    assert!(offset_of!(TSEnumBody, span) == 0);
+    assert!(offset_of!(TSEnumBody, members) == 8);
 
     assert!(size_of::<TSEnumMember>() == 24);
     assert!(align_of::<TSEnumMember>() == 4);
@@ -2520,8 +2523,8 @@ const _: () = {
     assert!(align_of::<TSInterfaceDeclaration>() == 4);
     assert!(offset_of!(TSInterfaceDeclaration, span) == 0);
     assert!(offset_of!(TSInterfaceDeclaration, id) == 8);
-    assert!(offset_of!(TSInterfaceDeclaration, extends) == 28);
-    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 44);
+    assert!(offset_of!(TSInterfaceDeclaration, type_parameters) == 28);
+    assert!(offset_of!(TSInterfaceDeclaration, extends) == 32);
     assert!(offset_of!(TSInterfaceDeclaration, body) == 48);
     assert!(offset_of!(TSInterfaceDeclaration, declare) == 52);
     assert!(offset_of!(TSInterfaceDeclaration, scope_id) == 56);
@@ -2551,13 +2554,13 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, readonly) == 28);
     assert!(offset_of!(TSIndexSignature, r#static) == 29);
 
-    assert!(size_of::<TSCallSignatureDeclaration>() == 44);
+    assert!(size_of::<TSCallSignatureDeclaration>() == 24);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 12);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 36);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 40);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 16);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 20);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
@@ -2648,14 +2651,13 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 8);
     assert!(align_of::<TSTypeQueryExprName>() == 4);
 
-    assert!(size_of::<TSImportType>() == 36);
+    assert!(size_of::<TSImportType>() == 32);
     assert!(align_of::<TSImportType>() == 4);
     assert!(offset_of!(TSImportType, span) == 0);
     assert!(offset_of!(TSImportType, argument) == 8);
     assert!(offset_of!(TSImportType, options) == 16);
     assert!(offset_of!(TSImportType, qualifier) == 20);
     assert!(offset_of!(TSImportType, type_arguments) == 28);
-    assert!(offset_of!(TSImportType, is_type_of) == 32);
 
     assert!(size_of::<TSFunctionType>() == 28);
     assert!(align_of::<TSFunctionType>() == 4);
@@ -2750,7 +2752,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 4);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 16);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 16);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);

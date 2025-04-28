@@ -12,10 +12,7 @@ import { Linter } from 'eslint';
 // Some plugins have the recommended flag in rule itself, but some plugins have it in config.
 
 // https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/src/index.ts
-import {
-  configs as pluginTypeScriptConfigs,
-  rules as pluginTypeScriptAllRules,
-} from '@typescript-eslint/eslint-plugin';
+import pluginTypescript from '@typescript-eslint/eslint-plugin';
 // https://github.com/eslint-community/eslint-plugin-n/blob/v17.13.2/lib/index.js
 import pluginNAll from 'eslint-plugin-n';
 // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v57.0.0/index.js
@@ -42,6 +39,10 @@ import pluginPromise from 'eslint-plugin-promise';
 import pluginVitest from 'eslint-plugin-vitest';
 
 // destructuring default exports
+const {
+  configs: pluginTypeScriptConfigs,
+  rules: pluginTypeScriptAllRules,
+} = pluginTypescript;
 const { rules: pluginNAllRules } = pluginNAll;
 const {
   configs: pluginUnicornConfigs,
