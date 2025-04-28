@@ -298,6 +298,7 @@ declare_oxc_lint!(
     JsxCurlyBracePresence,
     react,
     style,
+    pending
 );
 
 impl Rule for JsxCurlyBracePresence {
@@ -813,10 +814,10 @@ fn test() {
         ),
         (
             r#"
-        	        <CollapsibleTitle
-        	          extra={<span className="activity-type">{activity.type}</span>}
-        	        />
-        	      "#,
+			        <CollapsibleTitle
+			          extra={<span className="activity-type">{activity.type}</span>}
+			        />
+			      "#,
             Some(json!(["never"])),
         ),
         ("<App label={`${label}`} />", Some(json!(["never"]))),
@@ -947,8 +948,8 @@ fn test() {
         ),
         (
             "
-        	        <Box mb={'1rem {}'} />
-        	      ",
+			        <Box mb={'1rem {}'} />
+			      ",
             Some(json!(["never"])),
         ),
         (r#"<MyComponent prop={"{ style: true }"}>bar</MyComponent>"#, Some(json!(["never"]))),
@@ -963,8 +964,330 @@ fn test() {
             "<App horror={<div />} />",
             Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
         ),
+        // (
+        //     r#"<Foo bar={"'"} />"#,
+        //     Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
+        // ),
+        //(
+        //    r#"
+        //	        <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
+        //	      "#,
+        //    Some(json!(["never"])),
+        //),
     ];
 
+    // TODO: implement fixer
+    let _fix = vec![
+        ("<App prop={`foo`} />", r#"<App prop="foo" />"#, Some(json!([{ "props": "never" }]))),
+        (
+            "<App>{<myApp></myApp>}</App>",
+            "<App><myApp></myApp></App>",
+            Some(json!([{ "children": "never" }])),
+        ),
+        ("<App>{<myApp></myApp>}</App>", "<App><myApp></myApp></App>", None),
+        (
+            "<App prop={`foo`}>foo</App>",
+            r#"<App prop="foo">foo</App>"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        ("<App>{`foo`}</App>", "<App>foo</App>", Some(json!([{ "children": "never" }]))),
+        ("<>{`foo`}</>", "<>foo</>", Some(json!([{ "children": "never" }]))),
+        ("<MyComponent>{'foo'}</MyComponent>", "<MyComponent>foo</MyComponent>", None),
+        (
+            "<MyComponent prop={'bar'}>foo</MyComponent>",
+            r#"<MyComponent prop="bar">foo</MyComponent>"#,
+            None,
+        ),
+        (
+            "<MyComponent>{'foo'}</MyComponent>",
+            "<MyComponent>foo</MyComponent>",
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            "<MyComponent prop={'bar'}>foo</MyComponent>",
+            r#"<MyComponent prop="bar">foo</MyComponent>"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            "
+			        <MyComponent>
+			          {'%'}
+			        </MyComponent>
+			      ",
+            "
+			        <MyComponent>
+			          %
+			        </MyComponent>
+			      ",
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            "
+			        <MyComponent>
+			          {'foo'}
+			          <div>
+			            {'bar'}
+			          </div>
+			          {'baz'}
+			        </MyComponent>
+			      ",
+            "
+			        <MyComponent>
+			          foo
+			          <div>
+			            bar
+			          </div>
+			          baz
+			        </MyComponent>
+			      ",
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            "
+			        <MyComponent>
+			          {'foo'}
+			          <div>
+			            {'bar'}
+			          </div>
+			          {'baz'}
+			          {'some-complicated-exp'}
+			        </MyComponent>
+			      ",
+            "
+			        <MyComponent>
+			          foo
+			          <div>
+			            bar
+			          </div>
+			          {'baz'}
+			          {'some-complicated-exp'}
+			        </MyComponent>
+			      ",
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            "<MyComponent prop='bar'>foo</MyComponent>",
+            r#"<MyComponent prop={"bar"}>foo</MyComponent>"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            r#"<MyComponent prop="foo 'bar'">foo</MyComponent>"#,
+            r#"<MyComponent prop={"foo 'bar'"}>foo</MyComponent>"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            r#"<MyComponent prop='foo "bar"'>foo</MyComponent>"#,
+            r#"<MyComponent prop={"foo "bar""}>foo</MyComponent>"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<MyComponent>foo bar </MyComponent>",
+            r#"<MyComponent>{"foo bar "}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            r#"<MyComponent prop="foo 'bar' \n ">foo</MyComponent>"#,
+            r#"<MyComponent prop={"foo 'bar' \\n "}>foo</MyComponent>"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<MyComponent>foo bar \r </MyComponent>",
+            r#"<MyComponent>{"foo bar \\r "}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            "<MyComponent>foo bar 'foo'</MyComponent>",
+            r#"<MyComponent>{"foo bar 'foo'"}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            r#"<MyComponent>foo bar "foo"</MyComponent>"#,
+            r#"<MyComponent>{"foo bar "foo""}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            "<MyComponent>foo bar <App/></MyComponent>",
+            r#"<MyComponent>{"foo bar "}<App/></MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            "<MyComponent>foo \n bar</MyComponent>",
+            r#"<MyComponent>{"foo \\n bar"}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            r"<MyComponent>foo \u1234 bar</MyComponent>",
+            r#"<MyComponent>{"foo \\u1234 bar"}</MyComponent>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            r"<MyComponent prop='foo \u1234 bar' />",
+            r#"<MyComponent prop={"foo \\u1234 bar"} />"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<MyComponent prop={'bar'}>{'foo'}</MyComponent>",
+            r#"<MyComponent prop="bar">foo</MyComponent>"#,
+            Some(json!(["never"])),
+        ),
+        (
+            "<MyComponent prop='bar'>foo</MyComponent>",
+            r#"<MyComponent prop={"bar"}>{"foo"}</MyComponent>"#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"<App prop={'foo'} attr={" foo "} />"#,
+            r#"<App prop="foo" attr=" foo " />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<App prop='foo' attr="bar" />"#,
+            r#"<App prop={"foo"} attr={"bar"} />"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            r#"<App prop='foo' attr={"bar"} />"#,
+            r#"<App prop={"foo"} attr={"bar"} />"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<App prop={'foo'} attr='bar' />",
+            r#"<App prop={'foo'} attr={"bar"} />"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<App prop='foo &middot; bar' />",
+            r#"<App prop={"foo &middot; bar"} />"#,
+            Some(json!([{ "props": "always" }])),
+        ),
+        (
+            "<App>foo &middot; bar</App>",
+            r#"<App>{"foo &middot; bar"}</App>"#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            r#"<App>{'foo "bar"'}</App>"#,
+            r#"<App>foo "bar"</App>"#,
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            r#"<App>{"foo 'bar'"}</App>"#,
+            "<App>foo 'bar'</App>",
+            Some(json!([{ "children": "never" }])),
+        ),
+        (
+            r#"
+			        <App prop=""#,
+            r#"
+			        <App prop=""#,
+            Some(json!(["always"])),
+        ),
+        (
+            "
+			        <App prop='",
+            "
+			        <App prop='",
+            Some(json!(["always"])),
+        ),
+        (
+            "
+			        <App>
+			          foo bar
+			          <div>foo bar foo</div>
+			          <span>
+			            foo bar <i>foo bar</i>
+			            <strong>
+			              foo bar
+			            </strong>
+			          </span>
+			        </App>
+			      ",
+            r#"
+			        <App>
+			          {"foo bar"}
+			          <div>{"foo bar foo"}</div>
+			          <span>
+			            {"foo bar "}<i>{"foo bar"}</i>
+			            <strong>
+			              {"foo bar"}
+			            </strong>
+			          </span>
+			        </App>
+			      "#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            "
+			        <App>
+			          &lt;Component&gt;
+			          &nbsp;<Component />&nbsp;
+			          &nbsp;
+			        </App>
+			      ",
+            r#"
+			        <App>
+			          &lt;{"Component"}&gt;
+			          &nbsp;<Component />&nbsp;
+			          &nbsp;
+			        </App>
+			      "#,
+            Some(json!([{ "children": "always" }])),
+        ),
+        (
+            "
+			        <Box mb={'1rem'} />
+			      ",
+            r#"
+			        <Box mb="1rem" />
+			      "#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            "
+			        <Box mb={'1rem {}'} />
+			      ",
+            r#"
+			        <Box mb="1rem {}" />
+			      "#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"<MyComponent prop={"{ style: true }"}>bar</MyComponent>"#,
+            r#"<MyComponent prop="{ style: true }">bar</MyComponent>"#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"<MyComponent prop={"< style: true >"}>foo</MyComponent>"#,
+            r#"<MyComponent prop="< style: true >">foo</MyComponent>"#,
+            Some(json!(["never"])),
+        ),
+        (
+            "<App horror=<div /> />",
+            "<App horror={<div />} />",
+            Some(
+                json!([{ "props": "always", "children": "always", "propElementValues": "always" }]),
+            ),
+        ),
+        (
+            "<App horror={<div />} />",
+            "<App horror=<div /> />",
+            Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
+        ),
+        (
+            r#"<Foo bar={"'"} />"#,
+            r#"<Foo bar="'" />"#,
+            Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
+        ),
+        (
+            r#"
+			        <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
+			      "#,
+            r#"
+			        <Foo help='The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)' />
+			      "#,
+            Some(json!(["never"])),
+        ),
+    ];
     Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
