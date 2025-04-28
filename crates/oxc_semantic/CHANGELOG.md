@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+- a2b7e9d semantic: [**BREAKING**] Do not need to return old name in `Scoping::set_symbol_name` (#10613) (Dunqing)
+
+### Features
+
+
+### Performance
+
+- 075d4b5 semantic: Optimize `Scoping::rename_symbol` method (#10612) (Dunqing)
+
+### Refactor
+
+- f35efd3 traverse, semantic: Move `rename_symbol` from `TraverseScoping` to `Scoping` (#10611) (Dunqing)
+
 ## [0.65.0] - 2025-04-21
 
 - 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)

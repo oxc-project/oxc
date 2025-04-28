@@ -13,7 +13,9 @@ fn missing_parameters(span: Span) -> OxcDiagnostic {
 }
 
 fn missing_radix(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing radix parameter.").with_label(span)
+    OxcDiagnostic::warn("Missing radix parameter.")
+        .with_help("Add radix parameter `10' for parsing decimal numbers.")
+        .with_label(span)
 }
 
 fn redundant_radix(span: Span) -> OxcDiagnostic {
@@ -51,7 +53,8 @@ declare_oxc_lint!(
     /// ```
     Radix,
     eslint,
-    pedantic
+    pedantic,
+    conditional_fix_dangerous
 );
 
 impl Rule for Radix {
@@ -114,7 +117,18 @@ impl Radix {
             0 => ctx.diagnostic(missing_parameters(call_expr.span)),
             1 => {
                 if matches!(&self.radix_type, RadixType::Always) {
-                    ctx.diagnostic(missing_radix(call_expr.span));
+                    let first_arg = &call_expr.arguments[0];
+                    let end = call_expr.span.end;
+                    let check_span = Span::new(first_arg.span().start, end);
+                    let insert_param = ctx
+                        .source_range(check_span)
+                        .chars()
+                        .find_map(|c| if c == ',' { Some(" 10,") } else { None })
+                        .unwrap_or(", 10");
+
+                    ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
+                        fixer.insert_text_before_range(Span::new(end - 1, end - 1), insert_param)
+                    });
                 }
             }
             _ => {
@@ -240,5 +254,21 @@ fn test() {
         ("{ let Number; } (Number?.parseInt)();", None, None),
     ];
 
-    Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("parseInt(10)", "parseInt(10, 10)", Some(json!(["always"]))),
+        ("parseInt(10,)", "parseInt(10, 10,)", Some(json!(["always"]))),
+        ("parseInt(10      )", "parseInt(10      , 10)", Some(json!(["always"]))),
+        ("parseInt(10,         )", "parseInt(10,          10,)", Some(json!(["always"]))),
+        (
+            r#"parseInt("123123"     ,       )"#,
+            r#"parseInt("123123"     ,        10,)"#,
+            Some(json!(["always"])),
+        ),
+        (r#"Number.parseInt("10")"#, r#"Number.parseInt("10", 10)"#, Some(json!(["always"]))),
+        (r#"Number.parseInt("10",)"#, r#"Number.parseInt("10", 10,)"#, Some(json!(["always"]))),
+        (r#"Number.parseInt?.("10")"#, r#"Number.parseInt?.("10", 10)"#, Some(json!(["always"]))),
+        ("parseInt(10, /** 213123 */)", "parseInt(10, /** 213123 */ 10,)", Some(json!(["always"]))),
+    ];
+
+    Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

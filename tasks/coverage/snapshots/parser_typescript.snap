@@ -21303,7 +21303,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ for (v of []) { }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es6/for-ofStatements/for-of3.ts:2:6]
  1 │ var v: any;
  2 │ for (v++ of []) { }
@@ -27362,28 +27362,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement4.ts:1:6]
  1 │ for (a = 1 in b) {
    ·      ─────
  2 │ }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement6.ts:1:6]
  1 │ for (foo() in b) {
    ·      ─────
  2 │ }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement7.ts:1:6]
  1 │ for (new foo() in b) {
    ·      ─────────
  2 │ }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement8.ts:1:6]
  1 │ for (this in b) {
    ·      ────
@@ -28783,10 +28783,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]
+  × Cannot assign to this expression
+   ╭─[typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of12.ts:1:7]
  1 │ for ([""] of [[""]]) { }
-   ·      ────
+   ·       ──
    ╰────
 
   × Missing initializer in const declaration

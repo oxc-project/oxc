@@ -719,7 +719,7 @@ impl ESTree for FormalParameterConverter<'_, '_> {
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
         /* IF_TS */
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         /* END_IF_TS */
         params
@@ -1423,7 +1423,7 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "
@@ -1447,7 +1447,7 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "
@@ -1469,7 +1469,7 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param)
+        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
         if (thisParam !== null) params.unshift(thisParam);
         params
     "

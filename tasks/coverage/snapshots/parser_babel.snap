@@ -1815,10 +1815,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/374/input.js:1:5]
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/374/input.js:1:6]
  1 │ for((1 + 1) in list) process(x);
-   ·     ───────
+   ·      ─────
    ╰────
 
   × Expected `]` but found `EOF`
@@ -2090,13 +2090,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ╰── `;` expected
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/417/input.js:1:6]
  1 │ for (i + 1 in {});
    ·      ─────
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/418/input.js:1:6]
  1 │ for (+i in {});
    ·      ──
@@ -2920,7 +2920,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/no-for-in-init-concise-binary-in/input.js:1:6]
  1 │ for (() => x in y;;);
    ·      ───────
@@ -3141,7 +3141,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ })
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-in/bare-initializer/input.js:2:6]
  1 │ var a;
  2 │ for (a = 0 in {});
@@ -3179,7 +3179,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ───────────
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/bare-initializer/input.js:2:6]
  1 │ var a;
  2 │ for (a = 0 of {});
@@ -4994,7 +4994,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─────
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/in-iterator-stmt/input.js:2:8]
  1 │ function* g() {
  2 │   for (yield '' in {}; ; ) ;
@@ -5777,7 +5777,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of-arrow/input.js:2:14]
  1 │ async function f() {
  2 │   for await (async of => {} of x);
@@ -6357,7 +6357,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │ }
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/for-async-of/forbidden-arrow-function/input.js:1:6]
  1 │ for (async of => {} of x);
    ·      ──────────────
@@ -9033,7 +9033,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────────
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-for-of/invalid-lhs-init/input.js:1:6]
  1 │ for (this of that);
    ·      ────
@@ -10194,10 +10194,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0056/input.js:1:5]
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0056/input.js:1:6]
  1 │ for((1 + 1) in list) process(x);
-   ·     ───────
+   ·      ─────
    ╰────
 
   × Expected `]` but found `EOF`
@@ -10577,13 +10577,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ╰── `;` expected
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0125/input.js:1:6]
  1 │ for (i + 1 in {});
    ·      ─────
    ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0126/input.js:1:6]
  1 │ for (+i in {});
    ·      ──
