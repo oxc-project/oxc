@@ -2,14 +2,11 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 6489/6493 (99.94%)
-Positive Passed: 6458/6493 (99.46%)
+Positive Passed: 6470/6493 (99.65%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 `await` is only allowed within async functions and at the top levels of modules
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
-number out of range at line 28 column 25
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebang1.ts
 
@@ -19,16 +16,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebangAn
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts
 
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-number out of range at line 46 column 31
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-number out of range at line 46 column 31
-
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowingUnionToUnion.ts
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/compiler/parsingDeepParenthensizedExpression.ts
-recursion limit exceeded at line 3334 column 269
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/shebang.ts
 
@@ -43,31 +31,7 @@ Classes may not have a static property named prototype
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts
 The only valid meta property for import is import.meta
 
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteral.ts
-number out of range at line 129 column 27
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralES6.ts
-number out of range at line 129 column 27
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteral.ts
-number out of range at line 96 column 27
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteralES6.ts
-number out of range at line 96 column 27
-
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings10.ts
-unexpected end of hex escape at line 30 column 29
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings11.ts
-lone leading surrogate in hex escape at line 30 column 28
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates10.ts
-unexpected end of hex escape at line 38 column 36
-
-serde_json::from_str(oxc_json) Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates11.ts
-lone leading surrogate in hex escape at line 38 column 35
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
