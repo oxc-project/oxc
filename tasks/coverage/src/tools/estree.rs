@@ -290,6 +290,17 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
         ];
 
+        // Skip tests where `@typescript-eslint/parser` is incorrect, and we can't massage the AST
+        // to align with it
+        const INCORRECT_PATHS: &[&str] = &[
+            // TS-ESLint includes `\r` in `raw` field of `TemplateElement`.
+            // This is incorrect - `\r` should be converted to `\n`, as both Acorn and Espree do.
+            // This matches the `raw` value that you get at runtime in a tagged template in JS.
+            // We perform the `\r` -> `\n` conversion in parser, so we can't match TS-ESTree without
+            // breaking plain JS ESTree.
+            "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+        ];
+
         // Skip tests where fixture starts with a hashbang.
         // We intentionally diverge from TS-ESTree, by including an extra `hashbang` field on `Program`.
         // `acorn-test262` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
@@ -306,7 +317,8 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
         ];
 
-        static IGNORE_PATHS: &[&str] = concat_slices!([&str]: PARSE_ERROR_PATHS, HASHBANG_PATHS);
+        static IGNORE_PATHS: &[&str] =
+            concat_slices!([&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS);
 
         // Skip cases where expected to fail to parse
         if self.base.should_fail() {
