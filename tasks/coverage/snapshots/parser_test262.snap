@@ -13,7 +13,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/annexB/language/statements/for-in/bare-initializer.js:16:6]
  15 │ 
  16 │ for (a = 0 in {});
@@ -2663,6 +2663,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/comments/S7.4_A4_T1.js:19:3]
+ 18 │ /* var*/
+ 19 │ x*/
+    ·   ──
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
  18 │ // var /*
@@ -2670,12 +2677,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
- 1 │ #\041
-   ·   ─
- 2 │ 
-   ╰────
+  × Unexpected token
+    ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
+ 18 │ // var /*
+ 19 │ x*/
+    ·   ──
+    ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
@@ -2685,13 +2692,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ╰── `in` expected
     ╰────
 
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
- 1 │ #\u0021
-   ·        ▲
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
  19 │ 
@@ -2700,13 +2700,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ╰── `in` expected
     ╰────
 
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
- 1 │ #\u{21}
-   ·        ▲
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
  19 │ 
@@ -2714,13 +2707,6 @@ Negative Passed: 4519/4519 (100.00%)
     · ──┬──
     ·   ╰── `in` expected
     ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
- 1 │ #\x21
-   ·   ─
- 2 │ 
-   ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
@@ -6675,12 +6661,13 @@ Negative Passed: 4519/4519 (100.00%)
  18 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:16]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
  14 │ $DONOTEVALUATE();
  15 │ async(x = await) => {  }
-    ·                ─
+    ·                 ▲
     ╰────
+  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]
@@ -12720,15 +12707,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ var C = class {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ var C = class {
@@ -12736,15 +12714,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ var C = class {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -12761,15 +12730,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ var C = class {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -12827,15 +12787,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ var C = class {
@@ -12843,15 +12794,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -12869,15 +12811,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ var C = class {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ var C = class {
@@ -12886,15 +12819,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ var C = class {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ var C = class {
@@ -12902,15 +12826,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ var C = class {
- 29 │   static # x;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -12927,15 +12842,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ var C = class {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -14293,14 +14199,14 @@ Negative Passed: 4519/4519 (100.00%)
     · ────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/conditional/in-branch-2.js:23:6]
  22 │ 
  23 │ for (true ? 0 : 0 in {}; false; ) ;
     ·      ────────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/conditional/in-condition.js:23:6]
  22 │ 
  23 │ for ('' in {} ? 0 : 0; false; ) ;
@@ -17658,7 +17564,7 @@ Negative Passed: 4519/4519 (100.00%)
     · ───────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-await-of-loop.js:31:16]
  30 │ async function* f() {
  31 │     for await (import.meta of null) ;
@@ -17666,14 +17572,14 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ }
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-in-loop.js:30:6]
  29 │ 
  30 │ for (import.meta in null) ;
     ·      ───────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-of-loop.js:30:6]
  29 │ 
  30 │ for (import.meta of null) ;
@@ -19816,7 +19722,7 @@ Negative Passed: 4519/4519 (100.00%)
     · ────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/yield/in-iteration-stmt.js:23:8]
  22 │ function* g() {
  23 │   for (yield '' in {}; ; ) ;
@@ -19832,7 +19738,7 @@ Negative Passed: 4519/4519 (100.00%)
  29 │ }
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/yield/star-in-iteration-stmt.js:23:8]
  22 │ function* g() {
  23 │   for (yield * '' in {}; ; ) ;
@@ -21308,12 +21214,26 @@ Negative Passed: 4519/4519 (100.00%)
     · ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
+ 17 │ 
+ 18 │ //
+    · ───
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
  17 │ 
  18 │ /
     · ──
  19 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
+ 17 │     
+ 18 │ ╭─▶ /
+ 19 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -21323,11 +21243,25 @@ Negative Passed: 4519/4519 (100.00%)
     · ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ls.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
  17 │ 
  18 │ / /
     · ──
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
     ╰────
 
   × Unterminated string
@@ -22096,6 +22030,13 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T2.js:27:1]
+ 26 │ 
+ 27 │ /\/
+    · ────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T3.js:28:1]
  27 │ ///
  28 │ .source;
@@ -22117,12 +22058,26 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
  29 │ 
  30 │ /
     · ──
  31 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22133,6 +22088,13 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:24:1]
+ 23 │     
+ 24 │ ╭─▶ /\
+ 25 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
  22 │ 
@@ -22141,7 +22103,21 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
+ 22 │     
+ 23 │ ╭─▶ /\
+ 24 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
+ 23 │ 
+ 24 │ /a\/
+    · ─────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
  23 │ 
  24 │ /a\/
@@ -22163,12 +22139,26 @@ Negative Passed: 4519/4519 (100.00%)
  34 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:33:1]
+ 32 │     
+ 33 │ ╭─▶ /a
+ 34 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
  33 │ 
  34 │ /a
     · ───
  35 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
+ 33 │     
+ 34 │ ╭─▶ /a
+ 35 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22179,12 +22169,26 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
  28 │ 
  29 │ /a\
     · ────
  30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
     ╰────
 
   × Invalid regular expression: Invalid modifiers
@@ -22600,11 +22604,25 @@ Negative Passed: 4519/4519 (100.00%)
     ·    ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:1]
+ 18 │ 
+ 19 │ /./G;
+    · ────
+    ╰────
+
   × Flag g is mentioned twice in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:6]
  18 │ 
  19 │ /./gig;
     ·      ─
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:1]
+ 18 │ 
+ 19 │ /./gig;
+    · ──────
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23232,12 +23250,32 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <LS> between the two / characters
+ 34 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ / /
     · ──
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between the two / characters
+ 34 │ ╰─▶ */
     ╰────
 
   × Unterminated regular expression
@@ -23248,12 +23286,32 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\\ /
+ 30 │ │   
+ 31 │ │   /*
+ 32 │ │   There is a <LS> between "a\\ " and "/"
+ 33 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ /a\\  /
     · ─────
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /a\\  /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between "a\\ " and "/"
+ 34 │ ╰─▶ */
     ╰────
 
   × Invalid regular expression: Could not parse the entire pattern
@@ -31113,15 +31171,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ class C {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ class C {
@@ -31129,15 +31178,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ class C {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -31154,15 +31194,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ class C {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -31220,15 +31251,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ class C {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ class C {
@@ -31236,15 +31258,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ class C {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -31262,15 +31275,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ class C {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ class C {
@@ -31279,15 +31283,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ class C {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ class C {
@@ -31295,15 +31290,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ class C {
- 29 │   static # x;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -31320,15 +31306,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ class C {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
@@ -33189,7 +33166,7 @@ Negative Passed: 4519/4519 (100.00%)
  24 │     break;
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for/S12.6.3_A4_T2.js:23:5]
  22 │ //CHECK#1
  23 │ for(1 in arr;1;) {
@@ -33588,11 +33565,11 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:34:14]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:34:17]
  33 │ async function fn() {
  34 │   for await ([[(x, y)]] of [[[]]]) {}
-    ·              ──────────
+    ·                 ────
  35 │ }
     ╰────
 
@@ -33604,11 +33581,11 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:34:14]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:34:22]
  33 │ async function fn() {
  34 │   for await ([{ get x() {} }] of [[{}]]) {}
-    ·              ────────────────
+    ·                      ─────
  35 │ }
     ╰────
 
@@ -34394,11 +34371,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-array-invalid.js:33:9]
  32 │ 
  33 │ for ([[(x, y)]] in [[[]]]) ;
-    ·      ──────────
+    ·         ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34415,11 +34392,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-obj-invalid.js:33:14]
  32 │ 
  33 │ for ([{ get x() {} }] in [[{}]]) ;
-    ·      ────────────────
+    ·              ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34453,11 +34430,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] in [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34467,11 +34444,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] in [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34481,18 +34458,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] in [[]]) ;
-    ·      ──────────
+    ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-array-invalid.js:33:12]
  32 │ 
  33 │ for ([...[(x, y)]] in [[[]]]) ;
-    ·      ─────────────
+    ·            ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34502,11 +34479,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:33:17]
  32 │ 
  33 │ for ([...{ get x() {} }] in [[[]]]) ;
-    ·      ───────────────────
+    ·                 ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34590,11 +34567,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:33:13]
  32 │ 
  33 │ for ({ x: [(x, y)] } in [{ x: [] }]) ;
-    ·      ───────────────
+    ·             ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34604,11 +34581,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:33:18]
  32 │ 
  33 │ for ({ x: { get x() {} } } in [{ x: {} }]) ;
-    ·      ─────────────────────
+    ·                  ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34618,11 +34595,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                 ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:7]
  33 │ 
  34 │ for ({...rest, b} in [{}
-    ·      ────────────
+    ·       ───────
  35 │ ]) ;
     ╰────
 
@@ -34682,28 +34659,28 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ───
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-cover-non-asnmt-trgt.js:25:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-cover-non-asnmt-trgt.js:25:7]
  24 │ 
  25 │ for ((this) in {}) {}
-    ·      ──────
+    ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-ary.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-ary.js:21:8]
  20 │ 
  21 │ for ([(x, y)] in {}) {}
-    ·      ────────
+    ·        ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-obj.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-obj.js:21:9]
  20 │ 
  21 │ for ({ m() {} } in {}) {}
-    ·      ──────────
+    ·         ─────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/head-lhs-non-asnmt-trgt.js:19:6]
  18 │ 
  19 │ for (this in {}) {}
@@ -34900,11 +34877,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-array-invalid.js:33:9]
  32 │ 
  33 │ for ([[(x, y)]] of [[[]]]) ;
-    ·      ──────────
+    ·         ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34921,11 +34898,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-obj-invalid.js:33:14]
  32 │ 
  33 │ for ([{ get x() {} }] of [[{}]]) ;
-    ·      ────────────────
+    ·              ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34959,11 +34936,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] of [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34973,11 +34950,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] of [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
   × Unexpected trailing comma after rest element
@@ -34987,18 +34964,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] of [[]]) ;
-    ·      ──────────
+    ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-array-invalid.js:33:12]
  32 │ 
  33 │ for ([...[(x, y)]] of [[[]]]) ;
-    ·      ─────────────
+    ·            ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35008,11 +34985,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:33:17]
  32 │ 
  33 │ for ([...{ get x() {} }] of [[[]]]) ;
-    ·      ───────────────────
+    ·                 ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35220,11 +35197,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:33:13]
  32 │ 
  33 │ for ({ x: [(x, y)] } of [{ x: [] }]) ;
-    ·      ───────────────
+    ·             ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35234,11 +35211,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:33:18]
  32 │ 
  33 │ for ({ x: { get x() {} } } of [{ x: {} }]) ;
-    ·      ─────────────────────
+    ·                  ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35248,11 +35225,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                 ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:7]
  33 │ 
  34 │ for ({...rest, b} of [{}
-    ·      ────────────
+    ·       ───────
  35 │ ]) ;
     ╰────
 
@@ -35418,25 +35395,25 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-cover-non-asnmt-trgt.js:25:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-cover-non-asnmt-trgt.js:25:7]
  24 │ 
  25 │ for ((this) of []) {}
-    ·      ──────
+    ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-ary.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-ary.js:21:8]
  20 │ 
  21 │ for ([(x, y)] of []) {}
-    ·      ────────
+    ·        ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-obj.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-obj.js:21:9]
  20 │ 
  21 │ for ({ m() {} } of []) {}
-    ·      ──────────
+    ·         ─────
     ╰────
 
   × Expected `;` but found `[`
@@ -35447,7 +35424,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·              ╰── `;` expected
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/head-lhs-non-asnmt-trgt.js:19:6]
  18 │ 
  19 │ for (this of []) {}

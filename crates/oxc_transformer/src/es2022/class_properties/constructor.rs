@@ -444,9 +444,9 @@ impl<'a> ClassProperties<'a, '_> {
             // Generate replacement UID name
             let new_name = ctx.generate_uid_name(name);
             // Save replacement name in `clashing_symbols`
-            *name = ctx.ast.atom(&new_name);
+            *name = new_name;
             // Rename symbol and binding
-            ctx.rename_symbol(symbol_id, constructor_scope_id, new_name);
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
         }
 
         // Rename identifiers for clashing symbols in constructor params and body

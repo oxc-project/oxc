@@ -1,6 +1,5 @@
 use oxc_allocator::Box;
 use oxc_ast::{NONE, ast::*};
-use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
@@ -20,12 +19,12 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Option<Expression<'a>> {
         match self.is_parenthesized_arrow_function_expression() {
-            Tristate::False => Ok(None),
-            Tristate::True => self.parse_parenthesized_arrow_function_expression(
+            Tristate::False => None,
+            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
                 /* allow_return_type_in_arrow_function */ true,
-            ),
+            )),
             Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,
             ),
@@ -35,23 +34,21 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn try_parse_async_simple_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Option<Expression<'a>> {
         if self.at(Kind::Async)
             && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
         {
             let span = self.start_span();
             self.bump_any(); // bump `async`
-            let expr = self.parse_binary_expression_or_higher(Precedence::Comma)?;
-            return self
-                .parse_simple_arrow_function_expression(
-                    span,
-                    expr,
-                    /* async */ true,
-                    allow_return_type_in_arrow_function,
-                )
-                .map(Some);
+            let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
+            return Some(self.parse_simple_arrow_function_expression(
+                span,
+                expr,
+                /* async */ true,
+                allow_return_type_in_arrow_function,
+            ));
         }
-        Ok(None)
+        None
     }
 
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
@@ -217,7 +214,7 @@ impl<'a> ParserImpl<'a> {
         ident: Expression<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Expression<'a>> {
+    ) -> Expression<'a> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
@@ -247,7 +244,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
-        self.expect(Kind::Arrow)?;
+        self.expect(Kind::Arrow);
 
         self.parse_arrow_function_expression_body(
             ArrowFunctionHead {
@@ -262,17 +259,17 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
+    fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
-        let type_parameters = self.parse_ts_type_parameters()?;
+        let type_parameters = self.parse_ts_type_parameters();
 
         let (this_param, params) =
-            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters)?;
+            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters);
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};
@@ -280,7 +277,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let has_return_colon = self.is_ts && self.at(Kind::Colon);
-        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false)?;
+        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false);
 
         self.ctx = self.ctx.and_await(has_await);
 
@@ -288,16 +285,9 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
-        self.expect(Kind::Arrow)?;
+        self.expect(Kind::Arrow);
 
-        Ok(ArrowFunctionHead {
-            type_parameters,
-            params,
-            return_type,
-            r#async,
-            span,
-            has_return_colon,
-        })
+        ArrowFunctionHead { type_parameters, params, return_type, r#async, span, has_return_colon }
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -309,7 +299,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         arrow_function_head: ArrowFunctionHead<'a>,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Expression<'a>> {
+    ) -> Expression<'a> {
         let ArrowFunctionHead { type_parameters, params, return_type, r#async, span, .. } =
             arrow_function_head;
         let has_await = self.ctx.has_await();
@@ -319,17 +309,17 @@ impl<'a> ParserImpl<'a> {
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
             let expr = self
-                .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)?;
+                .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
             let span = expr.span();
             let expr_stmt = self.ast.statement_expression(span, expr);
             self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))
         } else {
-            self.parse_function_body()?
+            self.parse_function_body()
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.expression_arrow_function(
+        self.ast.expression_arrow_function(
             self.end_span(span),
             expression,
             r#async,
@@ -337,7 +327,7 @@ impl<'a> ParserImpl<'a> {
             params,
             return_type,
             body,
-        ))
+        )
     }
 
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
@@ -346,33 +336,33 @@ impl<'a> ParserImpl<'a> {
     fn parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Option<Expression<'a>>> {
-        let head = self.parse_parenthesized_arrow_function_head()?;
+    ) -> Expression<'a> {
+        let head = self.parse_parenthesized_arrow_function_head();
         self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
-            .map(Some)
     }
 
     fn parse_possible_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Option<Expression<'a>> {
         let pos = self.cur_token().start;
         if self.state.not_parenthesized_arrow.contains(&pos) {
-            return Ok(None);
+            return None;
         }
 
         let checkpoint = self.checkpoint();
 
-        let Ok(head) = self.parse_parenthesized_arrow_function_head() else {
+        let head = self.parse_parenthesized_arrow_function_head();
+        if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
-            return Ok(None);
-        };
+            return None;
+        }
 
         let has_return_colon = head.has_return_colon;
 
         let body =
-            self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)?;
+            self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function);
 
         // Given:
         //     x ? y => ({ y }) : z => ({ z })
@@ -399,10 +389,10 @@ impl<'a> ParserImpl<'a> {
             if !self.at(Kind::Colon) {
                 self.state.not_parenthesized_arrow.insert(pos);
                 self.rewind(checkpoint);
-                return Ok(None);
+                return None;
             }
         }
 
-        Ok(Some(body))
+        Some(body)
     }
 }

@@ -1,19 +1,24 @@
 import { ConfigurationChangeEvent, workspace } from 'vscode';
-import { Config } from './Config';
 import { IDisposable } from './types';
+import { VSCodeConfig } from './VSCodeConfig';
+import { WorkspaceConfig } from './WorkspaceConfig';
 
 export class ConfigService implements IDisposable {
-  private static readonly _namespace = 'oxc';
+  public static readonly namespace = 'oxc';
   private readonly _disposables: IDisposable[] = [];
 
-  public config: Config;
+  public vsCodeConfig: VSCodeConfig;
+
+  private _workspaceConfig: WorkspaceConfig;
 
   public onConfigChange:
     | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
     | undefined;
 
   constructor() {
-    this.config = new Config();
+    const conf = workspace.getConfiguration(ConfigService.namespace);
+    this.vsCodeConfig = new VSCodeConfig(conf);
+    this._workspaceConfig = new WorkspaceConfig(conf);
     this.onConfigChange = undefined;
 
     const disposeChangeListener = workspace.onDidChangeConfiguration(
@@ -22,9 +27,19 @@ export class ConfigService implements IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
+  public get rootServerConfig(): WorkspaceConfig {
+    return this._workspaceConfig;
+  }
+
+  public refresh(): void {
+    const conf = workspace.getConfiguration(ConfigService.namespace);
+    this.vsCodeConfig.refresh(conf);
+    this.rootServerConfig.refresh(conf);
+  }
+
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
-    if (event.affectsConfiguration(ConfigService._namespace)) {
-      this.config.refresh();
+    if (event.affectsConfiguration(ConfigService.namespace)) {
+      this.refresh();
       await this.onConfigChange?.(event);
     }
   }

@@ -556,14 +556,13 @@ impl<'a> PeepholeOptimizations {
             // `Number("a")` -> `+"a"` -> `NaN`
             // `Number("1")` -> `+"1"` -> `1`
             Expression::StringLiteral(n) => {
-                let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
-                if let Some(n) = argument.evaluate_value_to_number(&ctx) {
+                if let Some(n) = arg.evaluate_value_to_number(&ctx) {
                     n
                 } else {
                     return Some(ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        argument,
+                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
                     ));
                 }
             }

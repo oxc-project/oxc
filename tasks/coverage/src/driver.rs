@@ -5,13 +5,17 @@ use rustc_hash::FxHashSet;
 use oxc::{
     CompilerInterface,
     allocator::Allocator,
-    ast::{AstKind, Comment, ast::Program},
+    ast::{
+        AstKind, Comment,
+        ast::{Program, RegExpLiteral},
+    },
+    ast_visit::{Visit, walk},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{LiteralParser, Options},
-    semantic::{Semantic, SemanticBuilderReturn},
+    semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
 };
@@ -69,6 +73,7 @@ impl CompilerInterface for Driver {
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
+        self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
@@ -93,7 +98,6 @@ impl CompilerInterface for Driver {
                 return ControlFlow::Break(());
             }
         }
-        self.check_regular_expressions(&ret.semantic);
         ControlFlow::Continue(())
     }
 
@@ -157,38 +161,69 @@ impl Driver {
         false
     }
 
+    fn check_ast_nodes(&mut self, program: &Program<'_>) {
+        CheckASTNodes::new(self, program.source_text).check(program);
+    }
+}
+
+struct CheckASTNodes<'a> {
+    driver: &'a mut Driver,
+    source_text: &'a str,
+    allocator: Allocator,
+}
+
+impl<'a> CheckASTNodes<'a> {
+    fn new(driver: &'a mut Driver, source_text: &'a str) -> Self {
+        Self { driver, source_text, allocator: Allocator::default() }
+    }
+
+    fn check(&mut self, program: &Program<'a>) {
+        self.visit_program(program);
+    }
+}
+
+impl<'a> Visit<'a> for CheckASTNodes<'a> {
+    // TODO: This is too slow
+    // fn visit_span(&mut self, span: &Span) {
+    // let Span { start, end, .. } = span;
+    // if *end >= *start {
+    // self.driver.errors.push(
+    // OxcDiagnostic::error(format!("Span end {end} >= start {start}",)).with_label(*span),
+    // );
+    // }
+    // }
+
     /// Idempotency test for printing regular expressions.
-    fn check_regular_expressions(&mut self, semantic: &Semantic<'_>) {
-        let allocator = Allocator::default();
-        for literal in semantic.nodes().iter().filter_map(|node| node.kind().as_reg_exp_literal()) {
-            let Some(pattern) = literal.regex.pattern.as_pattern() else {
-                continue;
-            };
-            let printed1 = pattern.to_string();
-            let flags = literal.regex.flags.to_inline_string();
-            match LiteralParser::new(&allocator, &printed1, Some(&flags), Options::default())
-                .parse()
-            {
-                Ok(pattern2) => {
-                    let printed2 = pattern2.to_string();
-                    if !pattern2.content_eq(pattern) {
-                        self.errors.push(OxcDiagnostic::error(format!(
+    fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {
+        walk::walk_reg_exp_literal(self, literal);
+
+        let Some(pattern) = literal.regex.pattern.as_pattern() else {
+            return;
+        };
+        let printed1 = pattern.to_string();
+        let flags = literal.regex.flags.to_inline_string();
+        match LiteralParser::new(&self.allocator, &printed1, Some(&flags), Options::default())
+            .parse()
+        {
+            Ok(pattern2) => {
+                let printed2 = pattern2.to_string();
+                if !pattern2.content_eq(pattern) {
+                    self.driver.errors.push(OxcDiagnostic::error(format!(
                         "Regular Expression content mismatch for `{}`: `{pattern}` == `{pattern2}`",
-                        literal.span.source_text(semantic.source_text())
-                        )));
-                    }
-                    if printed1 != printed2 {
-                        self.errors.push(OxcDiagnostic::error(format!(
-                            "Regular Expression mismatch: {printed1} {printed2}"
-                        )));
-                    }
-                }
-                Err(error) => {
-                    self.errors.push(OxcDiagnostic::error(format!(
-                        "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
-                        literal.span.source_text(semantic.source_text()),
+                        literal.span.source_text(self.source_text)
                     )));
                 }
+                if printed1 != printed2 {
+                    self.driver.errors.push(OxcDiagnostic::error(format!(
+                        "Regular Expression mismatch: {printed1} {printed2}"
+                    )));
+                }
+            }
+            Err(error) => {
+                self.driver.errors.push(OxcDiagnostic::error(format!(
+                    "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
+                    literal.span.source_text(self.source_text),
+                )));
             }
         }
     }

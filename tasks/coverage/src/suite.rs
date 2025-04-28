@@ -121,7 +121,7 @@ pub trait Suite<T: Case> {
         let cases = paths
             .into_par_iter()
             .map(|path| {
-                let code = fs::read_to_string(&path).unwrap_or_else(|_| {
+                let mut code = fs::read_to_string(&path).unwrap_or_else(|_| {
                     // TypeScript tests may contain utf_16 encoding files
                     let file = fs::File::open(&path).unwrap();
                     let mut content = String::new();
@@ -134,8 +134,10 @@ pub trait Suite<T: Case> {
                 });
 
                 let path = path.strip_prefix(&test_path).unwrap().to_owned();
-                // remove the Byte Order Mark in some of the TypeScript files
-                let code = code.trim_start_matches('\u{feff}').to_string();
+                // Remove the Byte Order Mark in some of the TypeScript files
+                if code.starts_with('\u{feff}') {
+                    code.remove(0);
+                }
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())
@@ -377,14 +379,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 }
             }
             TestResult::GenericError(case, error) => {
-                writer.write_all(format!("{path}\n").as_bytes())?;
-                writer.write_all(format!("{case} error: {error}\n\n").as_bytes())?;
+                writer.write_all(format!("{case} Error: {path}\n",).as_bytes())?;
+                writer.write_all(format!("{error}\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
+        writer.write_all(b"\n")?;
         Ok(())
     }
 

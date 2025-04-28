@@ -447,15 +447,16 @@ fn test() {
         //             throw new TypeError;
         //         }
         //         "#,
-        r#"
+        r"
             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
                 throw new Error();
             }
-        r#"
+        ",
+        r"
             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
+        ",
         r"
             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();

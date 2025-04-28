@@ -1,5 +1,4 @@
 mod es_target;
-mod plugins;
 mod targets;
 
 use std::path::Path;

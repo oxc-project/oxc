@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.65.0"
+version = "0.67.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,9 +28,6 @@ required-features = ["full"]
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_parser = { workspace = true, features = [] }
-oxc_regular_expression = { workspace = true, optional = true }
-
 oxc_ast_visit = { workspace = true, optional = true }
 oxc_cfg = { workspace = true, optional = true }
 oxc_codegen = { workspace = true, optional = true }
@@ -38,10 +35,13 @@ oxc_diagnostics = { workspace = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
+oxc_parser = { workspace = true, features = [] }
+oxc_regular_expression = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
+oxc_transformer_plugins = { workspace = true, optional = true }
 
 [features]
 default = ["regular_expression"]
@@ -59,7 +59,7 @@ full = [
 ]
 
 semantic = ["oxc_semantic"]
-transformer = ["oxc_transformer"]
+transformer = ["oxc_transformer", "oxc_transformer_plugins"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]

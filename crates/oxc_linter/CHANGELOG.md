@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.8] - 2025-04-27
+
+### Features
+
+- 53394a7 linter: Add auto-fix for eslint/require-await (#10624) (yefan)
+- 6908bc3 linter: Add autofix for react/self-closing-comp (#10512) (x6eull)
+- e228840 parser: Fast forward lexer to EOF if errors are encountered (#10579) (Boshen)
+
+### Bug Fixes
+
+- 39adefe linter: Handle re-exporting of type correctly in `import/no-cycle` (#10606) (Ulrich Stark)
+- e67901b linter: Incorrect fix for prefer start ends with (#10533) (camc314)
+- 7c85ae7 linter/no-empty-function: Support 'allow' option (#10605) (Don Isaac)
+- a9785e3 parser,linter: Consider typescript declarations for named exports (#10532) (Ulrich Stark)
+
+### Testing
+
+- 8a2b250 linter: Fix incorrect test fixture for prefer-each (#10587) (Boshen)
+
 ## [0.16.7] - 2025-04-21
 
 - 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)

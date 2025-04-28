@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.8] - 2025-04-27
+
+### Bug Fixes
+
+- 966fb03 editor: Fix memory leaks when server or watchers restarted (#10628) (Sysix)
+
+### Performance
+
+- 3c27d0d editor: Avoid sending `workspace/didChangeConfiguration` request when the server needs a restarts (#10550) (Sysix)
+
+### Refactor
+
+- e903ba2 editor: Split Config to VSCodeConfig and WorkspaceConfig (#10572) (Sysix)
+
 ## [0.16.7] - 2025-04-21
 
 ### Features

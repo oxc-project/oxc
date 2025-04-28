@@ -781,6 +781,8 @@ function deserializeObjectPattern(pos) {
     end: deserializeU32(pos + 4),
     properties,
     decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -860,6 +862,8 @@ function deserializeFormalParameters(pos) {
         pos + 24,
       ),
       optional: deserializeBool(pos + 32),
+      decorators: [],
+      value: null,
     });
   }
   return params;
@@ -1770,11 +1774,36 @@ function deserializeTSTypeAliasDeclaration(pos) {
 }
 
 function deserializeTSClassImplements(pos) {
+  let expression = deserializeTSTypeName(pos + 8);
+  if (expression.type === 'TSQualifiedName') {
+    let parent = expression = {
+      type: 'MemberExpression',
+      start: expression.start,
+      end: expression.end,
+      object: expression.left,
+      property: expression.right,
+      computed: false,
+      optional: false,
+    };
+
+    while (parent.object.type === 'TSQualifiedName') {
+      const object = parent.object;
+      parent = parent.object = {
+        type: 'MemberExpression',
+        start: object.start,
+        end: object.end,
+        object: object.left,
+        property: object.right,
+        computed: false,
+        optional: false,
+      };
+    }
+  }
   return {
     type: 'TSClassImplements',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    expression: deserializeTSTypeName(pos + 8),
+    expression,
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
@@ -1909,17 +1938,31 @@ function deserializeTSTypePredicate(pos) {
 }
 
 function deserializeTSModuleDeclaration(pos) {
-  const kind = deserializeTSModuleDeclarationKind(pos + 80);
-  return {
-    type: 'TSModuleDeclaration',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    id: deserializeTSModuleDeclarationName(pos + 8),
-    body: deserializeOptionTSModuleDeclarationBody(pos + 64),
-    kind,
-    declare: deserializeBool(pos + 81),
-    global: kind === 'global',
-  };
+  const kind = deserializeTSModuleDeclarationKind(pos + 80),
+    global = kind === 'global',
+    start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
+    declare = deserializeBool(pos + 81);
+  let id = deserializeTSModuleDeclarationName(pos + 8),
+    body = deserializeOptionTSModuleDeclarationBody(pos + 64);
+
+  // Flatten `body`, and nest `id`
+  if (body !== null && body.type === 'TSModuleDeclaration') {
+    id = {
+      type: 'TSQualifiedName',
+      start: body.id.start,
+      end: id.end,
+      left: body.id,
+      right: id,
+    };
+    body = Object.hasOwn(body, 'body') ? body.body : null;
+  }
+
+  // Skip `body` field if `null`
+  const node = body === null
+    ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
+    : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+  return node;
 }
 
 function deserializeTSModuleBlock(pos) {
@@ -3930,7 +3973,9 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     default:
@@ -4030,7 +4075,9 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
@@ -4048,7 +4095,9 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
+      let id = deserializeIdentifierReference(pos + 8);
+      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
+      return id;
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:

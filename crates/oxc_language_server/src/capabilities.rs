@@ -5,7 +5,7 @@ use tower_lsp_server::lsp_types::{
     WorkspaceServerCapabilities,
 };
 
-use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::LSP_COMMANDS};
+use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
 
 #[derive(Clone, Default)]
 pub struct Capabilities {
@@ -45,11 +45,6 @@ impl From<ClientCapabilities> for Capabilities {
 
 impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
-        let commands = LSP_COMMANDS
-            .iter()
-            .filter_map(|c| if c.available(value.clone()) { Some(c.command_id()) } else { None })
-            .collect();
-
         Self {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
             workspace: Some(WorkspaceServerCapabilities {
@@ -74,7 +69,10 @@ impl From<Capabilities> for ServerCapabilities {
                 None
             },
             execute_command_provider: if value.workspace_execute_command {
-                Some(ExecuteCommandOptions { commands, ..Default::default() })
+                Some(ExecuteCommandOptions {
+                    commands: vec![FIX_ALL_COMMAND_ID.to_string()],
+                    ..Default::default()
+                })
             } else {
                 None
             },

@@ -7,11 +7,12 @@ use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
-use crate::codegen;
+use oxc_transformer_plugins::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
-pub fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
+use super::codegen;
+
+fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();

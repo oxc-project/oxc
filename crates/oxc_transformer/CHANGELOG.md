@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.67.0] - 2025-04-27
+
+### Features
+
+- 42ca96a transformer, napi/transform: Deprecate `allowDeclareFields` option (#10584) (Dunqing)
+- fae8c26 transformer/typescript: Support `allowDeclareFields: false` for backward compatibility (#10585) (Dunqing)
+- 6bff64e transformer/typescript: Support `removeClassFieldsWithoutInitializer` option (#10576) (Dunqing)
+- 1962bc6 transformer_plugins: Split out `oxc_transformer_plugins` crate (#10617) (Boshen)
+
+### Bug Fixes
+
+- bb522fa transformer/legacy-decorator: Should fallback to `Object` when a type reference refers to a type symbol (#10633) (Dunqing)
+- 6abc2f3 transformer/legacy-decorator: Keep imports when it's referenced as metadata (#10632) (Dunqing)
+
+### Performance
+
+- bdcbeb4 traverse: Use `ArenaString` instead `CompactString` to store UID name (#10562) (Dunqing)
+
+### Documentation
+
+- 73cd730 transformer: Add documentation for `CompilerAssumptions::set_public_class_fields` (#10582) (Dunqing)
+
+### Refactor
+
+- b31ab87 traverse: Take `&str` instead of `CompactStr` in `TraverseScoping::rename_symbol` (#10610) (Dunqing)
+- f35efd3 traverse, semantic: Move `rename_symbol` from `TraverseScoping` to `Scoping` (#10611) (Dunqing)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 84742d8 transformer/module_runner: Fix export default live binding (#10560) (hi-ogawa)
+- 6c115c7 transformer/module_runner: Fix execution order of re-export (#10362) (hi-ogawa)
+- b9d84b0 transformer/typescript: Remove `StringLiteral::raw` when rewriting extensions (#10554) (overlookmotel)
+
+### Performance
+
+- 3418ae5 transformer/class-properties: Re-use `InstanceInitializerVisitor` (#10543) (overlookmotel)
+- 7fcf0ac transformer/typescript: Reduce allocations renaming extensions (#10555) (overlookmotel)
+
+### Documentation
+
+- 1a9530c transformer/class-properties: Fix typo (#10542) (overlookmotel)
+
+### Refactor
+
+- 7e71282 transformer/class-properties: Correct outdated comment (#10546) (overlookmotel)
+- 596978b transformer/class-properties: Simplify to get `constructor` method only once (#10493) (Dunqing)
+- f13fe0a transformer/class-properties: Defer re-parenting initializers scopes until all instance properties are transformed (#10495) (Dunqing)
+- c83dad6 transformer/class-properties: Streamline handling scope of instance property initializer (#10492) (Dunqing)
+
 ## [0.65.0] - 2025-04-21
 
 ### Bug Fixes
