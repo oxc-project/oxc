@@ -193,6 +193,7 @@ function stringify(obj) {
     if (typeof value === 'bigint') return `__BIGINT__: ${value}`;
     if (typeof value === 'object' && value instanceof RegExp) return `__REGEXP__: ${value}`;
     if (value === Infinity) return `__INFINITY__`;
+    return value;
   });
 }
 
