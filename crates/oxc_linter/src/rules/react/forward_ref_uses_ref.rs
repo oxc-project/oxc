@@ -107,6 +107,7 @@ impl Rule for ForwardRefUsesRef {
 
 #[test]
 fn test() {
+    use crate::LintOptions;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -197,5 +198,10 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)
+        .with_lint_options(LintOptions {
+            framework_hints: FrameworkFlags::React,
+            ..LintOptions::default()
+        })
+        .test_and_snapshot();
 }
