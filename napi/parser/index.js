@@ -62,9 +62,16 @@ function parseSyncRaw(filename, sourceText, options) {
   const astTypeFlagPos = 2147483636;
   let isJsAst = buffer[astTypeFlagPos] === 0;
 
-  const data = isJsAst
-    ? deserializeJS(buffer, sourceText, sourceByteLen)
-    : deserializeTS(buffer, sourceText, sourceByteLen);
+  let data;
+  if (isJsAst) {
+    data = deserializeJS(buffer, sourceText, sourceByteLen);
+    const { hashbang } = data.program;
+    if (hashbang !== null) {
+      data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
+    }
+  } else {
+    data = deserializeTS(buffer, sourceText, sourceByteLen);
+  }
 
   return {
     get program() {

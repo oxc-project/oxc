@@ -16,7 +16,7 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{OxcError, convert_utf8_to_utf16};
+use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 
 mod convert;
 mod raw_transfer;
@@ -100,12 +100,33 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
 
-    let comments =
+    let mut comments =
         convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
 
     let program = match ast_type {
-        AstType::JavaScript => program.to_estree_js_json(),
-        AstType::TypeScript => program.to_estree_ts_json(),
+        AstType::JavaScript => {
+            // Add hashbang to start of comments
+            if let Some(hashbang) = &program.hashbang {
+                comments.insert(
+                    0,
+                    Comment {
+                        r#type: "Line".to_string(),
+                        value: hashbang.value.to_string(),
+                        start: hashbang.span.start,
+                        end: hashbang.span.end,
+                    },
+                );
+            }
+
+            program.to_estree_js_json()
+        }
+        AstType::TypeScript => {
+            // Note: `@typescript-eslint/parser` ignores hashbangs,
+            // despite appearances to the contrary in AST explorers.
+            // So we ignore them too.
+            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+            program.to_estree_ts_json()
+        }
     };
 
     let module = EcmaScriptModule::from(&module_record);

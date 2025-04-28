@@ -428,6 +428,7 @@ describe('parse', () => {
       expect(ret.errors.length).toBe(0);
       expect(ret.program.body.length).toBe(1);
       expect(ret.program.hashbang).toBeNull();
+      expect(ret.comments).toHaveLength(0);
     });
 
     it('is defined when hashbang', () => {
@@ -440,6 +441,27 @@ describe('parse', () => {
         end: 19,
         value: '/usr/bin/env node',
       });
+    });
+
+    it('is also recorded as a line comment in JS files', () => {
+      const ret = parseSync('test.js', '#!/usr/bin/env node\nlet x; // foo');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.comments).toHaveLength(2);
+      expect(ret.comments[0]).toEqual({
+        type: 'Line',
+        start: 0,
+        end: 19,
+        value: '/usr/bin/env node',
+      });
+    });
+
+    it('is not recorded as a line comment in TS files', () => {
+      const ret = parseSync('test.ts', '#!/usr/bin/env node\nlet x; // foo');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.comments).toHaveLength(1);
+      expect(ret.comments[0].value).toBe(' foo');
     });
   });
 
