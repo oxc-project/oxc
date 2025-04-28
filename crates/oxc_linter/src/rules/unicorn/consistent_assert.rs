@@ -127,7 +127,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
                     |fixer| fixer.insert_text_after(&ident.span, ".ok"),
                 );
             }
-            _ => {},
+            _ => {}
         }
     }
 }
