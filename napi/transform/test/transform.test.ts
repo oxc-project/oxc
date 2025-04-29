@@ -244,6 +244,17 @@ describe('define plugin', () => {
     });
     expect(ret.code).toEqual('console.log({ __TEST_DEFINE__: "replaced" });\n');
   });
+
+  it('replaces undefined', () => {
+    const code = 'new Foo()';
+    const ret = transform('test.js', code, {
+      define: {
+        'Foo': 'undefined',
+      },
+    });
+    // Replaced `undefined` with `void 0` by DCE.
+    expect(ret.code).toEqual('new (void 0)();\n');
+  });
 });
 
 describe('inject plugin', () => {
