@@ -69,20 +69,19 @@ impl<'a> RefreshIdentifierResolver<'a> {
         match self {
             Self::Identifier(ident) => {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
-                Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
                     reference_id,
-                ))
+                )
             }
             Self::Member((ident, property)) => {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
-                let ident =
-                    Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
-                        ident.span,
-                        ident.name,
-                        reference_id,
-                    ));
+                let ident = ctx.ast.expression_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                );
                 Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     ident,
