@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, mem};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -139,8 +139,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
-        for mut statement in program.body.drain(..) {
+        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
+        for mut statement in program.body.take_in(ctx.ast.allocator) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -156,8 +156,8 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         }
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
-        for (binding, persistent_id) in self.registrations.drain(..) {
+        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len());
+        for (binding, persistent_id) in mem::take(&mut self.registrations) {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
