@@ -79,7 +79,7 @@ impl WorkspaceWorker {
         options: &Options,
     ) -> ConcurrentHashMap<PathBuf, ConfigStore> {
         // nested config is disabled, no need to search for configs
-        if options.use_nested_configs() {
+        if !options.use_nested_configs() {
             return ConcurrentHashMap::default();
         }
 
