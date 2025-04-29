@@ -50,7 +50,12 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'eslint/no-with', // superseded by strict mode
   'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
   'eslint/no-undef-init', // #6456 unicorn/no-useless-undefined covers this case
-  'import/no-unresolved', // Will always contain false positives due to module resolution complexity
+  'import/no-unresolved', // Will always contain false positives due to module resolution complexity,
+  'react/jsx-equals-spacing', // stylistic rule
+  'react/jsx-curly-spacing', // stylistic rule
+  'react/jsx-indent', // stylistic rule
+  'react/jsx-indent-props', // stylistic rule
+  'react/jsx-props-no-multi-spaces', // stylistic rule
 ]);
 
 /**
