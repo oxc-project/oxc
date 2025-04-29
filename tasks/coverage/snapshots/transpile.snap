@@ -347,9 +347,9 @@ export const inObjectLiteralFnExprBad = { o: function(array: T = [], rParam: str
 export const inObjectLiteralArrowOk1 = { o: (array: number[] = [], rParam: string): void => {} };
 export const inObjectLiteralArrowOk2 = { o: (array: T | undefined = [], rParam: string): void => {} };
 export const inObjectLiteralArrowBad = { o: (array: T = [], rParam: string): void => {} };
-export const inObjectLiteralMethodOk1 = { o(array: number[] = [], rParam: string) {} };
-export const inObjectLiteralMethodOk2 = { o(array: T | undefined = [], rParam: string) {} };
-export const inObjectLiteralMethodBad = { o(array: T = [], rParam: string) {} };
+export const inObjectLiteralMethodOk1 = { o(array: number[] = [], rParam: string): void {} };
+export const inObjectLiteralMethodOk2 = { o(array: T | undefined = [], rParam: string): void {} };
+export const inObjectLiteralMethodBad = { o(array: T = [], rParam: string): void {} };
 export class InClassFnExprOk1 {
 	o = function(array: number[] = [], rParam: string): void {};
 }

@@ -1628,6 +1628,11 @@ impl Gen for ObjectProperty<'_> {
                 p.print_ascii_byte(b'(');
                 func.params.print(p, ctx);
                 p.print_ascii_byte(b')');
+                if let Some(return_type) = &func.return_type {
+                    p.print_colon();
+                    p.print_soft_space();
+                    return_type.print(p, ctx);
+                }
                 if let Some(body) = &func.body {
                     p.print_soft_space();
                     body.print(p, ctx);

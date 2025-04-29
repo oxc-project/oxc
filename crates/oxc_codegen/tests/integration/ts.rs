@@ -1,6 +1,20 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::{snapshot, snapshot_options, tester::test_tsx};
+use crate::{
+    snapshot, snapshot_options,
+    tester::{test_same, test_tsx},
+};
+
+#[test]
+fn cases() {
+    test_same("({ foo(): string {} });\n");
+}
+
+#[test]
+fn tsx() {
+    test_tsx("<T,>() => {}", "<T,>() => {};\n");
+    test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+}
 
 #[test]
 fn ts() {
@@ -106,10 +120,4 @@ export import b = require("b");
         &cases,
         &CodegenOptions { minify: true, ..CodegenOptions::default() },
     );
-}
-
-#[test]
-fn tsx() {
-    test_tsx("<T,>() => {}", "<T,>() => {};\n");
-    test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
 }
