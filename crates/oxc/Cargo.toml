@@ -77,7 +77,7 @@ serialize = [
   "oxc_syntax/serialize",
 ]
 
-nightly = ["oxc_allocator/nightly"]
+allocator_api = ["oxc_allocator/allocator_api"]
 
 [package.metadata.docs.rs]
 all-features = true
