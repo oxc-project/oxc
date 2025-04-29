@@ -400,13 +400,3 @@ source: crates/oxc_linter/src/tester.rs
  3 │           bar: {
    ╰────
   help: Consider removing this declaration.
-
-  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
-   ╭─[no_unused_vars.ts:2:18]
- 1 │ 
- 2 │         import { foo } from 'foo';
-   ·                  ─┬─
-   ·                   ╰── 'foo' is imported here
- 3 │         export type Bar = typeof foo;
-   ╰────
-  help: Consider removing this import.

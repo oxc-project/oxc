@@ -1402,6 +1402,13 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        import { foo } from 'foo';
+        export type Bar = typeof foo;
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1766,13 +1773,6 @@ fn test() {
           },
         };
         export type Bar = (typeof foo)['bar'];
-            ",
-            None,
-        ),
-        (
-            "
-        import { foo } from 'foo';
-        export type Bar = typeof foo;
             ",
             None,
         ),

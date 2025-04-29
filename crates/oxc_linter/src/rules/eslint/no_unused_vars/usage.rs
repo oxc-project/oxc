@@ -137,7 +137,7 @@ impl<'a> Symbol<'_, 'a> {
                     continue;
                 }
 
-                if !self.flags().intersects(SymbolFlags::TypeImport)
+                if !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
                     && self.reference_contains_type_query(reference)
                 {
                     continue;
