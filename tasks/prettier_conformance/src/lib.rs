@@ -11,7 +11,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
-use similar::{ChangeTag, TextDiff};
+use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
@@ -271,16 +271,6 @@ impl TestRunner {
                     // );
 
                     if !result {
-                        let mut count = 0;
-                        for op in diff.ops() {
-                            for change in diff.iter_changes(op) {
-                                match change.tag() {
-                                    ChangeTag::Delete | ChangeTag::Insert => count += 1,
-                                    ChangeTag::Equal => {}
-                                }
-                            }
-                        }
-
                         // print_with_border("Input");
                         // println!("{source_text}");
                         // print_with_border(&format!(
@@ -291,15 +281,13 @@ impl TestRunner {
                         // print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
                         // println!("{actual}");
                         // print_with_border("Diff");
-                        if count <= 10 {
-                            println!(
-                                "{}",
-                                path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                            );
-                            oxc_tasks_common::print_diff_in_terminal(&diff);
-                        }
+                        println!(
+                            "{}",
+                            path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                        );
+                        oxc_tasks_common::print_diff_in_terminal(&diff);
                     }
-                    // println!();
+                    println!();
                 }
             }
 

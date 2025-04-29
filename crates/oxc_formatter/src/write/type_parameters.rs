@@ -7,7 +7,7 @@ use crate::{
         Buffer, Format, FormatError, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
-    options::TrailingSeparator,
+    options::{FormatTrailingCommas, TrailingSeparator},
     write,
 };
 
@@ -32,7 +32,7 @@ impl<'a> Format<'a> for Vec<'a, TSTypeParameter<'a>> {
         // } else {
         // FormatTrailingCommas::ES5.trailing_separator(f.options())
         // };
-        let trailing_separator = TrailingSeparator::Mandatory;
+        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
 
         f.join_with(&soft_line_break_or_space())
             .entries(
