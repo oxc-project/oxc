@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -20,7 +20,7 @@ pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfi
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     Compressor::new(&allocator, CompressOptions::default())
         .dead_code_elimination_with_scoping(scoping, &mut program);
-    let result = CodeGenerator::new()
+    let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
@@ -277,7 +277,7 @@ log(__MEMBER__);
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
-    let result = CodeGenerator::new()
+    let result = Codegen::new()
         .with_options(CodegenOptions {
             single_quote: true,
             source_map_path: Some(std::path::Path::new(&"test.js.map").to_path_buf()),

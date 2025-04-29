@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -23,7 +23,7 @@ fn bench_codegen(criterion: &mut Criterion) {
 
         let mut group = criterion.benchmark_group("codegen");
         group.bench_function(id.clone(), |b| {
-            b.iter_with_large_drop(|| CodeGenerator::new().build(&program).map);
+            b.iter_with_large_drop(|| Codegen::new().build(&program).map);
         });
         group.finish();
 
@@ -39,7 +39,7 @@ fn bench_codegen(criterion: &mut Criterion) {
         let mut group = criterion.benchmark_group("codegen_sourcemap");
         group.bench_function(id, |b| {
             b.iter_with_large_drop(|| {
-                CodeGenerator::new()
+                Codegen::new()
                     .with_options(CodegenOptions {
                         source_map_path: Some(PathBuf::from(&file.file_name)),
                         ..CodegenOptions::default()

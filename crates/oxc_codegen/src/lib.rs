@@ -38,9 +38,6 @@ pub use crate::{
     options::{CodegenOptions, LegalComment},
 };
 
-/// Code generator without whitespace removal.
-pub type CodeGenerator<'a> = Codegen<'a>;
-
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
 pub struct CodegenReturn {

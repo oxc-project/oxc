@@ -3,7 +3,7 @@
 //! * <https://github.com/rollup/plugins/tree/pluginutils-v5.1.3/packages/inject/test>
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -19,7 +19,7 @@ fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) 
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = InjectGlobalVariables::new(&allocator, config).build(scoping, &mut program);
-    let result = CodeGenerator::new()
+    let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;

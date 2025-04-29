@@ -12,7 +12,7 @@ use oxc::{
     allocator::Allocator,
     ast::ast::Program,
     ast_visit::Visit,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{Codegen, CodegenOptions},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
@@ -169,7 +169,7 @@ impl Oxc {
                     IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions::default())
                         .build(&program);
                 if ret.errors.is_empty() {
-                    let codegen_result = CodeGenerator::new()
+                    let codegen_result = Codegen::new()
                         .with_options(CodegenOptions {
                             source_map_path: codegen_options
                                 .enable_sourcemap
@@ -228,7 +228,7 @@ impl Oxc {
             None
         };
 
-        let codegen_result = CodeGenerator::new()
+        let codegen_result = Codegen::new()
             .with_scoping(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),

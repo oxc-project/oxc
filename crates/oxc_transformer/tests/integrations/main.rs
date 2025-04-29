@@ -4,7 +4,7 @@ mod targets;
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -14,7 +14,7 @@ use oxc_transformer::{TransformOptions, Transformer};
 pub fn codegen(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    CodeGenerator::new()
+    Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&ret.program)
         .code
@@ -34,7 +34,7 @@ pub(crate) fn test(
     if !ret.errors.is_empty() {
         return Err(ret.errors);
     }
-    let code = CodeGenerator::new()
+    let code = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
