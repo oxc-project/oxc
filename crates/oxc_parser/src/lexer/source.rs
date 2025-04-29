@@ -120,7 +120,7 @@ impl<'a> Source<'a> {
     pub(super) fn remaining(&self) -> &'a str {
         // SAFETY:
         // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
-        // `end` is pointer to end of original `&str`, so be definition a UTF-8 char boundary.
+        // `end` is pointer to end of original `&str`, so by definition on a UTF-8 char boundary.
         unsafe {
             self.str_between_positions_unchecked(
                 SourcePosition::new(self.ptr),
