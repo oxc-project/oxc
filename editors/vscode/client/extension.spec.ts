@@ -327,4 +327,18 @@ suite('E2E Diagnostics', () => {
 
     strictEqual(contentWithFixAll.toString(), 'if (foo === null) { bar();}');
   });
+
+  test('nested configs severity', async () => {
+    await loadFixture('nested_config');
+    const rootDiagnostics = await getDiagnostics('index.ts');
+    const nestedDiagnostics = await getDiagnostics('folder/index.ts');
+
+    assert(typeof rootDiagnostics[0].code == 'object');
+    strictEqual(rootDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(rootDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    assert(typeof nestedDiagnostics[0].code == 'object');
+    strictEqual(nestedDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
 });
