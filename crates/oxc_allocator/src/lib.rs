@@ -13,19 +13,19 @@
 //! See [`Allocator`] docs for information on efficient use of [`Allocator`].
 //!
 //! ## Features
-//! 
-//! * `allocator_api` - Enables the nightly Rust `allocator_api` feature via dependencies. 
+//!
+//! * `allocator_api` - Enables the nightly Rust `allocator_api` feature via dependencies.
 //!   This feature enables `allocator-api2/nightly`, `hashbrown/nightly`, and `bumpalo/allocator_api`.
-//!   Note that enabling this feature will require all other crates in your dependency tree 
-//!   that use these libraries to be compatible with their nightly features. Only enable this 
+//!   Note that enabling this feature will require all other crates in your dependency tree
+//!   that use these libraries to be compatible with their nightly features. Only enable this
 //!   if you are certain all dependencies are compatible.
-//! 
+//!
 //! * `serialize` - Enables serialization support with `serde`.
-//! 
+//!
 //! * `from_raw_parts` - Enables creating collections from raw parts.
 
 #![warn(missing_docs)]
-#![cfg_attr(feature = "nightly", feature(allocator_api))]
+#![cfg_attr(feature = "allocator_api", feature(allocator_api))]
 
 mod address;
 mod allocator;
