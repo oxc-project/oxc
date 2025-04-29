@@ -1,0 +1,72 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-equals-spacing): There should be no space before '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo ={bar} />
+   ·      ───
+   ╰────
+  help: Disallows spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): There should be no space after '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo= {bar} />
+   ·      ───
+   ╰────
+  help: Disallows spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): There should be no space after '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo= {bar} bar = {baz} />
+   ·      ───
+   ╰────
+  help: Disallows spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): There should be no space before '='
+   ╭─[jsx_equals_spacing.tsx:1:17]
+ 1 │ <App foo= {bar} bar = {baz} />
+   ·                 ───
+   ╰────
+  help: Disallows spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): There should be no space after '='
+   ╭─[jsx_equals_spacing.tsx:1:17]
+ 1 │ <App foo= {bar} bar = {baz} />
+   ·                 ───
+   ╰────
+  help: Disallows spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): A space is required after '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo ={bar} />
+   ·      ───
+   ╰────
+  help: Requires spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): A space is required before '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo= {bar} />
+   ·      ───
+   ╰────
+  help: Requires spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): A space is required before '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo={bar} bar ={baz} />
+   ·      ───
+   ╰────
+  help: Requires spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): A space is required after '='
+   ╭─[jsx_equals_spacing.tsx:1:6]
+ 1 │ <App foo={bar} bar ={baz} />
+   ·      ───
+   ╰────
+  help: Requires spaces around the equal sign
+
+  ⚠ eslint-plugin-react(jsx-equals-spacing): A space is required after '='
+   ╭─[jsx_equals_spacing.tsx:1:16]
+ 1 │ <App foo={bar} bar ={baz} />
+   ·                ───
+   ╰────
+  help: Requires spaces around the equal sign
