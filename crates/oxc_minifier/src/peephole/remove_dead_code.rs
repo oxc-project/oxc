@@ -122,6 +122,33 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
+    pub fn remove_dead_code_exit_class(
+        &self,
+        class: &mut Class<'a>,
+        state: &mut State,
+        _ctx: Ctx<'a, '_>,
+    ) {
+        if class.super_class.is_some() {
+            return;
+        }
+
+        class.body.body.retain(|element| {
+            match element {
+                // `constructor() ...`
+                ClassElement::MethodDefinition(constructor)
+                    if constructor.kind == MethodDefinitionKind::Constructor =>
+                {
+                    if Self::is_empty_constructor(&constructor) {
+                        state.changed = true;
+                        return false;
+                    }
+                    true
+                }
+                _ => true,
+            }
+        })
+    }
+
     /// Remove block from single line blocks
     /// `{ block } -> block`
     fn try_optimize_block(
@@ -537,6 +564,18 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => false,
         }
     }
+
+    fn is_empty_constructor(constructor: &MethodDefinition<'a>) -> bool {
+        let params = &constructor.value.params;
+        if !constructor.decorators.is_empty() || params.has_parameter() {
+            return false;
+        }
+        let Some(body) = constructor.value.body.as_ref() else {
+            return false;
+        };
+
+        body.statements.is_empty()
+    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -760,5 +799,19 @@ mod test {
             "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
             "var i; for (i = 0; i < 10; i++) foo(i);",
         );
+    }
+
+    #[test]
+    fn remove_empty_constructor() {
+        test("class Foo { constructor() {} }", "class Foo { }");
+        test_same(
+            "
+            class Bar{}
+            class Foo extends Bar { constructor() {} }
+            ",
+        );
+        test_same("class Foo { constructor() { this.a = 1; } }");
+        test_same("class Foo { constructor(a) {} }");
+        test_same("class Foo { @foo\nconstructor() {} }");
     }
 }

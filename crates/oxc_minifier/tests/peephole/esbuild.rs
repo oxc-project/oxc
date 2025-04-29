@@ -114,7 +114,7 @@ fn js_parser_test() {
     );
     test(
         "class Foo { constructor() {} ['constructor']() {} }",
-        "class Foo { constructor() { } ['constructor']() { }}",
+        "class Foo { ['constructor']() { }}",
     );
     test(
         "class Foo { static constructor() {} static ['constructor']() {} }",

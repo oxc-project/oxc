@@ -331,6 +331,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
     }
 
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut state = State::default();
+        self.remove_dead_code_exit_class(class, &mut state, Ctx(ctx));
+    }
+
     fn exit_method_definition(
         &mut self,
         prop: &mut MethodDefinition<'a>,
@@ -461,5 +466,10 @@ impl<'a> Traverse<'a> for DeadCodeElimination {
         let mut state = State::default();
         self.inner.fold_constants_exit_expression(expr, &mut state, Ctx(ctx));
         self.inner.remove_dead_code_exit_expression(expr, &mut state, Ctx(ctx));
+    }
+
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut state = State::default();
+        self.inner.remove_dead_code_exit_class(class, &mut state, Ctx(ctx));
     }
 }
