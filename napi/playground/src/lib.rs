@@ -244,7 +244,11 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         let comments =
             convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut []);
-        self.ast_json = program.to_pretty_estree_ts_json();
+        self.ast_json = if source_type.is_javascript() {
+            program.to_pretty_estree_js_json()
+        } else {
+            program.to_pretty_estree_ts_json()
+        };
         self.comments = comments;
 
         Ok(())
