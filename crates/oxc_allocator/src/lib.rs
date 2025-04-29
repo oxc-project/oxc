@@ -11,6 +11,13 @@
 //! * [`HashMap`]
 //!
 //! See [`Allocator`] docs for information on efficient use of [`Allocator`].
+//!
+//! ## Features
+//!
+//! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
+//!
+//! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
+//!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 
 #![warn(missing_docs)]
 
