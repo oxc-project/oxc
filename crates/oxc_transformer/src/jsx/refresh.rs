@@ -155,9 +155,18 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             return;
         }
 
+        program.body.reserve(self.registrations.len() + 1);
+
+        let var_decl_index = program.body.len();
+        program.body.push(Statement::from(ctx.ast.declaration_variable(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.vec(), // This is replaced at the end
+            false,
+        )));
+
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len());
-        for (binding, persistent_id) in &self.registrations {
+        program.body.extend(self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -171,18 +180,16 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Argument::from(binding.create_read_expression(ctx)),
                 Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
             ]);
-            new_statements.push(ctx.ast.statement_expression(
+            ctx.ast.statement_expression(
                 SPAN,
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
-            ));
-        }
-        program.body.push(Statement::from(ctx.ast.declaration_variable(
-            SPAN,
-            VariableDeclarationKind::Var,
-            variable_declarator_items,
-            false,
-        )));
-        program.body.extend(new_statements);
+            )
+        }));
+
+        let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
+            unreachable!()
+        };
+        var_decl.declarations = variable_declarator_items;
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
