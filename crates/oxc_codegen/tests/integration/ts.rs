@@ -8,6 +8,8 @@ use crate::{
 #[test]
 fn cases() {
     test_same("({ foo(): string {} });\n");
+    test_same("interface I<in out T,> {}\n");
+    test_same("function F<const in out T,>() {}\n");
 }
 
 #[test]

@@ -3352,6 +3352,12 @@ impl Gen for TSTypeParameter<'_> {
         if self.r#const {
             p.print_str("const ");
         }
+        if self.r#in {
+            p.print_str("in ");
+        }
+        if self.out {
+            p.print_str("out ");
+        }
         self.name.print(p, ctx);
         if let Some(constraint) = &self.constraint {
             p.print_str(" extends ");
