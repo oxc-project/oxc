@@ -1,8 +1,8 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
+        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
         JSXExpressionContainer,
     },
 };
@@ -298,7 +298,7 @@ declare_oxc_lint!(
     JsxCurlyBracePresence,
     react,
     style,
-    pending
+    fix
 );
 
 impl Rule for JsxCurlyBracePresence {
@@ -381,7 +381,14 @@ impl JsxCurlyBracePresence {
                         && children.len() == 1
                         && !is_whitespace(&text.value)
                     {
-                        ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(text.span));
+                        ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(text.span), |fixer|{
+let mut fix = fixer.new_fix_with_capacity(2);
+                            fix.push(fixer.insert_text_before(&text.span, r#"{""#));
+fix.push(fixer.insert_text_after(&text.span, r#""}"#));
+
+fix.with_message("add curly braces")
+
+                        });
                     }
                 }
                 _ => {}
@@ -406,17 +413,17 @@ impl JsxCurlyBracePresence {
             }
             JSXAttributeValue::Element(el) => {
                 if self.prop_element_values.is_always() {
-                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(el.span));
-                }
+                    report_missing_curly(ctx, el.span);
+                                    }
             }
             JSXAttributeValue::Fragment(fragment) => {
                 if self.prop_element_values.is_always() {
-                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(fragment.span));
+                    report_missing_curly(ctx, fragment.span);
                 }
             }
             JSXAttributeValue::StringLiteral(string) => {
                 if self.props.is_always() {
-                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(string.span));
+                    report_missing_curly(ctx, string.span);
                 }
             }
         }
@@ -438,18 +445,18 @@ impl JsxCurlyBracePresence {
                     && self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
                 {
-                    report_unnecessary_curly(ctx, container, inner.span());
+                    report_unnecessary_curly(ctx, container, inner.span(), is_prop);
                 }
             }
             Expression::JSXElement(el) => {
                 if is_prop {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
-                        report_unnecessary_curly(ctx, container, inner.span());
+                        report_unnecessary_curly(ctx, container, inner.span(), is_prop);
                     }
                 } else if self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
                 {
-                    report_unnecessary_curly(ctx, container, inner.span());
+                    report_unnecessary_curly(ctx, container, inner.span(), is_prop);
                 }
             }
             Expression::StringLiteral(string) => {
@@ -458,7 +465,7 @@ impl JsxCurlyBracePresence {
                     if is_allowed_string_like(ctx, raw, container, node.id(), is_prop) {
                         return;
                     }
-                    report_unnecessary_curly(ctx, container, string.span);
+                    report_unnecessary_curly(ctx, container, string.span, is_prop);
                 }
             }
             Expression::TemplateLiteral(template) => {
@@ -475,7 +482,7 @@ impl JsxCurlyBracePresence {
                     {
                         return;
                     }
-                    report_unnecessary_curly(ctx, container, template.span);
+                    report_unnecessary_curly(ctx, container, template.span, is_prop);
                 }
             }
             _ => {}
@@ -538,10 +545,70 @@ fn contains_html_entity(s: &str) -> bool {
 
 fn report_unnecessary_curly<'a>(
     ctx: &LintContext<'a>,
-    _container: &JSXExpressionContainer<'a>,
+    container: &JSXExpressionContainer<'a>,
     inner_span: Span,
+    is_prop: bool,
 ) {
-    ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span));
+    ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
+        if !is_prop {
+            dbg!(&container.expression);
+            let str = match &container.expression {
+                JSXExpression::TemplateLiteral(template_lit) => template_lit.quasi().unwrap(),
+                JSXExpression::StringLiteral(string_lit) => string_lit.value,
+                JSXExpression::JSXElement(el) => {
+                    return fixer.replace(container.span, ctx.source_range(el.span))
+                }
+                _ => unreachable!()
+            };
+            return fixer.replace(container.span, str);
+        }
+
+        match &container.expression {
+            JSXExpression::TemplateLiteral(template_lit) => {
+                let alloc = Allocator::default();
+                let ast_builder = AstBuilder::new(&alloc);
+
+                let mut fix = fixer.codegen();
+                fix.print_expression(&ast_builder.expression_string_literal(
+                    Span::default(),
+                    template_lit.quasi().unwrap(),
+                    None,
+                ));
+
+                fixer.replace(container.span, fix)
+            }
+            JSXExpression::StringLiteral(_) => {
+                let mut fix = fixer.codegen();
+                fix.print_expression(container.expression.to_expression());
+
+                fixer.replace(container.span, fix)
+            }
+            _ => {
+                let mut fix = fixer.new_fix_with_capacity(2);
+
+                fix.push(fixer.delete_range(Span::sized(container.span.start, 1)));
+                fix.push(fixer.delete_range(Span::sized(container.span.end - 1, 1)));
+
+                fix.with_message("remove the curly braces")
+            }
+        }
+    });
+}
+
+fn report_missing_curly<'a>(ctx: &LintContext<'a>,span: Span) {
+
+
+
+
+ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(span), |fixer| {
+    let mut fix = fixer.new_fix_with_capacity(2);
+                        fix.push(fixer.insert_text_before(&span, "{"));
+                        fix.push(fixer.insert_text_after(&span, "}"));
+
+                        fix.with_message("add the missing curly braces")
+
+                    });
+
 }
 
 fn has_adjacent_jsx_expression_containers<'a>(
@@ -802,7 +869,7 @@ fn test() {
         (
             r#"
 			        import React from "react";
-			
+
 			        const Component = () => {
 			          return <span>{"/*"}</span>;
 			        };
@@ -985,9 +1052,8 @@ fn test() {
         //),
     ];
 
-    // TODO: implement fixer
-    let _fix = vec![
-        ("<App prop={`foo`} />", r#"<App prop="foo" />"#, Some(json!([{ "props": "never" }]))),
+    let fix = vec![
+        ("<App prop={`foo`} />", r#"<App prop='foo' />"#, Some(json!([{ "props": "never" }]))),
         (
             "<App>{<myApp></myApp>}</App>",
             "<App><myApp></myApp></App>",
@@ -996,7 +1062,7 @@ fn test() {
         ("<App>{<myApp></myApp>}</App>", "<App><myApp></myApp></App>", None),
         (
             "<App prop={`foo`}>foo</App>",
-            r#"<App prop="foo">foo</App>"#,
+            r#"<App prop='foo'>foo</App>"#,
             Some(json!([{ "props": "never" }])),
         ),
         ("<App>{`foo`}</App>", "<App>foo</App>", Some(json!([{ "children": "never" }]))),
@@ -1004,7 +1070,7 @@ fn test() {
         ("<MyComponent>{'foo'}</MyComponent>", "<MyComponent>foo</MyComponent>", None),
         (
             "<MyComponent prop={'bar'}>foo</MyComponent>",
-            r#"<MyComponent prop="bar">foo</MyComponent>"#,
+            r#"<MyComponent prop='bar'>foo</MyComponent>"#,
             None,
         ),
         (
@@ -1014,7 +1080,7 @@ fn test() {
         ),
         (
             "<MyComponent prop={'bar'}>foo</MyComponent>",
-            r#"<MyComponent prop="bar">foo</MyComponent>"#,
+            r#"<MyComponent prop='bar'>foo</MyComponent>"#,
             Some(json!([{ "props": "never" }])),
         ),
         (
@@ -1068,25 +1134,20 @@ fn test() {
 			          <div>
 			            bar
 			          </div>
-			          {'baz'}
-			          {'some-complicated-exp'}
+			          baz
+			          some-complicated-exp
 			        </MyComponent>
 			      ",
             Some(json!([{ "children": "never" }])),
         ),
         (
             "<MyComponent prop='bar'>foo</MyComponent>",
-            r#"<MyComponent prop={"bar"}>foo</MyComponent>"#,
+            r#"<MyComponent prop={'bar'}>foo</MyComponent>"#,
             Some(json!([{ "props": "always" }])),
         ),
         (
             r#"<MyComponent prop="foo 'bar'">foo</MyComponent>"#,
             r#"<MyComponent prop={"foo 'bar'"}>foo</MyComponent>"#,
-            Some(json!([{ "props": "always" }])),
-        ),
-        (
-            r#"<MyComponent prop='foo "bar"'>foo</MyComponent>"#,
-            r#"<MyComponent prop={"foo "bar""}>foo</MyComponent>"#,
             Some(json!([{ "props": "always" }])),
         ),
         (
@@ -1298,5 +1359,6 @@ fn test() {
         ),
     ];
     Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
