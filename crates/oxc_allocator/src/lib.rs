@@ -14,15 +14,16 @@
 //!
 //! ## Features
 //!
+//! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
+//!
+//! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
+//!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
+//!
 //! * `allocator_api` - Enables the nightly Rust `allocator_api` feature via dependencies.
 //!   This feature enables `allocator-api2/nightly`, `hashbrown/nightly`, and `bumpalo/allocator_api`.
 //!   Note that enabling this feature will require all other crates in your dependency tree
 //!   that use these libraries to be compatible with their nightly features. Only enable this
-//!   if you are certain all dependencies are compatible.
-//!
-//! * `serialize` - Enables serialization support with `serde`.
-//!
-//! * `from_raw_parts` - Enables creating collections from raw parts.
+//!   if you are certain all dependencies are compatible, otherwise you'd get a compile error.
 
 #![warn(missing_docs)]
 #![cfg_attr(feature = "allocator_api", feature(allocator_api))]

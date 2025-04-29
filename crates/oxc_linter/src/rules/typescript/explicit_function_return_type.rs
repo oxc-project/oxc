@@ -420,6 +420,14 @@ impl ExplicitFunctionReturnType {
         let AstKind::ArrowFunctionExpression(func) = node.kind() else { return false };
         let Some(expr) = func.get_expression() else { return false };
 
+        let mut expr = expr;
+        loop {
+            expr = match expr {
+                Expression::TSSatisfiesExpression(e) => &e.expression,
+                _ => break,
+            };
+        }
+
         match expr {
             Expression::TSAsExpression(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
@@ -606,7 +614,10 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 }
 
 fn is_function(expr: &Expression) -> bool {
-    matches!(expr, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
+    matches!(
+        expr.get_inner_expression(),
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+    )
 }
 
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -621,12 +632,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return true;
             }
         }
-    } else if check_return_statement_and_bodyless(parent) {
-        return false;
     }
 
-    for ancestor in ctx.nodes().ancestor_ids(node.id()).skip(1) {
-        match ctx.nodes().kind(ancestor) {
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+        match ancestor.kind() {
             AstKind::ArrowFunctionExpression(func) => {
                 if func.return_type.is_some() {
                     return true;
@@ -667,14 +676,6 @@ fn all_return_statements_are_functions(node: &AstNode) -> bool {
                 false
             }
         }
-        _ => false,
-    }
-}
-
-fn check_return_statement_and_bodyless(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::ReturnStatement(_) => true,
-        AstKind::ArrowFunctionExpression(func) => func.body.statements.is_empty(),
         _ => false,
     }
 }
@@ -1155,9 +1156,56 @@ fn test() {
         ),
         (
             "
-        	new Promise(resolve => {});
-        	new Foo(1, () => {});
-        	",
+        	interface R {
+                type: string;
+                value: number;
+                }
+
+                const func = (value: number) => ({ type: 'X', value }) as const satisfies R;
+                ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+                interface R {
+                    type: string;
+                    value: number;
+                    }
+
+                    const func = (value: number) =>
+                    ({ type: 'X', value }) as const satisfies R satisfies R;
+                    ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+                    interface R {
+                        type: string;
+                        value: number;
+                        }
+
+                        const func = (value: number) =>
+                        ({ type: 'X', value }) as const satisfies R satisfies R satisfies R;
+                        ",
+            Some(
+                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
+        (
+            "
+            new Promise(resolve => {});
+            new Foo(1, () => {});
+            ",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1503,6 +1551,15 @@ fn test() {
         	const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
         	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
+            None,
+            None,
+        ),
+        (
+            "export function define(): (callback: (() => void)) => void {
+                return () => {xxxxxxx }
+            }
+        	",
+            None,
             None,
             None,
         ),

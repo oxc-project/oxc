@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
@@ -15,7 +16,29 @@ fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiag
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct PreferNumberProperties;
+pub struct PreferNumberProperties(Box<PreferNumberPropertiesConfig>);
+
+impl std::ops::Deref for PreferNumberProperties {
+    type Target = PreferNumberPropertiesConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PreferNumberPropertiesConfig {
+    // default is true
+    check_infinity: bool,
+    // default is true
+    check_nan: bool,
+}
+
+impl Default for PreferNumberPropertiesConfig {
+    fn default() -> Self {
+        Self { check_infinity: false, check_nan: true }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -54,6 +77,21 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNumberProperties {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut config = PreferNumberPropertiesConfig::default();
+
+        if let Some(value) = value.get(0) {
+            if let Some(Value::Bool(val)) = value.get("checkInfinity") {
+                config.check_infinity = *val;
+            }
+            if let Some(Value::Bool(val)) = value.get("checkNaN") {
+                config.check_nan = *val;
+            }
+        }
+
+        Self(Box::new(config))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MemberExpression(member_expr) => {
@@ -63,13 +101,13 @@ impl Rule for PreferNumberProperties {
 
                 if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
                     match member_expr.static_property_name() {
-                        Some("NaN") => {
+                        Some("NaN") if self.check_nan => {
                             ctx.diagnostic(prefer_number_properties_diagnostic(
                                 member_expr.span(),
                                 "NaN",
                             ));
                         }
-                        Some("Infinity") => {
+                        Some("Infinity") if self.check_infinity => {
                             ctx.diagnostic(prefer_number_properties_diagnostic(
                                 member_expr.span(),
                                 "Infinity",
@@ -79,21 +117,37 @@ impl Rule for PreferNumberProperties {
                     }
                 }
             }
-            AstKind::IdentifierReference(ident_ref) => match ident_ref.name.as_str() {
-                "NaN" | "Infinity" => {
-                    ctx.diagnostic(prefer_number_properties_diagnostic(
-                        ident_ref.span,
-                        &ident_ref.name,
-                    ));
+            AstKind::IdentifierReference(ident_ref)
+                if ctx.is_reference_to_global_variable(ident_ref) =>
+            {
+                match ident_ref.name.as_str() {
+                    "NaN" if self.check_nan => {
+                        ctx.diagnostic(prefer_number_properties_diagnostic(
+                            ident_ref.span,
+                            &ident_ref.name,
+                        ));
+                    }
+                    "Infinity" if self.check_infinity => {
+                        ctx.diagnostic(prefer_number_properties_diagnostic(
+                            ident_ref.span,
+                            &ident_ref.name,
+                        ));
+                    }
+                    _ => {}
                 }
-                _ => {}
-            },
+            }
             AstKind::CallExpression(call_expr) => {
                 let Some(ident_name) = extract_ident_from_expression(&call_expr.callee) else {
                     return;
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
+                    if let Expression::Identifier(ident) = &call_expr.callee {
+                        if !ctx.is_reference_to_global_variable(ident) {
+                            return;
+                        }
+                    }
+
                     ctx.diagnostic(prefer_number_properties_diagnostic(
                         call_expr.callee.span(),
                         ident_name,
@@ -127,12 +181,49 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
         (r#"Number.parseInt("10", 2);"#, None),
         (r#"Number.parseFloat("10.5");"#, None),
         (r"Number.isNaN(10);", None),
         (r"Number.isFinite(10);", None),
+        (r#"const parseInt = function() {}; parseInt("10", 2);"#, None),
+        (r#"const parseFloat = function() {}; parseFloat("10.5");"#, None),
+        (r"const isNaN = function() {}; isNaN(10);", None),
+        (r"const isFinite = function() {}; isFinite(10);", None),
+        (r#"const {parseInt} = Number; parseInt("10", 2);"#, None),
+        (r#"const {parseFloat} = Number; parseFloat("10.5");"#, None),
+        (r"const {isNaN} = Number; isNaN(10);", None),
+        (r"const {isFinite} = Number; isFinite(10);", None),
+        (
+            r#"const parseInt = function() {};
+function inner() {
+	return parseInt("10", 2);
+}"#,
+            None,
+        ),
+        (
+            r#"const parseFloat = function() {};
+function inner() {
+	return parseFloat("10.5");
+}"#,
+            None,
+        ),
+        (
+            r"const isNaN = function() {};
+function inner() {
+	return isNaN(10);
+}",
+            None,
+        ),
+        (
+            r"const isFinite = function() {};
+function inner() {
+	return isFinite(10);
+}",
+            None,
+        ),
         (r"global.isFinite = Number.isFinite;", None),
         (r"global.isFinite ??= 1;", None),
         (r"isFinite ||= 1;", None),
@@ -154,6 +245,7 @@ fn test() {
         (r"const foo = bar.NaN;", None),
         (r"const foo = nan;", None),
         (r#"const foo = "NaN";"#, None),
+        (r"function foo () { const NaN = 2; return NaN }", None),
         (r"const {NaN} = {};", None),
         (r"const {a: NaN} = {};", None),
         (r"const {[a]: NaN} = {};", None),
@@ -173,6 +265,16 @@ fn test() {
         (r"class Foo {#NaN(){}}", None),
         (r"class Foo3 {NaN = 1}", None),
         (r"class Foo {#NaN = 1}", None),
+        (
+            r"NaN: for (const foo of bar) {
+	if (a) {
+		continue NaN;
+	} else {
+		break NaN;
+	}
+}",
+            None,
+        ),
         (r#"import {NaN} from "foo""#, None),
         (r#"import {NaN as NaN} from "foo""#, None),
         (r#"import NaN from "foo""#, None),
@@ -187,21 +289,56 @@ fn test() {
         (r"const foo = window.Number.Infinity;", None),
         (r"const foo = bar.Infinity;", None),
         (r"const foo = infinity;", None),
-        (r#"const foo = "Infinite";"#, None),
+        (r#"const foo = "Infinity";"#, None),
         (r#"const foo = "-Infinity";"#, None),
+        (
+            r"function foo () {
+	const Infinity = 2
+	return Infinity
+}",
+            None,
+        ),
         (r"const {Infinity} = {};", None),
         (r"function Infinity() {}", None),
         (r"class Infinity {}", None),
         (r"class Foo { Infinity(){}}", None),
-        // (r#"const foo = Infinity;"#, Some(serde_json::json!([{"checkInfinity": false}]))),
-        // (r#"const foo = -Infinity;"#, Some(serde_json::json!([{"checkInfinity": false}]))),
+        (r"const foo = Infinity;", None),
+        (r"const foo = -Infinity;", None),
+        (r"const foo = NaN", Some(json!([{"checkNaN":false}]))),
         (r"class Foo2 {NaN = 1}", None),
+        (
+            r"export enum NumberSymbol {
+	Decimal,
+	NaN,
+}",
+            None,
+        ),
         (r"declare var NaN: number;", None),
+        (
+            r"interface NumberConstructor {
+	readonly NaN: number;
+}",
+            None,
+        ),
         (r"declare function NaN(s: string, radix?: number): number;", None),
         (r"class Foo {NaN = 1}", None),
+        (r"const foo = ++Infinity;", None),
+        (r"const foo = --Infinity;", None),
+        (r"const foo = -(--Infinity);", None),
     ];
 
     let fail = vec![
+        (r#"parseInt("10", 2);"#, None),
+        (r#"parseFloat("10.5");"#, None),
+        (r"isNaN(10);", None),
+        (r"isFinite(10);", None),
+        (
+            r#"const a = parseInt("10", 2);
+    const b = parseFloat("10.5");
+    const c = isNaN(10);
+    const d = isFinite(10);"#,
+            None,
+        ),
         (r"const foo = NaN;", None),
         (r"if (Number.isNaN(NaN)) {}", None),
         (r"if (Object.is(foo, NaN)) {}", None),
@@ -211,6 +348,8 @@ fn test() {
         (r"const {foo = NaN} = {};", None),
         (r"const foo = NaN.toString();", None),
         (r"class Foo3 {[NaN] = 1}", None),
+        (r"const foo = Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = -Infinity;", Some(json!([{"checkInfinity":true}]))),
         (r"class Foo2 {[NaN] = 1}", None),
         (r"class Foo {[NaN] = 1}", None),
         (r"const foo = {[NaN]: 1}", None),
@@ -218,35 +357,41 @@ fn test() {
         (r"foo[NaN] = 1;", None),
         (r"class A {[NaN](){}}", None),
         (r"foo = {[NaN]: 1}", None),
-        (r"const foo = Infinity;", None),
-        (r"if (Number.isNaN(Infinity)) {}", None),
-        (r"if (Object.is(foo, Infinity)) {}", None),
-        (r"const foo = bar[Infinity];", None),
-        (r"const foo = {Infinity};", None),
-        (r"const foo = {Infinity: Infinity};", None),
-        (r"const foo = {[Infinity]: -Infinity};", None),
-        (r"const foo = {[-Infinity]: Infinity};", None),
-        (r"const foo = {Infinity: -Infinity};", None),
-        (r"const {foo = Infinity} = {};", None),
-        (r"const {foo = -Infinity} = {};", None),
-        (r"const foo = Infinity.toString();", None),
-        (r"const foo = -Infinity.toString();", None),
-        (r"const foo = (-Infinity).toString();", None),
-        (r"const foo = +Infinity;", None),
-        (r"const foo = +-Infinity;", None),
-        (r"const foo = -Infinity;", None),
-        (r"const foo = -(-Infinity);", None),
-        (r"const foo = 1 - Infinity;", None),
-        (r"const foo = 1 - -Infinity;", None),
-        (r"const isPositiveZero = value => value === 0 && 1 / value === Infinity;", None),
-        (r"const isNegativeZero = value => value === 0 && 1 / value === -Infinity;", None),
+        (r"const foo = Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"if (Number.isNaN(Infinity)) {}", Some(json!([{"checkInfinity":true}]))),
+        (r"if (Object.is(foo, Infinity)) {}", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = bar[Infinity];", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = {Infinity};", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = {Infinity: Infinity};", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = {[Infinity]: -Infinity};", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = {[-Infinity]: Infinity};", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = {Infinity: -Infinity};", Some(json!([{"checkInfinity":true}]))),
+        (r"const {foo = Infinity} = {};", Some(json!([{"checkInfinity":true}]))),
+        (r"const {foo = -Infinity} = {};", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = Infinity.toString();", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = -Infinity.toString();", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = (-Infinity).toString();", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = +Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = +-Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = -Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = -(-Infinity);", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = 1 - Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (r"const foo = 1 - -Infinity;", Some(json!([{"checkInfinity":true}]))),
+        (
+            r"const isPositiveZero = value => value === 0 && 1 / value === Infinity;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            r"const isNegativeZero = value => value === 0 && 1 / value === -Infinity;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
         (r"const {a = NaN} = {};", None),
         (r"const {[NaN]: a = NaN} = {};", None),
         (r"const [a = NaN] = [];", None),
         (r"function foo({a = NaN}) {}", None),
         (r"function foo({[NaN]: a = NaN}) {}", None),
         (r"function foo([a = NaN]) {}", None),
-        (r"function foo() {return-Infinity}", None),
+        (r"function foo() {return-Infinity}", Some(json!([{"checkInfinity":true}]))),
         (r"globalThis.isNaN(foo);", None),
         (r"global.isNaN(foo);", None),
         (r"window.isNaN(foo);", None),
@@ -256,7 +401,41 @@ fn test() {
         (r"window.parseFloat(foo);", None),
         (r"self.parseFloat(foo);", None),
         (r"globalThis.NaN", None),
-        (r"-globalThis.Infinity", None),
+        (r"-globalThis.Infinity", Some(json!([{"checkInfinity":true}]))),
+        //     (
+        //         r"const options = {
+        //     normalize: parseFloat,
+        //     parseInt,
+        // };
+
+        // run(foo, options);",
+        //         None,
+        //     ),
+    ];
+
+    let _fix = vec![
+        (
+            r#"const a = parseInt("10", 2);
+			const b = parseFloat("10.5");
+			const c = isNaN(10);
+			const d = isFinite(10);"#,
+            r#"const a = Number.parseInt("10", 2);
+			const b = Number.parseFloat("10.5");
+			const c = isNaN(10);
+			const d = isFinite(10);"#,
+            None::<Value>,
+        ),
+        ("const foo = NaN;", "const foo = Number.NaN;", None),
+        ("if (Number.isNaN(NaN)) {}", "if (Number.isNaN(Number.NaN)) {}", None),
+        ("if (Object.is(foo, NaN)) {}", "if (Object.is(foo, Number.NaN)) {}", None),
+        ("const foo = bar[NaN];", "const foo = bar[Number.NaN];", None),
+        ("const foo = {NaN};", "const foo = {NaN: Number.NaN};", None),
+        ("const foo = {NaN: NaN};", "const foo = {NaN: Number.NaN};", None),
+        ("const {foo = NaN} = {};", "const {foo = Number.NaN} = {};", None),
+        ("const foo = NaN.toString();", "const foo = Number.NaN.toString();", None),
+        ("class Foo3 {[NaN] = 1}", "class Foo3 {[Number.NaN] = 1}", None),
+        ("class Foo2 {[NaN] = 1}", "class Foo2 {[Number.NaN] = 1}", None),
+        ("class Foo {[NaN] = 1}", "class Foo {[Number.NaN] = 1}", None),
     ];
 
     Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)

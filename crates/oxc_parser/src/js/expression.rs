@@ -546,18 +546,26 @@ impl<'a> ParserImpl<'a> {
             _ => unreachable!(),
         };
 
-        // `cooked = None` when template literal has invalid escape sequence
-        // This is matched by `is_valid_escape_sequence` in `Lexer::read_template_literal`
-        let cooked = self.cur_template_string();
-        let lone_surrogates = self.cur_token().lone_surrogates;
+        // Get `raw`
+        let raw_span = self.cur_token().span();
+        let mut raw = Atom::from(
+            &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],
+        );
 
-        let cur_src = self.cur_src();
-        let raw = &cur_src[1..cur_src.len() - end_offset as usize];
-        let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
-            self.ast.str(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"))
+        // Get `cooked`.
+        // Also replace `\r` with `\n` in `raw`.
+        // If contains `\r`, then `escaped` must be `true` (because `\r` needs unescaping),
+        // so we can skip searching for `\r` in common case where contains no escapes.
+        let (cooked, lone_surrogates) = if self.cur_token().escaped {
+            // `cooked = None` when template literal has invalid escape sequence
+            let cooked = self.cur_template_string().map(Atom::from);
+            if cooked.is_some() && raw.contains('\r') {
+                raw = self.ast.atom(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
+            }
+            (cooked, self.cur_token().lone_surrogates)
         } else {
-            raw
-        });
+            (Some(raw), false)
+        };
 
         self.bump_any();
 
@@ -572,7 +580,7 @@ impl<'a> ParserImpl<'a> {
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         self.ast.template_element_with_lone_surrogates(
             span,
-            TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
+            TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
         )

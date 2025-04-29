@@ -31,7 +31,7 @@ Following configuration are supported via `settings.json`:
 | `oxc.trace.server` | `off`         | `off` \| `messages` \| `verbose` | races the communication between VS Code and the language server.            |
 | `oxc.configPath`   | `null`        | `null`\| `<string>`              | Path to ESlint configuration. Keep it empty to enable nested configuration. |
 | `oxc.path.server`  | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server. |
-| `oxc.flags`        | -             | `Record<string, string>`         | Specific Oxlint flags to pass to the language server.                       |
+| `oxc.flags`        | -             | `Record<string, string>`         | Custom flags passed to the language server.                                 |
 
 ### Flags
 

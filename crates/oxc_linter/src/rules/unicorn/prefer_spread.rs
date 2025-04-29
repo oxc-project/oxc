@@ -87,7 +87,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             }
 
-            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "Array.from()"));
+            report_with_spread_fixer(ctx, call_expr.span, "Array.from()", expr);
         }
         // `array.concat()`
         "concat" => {
@@ -131,7 +131,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 }
             }
 
-            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "array.slice()"));
+            report_with_spread_fixer(ctx, call_expr.span, "array.slice()", member_expr_obj);
         }
         // `array.toSpliced()`
         "toSpliced" => {
@@ -144,7 +144,12 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             }
 
-            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "array.toSpliced()"));
+            report_with_spread_fixer(
+                ctx,
+                call_expr.span,
+                "array.toSpliced()",
+                member_expr.object(),
+            );
         }
         // `string.split()`
         "split" => {
@@ -235,6 +240,21 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     false
 }
 
+fn report_with_spread_fixer(
+    ctx: &LintContext,
+    span: Span,
+    bad_method: &str,
+    expr_to_spread: &Expression,
+) {
+    ctx.diagnostic_with_fix(unicorn_prefer_spread_diagnostic(span, bad_method), |fixer| {
+        let mut codegen = fixer.codegen();
+        codegen.print_str("[...");
+        codegen.print_expression(expr_to_spread);
+        codegen.print_str("]");
+        fixer.replace(span, codegen)
+    });
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -248,6 +268,7 @@ fn test() {
         r"Uint16Array.from(set);",
         r"Int32Array.from(set);",
         r"Uint32Array.from(set);",
+        r"Float16Array.from(set);",
         r"Float32Array.from(set);",
         r"Float64Array.from(set);",
         r"BigInt64Array.from(set);",
@@ -271,14 +292,16 @@ fn test() {
         r"array[concat](1)",
         r#""foo".concat("bar")"#,
         r#"`${foo}`.concat("bar")"#,
-        r"const bufA = Buffer.concat([buf1, buf2, buf3], totalLength);",
-        r"Foo.concat(1)",
-        r"FooBar.concat(1)",
-        r"global.Buffer.concat([])",
+        r#"const string = 'foo';
+			foo = string.concat("bar");"#,
+        "const bufA = Buffer.concat([buf1, buf2, buf3], totalLength);",
+        "Foo.concat(1)",
+        "FooBar.concat(1)",
+        "global.Buffer.concat([])",
         r#"["1", "2"].join(",").concat("...")"#,
         r#"foo.join(",").concat("...")"#,
-        r"foo.join().concat(bar)",
-        // r#"(a + b).concat(c)"#,
+        "foo.join().concat(bar)",
+        //"(a + b).concat(c)",
         r"new Array.slice()",
         r"slice()",
         r"array[slice]()",
@@ -343,108 +366,173 @@ fn test() {
     ];
 
     let fail = vec![
-        r"const x = Array.from(set);",
-        r"Array.from(set).map(() => {});",
-        r"Array.from(new Set([1, 2])).map(() => {});",
+        "const x = Array.from(set);",
+        "Array.from(set).map(() => {});",
+        "Array.from(new Set([1, 2])).map(() => {});",
         r#"Array.from(document.querySelectorAll("*")).map(() => {});"#,
-        r"const foo = `${Array.from(arrayLike)}`",
-        r"(Array).from(foo)",
-        r"(Array.from)(foo)",
-        r"((Array).from)(foo)",
-        r"(Array).from((0, foo))",
-        r"(Array.from)((0, foo))",
-        r"((Array).from)((0, foo))",
-        r"Array.from(a ? b : c)",
-        r"Array.from([...a, ...b], )",
-        r"Array.from([1])",
-        r"Array.from([...a, ...b])",
-        r"/* 1 */ Array /* 2 */ .from /* 3 */ ( /* 4 */ a /* 5 */,)",
-        r"[1].concat(2)",
-        r"[1].concat([2, 3])",
-        r"[1].concat(2,)",
-        r"[1].concat([2, ...bar],)",
-        r"[1,].concat(2)",
-        r"[1,].concat([2, 3])",
-        r"[1,].concat(2,)",
-        r"[1,].concat([2, 3],)",
-        r"(( (( (( [1,] )).concat ))( (([2, 3])) ,) ))",
-        r"(( (( (( [1,] )).concat ))( (([2, 3])) , bar ) ))",
-        r"foo.concat(2)",
-        r"foo.concat([2, 3])",
-        r"foo.concat(2,)",
-        r"foo.concat([2, 3],)",
-        r"(( (( ((foo)).concat ))( (([2, 3])) ,) ))",
-        r"(( (( ((foo)).concat ))( (([2, 3])) , bar ) ))",
-        r"const foo = foo.concat(2)",
-        r"const foo = () => foo.concat(2)",
-        r"foo.concat([bar])",
-        r"foo.concat(bar)",
-        r"Array.from(set).concat([2, 3])",
-        r"foo.concat([2, 3]).concat(4)",
+        "const foo = []
+			Array.from(arrayLike).forEach(doSomething)",
+        r#"const foo = "1"
+			Array.from(arrayLike).forEach(doSomething)"#,
+        "const foo = null
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = true
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = 1
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = /./
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = /./g
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = bar
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = bar.baz
+			Array.from(arrayLike).forEach(doSomething)",
+        "function* foo() {
+				yield Array.from(arrayLike).forEach(doSomething)
+			}",
+        "const foo = \\`bar\\`
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = [];
+			Array.from(arrayLike).forEach(doSomething)",
+        "for (const key of Array.from(arrayLike)) {
+			}",
+        "for (const key in Array.from(arrayLike)) {
+			}",
+        "const foo = `${Array.from(arrayLike)}`",
+        "async function foo(){
+				return await Array.from(arrayLike)
+			}",
+        "foo()
+			Array.from(arrayLike).forEach(doSomething)",
+        "const foo = {}
+			Array.from(arrayLike).forEach(doSomething)",
+        "(Array).from(foo)",
+        "(Array.from)(foo)",
+        "((Array).from)(foo)",
+        "(Array).from((0, foo))",
+        "(Array.from)((0, foo))",
+        "((Array).from)((0, foo))",
+        "Array.from(a ? b : c)",
+        "Array.from((0, a))",
+        "Array.from([...a, ...b], )",
+        "Array.from([1])",
+        "Array.from([...a, ...b])",
+        "/* 1 */ Array /* 2 */ .from /* 3 */ ( /* 4 */ a /* 5 */,)",
+        "[1].concat(2)",
+        "[1].concat([2, 3])",
+        "[1].concat(2,)",
+        "[1].concat([2, ...bar],)",
+        "[1,].concat(2)",
+        "[1,].concat([2, 3])",
+        "[1,].concat(2,)",
+        "[1,].concat([2, 3],)",
+        "(( (( (( [1,] )).concat ))( (([2, 3])) ,) ))",
+        "(( (( (( [1,] )).concat ))( (([2, 3])) , bar ) ))",
+        "foo.concat(2)",
+        "foo.concat([2, 3])",
+        "foo.concat(2,)",
+        "foo.concat([2, 3],)",
+        "(( (( ((foo)).concat ))( (([2, 3])) ,) ))",
+        "(( (( ((foo)).concat ))( (([2, 3])) , bar ) ))",
+        "bar()
+			foo.concat(2)",
+        "const foo = foo.concat(2)",
+        "const foo = () => foo.concat(2)",
+        "const five = 2 + 3;
+			foo.concat(five);",
+        "const array = [2 + 3];
+			foo.concat(array);",
+        "foo.concat([bar])",
+        "foo.concat(bar)",
+        "Array.from(set).concat([2, 3])",
+        "foo.concat([2, 3]).concat(4)",
         r#"string.concat("bar")"#,
-        r"foo.concat(2, 3)",
-        r"foo.concat(2, bar)",
-        r"[...foo, 2].concat(bar)",
-        r"let sortedScores = scores.concat().sort((a, b) => b[0] - a[0]);",
-        r"foo.concat(bar, 2, 3)",
-        r"foo.concat(bar, 2, 3, baz)",
-        r"async function a() {return [].concat(await bar)}",
-        r"async function a() {return [].concat(((await bar)))}",
-        r"foo.concat((0, 1))",
-        r"async function a() {return (await bar).concat(1)}",
-        r"[].concat(...bar)",
-        r"[].concat([,], [])",
-        r"[,].concat([,], [,])",
-        r"[,].concat([,,], [,])",
-        r"[,].concat([,], [,,])",
-        r"[1].concat([2,], [3,])",
-        r"[1].concat([2,,], [3,,])",
-        r"[1,].concat([2,], [3,])",
-        r"[1,].concat([2,,], [3,,])",
-        r"[].concat([], [])",
-        r"[].concat((a.b.c), 2)",
-        r"[].concat(a.b(), 2)",
-        r"foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])",
-        r"foo.concat(bar, 2, 3, ...baz)",
-        r"notClass.concat(1)",
-        r"_A.concat(1)",
-        r"FOO.concat(1)",
-        r"A.concat(1)",
-        r"Foo.x.concat(1)",
-        r"if (test) foo.concat(1)",
-        r"if (test) {} else foo.concat(1)",
-        r"if (test) {} else foo.concat(1)",
-        r"for (;;) foo.concat(1)",
-        r"for (a in b) foo.concat(1)",
-        r"for (a in b) foo.concat(1)",
-        r"for (const a of b) foo.concat(1)",
-        r"while (test) foo.concat(1)",
-        r"do foo.concat(1); while (test)",
-        r"with (foo) foo.concat(1)",
+        "foo.concat(2, 3)",
+        "foo.concat(2, bar)",
+        "[...foo, 2].concat(bar)",
+        "let sortedScores = scores.concat().sort((a, b) => b[0] - a[0]);",
+        "foo.concat(bar, 2, 3)",
+        "foo.concat(bar, 2, 3, baz)",
+        "async function a() {return [].concat(await bar)}",
+        "async function a() {return [].concat((0, bar))}",
+        "async function a() {return [].concat(((await bar)))}",
+        "foo.concat((0, 1))",
+        "async function a() {return (await bar).concat(1)}",
+        "[].concat(...bar)",
+        "[].concat([,], [])",
+        "[,].concat([,], [,])",
+        "[,].concat([,,], [,])",
+        "[,].concat([,], [,,])",
+        "[1].concat([2,], [3,])",
+        "[1].concat([2,,], [3,,])",
+        "[1,].concat([2,], [3,])",
+        "[1,].concat([2,,], [3,,])",
+        "[].concat([], [])",
+        r#"const EMPTY_STRING = ""
+			const EMPTY_STRING_IN_ARRAY = ""
+			const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
+			const array = [].concat(
+				undefined,
+				null,
+				EMPTY_STRING,
+				false,
+				0,
+				[EMPTY_STRING_IN_ARRAY],
+				[[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
+			)"#,
+        "[].concat((a.b.c), 2)",
+        "[].concat(a.b(), 2)",
+        "foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])",
+        "foo.concat(bar, 2, 3, ...baz)",
+        "notClass.concat(1)",
+        "_A.concat(1)",
+        "FOO.concat(1)",
+        "A.concat(1)",
+        "Foo.x.concat(1)",
+        "if (test) foo.concat(1)",
+        "if (test) {} else foo.concat(1)",
+        "if (test) {} else foo.concat(1)",
+        "for (;;) foo.concat(1)",
+        "for (a in b) foo.concat(1)",
+        "for (a in b) foo.concat(1)",
+        "for (const a of b) foo.concat(1)",
+        "while (test) foo.concat(1)",
+        "do foo.concat(1); while (test)",
+        "with (foo) foo.concat(1)", // {"parserOptions": {"ecmaVersion": 6, "sourceType": "script"}},
+        "const baz = [2];
+			call(foo, ...[bar].concat(baz));",
         r#"foo.join(foo, bar).concat("...")"#,
-        r"array.slice()",
-        r"array.slice().slice()",
-        r"array.slice(1).slice()",
-        r"array.slice().slice(1)",
-        r"const copy = array.slice()",
-        r"(( (( (( array )).slice ))() ))",
+        "array.slice()",
+        "array.slice().slice()",
+        "array.slice(1).slice()",
+        "array.slice().slice(1)",
+        "const copy = array.slice()",
+        "(( (( (( array )).slice ))() ))",
+        "(scopeManager?.scopes).slice()",
+        "bar()
+			foo.slice()",
         r#""".slice()"#,
-        r"new Uint8Array([10, 20, 30, 40, 50]).slice()",
-        r"array.slice(0)",
-        r"array.slice(0b0)",
-        r"array.slice(0.00)",
-        r"array.slice(0.00, )",
-        r"array.toSpliced()",
-        r"array.toSpliced().toSpliced()",
-        r"const copy = array.toSpliced()",
-        r"(( (( (( array )).toSpliced ))() ))",
+        "new Uint8Array([10, 20, 30, 40, 50]).slice()",
+        "array.slice(0)",
+        "array.slice(0b0)",
+        "array.slice(0.00)",
+        "array.slice(0.00, )",
+        "array.toSpliced()",
+        "array.toSpliced().toSpliced()",
+        "const copy = array.toSpliced()",
+        "(( (( (( array )).toSpliced ))() ))",
+        "bar()
+        foo.toSpliced()",
         r#""".toSpliced()"#,
-        r"new Uint8Array([10, 20, 30, 40, 50]).toSpliced()",
+        "new Uint8Array([10, 20, 30, 40, 50]).toSpliced()",
         r#""string".split("")"#,
         r#""string".split('')"#,
         r#"unknown.split("")"#,
         r#"const characters = "string".split("")"#,
         r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
+        r#"bar()
+        foo.split("")"#,
         r#"unknown.split("")"#,
         r#""🦄".split("")"#,
         r#"const {length} = "🦄".split("")"#,
@@ -452,8 +540,16 @@ fn test() {
 
     let expect_fix = vec![
         // `Array.from()`
+        ("const x = Array.from(set);", "const x = [...set];", None),
+        ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});", None),
         // `array.slice()`
+        ("array.slice()", "[...array]", None),
+        ("array.slice(1).slice()", "[...array.slice(1)]", None),
         // `array.toSpliced()`
+        ("array.toSpliced()", "[...array]", None),
+        ("const copy = array.toSpliced()", "const copy = [...array]", None),
+        // ("", "", None),
+        // ("", "", None),
         // `string.split()`
         (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
         (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),

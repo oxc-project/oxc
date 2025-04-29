@@ -1340,6 +1340,7 @@ pub enum TSTypeQueryExprName<'a> {
 pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
+    #[estree(via = TSImportTypeOptions)]
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,

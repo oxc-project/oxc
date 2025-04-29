@@ -1148,6 +1148,7 @@ fn test_type_references() {
             accessor y!: Foo
         }
         ",
+        "import { foo } from 'bar'; export type K = typeof foo",
     ];
 
     let fail = vec![

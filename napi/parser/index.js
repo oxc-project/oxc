@@ -1,6 +1,4 @@
 const bindings = require('./bindings.js');
-const deserializeJS = require('./deserialize-js.js');
-const deserializeTS = require('./deserialize-ts.js');
 const { wrap } = require('./wrap.cjs');
 
 module.exports.ParseResult = bindings.ParseResult;
@@ -22,7 +20,7 @@ module.exports.parseSync = function parseSync(filename, sourceText, options) {
   return wrap(bindings.parseSync(filename, sourceText, options));
 };
 
-let buffer, encoder;
+let buffer, encoder, deserializeJS, deserializeTS;
 
 function parseSyncRaw(filename, sourceText, options) {
   if (!rawTransferSupported()) {
@@ -62,9 +60,23 @@ function parseSyncRaw(filename, sourceText, options) {
   const astTypeFlagPos = 2147483636;
   let isJsAst = buffer[astTypeFlagPos] === 0;
 
-  const data = isJsAst
-    ? deserializeJS(buffer, sourceText, sourceByteLen)
-    : deserializeTS(buffer, sourceText, sourceByteLen);
+  // Lazy load deserializer, and deserialize buffer to JS objects
+  let data;
+  if (isJsAst) {
+    if (!deserializeJS) deserializeJS = require('./generated/deserialize/js.js');
+    data = deserializeJS(buffer, sourceText, sourceByteLen);
+
+    // Add a line comment for hashbang
+    const { hashbang } = data.program;
+    if (hashbang !== null) {
+      data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
+    }
+  } else {
+    if (!deserializeTS) deserializeTS = require('./generated/deserialize/ts.js');
+    data = deserializeTS(buffer, sourceText, sourceByteLen);
+    // Note: Do not add line comment for hashbang, to match `@typescript-eslint/parser`.
+    // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
+  }
 
   return {
     get program() {
