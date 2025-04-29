@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, LogicalOperator, UnaryExpression,
+    LogicalExpression, LogicalOperator, SimpleAssignmentTarget, UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -110,6 +110,12 @@ impl DetermineValueType for Expression<'_> {
             Expression::ConditionalExpression(e) => e.value_type(is_global_reference),
             Expression::LogicalExpression(e) => e.value_type(is_global_reference),
             Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
+            Expression::UpdateExpression(e) => match &e.argument {
+                // should we be more conservative and assume BigInt?
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => ValueType::Number,
+                oxc_ast::match_member_expression!(SimpleAssignmentTarget) => ValueType::Number,
+                _ => ValueType::Undetermined,
+            },
             _ => ValueType::Undetermined,
         }
     }
