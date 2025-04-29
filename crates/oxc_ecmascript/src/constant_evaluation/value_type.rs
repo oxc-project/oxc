@@ -32,6 +32,10 @@ impl ValueType {
         self == Self::Null
     }
 
+    pub fn is_nullish(self) -> bool {
+        matches!(self, Self::Null | Self::Undefined)
+    }
+
     pub fn is_string(self) -> bool {
         self == Self::String
     }
