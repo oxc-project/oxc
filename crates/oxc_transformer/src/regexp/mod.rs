@@ -44,15 +44,13 @@
 //! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
 //! (actually these would be improvements on ESBuild, not Babel)
 
-use std::borrow::Cow;
-
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, SPAN, format_atom};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -172,9 +170,9 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
             }
         }
 
-        let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
-            RegExpPattern::Raw(raw) => Cow::Borrowed(raw),
-            RegExpPattern::Pattern(p) => Cow::Owned(p.to_string()),
+        let pattern_source = match &regexp.regex.pattern {
+            RegExpPattern::Raw(raw) => Atom::from(*raw),
+            RegExpPattern::Pattern(p) => format_atom!(ctx.ast.allocator, "{p}"),
             RegExpPattern::Invalid(_) => return,
         };
 
