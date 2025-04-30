@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, iter};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -155,9 +155,15 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             return;
         }
 
+        let var_decl = Statement::from(ctx.ast.declaration_variable(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.vec(), // This is replaced at the end
+            false,
+        ));
+
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len());
-        for (binding, persistent_id) in &self.registrations {
+        let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -171,18 +177,19 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Argument::from(binding.create_read_expression(ctx)),
                 Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
             ]);
-            new_statements.push(ctx.ast.statement_expression(
+            ctx.ast.statement_expression(
                 SPAN,
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
-            ));
-        }
-        program.body.push(Statement::from(ctx.ast.declaration_variable(
-            SPAN,
-            VariableDeclarationKind::Var,
-            variable_declarator_items,
-            false,
-        )));
-        program.body.extend(new_statements);
+            )
+        });
+
+        let var_decl_index = program.body.len();
+        program.body.extend(iter::once(var_decl).chain(calls));
+
+        let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
+            unreachable!()
+        };
+        var_decl.declarations = variable_declarator_items;
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
