@@ -459,6 +459,8 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::linter::tester::get_file_uri;
+
     use super::*;
 
     #[test]
@@ -486,5 +488,35 @@ mod tests {
             !worker
                 .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
+    }
+
+    #[test]
+    fn test_init_nested_configs_with_disabled_nested_configs() {
+        let mut flags = FxHashMap::default();
+        flags.insert("disable_nested_configs".to_string(), "true".to_string());
+
+        let configs = WorkspaceWorker::init_nested_configs(
+            &Uri::from_str("file:///root/").unwrap(),
+            &Options { flags, ..Options::default() },
+        );
+
+        assert!(configs.is_empty());
+    }
+
+    #[test]
+    fn test_init_nested_configs() {
+        let configs = WorkspaceWorker::init_nested_configs(
+            &get_file_uri("fixtures/linter/init_nested_configs"),
+            &Options::default(),
+        );
+        let configs = configs.pin();
+        let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
+        // sorting the key because for consistent tests results
+        configs_dirs.sort();
+
+        assert!(configs_dirs.len() == 3);
+        assert!(configs_dirs[2].ends_with("deep2"));
+        assert!(configs_dirs[1].ends_with("deep1"));
+        assert!(configs_dirs[0].ends_with("init_nested_configs"));
     }
 }

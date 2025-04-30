@@ -4,4 +4,4 @@ pub mod isolated_lint_handler;
 pub mod server_linter;
 
 #[cfg(test)]
-mod tester;
+pub mod tester;
