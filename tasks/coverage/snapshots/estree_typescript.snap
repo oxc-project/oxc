@@ -2,23 +2,11 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 6480/6481 (99.98%)
-Positive Passed: 6472/6481 (99.86%)
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowingUnionToUnion.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardNarrowsPrimitiveIntersection.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardNarrowsToLiteralTypeUnion.ts
-
+Positive Passed: 6478/6481 (99.95%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 JSX expressions may not use the comma operator
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags02.ts
 

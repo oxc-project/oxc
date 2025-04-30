@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_syntax::operator::UnaryOperator;
+use oxc_span::GetSpan;
 
 use crate::{
     Context, ParserImpl, diagnostics,
@@ -649,9 +650,8 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `is`
         // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
-        let type_span = self.start_span();
         let ty = self.parse_ts_type();
-        let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
+        let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
         self.ast.ts_type_type_predicate(self.end_span(span), parameter_name, false, type_annotation)
     }
 
@@ -1051,10 +1051,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
         let type_predicate_variable = self.try_parse(Self::parse_type_predicate_prefix);
-        let type_span = self.start_span();
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
-            let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
+            let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
             return self.ast.ts_type_type_predicate(
                 self.end_span(span),
                 parameter_name,
