@@ -204,9 +204,9 @@ impl<'a> PeepholeOptimizations {
             None => None,
         };
         let result = match s.value.as_str().char_at(char_at_index) {
-            StringCharAtResult::Value(c) => &c.to_string(),
+            StringCharAtResult::Value(c) => format_atom!(ctx.ast.allocator, "{c}"),
             StringCharAtResult::InvalidChar(_) => return None,
-            StringCharAtResult::OutOfRange => "",
+            StringCharAtResult::OutOfRange => Atom::empty(),
         };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
