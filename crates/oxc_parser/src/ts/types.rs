@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
-use oxc_syntax::operator::UnaryOperator;
 use oxc_span::GetSpan;
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     Context, ParserImpl, diagnostics,
