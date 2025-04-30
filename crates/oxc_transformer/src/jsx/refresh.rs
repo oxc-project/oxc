@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, iter};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -155,18 +155,15 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             return;
         }
 
-        program.body.reserve(self.registrations.len() + 1);
-
-        let var_decl_index = program.body.len();
-        program.body.push(Statement::from(ctx.ast.declaration_variable(
+        let var_decl = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec(), // This is replaced at the end
             false,
-        )));
+        ));
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        program.body.extend(self.registrations.iter().map(|(binding, persistent_id)| {
+        let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -184,7 +181,10 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 SPAN,
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
             )
-        }));
+        });
+
+        let var_decl_index = program.body.len();
+        program.body.extend(iter::once(var_decl).chain(calls));
 
         let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
             unreachable!()
