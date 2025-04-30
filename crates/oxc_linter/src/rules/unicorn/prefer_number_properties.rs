@@ -7,7 +7,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, fixer::RuleFixer, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+};
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))
@@ -73,7 +75,7 @@ declare_oxc_lint!(
     PreferNumberProperties,
     unicorn,
     restriction,
-    fix
+    dangerous_fix
 );
 
 impl Rule for PreferNumberProperties {
@@ -124,21 +126,31 @@ impl Rule for PreferNumberProperties {
                         Some(AstKind::ObjectProperty(_))
                     ))
                 {
-                    ctx.diagnostic_with_fix(
-                        prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
-                        |fixer| match ctx.nodes().parent_kind(node.id()) {
-                            Some(AstKind::ObjectProperty(object_property))
-                                if object_property.shorthand =>
-                            {
-                                fixer.insert_text_before(
-                                    &ident_ref.span,
-                                    format!("{}: Number.", ident_ref.name.as_str()),
-                                )
-                            }
-                            Some(_) => fixer.insert_text_before(&ident_ref.span, "Number."),
-                            None => unreachable!(),
-                        },
-                    );
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id())
+                    {
+                        Some(AstKind::ObjectProperty(object_property))
+                            if object_property.shorthand =>
+                        {
+                            fixer.insert_text_before(
+                                &ident_ref.span,
+                                format!("{}: Number.", ident_ref.name.as_str()),
+                            )
+                        }
+                        Some(_) => fixer.insert_text_before(&ident_ref.span, "Number."),
+                        None => unreachable!(),
+                    };
+
+                    if ident_ref.name.as_str() == "isNaN" || ident_ref.name.as_str() == "isFinite" {
+                        ctx.diagnostic_with_dangerous_fix(
+                            prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
+                            fixer,
+                        );
+                    } else {
+                        ctx.diagnostic_with_fix(
+                            prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
+                            fixer,
+                        );
+                    }
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -153,20 +165,35 @@ impl Rule for PreferNumberProperties {
                         }
                     }
 
-                    ctx.diagnostic_with_fix(
-                        prefer_number_properties_diagnostic(call_expr.callee.span(), ident_name),
-                        |fixer| match &call_expr.callee {
-                            Expression::Identifier(ident) => {
-                                fixer.insert_text_before(&ident.span, "Number.")
-                            }
-                            match_member_expression!(Expression) => {
-                                let member_expr = call_expr.callee.to_member_expression();
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {
+                        Expression::Identifier(ident) => {
+                            fixer.insert_text_before(&ident.span, "Number.")
+                        }
+                        match_member_expression!(Expression) => {
+                            let member_expr = call_expr.callee.to_member_expression();
 
-                                fixer.replace(member_expr.object().span(), "Number")
-                            }
-                            _ => unreachable!(),
-                        },
-                    );
+                            fixer.replace(member_expr.object().span(), "Number")
+                        }
+                        _ => unreachable!(),
+                    };
+
+                    if ident_name == "isFinite" || ident_name == "isNaN" {
+                        ctx.diagnostic_with_dangerous_fix(
+                            prefer_number_properties_diagnostic(
+                                call_expr.callee.span(),
+                                ident_name,
+                            ),
+                            fixer,
+                        );
+                    } else {
+                        ctx.diagnostic_with_fix(
+                            prefer_number_properties_diagnostic(
+                                call_expr.callee.span(),
+                                ident_name,
+                            ),
+                            fixer,
+                        );
+                    }
                 }
             }
             _ => {}
