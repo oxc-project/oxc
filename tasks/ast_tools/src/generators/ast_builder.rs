@@ -287,8 +287,7 @@ fn get_struct_params<'s>(
     TokenStream,    // `where` clause
     bool,           // Has default fields
 ) {
-    // Only a single `Atom` or `&str` generic supported at present
-    let mut has_atom_generic = false;
+    // Only a single `&str` generic supported at present
     let mut has_str_generic = false;
     let mut generic_count = 0u32;
     let mut has_default_fields = false;
@@ -318,10 +317,6 @@ fn get_struct_params<'s>(
 
             let generic_ident = match type_def {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
-                    "Atom" if !has_atom_generic => {
-                        has_atom_generic = true;
-                        Some(create_safe_ident("A"))
-                    }
                     "&str" if !has_str_generic => {
                         has_str_generic = true;
                         Some(create_safe_ident("S"))
