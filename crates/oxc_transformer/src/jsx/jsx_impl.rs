@@ -788,7 +788,12 @@ impl<'a> JsxImpl<'a, '_> {
                 if self.options.throw_if_namespace {
                     self.ctx.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
-                ctx.ast.expression_string_literal(namespaced.span, namespaced.to_string(), None)
+                let namespace_name = ctx.ast.atom_from_strs_array([
+                    &namespaced.namespace.name,
+                    ":",
+                    &namespaced.name.name,
+                ]);
+                ctx.ast.expression_string_literal(namespaced.span, namespace_name, None)
             }
             JSXElementName::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         }
