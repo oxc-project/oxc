@@ -893,7 +893,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if init_name == "useRef" || init_name == "useCallback" {
+            if init_name == "useRef" {
                 return true;
             }
 
@@ -2009,18 +2009,20 @@ fn test() {
             </>
           );
         }",
-        r"function Example() {
-          const foo = useCallback(() => {
-            foo();
-          }, []);
-        }",
-        r"function Example({ prop }) {
-          const foo = useCallback(() => {
-            if (prop) {
-              foo();
-            }
-          }, [prop]);
-        }",
+        // we don't support the following two cases as they would both cause an infinite loop at runtime
+        //  r"function Example() {
+        //    const foo = useCallback(() => {
+        //      foo();
+        //    }, []);
+        //  }",
+        //
+        //  r"function Example({ prop }) {
+        //    const foo = useCallback(() => {
+        //      if (prop) {
+        //        foo();
+        //      }
+        //    }, [prop]);
+        //  }",
         r"function Hello() {
           const [state, setState] = useState(0);
           useEffect(() => {
@@ -3324,21 +3326,20 @@ fn test() {
         r"function Thing() {
           useEffect(async () => {});
         }",
-        // TODO: not supported yet
+        // NOTE: intentionally not supported, as `foo` would be referenced before it's declaration
         // r"function Example() {
         //   const foo = useCallback(() => {
         //     foo();
         //     }, [foo]);
         //     }",
-        // TODO: not supported yet
-        // r"function Example({ prop }) {
-        //   const foo = useCallback(() => {
-        //     prop.hello(foo);
-        //   }, [foo]);
-        //   const bar = useCallback(() => {
-        //     foo();
-        //   }, [foo]);
-        // }",
+        r"function Example({ prop }) {
+          const foo = useCallback(() => {
+            prop.hello(foo);
+          }, [foo]);
+          const bar = useCallback(() => {
+            foo();
+          }, [foo]);
+        }",
         r"function MyComponent() {
           const local = {};
           function myEffect() {
@@ -3563,6 +3564,17 @@ fn test() {
             <></>
           )
         }",
+        // https://github.com/oxc-project/oxc/issues/9788
+        r#"import { useCallback, useEffect } from "react";
+
+        function Component({ foo }) {
+          const log = useCallback(() => {
+          console.log(foo);
+        }, [foo]);
+        useEffect(() => {
+          log();
+        }, []);
+        }"#,
     ];
 
     Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();

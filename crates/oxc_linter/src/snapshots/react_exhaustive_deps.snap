@@ -1907,6 +1907,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider putting the asynchronous code inside a function and calling it from the effect.
 
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'prop'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             prop.hello(foo);
+ 4 │           }, [foo]);
+   ·              ─────
+ 5 │           const bar = useCallback(() => {
+   ╰────
+  help: Either include it or remove the dependency array.
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:31]
  5 │           }
@@ -2246,5 +2255,14 @@ source: crates/oxc_linter/src/tester.rs
  10 │           }, [])
     ·              ──
  11 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'log'
+    ╭─[exhaustive_deps.tsx:9:12]
+  8 │           log();
+  9 │         }, []);
+    ·            ──
+ 10 │         }
     ╰────
   help: Either include it or remove the dependency array.
