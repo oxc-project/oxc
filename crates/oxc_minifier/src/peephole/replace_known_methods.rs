@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use std::borrow::Cow;
 
-use oxc_allocator::{IntoIn, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -183,7 +183,7 @@ impl<'a> PeepholeOptimizations {
         }
         Some(ctx.ast.expression_string_literal(
             span,
-            s.value.as_str().substring(start_idx, end_idx),
+            ctx.ast.atom(&s.value.as_str().substring(start_idx, end_idx)),
             None,
         ))
     }
@@ -291,7 +291,7 @@ impl<'a> PeepholeOptimizations {
             let c = char::try_from(v).ok()?;
             s.push(c);
         }
-        Some(ctx.ast.expression_string_literal(span, s, None))
+        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None))
     }
 
     #[expect(
@@ -325,7 +325,7 @@ impl<'a> PeepholeOptimizations {
                 if radix == 10 {
                     use oxc_syntax::number::ToJsString;
                     let s = lit.value.to_js_string();
-                    return Some(ctx.ast.expression_string_literal(span, s, None));
+                    return Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None));
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
@@ -343,7 +343,8 @@ impl<'a> PeepholeOptimizations {
                 if i as f64 != value {
                     return None;
                 }
-                Some(ctx.ast.expression_string_literal(span, Self::format_radix(i, radix), None))
+                let value = Self::format_radix(i, radix);
+                Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&value), None))
             }
             // `null` returns type errors
             Expression::BooleanLiteral(_)
@@ -775,8 +776,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
-                            raw: Self::escape_string_for_template_literal(&s)
-                                .into_in(ctx.ast.allocator),
+                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
                             cooked: Some(cooked),
                         },
                         false,
