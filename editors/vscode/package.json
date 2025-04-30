@@ -33,7 +33,8 @@
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:vue",
-    "onLanguage:svelte"
+    "onLanguage:svelte",
+    "onLanguage:astro"
   ],
   "main": "./out/main.js",
   "contributes": {
