@@ -77,7 +77,10 @@ impl<'a> PeepholeOptimizations {
             if prop_name == binding_identifier.name {
                 *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
                     assign_target_prop_prop.span,
-                    ctx.ast.identifier_reference(assign_target_prop_prop.span, prop_name),
+                    ctx.ast.identifier_reference(
+                        assign_target_prop_prop.span,
+                        binding_identifier.name,
+                    ),
                     None,
                 );
                 state.changed = true;
