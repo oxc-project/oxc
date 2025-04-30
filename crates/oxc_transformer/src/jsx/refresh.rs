@@ -32,20 +32,20 @@ enum RefreshIdentifierResolver<'a> {
 impl<'a> RefreshIdentifierResolver<'a> {
     /// Parses a string into a RefreshIdentifierResolver
     pub fn parse(input: &str, ast: AstBuilder<'a>) -> Self {
-        if !input.contains('.') {
+        let mut parts = input.split('.');
+
+        let first_part = parts.next().unwrap();
+        let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
             return Self::Identifier(ast.identifier_reference(SPAN, input));
-        }
-
-        let mut parts = input.split('.');
-        let first_part = parts.next().unwrap();
+        };
 
         if first_part == "import" {
-            // Handle import.meta.$RefreshReg$ expression
+            // Handle `import.meta.$RefreshReg$` expression
             let mut expr = ast.expression_meta_property(
                 SPAN,
                 ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, parts.next().unwrap()),
+                ast.identifier_name(SPAN, second_part),
             );
             if let Some(property) = parts.next() {
                 expr = Expression::from(ast.member_expression_static(
@@ -60,7 +60,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
 
         // Handle `window.$RefreshReg$` member expression
         let object = ast.identifier_reference(SPAN, first_part);
-        let property = ast.identifier_name(SPAN, parts.next().unwrap());
+        let property = ast.identifier_name(SPAN, second_part);
         Self::Member((object, property))
     }
 
