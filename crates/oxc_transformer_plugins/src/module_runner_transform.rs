@@ -709,7 +709,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     // `key: value` or `key() {}`
     fn create_object_property(
-        key: &str,
+        key: &'static str,
         value: Option<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {

@@ -605,7 +605,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     // `_metadata(key, value)
     fn create_metadata_decorate(
         &self,
-        key: &str,
+        key: &'a str,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
