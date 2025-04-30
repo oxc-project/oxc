@@ -43,9 +43,82 @@ defaults:
     shell: bash
 
 jobs:
+  # Add a new job to check if base branch run is completed
+  check-base-benchmark:
+    name: Check base branch benchmark
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Wait for base branch benchmark run to succeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE_BRANCH_NAME: ${{ github.event.pull_request.base.ref }}
+          WORKFLOW_FILE_NAME: ${{ github.workflow }}
+          MAX_WAIT_MINUTES: 15
+        run: |
+          echo "Looking for the latest workflow run on '$BASE_BRANCH_NAME' for '$WORKFLOW_FILE_NAME'..."
+          INITIAL_RUN_ID=""
+          CURRENT_RUN_ID=""
+
+          # Try to find the latest run on the base branch initially
+          INITIAL_RUN_ID=$(gh run list --workflow "$WORKFLOW_FILE_NAME" --branch "$BASE_BRANCH_NAME" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+
+          if [ -z "$INITIAL_RUN_ID" ]; then
+            echo "Warning: Could not find a recent run on '$BASE_BRANCH_NAME'. Proceeding without waiting."
+          else
+            echo "Found initial target run ID: $INITIAL_RUN_ID. Starting to monitor..."
+            WAIT_START_TIME=$(date +%s)
+            MAX_WAIT_SECONDS=$((MAX_WAIT_MINUTES * 60))
+            CURRENT_RUN_ID=$INITIAL_RUN_ID
+
+            while true; do
+              # Re-check for the latest workflow run in case there were new pushes
+              LATEST_RUN_ID=$(gh run list --workflow "$WORKFLOW_FILE_NAME" --branch "$BASE_BRANCH_NAME" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+
+              # If we found a newer run ID than what we were tracking, switch to it
+              if [ "$LATEST_RUN_ID" != "$CURRENT_RUN_ID" ]; then
+                echo "Detected a newer workflow run ($LATEST_RUN_ID) on '$BASE_BRANCH_NAME'. Switching monitoring target."
+                CURRENT_RUN_ID=$LATEST_RUN_ID
+              fi
+
+              # Check the status of the current run we're monitoring
+              RUN_INFO=$(gh run view "$CURRENT_RUN_ID" --json status,conclusion --jq '{status: .status, conclusion: .conclusion}')
+              STATUS=$(echo "$RUN_INFO" | jq -r '.status')
+              CONCLUSION=$(echo "$RUN_INFO" | jq -r '.conclusion')
+
+              echo "Run $CURRENT_RUN_ID status: $STATUS, conclusion: $CONCLUSION"
+              if [ "$STATUS" == "completed" ]; then
+                if [ "$CONCLUSION" == "success" ]; then
+                  echo "Run $CURRENT_RUN_ID completed successfully. Proceeding."
+                  break
+                else
+                  echo "Warning: Run $CURRENT_RUN_ID completed with conclusion '$CONCLUSION'. Proceeding anyway, but benchmark results may not be accurate."
+                  break  # Even though the run failed, we proceed because some changes do not affect the benchmark.
+                fi
+              fi
+
+              CURRENT_TIME=$(date +%s)
+              ELAPSED_TIME=$((CURRENT_TIME - WAIT_START_TIME))
+              if [ "$ELAPSED_TIME" -ge "$MAX_WAIT_SECONDS" ]; then
+                echo "Warning: Timeout waiting after ${MAX_WAIT_MINUTES} minutes. The current run $CURRENT_RUN_ID has status '$STATUS'. Proceeding anyway."
+                break
+              fi
+
+              echo "Waiting 30 seconds before checking again..."
+              sleep 30
+            done
+          fi
+        shell: bash
+
   # Build and run benchmarks for all components except linter
   benchmark:
     name: Benchmark
+    needs: check-base-benchmark
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -123,7 +196,8 @@ jobs:
   # Run linter benchmarks. Each fixture in a separate job.
   benchmark-linter:
     name: Benchmark linter
-    needs: build-linter
+    needs: [check-base-benchmark, build-linter]
+    if: always() && needs.build-linter.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
