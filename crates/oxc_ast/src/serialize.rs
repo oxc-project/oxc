@@ -1586,10 +1586,12 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     seq.end();
 }
 
-/// TODO: Comments
+/// Serializer for `type_annotation` field of `TSTypePredicate`.
+///
+/// TODO: More description
 #[ast_meta]
 #[estree(
-    ts_type = "TSTypeAnnotation",
+    ts_type = "TSTypeAnnotation | null",
     raw_deser = "
         const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
         // TODO: raw_deser
@@ -1605,13 +1607,13 @@ impl ESTree for TSTypePredicateTypeAnnotation<'_, '_> {
             return;
         };
 
+        let inner_type_annotation = &type_predicate_type_annotation.type_annotation;
+        let inner_type_annotation_span = inner_type_annotation.span();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
-        // TODO: DRY
-        state
-            .serialize_field("start", &type_predicate_type_annotation.type_annotation.span().start);
-        state.serialize_field("end", &type_predicate_type_annotation.type_annotation.span().end);
-        state.serialize_field("typeAnnotation", &type_predicate_type_annotation.type_annotation);
+        state.serialize_field("start", &inner_type_annotation_span.start);
+        state.serialize_field("end", &inner_type_annotation_span.end);
+        state.serialize_field("typeAnnotation", &inner_type_annotation);
         state.end();
     }
 }

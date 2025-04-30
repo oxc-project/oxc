@@ -1776,6 +1776,7 @@ function deserializeTSInterfaceHeritage(pos) {
 
 function deserializeTSTypePredicate(pos) {
   const typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
+  // TODO: raw_deser
   return {
     type: 'TSTypePredicate',
     start: deserializeU32(pos),

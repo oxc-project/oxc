@@ -1309,7 +1309,7 @@ export interface TSTypePredicate extends Span {
   type: 'TSTypePredicate';
   parameterName: TSTypePredicateName;
   asserts: boolean;
-  typeAnnotation: TSTypeAnnotation;
+  typeAnnotation: TSTypeAnnotation | null;
 }
 
 export type TSTypePredicateName = IdentifierName | TSThisType;
