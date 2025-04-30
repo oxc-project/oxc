@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::SPAN;
+use oxc_span::{Atom, SPAN, format_atom};
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::Ancestor;
 
@@ -97,12 +97,14 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
+
+        let value = s.value.as_str();
         let value = match name {
-            "toLowerCase" => s.value.cow_to_lowercase(),
-            "toUpperCase" => s.value.cow_to_uppercase(),
-            "trim" => Cow::Borrowed(s.value.trim()),
-            "trimStart" => Cow::Borrowed(s.value.trim_start()),
-            "trimEnd" => Cow::Borrowed(s.value.trim_end()),
+            "toLowerCase" => ctx.ast.atom_from_cow(&value.cow_to_lowercase()),
+            "toUpperCase" => ctx.ast.atom_from_cow(&value.cow_to_uppercase()),
+            "trim" => Atom::from(value.trim()),
+            "trimStart" => Atom::from(value.trim_start()),
+            "trimEnd" => Atom::from(value.trim_end()),
             _ => return None,
         };
         Some(ctx.ast.expression_string_literal(span, value, None))
@@ -267,7 +269,7 @@ impl<'a> PeepholeOptimizations {
             "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
             _ => unreachable!(),
         };
-        Some(ctx.ast.expression_string_literal(span, result, None))
+        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&result), None))
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
@@ -352,7 +354,9 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string(&ctx).map(|s| ctx.ast.expression_string_literal(span, s, None))
+                object.to_js_string(&ctx).map(|s| {
+                    ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&s), None)
+                })
             }
             _ => None,
         }
@@ -761,16 +765,13 @@ impl<'a> PeepholeOptimizations {
                     debug_assert_eq!(quasi_strs.len(), 1);
                     return Some(ctx.ast.expression_string_literal(
                         span,
-                        quasi_strs.pop().unwrap(),
+                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
                         None,
                     ));
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = match &s {
-                        Cow::Owned(s) => ctx.ast.atom(s),
-                        Cow::Borrowed(s) => Atom::from(*s),
-                    };
+                    let cooked = ctx.ast.atom_from_cow(&s);
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
