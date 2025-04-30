@@ -112,8 +112,16 @@ struct Param<'d> {
     fn_param: TokenStream,
     /// `true` if is a default param (semantic ID)
     is_default: bool,
-    /// `true` if this param has a generic param e.g. `type_annotation: T1` (`T1` is generic)
-    has_generic_param: bool,
+    /// `None` if param is not generic.
+    /// `Some(GenericType::Into)` if is generic and uses `Into` e.g. `name: A`.
+    /// `Some(GenericType::IntoIn)` if is generic and uses `IntoIn` e.g. `type_annotation: T1`.
+    generic_type: Option<GenericType>,
+}
+
+/// Type of generic param.
+enum GenericType {
+    Into,
+    IntoIn,
 }
 
 /// Generate builder methods for a type.
@@ -289,7 +297,6 @@ fn get_struct_params<'s>(
 ) {
     // Only a single `Atom` or `&str` generic supported at present
     let mut has_atom_generic = false;
-    let mut has_str_generic = false;
     let mut generic_count = 0u32;
     let mut has_default_fields = false;
 
@@ -316,46 +323,45 @@ fn get_struct_params<'s>(
                 has_default_fields = true;
             }
 
-            let generic_ident = match type_def {
+            let generic_details = match type_def {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
                     "Atom" if !has_atom_generic => {
                         has_atom_generic = true;
-                        Some(create_safe_ident("A"))
-                    }
-                    "&str" if !has_str_generic => {
-                        has_str_generic = true;
-                        Some(create_safe_ident("S"))
+                        Some((create_safe_ident("A"), GenericType::Into))
                     }
                     _ => None,
                 },
                 TypeDef::Box(_) => {
                     generic_count += 1;
-                    Some(format_ident!("T{generic_count}"))
+                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
                 }
                 TypeDef::Option(option_def) if option_def.inner_type(schema).is_box() => {
                     generic_count += 1;
-                    Some(format_ident!("T{generic_count}"))
+                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
                 }
                 _ => None,
             };
-            let has_generic_param = generic_ident.is_some();
 
-            let fn_param_ty = if is_default {
-                assert!(!has_generic_param);
-                type_def.innermost_type(schema).ty(schema)
-            } else if let Some(generic_ident) = generic_ident {
-                let where_clause_part = quote!( #generic_ident: IntoIn<'a, #ty> );
+            let (fn_param_ty, generic_type) = if is_default {
+                assert!(generic_details.is_none());
+                let ty = type_def.innermost_type(schema).ty(schema);
+                (ty, None)
+            } else if let Some((generic_ident, generic_type)) = generic_details {
+                let where_clause_part = match generic_type {
+                    GenericType::Into => quote!( #generic_ident: Into<#ty> ),
+                    GenericType::IntoIn => quote!( #generic_ident: IntoIn<'a, #ty> ),
+                };
                 let generic_ty = quote!( #generic_ident );
                 generics.push((generic_ident, where_clause_part));
-                generic_ty
+                (generic_ty, Some(generic_type))
             } else {
-                ty
+                (ty, None)
             };
 
             let field_ident = field.ident();
             let fn_param = quote!( #field_ident: #fn_param_ty );
 
-            Param { field, ident: field_ident, fn_param, is_default, has_generic_param }
+            Param { field, ident: field_ident, fn_param, is_default, generic_type }
         })
         .collect();
 
@@ -407,10 +413,12 @@ fn get_struct_fn_params_and_fields(
             return None;
         }
 
-        let field = if param.has_generic_param {
-            quote!( #param_ident: #param_ident.into_in(self.allocator) )
-        } else {
-            quote!( #param_ident )
+        let field = match param.generic_type {
+            Some(GenericType::Into) => quote!( #param_ident: #param_ident.into() ),
+            Some(GenericType::IntoIn) => {
+                quote!( #param_ident: #param_ident.into_in(self.allocator) )
+            }
+            None => quote!( #param_ident ),
         };
 
         fields.push(field);
