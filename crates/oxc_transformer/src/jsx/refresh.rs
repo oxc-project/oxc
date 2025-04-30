@@ -1,4 +1,4 @@
-use std::{collections::hash_map::Entry, mem};
+use std::collections::hash_map::Entry;
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -157,7 +157,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len());
-        for (binding, persistent_id) in mem::take(&mut self.registrations) {
+        for (binding, persistent_id) in &self.registrations {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -169,7 +169,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             let callee = self.refresh_reg.to_expression(ctx);
             let arguments = ctx.ast.vec_from_array([
                 Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(SPAN, persistent_id, None)),
+                Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
             ]);
             new_statements.push(ctx.ast.statement_expression(
                 SPAN,
