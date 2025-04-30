@@ -1775,13 +1775,14 @@ function deserializeTSInterfaceHeritage(pos) {
 }
 
 function deserializeTSTypePredicate(pos) {
+  const typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
   return {
     type: 'TSTypePredicate',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     parameterName: deserializeTSTypePredicateName(pos + 8),
     asserts: deserializeBool(pos + 24),
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 32),
+    typeAnnotation,
   };
 }
 

@@ -1586,6 +1586,37 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     seq.end();
 }
 
+/// TODO: Comments
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeAnnotation",
+    raw_deser = "
+        const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+        // TODO: raw_deser
+        typeAnnotation
+    "
+)]
+pub struct TSTypePredicateTypeAnnotation<'a, 'b>(
+    pub &'b TSTypePredicate<'a>,
+);
+
+impl ESTree for TSTypePredicateTypeAnnotation<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let Some(type_predicate_type_annotation) = &self.0.type_annotation else {
+            Null(()).serialize(serializer);
+            return;
+        };
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
+        // TODO: DRY
+        state.serialize_field("start", &type_predicate_type_annotation.type_annotation.span().start);
+        state.serialize_field("end", &type_predicate_type_annotation.type_annotation.span().end);
+        state.serialize_field("typeAnnotation", &type_predicate_type_annotation.type_annotation);
+        state.end();
+    }
+}
+
 // --------------------
 // Comments
 // --------------------

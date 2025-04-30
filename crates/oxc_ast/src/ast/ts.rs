@@ -1131,6 +1131,7 @@ pub struct TSTypePredicate<'a> {
     /// declare function isString(x: any): asserts x is string; // true
     /// ```
     pub asserts: bool,
+    #[estree(via = TSTypePredicateTypeAnnotation)]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 

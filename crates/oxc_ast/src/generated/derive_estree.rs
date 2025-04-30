@@ -3020,7 +3020,10 @@ impl ESTree for TSTypePredicate<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("parameterName", &self.parameter_name);
         state.serialize_field("asserts", &self.asserts);
-        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field(
+            "typeAnnotation",
+            &crate::serialize::TSTypePredicateTypeAnnotation(self),
+        );
         state.end();
     }
 }
