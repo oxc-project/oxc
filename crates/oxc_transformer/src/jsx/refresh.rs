@@ -169,11 +169,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             let callee = self.refresh_reg.to_expression(ctx);
             let arguments = ctx.ast.vec_from_array([
                 Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(
-                    SPAN,
-                    ctx.ast.atom(&persistent_id),
-                    None,
-                )),
+                Argument::from(ctx.ast.expression_string_literal(SPAN, persistent_id, None)),
             ]);
             new_statements.push(ctx.ast.statement_expression(
                 SPAN,
