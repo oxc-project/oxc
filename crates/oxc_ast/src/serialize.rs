@@ -1596,9 +1596,7 @@ fn serialize_formal_params_with_this_param<'a, S: Serializer>(
         typeAnnotation
     "
 )]
-pub struct TSTypePredicateTypeAnnotation<'a, 'b>(
-    pub &'b TSTypePredicate<'a>,
-);
+pub struct TSTypePredicateTypeAnnotation<'a, 'b>(pub &'b TSTypePredicate<'a>);
 
 impl ESTree for TSTypePredicateTypeAnnotation<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
@@ -1610,7 +1608,8 @@ impl ESTree for TSTypePredicateTypeAnnotation<'_, '_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
         // TODO: DRY
-        state.serialize_field("start", &type_predicate_type_annotation.type_annotation.span().start);
+        state
+            .serialize_field("start", &type_predicate_type_annotation.type_annotation.span().start);
         state.serialize_field("end", &type_predicate_type_annotation.type_annotation.span().end);
         state.serialize_field("typeAnnotation", &type_predicate_type_annotation.type_annotation);
         state.end();
