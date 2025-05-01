@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
@@ -64,7 +64,7 @@ impl InjectImport {
 
     fn replace_name(local: &str) -> Option<CompactStr> {
         match local.cow_replace('.', "_") {
-            Cow::Owned(local) => Some(CompactStr::from(format!("$inject_{local}"))),
+            Cow::Owned(local) => Some(format_compact_str!("$inject_{local}")),
             Cow::Borrowed(_) => None,
         }
     }
