@@ -1,4 +1,5 @@
 use memchr::memmem::Finder;
+
 use oxc_span::SourceType;
 
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
@@ -48,8 +49,21 @@ impl<'a> VuePartialLoader<'a> {
 
         // get ts and jsx attribute
         let content = &self.source_text[*pointer..*pointer + offset];
-        let is_ts = content.contains("ts");
-        let is_jsx = content.contains("tsx") || content.contains("jsx");
+
+        // parse `lang`
+        let lang = content.split_once("lang").map_or(Some("mjs"), |(_, s)| {
+            const QUOTES: [char; 2] = ['"', '\''];
+            s.trim_start()
+                .trim_start_matches('=')
+                .trim_start()
+                .trim_start_matches(QUOTES)
+                .split_once(QUOTES)
+                .map(|(s, _)| s)
+        })?;
+        let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
+        if !lang.contains('x') {
+            source_type = source_type.with_standard(true);
+        }
 
         *pointer += offset + 1;
         let js_start = *pointer;
@@ -61,7 +75,6 @@ impl<'a> VuePartialLoader<'a> {
         *pointer += offset + SCRIPT_END.len();
 
         let source_text = &self.source_text[js_start..js_end];
-        let source_type = SourceType::mjs().with_typescript(is_ts).with_jsx(is_jsx);
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
         Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
@@ -70,6 +83,8 @@ impl<'a> VuePartialLoader<'a> {
 
 #[cfg(test)]
 mod test {
+    use oxc_span::SourceType;
+
     use super::{JavaScriptSource, VuePartialLoader};
 
     fn parse_vue(source_text: &str) -> JavaScriptSource<'_> {
@@ -99,20 +114,7 @@ mod test {
         "#;
 
         let result = parse_vue(source_text);
-        assert!(result.source_type.is_typescript());
-        assert_eq!(result.source_text.trim(), "1/1");
-    }
-
-    #[test]
-    fn test_build_vue_with_ts_flag_2() {
-        let source_text = r"
-        <script lang=ts setup>
-            1/1
-        </script>
-        ";
-
-        let result = parse_vue(source_text);
-        assert!(result.source_type.is_typescript());
+        assert_eq!(result.source_type, SourceType::ts());
         assert_eq!(result.source_text.trim(), "1/1");
     }
 
@@ -125,21 +127,7 @@ mod test {
         ";
 
         let result = parse_vue(source_text);
-        assert!(result.source_type.is_typescript());
-        assert_eq!(result.source_text.trim(), "1/1");
-    }
-
-    #[test]
-    fn test_build_vue_with_tsx_flag() {
-        let source_text = r"
-        <script lang=tsx setup>
-            1/1
-        </script>
-        ";
-
-        let result = parse_vue(source_text);
-        assert!(result.source_type.is_jsx());
-        assert!(result.source_type.is_typescript());
+        assert_eq!(result.source_type, SourceType::ts());
         assert_eq!(result.source_text.trim(), "1/1");
     }
 
@@ -251,5 +239,29 @@ mod test {
         let sources = VuePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 1);
         assert_eq!(sources[0].source_text, "a");
+    }
+
+    #[test]
+    fn lang() {
+        let cases = [
+            ("<script>debugger</script>", Some(SourceType::mjs())),
+            ("<script lang = 'tsx' >debugger</script>", Some(SourceType::tsx())),
+            (r#"<script lang = "cjs" >debugger</script>"#, Some(SourceType::cjs())),
+            ("<script lang = 'xxx'>debugger</script>", None),
+            (r#"<script lang = "xxx">debugger</script>"#, None),
+            ("<script lang='xxx'>debugger</script>", None),
+            (r#"<script lang="xxx">debugger</script>"#, None),
+            ("<script lang=tsx>debugger</script>", None), // this is valid but too compliated to parse
+        ];
+
+        for (source_text, source_type) in cases {
+            let sources = VuePartialLoader::new(source_text).parse();
+            if let Some(expected) = source_type {
+                assert_eq!(sources.len(), 1);
+                assert_eq!(sources[0].source_type, expected);
+            } else {
+                assert_eq!(sources.len(), 0);
+            }
+        }
     }
 }

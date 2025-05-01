@@ -462,36 +462,44 @@ impl SourceType {
                 )
             })?;
 
+        let mut source_type = Self::from_extension(extension)?;
+
+        #[expect(clippy::case_sensitive_file_extension_comparisons)]
+        if match extension {
+            "ts" if file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d") => {
+                true
+            }
+            "mts" | "cts" if file_name[..file_name.len() - 4].ends_with(".d") => true,
+            _ => false,
+        } {
+            source_type.language = Language::TypeScriptDefinition;
+        }
+
+        Ok(source_type)
+    }
+
+    /// Converts a file extension to [`SourceType`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UnknownExtension`] if:
+    ///   * the file extension is not one of "js", "mjs", "cjs", "jsx", "ts",
+    ///     "mts", "cts", "tsx". See [`VALID_EXTENSIONS`] for the list of valid
+    ///     extensions.
+    pub fn from_extension(extension: &str) -> Result<Self, UnknownExtension> {
         let module_kind = match extension {
             "js" | "tsx" | "ts" | "jsx" | "mts" | "mjs" => ModuleKind::Module,
             "cjs" | "cts" => ModuleKind::Script,
-            _ => unreachable!(),
+            _ => return Err(UnknownExtension::new("Unknown extension.")),
         };
 
         let language = match extension {
             // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
             // `{file basename}.d.{extension}.ts`
             // https://github.com/microsoft/TypeScript/issues/50133
-            "ts" => {
-                if file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d") {
-                    Language::TypeScriptDefinition
-                } else {
-                    Language::TypeScript
-                }
-            }
             "js" | "cjs" | "mjs" | "jsx" => Language::JavaScript,
-            "tsx" => Language::TypeScript,
-            #[expect(clippy::case_sensitive_file_extension_comparisons)]
-            "mts" | "cts" => {
-                if file_name[..file_name.len() - 4].ends_with(".d") {
-                    Language::TypeScriptDefinition
-                } else {
-                    Language::TypeScript
-                }
-            }
-            _ => {
-                unreachable!();
-            }
+            "ts" | "tsx" | "mts" | "cts" => Language::TypeScript,
+            _ => return Err(UnknownExtension::new("Unknown extension.")),
         };
 
         let variant = match extension {
