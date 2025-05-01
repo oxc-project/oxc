@@ -731,6 +731,9 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let mut lhs = lhs;
         loop {
+            if self.fatal_error.is_some() {
+                return lhs;
+            }
             lhs = match self.cur_kind() {
                 Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false),
                 Kind::QuestionDot => {
