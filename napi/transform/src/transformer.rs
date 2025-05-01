@@ -652,11 +652,11 @@ impl Compiler {
                                     "Inject plugin did not receive a tuple [string, string].",
                                 )]);
                             }
-                            let source = v[0].to_string();
+                            let source = &v[0];
                             Ok(if v[1] == "*" {
-                                InjectImport::namespace_specifier(&source, &local)
+                                InjectImport::namespace_specifier(source, &local)
                             } else {
-                                InjectImport::named_specifier(&source, Some(&v[1]), &local)
+                                InjectImport::named_specifier(source, Some(&v[1]), &local)
                             })
                         }
                     })
