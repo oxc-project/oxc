@@ -6,9 +6,7 @@ source: crates/oxc_codegen/tests/integration/main.rs
 /* @license */
 foo;bar;
 ----------
-foo;
-bar;
-
+foo;bar;
 /* @license */
 /* @license */
 
@@ -17,9 +15,7 @@ bar;
 /* @preserve */
 foo;bar;
 ----------
-foo;
-bar;
-
+foo;bar;
 /* @license */
 /* @preserve */
 
@@ -28,9 +24,7 @@ bar;
 //! KEEP
 foo;bar;
 ----------
-foo;
-bar;
-
+foo;bar;
 /* @license */
 //! KEEP
 
@@ -39,9 +33,7 @@ bar;
 /*! KEEP */
 foo;bar;
 ----------
-foo;
-bar;
-
+foo;bar;
 /* @license */
 /*! KEEP */
 
@@ -49,9 +41,7 @@ bar;
 /* @license *//*! KEEP */
 foo;bar;
 ----------
-foo;
-bar;
-
+foo;bar;
 /* @license */
 /*! KEEP */
 
@@ -64,10 +54,7 @@ function () {
     bar;
 }
 ----------
-function() {
-	bar;
-}
-
+function(){bar}
 /*
 * @license
 * Copyright notice 2
@@ -76,11 +63,7 @@ function() {
 ########## 6
 function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
 ----------
-function bar() {
-	var foo;
-	function() {}
-}
-
+function bar(){var foo;function(){}}
 /*! #__NO_SIDE_EFFECTS__ */
 
 ########## 7
@@ -98,15 +81,14 @@ function foo() {
  * @preserve
  */
 ----------
-function foo() {
-	(() => {
-		/**
-		* @preserve
-		*/
-	})();
-	/**
-	* @preserve
-	*/
+function foo(){(()=>{
+/**
+* @preserve
+*/
+})()
+/**
+* @preserve
+*/
 }
 /**
 * @preserve

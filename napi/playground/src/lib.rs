@@ -12,7 +12,7 @@ use oxc::{
     allocator::Allocator,
     ast::ast::Program,
     ast_visit::Visit,
-    codegen::{Codegen, CodegenOptions},
+    codegen::{Codegen, CodegenOptions, LegalComment},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
@@ -232,6 +232,9 @@ impl Oxc {
             .with_scoping(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
+                comments: true,
+                annotation_comments: true,
+                legal_comments: LegalComment::Inline,
                 source_map_path: codegen_options
                     .enable_sourcemap
                     .unwrap_or_default()

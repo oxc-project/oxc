@@ -150,7 +150,7 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
     .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
     Codegen::new()
-        .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
+        .with_options(CodegenOptions::minify())
         .with_scoping(ret.scoping)
         .build(&program)
         .code

@@ -54,7 +54,13 @@ fn minify(
     };
     let ret = Minifier::new(options).build(allocator, &mut program);
     Codegen::new()
-        .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
+        .with_options(CodegenOptions {
+            minify: nospace,
+            comments: false,
+            annotation_comments: false,
+            legal_comments: oxc_codegen::LegalComment::Eof,
+            ..CodegenOptions::default()
+        })
         .with_scoping(ret.scoping)
         .build(&program)
         .code

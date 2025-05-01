@@ -1871,8 +1871,8 @@ function foobar() {
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('react', { importedNames: ['default'] });
 const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['Foo', 'Slot'] });
-function Bar({ Slot = __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
-  return __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, __vite_ssr_import_0__.default.createElement(Slot, null));
+function Bar({ Slot = /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
+  return /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(Slot, null));
 }",
         );
     }

@@ -152,10 +152,10 @@ impl Default for CodegenOptions {
 
 impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
     fn from(o: &CodegenOptions) -> Self {
-        let default = oxc_codegen::CodegenOptions::default();
-        oxc_codegen::CodegenOptions {
-            minify: o.remove_whitespace.unwrap_or(default.minify),
-            ..default
+        if o.remove_whitespace.is_some_and(|b| b) {
+            oxc_codegen::CodegenOptions::minify()
+        } else {
+            oxc_codegen::CodegenOptions::default()
         }
     }
 }

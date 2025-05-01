@@ -106,8 +106,11 @@ pub struct Codegen<'a> {
 
     /// Fast path for [CodegenOptions::single_quote]
     quote: Quote,
+
     /// Fast path for if print comments
-    print_comments: bool,
+    print_any_comment: bool,
+    print_legal_comment: bool,
+    print_annotation_comment: bool,
 
     // Builders
     comments: CommentsMap,
@@ -143,7 +146,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn new() -> Self {
         let options = CodegenOptions::default();
-        let print_comments = options.print_comments();
+        let print_any_comment = options.print_any_comment();
+        let print_legal_comment = options.print_legal_comment();
+        let print_annotation_comment = options.print_annotation_comment();
         Self {
             options,
             source_text: "",
@@ -162,7 +167,9 @@ impl<'a> Codegen<'a> {
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
-            print_comments,
+            print_any_comment,
+            print_legal_comment,
+            print_annotation_comment,
             comments: CommentsMap::default(),
             legal_comments: vec![],
             sourcemap_builder: None,
@@ -173,7 +180,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
-        self.print_comments = options.print_comments();
+        self.print_any_comment = options.print_any_comment();
+        self.print_legal_comment = options.print_legal_comment();
+        self.print_annotation_comment = options.print_annotation_comment();
         self.options = options;
         self
     }
@@ -195,9 +204,9 @@ impl<'a> Codegen<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
-        if self.print_comments {
+        if self.print_any_comment {
             if program.comments.is_empty() {
-                self.print_comments = false;
+                self.print_any_comment = false;
             } else {
                 self.build_comments(&program.comments);
             }
