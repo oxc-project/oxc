@@ -509,14 +509,6 @@ fn get_uid_name_base(name: &str) -> &str {
     unsafe { str::from_utf8_unchecked(bytes) }
 }
 
-fn get_unique_name<'a>(
-    base: &str,
-    uid_names: &FxHashSet<&'a str>,
-    allocator: &'a Allocator,
-) -> ArenaString<'a> {
-    get_unique_name_impl(base, uid_names, allocator)
-}
-
 // TODO: We could make this function more performant, especially when it checks a lot of names
 // before it reaches one that is unused.
 // This function repeatedly creates strings which have only differ from each other by digits added on end,
@@ -525,7 +517,7 @@ fn get_unique_name<'a>(
 // we could calculate an "unfinished" hash not including the last block, and then just add the final
 // block to "finish" the hash on each iteration. With `FxHash` this would be straight line code and only
 // a few operations.
-fn get_unique_name_impl<'a>(
+fn get_unique_name<'a>(
     base: &str,
     uid_names: &FxHashSet<&'a str>,
     allocator: &'a Allocator,
