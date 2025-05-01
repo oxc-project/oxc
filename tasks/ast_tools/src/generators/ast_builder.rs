@@ -298,9 +298,8 @@ fn get_struct_params<'s>(
     TokenStream,    // `where` clause
     bool,           // Has default fields
 ) {
-    // Only a single `Atom` generic is supported at present
-    let mut has_atom_generic = false;
     let mut generic_count = 0u32;
+    let mut atom_generic_count = 0u32;
     let mut has_default_fields = false;
 
     let mut generics = vec![];
@@ -327,11 +326,9 @@ fn get_struct_params<'s>(
             }
 
             let generic_details = match type_def {
-                TypeDef::Primitive(primitive_def)
-                    if primitive_def.name() == "Atom" && !has_atom_generic =>
-                {
-                    has_atom_generic = true;
-                    Some((create_safe_ident("A"), GenericType::Into))
+                TypeDef::Primitive(primitive_def) if primitive_def.name() == "Atom" => {
+                    atom_generic_count += 1;
+                    Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
                 }
                 TypeDef::Box(_) => {
                     generic_count += 1;

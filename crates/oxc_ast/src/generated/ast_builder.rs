@@ -140,14 +140,14 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
-    pub fn expression_big_int_literal<A>(
+    pub fn expression_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A,
+        raw: A1,
         base: BigintBase,
     ) -> Expression<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Expression::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
     }
@@ -179,14 +179,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn expression_string_literal<A>(
+    pub fn expression_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> Expression<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -201,15 +201,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn expression_string_literal_with_lone_surrogates<A>(
+    pub fn expression_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> Expression<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -245,9 +245,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn expression_identifier<A>(self, span: Span, name: A) -> Expression<'a>
+    pub fn expression_identifier<A1>(self, span: Span, name: A1) -> Expression<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Expression::Identifier(self.alloc_identifier_reference(span, name))
     }
@@ -261,14 +261,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn expression_identifier_with_reference_id<A>(
+    pub fn expression_identifier_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> Expression<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Expression::Identifier(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -1218,9 +1218,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn identifier_name<A>(self, span: Span, name: A) -> IdentifierName<'a>
+    pub fn identifier_name<A1>(self, span: Span, name: A1) -> IdentifierName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         IdentifierName { span, name: name.into() }
     }
@@ -1234,9 +1234,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn alloc_identifier_name<A>(self, span: Span, name: A) -> Box<'a, IdentifierName<'a>>
+    pub fn alloc_identifier_name<A1>(self, span: Span, name: A1) -> Box<'a, IdentifierName<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.identifier_name(span, name), self.allocator)
     }
@@ -1250,9 +1250,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn identifier_reference<A>(self, span: Span, name: A) -> IdentifierReference<'a>
+    pub fn identifier_reference<A1>(self, span: Span, name: A1) -> IdentifierReference<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         IdentifierReference { span, name: name.into(), reference_id: Default::default() }
     }
@@ -1266,13 +1266,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn alloc_identifier_reference<A>(
+    pub fn alloc_identifier_reference<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> Box<'a, IdentifierReference<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
@@ -1287,14 +1287,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn identifier_reference_with_reference_id<A>(
+    pub fn identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> IdentifierReference<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         IdentifierReference { span, name: name.into(), reference_id: Cell::new(Some(reference_id)) }
     }
@@ -1309,14 +1309,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn alloc_identifier_reference_with_reference_id<A>(
+    pub fn alloc_identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> Box<'a, IdentifierReference<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(
             self.identifier_reference_with_reference_id(span, name, reference_id),
@@ -1333,9 +1333,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn binding_identifier<A>(self, span: Span, name: A) -> BindingIdentifier<'a>
+    pub fn binding_identifier<A1>(self, span: Span, name: A1) -> BindingIdentifier<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         BindingIdentifier { span, name: name.into(), symbol_id: Default::default() }
     }
@@ -1349,9 +1349,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn alloc_binding_identifier<A>(self, span: Span, name: A) -> Box<'a, BindingIdentifier<'a>>
+    pub fn alloc_binding_identifier<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> Box<'a, BindingIdentifier<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
     }
@@ -1366,14 +1370,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn binding_identifier_with_symbol_id<A>(
+    pub fn binding_identifier_with_symbol_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         symbol_id: SymbolId,
     ) -> BindingIdentifier<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         BindingIdentifier { span, name: name.into(), symbol_id: Cell::new(Some(symbol_id)) }
     }
@@ -1388,14 +1392,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn alloc_binding_identifier_with_symbol_id<A>(
+    pub fn alloc_binding_identifier_with_symbol_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         symbol_id: SymbolId,
     ) -> Box<'a, BindingIdentifier<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), self.allocator)
     }
@@ -1406,9 +1410,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn label_identifier<A>(self, span: Span, name: A) -> LabelIdentifier<'a>
+    pub fn label_identifier<A1>(self, span: Span, name: A1) -> LabelIdentifier<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         LabelIdentifier { span, name: name.into() }
     }
@@ -1648,9 +1652,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn property_key_static_identifier<A>(self, span: Span, name: A) -> PropertyKey<'a>
+    pub fn property_key_static_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         PropertyKey::StaticIdentifier(self.alloc_identifier_name(span, name))
     }
@@ -1663,9 +1667,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn property_key_private_identifier<A>(self, span: Span, name: A) -> PropertyKey<'a>
+    pub fn property_key_private_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         PropertyKey::PrivateIdentifier(self.alloc_private_identifier(span, name))
     }
@@ -2610,13 +2614,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn simple_assignment_target_assignment_target_identifier<A>(
+    pub fn simple_assignment_target_assignment_target_identifier<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> SimpleAssignmentTarget<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference(span, name),
@@ -2632,14 +2636,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn simple_assignment_target_assignment_target_identifier_with_reference_id<A>(
+    pub fn simple_assignment_target_assignment_target_identifier_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> SimpleAssignmentTarget<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
@@ -3699,14 +3703,14 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`: Directive with any escapes unescaped
     /// * `directive`: Raw content of directive as it appears in source, any escapes left as is
     #[inline]
-    pub fn directive<A>(
+    pub fn directive<A1>(
         self,
         span: Span,
         expression: StringLiteral<'a>,
-        directive: A,
+        directive: A1,
     ) -> Directive<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Directive { span, expression, directive: directive.into() }
     }
@@ -3717,9 +3721,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `value`
     #[inline]
-    pub fn hashbang<A>(self, span: Span, value: A) -> Hashbang<'a>
+    pub fn hashbang<A1>(self, span: Span, value: A1) -> Hashbang<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Hashbang { span, value: value.into() }
     }
@@ -5403,13 +5407,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier<A>(
+    pub fn binding_pattern_kind_binding_identifier<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> BindingPatternKind<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         BindingPatternKind::BindingIdentifier(self.alloc_binding_identifier(span, name))
     }
@@ -5423,14 +5427,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier_with_symbol_id<A>(
+    pub fn binding_pattern_kind_binding_identifier_with_symbol_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         symbol_id: SymbolId,
     ) -> BindingPatternKind<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         BindingPatternKind::BindingIdentifier(
             self.alloc_binding_identifier_with_symbol_id(span, name, symbol_id),
@@ -6948,9 +6952,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn private_identifier<A>(self, span: Span, name: A) -> PrivateIdentifier<'a>
+    pub fn private_identifier<A1>(self, span: Span, name: A1) -> PrivateIdentifier<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         PrivateIdentifier { span, name: name.into() }
     }
@@ -6964,9 +6968,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn alloc_private_identifier<A>(self, span: Span, name: A) -> Box<'a, PrivateIdentifier<'a>>
+    pub fn alloc_private_identifier<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> Box<'a, PrivateIdentifier<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.private_identifier(span, name), self.allocator)
     }
@@ -7636,9 +7644,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn import_attribute_key_identifier<A>(self, span: Span, name: A) -> ImportAttributeKey<'a>
+    pub fn import_attribute_key_identifier<A1>(self, span: Span, name: A1) -> ImportAttributeKey<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ImportAttributeKey::Identifier(self.identifier_name(span, name))
     }
@@ -7650,14 +7658,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn import_attribute_key_string_literal<A>(
+    pub fn import_attribute_key_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> ImportAttributeKey<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -7670,15 +7678,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn import_attribute_key_string_literal_with_lone_surrogates<A>(
+    pub fn import_attribute_key_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> ImportAttributeKey<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ImportAttributeKey::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
@@ -8184,9 +8192,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn module_export_name_identifier_name<A>(self, span: Span, name: A) -> ModuleExportName<'a>
+    pub fn module_export_name_identifier_name<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> ModuleExportName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ModuleExportName::IdentifierName(self.identifier_name(span, name))
     }
@@ -8197,13 +8209,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn module_export_name_identifier_reference<A>(
+    pub fn module_export_name_identifier_reference<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> ModuleExportName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
@@ -8215,14 +8227,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn module_export_name_identifier_reference_with_reference_id<A>(
+    pub fn module_export_name_identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> ModuleExportName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ModuleExportName::IdentifierReference(self.identifier_reference_with_reference_id(
             span,
@@ -8238,14 +8250,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn module_export_name_string_literal<A>(
+    pub fn module_export_name_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> ModuleExportName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -8258,15 +8270,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn module_export_name_string_literal_with_lone_surrogates<A>(
+    pub fn module_export_name_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> ModuleExportName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
@@ -8416,9 +8428,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn string_literal<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> StringLiteral<'a>
+    pub fn string_literal<A1>(
+        self,
+        span: Span,
+        value: A1,
+        raw: Option<Atom<'a>>,
+    ) -> StringLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         StringLiteral { span, value: value.into(), raw, lone_surrogates: Default::default() }
     }
@@ -8433,14 +8450,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_string_literal<A>(
+    pub fn alloc_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> Box<'a, StringLiteral<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
     }
@@ -8456,15 +8473,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn string_literal_with_lone_surrogates<A>(
+    pub fn string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> StringLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         StringLiteral { span, value: value.into(), raw, lone_surrogates }
     }
@@ -8480,15 +8497,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn alloc_string_literal_with_lone_surrogates<A>(
+    pub fn alloc_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> Box<'a, StringLiteral<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(
             self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
@@ -8506,9 +8523,9 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
-    pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
+    pub fn big_int_literal<A1>(self, span: Span, raw: A1, base: BigintBase) -> BigIntLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         BigIntLiteral { span, raw: raw.into(), base }
     }
@@ -8523,14 +8540,14 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
-    pub fn alloc_big_int_literal<A>(
+    pub fn alloc_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A,
+        raw: A1,
         base: BigintBase,
     ) -> Box<'a, BigIntLiteral<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.big_int_literal(span, raw, base), self.allocator)
     }
@@ -8792,9 +8809,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_element_name_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    pub fn jsx_element_name_identifier<A1>(self, span: Span, name: A1) -> JSXElementName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXElementName::Identifier(self.alloc_jsx_identifier(span, name))
     }
@@ -8807,9 +8824,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn jsx_element_name_identifier_reference<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    pub fn jsx_element_name_identifier_reference<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> JSXElementName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -8823,14 +8844,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn jsx_element_name_identifier_reference_with_reference_id<A>(
+    pub fn jsx_element_name_identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> JSXElementName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -8970,13 +8991,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn jsx_member_expression_object_identifier_reference<A>(
+    pub fn jsx_member_expression_object_identifier_reference<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> JSXMemberExpressionObject<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -8990,14 +9011,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn jsx_member_expression_object_identifier_reference_with_reference_id<A>(
+    pub fn jsx_member_expression_object_identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> JSXMemberExpressionObject<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXMemberExpressionObject::IdentifierReference(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
@@ -9204,9 +9225,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_attribute_name_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
+    pub fn jsx_attribute_name_identifier<A1>(self, span: Span, name: A1) -> JSXAttributeName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXAttributeName::Identifier(self.alloc_jsx_identifier(span, name))
     }
@@ -9238,14 +9259,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_attribute_value_string_literal<A>(
+    pub fn jsx_attribute_value_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> JSXAttributeValue<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -9260,15 +9281,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn jsx_attribute_value_string_literal_with_lone_surrogates<A>(
+    pub fn jsx_attribute_value_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> JSXAttributeValue<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -9359,9 +9380,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_identifier<A>(self, span: Span, name: A) -> JSXIdentifier<'a>
+    pub fn jsx_identifier<A1>(self, span: Span, name: A1) -> JSXIdentifier<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXIdentifier { span, name: name.into() }
     }
@@ -9375,9 +9396,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn alloc_jsx_identifier<A>(self, span: Span, name: A) -> Box<'a, JSXIdentifier<'a>>
+    pub fn alloc_jsx_identifier<A1>(self, span: Span, name: A1) -> Box<'a, JSXIdentifier<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.jsx_identifier(span, name), self.allocator)
     }
@@ -9391,9 +9412,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_child_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXChild<'a>
+    pub fn jsx_child_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXChild<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXChild::Text(self.alloc_jsx_text(span, value, raw))
     }
@@ -9515,9 +9536,9 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXText<'a>
+    pub fn jsx_text<A1>(self, span: Span, value: A1, raw: Option<Atom<'a>>) -> JSXText<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         JSXText { span, value: value.into(), raw }
     }
@@ -9532,14 +9553,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The text content.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_jsx_text<A>(
+    pub fn alloc_jsx_text<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> Box<'a, JSXText<'a>>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         Box::new_in(self.jsx_text(span, value, raw), self.allocator)
     }
@@ -9725,9 +9746,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_enum_member_name_identifier<A>(self, span: Span, name: A) -> TSEnumMemberName<'a>
+    pub fn ts_enum_member_name_identifier<A1>(self, span: Span, name: A1) -> TSEnumMemberName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSEnumMemberName::Identifier(self.alloc_identifier_name(span, name))
     }
@@ -9741,14 +9762,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_enum_member_name_string<A>(
+    pub fn ts_enum_member_name_string<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> TSEnumMemberName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
@@ -9763,15 +9784,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_enum_member_name_string_with_lone_surrogates<A>(
+    pub fn ts_enum_member_name_string_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> TSEnumMemberName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -9790,14 +9811,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_enum_member_name_computed_string<A>(
+    pub fn ts_enum_member_name_computed_string<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> TSEnumMemberName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
     }
@@ -9812,15 +9833,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_enum_member_name_computed_string_with_lone_surrogates<A>(
+    pub fn ts_enum_member_name_computed_string_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> TSEnumMemberName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -9957,14 +9978,14 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
-    pub fn ts_literal_big_int_literal<A>(
+    pub fn ts_literal_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A,
+        raw: A1,
         base: BigintBase,
     ) -> TSLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
     }
@@ -9978,14 +9999,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_literal_string_literal<A>(
+    pub fn ts_literal_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> TSLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
@@ -10000,15 +10021,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_literal_string_literal_with_lone_surrogates<A>(
+    pub fn ts_literal_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> TSLiteral<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
             span,
@@ -11664,9 +11685,9 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn ts_type_name_identifier_reference<A>(self, span: Span, name: A) -> TSTypeName<'a>
+    pub fn ts_type_name_identifier_reference<A1>(self, span: Span, name: A1) -> TSTypeName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -11680,14 +11701,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn ts_type_name_identifier_reference_with_reference_id<A>(
+    pub fn ts_type_name_identifier_reference_with_reference_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         reference_id: ReferenceId,
     ) -> TSTypeName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -13018,14 +13039,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`
     /// * `type_annotation`
     #[inline]
-    pub fn ts_index_signature_name<A, T1>(
+    pub fn ts_index_signature_name<A1, T1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         type_annotation: T1,
     ) -> TSIndexSignatureName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {
@@ -13122,13 +13143,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_type_predicate_name_identifier<A>(
+    pub fn ts_type_predicate_name_identifier<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> TSTypePredicateName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSTypePredicateName::Identifier(self.alloc_identifier_name(span, name))
     }
@@ -13247,13 +13268,13 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn ts_module_declaration_name_identifier<A>(
+    pub fn ts_module_declaration_name_identifier<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
     ) -> TSModuleDeclarationName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
@@ -13265,14 +13286,14 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn ts_module_declaration_name_identifier_with_symbol_id<A>(
+    pub fn ts_module_declaration_name_identifier_with_symbol_id<A1>(
         self,
         span: Span,
-        name: A,
+        name: A1,
         symbol_id: SymbolId,
     ) -> TSModuleDeclarationName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSModuleDeclarationName::Identifier(
             self.binding_identifier_with_symbol_id(span, name, symbol_id),
@@ -13286,14 +13307,14 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_module_declaration_name_string_literal<A>(
+    pub fn ts_module_declaration_name_string_literal<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
     ) -> TSModuleDeclarationName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
     }
@@ -13306,15 +13327,15 @@ impl<'a> AstBuilder<'a> {
     /// * `raw`: The raw string as it appears in source code.
     /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<A>(
+    pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<A1>(
         self,
         span: Span,
-        value: A,
+        value: A1,
         raw: Option<Atom<'a>>,
         lone_surrogates: bool,
     ) -> TSModuleDeclarationName<'a>
     where
-        A: Into<Atom<'a>>,
+        A1: Into<Atom<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal_with_lone_surrogates(
             span,
