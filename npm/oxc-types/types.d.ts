@@ -1375,11 +1375,13 @@ export interface TSMappedType extends Span {
   type: 'TSMappedType';
   nameType: TSType | null;
   typeAnnotation: TSType | null;
-  optional: true | '+' | '-' | null;
-  readonly: true | '+' | '-' | null;
+  optional: TSMappedTypeModifierOperator;
+  readonly: TSMappedTypeModifierOperator;
   key: TSTypeParameter['name'];
   constraint: TSTypeParameter['constraint'];
 }
+
+export type TSMappedTypeModifierOperator = true | '+' | '-' | null;
 
 export interface TSTemplateLiteralType extends Span {
   type: 'TSTemplateLiteralType';

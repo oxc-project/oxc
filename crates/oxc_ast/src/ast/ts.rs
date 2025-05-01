@@ -1462,15 +1462,18 @@ pub struct TSMappedType<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
-#[estree(via = TSMappedTypeModifierOperatorConverter)]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
+    #[estree(via = True)]
     True = 0,
     /// e.g. `+?` in `{ [P in K]+?: T }`
+    #[estree(rename = "+")]
     Plus = 1,
     /// e.g. `-?` in `{ [P in K]-?: T }`
+    #[estree(rename = "-")]
     Minus = 2,
     /// No modifier present
+    #[estree(via = Null)]
     None = 3,
 }
 

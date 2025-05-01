@@ -1294,29 +1294,6 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
     }
 }
 
-#[ast_meta]
-#[estree(
-    ts_type = "true | '+' | '-' | null",
-    raw_deser = "
-        const operator = DESER[u8](POS);
-        [true, '+', '-', null][operator]
-    "
-)]
-pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifierOperator);
-
-impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self.0 {
-            TSMappedTypeModifierOperator::True => true.serialize(serializer),
-            TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
-            TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
-            // This is typed as `undefined` (= key is not present) in TS-ESTree.
-            // But we serialize it as `null` to align result in snapshot tests.
-            TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
-        }
-    }
-}
-
 /// Serializer for `IdentifierReference` variant of `TSTypeName`.
 ///
 /// Where is an identifier called `this`, TS-ESTree presents it as a `ThisExpression`.

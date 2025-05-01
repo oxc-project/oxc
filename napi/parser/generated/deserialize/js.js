@@ -3946,8 +3946,18 @@ function deserializeTSTypeQueryExprName(pos) {
 }
 
 function deserializeTSMappedTypeModifierOperator(pos) {
-  const operator = deserializeU8(pos);
-  return [true, '+', '-', null][operator];
+  switch (uint8[pos]) {
+    case 0:
+      return true;
+    case 1:
+      return '+';
+    case 2:
+      return '-';
+    case 3:
+      return null;
+    default:
+      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSMappedTypeModifierOperator`);
+  }
 }
 
 function deserializeTSModuleReference(pos) {

@@ -3187,7 +3187,12 @@ impl ESTree for TSMappedType<'_> {
 
 impl ESTree for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::TSMappedTypeModifierOperatorConverter(self).serialize(serializer)
+        match self {
+            Self::True => crate::serialize::True(()).serialize(serializer),
+            Self::Plus => JsonSafeString("+").serialize(serializer),
+            Self::Minus => JsonSafeString("-").serialize(serializer),
+            Self::None => crate::serialize::Null(()).serialize(serializer),
+        }
     }
 }
 
