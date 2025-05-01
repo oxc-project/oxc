@@ -427,15 +427,6 @@ pub fn return_statement_only_in_function_body(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
-    // OxcDiagnostic::error("TS18007: JSX expressions may not use the comma
-    // operator.")
-    ts_error("18007", "JSX expressions may not use the comma operator")
-        .with_help("Did you mean to write an array?")
-        .with_label(span)
-}
-
-#[cold]
 pub fn invalid_identifier_in_using_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations may not have binding patterns.").with_label(span)
 }
