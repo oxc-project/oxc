@@ -389,7 +389,7 @@ impl<'a> PeepholeOptimizations {
                     e.right.get_side_free_string_value(&ctx),
                 ) {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
-                    let value = left_str.into_owned() + &right_str;
+                    let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
                     let left = left_binary_expr.left.take_in(ctx.ast.allocator);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
