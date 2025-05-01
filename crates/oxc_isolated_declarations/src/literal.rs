@@ -12,7 +12,7 @@ impl<'a> IsolatedDeclarations<'a> {
             lit.quasis.first().map(|item| {
                 self.ast.alloc(self.ast.string_literal(
                     lit.span,
-                    if let Some(cooked) = &item.value.cooked { cooked } else { &item.value.raw },
+                    item.value.cooked.unwrap_or(item.value.raw),
                     None,
                 ))
             })
