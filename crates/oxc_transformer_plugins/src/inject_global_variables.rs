@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use cow_utils::CowUtils;
 
@@ -63,9 +63,10 @@ impl InjectImport {
     }
 
     fn replace_name(local: &str) -> Option<CompactStr> {
-        local
-            .contains('.')
-            .then(|| CompactStr::from(format!("$inject_{}", local.cow_replace('.', "_"))))
+        match local.cow_replace('.', "_") {
+            Cow::Owned(local) => Some(CompactStr::from(format!("$inject_{local}"))),
+            Cow::Borrowed(_) => None,
+        }
     }
 }
 
