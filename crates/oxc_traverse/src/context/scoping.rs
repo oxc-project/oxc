@@ -608,13 +608,9 @@ fn get_unique_name<'a>(
     let mut buffer = ItoaBuffer::new();
     for n in 100..=u32::MAX {
         let digits = buffer.format(n);
-        /*
         // SAFETY: `base_len` is always shorter than current `name.len()`, on a UTF-8 char boundary,
         // and `name` contains at least `base_len` initialized bytes
         unsafe { name.set_len(base_len) };
-        */
-        // workaround for `set_len` does not exist in `ArenaString`
-        name.truncate(base_len);
         name.push_str(digits);
         if !uid_names.contains(name.as_str()) {
             return name;
