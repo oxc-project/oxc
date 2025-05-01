@@ -68,6 +68,7 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
     let severity = report.diagnostic.severity;
     let source = &report.diagnostic.source;
     let tags = &report.diagnostic.tags;
+    let fixed = &report.fixed_content;
 
     format!(
         r"
@@ -79,7 +80,8 @@ range: {range:?}
 severity: {severity:?}
 source: {source:?}
 tags: {tags:?}
-            "
+fixed: {fixed:?}
+"
     )
 }
 

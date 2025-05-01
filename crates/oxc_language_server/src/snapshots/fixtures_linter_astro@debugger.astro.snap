@@ -12,7 +12,8 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-            
+fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 0, character: 1 }, end: Position { line: 1, character: 5 } } })
+
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -24,7 +25,8 @@ related_information[0].location.range: Range { start: Position { line: 10, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-            
+fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 0, character: 3 }, end: Position { line: 1, character: 7 } } })
+
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -36,7 +38,8 @@ related_information[0].location.range: Range { start: Position { line: 14, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-            
+fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 0, character: 3 }, end: Position { line: 1, character: 7 } } })
+
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -48,3 +51,4 @@ related_information[0].location.range: Range { start: Position { line: 18, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 0, character: 3 }, end: Position { line: 1, character: 7 } } })

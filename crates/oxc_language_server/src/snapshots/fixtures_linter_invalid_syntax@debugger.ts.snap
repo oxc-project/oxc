@@ -10,3 +10,4 @@ related_information: None
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+fixed: None
