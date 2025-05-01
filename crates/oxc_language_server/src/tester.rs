@@ -66,8 +66,9 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
         None => "related_information: None".to_string(),
     };
     let severity = report.diagnostic.severity;
-    let source = report.diagnostic.source.clone();
-    let tags = report.diagnostic.tags.clone();
+    let source = &report.diagnostic.source;
+    let tags = &report.diagnostic.tags;
+
     format!(
         r"
 code: {code:?}
