@@ -185,7 +185,7 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
             Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source, None)),
             Argument::from(ctx.ast.expression_string_literal(
                 SPAN,
-                flags.to_inline_string().as_str(),
+                ctx.ast.atom(flags.to_inline_string().as_str()),
                 None,
             )),
         ]);

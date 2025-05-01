@@ -37,7 +37,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
         let first_part = parts.next().unwrap();
         let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, input));
+            return Self::Identifier(ast.identifier_reference(SPAN, ast.atom(input)));
         };
 
         if first_part == "import" {
@@ -45,13 +45,13 @@ impl<'a> RefreshIdentifierResolver<'a> {
             let mut expr = ast.expression_meta_property(
                 SPAN,
                 ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, second_part),
+                ast.identifier_name(SPAN, ast.atom(second_part)),
             );
             if let Some(property) = parts.next() {
                 expr = Expression::from(ast.member_expression_static(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, property),
+                    ast.identifier_name(SPAN, ast.atom(property)),
                     false,
                 ));
             }
@@ -59,8 +59,8 @@ impl<'a> RefreshIdentifierResolver<'a> {
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, first_part);
-        let property = ast.identifier_name(SPAN, second_part);
+        let object = ast.identifier_reference(SPAN, ast.atom(first_part));
+        let property = ast.identifier_name(SPAN, ast.atom(second_part));
         Self::Member((object, property))
     }
 

@@ -121,7 +121,7 @@ fn do_fix<'a>(
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, argument, None));
+    content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
     content.print_str(r")");
     fixer.replace(call_expr.span, content)
 }

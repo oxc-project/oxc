@@ -204,7 +204,7 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, inject.source.as_str(), None);
+            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
             let kind = ImportOrExportKind::Value;
             let import_decl = self
                 .ast
@@ -234,18 +234,18 @@ impl<'a> InjectGlobalVariables<'a> {
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, local),
+                    self.ast.binding_identifier(SPAN, self.ast.atom(local)),
                     ImportOrExportKind::Value,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, local);
+                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
                 self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, local);
+                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
                 self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
             }
         }
