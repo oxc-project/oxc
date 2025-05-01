@@ -1,15 +1,13 @@
 use std::fmt::Write;
 
-use oxc_linter::Linter;
 use tower_lsp_server::{
     UriExt,
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use super::{
-    error_with_position::DiagnosticReport, isolated_lint_handler::IsolatedLintHandlerOptions,
-    server_linter::ServerLinter,
-};
+use crate::{Options, worker::WorkspaceWorker};
+
+use super::linter::error_with_position::DiagnosticReport;
 
 /// Given a file path relative to the crate root directory, return the URI of the file.
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
@@ -86,63 +84,48 @@ tags: {tags:?}
 
 /// Testing struct for the [linter server][crate::linter::server_linter::ServerLinter].
 pub struct Tester<'t> {
-    server_linter: ServerLinter,
-    snapshot_suffix: Option<&'t str>,
+    relative_root_dir: &'t str,
+    options: Option<Options>,
 }
 
 impl Tester<'_> {
-    pub fn new() -> Self {
-        Self {
-            snapshot_suffix: None,
-            server_linter: ServerLinter::new(IsolatedLintHandlerOptions {
-                use_cross_module: false,
-                root_path: std::env::current_dir().expect("could not get current dir"),
-            }),
-        }
+    pub fn new(relative_root_dir: &'static str, options: Option<Options>) -> Self {
+        Self { relative_root_dir, options }
     }
 
-    pub fn new_with_linter(linter: Linter) -> Self {
-        Self::new_with_server_linter(ServerLinter::new_with_linter(
-            linter,
-            IsolatedLintHandlerOptions {
-                use_cross_module: false,
-                root_path: std::env::current_dir().expect("could not get current dir"),
-            },
-        ))
-    }
-
-    pub fn new_with_server_linter(server_linter: ServerLinter) -> Self {
-        Self { snapshot_suffix: None, server_linter }
-    }
-
-    pub fn with_snapshot_suffix(mut self, suffix: &'static str) -> Self {
-        self.snapshot_suffix = Some(suffix);
-        self
+    fn create_workspace_worker(&self) -> WorkspaceWorker {
+        let absolute_path = std::env::current_dir()
+            .expect("could not get current dir")
+            .join(self.relative_root_dir);
+        let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
+        WorkspaceWorker::new(&uri, self.options.clone().unwrap_or_default())
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
     /// and return the resulting diagnostics in a custom snapshot format.
     #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
-        let uri = get_file_uri(relative_file_path);
-        let content = match std::fs::read_to_string(uri.to_file_path().unwrap()) {
-            Ok(content) => content,
-            Err(err) => panic!("could not read fixture file: {err}: {relative_file_path}"),
-        };
-        let reports = self.server_linter.run_single(&uri, Some(content)).unwrap();
+        let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
+        let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            self.create_workspace_worker()
+                .lint_file(&uri, None)
+                .await
+                .expect("lint file is ignored")
+        });
         let snapshot = if reports.is_empty() {
             "No diagnostic reports".to_string()
         } else {
             reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
         };
 
-        let snapshot_name = relative_file_path.replace('/', "_");
+        let snapshot_name = self.relative_root_dir.replace('/', "_");
         let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
-        if let Some(suffix) = self.snapshot_suffix {
-            settings.set_snapshot_suffix(suffix);
+        if let Some(path) = uri.to_file_path() {
+            settings.set_input_file(path.as_ref());
         }
+        settings.set_snapshot_suffix(relative_file_path.replace('/', "_"));
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot);
         });

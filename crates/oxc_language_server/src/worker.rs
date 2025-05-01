@@ -459,7 +459,7 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::linter::tester::get_file_uri;
+    use crate::tester::get_file_uri;
 
     use super::*;
 

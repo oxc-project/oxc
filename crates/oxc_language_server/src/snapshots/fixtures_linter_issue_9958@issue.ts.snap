@@ -1,5 +1,6 @@
 ---
-source: crates/oxc_language_server/src/linter/tester.rs
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/issue_9958/issue.ts
 ---
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"

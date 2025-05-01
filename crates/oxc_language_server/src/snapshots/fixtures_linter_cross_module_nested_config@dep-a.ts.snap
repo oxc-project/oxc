@@ -1,0 +1,5 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/cross_module_nested_config/dep-a.ts
+---
+No diagnostic reports

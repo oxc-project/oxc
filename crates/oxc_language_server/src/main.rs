@@ -1,5 +1,3 @@
-use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
-use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use futures::future::join_all;
 use log::{debug, info};
 use oxc_linter::FixKind;
@@ -18,14 +16,18 @@ use tower_lsp_server::{
         Uri, WorkspaceEdit,
     },
 };
+// #
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use worker::WorkspaceWorker;
-
-use crate::capabilities::Capabilities;
 
 mod capabilities;
 mod code_actions;
 mod commands;
 mod linter;
+#[cfg(test)]
+mod tester;
 mod worker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
