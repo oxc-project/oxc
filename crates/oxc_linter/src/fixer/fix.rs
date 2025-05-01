@@ -292,6 +292,7 @@ pub struct Fix<'a> {
 }
 
 #[cfg(feature = "language_server")]
+#[derive(Debug)]
 pub struct FixWithPosition<'a> {
     pub content: Cow<'a, str>,
     pub span: SpanPositionMessage<'a>,

@@ -233,6 +233,7 @@ pub struct Message<'a> {
 }
 
 #[cfg(feature = "language_server")]
+#[derive(Debug)]
 pub struct MessageWithPosition<'a> {
     pub message: Cow<'a, str>,
     pub labels: Option<Vec<SpanPositionMessage<'a>>>,
