@@ -322,12 +322,10 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
         .iter()
         .filter(|variant| !should_skip_enum_variant(variant))
         .map(|variant| {
-            if let Some(variant_type) = variant.field_type(schema) {
-                if let Some(converter_name) = &variant.estree.via {
-                    Cow::Borrowed(get_ts_type_for_converter(converter_name, schema).unwrap())
-                } else {
-                    ts_type_name(variant_type, schema)
-                }
+            if let Some(converter_name) = &variant.estree.via {
+                Cow::Borrowed(get_ts_type_for_converter(converter_name, schema).unwrap())
+            } else if let Some(variant_type) = variant.field_type(schema) {
+                ts_type_name(variant_type, schema)
             } else {
                 format_cow!("'{}'", get_fieldless_variant_value(enum_def, variant))
             }
