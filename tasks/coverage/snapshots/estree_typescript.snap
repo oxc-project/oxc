@@ -1,10 +1,9 @@
 commit: 15392346
 
 estree_typescript Summary:
-AST Parsed     : 6480/6481 (99.98%)
+AST Parsed     : 6481/6481 (100.00%)
 Positive Passed: 6478/6481 (99.95%)
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
-JSX expressions may not use the comma operator
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
