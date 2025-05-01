@@ -3167,16 +3167,10 @@ impl Gen for TSMappedType<'_> {
         p.print_str("{");
         p.print_soft_space();
         match self.readonly {
-            TSMappedTypeModifierOperator::True => {
-                p.print_str("readonly ");
-            }
-            TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+readonly ");
-            }
-            TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-readonly ");
-            }
-            TSMappedTypeModifierOperator::None => {}
+            Some(TSMappedTypeModifierOperator::True) => p.print_str("readonly "),
+            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+readonly "),
+            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-readonly "),
+            None => {}
         }
         p.print_str("[");
         self.type_parameter.name.print(p, ctx);
@@ -3194,16 +3188,10 @@ impl Gen for TSMappedType<'_> {
         }
         p.print_str("]");
         match self.optional {
-            TSMappedTypeModifierOperator::True => {
-                p.print_str("?");
-            }
-            TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+?");
-            }
-            TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-?");
-            }
-            TSMappedTypeModifierOperator::None => {}
+            Some(TSMappedTypeModifierOperator::True) => p.print_str("?"),
+            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+?"),
+            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-?"),
+            None => {}
         }
         p.print_soft_space();
         if let Some(type_annotation) = &self.type_annotation {

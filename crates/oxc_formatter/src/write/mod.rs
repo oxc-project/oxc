@@ -2906,16 +2906,10 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
             write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span)))?;
 
             match self.readonly {
-                TSMappedTypeModifierOperator::True => {
-                    write!(f, ["readonly", space()])?;
-                }
-                TSMappedTypeModifierOperator::Plus => {
-                    write!(f, ["+readonly", space()])?;
-                }
-                TSMappedTypeModifierOperator::Minus => {
-                    write!(f, ["-readonly", space()])?;
-                }
-                TSMappedTypeModifierOperator::None => {}
+                Some(TSMappedTypeModifierOperator::True) => write!(f, ["readonly", space()])?,
+                Some(TSMappedTypeModifierOperator::Plus) => write!(f, ["+readonly", space()])?,
+                Some(TSMappedTypeModifierOperator::Minus) => write!(f, ["-readonly", space()])?,
+                None => {}
             }
 
             let format_inner_inner = format_with(|f| {
@@ -2934,16 +2928,10 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
             });
 
             match self.optional {
-                TSMappedTypeModifierOperator::True => {
-                    write!(f, "?")?;
-                }
-                TSMappedTypeModifierOperator::Plus => {
-                    write!(f, "+?")?;
-                }
-                TSMappedTypeModifierOperator::Minus => {
-                    write!(f, "-?")?;
-                }
-                TSMappedTypeModifierOperator::None => {}
+                Some(TSMappedTypeModifierOperator::True) => write!(f, "?")?,
+                Some(TSMappedTypeModifierOperator::Plus) => write!(f, "+?")?,
+                Some(TSMappedTypeModifierOperator::Minus) => write!(f, "-?")?,
+                None => {}
             }
 
             write!(f, [space(), group(&format_inner_inner)])?;

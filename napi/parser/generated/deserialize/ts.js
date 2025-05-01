@@ -2060,8 +2060,8 @@ function deserializeTSMappedType(pos) {
     end: deserializeU32(pos + 4),
     nameType: deserializeOptionTSType(pos + 16),
     typeAnnotation: deserializeOptionTSType(pos + 32),
-    optional: deserializeTSMappedTypeModifierOperator(pos + 48),
-    readonly: deserializeTSMappedTypeModifierOperator(pos + 49),
+    optional: deserializeOptionTSMappedTypeModifierOperator(pos + 48),
+    readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 49),
     key: typeParameter.name,
     constraint: typeParameter.constraint,
   };
@@ -4105,8 +4105,6 @@ function deserializeTSMappedTypeModifierOperator(pos) {
       return '+';
     case 2:
       return '-';
-    case 3:
-      return null;
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSMappedTypeModifierOperator`);
   }
@@ -5730,6 +5728,11 @@ function deserializeOptionBoxObjectExpression(pos) {
 function deserializeOptionTSTypeName(pos) {
   if (uint8[pos] === 2) return null;
   return deserializeTSTypeName(pos);
+}
+
+function deserializeOptionTSMappedTypeModifierOperator(pos) {
+  if (uint8[pos] === 3) return null;
+  return deserializeTSMappedTypeModifierOperator(pos);
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {

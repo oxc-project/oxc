@@ -1437,25 +1437,25 @@ pub struct TSMappedType<'a> {
     /// ## Examples
     /// ```ts
     /// type Foo = { [P in keyof T]?: T[P] }
-    /// //                         ^^ True
+    /// //                         ^  Some(True)
     /// type Bar = { [P in keyof T]+?: T[P] }
-    /// //                         ^^ Plus
+    /// //                         ^^ Some(Plus)
     /// type Baz = { [P in keyof T]-?: T[P] }
-    /// //                         ^^ Minus
+    /// //                         ^^ Some(Minus)
     /// type Qux = { [P in keyof T]: T[P] }
-    /// //                         ^ None
+    /// //                         ^  None
     /// ```
-    pub optional: TSMappedTypeModifierOperator,
+    pub optional: Option<TSMappedTypeModifierOperator>,
     /// Readonly modifier before keyed index signature
     ///
     /// ## Examples
     /// ```ts
-    /// type Foo = { readonly [P in keyof T]: T[P] }  // True
-    /// type Bar = { +readonly [P in keyof T]: T[P] } // Plus
-    /// type Baz = { -readonly [P in keyof T]: T[P] } // Minus
+    /// type Foo = { readonly [P in keyof T]: T[P] }  // Some(True)
+    /// type Bar = { +readonly [P in keyof T]: T[P] } // Some(Plus)
+    /// type Baz = { -readonly [P in keyof T]: T[P] } // Some(Minus)
     /// type Qux = { [P in keyof T]: T[P] }           // None
     /// ```
-    pub readonly: TSMappedTypeModifierOperator,
+    pub readonly: Option<TSMappedTypeModifierOperator>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1472,9 +1472,6 @@ pub enum TSMappedTypeModifierOperator {
     /// e.g. `-?` in `{ [P in K]-?: T }`
     #[estree(rename = "-")]
     Minus = 2,
-    /// No modifier present
-    #[estree(via = Null)]
-    None = 3,
 }
 
 /// TypeScript Template Literal Type

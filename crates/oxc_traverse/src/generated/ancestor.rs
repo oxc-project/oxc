@@ -14781,18 +14781,18 @@ impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
     }
 
     #[inline]
-    pub fn optional(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 
     #[inline]
-    pub fn readonly(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 
@@ -14842,18 +14842,18 @@ impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
     }
 
     #[inline]
-    pub fn optional(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 
     #[inline]
-    pub fn readonly(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 
@@ -14903,18 +14903,18 @@ impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn optional(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 
     #[inline]
-    pub fn readonly(self) -> &'t TSMappedTypeModifierOperator {
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
-                as *const TSMappedTypeModifierOperator)
+                as *const Option<TSMappedTypeModifierOperator>)
         }
     }
 

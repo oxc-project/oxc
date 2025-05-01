@@ -556,13 +556,13 @@ impl<'a> ParserImpl<'a> {
     fn parse_mapped_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
-        let mut readonly = TSMappedTypeModifierOperator::None;
+        let mut readonly = None;
         if self.eat(Kind::Readonly) {
-            readonly = TSMappedTypeModifierOperator::True;
+            readonly = Some(TSMappedTypeModifierOperator::True);
         } else if self.eat(Kind::Plus) && self.eat(Kind::Readonly) {
-            readonly = TSMappedTypeModifierOperator::Plus;
+            readonly = Some(TSMappedTypeModifierOperator::Plus);
         } else if self.eat(Kind::Minus) && self.eat(Kind::Readonly) {
-            readonly = TSMappedTypeModifierOperator::Minus;
+            readonly = Some(TSMappedTypeModifierOperator::Minus);
         }
 
         self.expect(Kind::LBrack);
@@ -589,19 +589,19 @@ impl<'a> ParserImpl<'a> {
         let optional = match self.cur_kind() {
             Kind::Question => {
                 self.bump_any();
-                TSMappedTypeModifierOperator::True
+                Some(TSMappedTypeModifierOperator::True)
             }
             Kind::Minus => {
                 self.bump_any();
                 self.expect(Kind::Question);
-                TSMappedTypeModifierOperator::Minus
+                Some(TSMappedTypeModifierOperator::Minus)
             }
             Kind::Plus => {
                 self.bump_any();
                 self.expect(Kind::Question);
-                TSMappedTypeModifierOperator::Plus
+                Some(TSMappedTypeModifierOperator::Plus)
             }
-            _ => TSMappedTypeModifierOperator::None,
+            _ => None,
         };
 
         let type_annotation = self.eat(Kind::Colon).then(|| self.parse_ts_type());

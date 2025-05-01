@@ -10504,8 +10504,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
@@ -10539,8 +10539,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
     ) -> TSType<'a>
     where
@@ -13887,8 +13887,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
     ) -> TSMappedType<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
@@ -13923,8 +13923,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
     ) -> Box<'a, TSMappedType<'a>>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
@@ -13962,8 +13962,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
     ) -> TSMappedType<'a>
     where
@@ -14000,8 +14000,8 @@ impl<'a> AstBuilder<'a> {
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
-        optional: TSMappedTypeModifierOperator,
-        readonly: TSMappedTypeModifierOperator,
+        optional: Option<TSMappedTypeModifierOperator>,
+        readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
     ) -> Box<'a, TSMappedType<'a>>
     where
