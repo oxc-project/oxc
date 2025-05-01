@@ -2907,13 +2907,13 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
 
             match self.readonly {
                 TSMappedTypeModifierOperator::True => {
-                    write!(f, ["readonly", space()]);
+                    write!(f, ["readonly", space()])?;
                 }
                 TSMappedTypeModifierOperator::Plus => {
-                    write!(f, ["+readonly", space()]);
+                    write!(f, ["+readonly", space()])?;
                 }
                 TSMappedTypeModifierOperator::Minus => {
-                    write!(f, ["-readonly", space()]);
+                    write!(f, ["-readonly", space()])?;
                 }
                 TSMappedTypeModifierOperator::None => {}
             }
