@@ -299,6 +299,21 @@ impl<'alloc> String<'alloc> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_bump_str()
     }
+
+    /// Set length of [`String`].
+    ///
+    /// # SAFETY
+    /// * `new_len` must be less than or equal to [`capacity()`].
+    /// * If `new_len` > `self.len()`, the bytes at `self.len()..new_len` must be initialized.
+    /// * `new_len` must be on a UTF-8 character boundary
+    ///   i.e. the first `new_len` bytes of the `String`'s buffer must comprise a valid UTF-8 string.
+    ///
+    /// [`capacity()`]: String#capacity
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        // SAFETY: Safety requirements satisfy `bumpalo::collections::Vec`'s safety requirements.
+        // Caller guarantees `new_len` is on a UTF-8 character boundary.
+        unsafe { self.as_mut_vec().set_len(new_len) }
+    }
 }
 
 // Provide access to all `bumpalo::String`'s methods via deref
