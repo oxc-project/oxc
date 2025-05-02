@@ -111,13 +111,20 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for RegExp<'a, '_> {
-    fn enter_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut oxc_traverse::TraverseCtx<'a>,
-    ) {
+    // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
+    #[inline]
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if matches!(expr, Expression::RegExpLiteral(_)) {
+            self.transform_regexp(expr, ctx);
+        }
+    }
+}
+
+impl<'a> RegExp<'a, '_> {
+    /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
+    fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::RegExpLiteral(regexp) = expr else {
-            return;
+            unreachable!();
         };
         let regexp = regexp.as_mut();
 
@@ -192,9 +199,7 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
     }
-}
 
-impl<'a> RegExp<'a, '_> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.
