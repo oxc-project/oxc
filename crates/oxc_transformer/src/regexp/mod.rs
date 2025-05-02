@@ -137,11 +137,12 @@ impl<'a> RegExp<'a, '_> {
                 return;
             }
 
-            let literal_span = regexp.span;
+            let owned_pattern;
             let pattern = match &mut regexp.regex.pattern {
                 RegExpPattern::Raw(raw) => {
                     #[expect(clippy::cast_possible_truncation)]
                     let pattern_len = raw.len() as u32;
+                    let literal_span = regexp.span;
                     let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
                     let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
                     let flags_text = Span::new(flags_span_start, literal_span.end)
@@ -155,11 +156,8 @@ impl<'a> RegExp<'a, '_> {
                         ctx,
                     ) {
                         Ok(pattern) => {
-                            regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
-                            let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
-                                unreachable!()
-                            };
-                            pattern
+                            owned_pattern = Some(pattern);
+                            owned_pattern.as_ref().unwrap()
                         }
                         Err(error) => {
                             regexp.regex.pattern = RegExpPattern::Invalid(raw);
