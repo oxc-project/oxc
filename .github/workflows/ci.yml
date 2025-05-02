@@ -25,22 +25,28 @@ concurrency:
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  test:
-    name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # - os: windows-latest # See `test-windows` job below
-          - os: ubuntu-latest
-          - os: macos-latest
-    runs-on: ${{ matrix.os }}
+  test-ubuntu:
+    name: Test Linux
+    runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
-          # warm cache factory for all other CI jobs
-          # cache `target` directory to avoid download crates
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm
+      - run: cargo ck
+      - run: cargo test --all-features
+      - run: git diff --exit-code # Must commit everything
+
+  # Separate job to save a job on PRs
+  test-mac:
+    name: Test Mac
+    runs-on: macos-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
@@ -48,7 +54,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    name: Test (windows-latest)
+    name: Test Windows
     if: ${{ github.ref_name == 'main' }}
     runs-on: windows-latest
     steps:
