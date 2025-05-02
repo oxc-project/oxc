@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.9] - 2025-05-02
+
+### Bug Fixes
+
+- 4ee95ec editor: Activate extension when astro files are opened too (#10725) (Sysix)
+
+### Documentation
+
+- 275fe71 editor: `oxc.flags` are not related to `oxlint` (#10645) (Sysix)
+
+### Testing
+
+- 1c4f90f editor: Add test for nested config serverity (#10697) (Sysix)
+
 ## [0.16.8] - 2025-04-27
 
 ### Bug Fixes

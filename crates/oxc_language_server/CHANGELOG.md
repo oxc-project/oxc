@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.9] - 2025-05-02
+
+### Bug Fixes
+
+- 46665bd langage_server: Fix initialize nested configs (#10698) (Sysix)
+- 98bcd5f lsp: Incorrect quick fix offset in vue files (#10742) (camc314)
+
+### Testing
+
+- 9ebf3d4 language_server: Refactor tester to use WorkspaceWorker (#10730) (Sysix)
+- 5a709ad language_server: Add test for `init_nested_configs` (#10728) (Sysix)
+- 2615758 language_server: Fix slow test (#10659) (Alexander S.)
+- fd18aaa language_server: Skip slow test (#10658) (overlookmotel)
+- f6f1c5c lsp: Include fixed content in lsp snapshots (#10744) (camc314)
+
 ## [0.16.8] - 2025-04-27
 
 ### Bug Fixes

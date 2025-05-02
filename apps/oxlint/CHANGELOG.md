@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.9] - 2025-05-02
+
+### Features
+
+- 63f02a8 linter: Add react/forward_ref_uses_ref (#10506) (x6eull)
+- eac205f linter: Add unicorn/consistent-assert rule (#10653) (Shota Kitahara)
+
+### Bug Fixes
+
+- e7c2b32 linter: Move `consistent-assert` to `pedantic` (#10665) (camc314)
+
 ## [0.16.8] - 2025-04-27
 
 ### Bug Fixes
