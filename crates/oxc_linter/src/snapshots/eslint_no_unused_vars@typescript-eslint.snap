@@ -341,7 +341,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:16]
  1 │ 
  2 │          const foo: number = 1;
@@ -351,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:23]
  1 │ 
  2 │         declare const foo: number;
@@ -361,7 +361,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:15]
  1 │ 
  2 │         const foo: number = 1;
@@ -371,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:15]
  1 │ 
  2 │         const foo: number = 1;
@@ -381,7 +381,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:15]
  1 │ 
  2 │         const foo = {
@@ -391,7 +391,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type Unused variables should start with a '_'..
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:15]
  1 │ 
  2 │         const foo = {

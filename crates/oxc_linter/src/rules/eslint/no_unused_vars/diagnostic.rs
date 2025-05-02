@@ -77,7 +77,7 @@ where
     let suffix = pat.diagnostic_help(pronoun_plural);
 
     OxcDiagnostic::warn(if only_used_as_type {
-        format!("{pronoun} is {verb} but only used as a type{suffix}.",)
+        format!("{pronoun} is {verb} but only used as a type.{suffix}",)
     } else {
         format!("{pronoun} '{name}' is {verb} but never used.{suffix}")
     })
