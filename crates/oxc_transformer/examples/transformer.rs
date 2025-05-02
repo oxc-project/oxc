@@ -72,6 +72,7 @@ fn main() {
         TransformOptions::enable_all()
     };
 
+    transform_options.debug = true;
     transform_options.helper_loader.mode = HelperLoaderMode::External;
 
     let ret = Transformer::new(&allocator, path, &transform_options)

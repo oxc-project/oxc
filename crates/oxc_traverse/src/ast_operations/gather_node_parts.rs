@@ -9,7 +9,11 @@ use oxc_ecmascript::BoundNames;
 
 use super::to_identifier;
 
-pub fn get_var_name_from_node<'a, N: GatherNodeParts<'a>>(node: &N) -> String {
+pub fn get_var_name_from_node<'a, N: GatherNodeParts<'a>>(node: &N, debug: bool) -> String {
+    if !debug {
+        return String::new();
+    }
+
     let mut name = String::new();
     node.gather(&mut |mut part| {
         if name.is_empty() {

@@ -457,7 +457,7 @@ impl<'a> TraverseCtx<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let name = get_var_name_from_node(node);
+        let name = get_var_name_from_node(node, self.scoping.debug);
         self.generate_uid(&name, scope_id, flags)
     }
 
@@ -492,7 +492,7 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         node: &N,
     ) -> BoundIdentifier<'a> {
-        let name = get_var_name_from_node(node);
+        let name = get_var_name_from_node(node, self.scoping.debug);
         self.generate_uid_in_current_hoist_scope(&name)
     }
 
@@ -649,9 +649,9 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// # SAFETY
     /// This function must not be public to maintain soundness of [`TraverseAncestry`].
-    pub(crate) fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(scoping: Scoping, allocator: &'a Allocator, debug: bool) -> Self {
         let ancestry = TraverseAncestry::new();
-        let scoping = TraverseScoping::new(scoping);
+        let scoping = TraverseScoping::new(scoping, debug);
         let ast = AstBuilder::new(allocator);
         Self { ancestry, scoping, ast }
     }

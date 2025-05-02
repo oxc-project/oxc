@@ -97,6 +97,9 @@ pub struct TransformOptions {
     /// options.
     pub cwd: Option<String>,
 
+    /// If `true` produces more debuggable output
+    pub debug: Option<bool>,
+
     /// Enable source map generation.
     ///
     /// When `true`, the `sourceMap` field of transform result objects will be populated.
@@ -156,6 +159,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
         };
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
+            debug: options.debug.is_some_and(|debug| debug),
             assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
             typescript: options
                 .typescript

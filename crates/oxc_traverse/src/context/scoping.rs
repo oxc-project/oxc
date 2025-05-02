@@ -24,6 +24,7 @@ use super::uid::UidGenerator;
 pub struct TraverseScoping<'a> {
     scoping: Scoping,
     uid_generator: Option<UidGenerator<'a>>,
+    pub(super) debug: bool,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,
     current_block_scope_id: ScopeId,
@@ -286,9 +287,21 @@ impl<'a> TraverseScoping<'a> {
     ///
     /// See comments on `UidGenerator` for further details.
     pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Atom<'a> {
+        if let Some(UidGenerator::Fast(uid_generator)) = &mut self.uid_generator {
+            uid_generator.create()
+        } else {
+            // `debug: true` is default and `FastUidGenerator` is only created once, so cold path
+            self.generate_uid_name_slow(name, allocator)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn generate_uid_name_slow(&mut self, name: &str, allocator: &'a Allocator) -> Atom<'a> {
         // If `uid_generator` is not already populated, initialize it
-        let uid_generator =
-            self.uid_generator.get_or_insert_with(|| UidGenerator::new(&self.scoping, allocator));
+        let uid_generator = self
+            .uid_generator
+            .get_or_insert_with(|| UidGenerator::new(self.debug, &self.scoping, allocator));
         // Generate unique name
         uid_generator.create(name)
     }
@@ -361,10 +374,11 @@ impl<'a> TraverseScoping<'a> {
 // Methods used internally within crate
 impl TraverseScoping<'_> {
     /// Create new `TraverseScoping`
-    pub(super) fn new(scoping: Scoping) -> Self {
+    pub(super) fn new(scoping: Scoping, debug: bool) -> Self {
         Self {
             scoping,
             uid_generator: None,
+            debug,
             // Dummy values. Both immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
             current_hoist_scope_id: ScopeId::new(0),

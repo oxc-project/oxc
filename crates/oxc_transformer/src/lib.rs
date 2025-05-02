@@ -12,7 +12,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
+use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
 // Core
 mod common;
@@ -157,7 +157,11 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let scoping = traverse_mut(&mut transformer, allocator, program, scoping);
+        let mut traverse_ctx =
+            ReusableTraverseCtx::new_with_debug(scoping, allocator, self.ctx.debug);
+        traverse_mut_with_ctx(&mut transformer, program, &mut traverse_ctx);
+        let scoping = traverse_ctx.into_scoping();
+
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
         TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }

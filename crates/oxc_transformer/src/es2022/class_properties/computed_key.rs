@@ -131,7 +131,7 @@ impl<'a> ClassProperties<'a, '_> {
             let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
                 unreachable!();
             };
-            assert!(ident.name.starts_with('_'));
+            assert!(ident.name.starts_with(if self.ctx.debug { '_' } else { '$' }));
             assert!(ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_some());
             assert!(ident.span.is_empty());
             assert!(prop.value.is_none());

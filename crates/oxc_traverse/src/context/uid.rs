@@ -1,18 +1,343 @@
-use std::{iter, str};
+use std::{cmp, iter, slice, str};
 
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, String as ArenaString};
+use oxc_data_structures::assert_unchecked;
 use oxc_semantic::Scoping;
 use oxc_span::Atom;
 
+/// Number of characters in range `a-z` or `A-Z` required to produce at least `u32::MAX` unique combinations
+const POSTFIX_BYTES: usize = 6;
+const _: () = {
+    #[expect(clippy::cast_possible_truncation)]
+    let max_combinations = 52u64.pow(POSTFIX_BYTES as u32);
+    assert!(max_combinations >= u32::MAX as u64);
+};
+
 /// Unique identifier generator.
 ///
-/// When initialized with [`UidGenerator::new`], creates a catalog of all symbols and unresolved references
+/// Can be either [`FastUidGenerator`] or [`DebugUidGenerator`],
+/// depending on `debug` param passed to [`UidGenerator::new`].
+#[expect(private_interfaces)]
+pub enum UidGenerator<'a> {
+    Fast(FastUidGenerator<'a>),
+    Debug(DebugUidGenerator<'a>),
+}
+
+impl<'a> UidGenerator<'a> {
+    /// Create [`UidGenerator`].
+    ///
+    /// * If `debug` is `false`, returns a fast generator which produces UIDs of form `$a`, `$b` etc.
+    /// * If `debug` is `true`, returns a slower generator which produces UIDs better for debugging.
+    pub(super) fn new(debug: bool, scoping: &Scoping, allocator: &'a Allocator) -> Self {
+        if debug {
+            Self::Debug(DebugUidGenerator::new(scoping, allocator))
+        } else {
+            Self::Fast(FastUidGenerator::new(scoping, allocator))
+        }
+    }
+
+    /// Create a unique identifier.
+    ///
+    /// This method will never return the same UID twice.
+    ///
+    /// The form of the UID depends on value of `debug` passed to [`UidGenerator::new`].
+    ///
+    /// For more details, see:
+    ///
+    /// * [`FastUidGenerator::create`]
+    /// * [`DebugUidGenerator::create`]
+    pub(super) fn create(&mut self, name: &str) -> Atom<'a> {
+        match self {
+            Self::Fast(generator) => generator.create(),
+            Self::Debug(generator) => generator.create(name),
+        }
+    }
+}
+
+/// Unique identifier generator which produces short var names, using a fast algorithm.
+///
+/// [`FastUidGenerator::new`] searches all symbols and unresolved references in AST for those that
+/// begin with `$`. It finds the longest `$` prefix.
+///
+/// [`FastUidGenerator::create`] uses that information to generate a unique identifier which does not
+/// clash with any existing name.
+///
+/// Generated UIDs are `$a`, `$b`, ... `$z`, `$A`, `$B`, ... `$Z`, `$aa`, `$ab`, ...
+///
+/// If AST already contains a symbol that begins with `$`, generated UIDs are `$$a`, `$$b`, etc.
+/// If AST contains a symbol with a longer `$` prefix, generated UIDs are prefixed with 1 more `$`
+/// than the longest.
+/// e.g. existing symbol `$$$foo` -> UIDs `$$$$a`, `$$$$b`, etc.
+/// In practice, long prefixes should be very rare.
+///
+/// `$` is used as the prefix instead of `_`, because it's rare that JS code uses `$` in identifiers,
+/// so makes it less likely that a long prefix is required.
+///
+/// # Implementation details
+///
+/// `FastUidGenerator` owns a small string buffer.
+///
+/// Buffer starts as "$$$$$$`".
+/// When generating a UID, the last byte is incremented.
+/// i.e. "$$$$$$`" -> `$$$$$$a` -> `$$$$$$b` -> `$$$$$$c`.
+///
+/// All the pointers stored in the type point to different places in that buffer:
+///
+/// ```no_compile
+/// $$$$abc
+/// ^       `buffer_start_ptr`
+///    ^    `active_ptr`
+///     ^   `first_letter_ptr`
+///       ^ `last_letter_ptr`
+/// ```
+///
+/// "Active" part of the buffer is the section which is used as UID:
+/// ```no_compile
+/// Buffer: $$$$$$a
+/// Active:      ^^
+/// ```
+///
+/// 52nd UID is `$Z`, after which the UID grows in length to `$aa` ("rollover").
+/// The active part of the buffer expands in place:
+/// ```no_compile
+/// Buffer: $$$$$aa
+/// Active:     ^^^
+/// ```
+///
+/// This in place expansion means the buffer never has to reallocate.
+///
+/// Using a pre-built string which is manually mutated (usually requiring just incrementing the last byte)
+/// is more efficient than a `u32` counter which is converted to a string on each call to
+/// [`FastUidGenerator::create`].
+///
+/// Using pointers to access the buffer makes the fast path for generating a UID (last byte is not `Z`,
+/// so no "rollover" required) as cheap as possible - only a handful of instructions.
+pub struct FastUidGenerator<'a> {
+    /// Pointer to start of buffer
+    buffer_start_ptr: *mut u8,
+    /// Pointer to start of active string in buffer
+    active_ptr: *const u8,
+    /// Pointer to first letter in buffer (excluding preceding `$`s)
+    first_letter_ptr: *const u8,
+    /// Pointer to last letter in buffer
+    last_letter_ptr: *mut u8,
+    /// Allocator
+    allocator: &'a Allocator,
+}
+
+impl<'a> FastUidGenerator<'a> {
+    /// Create [`FastUidGenerator`].
+    fn new(scoping: &Scoping, allocator: &'a Allocator) -> Self {
+        // Find the symbol or unresolved references with maximum number of `$`s on start
+        let mut dollar_count = 0;
+        let mut update_dollar_count = |name: &str| {
+            let this_dollar_count =
+                name.as_bytes().iter().position(|&b| b != b'$').unwrap_or(name.len());
+            dollar_count = cmp::max(dollar_count, this_dollar_count);
+        };
+
+        for name in scoping.symbol_names() {
+            update_dollar_count(name);
+        }
+        for &name in scoping.root_unresolved_references().keys() {
+            update_dollar_count(name);
+        }
+
+        // We will prefix UIDs with 1 more `$` than the longest `$` prefix in existing symbols
+        dollar_count += 1;
+
+        // Create a buffer large enough to contain all possible UID names.
+        // Fill it with `$`s and a final "`".
+        // If `dollar_count` is 1 (no symbols found starting with a `$`),
+        // buffer contains "$$$$$$`" (7 bytes).
+        // If the maximum number of UIDs are created, buffer will end up containing
+        // `$ZZZZZZ` (also 7 bytes).
+        // If an existing symbol was found which starts with `$$`, buffer needs to be longer.
+        // Buffer will contain "$$$$$$$$`" (9 bytes). Maximum UID is `$$$ZZZZZZ` (also 9 bytes).
+        let len = dollar_count + POSTFIX_BYTES;
+        let mut buffer = String::with_capacity(len);
+        buffer.extend(iter::repeat_n('$', len - 1));
+        buffer.push('`'); // "`" is the character before `a`
+        let buffer = buffer.into_boxed_str();
+
+        // Convert `Box` to pointer.
+        // We can't hold onto the `Box` because `Box` contains a `Unique` pointer and we want
+        // to access `buffer`'s data via raw pointers.
+        let buffer_start_ptr = Box::into_raw(buffer).cast::<u8>();
+
+        // Get pointer to last byte in `buffer` (which is currently "`").
+        // SAFETY: `buffer` is `len` bytes long, and `len > 0`, so `len - 1` cannot be out of bounds.
+        let last_letter_ptr = unsafe { buffer_start_ptr.add(len - 1) };
+
+        // Get pointer to start of active string in `buffer`.
+        // If `dollar_count` is 1 (no symbols found starting with a `$`), active string is "$`".
+        // If `dollar_count` is 3 (symbol found starting with `$$`), active string is "$$$`".
+        // SAFETY: `last_letter_ptr` points to last byte in `buffer`.
+        // `buffer`'s length is `dollar_count + POSTFIX_BYTES`, and `POSTFIX_BYTES > 0`,
+        // so `last_letter_ptr - dollar_count` cannot be out of bounds of `buffer`.
+        let active_ptr = unsafe { last_letter_ptr.sub(dollar_count) };
+
+        Self {
+            buffer_start_ptr,
+            active_ptr,
+            first_letter_ptr: last_letter_ptr,
+            last_letter_ptr,
+            allocator,
+        }
+    }
+
+    /// Create a unique identifier.
+    ///
+    /// UID will be of the form `$a`, with a sufficient number of dollars on start to avoid clash
+    /// with any existing var names.
+    ///
+    /// This method will never return the same UID twice.
+    #[inline] // `#[inline]` to inline into `TraverseCtx::generate_uid_name`
+    pub(super) fn create(&mut self) -> Atom<'a> {
+        // SAFETY: `last_letter_ptr` points to last byte of the buffer.
+        // All bytes of the buffer are initialized. No other references to buffer exist.
+        let last_letter = unsafe { self.last_letter_ptr.as_mut().unwrap_unchecked() };
+        if (*last_letter | 32) < b'z' {
+            // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y` or "`"
+            *last_letter += 1;
+        } else if *last_letter == b'z' {
+            *last_letter = b'A';
+        } else {
+            debug_assert_eq!(*last_letter, b'Z');
+            return self.rollover();
+        }
+
+        self.get_active()
+    }
+
+    /// Create UID when last letter is `Z`, so the previous letter needs to be incremented.
+    ///
+    /// Marked `#[cold]` and `#[inline(never)]` as will only happen once every 52 UIDs.
+    #[cold]
+    #[inline(never)]
+    fn rollover(&mut self) -> Atom<'a> {
+        self.rollover_update();
+        self.get_active()
+    }
+
+    fn rollover_update(&mut self) {
+        let mut letter_ptr = self.last_letter_ptr;
+
+        // SAFETY: `letter_ptr` starts pointing to last byte of buffer, and loop exits if it gets to
+        // `first_letter_ptr`, which also points to within buffer. So `letter_ptr` remains in bounds.
+        // All bytes in buffer are initialized, so reading any byte is valid.
+        unsafe {
+            loop {
+                // Set letter to `a`
+                let letter = letter_ptr.as_mut().unwrap_unchecked();
+                *letter = b'a';
+
+                // If this is first letter, we need to add an extra letter
+                if letter_ptr.cast_const() == self.first_letter_ptr {
+                    break;
+                }
+
+                // Move back to previous letter
+                letter_ptr = letter_ptr.sub(1);
+
+                // Increment letter
+                let letter = letter_ptr.as_mut().unwrap_unchecked();
+                if (*letter | 32) < b'z' {
+                    // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y`
+                    *letter += 1;
+                    return;
+                }
+                if *letter == b'z' {
+                    *letter = b'A';
+                    return;
+                }
+
+                // Letter is `Z`. Need to change it to `a` and increment previous letter
+                debug_assert_eq!(*letter, b'Z');
+            }
+        }
+
+        // SAFETY: Loop above exited with `letter_ptr == first_letter_ptr`.
+        // There is always at least 1 `$` before 1st letter, so subtracting 1 is in bounds of buffer.
+        letter_ptr = unsafe { letter_ptr.sub(1) };
+        // SAFETY: All bytes of buffer are initialized
+        let letter = unsafe { letter_ptr.as_mut().unwrap_unchecked() };
+        debug_assert_eq!(*letter, b'$');
+
+        // We can only create a maximum of `POSTFIX_BYTES` letters.
+        // SAFETY: Buffer is originally created with length at least `POSTFIX_BYTES + 1`.
+        // `last_letter_ptr` points to the last byte so subtracting `POSTFIX_BYTES - 1` is in bounds.
+        let earliest_letter_ptr = unsafe { self.last_letter_ptr.sub(POSTFIX_BYTES - 1) };
+        assert!(letter_ptr.cast_const() >= earliest_letter_ptr, "Created too many UIDs");
+
+        // Add another `a` on start (loop above has already converted all existing letters to `a`).
+        // So we started with `$ZZ` and now end up with `$aaa`.
+        *letter = b'a';
+
+        // Update pointer to first letter
+        self.first_letter_ptr = letter_ptr;
+
+        // Extend active string forwards by 1 byte.
+        // SAFETY: Buffer is created with length `POSTFIX_BYTES + dollar_count`.
+        // `active_ptr` is `dollar_count` less than the first letter.
+        // We just increased number of letters by 1, and checked new number of letters does not
+        // exceed `POSTFIX_BYTES`, so `active_ptr - 1` cannot be before start of buffer.
+        self.active_ptr = unsafe { self.active_ptr.sub(1) };
+    }
+
+    /// Get the active string (current UID) and allocate into arena. Return UID as an [`Atom`].
+    //
+    // `#[inline(always)]` to inline into `create`, to keep the path for no rollover as fast as possible
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn get_active(&self) -> Atom<'a> {
+        // SAFETY: `active_ptr` points within buffer. `last_letter_ptr + 1` is end of buffer.
+        // The distance between the two is at least 2 bytes.
+        // All bytes in buffer are initialized.
+        // Buffer contains only ASCII bytes, so any slice of it is a valid UTF-8 string.
+        let uid = unsafe {
+            let end_ptr = self.last_letter_ptr.add(1).cast_const();
+            assert_unchecked!(end_ptr > self.active_ptr);
+            #[expect(clippy::cast_sign_loss)]
+            let len = end_ptr.offset_from(self.active_ptr) as usize;
+            let slice = slice::from_raw_parts(self.active_ptr, len);
+            str::from_utf8_unchecked(slice)
+        };
+        Atom::from(self.allocator.alloc_str(uid))
+    }
+}
+
+impl Drop for FastUidGenerator<'_> {
+    fn drop(&mut self) {
+        // Reconstitute the original `Box<str>` created in `new`, and drop it.
+        // SAFETY:
+        // `buffer_start_ptr` points to start of the buffer.
+        // `last_letter_ptr` points to last byte of the buffer.
+        // So a slice from `buffer_start_ptr` to `last_letter_ptr + 1` is the whole buffer.
+        // All bytes in buffer are initialized, and buffer contains only ASCII bytes,
+        // so is a valid UTF-8 string.
+        // No other references to buffer exist, so safe to give ownership of it to a `Box`.
+        unsafe {
+            let end_ptr = self.last_letter_ptr.add(1);
+            assert_unchecked!(end_ptr > self.buffer_start_ptr);
+            #[expect(clippy::cast_sign_loss)]
+            let len = end_ptr.offset_from(self.buffer_start_ptr) as usize;
+            let slice = slice::from_raw_parts_mut(self.buffer_start_ptr, len);
+            let str = str::from_utf8_unchecked_mut(slice);
+            let _box = Box::from_raw(str);
+        }
+    }
+}
+
+/// Unique identifier generator which produces debug-friendly variable names.
+///
+/// When initialized with [`DebugUidGenerator::new`], creates a catalog of all symbols and unresolved references
 /// in the AST which begin with `_`.
 ///
-/// [`UidGenerator::create`] uses that catalog to generate a unique identifier which does not clash with
+/// [`DebugUidGenerator::create`] uses that catalog to generate a unique identifier which does not clash with
 /// any existing name.
 ///
 /// Such UIDs are based on the base name provided. They start with `_` and end with digits if required to
@@ -69,54 +394,7 @@ use oxc_span::Atom;
 ///
 /// 5. Uses a slightly different algorithm for generating names (see above).
 ///    The resulting UIDs are similar enough to Babel's algorithm to fail only 1 of Babel's tests.
-///
-/// # Potential improvements
-///
-/// TODO(improve-on-babel):
-///
-/// UID generation is fairly expensive, because of the amount of string hashing required.
-///
-/// [`UidGenerator::new`] iterates through every binding and unresolved reference in the entire AST,
-/// and builds a hashmap of symbols which could clash with UIDs.
-/// Once that's built, [`UidGenerator::create`] has to do at a hashmap lookup when generating each UID.
-/// Hashing strings is a fairly expensive operation.
-///
-/// We could improve this in one of 3 ways:
-///
-/// ## 1. Build the hashmap in `SemanticBuilder`
-///
-/// Instead of iterating through all symbols again here.
-///
-/// ## 2. Use a simpler algorithm
-///
-/// * During initial semantic pass, check for any existing identifiers starting with `_`.
-/// * Calculate what is the highest postfix number on `_...` identifiers (e.g. `_foo1`, `_bar8`).
-/// * Store that highest number in a counter which is global across the whole program.
-/// * When creating a UID, increment the counter, and make the UID `_<name><counter>`.
-///
-/// i.e. if source contains identifiers `_foo1` and `_bar15`, create UIDs named `_qux16`,
-/// `_temp17` etc. They'll all be unique within the program.
-///
-/// Minimal cost in semantic, and generating UIDs extremely cheap.
-///
-/// The resulting UIDs would still be fairly readable.
-///
-/// This is a different method from Babel, and unfortunately produces UID names
-/// which differ from Babel for some of its test cases.
-///
-/// ## 3. Even simpler algorithm, but produces hard-to-read code
-///
-/// If output is being minified anyway, use a method which produces less debuggable output,
-/// but is even simpler:
-///
-/// * During initial semantic pass, check for any existing identifiers starting with `_`.
-/// * Find the highest number of leading `_`s for any existing symbol.
-/// * Generate UIDs with a counter starting at 0, prefixed with number of `_`s one greater than
-///   what was found in AST.
-///
-/// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
-/// `___2` etc. They'll all be unique within the program.
-pub struct UidGenerator<'a> {
+struct DebugUidGenerator<'a> {
     names: FxHashMap<&'a str, UidName>,
     allocator: &'a Allocator,
 }
@@ -135,9 +413,9 @@ struct UidName {
     underscore_count: u32,
 }
 
-impl<'a> UidGenerator<'a> {
-    /// Create [`UidGenerator`].
-    pub(super) fn new(scoping: &Scoping, allocator: &'a Allocator) -> Self {
+impl<'a> DebugUidGenerator<'a> {
+    /// Create [`DebugUidGenerator`].
+    fn new(scoping: &Scoping, allocator: &'a Allocator) -> Self {
         let mut generator = Self { names: FxHashMap::default(), allocator };
 
         for name in scoping.symbol_names() {
@@ -150,7 +428,7 @@ impl<'a> UidGenerator<'a> {
         generator
     }
 
-    /// Add a record to [`UidGenerator`].
+    /// Add a record to [`DebugUidGenerator`].
     fn add(&mut self, name: &str) {
         // If `name` does not start with `_`, exit
         if name.as_bytes().first() != Some(&b'_') {
@@ -244,8 +522,8 @@ impl<'a> UidGenerator<'a> {
     /// The fact that a `_` will be prepended on start means providing an empty string or a string
     /// starting with a digit (0-9) is fine.
     ///
-    /// Please see docs for [`UidGenerator`] for further info.
-    pub(super) fn create(&mut self, name: &str) -> Atom<'a> {
+    /// Please see docs for [`DebugUidGenerator`] for further info.
+    fn create(&mut self, name: &str) -> Atom<'a> {
         // Get the base name, with `_`s trimmed from start, and digits trimmed from end.
         // i.e. `__foo123` -> `foo`.
         // Equivalent to `name.trim_start_matches('_').trim_end_matches(|c: char| c.is_ascii_digit())`
@@ -311,7 +589,158 @@ impl<'a> UidGenerator<'a> {
 
 #[cfg(test)]
 #[test]
-fn uids() {
+fn fast_uids() {
+    use oxc_span::SPAN;
+    use oxc_syntax::{node::NodeId, scope::ScopeId, symbol::SymbolFlags};
+
+    // (&[ initial, ... ], &[ expected_uid, ... ])
+    #[rustfmt::skip]
+    let cases: &[(&[&str], &[&str])] = &[
+        (
+            &[],
+            &[
+                "$a", "$b", "$c", "$d", "$e", "$f", "$g", "$h", "$i", "$j", "$k", "$l", "$m",
+                "$n", "$o", "$p", "$q", "$r", "$s", "$t", "$u", "$v", "$w", "$x", "$y", "$z",
+                "$A", "$B", "$C", "$D", "$E", "$F", "$G", "$H", "$I", "$J", "$K", "$L", "$M",
+                "$N", "$O", "$P", "$Q", "$R", "$S", "$T", "$U", "$V", "$W", "$X", "$Y", "$Z",
+                "$aa", "$ab", "$ac", "$ad", "$ae", "$af", "$ag", "$ah", "$ai", "$aj", "$ak", "$al", "$am",
+                "$an", "$ao", "$ap", "$aq", "$ar", "$as", "$at", "$au", "$av", "$aw", "$ax", "$ay", "$az",
+                "$aA", "$aB", "$aC", "$aD", "$aE", "$aF", "$aG", "$aH", "$aI", "$aJ", "$aK", "$aL", "$aM",
+                "$aN", "$aO", "$aP", "$aQ", "$aR", "$aS", "$aT", "$aU", "$aV", "$aW", "$aX", "$aY", "$aZ",
+                "$ba", "$bb", "$bc", "$bd", "$be", "$bf", "$bg", "$bh", "$bi", "$bj", "$bk", "$bl", "$bm",
+                "$bn", "$bo", "$bp", "$bq", "$br", "$bs", "$bt", "$bu", "$bv", "$bw", "$bx", "$by", "$bz",
+                "$bA", "$bB", "$bC", "$bD", "$bE", "$bF", "$bG", "$bH", "$bI", "$bJ", "$bK", "$bL", "$bM",
+                "$bN", "$bO", "$bP", "$bQ", "$bR", "$bS", "$bT", "$bU", "$bV", "$bW", "$bX", "$bY", "$bZ",
+                "$ca",
+            ],
+        ),
+        (
+            &["foo", "bar$", "_$qux"],
+            &[
+                "$a", "$b", "$c", "$d", "$e", "$f", "$g", "$h", "$i", "$j", "$k", "$l", "$m",
+                "$n", "$o", "$p", "$q", "$r", "$s", "$t", "$u", "$v", "$w", "$x", "$y", "$z",
+                "$A", "$B", "$C", "$D", "$E", "$F", "$G", "$H", "$I", "$J", "$K", "$L", "$M",
+                "$N", "$O", "$P", "$Q", "$R", "$S", "$T", "$U", "$V", "$W", "$X", "$Y", "$Z",
+                "$aa", "$ab", "$ac", "$ad", "$ae", "$af", "$ag", "$ah", "$ai", "$aj", "$ak", "$al", "$am",
+                "$an", "$ao", "$ap", "$aq", "$ar", "$as", "$at", "$au", "$av", "$aw", "$ax", "$ay", "$az",
+                "$aA", "$aB", "$aC", "$aD", "$aE", "$aF", "$aG", "$aH", "$aI", "$aJ", "$aK", "$aL", "$aM",
+                "$aN", "$aO", "$aP", "$aQ", "$aR", "$aS", "$aT", "$aU", "$aV", "$aW", "$aX", "$aY", "$aZ",
+                "$ba", "$bb", "$bc", "$bd", "$be", "$bf", "$bg", "$bh", "$bi", "$bj", "$bk", "$bl", "$bm",
+                "$bn", "$bo", "$bp", "$bq", "$br", "$bs", "$bt", "$bu", "$bv", "$bw", "$bx", "$by", "$bz",
+                "$bA", "$bB", "$bC", "$bD", "$bE", "$bF", "$bG", "$bH", "$bI", "$bJ", "$bK", "$bL", "$bM",
+                "$bN", "$bO", "$bP", "$bQ", "$bR", "$bS", "$bT", "$bU", "$bV", "$bW", "$bX", "$bY", "$bZ",
+                "$ca",
+            ],
+        ),
+        (
+            &["$"],
+            &[
+                "$$a", "$$b", "$$c", "$$d", "$$e", "$$f", "$$g", "$$h", "$$i", "$$j", "$$k", "$$l", "$$m",
+                "$$n", "$$o", "$$p", "$$q", "$$r", "$$s", "$$t", "$$u", "$$v", "$$w", "$$x", "$$y", "$$z",
+                "$$A", "$$B", "$$C", "$$D", "$$E", "$$F", "$$G", "$$H", "$$I", "$$J", "$$K", "$$L", "$$M",
+                "$$N", "$$O", "$$P", "$$Q", "$$R", "$$S", "$$T", "$$U", "$$V", "$$W", "$$X", "$$Y", "$$Z",
+                "$$aa", "$$ab", "$$ac", "$$ad", "$$ae", "$$af", "$$ag", "$$ah", "$$ai", "$$aj", "$$ak", "$$al", "$$am",
+                "$$an", "$$ao", "$$ap", "$$aq", "$$ar", "$$as", "$$at", "$$au", "$$av", "$$aw", "$$ax", "$$ay", "$$az",
+                "$$aA", "$$aB", "$$aC", "$$aD", "$$aE", "$$aF", "$$aG", "$$aH", "$$aI", "$$aJ", "$$aK", "$$aL", "$$aM",
+                "$$aN", "$$aO", "$$aP", "$$aQ", "$$aR", "$$aS", "$$aT", "$$aU", "$$aV", "$$aW", "$$aX", "$$aY", "$$aZ",
+                "$$ba", "$$bb", "$$bc", "$$bd", "$$be", "$$bf", "$$bg", "$$bh", "$$bi", "$$bj", "$$bk", "$$bl", "$$bm",
+                "$$bn", "$$bo", "$$bp", "$$bq", "$$br", "$$bs", "$$bt", "$$bu", "$$bv", "$$bw", "$$bx", "$$by", "$$bz",
+                "$$bA", "$$bB", "$$bC", "$$bD", "$$bE", "$$bF", "$$bG", "$$bH", "$$bI", "$$bJ", "$$bK", "$$bL", "$$bM",
+                "$$bN", "$$bO", "$$bP", "$$bQ", "$$bR", "$$bS", "$$bT", "$$bU", "$$bV", "$$bW", "$$bX", "$$bY", "$$bZ",
+                "$$ca",
+            ],
+        ),
+        (
+            &["$foo"],
+            &[
+                "$$a", "$$b", "$$c", "$$d", "$$e", "$$f", "$$g", "$$h", "$$i", "$$j", "$$k", "$$l", "$$m",
+                "$$n", "$$o", "$$p", "$$q", "$$r", "$$s", "$$t", "$$u", "$$v", "$$w", "$$x", "$$y", "$$z",
+                "$$A", "$$B", "$$C", "$$D", "$$E", "$$F", "$$G", "$$H", "$$I", "$$J", "$$K", "$$L", "$$M",
+                "$$N", "$$O", "$$P", "$$Q", "$$R", "$$S", "$$T", "$$U", "$$V", "$$W", "$$X", "$$Y", "$$Z",
+                "$$aa", "$$ab", "$$ac", "$$ad", "$$ae", "$$af", "$$ag", "$$ah", "$$ai", "$$aj", "$$ak", "$$al", "$$am",
+                "$$an", "$$ao", "$$ap", "$$aq", "$$ar", "$$as", "$$at", "$$au", "$$av", "$$aw", "$$ax", "$$ay", "$$az",
+                "$$aA", "$$aB", "$$aC", "$$aD", "$$aE", "$$aF", "$$aG", "$$aH", "$$aI", "$$aJ", "$$aK", "$$aL", "$$aM",
+                "$$aN", "$$aO", "$$aP", "$$aQ", "$$aR", "$$aS", "$$aT", "$$aU", "$$aV", "$$aW", "$$aX", "$$aY", "$$aZ",
+                "$$ba", "$$bb", "$$bc", "$$bd", "$$be", "$$bf", "$$bg", "$$bh", "$$bi", "$$bj", "$$bk", "$$bl", "$$bm",
+                "$$bn", "$$bo", "$$bp", "$$bq", "$$br", "$$bs", "$$bt", "$$bu", "$$bv", "$$bw", "$$bx", "$$by", "$$bz",
+                "$$bA", "$$bB", "$$bC", "$$bD", "$$bE", "$$bF", "$$bG", "$$bH", "$$bI", "$$bJ", "$$bK", "$$bL", "$$bM",
+                "$$bN", "$$bO", "$$bP", "$$bQ", "$$bR", "$$bS", "$$bT", "$$bU", "$$bV", "$$bW", "$$bX", "$$bY", "$$bZ",
+                "$$ca",
+            ],
+        ),
+        (
+            &["$$$"],
+            &[
+                "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
+                "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
+                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
+                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
+                "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
+                "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
+                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
+                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
+                "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
+                "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
+                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
+                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
+                "$$$$ca",
+            ],
+        ),
+        (
+            &["$$$foo"],
+            &[
+                "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
+                "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
+                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
+                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
+                "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
+                "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
+                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
+                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
+                "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
+                "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
+                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
+                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
+                "$$$$ca",
+            ],
+        ),
+        (
+            &["$$$foo", "$a"],
+            &[
+                "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
+                "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
+                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
+                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
+                "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
+                "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
+                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
+                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
+                "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
+                "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
+                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
+                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
+                "$$$$ca",
+            ],
+        ),
+    ];
+
+    let allocator = Allocator::default();
+    for &(used_names, created) in cases {
+        let mut scoping = Scoping::default();
+        for &name in used_names {
+            scoping.create_symbol(SPAN, name, SymbolFlags::empty(), ScopeId::new(0), NodeId::DUMMY);
+        }
+
+        let mut generator = FastUidGenerator::new(&scoping, &allocator);
+        for &expected_uid in created {
+            assert_eq!(generator.create(), expected_uid);
+        }
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn debug_uids() {
     // (&[ initial, ... ], &[ (name, expected_uid), ... ])
     #[expect(clippy::type_complexity)]
     let cases: &[(&[&str], &[(&str, &str)])] = &[
@@ -364,7 +793,8 @@ fn uids() {
 
     let allocator = Allocator::default();
     for &(used_names, created) in cases {
-        let mut generator = UidGenerator { names: FxHashMap::default(), allocator: &allocator };
+        let mut generator =
+            DebugUidGenerator { names: FxHashMap::default(), allocator: &allocator };
         for &used_name in used_names {
             generator.add(used_name);
         }

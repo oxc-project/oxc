@@ -16,6 +16,7 @@ use crate::{
 
 fn get_default_transformer_options() -> TransformOptions {
     TransformOptions {
+        debug: true,
         jsx: JsxOptions {
             jsx_plugin: true,
             jsx_self_plugin: true,

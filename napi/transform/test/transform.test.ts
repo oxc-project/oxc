@@ -1,7 +1,12 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { HelperMode, transform } from '../index';
+import { HelperMode, transform as transformOriginal } from '../index';
+
+function transform(filename, code, ...args) {
+  const options = { debug: true, ...args[0] };
+  return transformOriginal(filename, code, options);
+}
 
 describe('simple', () => {
   const code = 'export class A<T> {}';

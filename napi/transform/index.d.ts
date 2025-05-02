@@ -369,6 +369,8 @@ export interface TransformOptions {
    * options.
    */
   cwd?: string
+  /** If `true` produces more debuggable output */
+  debug?: boolean
   /**
    * Enable source map generation.
    *

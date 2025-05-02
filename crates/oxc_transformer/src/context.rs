@@ -33,6 +33,8 @@ pub struct TransformCtx<'a> {
 
     pub assumptions: CompilerAssumptions,
 
+    pub debug: bool,
+
     // Helpers
     /// Manage helper loading
     pub helper_loader: HelperLoaderStore<'a>,
@@ -60,6 +62,7 @@ impl TransformCtx<'_> {
             source_text: "",
             module: options.env.module,
             assumptions: options.assumptions,
+            debug: options.debug,
             helper_loader: HelperLoaderStore::new(&options.helper_loader),
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),

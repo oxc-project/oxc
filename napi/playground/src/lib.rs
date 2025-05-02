@@ -189,7 +189,7 @@ impl Oxc {
                 return Ok(());
             }
 
-            let options = transform_options
+            let mut options = transform_options
                 .target
                 .as_ref()
                 .and_then(|target| {
@@ -200,6 +200,7 @@ impl Oxc {
                         .ok()
                 })
                 .unwrap_or_default();
+            options.debug = true;
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {

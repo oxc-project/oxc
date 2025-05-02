@@ -46,6 +46,9 @@ pub struct TransformOptions {
     /// The working directory that all paths in the programmatic options will be resolved relative to.
     pub cwd: PathBuf,
 
+    /// If `true`, produces code with inserted UIDs in a more easily debuggable form.
+    pub debug: bool,
+
     // Core
     /// Set assumptions in order to produce smaller output.
     /// For more information, check the [assumptions](https://babel.dev/docs/assumptions) documentation page.
@@ -80,6 +83,7 @@ impl TransformOptions {
     pub fn enable_all() -> Self {
         Self {
             cwd: PathBuf::new(),
+            debug: false,
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions { legacy: true, emit_decorator_metadata: true },
@@ -260,6 +264,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
+            debug: false,
             assumptions: options.assumptions,
             typescript,
             decorator,

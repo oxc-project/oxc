@@ -948,7 +948,7 @@ impl<'a> ClassProperties<'a, '_> {
             ..
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
-        let temp_var_name_base = get_var_name_from_node(field_expr);
+        let temp_var_name_base = get_var_name_from_node(field_expr, self.ctx.debug);
 
         // TODO(improve-on-babel): Could avoid `move_expression` here and replace `update_expr.argument` instead.
         // Only doing this first to match the order Babel creates temp vars.

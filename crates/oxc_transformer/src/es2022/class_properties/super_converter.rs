@@ -373,7 +373,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
             unreachable!()
         };
 
-        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+        let temp_var_name_base =
+            get_var_name_from_node(member.as_ref(), self.class_properties.ctx.debug);
 
         let property =
             ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
@@ -436,7 +437,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
             unreachable!()
         };
 
-        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+        let temp_var_name_base =
+            get_var_name_from_node(member.as_ref(), self.class_properties.ctx.debug);
 
         let property = member.expression.get_inner_expression_mut().take_in(ctx.ast.allocator);
 

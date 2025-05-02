@@ -21,7 +21,12 @@ pub struct ReusableTraverseCtx<'a>(TraverseCtx<'a>);
 impl<'a> ReusableTraverseCtx<'a> {
     /// Create new [`ReusableTraverseCtx`].
     pub fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
-        Self(TraverseCtx::new(scoping, allocator))
+        Self(TraverseCtx::new(scoping, allocator, false))
+    }
+
+    /// Create new [`ReusableTraverseCtx`] with `debug` flag.
+    pub fn new_with_debug(scoping: Scoping, allocator: &'a Allocator, debug: bool) -> Self {
+        Self(TraverseCtx::new(scoping, allocator, debug))
     }
 
     /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].

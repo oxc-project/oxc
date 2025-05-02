@@ -52,7 +52,10 @@ impl TestCase {
 
         let mut options = BabelOptions::from_test_path(options_directory_path.as_path());
         options.cwd.replace(cwd.to_path_buf());
-        let transform_options = TransformOptions::try_from(&options);
+        let transform_options = TransformOptions::try_from(&options).map(|mut options| {
+            options.debug = true;
+            options
+        });
         let path = path.to_path_buf();
         let errors = vec![];
 
