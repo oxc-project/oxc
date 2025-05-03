@@ -430,8 +430,19 @@ impl<'a, T> RawVec<'a, T> {
     /// ```
     #[inline]
     pub fn reserve(&mut self, len: usize, additional: usize) {
-        if let Err(err) = self.try_reserve(len, additional) {
-            handle_error(err)
+        // Callers expect this function to be very cheap when there is already sufficient capacity.
+        // Therefore, we move all the resizing and error-handling logic from grow_amortized and
+        // handle_reserve behind a call, while making sure that this function is likely to be
+        // inlined as just a comparison and a call if the comparison fails.
+        #[cold]
+        fn do_reserve_and_handle<T>(slf: &mut RawVec<T>, len: usize, additional: usize) {
+            if let Err(err) = slf.grow_amortized(len, additional) {
+                handle_error(err);
+            }
+        }
+
+        if self.needs_to_grow(len, additional) {
+            do_reserve_and_handle(self, len, additional);
         }
     }
 
