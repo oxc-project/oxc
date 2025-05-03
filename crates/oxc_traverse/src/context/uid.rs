@@ -191,15 +191,14 @@ impl<'a> FastUidGenerator<'a> {
         // SAFETY: `last_letter_ptr` points to last byte of the buffer.
         // All bytes of the buffer are initialized. No other references to buffer exist.
         let last_letter = unsafe { self.last_letter_ptr.as_mut().unwrap_unchecked() };
-        if (*last_letter | 32) < b'z' {
-            // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y` or "`"
-            *last_letter += 1;
-        } else if *last_letter == b'z' {
-            *last_letter = b'A';
-        } else {
-            debug_assert_eq!(*last_letter, b'Z');
+        if *last_letter == b'Z' {
             return self.rollover();
         }
+
+        // Increment letter, unless letter is `z` in which case jump to `A`.
+        // Performed with arithmetic to avoid a branch. https://godbolt.org/z/Kq81Kc4xq
+        *last_letter = (*last_letter)
+            .wrapping_add(1 + u8::from(*last_letter == b'z') * (b'A'.wrapping_sub(b'z') - 1));
 
         self.get_active()
     }
