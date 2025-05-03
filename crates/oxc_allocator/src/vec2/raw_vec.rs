@@ -541,11 +541,10 @@ impl<'a, T> RawVec<'a, T> {
                 let new_size = elem_size * amount;
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
-                match realloc(self.a, self.ptr.cast(), old_layout, new_size) {
+                let new_layout = Layout::from_size_align_unchecked(new_size, align);
+                match self.a.shrink(self.ptr.cast(), old_layout, new_layout) {
                     Ok(p) => self.ptr = p.cast(),
-                    Err(_) => {
-                        handle_alloc_error(Layout::from_size_align_unchecked(new_size, align))
-                    }
+                    Err(_) => handle_alloc_error(new_layout),
                 }
             }
             self.cap = amount;
@@ -631,8 +630,20 @@ impl<'a, T> RawVec<'a, T> {
 
         let res = match self.current_layout() {
             Some(layout) => unsafe {
+                // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
+                // relatively expensive and we want to avoid inlining it into the caller.
+                #[cold]
+                #[inline(never)]
+                unsafe fn grow<T>(
+                    a: &Bump,
+                    ptr: NonNull<T>,
+                    old_layout: Layout,
+                    new_layout: Layout,
+                ) -> Result<NonNull<[u8]>, AllocError> {
+                    a.grow(ptr.cast(), old_layout, new_layout)
+                }
                 debug_assert!(new_layout.align() == layout.align());
-                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+                grow(self.a, self.ptr, layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
@@ -683,81 +694,6 @@ fn capacity_overflow() -> ! {
 #[inline]
 fn layout_from_size_align(size: usize, align: usize) -> Result<Layout, AllocError> {
     Layout::from_size_align(size, align).map_err(|_| AllocError)
-}
-
-// Code copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L1917-L1936
-// Doc comment from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/alloc.rs#L322-L402
-//
-/// Returns a pointer suitable for holding data described by
-/// a new layout with `layout`’s alignment and a size given
-/// by `new_size`. To
-/// accomplish this, this may extend or shrink the allocation
-/// referenced by `ptr` to fit the new layout.
-///
-/// If this returns `Ok`, then ownership of the memory block
-/// referenced by `ptr` has been transferred to this
-/// allocator. The memory may or may not have been freed, and
-/// should be considered unusable (unless of course it was
-/// transferred back to the caller again via the return value of
-/// this method).
-///
-/// If this method returns `Err`, then ownership of the memory
-/// block has not been transferred to this allocator, and the
-/// contents of the memory block are unaltered.
-///
-/// # Safety
-///
-/// This function is unsafe because undefined behavior can result
-/// if the caller does not ensure all of the following:
-///
-/// * `ptr` must be currently allocated via this allocator,
-///
-/// * `layout` must *fit* the `ptr` (see above). (The `new_size`
-///   argument need not fit it.)
-///
-/// * `new_size` must be greater than zero.
-///
-/// * `new_size`, when rounded up to the nearest multiple of `layout.align()`,
-///   must not overflow (i.e. the rounded value must be less than `usize::MAX`).
-///
-/// (Extension subtraits might provide more specific bounds on
-/// behavior, e.g. guarantee a sentinel address or a null pointer
-/// in response to a zero-size allocation request.)
-///
-/// # Errors
-///
-/// Returns `Err` only if the new layout
-/// does not meet the allocator's size
-/// and alignment constraints of the allocator, or if reallocation
-/// otherwise fails.
-///
-/// Implementations are encouraged to return `Err` on memory
-/// exhaustion rather than panicking or aborting, but this is not
-/// a strict requirement. (Specifically: it is *legal* to
-/// implement this trait atop an underlying native allocation
-/// library that aborts on memory exhaustion.)
-///
-/// Clients wishing to abort computation in response to a
-/// reallocation error are encouraged to call the [`handle_alloc_error`] function,
-/// rather than directly invoking `panic!` or similar.
-unsafe fn realloc(
-    bump: &Bump,
-    ptr: NonNull<u8>,
-    layout: Layout,
-    new_size: usize,
-) -> Result<NonNull<[u8]>, AllocError> {
-    let old_size = layout.size();
-
-    if old_size == 0 {
-        return bump.allocate(layout);
-    }
-
-    let new_layout = layout_from_size_align(new_size, layout.align())?;
-    if new_size <= old_size {
-        bump.shrink(ptr, layout, new_layout)
-    } else {
-        bump.grow(ptr, layout, new_layout)
-    }
 }
 
 /// Handle collection allocation errors
