@@ -196,8 +196,8 @@ impl<'a> FastUidGenerator<'a> {
         }
 
         // Increment letter, unless letter is `z` in which case jump to `A`.
-        // Performed with arithmetic to avoid a branch. https://godbolt.org/z/Kq81Kc4xq
-        *last_letter = (*last_letter)
+        // Performed with arithmetic to avoid a branch. https://godbolt.org/z/Kxo9Wc98K
+        *last_letter = last_letter
             .wrapping_add(1 + u8::from(*last_letter == b'z') * (b'A'.wrapping_sub(b'z') - 1));
 
         self.get_active()
