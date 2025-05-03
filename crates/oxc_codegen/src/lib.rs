@@ -187,6 +187,13 @@ impl<'a> Codegen<'a> {
         self
     }
 
+    /// Sets the source text for the code generator.
+    #[must_use]
+    pub fn with_source_text(mut self, source_text: &'a str) -> Self {
+        self.source_text = source_text;
+        self
+    }
+
     /// Set the symbol table used for identifier renaming.
     ///
     /// Can be used for easy renaming of variables (based on semantic analysis).
@@ -251,6 +258,8 @@ impl<'a> Codegen<'a> {
 
     /// Print a single [`Expression`], adding it to the code generator's
     /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
+    ///
+    /// NOTE: you must call [`Codegen::with_source_text`] before calling this method
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
