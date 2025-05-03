@@ -437,7 +437,10 @@ impl<'a, T> RawVec<'a, T> {
 
     /// A specialized version of `self.reserve(len, 1)` which requires the
     /// caller to ensure `len == self.capacity()`.
-    #[inline(never)]
+    //
+    // Unlike standard library implementation marked as `#[inline(never)]`, we need to
+    // mark as `#[inline]` because this function is common case in the oxc_parser.
+    #[inline]
     pub fn grow_one(&mut self) {
         if let Err(err) = self.grow_amortized(self.cap, 1) {
             handle_error(err);

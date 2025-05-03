@@ -1237,7 +1237,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 
         // space for the new element
         if len == self.buf.cap() {
-            self.reserve(1);
+            self.buf.grow_one();
         }
 
         unsafe {
@@ -1565,7 +1565,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
         if self.len == self.buf.cap() {
-            self.reserve(1);
+            self.buf.grow_one();
         }
         unsafe {
             let end = self.buf.ptr().add(self.len);
