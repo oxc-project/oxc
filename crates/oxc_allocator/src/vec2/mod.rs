@@ -2281,7 +2281,8 @@ impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
 impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.extend_desugared(iter.into_iter());
+        let iterator = iter.into_iter();
+        self.extend_desugared(iterator);
     }
 }
 
@@ -2300,8 +2301,18 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         while let Some(element) = iterator.next() {
             let len = self.len();
             if len == self.capacity() {
-                let (lower, _) = iterator.size_hint();
-                self.reserve(lower.saturating_add(1));
+                // This reallocation path is rarely taken, especially with prior reservation,
+                // so mark it `#[cold]` and `#[inline(never)]` helps the compiler optimize the
+                // common case, and prevents this cold path from being inlined to the `while` loop,
+                // which increases the execution instructions and hits the performance.
+                #[cold]
+                #[inline(never)]
+                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator) {
+                    let (lower, _) = iterator.size_hint();
+                    v.reserve(lower.saturating_add(1));
+                }
+
+                reserve_slow(self, &iterator);
             }
             unsafe {
                 ptr::write(self.as_mut_ptr().add(len), element);
