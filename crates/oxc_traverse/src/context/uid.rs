@@ -90,7 +90,6 @@ impl<'a> UidGenerator<'a> {
 /// $$$$abc
 /// ^       `buffer_start_ptr`
 ///    ^    `active_ptr`
-///     ^   `first_letter_ptr`
 ///       ^ `last_letter_ptr`
 /// ```
 ///
@@ -120,8 +119,6 @@ pub struct FastUidGenerator<'a> {
     buffer_start_ptr: *mut u8,
     /// Pointer to start of active string in buffer
     active_ptr: *const u8,
-    /// Pointer to first letter in buffer (excluding preceding `$`s)
-    first_letter_ptr: *const u8,
     /// Pointer to last letter in buffer
     last_letter_ptr: *mut u8,
     /// Allocator
@@ -180,13 +177,7 @@ impl<'a> FastUidGenerator<'a> {
         // so `last_letter_ptr - dollar_count` cannot be out of bounds of `buffer`.
         let active_ptr = unsafe { last_letter_ptr.sub(dollar_count) };
 
-        Self {
-            buffer_start_ptr,
-            active_ptr,
-            first_letter_ptr: last_letter_ptr,
-            last_letter_ptr,
-            allocator,
-        }
+        Self { buffer_start_ptr, active_ptr, last_letter_ptr, allocator }
     }
 
     /// Create a unique identifier.
@@ -226,8 +217,9 @@ impl<'a> FastUidGenerator<'a> {
     fn rollover_update(&mut self) {
         let mut letter_ptr = self.last_letter_ptr;
 
-        // SAFETY: `letter_ptr` starts pointing to last byte of buffer, and loop exits if it gets to
-        // `first_letter_ptr`, which also points to within buffer. So `letter_ptr` remains in bounds.
+        // SAFETY: `letter_ptr` starts pointing to last byte of buffer, and is decremented.
+        // Loop exits if it gets to `$`. There's always at least one `$` at start of buffer,
+        // so the loop can't run beyond the start.
         // All bytes in buffer are initialized, so reading any byte is valid.
         unsafe {
             loop {
@@ -235,16 +227,16 @@ impl<'a> FastUidGenerator<'a> {
                 let letter = letter_ptr.as_mut().unwrap_unchecked();
                 *letter = b'a';
 
-                // If this is first letter, we need to add an extra letter
-                if letter_ptr.cast_const() == self.first_letter_ptr {
+                // Move back to previous letter
+                letter_ptr = letter_ptr.sub(1);
+                let letter = letter_ptr.as_mut().unwrap_unchecked();
+
+                // If we've reached `$`, need to extend active string
+                if *letter == b'$' {
                     break;
                 }
 
-                // Move back to previous letter
-                letter_ptr = letter_ptr.sub(1);
-
                 // Increment letter
-                let letter = letter_ptr.as_mut().unwrap_unchecked();
                 if (*letter | 32) < b'z' {
                     // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y`
                     *letter += 1;
@@ -260,13 +252,7 @@ impl<'a> FastUidGenerator<'a> {
             }
         }
 
-        // SAFETY: Loop above exited with `letter_ptr == first_letter_ptr`.
-        // There is always at least 1 `$` before 1st letter, so subtracting 1 is in bounds of buffer.
-        letter_ptr = unsafe { letter_ptr.sub(1) };
-        // SAFETY: All bytes of buffer are initialized
-        let letter = unsafe { letter_ptr.as_mut().unwrap_unchecked() };
-        debug_assert_eq!(*letter, b'$');
-
+        // Extend active string.
         // We can only create a maximum of `POSTFIX_BYTES` letters.
         // SAFETY: Buffer is originally created with length at least `POSTFIX_BYTES + 1`.
         // `last_letter_ptr` points to the last byte so subtracting `POSTFIX_BYTES - 1` is in bounds.
@@ -275,10 +261,9 @@ impl<'a> FastUidGenerator<'a> {
 
         // Add another `a` on start (loop above has already converted all existing letters to `a`).
         // So we started with `$ZZ` and now end up with `$aaa`.
+        // SAFETY: `letter_ptr` is in bounds of buffer. All bytes of buffer are initialized.
+        let letter = unsafe { letter_ptr.as_mut().unwrap_unchecked() };
         *letter = b'a';
-
-        // Update pointer to first letter
-        self.first_letter_ptr = letter_ptr;
 
         // Extend active string forwards by 1 byte.
         // SAFETY: Buffer is created with length `POSTFIX_BYTES + dollar_count`.
