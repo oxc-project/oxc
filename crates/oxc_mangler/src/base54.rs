@@ -66,6 +66,62 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     str
 }
 
+pub fn base54_v2(mut num: u32) -> InlineString<7, u8> {
+    const FIRST_BASE: u32 = 54;
+    const REST_BASE_MASK: u32 = 0b11_1111; // 63
+
+    let mut out = InlineString::new();
+
+    let first_idx = (num % FIRST_BASE) as usize;
+    // SAFETY:
+    unsafe {
+        out.push_unchecked(BASE54_CHARS.0[first_idx]);
+    }
+    num /= FIRST_BASE;
+
+    macro_rules! push_digit {
+        ($val:expr) => {{
+            let idx = ($val & REST_BASE_MASK) as usize;
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            unsafe {
+                out.push_unchecked(BASE54_CHARS.0[idx])
+            }
+        }};
+    }
+
+    if num != 0 {
+        num -= 1; // bijective adjustment
+        push_digit!(num);
+        num >>= 6;
+
+        if num != 0 {
+            num -= 1;
+            push_digit!(num);
+            num >>= 6;
+
+            if num != 0 {
+                num -= 1;
+                push_digit!(num);
+                num >>= 6;
+
+                if num != 0 {
+                    num -= 1;
+                    push_digit!(num);
+                    num >>= 6;
+
+                    if num != 0 {
+                        num -= 1;
+                        push_digit!(num);
+                    }
+                }
+            }
+        }
+    }
+
+    out
+}
+
+//use super::base54_v2;
 #[cfg(test)]
 mod test {
     use super::base54;

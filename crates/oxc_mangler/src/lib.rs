@@ -5,7 +5,7 @@ use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use rustc_hash::FxHashSet;
 
-use base54::base54;
+use base54::base54_v2;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
@@ -13,7 +13,7 @@ use oxc_index::Idx;
 use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::Atom;
 
-pub(crate) mod base54;
+pub mod base54;
 mod keep_names;
 
 pub use keep_names::MangleOptionsKeepNames;
@@ -189,7 +189,7 @@ impl Mangler {
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
-            self.build_with_semantic_impl(semantic, program, base54)
+            self.build_with_semantic_impl(semantic, program, base54_v2)
         }
     }
 
