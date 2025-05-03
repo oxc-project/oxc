@@ -197,13 +197,6 @@ impl<'a> FastUidGenerator<'a> {
     /// This method will never return the same UID twice.
     #[inline] // `#[inline]` to inline into `TraverseCtx::generate_uid_name`
     pub(super) fn create(&mut self) -> Atom<'a> {
-        let allocator = self.allocator;
-        let uid = self.create_str();
-        Atom::from(allocator.alloc_str(uid))
-    }
-
-    /// Create UID as `&str`.
-    fn create_str(&mut self) -> &str {
         // SAFETY: `last_letter_ptr` points to last byte of the buffer.
         // All bytes of the buffer are initialized. No other references to buffer exist.
         let last_letter = unsafe { self.last_letter_ptr.as_mut().unwrap_unchecked() };
@@ -225,7 +218,7 @@ impl<'a> FastUidGenerator<'a> {
     /// Marked `#[cold]` and `#[inline(never)]` as will only happen once every 52 UIDs.
     #[cold]
     #[inline(never)]
-    fn rollover(&mut self) -> &str {
+    fn rollover(&mut self) -> Atom<'a> {
         self.rollover_update();
         self.get_active()
     }
@@ -295,24 +288,25 @@ impl<'a> FastUidGenerator<'a> {
         self.active_ptr = unsafe { self.active_ptr.sub(1) };
     }
 
-    /// Get the active string (UID).
+    /// Get the active string (current UID) and allocate into arena. Return UID as an [`Atom`].
     //
     // `#[inline(always)]` to inline into `create`, to keep the path for no rollover as fast as possible
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn get_active(&self) -> &str {
+    fn get_active(&self) -> Atom<'a> {
         // SAFETY: `active_ptr` points within buffer. `last_letter_ptr + 1` is end of buffer.
         // The distance between the two is at least 2 bytes.
         // All bytes in buffer are initialized.
         // Buffer contains only ASCII bytes, so any slice of it is a valid UTF-8 string.
-        unsafe {
+        let uid = unsafe {
             let end_ptr = self.last_letter_ptr.add(1).cast_const();
             assert_unchecked!(end_ptr > self.active_ptr);
             #[expect(clippy::cast_sign_loss)]
             let len = end_ptr.offset_from(self.active_ptr) as usize;
             let slice = slice::from_raw_parts(self.active_ptr, len);
             str::from_utf8_unchecked(slice)
-        }
+        };
+        Atom::from(self.allocator.alloc_str(uid))
     }
 }
 
