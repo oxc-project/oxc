@@ -8,11 +8,11 @@ use oxc_data_structures::assert_unchecked;
 use oxc_semantic::Scoping;
 use oxc_span::Atom;
 
-/// Number of characters in range `a-z` or `A-Z` required to produce at least `u32::MAX` unique combinations
-const POSTFIX_BYTES: usize = 6;
+/// Number of characters in range `a-z` required to produce at least `u32::MAX` unique combinations
+const POSTFIX_BYTES: usize = 7;
 const _: () = {
     #[expect(clippy::cast_possible_truncation)]
-    let max_combinations = 52u64.pow(POSTFIX_BYTES as u32);
+    let max_combinations = 26u64.pow(POSTFIX_BYTES as u32);
     assert!(max_combinations >= u32::MAX as u64);
 };
 
@@ -65,7 +65,7 @@ impl<'a> UidGenerator<'a> {
 /// [`FastUidGenerator::create`] uses that information to generate a unique identifier which does not
 /// clash with any existing name.
 ///
-/// Generated UIDs are `$a`, `$b`, ... `$z`, `$A`, `$B`, ... `$Z`, `$aa`, `$ab`, ...
+/// Generated UIDs are `$a`, `$b`, ... `$z`, `$aa`, `$ab`, ...
 ///
 /// If AST already contains a symbol that begins with `$`, generated UIDs are `$$a`, `$$b`, etc.
 /// If AST contains a symbol with a longer `$` prefix, generated UIDs are prefixed with 1 more `$`
@@ -80,30 +80,30 @@ impl<'a> UidGenerator<'a> {
 ///
 /// `FastUidGenerator` owns a small string buffer.
 ///
-/// Buffer starts as "$$$$$$`".
+/// Buffer starts as "$$$$$$$`".
 /// When generating a UID, the last byte is incremented.
-/// i.e. "$$$$$$`" -> `$$$$$$a` -> `$$$$$$b` -> `$$$$$$c`.
+/// i.e. "$$$$$$$`" -> `$$$$$$$a` -> `$$$$$$$b` -> `$$$$$$$c`.
 ///
 /// All the pointers stored in the type point to different places in that buffer:
 ///
 /// ```no_compile
-/// $$$$abc
-/// ^       `buffer_start_ptr`
-///    ^    `active_ptr`
-///       ^ `last_letter_ptr`
+/// $$$$$abc
+/// ^        `buffer_start_ptr`
+///     ^    `active_ptr`
+///        ^ `last_letter_ptr`
 /// ```
 ///
 /// "Active" part of the buffer is the section which is used as UID:
 /// ```no_compile
-/// Buffer: $$$$$$a
-/// Active:      ^^
+/// Buffer: $$$$$$$a
+/// Active:       ^^
 /// ```
 ///
-/// 52nd UID is `$Z`, after which the UID grows in length to `$aa` ("rollover").
+/// 26th UID is `$z`, after which the UID grows in length to `$aa` ("rollover").
 /// The active part of the buffer expands in place:
 /// ```no_compile
-/// Buffer: $$$$$aa
-/// Active:     ^^^
+/// Buffer: $$$$$$aa
+/// Active:      ^^^
 /// ```
 ///
 /// This in place expansion means the buffer never has to reallocate.
@@ -112,7 +112,7 @@ impl<'a> UidGenerator<'a> {
 /// is more efficient than a `u32` counter which is converted to a string on each call to
 /// [`FastUidGenerator::create`].
 ///
-/// Using pointers to access the buffer makes the fast path for generating a UID (last byte is not `Z`,
+/// Using pointers to access the buffer makes the fast path for generating a UID (last byte is not `z`,
 /// so no "rollover" required) as cheap as possible - only a handful of instructions.
 pub struct FastUidGenerator<'a> {
     /// Pointer to start of buffer
@@ -149,11 +149,11 @@ impl<'a> FastUidGenerator<'a> {
         // Create a buffer large enough to contain all possible UID names.
         // Fill it with `$`s and a final "`".
         // If `dollar_count` is 1 (no symbols found starting with a `$`),
-        // buffer contains "$$$$$$`" (7 bytes).
+        // buffer contains "$$$$$$$`" (8 bytes).
         // If the maximum number of UIDs are created, buffer will end up containing
-        // `$ZZZZZZ` (also 7 bytes).
+        // `$zzzzzzz` (also 8 bytes).
         // If an existing symbol was found which starts with `$$`, buffer needs to be longer.
-        // Buffer will contain "$$$$$$$$`" (9 bytes). Maximum UID is `$$$ZZZZZZ` (also 9 bytes).
+        // Buffer will contain "$$$$$$$$$`" (10 bytes). Maximum UID is `$$$zzzzzzz` (also 10 bytes).
         let len = dollar_count + POSTFIX_BYTES;
         let mut buffer = String::with_capacity(len);
         buffer.extend(iter::repeat_n('$', len - 1));
@@ -191,22 +191,19 @@ impl<'a> FastUidGenerator<'a> {
         // SAFETY: `last_letter_ptr` points to last byte of the buffer.
         // All bytes of the buffer are initialized. No other references to buffer exist.
         let last_letter = unsafe { self.last_letter_ptr.as_mut().unwrap_unchecked() };
-        if (*last_letter | 32) < b'z' {
-            // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y` or "`"
-            *last_letter += 1;
-        } else if *last_letter == b'z' {
-            *last_letter = b'A';
-        } else {
-            debug_assert_eq!(*last_letter, b'Z');
+        if *last_letter == b'z' {
             return self.rollover();
         }
+
+        // Increment last letter i.e. `a` -> `b`
+        *last_letter += 1;
 
         self.get_active()
     }
 
-    /// Create UID when last letter is `Z`, so the previous letter needs to be incremented.
+    /// Create UID when last letter is `z`, so the previous letter needs to be incremented.
     ///
-    /// Marked `#[cold]` and `#[inline(never)]` as will only happen once every 52 UIDs.
+    /// Marked `#[cold]` and `#[inline(never)]` as will only happen once every 26 UIDs.
     #[cold]
     #[inline(never)]
     fn rollover(&mut self) -> Atom<'a> {
@@ -237,18 +234,12 @@ impl<'a> FastUidGenerator<'a> {
                 }
 
                 // Increment letter
-                if (*letter | 32) < b'z' {
-                    // `| 32` converts `A-Z` to lower case, so this matches `a-y` or `A-Y`
+                if *letter != b'z' {
                     *letter += 1;
                     return;
                 }
-                if *letter == b'z' {
-                    *letter = b'A';
-                    return;
-                }
 
-                // Letter is `Z`. Need to change it to `a` and increment previous letter
-                debug_assert_eq!(*letter, b'Z');
+                // Letter is `z`. Need to change it to `a` and increment previous letter
             }
         }
 
@@ -260,7 +251,7 @@ impl<'a> FastUidGenerator<'a> {
         assert!(letter_ptr.cast_const() >= earliest_letter_ptr, "Created too many UIDs");
 
         // Add another `a` on start (loop above has already converted all existing letters to `a`).
-        // So we started with `$ZZ` and now end up with `$aaa`.
+        // So we started with `$zz` and now end up with `$aaa`.
         // SAFETY: `letter_ptr` is in bounds of buffer. All bytes of buffer are initialized.
         let letter = unsafe { letter_ptr.as_mut().unwrap_unchecked() };
         *letter = b'a';
@@ -586,16 +577,10 @@ fn fast_uids() {
             &[
                 "$a", "$b", "$c", "$d", "$e", "$f", "$g", "$h", "$i", "$j", "$k", "$l", "$m",
                 "$n", "$o", "$p", "$q", "$r", "$s", "$t", "$u", "$v", "$w", "$x", "$y", "$z",
-                "$A", "$B", "$C", "$D", "$E", "$F", "$G", "$H", "$I", "$J", "$K", "$L", "$M",
-                "$N", "$O", "$P", "$Q", "$R", "$S", "$T", "$U", "$V", "$W", "$X", "$Y", "$Z",
                 "$aa", "$ab", "$ac", "$ad", "$ae", "$af", "$ag", "$ah", "$ai", "$aj", "$ak", "$al", "$am",
                 "$an", "$ao", "$ap", "$aq", "$ar", "$as", "$at", "$au", "$av", "$aw", "$ax", "$ay", "$az",
-                "$aA", "$aB", "$aC", "$aD", "$aE", "$aF", "$aG", "$aH", "$aI", "$aJ", "$aK", "$aL", "$aM",
-                "$aN", "$aO", "$aP", "$aQ", "$aR", "$aS", "$aT", "$aU", "$aV", "$aW", "$aX", "$aY", "$aZ",
                 "$ba", "$bb", "$bc", "$bd", "$be", "$bf", "$bg", "$bh", "$bi", "$bj", "$bk", "$bl", "$bm",
                 "$bn", "$bo", "$bp", "$bq", "$br", "$bs", "$bt", "$bu", "$bv", "$bw", "$bx", "$by", "$bz",
-                "$bA", "$bB", "$bC", "$bD", "$bE", "$bF", "$bG", "$bH", "$bI", "$bJ", "$bK", "$bL", "$bM",
-                "$bN", "$bO", "$bP", "$bQ", "$bR", "$bS", "$bT", "$bU", "$bV", "$bW", "$bX", "$bY", "$bZ",
                 "$ca",
             ],
         ),
@@ -604,16 +589,10 @@ fn fast_uids() {
             &[
                 "$a", "$b", "$c", "$d", "$e", "$f", "$g", "$h", "$i", "$j", "$k", "$l", "$m",
                 "$n", "$o", "$p", "$q", "$r", "$s", "$t", "$u", "$v", "$w", "$x", "$y", "$z",
-                "$A", "$B", "$C", "$D", "$E", "$F", "$G", "$H", "$I", "$J", "$K", "$L", "$M",
-                "$N", "$O", "$P", "$Q", "$R", "$S", "$T", "$U", "$V", "$W", "$X", "$Y", "$Z",
                 "$aa", "$ab", "$ac", "$ad", "$ae", "$af", "$ag", "$ah", "$ai", "$aj", "$ak", "$al", "$am",
                 "$an", "$ao", "$ap", "$aq", "$ar", "$as", "$at", "$au", "$av", "$aw", "$ax", "$ay", "$az",
-                "$aA", "$aB", "$aC", "$aD", "$aE", "$aF", "$aG", "$aH", "$aI", "$aJ", "$aK", "$aL", "$aM",
-                "$aN", "$aO", "$aP", "$aQ", "$aR", "$aS", "$aT", "$aU", "$aV", "$aW", "$aX", "$aY", "$aZ",
                 "$ba", "$bb", "$bc", "$bd", "$be", "$bf", "$bg", "$bh", "$bi", "$bj", "$bk", "$bl", "$bm",
                 "$bn", "$bo", "$bp", "$bq", "$br", "$bs", "$bt", "$bu", "$bv", "$bw", "$bx", "$by", "$bz",
-                "$bA", "$bB", "$bC", "$bD", "$bE", "$bF", "$bG", "$bH", "$bI", "$bJ", "$bK", "$bL", "$bM",
-                "$bN", "$bO", "$bP", "$bQ", "$bR", "$bS", "$bT", "$bU", "$bV", "$bW", "$bX", "$bY", "$bZ",
                 "$ca",
             ],
         ),
@@ -622,16 +601,10 @@ fn fast_uids() {
             &[
                 "$$a", "$$b", "$$c", "$$d", "$$e", "$$f", "$$g", "$$h", "$$i", "$$j", "$$k", "$$l", "$$m",
                 "$$n", "$$o", "$$p", "$$q", "$$r", "$$s", "$$t", "$$u", "$$v", "$$w", "$$x", "$$y", "$$z",
-                "$$A", "$$B", "$$C", "$$D", "$$E", "$$F", "$$G", "$$H", "$$I", "$$J", "$$K", "$$L", "$$M",
-                "$$N", "$$O", "$$P", "$$Q", "$$R", "$$S", "$$T", "$$U", "$$V", "$$W", "$$X", "$$Y", "$$Z",
                 "$$aa", "$$ab", "$$ac", "$$ad", "$$ae", "$$af", "$$ag", "$$ah", "$$ai", "$$aj", "$$ak", "$$al", "$$am",
                 "$$an", "$$ao", "$$ap", "$$aq", "$$ar", "$$as", "$$at", "$$au", "$$av", "$$aw", "$$ax", "$$ay", "$$az",
-                "$$aA", "$$aB", "$$aC", "$$aD", "$$aE", "$$aF", "$$aG", "$$aH", "$$aI", "$$aJ", "$$aK", "$$aL", "$$aM",
-                "$$aN", "$$aO", "$$aP", "$$aQ", "$$aR", "$$aS", "$$aT", "$$aU", "$$aV", "$$aW", "$$aX", "$$aY", "$$aZ",
                 "$$ba", "$$bb", "$$bc", "$$bd", "$$be", "$$bf", "$$bg", "$$bh", "$$bi", "$$bj", "$$bk", "$$bl", "$$bm",
                 "$$bn", "$$bo", "$$bp", "$$bq", "$$br", "$$bs", "$$bt", "$$bu", "$$bv", "$$bw", "$$bx", "$$by", "$$bz",
-                "$$bA", "$$bB", "$$bC", "$$bD", "$$bE", "$$bF", "$$bG", "$$bH", "$$bI", "$$bJ", "$$bK", "$$bL", "$$bM",
-                "$$bN", "$$bO", "$$bP", "$$bQ", "$$bR", "$$bS", "$$bT", "$$bU", "$$bV", "$$bW", "$$bX", "$$bY", "$$bZ",
                 "$$ca",
             ],
         ),
@@ -640,16 +613,10 @@ fn fast_uids() {
             &[
                 "$$a", "$$b", "$$c", "$$d", "$$e", "$$f", "$$g", "$$h", "$$i", "$$j", "$$k", "$$l", "$$m",
                 "$$n", "$$o", "$$p", "$$q", "$$r", "$$s", "$$t", "$$u", "$$v", "$$w", "$$x", "$$y", "$$z",
-                "$$A", "$$B", "$$C", "$$D", "$$E", "$$F", "$$G", "$$H", "$$I", "$$J", "$$K", "$$L", "$$M",
-                "$$N", "$$O", "$$P", "$$Q", "$$R", "$$S", "$$T", "$$U", "$$V", "$$W", "$$X", "$$Y", "$$Z",
                 "$$aa", "$$ab", "$$ac", "$$ad", "$$ae", "$$af", "$$ag", "$$ah", "$$ai", "$$aj", "$$ak", "$$al", "$$am",
                 "$$an", "$$ao", "$$ap", "$$aq", "$$ar", "$$as", "$$at", "$$au", "$$av", "$$aw", "$$ax", "$$ay", "$$az",
-                "$$aA", "$$aB", "$$aC", "$$aD", "$$aE", "$$aF", "$$aG", "$$aH", "$$aI", "$$aJ", "$$aK", "$$aL", "$$aM",
-                "$$aN", "$$aO", "$$aP", "$$aQ", "$$aR", "$$aS", "$$aT", "$$aU", "$$aV", "$$aW", "$$aX", "$$aY", "$$aZ",
                 "$$ba", "$$bb", "$$bc", "$$bd", "$$be", "$$bf", "$$bg", "$$bh", "$$bi", "$$bj", "$$bk", "$$bl", "$$bm",
                 "$$bn", "$$bo", "$$bp", "$$bq", "$$br", "$$bs", "$$bt", "$$bu", "$$bv", "$$bw", "$$bx", "$$by", "$$bz",
-                "$$bA", "$$bB", "$$bC", "$$bD", "$$bE", "$$bF", "$$bG", "$$bH", "$$bI", "$$bJ", "$$bK", "$$bL", "$$bM",
-                "$$bN", "$$bO", "$$bP", "$$bQ", "$$bR", "$$bS", "$$bT", "$$bU", "$$bV", "$$bW", "$$bX", "$$bY", "$$bZ",
                 "$$ca",
             ],
         ),
@@ -658,16 +625,10 @@ fn fast_uids() {
             &[
                 "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
                 "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
-                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
-                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
                 "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
                 "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
-                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
-                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
                 "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
                 "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
-                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
-                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
                 "$$$$ca",
             ],
         ),
@@ -676,16 +637,10 @@ fn fast_uids() {
             &[
                 "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
                 "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
-                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
-                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
                 "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
                 "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
-                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
-                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
                 "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
                 "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
-                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
-                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
                 "$$$$ca",
             ],
         ),
@@ -694,16 +649,10 @@ fn fast_uids() {
             &[
                 "$$$$a", "$$$$b", "$$$$c", "$$$$d", "$$$$e", "$$$$f", "$$$$g", "$$$$h", "$$$$i", "$$$$j", "$$$$k", "$$$$l", "$$$$m",
                 "$$$$n", "$$$$o", "$$$$p", "$$$$q", "$$$$r", "$$$$s", "$$$$t", "$$$$u", "$$$$v", "$$$$w", "$$$$x", "$$$$y", "$$$$z",
-                "$$$$A", "$$$$B", "$$$$C", "$$$$D", "$$$$E", "$$$$F", "$$$$G", "$$$$H", "$$$$I", "$$$$J", "$$$$K", "$$$$L", "$$$$M",
-                "$$$$N", "$$$$O", "$$$$P", "$$$$Q", "$$$$R", "$$$$S", "$$$$T", "$$$$U", "$$$$V", "$$$$W", "$$$$X", "$$$$Y", "$$$$Z",
                 "$$$$aa", "$$$$ab", "$$$$ac", "$$$$ad", "$$$$ae", "$$$$af", "$$$$ag", "$$$$ah", "$$$$ai", "$$$$aj", "$$$$ak", "$$$$al", "$$$$am",
                 "$$$$an", "$$$$ao", "$$$$ap", "$$$$aq", "$$$$ar", "$$$$as", "$$$$at", "$$$$au", "$$$$av", "$$$$aw", "$$$$ax", "$$$$ay", "$$$$az",
-                "$$$$aA", "$$$$aB", "$$$$aC", "$$$$aD", "$$$$aE", "$$$$aF", "$$$$aG", "$$$$aH", "$$$$aI", "$$$$aJ", "$$$$aK", "$$$$aL", "$$$$aM",
-                "$$$$aN", "$$$$aO", "$$$$aP", "$$$$aQ", "$$$$aR", "$$$$aS", "$$$$aT", "$$$$aU", "$$$$aV", "$$$$aW", "$$$$aX", "$$$$aY", "$$$$aZ",
                 "$$$$ba", "$$$$bb", "$$$$bc", "$$$$bd", "$$$$be", "$$$$bf", "$$$$bg", "$$$$bh", "$$$$bi", "$$$$bj", "$$$$bk", "$$$$bl", "$$$$bm",
                 "$$$$bn", "$$$$bo", "$$$$bp", "$$$$bq", "$$$$br", "$$$$bs", "$$$$bt", "$$$$bu", "$$$$bv", "$$$$bw", "$$$$bx", "$$$$by", "$$$$bz",
-                "$$$$bA", "$$$$bB", "$$$$bC", "$$$$bD", "$$$$bE", "$$$$bF", "$$$$bG", "$$$$bH", "$$$$bI", "$$$$bJ", "$$$$bK", "$$$$bL", "$$$$bM",
-                "$$$$bN", "$$$$bO", "$$$$bP", "$$$$bQ", "$$$$bR", "$$$$bS", "$$$$bT", "$$$$bU", "$$$$bV", "$$$$bW", "$$$$bX", "$$$$bY", "$$$$bZ",
                 "$$$$ca",
             ],
         ),
