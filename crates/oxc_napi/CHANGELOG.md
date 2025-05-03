@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+### Refactor
+
+- 06fde2a ast/estree: `convert_utf8_to_utf16` take `&mut` slice of errors, not `&mut Vec` (#10672) (overlookmotel)
+
 ## [0.61.0] - 2025-03-20
 
 ### Features

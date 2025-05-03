@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Performance
+
+- 79e462d transformer: Faster UID generation (#10759) (overlookmotel)
+
+### Refactor
+
+- ae57125 traverse: Remove `get_unique_name_impl` (#10755) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Performance
