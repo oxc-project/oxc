@@ -184,10 +184,10 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
-    #[expect(clippy::unused_self)]
     #[must_use]
     pub fn codegen(self) -> Codegen<'a> {
         Codegen::new()
+            .with_source_text(self.source_text())
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 

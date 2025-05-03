@@ -553,6 +553,11 @@ fn test() {
         // `string.split()`
         (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
         (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
+        (
+            r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
+            "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
+            None,
+        ),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)

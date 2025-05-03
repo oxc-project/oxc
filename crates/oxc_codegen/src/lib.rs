@@ -262,6 +262,7 @@ impl<'a> Codegen<'a> {
     /// NOTE: you must call [`Codegen::with_source_text`] before calling this method
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
+        debug_assert!(!self.source_text.is_empty());
         expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
