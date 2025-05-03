@@ -351,22 +351,6 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
-    /// Calculates the buffer's new size given that it'll hold `len +
-    /// additional` elements. This logic is used in amortized reserve methods.
-    /// Returns `(new_capacity, new_alloc_size)`.
-    fn amortized_new_size(
-        &self,
-        len: usize,
-        additional: usize,
-    ) -> Result<usize, CollectionAllocErr> {
-        // Nothing we can really do about these checks :(
-        let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
-        // Cannot overflow, because `cap <= isize::MAX`, and type of `cap` is `usize`.
-        let double_cap = self.cap * 2;
-        // `double_cap` guarantees exponential growth.
-        Ok(cmp::max(double_cap, required_cap))
-    }
-
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
         if self.needs_to_grow(len, additional) {
@@ -635,12 +619,46 @@ impl<'a, T> RawVec<'a, T> {
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
-            let new_cap = self.amortized_new_size(len, additional)?;
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            // Nothing we can really do about these checks, sadly.
+            let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
+
+            // This guarantees exponential growth. The doubling cannot overflow
+            // because `cap <= isize::MAX` and the type of `cap` is `usize`.
+            let cap = cmp::max(self.cap() * 2, required_cap);
+
+            // The following commented-out code is copied from the standard library.
+            // We don't use it because this would cause notable performance regression
+            // in the oxc_transformer, oxc_minifier and oxc_mangler, but would only get a
+            // tiny performance improvement in the oxc_parser.
+            //
+            // The reason is that only the oxc_parser has a lot of tiny `Vec`s without
+            // pre-reserved capacity, which can benefit from this change. Other
+            // crates don't have such cases, so the `cmp::max` calculation costs more
+            // than the potential performance improvement.
+            //
+            // ------------------ Copied from the standard library ------------------
+            //
+            // Tiny Vecs are dumb. Skip to:
+            // - 8 if the element size is 1, because any heap allocators is likely
+            //   to round up a request of less than 8 bytes to at least 8 bytes.
+            // - 4 if elements are moderate-sized (<= 1 KiB).
+            // - 1 otherwise, to avoid wasting too much space for very short Vecs.
+            // const fn min_non_zero_cap(size: usize) -> usize {
+            //     if size == 1 {
+            //         8
+            //     } else if size <= 1024 {
+            //         4
+            //     } else {
+            //         1
+            //     }
+            // }
+            // let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
+
+            let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = new_cap;
+            self.cap = cap;
 
             Ok(())
         }
