@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+### Features
+
+- 4b4b09e allocator: Add `String::set_len` method (#10757) (overlookmotel)
+- d5f66fb allocator: Implement `Display` for `Box` (#10731) (overlookmotel)
+- 3cd3d23 allocator/vec2: Align `RawVec::reserve` with standard library implementation (#10701) (Dunqing)
+- 7f2f247 allocator/vec2: Add specialized `grow_one` method (#9855) (Dunqing)
+- 6ce3bbb allocator/vec2: Introduce `extend_desugared` method as `extend` internal implementation (#10670) (Dunqing)
+
+### Performance
+
+- 4eaef66 allocator/vec2: Align min amortized cap size with `std` (#9857) (Dunqing)
+- 04e0390 allocator/vec2: Replace `self.reserve(1)` calls with `self.grow_one()` for better efficiency (#9856) (Dunqing)
+- 2dc4779 allocator/vec2: Calling `Bump::grow` or `Bump::shrink` at the call site directly instead of calling `realloc` (#10686) (Dunqing)
+- b4953b4 allocator/vec2: Resolve performance regression for `extend` by marking reserve as `#[cold]` and `#[inline(never)]` (#10675) (Dunqing)
+
+### Documentation
+
+- c48f6ae allocator: Document cargo features (#10695) (overlookmotel)
+
 ## [0.66.0] - 2025-04-23
 
 ### Testing

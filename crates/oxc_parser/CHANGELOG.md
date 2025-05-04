@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Bug Fixes
+
+- 7234ba4 estree: Adjust span for `TSTypePredicate`.`typeAnnotation` (#10711) (Yuji Sugiura)
+- 2718f29 parser: Fix panic when the parser tries to re-lex `>>` (#10756) (Boshen)
+- d1d05d3 parser: Check comma in JSX expr lazily (#10739) (Yuji Sugiura)
+- f803807 parser: Fix crash when parsing `for(in` (#10640) (Boshen)
+
+### Performance
+
+- 4861a62 parser: Faster parsing `TemplateElement`s (#10678) (overlookmotel)
+
+### Documentation
+
+- 24ada6f lexer: Correct comment (#10700) (overlookmotel)
+
+### Refactor
+
+
 ## [0.67.0] - 2025-04-27
 
 ### Features

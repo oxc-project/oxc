@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Bug Fixes
+
+- 4795059 transformer_plugins: Provide reference data when identifiers are replaced (#10620) (Boshen)
+
+### Refactor
+
+
 ## [0.67.0] - 2025-04-27
 
 ### Features

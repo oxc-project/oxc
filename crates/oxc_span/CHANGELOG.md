@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+### Features
+
+- 0105253 span: Introduce `format_atom!` macro (#10722) (overlookmotel)
+
+### Bug Fixes
+
+- 48c542d linter: Skip linting vue <script> where `lang` is not js / ts (#10740) (Boshen)
+
 ## [0.63.0] - 2025-04-08
 
 ### Bug Fixes

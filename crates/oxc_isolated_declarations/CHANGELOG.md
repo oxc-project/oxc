@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Performance
+
+- 44f1952 isolated_declaration: Avoid copying string data (#10732) (overlookmotel)
+
+### Refactor
+
+- 40896d4 isolated_declarations: Shorten code (#10774) (overlookmotel)
+
 ## [0.66.0] - 2025-04-23
 
 ### Bug Fixes

@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+### Features
+
+- 60347e7 ast_tools: `AstBuilder` generator support types with more than 1 `Atom` field (#10737) (overlookmotel)
+
+### Bug Fixes
+
+- 8bfd5e3 ast: `AssignmentTargetMaybeDefault::identifier` preserve lifetime (#10720) (overlookmotel)
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+
+### Styling
+
+- c18c81f ast: Import `Display` trait (#10724) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Bug Fixes
