@@ -405,7 +405,7 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `BigInt`.
 #[ast_meta]
-#[estree(ts_type = "BigInt", raw_deser = "BigInt(THIS.bigint)")]
+#[estree(ts_type = "bigint", raw_deser = "BigInt(THIS.bigint)")]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralValue<'_, '_> {

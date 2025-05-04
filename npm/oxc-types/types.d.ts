@@ -845,7 +845,7 @@ export interface StringLiteral extends Span {
 
 export interface BigIntLiteral extends Span {
   type: 'Literal';
-  value: BigInt;
+  value: bigint;
   raw: string | null;
   bigint: string;
 }
