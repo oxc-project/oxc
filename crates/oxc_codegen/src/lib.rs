@@ -75,7 +75,7 @@ pub struct Codegen<'a> {
     pub(crate) options: CodegenOptions,
 
     /// Original source code of the AST
-    source_text: &'a str,
+    source_text: Option<&'a str>,
 
     scoping: Option<Scoping>,
 
@@ -151,7 +151,7 @@ impl<'a> Codegen<'a> {
         let print_annotation_comment = options.print_annotation_comment();
         Self {
             options,
-            source_text: "",
+            source_text: None,
             scoping: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
@@ -190,7 +190,7 @@ impl<'a> Codegen<'a> {
     /// Sets the source text for the code generator.
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
-        self.source_text = source_text;
+        self.source_text = Some(source_text);
         self
     }
 
@@ -209,8 +209,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
-        self.source_text = program.source_text;
+        self.source_text = Some(program.source_text);
         self.code.reserve(program.source_text.len());
+
         if self.print_any_comment {
             if program.comments.is_empty() {
                 self.print_any_comment = false;
@@ -258,11 +259,8 @@ impl<'a> Codegen<'a> {
 
     /// Print a single [`Expression`], adding it to the code generator's
     /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
-    ///
-    /// NOTE: you must call [`Codegen::with_source_text`] before calling this method
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        debug_assert!(!self.source_text.is_empty());
         expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
