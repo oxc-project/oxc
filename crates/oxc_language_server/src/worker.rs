@@ -1,14 +1,9 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-    vec,
-};
+use std::{path::PathBuf, str::FromStr, vec};
 
-use globset::Glob;
 use ignore::gitignore::Gitignore;
-use log::{debug, info, warn};
-use oxc_linter::{ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc};
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use log::{debug, info};
+use oxc_linter::{ConfigStore, ConfigStoreBuilder, Oxlintrc};
+use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, OnceCell, RwLock};
 use tower_lsp_server::{
     UriExt,
@@ -21,10 +16,7 @@ use crate::{
         apply_all_fix_code_action, apply_fix_code_action, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
-    linter::{
-        config_walker::ConfigWalker, error_with_position::DiagnosticReport,
-        isolated_lint_handler::IsolatedLintHandlerOptions, server_linter::ServerLinter,
-    },
+    linter::{error_with_position::DiagnosticReport, server_linter::ServerLinter},
 };
 
 pub struct WorkspaceWorker {
@@ -41,16 +33,15 @@ impl WorkspaceWorker {
         let root_uri_cell = OnceCell::new();
         root_uri_cell.set(root_uri.clone()).unwrap();
 
-        let nested_configs = Self::init_nested_configs(root_uri, &options);
+        let nested_configs = ServerLinter::create_nested_configs(root_uri, &options);
         let (server_linter, oxlintrc) =
-            Self::init_linter_config(root_uri, &options, &nested_configs);
-
+            ServerLinter::create_server_linter(root_uri, &options, &nested_configs);
         Self {
             root_uri: root_uri_cell,
             server_linter: RwLock::new(server_linter),
             diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
             options: Mutex::new(options),
-            gitignore_glob: Mutex::new(Self::init_ignore_glob(root_uri, &oxlintrc)),
+            gitignore_glob: Mutex::new(ServerLinter::create_ignore_glob(root_uri, &oxlintrc)),
             nested_configs: RwLock::const_new(nested_configs),
         }
     }
@@ -72,160 +63,24 @@ impl WorkspaceWorker {
         self.diagnostics_report_map.read().await.pin().remove(&uri.to_string());
     }
 
-    /// Searches inside root_uri recursively for the default oxlint config files
-    /// and insert them inside the nested configuration
-    fn init_nested_configs(
-        root_uri: &Uri,
-        options: &Options,
-    ) -> ConcurrentHashMap<PathBuf, ConfigStore> {
-        // nested config is disabled, no need to search for configs
-        if !options.use_nested_configs() {
-            return ConcurrentHashMap::default();
-        }
-
-        let root_path = root_uri.to_file_path().expect("Failed to convert URI to file path");
-
-        let paths = ConfigWalker::new(&root_path).paths();
-        let nested_configs =
-            ConcurrentHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
-
-        for path in paths {
-            let file_path = Path::new(&path);
-            let Some(dir_path) = file_path.parent() else {
-                continue;
-            };
-
-            let oxlintrc = Oxlintrc::from_file(file_path).expect("Failed to parse config file");
-            let config_store_builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
-                .expect("Failed to create config store builder");
-            let config_store = config_store_builder.build().expect("Failed to build config store");
-            nested_configs.pin().insert(dir_path.to_path_buf(), config_store);
-        }
-
-        nested_configs
-    }
-
     async fn refresh_nested_configs(&self) {
         let options = self.options.lock().await;
-        let nested_configs = Self::init_nested_configs(self.root_uri.get().unwrap(), &options);
+        let nested_configs =
+            ServerLinter::create_nested_configs(self.root_uri.get().unwrap(), &options);
 
         *self.nested_configs.write().await = nested_configs;
-    }
-
-    fn init_linter_config(
-        root_uri: &Uri,
-        options: &Options,
-        nested_configs: &ConcurrentHashMap<PathBuf, ConfigStore>,
-    ) -> (ServerLinter, Oxlintrc) {
-        let root_path = root_uri.to_file_path().unwrap();
-        let relative_config_path = options.config_path.clone();
-        let oxlintrc = if relative_config_path.is_some() {
-            let config = root_path.join(relative_config_path.unwrap());
-            if config.try_exists().expect("Could not get fs metadata for config") {
-                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
-                    oxlintrc
-                } else {
-                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
-                    Oxlintrc::default()
-                }
-            } else {
-                warn!(
-                    "Config file not found: {}, fallback to default config",
-                    config.to_string_lossy()
-                );
-                Oxlintrc::default()
-            }
-        } else {
-            Oxlintrc::default()
-        };
-
-        // clone because we are returning it for ignore builder
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
-
-        // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
-        let use_nested_config = options.use_nested_configs();
-
-        let use_cross_module = if use_nested_config {
-            nested_configs.pin().values().any(|config| config.plugins().has_import())
-        } else {
-            config_builder.plugins().has_import()
-        };
-
-        let config_store = config_builder.build().expect("Failed to build config store");
-
-        let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
-
-        let linter = if use_nested_config {
-            let nested_configs = nested_configs.pin();
-            let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect::<FxHashMap<_, _>>();
-
-            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
-        } else {
-            Linter::new(lint_options, config_store)
-        };
-
-        let server_linter = ServerLinter::new_with_linter(
-            linter,
-            IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
-        );
-
-        (server_linter, oxlintrc)
     }
 
     async fn refresh_linter_config(&self) {
         let options = self.options.lock().await;
         let nested_configs = self.nested_configs.read().await;
-        let (server_linter, _) =
-            Self::init_linter_config(self.root_uri.get().unwrap(), &options, &nested_configs);
+        let (server_linter, _) = ServerLinter::create_server_linter(
+            self.root_uri.get().unwrap(),
+            &options,
+            &nested_configs,
+        );
 
         *self.server_linter.write().await = server_linter;
-    }
-
-    fn init_ignore_glob(root_uri: &Uri, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
-        let mut builder = globset::GlobSetBuilder::new();
-        // Collecting all ignore files
-        builder.add(Glob::new("**/.eslintignore").unwrap());
-        builder.add(Glob::new("**/.gitignore").unwrap());
-
-        let ignore_file_glob_set = builder.build().unwrap();
-
-        let walk = ignore::WalkBuilder::new(root_uri.to_file_path().unwrap())
-            .ignore(true)
-            .hidden(false)
-            .git_global(false)
-            .build()
-            .flatten();
-
-        let mut gitignore_globs = vec![];
-        for entry in walk {
-            let ignore_file_path = entry.path();
-            if !ignore_file_glob_set.is_match(ignore_file_path) {
-                continue;
-            }
-
-            if let Some(ignore_file_dir) = ignore_file_path.parent() {
-                let mut builder = ignore::gitignore::GitignoreBuilder::new(ignore_file_dir);
-                builder.add(ignore_file_path);
-                if let Ok(gitignore) = builder.build() {
-                    gitignore_globs.push(gitignore);
-                }
-            }
-        }
-
-        if !oxlintrc.ignore_patterns.is_empty() {
-            let mut builder =
-                ignore::gitignore::GitignoreBuilder::new(oxlintrc.path.parent().unwrap());
-            for entry in &oxlintrc.ignore_patterns {
-                builder.add_line(None, entry).expect("Failed to add ignore line");
-            }
-            gitignore_globs.push(builder.build().unwrap());
-        }
-
-        gitignore_globs
     }
 
     fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
@@ -459,8 +314,6 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::tester::get_file_uri;
-
     use super::*;
 
     #[test]
@@ -488,35 +341,5 @@ mod tests {
             !worker
                 .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
-    }
-
-    #[test]
-    fn test_init_nested_configs_with_disabled_nested_configs() {
-        let mut flags = FxHashMap::default();
-        flags.insert("disable_nested_configs".to_string(), "true".to_string());
-
-        let configs = WorkspaceWorker::init_nested_configs(
-            &Uri::from_str("file:///root/").unwrap(),
-            &Options { flags, ..Options::default() },
-        );
-
-        assert!(configs.is_empty());
-    }
-
-    #[test]
-    fn test_init_nested_configs() {
-        let configs = WorkspaceWorker::init_nested_configs(
-            &get_file_uri("fixtures/linter/init_nested_configs"),
-            &Options::default(),
-        );
-        let configs = configs.pin();
-        let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
-        // sorting the key because for consistent tests results
-        configs_dirs.sort();
-
-        assert!(configs_dirs.len() == 3);
-        assert!(configs_dirs[2].ends_with("deep2"));
-        assert!(configs_dirs[1].ends_with("deep1"));
-        assert!(configs_dirs[0].ends_with("init_nested_configs"));
     }
 }
