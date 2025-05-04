@@ -1,6 +1,8 @@
 // Note: This code is repeated in `wrap.mjs`.
 // Any changes should be applied in that file too.
 
+const visitorKeys = require('./generated/visitor-keys.js');
+
 module.exports.wrap = function wrap(result) {
   let program, module, comments, errors;
   return {
@@ -24,24 +26,38 @@ module.exports.wrap = function wrap(result) {
 };
 
 function jsonParseAst(program) {
-  return JSON.parse(program, transform);
+  const parsed = JSON.parse(program);
+  visitNode(parsed, transform);
+  return parsed;
 }
 
-function transform(key, value) {
+function transform(node) {
   // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.
   // This is not possible to do on Rust side, as neither can be represented correctly in JSON.
-  if (value === null && key === 'value' && Object.hasOwn(this, 'type') && this.type === 'Literal') {
-    if (Object.hasOwn(this, 'bigint')) {
-      return BigInt(this.bigint);
+  if (node.type === 'Literal') {
+    if (node.bigint) {
+      node.value = BigInt(node.bigint);
     }
-    if (Object.hasOwn(this, 'regex')) {
-      const { regex } = this;
+    if (node.regex) {
       try {
-        return RegExp(regex.pattern, regex.flags);
+        node.value = RegExp(node.regex.pattern, node.regex.flags);
       } catch (_err) {
         // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
       }
     }
   }
-  return value;
+}
+
+function visitNode(node, fn) {
+  if (!node) return;
+  if (Array.isArray(node)) {
+    for (const el of node) visitNode(el, fn);
+    return;
+  }
+
+  fn(node);
+
+  const keys = visitorKeys[node.type];
+  if (!keys) return;
+  for (const key of keys) visitNode(node[key], fn);
 }

@@ -1,3 +1,4 @@
 node_modules/
 *.node
 tsconfig.vitest-temp.json
+parser/generated/visitor-keys.js
