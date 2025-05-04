@@ -163,7 +163,10 @@ impl Codegen<'_> {
     }
 
     fn print_comment(&mut self, comment: &Comment) {
-        let comment_source = comment.span.source_text(self.source_text);
+        let Some(source_text) = self.source_text else {
+            return;
+        };
+        let comment_source = comment.span.source_text(source_text);
         match comment.kind {
             CommentKind::Line => {
                 self.print_str(comment_source);
