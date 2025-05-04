@@ -664,7 +664,7 @@ impl<'a> PeepholeOptimizations {
                     | Expression::ArrowFunctionExpression(_)
                     | Expression::FunctionExpression(_) => (new_size, true),
                     Expression::ObjectExpression(o)
-                        if Self::is_spread_inlineable_object_literal(o) =>
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
                         (new_size + o.properties.len(), true)
                     }
@@ -694,9 +694,19 @@ impl<'a> PeepholeOptimizations {
                         // skip
                     }
                     Expression::ObjectExpression(o)
-                        if Self::is_spread_inlineable_object_literal(o) =>
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
-                        new_properties.extend(o.properties.drain(..));
+                        new_properties.extend(o.properties.drain(..).filter(|prop| {
+                            match prop {
+                                ObjectPropertyKind::SpreadProperty(_) => true,
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    // non-computed __proto__ property sets the prototype of the object instead
+                                    p.computed
+                                        || p.method
+                                        || !p.key.is_specific_static_name("__proto__")
+                                }
+                            }
+                        }));
                     }
                     Expression::ArrayExpression(o) if o.elements.is_empty() => {
                         // skip empty array
@@ -714,14 +724,19 @@ impl<'a> PeepholeOptimizations {
         state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>) -> bool {
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
                 // getters are evaluated when spreading
                 matches!(p.kind, PropertyKind::Init)
-                    // non-computed __proto__ property sets the prototype of the object
-                    && (p.computed || p.method || !p.key.is_specific_static_name("__proto__"))
+                    && (
+                        // non-computed __proto__ property sets the prototype of the object instead
+                        p.computed
+                            || p.method
+                            || !p.key.is_specific_static_name("__proto__")
+                            || !p.value.may_have_side_effects(&ctx)
+                    )
             }
         })
     }
@@ -2111,8 +2126,9 @@ mod test {
             fold("({ a: 0, ...{ a: 1 } })", "({ a: 0, a: 1 })"); // can be fold to `({ a: 1 })`
             fold("({ a: foo(), ...{ a: bar() } })", "({ a: foo(), a: bar() })"); // can be fold to `({ a: (foo(), bar()) })`
             fold_same("({ ...{ get a() { return 0 } } })");
-            fold_same("({ ...{ __proto__: null } })");
-            fold_same("({ ...{ '__proto__': null } })");
+            fold("({ ...{ __proto__: null } })", "({})");
+            fold("({ ...{ '__proto__': null } })", "({})");
+            fold_same("({ a: foo(), ...{ __proto__: bar() }, b: baz() })"); // can be folded to `({ a: foo(), b: (bar(), baz()) })`
             fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
             fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
         }
