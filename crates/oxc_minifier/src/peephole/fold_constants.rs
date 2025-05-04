@@ -646,30 +646,68 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        let len = e.properties.len();
-        e.properties.retain(|p| {
-            if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
+        let (new_size, should_fold) =
+            e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
+                let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
+                    return (new_size + 1, should_fold);
+                };
                 let e = &spread_element.argument;
                 if e.is_literal() || ctx.is_expression_undefined(e) {
-                    return false;
+                    return (new_size, true);
                 }
-                if let Expression::ObjectExpression(o) = e {
-                    if o.properties.is_empty() {
-                        return false;
+                match e {
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o) =>
+                    {
+                        (new_size + o.properties.len(), true)
                     }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => (new_size, true),
+                    _ => (new_size + 1, should_fold),
                 }
-                if let Expression::ArrayExpression(o) = e {
-                    if o.elements.is_empty() {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            true
-        });
-        if e.properties.len() != len {
-            state.changed = true;
+            });
+        if !should_fold {
+            return;
         }
+
+        let mut new_properties = ctx.ast.vec_with_capacity::<ObjectPropertyKind>(new_size);
+        for p in e.properties.drain(..) {
+            if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
+                let e = &mut spread_element.argument;
+                if e.is_literal() || ctx.is_expression_undefined(e) {
+                    continue;
+                }
+                match e {
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o) =>
+                    {
+                        new_properties.extend(o.properties.drain(..));
+                    }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => {
+                        // skip empty array
+                    }
+                    _ => {
+                        new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
+                    }
+                }
+            } else {
+                new_properties.push(p);
+            }
+        }
+
+        e.properties = new_properties;
+        state.changed = true;
+    }
+
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>) -> bool {
+        e.properties.iter().all(|p| match p {
+            ObjectPropertyKind::SpreadProperty(_) => true,
+            ObjectPropertyKind::ObjectProperty(p) => {
+                // getters are evaluated when spreading
+                matches!(p.kind, PropertyKind::Init)
+                    // non-computed __proto__ property sets the prototype of the object
+                    && (p.computed || p.method || !p.key.is_specific_static_name("__proto__"))
+            }
+        })
     }
 
     /// Inline constant values in template literals
@@ -2049,6 +2087,15 @@ mod test {
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
+            fold("({ a: 0, ...{ b: 1 } })", "({ a: 0, b: 1 })");
+            fold("({ a: 0, ...{ b: 1, ...{ c: 2 } } })", "({ a: 0, b: 1, c: 2 })");
+            fold("({ a: 0, ...{ a: 1 } })", "({ a: 0, a: 1 })"); // can be fold to `({ a: 1 })`
+            fold("({ a: foo(), ...{ a: bar() } })", "({ a: foo(), a: bar() })"); // can be fold to `({ a: (foo(), bar()) })`
+            fold_same("({ ...{ get a() { return 0 } } })");
+            fold_same("({ ...{ __proto__: null } })");
+            fold_same("({ ...{ '__proto__': null } })");
+            fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
+            fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
         }
     }
 }
