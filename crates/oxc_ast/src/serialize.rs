@@ -1301,7 +1301,7 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
 #[estree(
     ts_type = "IdentifierReference | ThisExpression",
     raw_deser = "
-        let id = DESER[IdentifierReference](POS);
+        let id = DESER[Box<IdentifierReference>](POS);
         if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
         id
     "
