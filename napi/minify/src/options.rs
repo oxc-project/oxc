@@ -155,7 +155,8 @@ impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
         if o.remove_whitespace.is_some_and(|b| b) {
             oxc_codegen::CodegenOptions::minify()
         } else {
-            oxc_codegen::CodegenOptions::default()
+            // Need to remove all comments.
+            oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
         }
     }
 }
