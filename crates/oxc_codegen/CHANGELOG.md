@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 368d05f codegen: Make `source_text` an option, avoid panic (#10790) (Cameron)
+
 ## [0.68.0] - 2025-05-03
 
 - 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)

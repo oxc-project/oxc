@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.1] - 2025-05-04
+
+### Features
+
+- d04ab1f minifier: Inline object literal including __proto__ with spread operator (#10795) (sapphi-red)
+- 41c928f minifier: Remove function expressions passed to object spreads (#10794) (sapphi-red)
+- 54840d5 minifier: Inline nested spread object literals (#10792) (sapphi-red)
+
+### Bug Fixes
+
+- 7a4babe minifier: Keep string spread in object literals as-is (#10793) (sapphi-red)
+
 ## [0.68.0] - 2025-05-03
 
 - a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
