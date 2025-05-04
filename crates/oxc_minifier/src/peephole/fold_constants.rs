@@ -660,7 +660,9 @@ impl<'a> PeepholeOptimizations {
                     | Expression::NullLiteral(_)
                     | Expression::NumericLiteral(_)
                     | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_) => (new_size, true),
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => (new_size, true),
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o) =>
                     {
@@ -686,7 +688,9 @@ impl<'a> PeepholeOptimizations {
                     | Expression::NullLiteral(_)
                     | Expression::NumericLiteral(_)
                     | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_) => {
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => {
                         // skip
                     }
                     Expression::ObjectExpression(o)
@@ -2099,6 +2103,8 @@ mod test {
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
+            fold("({ z, ...()=>{} })", result);
+            fold("({ z, ...function(){} })", result);
             fold_same("({ z, ...'abc' })");
             fold("({ a: 0, ...{ b: 1 } })", "({ a: 0, b: 1 })");
             fold("({ a: 0, ...{ b: 1, ...{ c: 2 } } })", "({ a: 0, b: 1, c: 2 })");
