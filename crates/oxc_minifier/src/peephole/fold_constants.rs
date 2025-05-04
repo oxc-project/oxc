@@ -652,10 +652,15 @@ impl<'a> PeepholeOptimizations {
                     return (new_size + 1, should_fold);
                 };
                 let e = &spread_element.argument;
-                if e.is_literal() || ctx.is_expression_undefined(e) {
+                if ctx.is_expression_undefined(e) {
                     return (new_size, true);
                 }
                 match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_) => (new_size, true),
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o) =>
                     {
@@ -673,10 +678,17 @@ impl<'a> PeepholeOptimizations {
         for p in e.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
                 let e = &mut spread_element.argument;
-                if e.is_literal() || ctx.is_expression_undefined(e) {
+                if ctx.is_expression_undefined(e) {
                     continue;
                 }
                 match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_) => {
+                        // skip
+                    }
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o) =>
                     {
@@ -2087,6 +2099,7 @@ mod test {
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
+            fold_same("({ z, ...'abc' })");
             fold("({ a: 0, ...{ b: 1 } })", "({ a: 0, b: 1 })");
             fold("({ a: 0, ...{ b: 1, ...{ c: 2 } } })", "({ a: 0, b: 1, c: 2 })");
             fold("({ a: 0, ...{ a: 1 } })", "({ a: 0, a: 1 })"); // can be fold to `({ a: 1 })`
