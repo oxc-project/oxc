@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoUselessFragment,
     react,
-    pedantic
+    pedantic,
+    suggestion
 );
 
 impl Rule for JsxNoUselessFragment {
@@ -318,6 +319,92 @@ fn test() {
         (r"<><Foo>{moo}</Foo></>", None),
     ];
 
+    let fix = vec![
+        (r"<></>", r"<></>", None),
+        (r"<>{}</>", r"<>{}</>", None),
+        (r"<p>moo<>foo</></p>", r"<p>moofoo</p>", None),
+        (r"<>{meow}</>", r"<>{meow}</>", None),
+        (r"<p><>{meow}</></p>", r"<p>{meow}</p>", None),
+        (r"<><div/></>", r"<div/>", None),
+        (
+            r"
+            <>
+              <div/>
+            </>
+            ",
+            r"<div/>",
+            None,
+        ),
+        (r"<Fragment />", r"<Fragment />", None),
+        (
+            r"
+                <React.Fragment>
+                  <Foo />
+                </React.Fragment>
+            ",
+            r"<Foo />",
+            None,
+        ),
+        (r"<Eeee><>foo</></Eeee>", r"<Eeee><>foo</></Eeee>", None),
+        (r"<div><>foo</></div>", r"<div>foo</div>", None),
+        (r#"<div><>{"a"}{"b"}</></div>"#, r#"<div>{"a"}{"b"}</div>"#, None),
+        (
+            r#"
+            <section>
+              <Eeee />
+              <Eeee />
+              <>{"a"}{"b"}</>
+            </section>
+            "#,
+            r#"
+            <section>
+              <Eeee />
+              <Eeee />
+              {"a"}{"b"}
+            </section>
+            "#,
+            None,
+        ),
+        (r#"<div><Fragment>{"a"}{"b"}</Fragment></div>"#, r#"<div>{"a"}{"b"}</div>"#, None),
+        (
+            r"
+            <section>
+                git<>
+                    <b>hub</b>.
+                </>
+
+                git<> <b>hub</b></>
+            </section>",
+            r"
+            <section>
+                git<b>hub</b>.
+
+                git <b>hub</b>
+            </section>",
+            None,
+        ),
+        (r#"<div>a <>{""}{""}</> a</div>"#, r#"<div>a {""}{""} a</div>"#, None),
+        (
+            r"
+            const Comp = () => (
+              <html>
+                <React.Fragment />
+              </html>
+            );
+            ",
+            r"
+            const Comp = () => (
+              <html>
+                <React.Fragment />
+              </html>
+            );
+            ",
+            None,
+        ),
+        (r"<><Foo>{moo}</Foo></>", r"<Foo>{moo}</Foo>", Some(json!([{"allowExpressions": true}]))),
+    ];
+
     Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
