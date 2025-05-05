@@ -41,6 +41,7 @@
     "wrap.cjs",
     "wrap.mjs",
     "wasm.mjs",
+    "generated/visitor-keys.mjs",
     "bindings.js",
     "webcontainer-fallback.js",
     "generated/visitor-keys.js",
