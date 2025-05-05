@@ -137,4 +137,6 @@ module.exports = {
   TSTypeQuery: ['exprName', 'typeArguments'],
   TSTypeReference: ['typeName', 'typeArguments'],
   TSUnionType: ['types'],
+  ParenthesizedExpression: ['expression'],
+  TSParenthesizedType: ['typeAnnotation'],
 };
