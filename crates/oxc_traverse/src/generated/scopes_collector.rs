@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/scopes_collector.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/scopes_collector.rs`.
 
 #![expect(
     unused_variables,

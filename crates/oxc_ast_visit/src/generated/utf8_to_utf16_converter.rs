@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/utf8_to_utf16.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/utf8_to_utf16.rs`.
 
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;

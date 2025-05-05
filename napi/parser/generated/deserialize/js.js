@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
 'use strict';
 
