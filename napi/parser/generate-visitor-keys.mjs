@@ -2,7 +2,8 @@ import { visitorKeys as visitorKeysOriginal } from '@typescript-eslint/visitor-k
 import { writeFileSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';
 
-const PATH = pathJoin(import.meta.dirname, 'generated/visitor-keys.js');
+const PATH_CJS = pathJoin(import.meta.dirname, 'generated/visitor-keys.cjs');
+const PATH_MJS = pathJoin(import.meta.dirname, 'generated/visitor-keys.mjs');
 
 // Add keys for `ParenthesizedExpression` and `TSParenthesizedType`, which TS-ESLint doesn't have
 const visitorKeys = {
@@ -19,9 +20,10 @@ const keys = Object.entries(visitorKeys)
 const code = `// Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit \`napi/parser/generate-visitor-keys.mjs\`.
 
-module.exports = {
+const visitorKeys = {
 ${keys}
 };
 `;
 
-writeFileSync(PATH, code);
+writeFileSync(PATH_CJS, `${code}module.exports = visitorKeys;\n`);
+writeFileSync(PATH_MJS, `${code}export default visitorKeys;\n`);

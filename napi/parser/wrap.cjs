@@ -1,7 +1,7 @@
 // Note: This code is repeated in `wrap.mjs`.
 // Any changes should be applied in that file too.
 
-const visitorKeys = require('./generated/visitor-keys.js');
+const visitorKeys = require('./generated/visitor-keys.cjs');
 
 module.exports.wrap = function wrap(result) {
   let program, module, comments, errors;

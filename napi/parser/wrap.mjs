@@ -1,7 +1,7 @@
 // Note: This code is repeated in `wrap.cjs`.
 // Any changes should be applied in that file too.
 
-import visitorKeys from './generated/visitor-keys.js';
+import visitorKeys from './generated/visitor-keys.mjs';
 
 export function wrap(result) {
   let program, module, comments, errors;

@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `napi/parser/generate-visitor-keys.mjs`.
 
-module.exports = {
+const visitorKeys = {
   ArrayExpression: ['elements'],
   ArrayPattern: ['decorators', 'elements', 'typeAnnotation'],
   ArrowFunctionExpression: ['typeParameters', 'params', 'returnType', 'body'],
@@ -140,3 +140,4 @@ module.exports = {
   ParenthesizedExpression: ['expression'],
   TSParenthesizedType: ['typeAnnotation'],
 };
+export default visitorKeys;
