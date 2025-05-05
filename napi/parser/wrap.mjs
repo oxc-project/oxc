@@ -52,7 +52,9 @@ function transform(node) {
 function visitNode(node, fn) {
   if (!node) return;
   if (Array.isArray(node)) {
-    for (const el of node) visitNode(el, fn);
+    for (const el of node) {
+      visitNode(el, fn);
+    }
     return;
   }
 
@@ -60,5 +62,7 @@ function visitNode(node, fn) {
 
   const keys = visitorKeys[node.type];
   if (!keys) return;
-  for (const key of keys) visitNode(node[key], fn);
+  for (const key of keys) {
+    visitNode(node[key], fn);
+  }
 }
