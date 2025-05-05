@@ -505,8 +505,9 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let variant_ident = variant.ident();
 
         if should_skip_enum_variant(variant) {
+            let pattern = if variant.is_fieldless() { quote!() } else { quote!((_)) };
             return quote! {
-                Self::#variant_ident => { unreachable!("This enum variant is skipped.") }
+                Self::#variant_ident #pattern => unreachable!("This enum variant is skipped."),
             };
         }
 
