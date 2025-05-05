@@ -31,7 +31,13 @@ export default function generateAncestorsCode(types) {
         fieldType = types[fieldTypeName];
       if (!fieldType) continue;
 
-      let methodsCode = '';
+      let methodsCode = `
+        #[inline]
+        pub(crate) fn new(node: *mut ${type.rawName}) -> Self {
+          Self(node, PhantomData)
+        }
+      `;
+
       for (const otherField of type.fields) {
         if (otherField === field) continue;
 
@@ -56,7 +62,7 @@ export default function generateAncestorsCode(types) {
         #[repr(transparent)]
         #[derive(Clone, Copy, Debug)]
         pub struct ${structName}(
-          pub(crate) *const ${type.rawName},
+          pub(crate) *mut ${type.rawName},
           pub(crate) PhantomData<&'t ()>,
         );
 
@@ -113,6 +119,7 @@ export default function generateAncestorsCode(types) {
 
   return `
     #![expect(
+      dead_code,
       clippy::ptr_as_ptr,
       clippy::undocumented_unsafe_blocks,
       clippy::cast_ptr_alignment,

@@ -60,7 +60,7 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// `TraverseCtx`s have unique lifetimes, and so cannot be swapped for any other without
 /// the borrow-checker complaining.
 pub struct TraverseAncestry<'a> {
-    stack: NonEmptyStack<Ancestor<'a, 'static>>,
+    pub(crate) stack: NonEmptyStack<Ancestor<'a, 'static>>,
 }
 
 // Public methods
@@ -167,6 +167,11 @@ impl<'a> TraverseAncestry<'a> {
         // pop hasn't occurred already corresponding to that push.
         // Therefore the stack cannot by empty.
         // The stack starts with 1 entry, so also it cannot be left empty after this pop.
+        unsafe { self.stack.pop_unchecked() };
+    }
+
+    pub(crate) fn pop_stack_unchecked(&mut self) {
+        // SAFETY: Blah
         unsafe { self.stack.pop_unchecked() };
     }
 

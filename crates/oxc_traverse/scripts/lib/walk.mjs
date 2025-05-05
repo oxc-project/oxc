@@ -32,7 +32,7 @@ export default function generateWalkFunctionsCode(types) {
       unsafe_op_in_unsafe_fn
     )]
 
-    use std::{cell::Cell, marker::PhantomData};
+    use std::cell::Cell;
 
     use oxc_allocator::Vec;
     use oxc_ast::ast::*;
@@ -175,7 +175,7 @@ function generateWalkForStruct(type, types) {
       tagCode = `
         let pop_token = ctx.push_stack(
           Ancestor::${type.name}${fieldCamelName}(
-            ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
+            ancestor::${type.name}Without${fieldCamelName}::new(node)
           )
         );
       `;

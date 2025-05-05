@@ -675,6 +675,10 @@ impl<'a> TraverseCtx<'a> {
         self.ancestry.pop_stack(token);
     }
 
+    pub(crate) unsafe fn pop_stack_unchecked(&mut self) {
+        self.ancestry.pop_stack_unchecked();
+    }
+
     /// Shortcut for `self.ancestry.retag_stack`, to make `walk_*` methods less verbose.
     ///
     /// # SAFETY

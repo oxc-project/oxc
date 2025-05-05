@@ -3,6 +3,7 @@
 // To alter this generated file you have to edit the codegen.
 
 #![expect(
+    dead_code,
     clippy::ptr_as_ptr,
     clippy::undocumented_unsafe_blocks,
     clippy::cast_ptr_alignment,
@@ -2508,11 +2509,16 @@ pub(crate) const OFFSET_PROGRAM_SCOPE_ID: usize = offset_of!(Program, scope_id);
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ProgramWithoutHashbang<'a, 't>(
-    pub(crate) *const Program<'a>,
+    pub(crate) *mut Program<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Program<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
@@ -2566,11 +2572,16 @@ impl<'a, 't> GetAddress for ProgramWithoutHashbang<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ProgramWithoutDirectives<'a, 't>(
-    pub(crate) *const Program<'a>,
+    pub(crate) *mut Program<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Program<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
@@ -2622,12 +2633,14 @@ impl<'a, 't> GetAddress for ProgramWithoutDirectives<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ProgramWithoutBody<'a, 't>(
-    pub(crate) *const Program<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
+pub struct ProgramWithoutBody<'a, 't>(pub(crate) *mut Program<'a>, pub(crate) PhantomData<&'t ()>);
 
 impl<'a, 't> ProgramWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Program<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
@@ -2684,11 +2697,16 @@ pub(crate) const OFFSET_ARRAY_EXPRESSION_ELEMENTS: usize = offset_of!(ArrayExpre
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayExpressionWithoutElements<'a, 't>(
-    pub(crate) *const ArrayExpression<'a>,
+    pub(crate) *mut ArrayExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrayExpressionWithoutElements<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrayExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_SPAN) as *const Span) }
@@ -2709,11 +2727,16 @@ pub(crate) const OFFSET_OBJECT_EXPRESSION_PROPERTIES: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectExpressionWithoutProperties<'a, 't>(
-    pub(crate) *const ObjectExpression<'a>,
+    pub(crate) *mut ObjectExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectExpressionWithoutProperties<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_EXPRESSION_SPAN) as *const Span) }
@@ -2738,11 +2761,16 @@ pub(crate) const OFFSET_OBJECT_PROPERTY_COMPUTED: usize = offset_of!(ObjectPrope
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectPropertyWithoutKey<'a, 't>(
-    pub(crate) *const ObjectProperty<'a>,
+    pub(crate) *mut ObjectProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
@@ -2786,11 +2814,16 @@ impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectPropertyWithoutValue<'a, 't>(
-    pub(crate) *const ObjectProperty<'a>,
+    pub(crate) *mut ObjectProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
@@ -2839,11 +2872,16 @@ pub(crate) const OFFSET_TEMPLATE_LITERAL_EXPRESSIONS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TemplateLiteralWithoutQuasis<'a, 't>(
-    pub(crate) *const TemplateLiteral<'a>,
+    pub(crate) *mut TemplateLiteral<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TemplateLiteralWithoutQuasis<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TemplateLiteral<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_SPAN) as *const Span) }
@@ -2868,11 +2906,16 @@ impl<'a, 't> GetAddress for TemplateLiteralWithoutQuasis<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TemplateLiteralWithoutExpressions<'a, 't>(
-    pub(crate) *const TemplateLiteral<'a>,
+    pub(crate) *mut TemplateLiteral<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TemplateLiteralWithoutExpressions<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TemplateLiteral<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_SPAN) as *const Span) }
@@ -2906,11 +2949,16 @@ pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TaggedTemplateExpressionWithoutTag<'a, 't>(
-    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) *mut TaggedTemplateExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TaggedTemplateExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -2945,11 +2993,16 @@ impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTag<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TaggedTemplateExpressionWithoutQuasi<'a, 't>(
-    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) *mut TaggedTemplateExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TaggedTemplateExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -2984,11 +3037,16 @@ impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TaggedTemplateExpressionWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) *mut TaggedTemplateExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TaggedTemplateExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3032,11 +3090,16 @@ pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_OPTIONAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ComputedMemberExpressionWithoutObject<'a, 't>(
-    pub(crate) *const ComputedMemberExpression<'a>,
+    pub(crate) *mut ComputedMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ComputedMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ComputedMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3070,11 +3133,16 @@ impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutObject<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ComputedMemberExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const ComputedMemberExpression<'a>,
+    pub(crate) *mut ComputedMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ComputedMemberExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ComputedMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3117,11 +3185,16 @@ pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_OPTIONAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct StaticMemberExpressionWithoutObject<'a, 't>(
-    pub(crate) *const StaticMemberExpression<'a>,
+    pub(crate) *mut StaticMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> StaticMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut StaticMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3155,11 +3228,16 @@ impl<'a, 't> GetAddress for StaticMemberExpressionWithoutObject<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct StaticMemberExpressionWithoutProperty<'a, 't>(
-    pub(crate) *const StaticMemberExpression<'a>,
+    pub(crate) *mut StaticMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> StaticMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut StaticMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3202,11 +3280,16 @@ pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_OPTIONAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateFieldExpressionWithoutObject<'a, 't>(
-    pub(crate) *const PrivateFieldExpression<'a>,
+    pub(crate) *mut PrivateFieldExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PrivateFieldExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PrivateFieldExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3240,11 +3323,16 @@ impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutObject<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateFieldExpressionWithoutField<'a, 't>(
-    pub(crate) *const PrivateFieldExpression<'a>,
+    pub(crate) *mut PrivateFieldExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PrivateFieldExpressionWithoutField<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PrivateFieldExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3286,11 +3374,16 @@ pub(crate) const OFFSET_CALL_EXPRESSION_PURE: usize = offset_of!(CallExpression,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CallExpressionWithoutCallee<'a, 't>(
-    pub(crate) *const CallExpression<'a>,
+    pub(crate) *mut CallExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CallExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
@@ -3333,11 +3426,16 @@ impl<'a, 't> GetAddress for CallExpressionWithoutCallee<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CallExpressionWithoutTypeArguments<'a, 't>(
-    pub(crate) *const CallExpression<'a>,
+    pub(crate) *mut CallExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CallExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CallExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
@@ -3379,11 +3477,16 @@ impl<'a, 't> GetAddress for CallExpressionWithoutTypeArguments<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CallExpressionWithoutArguments<'a, 't>(
-    pub(crate) *const CallExpression<'a>,
+    pub(crate) *mut CallExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CallExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
@@ -3432,11 +3535,16 @@ pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, p
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct NewExpressionWithoutCallee<'a, 't>(
-    pub(crate) *const NewExpression<'a>,
+    pub(crate) *mut NewExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut NewExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
@@ -3474,11 +3582,16 @@ impl<'a, 't> GetAddress for NewExpressionWithoutCallee<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct NewExpressionWithoutArguments<'a, 't>(
-    pub(crate) *const NewExpression<'a>,
+    pub(crate) *mut NewExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut NewExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
@@ -3515,11 +3628,16 @@ impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct NewExpressionWithoutTypeArguments<'a, 't>(
-    pub(crate) *const NewExpression<'a>,
+    pub(crate) *mut NewExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> NewExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut NewExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
@@ -3560,11 +3678,16 @@ pub(crate) const OFFSET_META_PROPERTY_PROPERTY: usize = offset_of!(MetaProperty,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MetaPropertyWithoutMeta<'a, 't>(
-    pub(crate) *const MetaProperty<'a>,
+    pub(crate) *mut MetaProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> MetaPropertyWithoutMeta<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut MetaProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_SPAN) as *const Span) }
@@ -3589,11 +3712,16 @@ impl<'a, 't> GetAddress for MetaPropertyWithoutMeta<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MetaPropertyWithoutProperty<'a, 't>(
-    pub(crate) *const MetaProperty<'a>,
+    pub(crate) *mut MetaProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> MetaPropertyWithoutProperty<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut MetaProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_SPAN) as *const Span) }
@@ -3620,11 +3748,16 @@ pub(crate) const OFFSET_SPREAD_ELEMENT_ARGUMENT: usize = offset_of!(SpreadElemen
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SpreadElementWithoutArgument<'a, 't>(
-    pub(crate) *const SpreadElement<'a>,
+    pub(crate) *mut SpreadElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SpreadElementWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SpreadElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SPREAD_ELEMENT_SPAN) as *const Span) }
@@ -3646,11 +3779,16 @@ pub(crate) const OFFSET_UPDATE_EXPRESSION_ARGUMENT: usize = offset_of!(UpdateExp
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct UpdateExpressionWithoutArgument<'a, 't>(
-    pub(crate) *const UpdateExpression<'a>,
+    pub(crate) *mut UpdateExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> UpdateExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut UpdateExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_SPAN) as *const Span) }
@@ -3684,11 +3822,16 @@ pub(crate) const OFFSET_UNARY_EXPRESSION_ARGUMENT: usize = offset_of!(UnaryExpre
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct UnaryExpressionWithoutArgument<'a, 't>(
-    pub(crate) *const UnaryExpression<'a>,
+    pub(crate) *mut UnaryExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> UnaryExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut UnaryExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_UNARY_EXPRESSION_SPAN) as *const Span) }
@@ -3717,11 +3860,16 @@ pub(crate) const OFFSET_BINARY_EXPRESSION_RIGHT: usize = offset_of!(BinaryExpres
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BinaryExpressionWithoutLeft<'a, 't>(
-    pub(crate) *const BinaryExpression<'a>,
+    pub(crate) *mut BinaryExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BinaryExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BinaryExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_SPAN) as *const Span) }
@@ -3753,11 +3901,16 @@ impl<'a, 't> GetAddress for BinaryExpressionWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BinaryExpressionWithoutRight<'a, 't>(
-    pub(crate) *const BinaryExpression<'a>,
+    pub(crate) *mut BinaryExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BinaryExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BinaryExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_SPAN) as *const Span) }
@@ -3793,11 +3946,16 @@ pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_RIGHT: usize = offset_of!(PrivateI
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateInExpressionWithoutLeft<'a, 't>(
-    pub(crate) *const PrivateInExpression<'a>,
+    pub(crate) *mut PrivateInExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PrivateInExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
@@ -3822,11 +3980,16 @@ impl<'a, 't> GetAddress for PrivateInExpressionWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateInExpressionWithoutRight<'a, 't>(
-    pub(crate) *const PrivateInExpression<'a>,
+    pub(crate) *mut PrivateInExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PrivateInExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
@@ -3857,11 +4020,16 @@ pub(crate) const OFFSET_LOGICAL_EXPRESSION_RIGHT: usize = offset_of!(LogicalExpr
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LogicalExpressionWithoutLeft<'a, 't>(
-    pub(crate) *const LogicalExpression<'a>,
+    pub(crate) *mut LogicalExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> LogicalExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut LogicalExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_SPAN) as *const Span) }
@@ -3893,11 +4061,16 @@ impl<'a, 't> GetAddress for LogicalExpressionWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LogicalExpressionWithoutRight<'a, 't>(
-    pub(crate) *const LogicalExpression<'a>,
+    pub(crate) *mut LogicalExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> LogicalExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut LogicalExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_SPAN) as *const Span) }
@@ -3938,11 +4111,16 @@ pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_ALTERNATE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ConditionalExpressionWithoutTest<'a, 't>(
-    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) *mut ConditionalExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ConditionalExpressionWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ConditionalExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
@@ -3975,11 +4153,16 @@ impl<'a, 't> GetAddress for ConditionalExpressionWithoutTest<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ConditionalExpressionWithoutConsequent<'a, 't>(
-    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) *mut ConditionalExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ConditionalExpressionWithoutConsequent<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ConditionalExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
@@ -4012,11 +4195,16 @@ impl<'a, 't> GetAddress for ConditionalExpressionWithoutConsequent<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ConditionalExpressionWithoutAlternate<'a, 't>(
-    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) *mut ConditionalExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ConditionalExpressionWithoutAlternate<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ConditionalExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
@@ -4056,11 +4244,16 @@ pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_RIGHT: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentExpressionWithoutLeft<'a, 't>(
-    pub(crate) *const AssignmentExpression<'a>,
+    pub(crate) *mut AssignmentExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
@@ -4093,11 +4286,16 @@ impl<'a, 't> GetAddress for AssignmentExpressionWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentExpressionWithoutRight<'a, 't>(
-    pub(crate) *const AssignmentExpression<'a>,
+    pub(crate) *mut AssignmentExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
@@ -4137,11 +4335,16 @@ pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_REST: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayAssignmentTargetWithoutElements<'a, 't>(
-    pub(crate) *const ArrayAssignmentTarget<'a>,
+    pub(crate) *mut ArrayAssignmentTarget<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrayAssignmentTarget<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_SPAN) as *const Span) }
@@ -4166,11 +4369,16 @@ impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutElements<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayAssignmentTargetWithoutRest<'a, 't>(
-    pub(crate) *const ArrayAssignmentTarget<'a>,
+    pub(crate) *mut ArrayAssignmentTarget<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrayAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrayAssignmentTarget<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_SPAN) as *const Span) }
@@ -4202,11 +4410,16 @@ pub(crate) const OFFSET_OBJECT_ASSIGNMENT_TARGET_REST: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectAssignmentTargetWithoutProperties<'a, 't>(
-    pub(crate) *const ObjectAssignmentTarget<'a>,
+    pub(crate) *mut ObjectAssignmentTarget<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectAssignmentTargetWithoutProperties<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectAssignmentTarget<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4233,11 +4446,16 @@ impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutProperties<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectAssignmentTargetWithoutRest<'a, 't>(
-    pub(crate) *const ObjectAssignmentTarget<'a>,
+    pub(crate) *mut ObjectAssignmentTarget<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectAssignmentTarget<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4268,11 +4486,16 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_TARGET: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetRestWithoutTarget<'a, 't>(
-    pub(crate) *const AssignmentTargetRest<'a>,
+    pub(crate) *mut AssignmentTargetRest<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetRestWithoutTarget<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetRest<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_REST_SPAN) as *const Span) }
@@ -4296,11 +4519,16 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_INIT: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetWithDefaultWithoutBinding<'a, 't>(
-    pub(crate) *const AssignmentTargetWithDefault<'a>,
+    pub(crate) *mut AssignmentTargetWithDefault<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetWithDefault<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4327,11 +4555,16 @@ impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetWithDefaultWithoutInit<'a, 't>(
-    pub(crate) *const AssignmentTargetWithDefault<'a>,
+    pub(crate) *mut AssignmentTargetWithDefault<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetWithDefaultWithoutInit<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetWithDefault<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4365,11 +4598,16 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_INIT: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't>(
-    pub(crate) *const AssignmentTargetPropertyIdentifier<'a>,
+    pub(crate) *mut AssignmentTargetPropertyIdentifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetPropertyIdentifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4397,11 +4635,16 @@ impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutBinding<'a,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyIdentifierWithoutInit<'a, 't>(
-    pub(crate) *const AssignmentTargetPropertyIdentifier<'a>,
+    pub(crate) *mut AssignmentTargetPropertyIdentifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetPropertyIdentifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4438,11 +4681,16 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyPropertyWithoutName<'a, 't>(
-    pub(crate) *const AssignmentTargetPropertyProperty<'a>,
+    pub(crate) *mut AssignmentTargetPropertyProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetPropertyProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4478,11 +4726,16 @@ impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutName<'a, 't> 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyPropertyWithoutBinding<'a, 't>(
-    pub(crate) *const AssignmentTargetPropertyProperty<'a>,
+    pub(crate) *mut AssignmentTargetPropertyProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentTargetPropertyProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4522,11 +4775,16 @@ pub(crate) const OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SequenceExpressionWithoutExpressions<'a, 't>(
-    pub(crate) *const SequenceExpression<'a>,
+    pub(crate) *mut SequenceExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SequenceExpressionWithoutExpressions<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SequenceExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SEQUENCE_EXPRESSION_SPAN) as *const Span) }
@@ -4546,11 +4804,16 @@ pub(crate) const OFFSET_AWAIT_EXPRESSION_ARGUMENT: usize = offset_of!(AwaitExpre
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AwaitExpressionWithoutArgument<'a, 't>(
-    pub(crate) *const AwaitExpression<'a>,
+    pub(crate) *mut AwaitExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AwaitExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AwaitExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_AWAIT_EXPRESSION_SPAN) as *const Span) }
@@ -4571,11 +4834,16 @@ pub(crate) const OFFSET_CHAIN_EXPRESSION_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ChainExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const ChainExpression<'a>,
+    pub(crate) *mut ChainExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ChainExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ChainExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CHAIN_EXPRESSION_SPAN) as *const Span) }
@@ -4597,11 +4865,16 @@ pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ParenthesizedExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const ParenthesizedExpression<'a>,
+    pub(crate) *mut ParenthesizedExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ParenthesizedExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ParenthesizedExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -4624,11 +4897,16 @@ pub(crate) const OFFSET_DIRECTIVE_DIRECTIVE: usize = offset_of!(Directive, direc
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct DirectiveWithoutExpression<'a, 't>(
-    pub(crate) *const Directive<'a>,
+    pub(crate) *mut Directive<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> DirectiveWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Directive<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_SPAN) as *const Span) }
@@ -4654,11 +4932,16 @@ pub(crate) const OFFSET_BLOCK_STATEMENT_SCOPE_ID: usize = offset_of!(BlockStatem
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BlockStatementWithoutBody<'a, 't>(
-    pub(crate) *const BlockStatement<'a>,
+    pub(crate) *mut BlockStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BlockStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BlockStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SPAN) as *const Span) }
@@ -4690,11 +4973,16 @@ pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct VariableDeclarationWithoutDeclarations<'a, 't>(
-    pub(crate) *const VariableDeclaration<'a>,
+    pub(crate) *mut VariableDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> VariableDeclarationWithoutDeclarations<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut VariableDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_SPAN) as *const Span) }
@@ -4731,11 +5019,16 @@ pub(crate) const OFFSET_VARIABLE_DECLARATOR_DEFINITE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct VariableDeclaratorWithoutId<'a, 't>(
-    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) *mut VariableDeclarator<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut VariableDeclarator<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
@@ -4773,11 +5066,16 @@ impl<'a, 't> GetAddress for VariableDeclaratorWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct VariableDeclaratorWithoutInit<'a, 't>(
-    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) *mut VariableDeclarator<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut VariableDeclarator<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
@@ -4819,11 +5117,16 @@ pub(crate) const OFFSET_EXPRESSION_STATEMENT_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExpressionStatementWithoutExpression<'a, 't>(
-    pub(crate) *const ExpressionStatement<'a>,
+    pub(crate) *mut ExpressionStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExpressionStatementWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExpressionStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPRESSION_STATEMENT_SPAN) as *const Span) }
@@ -4845,11 +5148,16 @@ pub(crate) const OFFSET_IF_STATEMENT_ALTERNATE: usize = offset_of!(IfStatement, 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct IfStatementWithoutTest<'a, 't>(
-    pub(crate) *const IfStatement<'a>,
+    pub(crate) *mut IfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> IfStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut IfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
@@ -4881,11 +5189,16 @@ impl<'a, 't> GetAddress for IfStatementWithoutTest<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct IfStatementWithoutConsequent<'a, 't>(
-    pub(crate) *const IfStatement<'a>,
+    pub(crate) *mut IfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> IfStatementWithoutConsequent<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut IfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
@@ -4915,11 +5228,16 @@ impl<'a, 't> GetAddress for IfStatementWithoutConsequent<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct IfStatementWithoutAlternate<'a, 't>(
-    pub(crate) *const IfStatement<'a>,
+    pub(crate) *mut IfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> IfStatementWithoutAlternate<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut IfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
@@ -4952,11 +5270,16 @@ pub(crate) const OFFSET_DO_WHILE_STATEMENT_TEST: usize = offset_of!(DoWhileState
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct DoWhileStatementWithoutBody<'a, 't>(
-    pub(crate) *const DoWhileStatement<'a>,
+    pub(crate) *mut DoWhileStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> DoWhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut DoWhileStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
@@ -4980,11 +5303,16 @@ impl<'a, 't> GetAddress for DoWhileStatementWithoutBody<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct DoWhileStatementWithoutTest<'a, 't>(
-    pub(crate) *const DoWhileStatement<'a>,
+    pub(crate) *mut DoWhileStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> DoWhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut DoWhileStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
@@ -5012,11 +5340,16 @@ pub(crate) const OFFSET_WHILE_STATEMENT_BODY: usize = offset_of!(WhileStatement,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WhileStatementWithoutTest<'a, 't>(
-    pub(crate) *const WhileStatement<'a>,
+    pub(crate) *mut WhileStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WhileStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_SPAN) as *const Span) }
@@ -5040,11 +5373,16 @@ impl<'a, 't> GetAddress for WhileStatementWithoutTest<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WhileStatementWithoutBody<'a, 't>(
-    pub(crate) *const WhileStatement<'a>,
+    pub(crate) *mut WhileStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WhileStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_SPAN) as *const Span) }
@@ -5075,11 +5413,16 @@ pub(crate) const OFFSET_FOR_STATEMENT_SCOPE_ID: usize = offset_of!(ForStatement,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutInit<'a, 't>(
-    pub(crate) *const ForStatement<'a>,
+    pub(crate) *mut ForStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForStatementWithoutInit<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
@@ -5125,11 +5468,16 @@ impl<'a, 't> GetAddress for ForStatementWithoutInit<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutTest<'a, 't>(
-    pub(crate) *const ForStatement<'a>,
+    pub(crate) *mut ForStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
@@ -5175,11 +5523,16 @@ impl<'a, 't> GetAddress for ForStatementWithoutTest<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutUpdate<'a, 't>(
-    pub(crate) *const ForStatement<'a>,
+    pub(crate) *mut ForStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForStatementWithoutUpdate<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
@@ -5225,11 +5578,16 @@ impl<'a, 't> GetAddress for ForStatementWithoutUpdate<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutBody<'a, 't>(
-    pub(crate) *const ForStatement<'a>,
+    pub(crate) *mut ForStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
@@ -5284,11 +5642,16 @@ pub(crate) const OFFSET_FOR_IN_STATEMENT_SCOPE_ID: usize = offset_of!(ForInState
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForInStatementWithoutLeft<'a, 't>(
-    pub(crate) *const ForInStatement<'a>,
+    pub(crate) *mut ForInStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForInStatementWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForInStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
@@ -5327,11 +5690,16 @@ impl<'a, 't> GetAddress for ForInStatementWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForInStatementWithoutRight<'a, 't>(
-    pub(crate) *const ForInStatement<'a>,
+    pub(crate) *mut ForInStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForInStatementWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForInStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
@@ -5371,11 +5739,16 @@ impl<'a, 't> GetAddress for ForInStatementWithoutRight<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForInStatementWithoutBody<'a, 't>(
-    pub(crate) *const ForInStatement<'a>,
+    pub(crate) *mut ForInStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForInStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForInStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
@@ -5422,11 +5795,16 @@ pub(crate) const OFFSET_FOR_OF_STATEMENT_SCOPE_ID: usize = offset_of!(ForOfState
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForOfStatementWithoutLeft<'a, 't>(
-    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) *mut ForOfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForOfStatementWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForOfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
@@ -5470,11 +5848,16 @@ impl<'a, 't> GetAddress for ForOfStatementWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForOfStatementWithoutRight<'a, 't>(
-    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) *mut ForOfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForOfStatementWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForOfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
@@ -5519,11 +5902,16 @@ impl<'a, 't> GetAddress for ForOfStatementWithoutRight<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForOfStatementWithoutBody<'a, 't>(
-    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) *mut ForOfStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ForOfStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ForOfStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
@@ -5571,11 +5959,16 @@ pub(crate) const OFFSET_CONTINUE_STATEMENT_LABEL: usize = offset_of!(ContinueSta
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ContinueStatementWithoutLabel<'a, 't>(
-    pub(crate) *const ContinueStatement<'a>,
+    pub(crate) *mut ContinueStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ContinueStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ContinueStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONTINUE_STATEMENT_SPAN) as *const Span) }
@@ -5595,11 +5988,16 @@ pub(crate) const OFFSET_BREAK_STATEMENT_LABEL: usize = offset_of!(BreakStatement
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BreakStatementWithoutLabel<'a, 't>(
-    pub(crate) *const BreakStatement<'a>,
+    pub(crate) *mut BreakStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BreakStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BreakStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BREAK_STATEMENT_SPAN) as *const Span) }
@@ -5619,11 +6017,16 @@ pub(crate) const OFFSET_RETURN_STATEMENT_ARGUMENT: usize = offset_of!(ReturnStat
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ReturnStatementWithoutArgument<'a, 't>(
-    pub(crate) *const ReturnStatement<'a>,
+    pub(crate) *mut ReturnStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ReturnStatementWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ReturnStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_RETURN_STATEMENT_SPAN) as *const Span) }
@@ -5644,11 +6047,16 @@ pub(crate) const OFFSET_WITH_STATEMENT_BODY: usize = offset_of!(WithStatement, b
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithStatementWithoutObject<'a, 't>(
-    pub(crate) *const WithStatement<'a>,
+    pub(crate) *mut WithStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WithStatementWithoutObject<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WithStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SPAN) as *const Span) }
@@ -5670,11 +6078,16 @@ impl<'a, 't> GetAddress for WithStatementWithoutObject<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithStatementWithoutBody<'a, 't>(
-    pub(crate) *const WithStatement<'a>,
+    pub(crate) *mut WithStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WithStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WithStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SPAN) as *const Span) }
@@ -5704,11 +6117,16 @@ pub(crate) const OFFSET_SWITCH_STATEMENT_SCOPE_ID: usize = offset_of!(SwitchStat
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchStatementWithoutDiscriminant<'a, 't>(
-    pub(crate) *const SwitchStatement<'a>,
+    pub(crate) *mut SwitchStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SwitchStatementWithoutDiscriminant<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SwitchStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SPAN) as *const Span) }
@@ -5741,11 +6159,16 @@ impl<'a, 't> GetAddress for SwitchStatementWithoutDiscriminant<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchStatementWithoutCases<'a, 't>(
-    pub(crate) *const SwitchStatement<'a>,
+    pub(crate) *mut SwitchStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SwitchStatementWithoutCases<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SwitchStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SPAN) as *const Span) }
@@ -5782,11 +6205,16 @@ pub(crate) const OFFSET_SWITCH_CASE_CONSEQUENT: usize = offset_of!(SwitchCase, c
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchCaseWithoutTest<'a, 't>(
-    pub(crate) *const SwitchCase<'a>,
+    pub(crate) *mut SwitchCase<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SwitchCaseWithoutTest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SwitchCase<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
@@ -5811,11 +6239,16 @@ impl<'a, 't> GetAddress for SwitchCaseWithoutTest<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchCaseWithoutConsequent<'a, 't>(
-    pub(crate) *const SwitchCase<'a>,
+    pub(crate) *mut SwitchCase<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> SwitchCaseWithoutConsequent<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut SwitchCase<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
@@ -5843,11 +6276,16 @@ pub(crate) const OFFSET_LABELED_STATEMENT_BODY: usize = offset_of!(LabeledStatem
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LabeledStatementWithoutLabel<'a, 't>(
-    pub(crate) *const LabeledStatement<'a>,
+    pub(crate) *mut LabeledStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> LabeledStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut LabeledStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_SPAN) as *const Span) }
@@ -5871,11 +6309,16 @@ impl<'a, 't> GetAddress for LabeledStatementWithoutLabel<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LabeledStatementWithoutBody<'a, 't>(
-    pub(crate) *const LabeledStatement<'a>,
+    pub(crate) *mut LabeledStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> LabeledStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut LabeledStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_SPAN) as *const Span) }
@@ -5903,11 +6346,16 @@ pub(crate) const OFFSET_THROW_STATEMENT_ARGUMENT: usize = offset_of!(ThrowStatem
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ThrowStatementWithoutArgument<'a, 't>(
-    pub(crate) *const ThrowStatement<'a>,
+    pub(crate) *mut ThrowStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ThrowStatementWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ThrowStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_THROW_STATEMENT_SPAN) as *const Span) }
@@ -5929,11 +6377,16 @@ pub(crate) const OFFSET_TRY_STATEMENT_FINALIZER: usize = offset_of!(TryStatement
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TryStatementWithoutBlock<'a, 't>(
-    pub(crate) *const TryStatement<'a>,
+    pub(crate) *mut TryStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TryStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
@@ -5966,11 +6419,16 @@ impl<'a, 't> GetAddress for TryStatementWithoutBlock<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TryStatementWithoutHandler<'a, 't>(
-    pub(crate) *const TryStatement<'a>,
+    pub(crate) *mut TryStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TryStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
@@ -6003,11 +6461,16 @@ impl<'a, 't> GetAddress for TryStatementWithoutHandler<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TryStatementWithoutFinalizer<'a, 't>(
-    pub(crate) *const TryStatement<'a>,
+    pub(crate) *mut TryStatement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TryStatement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
@@ -6045,11 +6508,16 @@ pub(crate) const OFFSET_CATCH_CLAUSE_SCOPE_ID: usize = offset_of!(CatchClause, s
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CatchClauseWithoutParam<'a, 't>(
-    pub(crate) *const CatchClause<'a>,
+    pub(crate) *mut CatchClause<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CatchClauseWithoutParam<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CatchClause<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SPAN) as *const Span) }
@@ -6082,11 +6550,16 @@ impl<'a, 't> GetAddress for CatchClauseWithoutParam<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CatchClauseWithoutBody<'a, 't>(
-    pub(crate) *const CatchClause<'a>,
+    pub(crate) *mut CatchClause<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CatchClauseWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CatchClause<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SPAN) as *const Span) }
@@ -6122,11 +6595,16 @@ pub(crate) const OFFSET_CATCH_PARAMETER_PATTERN: usize = offset_of!(CatchParamet
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CatchParameterWithoutPattern<'a, 't>(
-    pub(crate) *const CatchParameter<'a>,
+    pub(crate) *mut CatchParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> CatchParameterWithoutPattern<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut CatchParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
@@ -6148,11 +6626,16 @@ pub(crate) const OFFSET_BINDING_PATTERN_OPTIONAL: usize = offset_of!(BindingPatt
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPatternWithoutKind<'a, 't>(
-    pub(crate) *const BindingPattern<'a>,
+    pub(crate) *mut BindingPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BindingPatternWithoutKind<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BindingPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
@@ -6177,11 +6660,16 @@ impl<'a, 't> GetAddress for BindingPatternWithoutKind<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPatternWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const BindingPattern<'a>,
+    pub(crate) *mut BindingPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BindingPatternWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BindingPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn kind(self) -> &'t BindingPatternKind<'a> {
         unsafe {
@@ -6210,11 +6698,16 @@ pub(crate) const OFFSET_ASSIGNMENT_PATTERN_RIGHT: usize = offset_of!(AssignmentP
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentPatternWithoutLeft<'a, 't>(
-    pub(crate) *const AssignmentPattern<'a>,
+    pub(crate) *mut AssignmentPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentPatternWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_SPAN) as *const Span) }
@@ -6238,11 +6731,16 @@ impl<'a, 't> GetAddress for AssignmentPatternWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentPatternWithoutRight<'a, 't>(
-    pub(crate) *const AssignmentPattern<'a>,
+    pub(crate) *mut AssignmentPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AssignmentPatternWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AssignmentPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_SPAN) as *const Span) }
@@ -6271,11 +6769,16 @@ pub(crate) const OFFSET_OBJECT_PATTERN_REST: usize = offset_of!(ObjectPattern, r
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectPatternWithoutProperties<'a, 't>(
-    pub(crate) *const ObjectPattern<'a>,
+    pub(crate) *mut ObjectPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectPatternWithoutProperties<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_SPAN) as *const Span) }
@@ -6300,11 +6803,16 @@ impl<'a, 't> GetAddress for ObjectPatternWithoutProperties<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectPatternWithoutRest<'a, 't>(
-    pub(crate) *const ObjectPattern<'a>,
+    pub(crate) *mut ObjectPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ObjectPatternWithoutRest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ObjectPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_SPAN) as *const Span) }
@@ -6335,11 +6843,16 @@ pub(crate) const OFFSET_BINDING_PROPERTY_COMPUTED: usize = offset_of!(BindingPro
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPropertyWithoutKey<'a, 't>(
-    pub(crate) *const BindingProperty<'a>,
+    pub(crate) *mut BindingProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BindingPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BindingProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SPAN) as *const Span) }
@@ -6374,11 +6887,16 @@ impl<'a, 't> GetAddress for BindingPropertyWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPropertyWithoutValue<'a, 't>(
-    pub(crate) *const BindingProperty<'a>,
+    pub(crate) *mut BindingProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BindingPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BindingProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SPAN) as *const Span) }
@@ -6416,11 +6934,16 @@ pub(crate) const OFFSET_ARRAY_PATTERN_REST: usize = offset_of!(ArrayPattern, res
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayPatternWithoutElements<'a, 't>(
-    pub(crate) *const ArrayPattern<'a>,
+    pub(crate) *mut ArrayPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrayPatternWithoutElements<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrayPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_SPAN) as *const Span) }
@@ -6445,11 +6968,16 @@ impl<'a, 't> GetAddress for ArrayPatternWithoutElements<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayPatternWithoutRest<'a, 't>(
-    pub(crate) *const ArrayPattern<'a>,
+    pub(crate) *mut ArrayPattern<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrayPatternWithoutRest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrayPattern<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_SPAN) as *const Span) }
@@ -6478,11 +7006,16 @@ pub(crate) const OFFSET_BINDING_REST_ELEMENT_ARGUMENT: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingRestElementWithoutArgument<'a, 't>(
-    pub(crate) *const BindingRestElement<'a>,
+    pub(crate) *mut BindingRestElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> BindingRestElementWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut BindingRestElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_REST_ELEMENT_SPAN) as *const Span) }
@@ -6512,12 +7045,14 @@ pub(crate) const OFFSET_FUNCTION_PURE: usize = offset_of!(Function, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct FunctionWithoutId<'a, 't>(
-    pub(crate) *const Function<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
+pub struct FunctionWithoutId<'a, 't>(pub(crate) *mut Function<'a>, pub(crate) PhantomData<&'t ()>);
 
 impl<'a, 't> FunctionWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -6606,11 +7141,16 @@ impl<'a, 't> GetAddress for FunctionWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutTypeParameters<'a, 't>(
-    pub(crate) *const Function<'a>,
+    pub(crate) *mut Function<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -6699,11 +7239,16 @@ impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutThisParam<'a, 't>(
-    pub(crate) *const Function<'a>,
+    pub(crate) *mut Function<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -6792,11 +7337,16 @@ impl<'a, 't> GetAddress for FunctionWithoutThisParam<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutParams<'a, 't>(
-    pub(crate) *const Function<'a>,
+    pub(crate) *mut Function<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -6885,11 +7435,16 @@ impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutReturnType<'a, 't>(
-    pub(crate) *const Function<'a>,
+    pub(crate) *mut Function<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -6978,11 +7533,16 @@ impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutBody<'a, 't>(
-    pub(crate) *const Function<'a>,
+    pub(crate) *mut Function<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Function<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
@@ -7076,11 +7636,16 @@ pub(crate) const OFFSET_FORMAL_PARAMETERS_REST: usize = offset_of!(FormalParamet
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParametersWithoutItems<'a, 't>(
-    pub(crate) *const FormalParameters<'a>,
+    pub(crate) *mut FormalParameters<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FormalParametersWithoutItems<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FormalParameters<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_SPAN) as *const Span) }
@@ -7113,11 +7678,16 @@ impl<'a, 't> GetAddress for FormalParametersWithoutItems<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParametersWithoutRest<'a, 't>(
-    pub(crate) *const FormalParameters<'a>,
+    pub(crate) *mut FormalParameters<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FormalParametersWithoutRest<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FormalParameters<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_SPAN) as *const Span) }
@@ -7159,11 +7729,16 @@ pub(crate) const OFFSET_FORMAL_PARAMETER_OVERRIDE: usize = offset_of!(FormalPara
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParameterWithoutDecorators<'a, 't>(
-    pub(crate) *const FormalParameter<'a>,
+    pub(crate) *mut FormalParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FormalParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
@@ -7206,11 +7781,16 @@ impl<'a, 't> GetAddress for FormalParameterWithoutDecorators<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParameterWithoutPattern<'a, 't>(
-    pub(crate) *const FormalParameter<'a>,
+    pub(crate) *mut FormalParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FormalParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
@@ -7257,11 +7837,16 @@ pub(crate) const OFFSET_FUNCTION_BODY_STATEMENTS: usize = offset_of!(FunctionBod
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionBodyWithoutDirectives<'a, 't>(
-    pub(crate) *const FunctionBody<'a>,
+    pub(crate) *mut FunctionBody<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionBodyWithoutDirectives<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FunctionBody<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
@@ -7286,11 +7871,16 @@ impl<'a, 't> GetAddress for FunctionBodyWithoutDirectives<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionBodyWithoutStatements<'a, 't>(
-    pub(crate) *const FunctionBody<'a>,
+    pub(crate) *mut FunctionBody<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut FunctionBody<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
@@ -7334,11 +7924,16 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PURE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutTypeParameters<'a, 't>(
-    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) *mut ArrowFunctionExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrowFunctionExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -7411,11 +8006,16 @@ impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutTypeParameters<'a, 't>
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutParams<'a, 't>(
-    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) *mut ArrowFunctionExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrowFunctionExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -7488,11 +8088,16 @@ impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutReturnType<'a, 't>(
-    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) *mut ArrowFunctionExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrowFunctionExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -7565,11 +8170,16 @@ impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutBody<'a, 't>(
-    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) *mut ArrowFunctionExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ArrowFunctionExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -7646,11 +8256,16 @@ pub(crate) const OFFSET_YIELD_EXPRESSION_ARGUMENT: usize = offset_of!(YieldExpre
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct YieldExpressionWithoutArgument<'a, 't>(
-    pub(crate) *const YieldExpression<'a>,
+    pub(crate) *mut YieldExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> YieldExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut YieldExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_YIELD_EXPRESSION_SPAN) as *const Span) }
@@ -7685,11 +8300,16 @@ pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutDecorators<'a, 't>(
-    pub(crate) *const Class<'a>,
+    pub(crate) *mut Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassWithoutDecorators<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -7770,9 +8390,14 @@ impl<'a, 't> GetAddress for ClassWithoutDecorators<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ClassWithoutId<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
+pub struct ClassWithoutId<'a, 't>(pub(crate) *mut Class<'a>, pub(crate) PhantomData<&'t ()>);
 
 impl<'a, 't> ClassWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -7854,11 +8479,16 @@ impl<'a, 't> GetAddress for ClassWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutTypeParameters<'a, 't>(
-    pub(crate) *const Class<'a>,
+    pub(crate) *mut Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -7939,11 +8569,16 @@ impl<'a, 't> GetAddress for ClassWithoutTypeParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutSuperClass<'a, 't>(
-    pub(crate) *const Class<'a>,
+    pub(crate) *mut Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -8025,11 +8660,16 @@ impl<'a, 't> GetAddress for ClassWithoutSuperClass<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutSuperTypeArguments<'a, 't>(
-    pub(crate) *const Class<'a>,
+    pub(crate) *mut Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassWithoutSuperTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -8110,11 +8750,16 @@ impl<'a, 't> GetAddress for ClassWithoutSuperTypeArguments<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutImplements<'a, 't>(
-    pub(crate) *const Class<'a>,
+    pub(crate) *mut Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassWithoutImplements<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -8194,9 +8839,14 @@ impl<'a, 't> GetAddress for ClassWithoutImplements<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ClassWithoutBody<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
+pub struct ClassWithoutBody<'a, 't>(pub(crate) *mut Class<'a>, pub(crate) PhantomData<&'t ()>);
 
 impl<'a, 't> ClassWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Class<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -8283,11 +8933,16 @@ pub(crate) const OFFSET_CLASS_BODY_BODY: usize = offset_of!(ClassBody, body);
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassBodyWithoutBody<'a, 't>(
-    pub(crate) *const ClassBody<'a>,
+    pub(crate) *mut ClassBody<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ClassBodyWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ClassBody<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY_SPAN) as *const Span) }
@@ -8319,11 +8974,16 @@ pub(crate) const OFFSET_METHOD_DEFINITION_ACCESSIBILITY: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MethodDefinitionWithoutDecorators<'a, 't>(
-    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) *mut MethodDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut MethodDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
@@ -8399,11 +9059,16 @@ impl<'a, 't> GetAddress for MethodDefinitionWithoutDecorators<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MethodDefinitionWithoutKey<'a, 't>(
-    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) *mut MethodDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut MethodDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
@@ -8480,11 +9145,16 @@ impl<'a, 't> GetAddress for MethodDefinitionWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MethodDefinitionWithoutValue<'a, 't>(
-    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) *mut MethodDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut MethodDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
@@ -8585,11 +9255,16 @@ pub(crate) const OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutDecorators<'a, 't>(
-    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) *mut PropertyDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PropertyDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
@@ -8680,11 +9355,16 @@ impl<'a, 't> GetAddress for PropertyDefinitionWithoutDecorators<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutKey<'a, 't>(
-    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) *mut PropertyDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PropertyDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
@@ -8776,11 +9456,16 @@ impl<'a, 't> GetAddress for PropertyDefinitionWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutValue<'a, 't>(
-    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) *mut PropertyDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PropertyDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
@@ -8871,11 +9556,16 @@ impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) *mut PropertyDefinition<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut PropertyDefinition<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
@@ -8970,11 +9660,16 @@ pub(crate) const OFFSET_STATIC_BLOCK_SCOPE_ID: usize = offset_of!(StaticBlock, s
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct StaticBlockWithoutBody<'a, 't>(
-    pub(crate) *const StaticBlock<'a>,
+    pub(crate) *mut StaticBlock<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> StaticBlockWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut StaticBlock<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SPAN) as *const Span) }
@@ -9015,11 +9710,16 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutDecorators<'a, 't>(
-    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) *mut AccessorProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AccessorProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
@@ -9095,11 +9795,16 @@ impl<'a, 't> GetAddress for AccessorPropertyWithoutDecorators<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutKey<'a, 't>(
-    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) *mut AccessorProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AccessorProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
@@ -9176,11 +9881,16 @@ impl<'a, 't> GetAddress for AccessorPropertyWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutValue<'a, 't>(
-    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) *mut AccessorProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AccessorProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
@@ -9256,11 +9966,16 @@ impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) *mut AccessorProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut AccessorProperty<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
@@ -9341,11 +10056,16 @@ pub(crate) const OFFSET_IMPORT_EXPRESSION_PHASE: usize = offset_of!(ImportExpres
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportExpressionWithoutSource<'a, 't>(
-    pub(crate) *const ImportExpression<'a>,
+    pub(crate) *mut ImportExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SPAN) as *const Span) }
@@ -9378,11 +10098,16 @@ impl<'a, 't> GetAddress for ImportExpressionWithoutSource<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportExpressionWithoutOptions<'a, 't>(
-    pub(crate) *const ImportExpression<'a>,
+    pub(crate) *mut ImportExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportExpressionWithoutOptions<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SPAN) as *const Span) }
@@ -9424,11 +10149,16 @@ pub(crate) const OFFSET_IMPORT_DECLARATION_IMPORT_KIND: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportDeclarationWithoutSpecifiers<'a, 't>(
-    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) *mut ImportDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
@@ -9477,11 +10207,16 @@ impl<'a, 't> GetAddress for ImportDeclarationWithoutSpecifiers<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportDeclarationWithoutSource<'a, 't>(
-    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) *mut ImportDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
@@ -9530,11 +10265,16 @@ impl<'a, 't> GetAddress for ImportDeclarationWithoutSource<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportDeclarationWithoutWithClause<'a, 't>(
-    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) *mut ImportDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
@@ -9589,11 +10329,16 @@ pub(crate) const OFFSET_IMPORT_SPECIFIER_IMPORT_KIND: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportSpecifierWithoutImported<'a, 't>(
-    pub(crate) *const ImportSpecifier<'a>,
+    pub(crate) *mut ImportSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportSpecifierWithoutImported<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_SPAN) as *const Span) }
@@ -9626,11 +10371,16 @@ impl<'a, 't> GetAddress for ImportSpecifierWithoutImported<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportSpecifierWithoutLocal<'a, 't>(
-    pub(crate) *const ImportSpecifier<'a>,
+    pub(crate) *mut ImportSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_SPAN) as *const Span) }
@@ -9668,11 +10418,16 @@ pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_LOCAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportDefaultSpecifierWithoutLocal<'a, 't>(
-    pub(crate) *const ImportDefaultSpecifier<'a>,
+    pub(crate) *mut ImportDefaultSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportDefaultSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportDefaultSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -9696,11 +10451,16 @@ pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_LOCAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportNamespaceSpecifierWithoutLocal<'a, 't>(
-    pub(crate) *const ImportNamespaceSpecifier<'a>,
+    pub(crate) *mut ImportNamespaceSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportNamespaceSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportNamespaceSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -9724,11 +10484,16 @@ pub(crate) const OFFSET_WITH_CLAUSE_WITH_ENTRIES: usize = offset_of!(WithClause,
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithClauseWithoutAttributesKeyword<'a, 't>(
-    pub(crate) *const WithClause<'a>,
+    pub(crate) *mut WithClause<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WithClauseWithoutAttributesKeyword<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WithClause<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_SPAN) as *const Span) }
@@ -9753,11 +10518,16 @@ impl<'a, 't> GetAddress for WithClauseWithoutAttributesKeyword<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithClauseWithoutWithEntries<'a, 't>(
-    pub(crate) *const WithClause<'a>,
+    pub(crate) *mut WithClause<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> WithClauseWithoutWithEntries<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut WithClause<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_SPAN) as *const Span) }
@@ -9786,11 +10556,16 @@ pub(crate) const OFFSET_IMPORT_ATTRIBUTE_VALUE: usize = offset_of!(ImportAttribu
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportAttributeWithoutKey<'a, 't>(
-    pub(crate) *const ImportAttribute<'a>,
+    pub(crate) *mut ImportAttribute<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportAttributeWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportAttribute<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
@@ -9814,11 +10589,16 @@ impl<'a, 't> GetAddress for ImportAttributeWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportAttributeWithoutValue<'a, 't>(
-    pub(crate) *const ImportAttribute<'a>,
+    pub(crate) *mut ImportAttribute<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ImportAttributeWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ImportAttribute<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
@@ -9856,11 +10636,16 @@ pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutDeclaration<'a, 't>(
-    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) *mut ExportNamedDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportNamedDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -9911,11 +10696,16 @@ impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutDeclaration<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutSpecifiers<'a, 't>(
-    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) *mut ExportNamedDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportNamedDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -9966,11 +10756,16 @@ impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutSource<'a, 't>(
-    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) *mut ExportNamedDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportNamedDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -10021,11 +10816,16 @@ impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSource<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutWithClause<'a, 't>(
-    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) *mut ExportNamedDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportNamedDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportNamedDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -10083,11 +10883,16 @@ pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportDefaultDeclarationWithoutExported<'a, 't>(
-    pub(crate) *const ExportDefaultDeclaration<'a>,
+    pub(crate) *mut ExportDefaultDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportDefaultDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportDefaultDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -10114,11 +10919,16 @@ impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutExported<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
-    pub(crate) *const ExportDefaultDeclaration<'a>,
+    pub(crate) *mut ExportDefaultDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportDefaultDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -10155,11 +10965,16 @@ pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportAllDeclarationWithoutExported<'a, 't>(
-    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) *mut ExportAllDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportAllDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
@@ -10200,11 +11015,16 @@ impl<'a, 't> GetAddress for ExportAllDeclarationWithoutExported<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportAllDeclarationWithoutSource<'a, 't>(
-    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) *mut ExportAllDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportAllDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
@@ -10245,11 +11065,16 @@ impl<'a, 't> GetAddress for ExportAllDeclarationWithoutSource<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportAllDeclarationWithoutWithClause<'a, 't>(
-    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) *mut ExportAllDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportAllDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportAllDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
@@ -10296,11 +11121,16 @@ pub(crate) const OFFSET_EXPORT_SPECIFIER_EXPORT_KIND: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportSpecifierWithoutLocal<'a, 't>(
-    pub(crate) *const ExportSpecifier<'a>,
+    pub(crate) *mut ExportSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_SPAN) as *const Span) }
@@ -10333,11 +11163,16 @@ impl<'a, 't> GetAddress for ExportSpecifierWithoutLocal<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportSpecifierWithoutExported<'a, 't>(
-    pub(crate) *const ExportSpecifier<'a>,
+    pub(crate) *mut ExportSpecifier<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> ExportSpecifierWithoutExported<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut ExportSpecifier<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_SPAN) as *const Span) }
@@ -10377,11 +11212,16 @@ pub(crate) const OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct V8IntrinsicExpressionWithoutName<'a, 't>(
-    pub(crate) *const V8IntrinsicExpression<'a>,
+    pub(crate) *mut V8IntrinsicExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> V8IntrinsicExpressionWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut V8IntrinsicExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_SPAN) as *const Span) }
@@ -10406,11 +11246,16 @@ impl<'a, 't> GetAddress for V8IntrinsicExpressionWithoutName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct V8IntrinsicExpressionWithoutArguments<'a, 't>(
-    pub(crate) *const V8IntrinsicExpression<'a>,
+    pub(crate) *mut V8IntrinsicExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> V8IntrinsicExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut V8IntrinsicExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_SPAN) as *const Span) }
@@ -10442,11 +11287,16 @@ pub(crate) const OFFSET_JSX_ELEMENT_CHILDREN: usize = offset_of!(JSXElement, chi
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXElementWithoutOpeningElement<'a, 't>(
-    pub(crate) *const JSXElement<'a>,
+    pub(crate) *mut JSXElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXElementWithoutOpeningElement<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
@@ -10479,11 +11329,16 @@ impl<'a, 't> GetAddress for JSXElementWithoutOpeningElement<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXElementWithoutClosingElement<'a, 't>(
-    pub(crate) *const JSXElement<'a>,
+    pub(crate) *mut JSXElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
@@ -10516,11 +11371,16 @@ impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXElementWithoutChildren<'a, 't>(
-    pub(crate) *const JSXElement<'a>,
+    pub(crate) *mut JSXElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXElementWithoutChildren<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
@@ -10560,11 +11420,16 @@ pub(crate) const OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXOpeningElementWithoutName<'a, 't>(
-    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) *mut JSXOpeningElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXOpeningElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
@@ -10597,11 +11462,16 @@ impl<'a, 't> GetAddress for JSXOpeningElementWithoutName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXOpeningElementWithoutAttributes<'a, 't>(
-    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) *mut JSXOpeningElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXOpeningElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
@@ -10634,11 +11504,16 @@ impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXOpeningElementWithoutTypeArguments<'a, 't>(
-    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) *mut JSXOpeningElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXOpeningElementWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXOpeningElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
@@ -10674,11 +11549,16 @@ pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_NAME: usize = offset_of!(JSXClosingE
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXClosingElementWithoutName<'a, 't>(
-    pub(crate) *const JSXClosingElement<'a>,
+    pub(crate) *mut JSXClosingElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXClosingElementWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXClosingElement<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_CLOSING_ELEMENT_SPAN) as *const Span) }
@@ -10702,11 +11582,16 @@ pub(crate) const OFFSET_JSX_FRAGMENT_CHILDREN: usize = offset_of!(JSXFragment, c
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXFragmentWithoutOpeningFragment<'a, 't>(
-    pub(crate) *const JSXFragment<'a>,
+    pub(crate) *mut JSXFragment<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXFragmentWithoutOpeningFragment<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXFragment<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
@@ -10739,11 +11624,16 @@ impl<'a, 't> GetAddress for JSXFragmentWithoutOpeningFragment<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXFragmentWithoutClosingFragment<'a, 't>(
-    pub(crate) *const JSXFragment<'a>,
+    pub(crate) *mut JSXFragment<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXFragment<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
@@ -10776,11 +11666,16 @@ impl<'a, 't> GetAddress for JSXFragmentWithoutClosingFragment<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXFragmentWithoutChildren<'a, 't>(
-    pub(crate) *const JSXFragment<'a>,
+    pub(crate) *mut JSXFragment<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXFragmentWithoutChildren<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXFragment<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
@@ -10818,11 +11713,16 @@ pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAME: usize = offset_of!(JSXNamespac
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXNamespacedNameWithoutNamespace<'a, 't>(
-    pub(crate) *const JSXNamespacedName<'a>,
+    pub(crate) *mut JSXNamespacedName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXNamespacedNameWithoutNamespace<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXNamespacedName<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_SPAN) as *const Span) }
@@ -10847,11 +11747,16 @@ impl<'a, 't> GetAddress for JSXNamespacedNameWithoutNamespace<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXNamespacedNameWithoutName<'a, 't>(
-    pub(crate) *const JSXNamespacedName<'a>,
+    pub(crate) *mut JSXNamespacedName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXNamespacedNameWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXNamespacedName<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_SPAN) as *const Span) }
@@ -10882,11 +11787,16 @@ pub(crate) const OFFSET_JSX_MEMBER_EXPRESSION_PROPERTY: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXMemberExpressionWithoutObject<'a, 't>(
-    pub(crate) *const JSXMemberExpression<'a>,
+    pub(crate) *mut JSXMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_SPAN) as *const Span) }
@@ -10911,11 +11821,16 @@ impl<'a, 't> GetAddress for JSXMemberExpressionWithoutObject<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXMemberExpressionWithoutProperty<'a, 't>(
-    pub(crate) *const JSXMemberExpression<'a>,
+    pub(crate) *mut JSXMemberExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXMemberExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_SPAN) as *const Span) }
@@ -10945,11 +11860,16 @@ pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXExpressionContainerWithoutExpression<'a, 't>(
-    pub(crate) *const JSXExpressionContainer<'a>,
+    pub(crate) *mut JSXExpressionContainer<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXExpressionContainerWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXExpressionContainer<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -10972,11 +11892,16 @@ pub(crate) const OFFSET_JSX_ATTRIBUTE_VALUE: usize = offset_of!(JSXAttribute, va
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXAttributeWithoutName<'a, 't>(
-    pub(crate) *const JSXAttribute<'a>,
+    pub(crate) *mut JSXAttribute<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXAttributeWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXAttribute<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_SPAN) as *const Span) }
@@ -11001,11 +11926,16 @@ impl<'a, 't> GetAddress for JSXAttributeWithoutName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXAttributeWithoutValue<'a, 't>(
-    pub(crate) *const JSXAttribute<'a>,
+    pub(crate) *mut JSXAttribute<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXAttributeWithoutValue<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXAttribute<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_SPAN) as *const Span) }
@@ -11033,11 +11963,16 @@ pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_ARGUMENT: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXSpreadAttributeWithoutArgument<'a, 't>(
-    pub(crate) *const JSXSpreadAttribute<'a>,
+    pub(crate) *mut JSXSpreadAttribute<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXSpreadAttributeWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXSpreadAttribute<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_ATTRIBUTE_SPAN) as *const Span) }
@@ -11057,11 +11992,16 @@ pub(crate) const OFFSET_JSX_SPREAD_CHILD_EXPRESSION: usize = offset_of!(JSXSprea
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXSpreadChildWithoutExpression<'a, 't>(
-    pub(crate) *const JSXSpreadChild<'a>,
+    pub(crate) *mut JSXSpreadChild<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSXSpreadChildWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSXSpreadChild<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_CHILD_SPAN) as *const Span) }
@@ -11083,11 +12023,16 @@ pub(crate) const OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSThisParameterWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSThisParameter<'a>,
+    pub(crate) *mut TSThisParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSThisParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSThisParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_SPAN) as *const Span) }
@@ -11117,11 +12062,16 @@ pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) *mut TSEnumDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSEnumDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
@@ -11163,11 +12113,16 @@ impl<'a, 't> GetAddress for TSEnumDeclarationWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumDeclarationWithoutBody<'a, 't>(
-    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) *mut TSEnumDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSEnumDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSEnumDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
@@ -11213,11 +12168,16 @@ pub(crate) const OFFSET_TS_ENUM_BODY_MEMBERS: usize = offset_of!(TSEnumBody, mem
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumBodyWithoutMembers<'a, 't>(
-    pub(crate) *const TSEnumBody<'a>,
+    pub(crate) *mut TSEnumBody<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSEnumBodyWithoutMembers<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSEnumBody<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SPAN) as *const Span) }
@@ -11238,11 +12198,16 @@ pub(crate) const OFFSET_TS_ENUM_MEMBER_INITIALIZER: usize = offset_of!(TSEnumMem
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumMemberWithoutId<'a, 't>(
-    pub(crate) *const TSEnumMember<'a>,
+    pub(crate) *mut TSEnumMember<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSEnumMemberWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSEnumMember<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_SPAN) as *const Span) }
@@ -11267,11 +12232,16 @@ impl<'a, 't> GetAddress for TSEnumMemberWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumMemberWithoutInitializer<'a, 't>(
-    pub(crate) *const TSEnumMember<'a>,
+    pub(crate) *mut TSEnumMember<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSEnumMemberWithoutInitializer<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSEnumMember<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_SPAN) as *const Span) }
@@ -11299,11 +12269,16 @@ pub(crate) const OFFSET_TS_TYPE_ANNOTATION_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAnnotationWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSTypeAnnotation<'a>,
+    pub(crate) *mut TSTypeAnnotation<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAnnotation<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ANNOTATION_SPAN) as *const Span) }
@@ -11323,11 +12298,16 @@ pub(crate) const OFFSET_TS_LITERAL_TYPE_LITERAL: usize = offset_of!(TSLiteralTyp
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSLiteralTypeWithoutLiteral<'a, 't>(
-    pub(crate) *const TSLiteralType<'a>,
+    pub(crate) *mut TSLiteralType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSLiteralTypeWithoutLiteral<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSLiteralType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_LITERAL_TYPE_SPAN) as *const Span) }
@@ -11356,11 +12336,16 @@ pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutCheckType<'a, 't>(
-    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) *mut TSConditionalType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConditionalTypeWithoutCheckType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConditionalType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
@@ -11408,11 +12393,16 @@ impl<'a, 't> GetAddress for TSConditionalTypeWithoutCheckType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutExtendsType<'a, 't>(
-    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) *mut TSConditionalType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConditionalTypeWithoutExtendsType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConditionalType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
@@ -11460,11 +12450,16 @@ impl<'a, 't> GetAddress for TSConditionalTypeWithoutExtendsType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutTrueType<'a, 't>(
-    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) *mut TSConditionalType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConditionalTypeWithoutTrueType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConditionalType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
@@ -11513,11 +12508,16 @@ impl<'a, 't> GetAddress for TSConditionalTypeWithoutTrueType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutFalseType<'a, 't>(
-    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) *mut TSConditionalType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConditionalTypeWithoutFalseType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConditionalType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
@@ -11568,11 +12568,16 @@ pub(crate) const OFFSET_TS_UNION_TYPE_TYPES: usize = offset_of!(TSUnionType, typ
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSUnionTypeWithoutTypes<'a, 't>(
-    pub(crate) *const TSUnionType<'a>,
+    pub(crate) *mut TSUnionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSUnionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSUnionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_UNION_TYPE_SPAN) as *const Span) }
@@ -11592,11 +12597,16 @@ pub(crate) const OFFSET_TS_INTERSECTION_TYPE_TYPES: usize = offset_of!(TSInterse
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIntersectionTypeWithoutTypes<'a, 't>(
-    pub(crate) *const TSIntersectionType<'a>,
+    pub(crate) *mut TSIntersectionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIntersectionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIntersectionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERSECTION_TYPE_SPAN) as *const Span) }
@@ -11617,11 +12627,16 @@ pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSParenthesizedTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSParenthesizedType<'a>,
+    pub(crate) *mut TSParenthesizedType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSParenthesizedType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_SPAN) as *const Span) }
@@ -11643,11 +12658,16 @@ pub(crate) const OFFSET_TS_TYPE_OPERATOR_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeOperatorWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSTypeOperator<'a>,
+    pub(crate) *mut TSTypeOperator<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeOperator<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_OPERATOR_SPAN) as *const Span) }
@@ -11675,11 +12695,16 @@ pub(crate) const OFFSET_TS_ARRAY_TYPE_ELEMENT_TYPE: usize = offset_of!(TSArrayTy
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSArrayTypeWithoutElementType<'a, 't>(
-    pub(crate) *const TSArrayType<'a>,
+    pub(crate) *mut TSArrayType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSArrayTypeWithoutElementType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSArrayType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ARRAY_TYPE_SPAN) as *const Span) }
@@ -11702,11 +12727,16 @@ pub(crate) const OFFSET_TS_INDEXED_ACCESS_TYPE_INDEX_TYPE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexedAccessTypeWithoutObjectType<'a, 't>(
-    pub(crate) *const TSIndexedAccessType<'a>,
+    pub(crate) *mut TSIndexedAccessType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIndexedAccessTypeWithoutObjectType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIndexedAccessType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_SPAN) as *const Span) }
@@ -11731,11 +12761,16 @@ impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutObjectType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexedAccessTypeWithoutIndexType<'a, 't>(
-    pub(crate) *const TSIndexedAccessType<'a>,
+    pub(crate) *mut TSIndexedAccessType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIndexedAccessTypeWithoutIndexType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIndexedAccessType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_SPAN) as *const Span) }
@@ -11763,11 +12798,16 @@ pub(crate) const OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES: usize = offset_of!(TSTupleT
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTupleTypeWithoutElementTypes<'a, 't>(
-    pub(crate) *const TSTupleType<'a>,
+    pub(crate) *mut TSTupleType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTupleTypeWithoutElementTypes<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTupleType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TUPLE_TYPE_SPAN) as *const Span) }
@@ -11791,11 +12831,16 @@ pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSNamedTupleMemberWithoutElementType<'a, 't>(
-    pub(crate) *const TSNamedTupleMember<'a>,
+    pub(crate) *mut TSNamedTupleMember<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSNamedTupleMember<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
@@ -11827,11 +12872,16 @@ impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSNamedTupleMemberWithoutLabel<'a, 't>(
-    pub(crate) *const TSNamedTupleMember<'a>,
+    pub(crate) *mut TSNamedTupleMember<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSNamedTupleMemberWithoutLabel<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSNamedTupleMember<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
@@ -11867,11 +12917,16 @@ pub(crate) const OFFSET_TS_OPTIONAL_TYPE_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSOptionalTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSOptionalType<'a>,
+    pub(crate) *mut TSOptionalType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSOptionalType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_OPTIONAL_TYPE_SPAN) as *const Span) }
@@ -11892,11 +12947,16 @@ pub(crate) const OFFSET_TS_REST_TYPE_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSRestTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSRestType<'a>,
+    pub(crate) *mut TSRestType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSRestTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSRestType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_REST_TYPE_SPAN) as *const Span) }
@@ -11918,11 +12978,16 @@ pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeReferenceWithoutTypeName<'a, 't>(
-    pub(crate) *const TSTypeReference<'a>,
+    pub(crate) *mut TSTypeReference<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeReferenceWithoutTypeName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeReference<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_SPAN) as *const Span) }
@@ -11947,11 +13012,16 @@ impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeReferenceWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSTypeReference<'a>,
+    pub(crate) *mut TSTypeReference<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeReferenceWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeReference<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_SPAN) as *const Span) }
@@ -11980,11 +13050,16 @@ pub(crate) const OFFSET_TS_QUALIFIED_NAME_RIGHT: usize = offset_of!(TSQualifiedN
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSQualifiedNameWithoutLeft<'a, 't>(
-    pub(crate) *const TSQualifiedName<'a>,
+    pub(crate) *mut TSQualifiedName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSQualifiedName<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_SPAN) as *const Span) }
@@ -12009,11 +13084,16 @@ impl<'a, 't> GetAddress for TSQualifiedNameWithoutLeft<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSQualifiedNameWithoutRight<'a, 't>(
-    pub(crate) *const TSQualifiedName<'a>,
+    pub(crate) *mut TSQualifiedName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSQualifiedName<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_SPAN) as *const Span) }
@@ -12042,11 +13122,16 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_PARAMS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterInstantiationWithoutParams<'a, 't>(
-    pub(crate) *const TSTypeParameterInstantiation<'a>,
+    pub(crate) *mut TSTypeParameterInstantiation<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeParameterInstantiationWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeParameterInstantiation<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12075,11 +13160,16 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONST: usize = offset_of!(TSTypeParame
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterWithoutName<'a, 't>(
-    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) *mut TSTypeParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeParameterWithoutName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
@@ -12127,11 +13217,16 @@ impl<'a, 't> GetAddress for TSTypeParameterWithoutName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterWithoutConstraint<'a, 't>(
-    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) *mut TSTypeParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeParameterWithoutConstraint<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
@@ -12179,11 +13274,16 @@ impl<'a, 't> GetAddress for TSTypeParameterWithoutConstraint<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterWithoutDefault<'a, 't>(
-    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) *mut TSTypeParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeParameterWithoutDefault<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeParameter<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
@@ -12236,11 +13336,16 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSTypeParameterDeclaration<'a>,
+    pub(crate) *mut TSTypeParameterDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeParameterDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeParameterDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12272,11 +13377,16 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAliasDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) *mut TSTypeAliasDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAliasDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAliasDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12326,11 +13436,16 @@ impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAliasDeclarationWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) *mut TSTypeAliasDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAliasDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12380,11 +13495,16 @@ impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) *mut TSTypeAliasDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAliasDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12440,11 +13560,16 @@ pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSClassImplementsWithoutExpression<'a, 't>(
-    pub(crate) *const TSClassImplements<'a>,
+    pub(crate) *mut TSClassImplements<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSClassImplements<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
@@ -12469,11 +13594,16 @@ impl<'a, 't> GetAddress for TSClassImplementsWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSClassImplementsWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSClassImplements<'a>,
+    pub(crate) *mut TSClassImplements<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSClassImplementsWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSClassImplements<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
@@ -12512,11 +13642,16 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) *mut TSInterfaceDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12574,11 +13709,16 @@ impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) *mut TSInterfaceDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12636,11 +13776,16 @@ impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutTypeParameters<'a, 't> 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutExtends<'a, 't>(
-    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) *mut TSInterfaceDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12698,11 +13843,16 @@ impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutBody<'a, 't>(
-    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) *mut TSInterfaceDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -12763,11 +13913,16 @@ pub(crate) const OFFSET_TS_INTERFACE_BODY_BODY: usize = offset_of!(TSInterfaceBo
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceBodyWithoutBody<'a, 't>(
-    pub(crate) *const TSInterfaceBody<'a>,
+    pub(crate) *mut TSInterfaceBody<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceBodyWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceBody<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_BODY_SPAN) as *const Span) }
@@ -12795,11 +13950,16 @@ pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSPropertySignatureWithoutKey<'a, 't>(
-    pub(crate) *const TSPropertySignature<'a>,
+    pub(crate) *mut TSPropertySignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSPropertySignatureWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSPropertySignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
@@ -12845,11 +14005,16 @@ impl<'a, 't> GetAddress for TSPropertySignatureWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSPropertySignatureWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSPropertySignature<'a>,
+    pub(crate) *mut TSPropertySignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSPropertySignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
@@ -12903,11 +14068,16 @@ pub(crate) const OFFSET_TS_INDEX_SIGNATURE_STATIC: usize = offset_of!(TSIndexSig
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexSignatureWithoutParameters<'a, 't>(
-    pub(crate) *const TSIndexSignature<'a>,
+    pub(crate) *mut TSIndexSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIndexSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_SPAN) as *const Span) }
@@ -12942,11 +14112,16 @@ impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexSignatureWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSIndexSignature<'a>,
+    pub(crate) *mut TSIndexSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIndexSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_SPAN) as *const Span) }
@@ -12992,11 +14167,16 @@ pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) *mut TSCallSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSCallSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13039,11 +14219,16 @@ impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutTypeParameters<'a, 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) *mut TSCallSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSCallSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13086,11 +14271,16 @@ impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) *mut TSCallSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSCallSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13133,11 +14323,16 @@ impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) *mut TSCallSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSCallSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13197,11 +14392,16 @@ pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMethodSignatureWithoutKey<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) *mut TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMethodSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
@@ -13276,11 +14476,16 @@ impl<'a, 't> GetAddress for TSMethodSignatureWithoutKey<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMethodSignatureWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) *mut TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMethodSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
@@ -13354,11 +14559,16 @@ impl<'a, 't> GetAddress for TSMethodSignatureWithoutTypeParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) *mut TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMethodSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
@@ -13432,11 +14642,16 @@ impl<'a, 't> GetAddress for TSMethodSignatureWithoutThisParam<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMethodSignatureWithoutParams<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) *mut TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMethodSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
@@ -13510,11 +14725,16 @@ impl<'a, 't> GetAddress for TSMethodSignatureWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) *mut TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMethodSignature<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
@@ -13599,11 +14819,16 @@ pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) *mut TSConstructSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13647,11 +14872,16 @@ impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutTypeParameters
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) *mut TSConstructSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13695,11 +14925,16 @@ impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutParams<'a, 't>
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) *mut TSConstructSignatureDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructSignatureDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -13750,11 +14985,16 @@ pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSIndexSignatureName<'a>,
+    pub(crate) *mut TSIndexSignatureName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSIndexSignatureName<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_SPAN) as *const Span) }
@@ -13784,11 +15024,16 @@ pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceHeritageWithoutExpression<'a, 't>(
-    pub(crate) *const TSInterfaceHeritage<'a>,
+    pub(crate) *mut TSInterfaceHeritage<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceHeritage<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_SPAN) as *const Span) }
@@ -13813,11 +15058,16 @@ impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceHeritageWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSInterfaceHeritage<'a>,
+    pub(crate) *mut TSInterfaceHeritage<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInterfaceHeritage<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_SPAN) as *const Span) }
@@ -13849,11 +15099,16 @@ pub(crate) const OFFSET_TS_TYPE_PREDICATE_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypePredicateWithoutParameterName<'a, 't>(
-    pub(crate) *const TSTypePredicate<'a>,
+    pub(crate) *mut TSTypePredicate<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypePredicateWithoutParameterName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypePredicate<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_SPAN) as *const Span) }
@@ -13883,11 +15138,16 @@ impl<'a, 't> GetAddress for TSTypePredicateWithoutParameterName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypePredicateWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSTypePredicate<'a>,
+    pub(crate) *mut TSTypePredicate<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypePredicateWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypePredicate<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_SPAN) as *const Span) }
@@ -13926,11 +15186,16 @@ pub(crate) const OFFSET_TS_MODULE_DECLARATION_SCOPE_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSModuleDeclaration<'a>,
+    pub(crate) *mut TSModuleDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSModuleDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSModuleDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SPAN) as *const Span) }
@@ -13978,11 +15243,16 @@ impl<'a, 't> GetAddress for TSModuleDeclarationWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleDeclarationWithoutBody<'a, 't>(
-    pub(crate) *const TSModuleDeclaration<'a>,
+    pub(crate) *mut TSModuleDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSModuleDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SPAN) as *const Span) }
@@ -14034,11 +15304,16 @@ pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleBlockWithoutDirectives<'a, 't>(
-    pub(crate) *const TSModuleBlock<'a>,
+    pub(crate) *mut TSModuleBlock<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSModuleBlockWithoutDirectives<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSModuleBlock<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
@@ -14063,11 +15338,16 @@ impl<'a, 't> GetAddress for TSModuleBlockWithoutDirectives<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleBlockWithoutBody<'a, 't>(
-    pub(crate) *const TSModuleBlock<'a>,
+    pub(crate) *mut TSModuleBlock<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSModuleBlockWithoutBody<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSModuleBlock<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
@@ -14095,11 +15375,16 @@ pub(crate) const OFFSET_TS_TYPE_LITERAL_MEMBERS: usize = offset_of!(TSTypeLitera
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeLiteralWithoutMembers<'a, 't>(
-    pub(crate) *const TSTypeLiteral<'a>,
+    pub(crate) *mut TSTypeLiteral<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeLiteralWithoutMembers<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeLiteral<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_LITERAL_SPAN) as *const Span) }
@@ -14120,11 +15405,16 @@ pub(crate) const OFFSET_TS_INFER_TYPE_TYPE_PARAMETER: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInferTypeWithoutTypeParameter<'a, 't>(
-    pub(crate) *const TSInferType<'a>,
+    pub(crate) *mut TSInferType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInferTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInferType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INFER_TYPE_SPAN) as *const Span) }
@@ -14146,11 +15436,16 @@ pub(crate) const OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeQueryWithoutExprName<'a, 't>(
-    pub(crate) *const TSTypeQuery<'a>,
+    pub(crate) *mut TSTypeQuery<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeQueryWithoutExprName<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeQuery<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_SPAN) as *const Span) }
@@ -14175,11 +15470,16 @@ impl<'a, 't> GetAddress for TSTypeQueryWithoutExprName<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeQueryWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSTypeQuery<'a>,
+    pub(crate) *mut TSTypeQuery<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeQueryWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeQuery<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_SPAN) as *const Span) }
@@ -14211,11 +15511,16 @@ pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutArgument<'a, 't>(
-    pub(crate) *const TSImportType<'a>,
+    pub(crate) *mut TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportTypeWithoutArgument<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
@@ -14256,11 +15561,16 @@ impl<'a, 't> GetAddress for TSImportTypeWithoutArgument<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutOptions<'a, 't>(
-    pub(crate) *const TSImportType<'a>,
+    pub(crate) *mut TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
@@ -14300,11 +15610,16 @@ impl<'a, 't> GetAddress for TSImportTypeWithoutOptions<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutQualifier<'a, 't>(
-    pub(crate) *const TSImportType<'a>,
+    pub(crate) *mut TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
@@ -14344,11 +15659,16 @@ impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSImportType<'a>,
+    pub(crate) *mut TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
@@ -14397,11 +15717,16 @@ pub(crate) const OFFSET_TS_FUNCTION_TYPE_SCOPE_ID: usize = offset_of!(TSFunction
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSFunctionTypeWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) *mut TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSFunctionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
@@ -14450,11 +15775,16 @@ impl<'a, 't> GetAddress for TSFunctionTypeWithoutTypeParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) *mut TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSFunctionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
@@ -14503,11 +15833,16 @@ impl<'a, 't> GetAddress for TSFunctionTypeWithoutThisParam<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSFunctionTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) *mut TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSFunctionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
@@ -14556,11 +15891,16 @@ impl<'a, 't> GetAddress for TSFunctionTypeWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) *mut TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSFunctionType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
@@ -14618,11 +15958,16 @@ pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructorTypeWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) *mut TSConstructorType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructorTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructorType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
@@ -14660,11 +16005,16 @@ impl<'a, 't> GetAddress for TSConstructorTypeWithoutTypeParameters<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructorTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) *mut TSConstructorType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructorType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
@@ -14702,11 +16052,16 @@ impl<'a, 't> GetAddress for TSConstructorTypeWithoutParams<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) *mut TSConstructorType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSConstructorType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
@@ -14754,11 +16109,16 @@ pub(crate) const OFFSET_TS_MAPPED_TYPE_SCOPE_ID: usize = offset_of!(TSMappedType
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMappedTypeWithoutTypeParameter<'a, 't>(
-    pub(crate) *const TSMappedType<'a>,
+    pub(crate) *mut TSMappedType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMappedType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
@@ -14815,11 +16175,16 @@ impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeParameter<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMappedTypeWithoutNameType<'a, 't>(
-    pub(crate) *const TSMappedType<'a>,
+    pub(crate) *mut TSMappedType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMappedType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
@@ -14876,11 +16241,16 @@ impl<'a, 't> GetAddress for TSMappedTypeWithoutNameType<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMappedTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSMappedType<'a>,
+    pub(crate) *mut TSMappedType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSMappedType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
@@ -14944,11 +16314,16 @@ pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_TYPES: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTemplateLiteralTypeWithoutQuasis<'a, 't>(
-    pub(crate) *const TSTemplateLiteralType<'a>,
+    pub(crate) *mut TSTemplateLiteralType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTemplateLiteralType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -14975,11 +16350,16 @@ impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTemplateLiteralTypeWithoutTypes<'a, 't>(
-    pub(crate) *const TSTemplateLiteralType<'a>,
+    pub(crate) *mut TSTemplateLiteralType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTemplateLiteralTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTemplateLiteralType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15011,11 +16391,16 @@ pub(crate) const OFFSET_TS_AS_EXPRESSION_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSAsExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const TSAsExpression<'a>,
+    pub(crate) *mut TSAsExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSAsExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSAsExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_SPAN) as *const Span) }
@@ -15040,11 +16425,16 @@ impl<'a, 't> GetAddress for TSAsExpressionWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSAsExpressionWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSAsExpression<'a>,
+    pub(crate) *mut TSAsExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSAsExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSAsExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_SPAN) as *const Span) }
@@ -15076,11 +16466,16 @@ pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSSatisfiesExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const TSSatisfiesExpression<'a>,
+    pub(crate) *mut TSSatisfiesExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSSatisfiesExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSSatisfiesExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
@@ -15105,11 +16500,16 @@ impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSSatisfiesExpression<'a>,
+    pub(crate) *mut TSSatisfiesExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSSatisfiesExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
@@ -15140,11 +16540,16 @@ pub(crate) const OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAssertionWithoutExpression<'a, 't>(
-    pub(crate) *const TSTypeAssertion<'a>,
+    pub(crate) *mut TSTypeAssertion<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAssertion<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
@@ -15169,11 +16574,16 @@ impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAssertionWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const TSTypeAssertion<'a>,
+    pub(crate) *mut TSTypeAssertion<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSTypeAssertion<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
@@ -15207,11 +16617,16 @@ pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_IMPORT_KIND: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportEqualsDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSImportEqualsDeclaration<'a>,
+    pub(crate) *mut TSImportEqualsDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportEqualsDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportEqualsDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15246,11 +16661,16 @@ impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutId<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportEqualsDeclarationWithoutModuleReference<'a, 't>(
-    pub(crate) *const TSImportEqualsDeclaration<'a>,
+    pub(crate) *mut TSImportEqualsDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSImportEqualsDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15290,11 +16710,16 @@ pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSExternalModuleReferenceWithoutExpression<'a, 't>(
-    pub(crate) *const TSExternalModuleReference<'a>,
+    pub(crate) *mut TSExternalModuleReference<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSExternalModuleReferenceWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSExternalModuleReference<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15317,11 +16742,16 @@ pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSNonNullExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const TSNonNullExpression<'a>,
+    pub(crate) *mut TSNonNullExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSNonNullExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSNonNullExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_SPAN) as *const Span) }
@@ -15341,11 +16771,16 @@ pub(crate) const OFFSET_DECORATOR_EXPRESSION: usize = offset_of!(Decorator, expr
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct DecoratorWithoutExpression<'a, 't>(
-    pub(crate) *const Decorator<'a>,
+    pub(crate) *mut Decorator<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> DecoratorWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut Decorator<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DECORATOR_SPAN) as *const Span) }
@@ -15366,11 +16801,16 @@ pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_EXPRESSION: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSExportAssignmentWithoutExpression<'a, 't>(
-    pub(crate) *const TSExportAssignment<'a>,
+    pub(crate) *mut TSExportAssignment<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSExportAssignmentWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSExportAssignment<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_EXPORT_ASSIGNMENT_SPAN) as *const Span) }
@@ -15392,11 +16832,16 @@ pub(crate) const OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_ID: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSNamespaceExportDeclarationWithoutId<'a, 't>(
-    pub(crate) *const TSNamespaceExportDeclaration<'a>,
+    pub(crate) *mut TSNamespaceExportDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSNamespaceExportDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSNamespaceExportDeclaration<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15423,11 +16868,16 @@ pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInstantiationExpressionWithoutExpression<'a, 't>(
-    pub(crate) *const TSInstantiationExpression<'a>,
+    pub(crate) *mut TSInstantiationExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInstantiationExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInstantiationExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15454,11 +16904,16 @@ impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutExpression<'a, 't> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInstantiationExpressionWithoutTypeArguments<'a, 't>(
-    pub(crate) *const TSInstantiationExpression<'a>,
+    pub(crate) *mut TSInstantiationExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> TSInstantiationExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut TSInstantiationExpression<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -15491,11 +16946,16 @@ pub(crate) const OFFSET_JS_DOC_NULLABLE_TYPE_POSTFIX: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSDocNullableTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const JSDocNullableType<'a>,
+    pub(crate) *mut JSDocNullableType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSDocNullableType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_SPAN) as *const Span) }
@@ -15524,11 +16984,16 @@ pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX: usize =
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const JSDocNonNullableType<'a>,
+    pub(crate) *mut JSDocNonNullableType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
 impl<'a, 't> JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub(crate) fn new(node: *mut JSDocNonNullableType<'a>) -> Self {
+        Self(node, PhantomData)
+    }
+
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {

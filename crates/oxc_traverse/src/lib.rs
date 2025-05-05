@@ -72,6 +72,7 @@ pub use context::{
     BoundIdentifier, MaybeBoundIdentifier, ReusableTraverseCtx, TraverseAncestry, TraverseCtx,
     TraverseScoping,
 };
+pub mod no_recurse;
 
 mod generated {
     pub mod ancestor;
