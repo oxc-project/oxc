@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
@@ -14,7 +13,7 @@ use tower_lsp_server::{
 use oxc_allocator::Allocator;
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader,
+    loader::Loader, read_to_string,
 };
 
 use super::error_with_position::{
@@ -103,7 +102,7 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
-        let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
+        let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
         debug!("lint {path:?}");
 
