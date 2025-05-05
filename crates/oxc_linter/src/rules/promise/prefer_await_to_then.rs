@@ -93,7 +93,12 @@ impl Rule for PreferAwaitToThen {
             }
         }
 
-        ctx.diagnostic(prefer_wait_to_then_diagnostic(call_expr.span));
+        let span = call_expr
+            .callee
+            .as_member_expression()
+            .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+            .map_or(call_expr.span, |(span, _)| span);
+        ctx.diagnostic(prefer_wait_to_then_diagnostic(span));
     }
 }
 

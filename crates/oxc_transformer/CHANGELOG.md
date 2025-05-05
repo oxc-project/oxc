@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.0] - 2025-05-03
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Performance
+
+- 8d84cf5 transformer: Avoid copying string data (#10726) (overlookmotel)
+- 91df9d4 transformer: Optimize inserting var/let statements (#10654) (Dunqing)
+- 2256918 transformer/jsx: Skip creating temp `String` (#10721) (overlookmotel)
+- b57f2e8 transformer/refresh: `RefreshIdentifierResolver::parse` search string for `.` only once (#10719) (overlookmotel)
+- 9e557cf transformer/refresh: Remove temp `Vec` (#10713) (overlookmotel)
+- 2aa3c4c transformer/refresh: Reuse existing `Atom` (#10709) (overlookmotel)
+- 7d8efd8 transformer/refresh: Use `take/take_in` instead of `drain` (#10656) (Dunqing)
+- dec3c80 transformer/regexp: Do not store parsed regexp (#10748) (overlookmotel)
+- fc90298 transformer/regexp: Inline `enter_expression` (#10745) (overlookmotel)
+- 8e902a5 transformer/regexp: Avoid copying string data and temp `String` (#10723) (overlookmotel)
+
+### Refactor
+
+- 62843e6 transformer/refresh: Shorten code (#10718) (overlookmotel)
+- c4a5dba transformer/refresh: Do not unnecessarily consume `Vec` (#10712) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Features

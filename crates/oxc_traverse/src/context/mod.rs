@@ -21,6 +21,7 @@ mod bound_identifier;
 mod maybe_bound_identifier;
 mod reusable;
 mod scoping;
+mod uid;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;

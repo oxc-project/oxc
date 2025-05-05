@@ -4,7 +4,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{Codegen, CodegenOptions},
     isolated_declarations::IsolatedDeclarations,
     parser::Parser,
     span::SourceType,
@@ -66,7 +66,7 @@ pub fn isolated_declaration(
         Some(true) => Some(source_path.to_path_buf()),
         _ => None,
     };
-    let codegen_ret = CodeGenerator::new()
+    let codegen_ret = Codegen::new()
         .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
         .build(&transformed_ret.program);
 

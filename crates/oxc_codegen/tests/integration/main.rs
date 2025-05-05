@@ -6,7 +6,7 @@ pub mod ts;
 pub mod unit;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -20,7 +20,7 @@ pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenRe
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut options = options.clone();
     options.single_quote = true;
-    CodeGenerator::new().with_options(options).build(&ret.program)
+    Codegen::new().with_options(options).build(&ret.program)
 }
 
 pub fn snapshot(name: &str, cases: &[&str]) {

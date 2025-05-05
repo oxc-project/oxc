@@ -28,6 +28,11 @@ setup(async () => {
   await activateExtension();
 });
 
+teardown(async () => {
+  await workspace.getConfiguration('oxc').update('flags', undefined);
+  await workspace.saveAll();
+});
+
 suite('commands', () => {
   test('listed commands', async () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
@@ -161,6 +166,46 @@ suite('code actions', () => {
 
     await workspace.getConfiguration('editor').update('codeActionsOnSave', undefined);
     await workspace.saveAll();
+  });
+
+  test('changing configuration "fix_kind" will reveal more code actions', async () => {
+    await loadFixture('changing_fix_kind');
+    const fileUri = Uri.joinPath(WORKSPACE_DIR, 'fixtures', 'for_direction.ts');
+    await window.showTextDocument(fileUri);
+    const codeActionsNoFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
+      'vscode.executeCodeActionProvider',
+      fileUri,
+      {
+        start: { line: 0, character: 18 },
+        end: { line: 0, character: 19 },
+      },
+    );
+
+    assert(Array.isArray(codeActionsNoFix));
+    const quickFixesNoFix = codeActionsNoFix.filter(
+      (action) => action.kind?.value === 'quickfix',
+    );
+    strictEqual(quickFixesNoFix.length, 2);
+
+    await workspace.getConfiguration('oxc').update('flags', {
+      'fix_kind': 'dangerous_fix',
+    });
+    await workspace.saveAll();
+
+    const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
+      'vscode.executeCodeActionProvider',
+      fileUri,
+      {
+        start: { line: 0, character: 18 },
+        end: { line: 0, character: 19 },
+      },
+    );
+
+    assert(Array.isArray(codeActionsWithFix));
+    const quickFixesWithFix = codeActionsWithFix.filter(
+      (action) => action.kind?.value === 'quickfix',
+    );
+    strictEqual(quickFixesWithFix.length, 3);
   });
 });
 
@@ -326,5 +371,19 @@ suite('E2E Diagnostics', () => {
     const contentWithFixAll = await workspace.fs.readFile(fileUri);
 
     strictEqual(contentWithFixAll.toString(), 'if (foo === null) { bar();}');
+  });
+
+  test('nested configs severity', async () => {
+    await loadFixture('nested_config');
+    const rootDiagnostics = await getDiagnostics('index.ts');
+    const nestedDiagnostics = await getDiagnostics('folder/index.ts');
+
+    assert(typeof rootDiagnostics[0].code == 'object');
+    strictEqual(rootDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(rootDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    assert(typeof nestedDiagnostics[0].code == 'object');
+    strictEqual(nestedDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 });

@@ -11,10 +11,20 @@ pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
         self.comments.reserve(comments.len());
+        let move_legal_comments = {
+            let legal_comments = &self.options.legal_comments;
+            matches!(
+                legal_comments,
+                LegalComment::Eof | LegalComment::Linked(_) | LegalComment::External
+            )
+        };
         for comment in comments {
             // Omit pure comments because they are handled separately.
             if comment.is_pure() || comment.is_no_side_effects() {
                 continue;
+            }
+            if comment.is_legal() && move_legal_comments {
+                self.legal_comments.push(*comment);
             }
             self.comments.entry(comment.attached_to).or_default().push(*comment);
         }
@@ -30,10 +40,10 @@ impl Codegen<'_> {
         arguments: &[Argument<'_>],
     ) -> (bool, bool) {
         let has_comment_before_right_paren =
-            self.print_comments && span.end > 0 && self.has_comment(span.end - 1);
+            self.print_annotation_comment && span.end > 0 && self.has_comment(span.end - 1);
 
         let has_comment = has_comment_before_right_paren
-            || self.print_comments
+            || self.print_annotation_comment
                 && arguments.iter().any(|item| self.has_comment(item.span().start));
 
         (has_comment, has_comment_before_right_paren)
@@ -45,7 +55,7 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
-        if !self.print_comments {
+        if !self.print_any_comment {
             return;
         }
         let Some(comments) = self.comments.remove(&start) else {
@@ -73,7 +83,7 @@ impl Codegen<'_> {
                         continue;
                     }
                     LegalComment::Eof | LegalComment::Linked(_) | LegalComment::External => {
-                        self.legal_comments.push(comment);
+                        /* noop, handled by `build_comments`. */
                         continue;
                     }
                     LegalComment::None => {}
@@ -90,7 +100,7 @@ impl Codegen<'_> {
     /// A statement comment also includes legal comments
     #[inline]
     pub(crate) fn print_statement_comments(&mut self, start: u32) {
-        if self.print_comments {
+        if self.print_any_comment {
             if let Some(comments) = self.get_statement_comments(start) {
                 self.print_comments(&comments);
             }
@@ -153,7 +163,10 @@ impl Codegen<'_> {
     }
 
     fn print_comment(&mut self, comment: &Comment) {
-        let comment_source = comment.span.source_text(self.source_text);
+        let Some(source_text) = self.source_text else {
+            return;
+        };
+        let comment_source = comment.span.source_text(source_text);
         match comment.kind {
             CommentKind::Line => {
                 self.print_str(comment_source);
@@ -178,12 +191,16 @@ impl Codegen<'_> {
         match self.options.legal_comments.clone() {
             LegalComment::Eof => {
                 let comments = self.legal_comments.drain(..).collect::<Vec<_>>();
+                if !comments.is_empty() {
+                    self.print_hard_newline();
+                }
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();
                 }
             }
             LegalComment::Linked(path) => {
+                self.print_hard_newline();
                 self.print_str("/*! For license information please see ");
                 self.print_str(&path);
                 self.print_str(" */");

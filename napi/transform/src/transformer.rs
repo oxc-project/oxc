@@ -13,7 +13,7 @@ use rustc_hash::FxHashMap;
 use oxc::{
     CompilerInterface,
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
+    codegen::{Codegen, CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
@@ -652,11 +652,11 @@ impl Compiler {
                                     "Inject plugin did not receive a tuple [string, string].",
                                 )]);
                             }
-                            let source = v[0].to_string();
+                            let source = &v[0];
                             Ok(if v[1] == "*" {
-                                InjectImport::namespace_specifier(&source, &local)
+                                InjectImport::namespace_specifier(source, &local)
                             } else {
-                                InjectImport::named_specifier(&source, Some(&v[1]), &local)
+                                InjectImport::named_specifier(source, Some(&v[1]), &local)
                             })
                         }
                     })
@@ -888,7 +888,7 @@ pub fn module_runner_transform(
     let (deps, dynamic_deps) =
         ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
 
-    let CodegenReturn { code, map, .. } = CodeGenerator::new()
+    let CodegenReturn { code, map, .. } = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: options.and_then(|opts| {
                 opts.sourcemap.as_ref().and_then(|s| s.then(|| file_path.to_path_buf()))

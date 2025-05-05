@@ -878,14 +878,14 @@ impl ObjectAssignmentTarget<'_> {
     }
 }
 
-impl AssignmentTargetMaybeDefault<'_> {
+impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// Returns the identifier bound by this assignment target.
     ///
     /// ## Example
     ///
     /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
     /// - returns `b` when called on `a: b` in `({a: b} = obj)`
-    pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
+    pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {

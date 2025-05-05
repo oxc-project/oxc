@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 35/35 (100.00%)
 Positive Passed: 35/35 (100.00%)
-Negative Passed: 32/32 (100.00%)
+Negative Passed: 33/33 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -15,6 +15,12 @@ Negative Passed: 32/32 (100.00%)
    ╭─[misc/fail/oxc-10638.js:2:1]
  1 │ for(
  2 │ in
+   · ──
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-10639.js:1:1]
+ 1 │ <<Ç
    · ──
    ╰────
 

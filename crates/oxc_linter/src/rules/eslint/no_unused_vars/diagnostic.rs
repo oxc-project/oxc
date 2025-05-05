@@ -57,8 +57,13 @@ where
             pronoun_singular.cow_to_ascii_lowercase()
         ))
 }
+
 /// Variable 'x' is declared but never used.
-pub fn declared<R>(symbol: &Symbol<'_, '_>, pat: &IgnorePattern<R>) -> OxcDiagnostic
+pub fn declared<R>(
+    symbol: &Symbol<'_, '_>,
+    pat: &IgnorePattern<R>,
+    only_used_as_type: bool,
+) -> OxcDiagnostic
 where
     R: fmt::Display,
 {
@@ -71,9 +76,13 @@ where
     let (pronoun, pronoun_plural) = pronoun_for_symbol(symbol.flags());
     let suffix = pat.diagnostic_help(pronoun_plural);
 
-    OxcDiagnostic::warn(format!("{pronoun} '{name}' is {verb} but never used.{suffix}"))
-        .with_label(symbol.span().label(format!("'{name}' is declared here")))
-        .with_help(help)
+    OxcDiagnostic::warn(if only_used_as_type {
+        format!("{pronoun} is {verb} but only used as a type.{suffix}",)
+    } else {
+        format!("{pronoun} '{name}' is {verb} but never used.{suffix}")
+    })
+    .with_label(symbol.span().label(format!("'{name}' is declared here")))
+    .with_help(help)
 }
 
 /// Variable 'x' is assigned a value but never used.

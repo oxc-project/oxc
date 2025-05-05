@@ -38,6 +38,7 @@ mod import {
 
 mod eslint {
     pub mod array_callback_return;
+    pub mod block_scoped_var;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -284,6 +285,7 @@ mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
+    pub mod forward_ref_uses_ref;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
@@ -563,6 +565,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_deprecated,
     // import::no_unused_modules,
     eslint::array_callback_return,
+    eslint::block_scoped_var,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
@@ -889,6 +892,7 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
     react::exhaustive_deps,
+    react::forward_ref_uses_ref,
     react::iframe_missing_sandbox,
     react::jsx_filename_extension,
     react::jsx_boolean_value,

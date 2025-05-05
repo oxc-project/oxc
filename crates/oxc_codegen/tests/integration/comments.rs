@@ -209,6 +209,16 @@ pub mod legal {
     }
 
     #[test]
+    fn legal_eof_minify_comment() {
+        let options = CodegenOptions {
+            minify: true,
+            legal_comments: LegalComment::Eof,
+            ..Default::default()
+        };
+        snapshot_options("legal_eof_minify_comments", &cases(), &options);
+    }
+
+    #[test]
     fn legal_linked_comment() {
         let options = CodegenOptions {
             legal_comments: LegalComment::Linked(String::from("test.js")),

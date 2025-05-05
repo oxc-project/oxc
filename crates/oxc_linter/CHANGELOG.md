@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.9] - 2025-05-02
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Features
+
+- 63f02a8 linter: Add react/forward_ref_uses_ref (#10506) (x6eull)
+- a3ada34 linter: Implement fixer for unicorn/prefer-number-properties (#10693) (camc314)
+- e97a4e0 linter: Add fixer to unicorn/prefer-spread (#10691) (camc314)
+- a69a0ee linter: Add eslint/block-scoped-var (#10237) (yefan)
+- 387af3a linter: Report vars only used as types (#10664) (camc314)
+- eac205f linter: Add unicorn/consistent-assert rule (#10653) (Shota Kitahara)
+- 0e6a727 linter: Add autofixer for eslint/radix (#10652) (yefan)
+- fb070c4 linter/no-extra-boolean-cast: Implement auto-fixer (#10682) (DonIsaac)
+- 432cd77 linter/no-new-wrapper: Implement auto-fixer (#10680) (DonIsaac)
+
+### Bug Fixes
+
+- b38338a linter: Make require post message target origin a fixer a suggestion (#10754) (camc314)
+- 48c542d linter: Skip linting vue <script> where `lang` is not js / ts (#10740) (Boshen)
+- c9575f6 linter: Fix false positive in react/exhaustive deps (#10727) (camc314)
+- d8d8f64 linter: Shorten span of promise/prefer-await-to-then (#10717) (camc314)
+- a88e349 linter: Mark `isNan` and `isFinite` as dangerous fixes in `unicorn/prefer-number-properties` (#10706) (Sysix)
+- f4ab05f linter: Panic in unicorn/no-useless-spread (#10715) (camc314)
+- 06f1717 linter: False positive in no unused vars when importing value used as type (#10690) (camc314)
+- 746b318 linter: False positive in typescript/explicit-function-return-type with `satisfies` (#10668) (camc314)
+- cce1043 linter: False positive in typescript/explicit-function-return-type (#10667) (camc314)
+- c89da93 linter: False positive in eslint/curly on windows (#10671) (camc314)
+- 374e19e linter: False positive in react/jsx-curly-brace-presence (#10663) (camc314)
+- e7c2b32 linter: Move `consistent-assert` to `pedantic` (#10665) (camc314)
+- 344ef88 linter: False positive in `eslint/no-unused-vars` when calling inside sequence expression (#10646) (Ulrich Stark)
+- 98bcd5f lsp: Incorrect quick fix offset in vue files (#10742) (camc314)
+
+### Performance
+
+- c753f75 transformer, linter: Use `format_compact_str!` (#10753) (overlookmotel)
+
+### Refactor
+
+
 ## [0.16.8] - 2025-04-27
 
 ### Features

@@ -10133,8 +10133,8 @@ rebuilt        : ["Array", "Function", "MyClassDecorator", "MyMethodDecorator", 
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/emitHelpersWithLocalCollisions.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "_decorate", "_objectSpread", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_decorate", "_objectSpread", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "__decorate2", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "__decorate2", "_objectSpread", "o", "y"]
 Symbol span mismatch for "A":
 after transform: SymbolId(2): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
@@ -16039,8 +16039,8 @@ rebuilt        : ["React", "o"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "_decorate", "_objectSpread", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_decorate", "_objectSpread", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "__decorate2", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "__decorate2", "_objectSpread", "o", "y"]
 Symbol span mismatch for "A":
 after transform: SymbolId(2): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }

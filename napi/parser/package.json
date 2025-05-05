@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.67.0",
+  "version": "0.68.1",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
@@ -43,8 +43,8 @@
     "wasm.mjs",
     "bindings.js",
     "webcontainer-fallback.js",
-    "deserialize-js.js",
-    "deserialize-ts.js"
+    "generated/deserialize/js.js",
+    "generated/deserialize/ts.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 368d05f codegen: Make `source_text` an option, avoid panic (#10790) (Cameron)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Features
+
+- 2d13b49 codegen: Expose `with_source_text` function (#10768) (camc314)
+- b01cb45 codegen: A way to keep legal comments after minification (#10689) (Boshen)
+
+### Bug Fixes
+
+- 4825eb5 codegen: Add missing `in` `out` from ts type parameter (#10696) (Boshen)
+- 06f796f codegen: Add missing return type from object methods (#10694) (Boshen)
+- 8c499c6 linter: Fix panic when doing code gen on regexp (#10769) (camc314)
+
+### Refactor
+
+
 ## [0.66.0] - 2025-04-23
 
 - 10e1018 codegen: [**BREAKING**] Print `StringLiteral` `raw` if `minify` option disabled (#10553) (overlookmotel)

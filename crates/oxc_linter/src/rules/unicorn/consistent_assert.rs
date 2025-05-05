@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentAssert,
     unicorn,
-    correctness,
+    pedantic,
     fix,
 );
 

@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
@@ -63,9 +63,10 @@ impl InjectImport {
     }
 
     fn replace_name(local: &str) -> Option<CompactStr> {
-        local
-            .contains('.')
-            .then(|| CompactStr::from(format!("$inject_{}", local.cow_replace('.', "_"))))
+        match local.cow_replace('.', "_") {
+            Cow::Owned(local) => Some(format_compact_str!("$inject_{local}")),
+            Cow::Borrowed(_) => None,
+        }
     }
 }
 
@@ -203,7 +204,7 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, inject.source.as_str(), None);
+            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
             let kind = ImportOrExportKind::Value;
             let import_decl = self
                 .ast
@@ -216,28 +217,35 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_import_to_specifier(&self, inject: &InjectImport) -> ImportDeclarationSpecifier<'a> {
         match &inject.specifier {
             InjectImportSpecifier::Specifier { imported, local } => {
-                let imported_name = imported.as_deref().unwrap_or("default");
-                let imported = if identifier::is_identifier_name(imported_name) {
-                    self.ast.module_export_name_identifier_name(SPAN, imported_name)
-                } else {
-                    self.ast.module_export_name_string_literal(SPAN, imported_name, None)
+                let imported = match imported {
+                    Some(imported_name) => {
+                        let imported_name = self.ast.atom(imported_name);
+                        if identifier::is_identifier_name(&imported_name) {
+                            self.ast.module_export_name_identifier_name(SPAN, imported_name)
+                        } else {
+                            self.ast.module_export_name_string_literal(SPAN, imported_name, None)
+                        }
+                    }
+                    None => self.ast.module_export_name_identifier_name(SPAN, "default"),
                 };
+
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
+
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, local),
+                    self.ast.binding_identifier(SPAN, self.ast.atom(local)),
                     ImportOrExportKind::Value,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, local);
+                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
                 self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, local);
+                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
                 self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
             }
         }

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::ops::Not;
 
 use cow_utils::CowUtils;
@@ -189,7 +190,7 @@ impl Gen for Statement<'_> {
             Self::ExportDefaultDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
-                    if func.pure && p.options.print_annotation_comments() {
+                    if func.pure && p.print_annotation_comment {
                         p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
                     }
                 }
@@ -198,7 +199,7 @@ impl Gen for Statement<'_> {
             Self::ExportNamedDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
-                    if func.pure && p.options.print_annotation_comments() {
+                    if func.pure && p.print_annotation_comment {
                         p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
                     }
                 }
@@ -220,7 +221,7 @@ impl Gen for Statement<'_> {
             }
             Self::FunctionDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
-                if decl.pure && p.options.print_annotation_comments() {
+                if decl.pure && p.print_annotation_comment {
                     p.print_indent();
                     p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
                 }
@@ -803,7 +804,7 @@ impl Gen for Function<'_> {
 impl Gen for FunctionBody<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let span_end = self.span.end;
-        let comments_at_end = if p.print_comments && span_end > 0 {
+        let comments_at_end = if p.print_any_comment && span_end > 0 {
             p.get_statement_comments(span_end - 1)
         } else {
             None
@@ -1194,13 +1195,13 @@ impl GenExpr for Expression<'_> {
             Self::ArrayExpression(expr) => expr.print(p, ctx),
             Self::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::FunctionExpression(func) => {
-                if func.pure && p.options.print_annotation_comments() {
+                if func.pure && p.print_annotation_comment {
                     p.print_str(NO_SIDE_EFFECTS_COMMENT);
                 }
                 func.print(p, ctx);
             }
             Self::ArrowFunctionExpression(func) => {
-                if func.pure && p.options.print_annotation_comments() {
+                if func.pure && p.print_annotation_comment {
                     p.print_str(NO_SIDE_EFFECTS_COMMENT);
                 }
                 func.print_expr(p, precedence, ctx);
@@ -1353,7 +1354,10 @@ impl Gen for RegExpLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let last = p.last_byte();
-        let pattern_text = self.regex.pattern.source_text(p.source_text);
+        let pattern_text = p.source_text.map_or_else(
+            || Cow::Owned(self.regex.pattern.to_string()),
+            |src| self.regex.pattern.source_text(src),
+        );
         // Avoid forming a single-line comment or "</script" sequence
         if last == Some(b'/')
             || (last == Some(b'<') && pattern_text.cow_to_ascii_lowercase().starts_with("script"))
@@ -1438,7 +1442,7 @@ impl GenExpr for CallExpression<'_> {
         let is_statement = p.start_of_stmt == p.code_len();
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let pure = self.pure && p.options.print_annotation_comments();
+        let pure = self.pure && p.print_annotation_comment;
         if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
@@ -1628,6 +1632,11 @@ impl Gen for ObjectProperty<'_> {
                 p.print_ascii_byte(b'(');
                 func.params.print(p, ctx);
                 p.print_ascii_byte(b')');
+                if let Some(return_type) = &func.return_type {
+                    p.print_colon();
+                    p.print_soft_space();
+                    return_type.print(p, ctx);
+                }
                 if let Some(body) = &func.body {
                     p.print_soft_space();
                     body.print(p, ctx);
@@ -2086,10 +2095,9 @@ impl GenExpr for ImportExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
 
-        let print_comments = p.options.print_comments();
         let has_comment_before_right_paren =
-            print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
-        let has_comment = print_comments
+            p.options.comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
+        let has_comment = p.options.comments
             && (has_comment_before_right_paren
                 || p.has_comment(self.source.span().start)
                 || self
@@ -2203,7 +2211,7 @@ impl GenExpr for ChainExpression<'_> {
 impl GenExpr for NewExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let pure = self.pure && p.options.print_annotation_comments();
+        let pure = self.pure && p.print_annotation_comment;
         if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
@@ -3163,16 +3171,10 @@ impl Gen for TSMappedType<'_> {
         p.print_str("{");
         p.print_soft_space();
         match self.readonly {
-            TSMappedTypeModifierOperator::True => {
-                p.print_str("readonly ");
-            }
-            TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+readonly ");
-            }
-            TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-readonly ");
-            }
-            TSMappedTypeModifierOperator::None => {}
+            Some(TSMappedTypeModifierOperator::True) => p.print_str("readonly "),
+            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+readonly "),
+            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-readonly "),
+            None => {}
         }
         p.print_str("[");
         self.type_parameter.name.print(p, ctx);
@@ -3190,16 +3192,10 @@ impl Gen for TSMappedType<'_> {
         }
         p.print_str("]");
         match self.optional {
-            TSMappedTypeModifierOperator::True => {
-                p.print_str("?");
-            }
-            TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+?");
-            }
-            TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-?");
-            }
-            TSMappedTypeModifierOperator::None => {}
+            Some(TSMappedTypeModifierOperator::True) => p.print_str("?"),
+            Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+?"),
+            Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-?"),
+            None => {}
         }
         p.print_soft_space();
         if let Some(type_annotation) = &self.type_annotation {
@@ -3346,6 +3342,12 @@ impl Gen for TSTypeParameter<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.r#const {
             p.print_str("const ");
+        }
+        if self.r#in {
+            p.print_str("in ");
+        }
+        if self.out {
+            p.print_str("out ");
         }
         self.name.print(p, ctx);
         if let Some(constraint) = &self.constraint {

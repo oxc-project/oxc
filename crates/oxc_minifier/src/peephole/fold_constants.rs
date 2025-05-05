@@ -389,7 +389,7 @@ impl<'a> PeepholeOptimizations {
                     e.right.get_side_free_string_value(&ctx),
                 ) {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
-                    let value = left_str.into_owned() + &right_str;
+                    let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
                     let left = left_binary_expr.left.take_in(ctx.ast.allocator);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
@@ -646,30 +646,99 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        let len = e.properties.len();
-        e.properties.retain(|p| {
-            if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
+        let (new_size, should_fold) =
+            e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
+                let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
+                    return (new_size + 1, should_fold);
+                };
                 let e = &spread_element.argument;
-                if e.is_literal() || ctx.is_expression_undefined(e) {
-                    return false;
+                if ctx.is_expression_undefined(e) {
+                    return (new_size, true);
                 }
-                if let Expression::ObjectExpression(o) = e {
-                    if o.properties.is_empty() {
-                        return false;
+                match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => (new_size, true),
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
+                    {
+                        (new_size + o.properties.len(), true)
                     }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => (new_size, true),
+                    _ => (new_size + 1, should_fold),
                 }
-                if let Expression::ArrayExpression(o) = e {
-                    if o.elements.is_empty() {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            true
-        });
-        if e.properties.len() != len {
-            state.changed = true;
+            });
+        if !should_fold {
+            return;
         }
+
+        let mut new_properties = ctx.ast.vec_with_capacity::<ObjectPropertyKind>(new_size);
+        for p in e.properties.drain(..) {
+            if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
+                let e = &mut spread_element.argument;
+                if ctx.is_expression_undefined(e) {
+                    continue;
+                }
+                match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => {
+                        // skip
+                    }
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
+                    {
+                        new_properties.extend(o.properties.drain(..).filter(|prop| {
+                            match prop {
+                                ObjectPropertyKind::SpreadProperty(_) => true,
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    // non-computed __proto__ property sets the prototype of the object instead
+                                    p.computed
+                                        || p.method
+                                        || !p.key.is_specific_static_name("__proto__")
+                                }
+                            }
+                        }));
+                    }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => {
+                        // skip empty array
+                    }
+                    _ => {
+                        new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
+                    }
+                }
+            } else {
+                new_properties.push(p);
+            }
+        }
+
+        e.properties = new_properties;
+        state.changed = true;
+    }
+
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        e.properties.iter().all(|p| match p {
+            ObjectPropertyKind::SpreadProperty(_) => true,
+            ObjectPropertyKind::ObjectProperty(p) => {
+                // getters are evaluated when spreading
+                matches!(p.kind, PropertyKind::Init)
+                    && (
+                        // non-computed __proto__ property sets the prototype of the object instead
+                        p.computed
+                            || p.method
+                            || !p.key.is_specific_static_name("__proto__")
+                            || !p.value.may_have_side_effects(&ctx)
+                    )
+            }
+        })
     }
 
     /// Inline constant values in template literals
@@ -2049,6 +2118,19 @@ mod test {
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
+            fold("({ z, ...()=>{} })", result);
+            fold("({ z, ...function(){} })", result);
+            fold_same("({ z, ...'abc' })");
+            fold("({ a: 0, ...{ b: 1 } })", "({ a: 0, b: 1 })");
+            fold("({ a: 0, ...{ b: 1, ...{ c: 2 } } })", "({ a: 0, b: 1, c: 2 })");
+            fold("({ a: 0, ...{ a: 1 } })", "({ a: 0, a: 1 })"); // can be fold to `({ a: 1 })`
+            fold("({ a: foo(), ...{ a: bar() } })", "({ a: foo(), a: bar() })"); // can be fold to `({ a: (foo(), bar()) })`
+            fold_same("({ ...{ get a() { return 0 } } })");
+            fold("({ ...{ __proto__: null } })", "({})");
+            fold("({ ...{ '__proto__': null } })", "({})");
+            fold_same("({ a: foo(), ...{ __proto__: bar() }, b: baz() })"); // can be folded to `({ a: foo(), b: (bar(), baz()) })`
+            fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
+            fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
         }
     }
 }

@@ -1237,7 +1237,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 
         // space for the new element
         if len == self.buf.cap() {
-            self.reserve(1);
+            self.buf.grow_one();
         }
 
         unsafe {
@@ -1565,7 +1565,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
         if self.len == self.buf.cap() {
-            self.reserve(1);
+            self.buf.grow_one();
         }
         unsafe {
             let end = self.buf.ptr().add(self.len);
@@ -2281,11 +2281,46 @@ impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
 impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        let iter = iter.into_iter();
-        self.reserve(iter.size_hint().0);
+        let iterator = iter.into_iter();
+        self.extend_desugared(iterator);
+    }
+}
 
-        for t in iter {
-            self.push(t);
+impl<'bump, T: 'bump> Vec<'bump, T> {
+    // leaf method to which various SpecFrom/SpecExtend implementations delegate when
+    // they have no further optimizations to apply
+    #[track_caller]
+    fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
+        // This is the case for a general iterator.
+        //
+        // This function should be the moral equivalent of:
+        //
+        //      for item in iterator {
+        //          self.push(item);
+        //      }
+        while let Some(element) = iterator.next() {
+            let len = self.len();
+            if len == self.capacity() {
+                // This reallocation path is rarely taken, especially with prior reservation,
+                // so mark it `#[cold]` and `#[inline(never)]` helps the compiler optimize the
+                // common case, and prevents this cold path from being inlined to the `while` loop,
+                // which increases the execution instructions and hits the performance.
+                #[cold]
+                #[inline(never)]
+                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator) {
+                    let (lower, _) = iterator.size_hint();
+                    v.reserve(lower.saturating_add(1));
+                }
+
+                reserve_slow(self, &iterator);
+            }
+            unsafe {
+                ptr::write(self.as_mut_ptr().add(len), element);
+                // Since next() executes user code which can panic we have to bump the length
+                // after each step.
+                // NB can't overflow since we would have had to alloc the address space
+                self.set_len(len + 1);
+            }
         }
     }
 }

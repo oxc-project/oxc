@@ -1,42 +1,11 @@
 commit: 15392346
 
 estree_typescript Summary:
-AST Parsed     : 6487/6488 (99.98%)
-Positive Passed: 6470/6488 (99.72%)
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebang1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebang2.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowingUnionToUnion.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/shebang.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/shebangBeforeReferences.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardNarrowsPrimitiveIntersection.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardNarrowsToLiteralTypeUnion.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
-JSX expressions may not use the comma operator
+AST Parsed     : 6481/6481 (100.00%)
+Positive Passed: 6478/6481 (99.95%)
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags02.ts
 

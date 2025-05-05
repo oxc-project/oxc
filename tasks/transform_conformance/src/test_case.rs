@@ -8,7 +8,7 @@ use similar::TextDiff;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{Codegen, CodegenOptions},
     diagnostics::{NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
@@ -325,7 +325,7 @@ impl TestCase {
                     // Clear comments to avoid pure annotation comments that cause mismatch.
                     ret.program.comments.clear();
 
-                    CodeGenerator::new()
+                    Codegen::new()
                         .with_options(CodegenOptions {
                             comments: false,
                             // Disable pure annotation comments for async_to_generator plugin,

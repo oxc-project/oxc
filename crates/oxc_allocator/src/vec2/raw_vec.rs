@@ -351,22 +351,6 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
-    /// Calculates the buffer's new size given that it'll hold `len +
-    /// additional` elements. This logic is used in amortized reserve methods.
-    /// Returns `(new_capacity, new_alloc_size)`.
-    fn amortized_new_size(
-        &self,
-        len: usize,
-        additional: usize,
-    ) -> Result<usize, CollectionAllocErr> {
-        // Nothing we can really do about these checks :(
-        let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
-        // Cannot overflow, because `cap <= isize::MAX`, and type of `cap` is `usize`.
-        let double_cap = self.cap * 2;
-        // `double_cap` guarantees exponential growth.
-        Ok(cmp::max(double_cap, required_cap))
-    }
-
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
         if self.needs_to_grow(len, additional) {
@@ -430,8 +414,31 @@ impl<'a, T> RawVec<'a, T> {
     /// ```
     #[inline]
     pub fn reserve(&mut self, len: usize, additional: usize) {
-        if let Err(err) = self.try_reserve(len, additional) {
-            handle_error(err)
+        // Callers expect this function to be very cheap when there is already sufficient capacity.
+        // Therefore, we move all the resizing and error-handling logic from grow_amortized and
+        // handle_reserve behind a call, while making sure that this function is likely to be
+        // inlined as just a comparison and a call if the comparison fails.
+        #[cold]
+        fn do_reserve_and_handle<T>(slf: &mut RawVec<T>, len: usize, additional: usize) {
+            if let Err(err) = slf.grow_amortized(len, additional) {
+                handle_error(err);
+            }
+        }
+
+        if self.needs_to_grow(len, additional) {
+            do_reserve_and_handle(self, len, additional);
+        }
+    }
+
+    /// A specialized version of `self.reserve(len, 1)` which requires the
+    /// caller to ensure `len == self.capacity()`.
+    //
+    // Unlike standard library implementation marked as `#[inline(never)]`, we need to
+    // mark as `#[inline]` because this function is common case in the oxc_parser.
+    #[inline]
+    pub fn grow_one(&mut self) {
+        if let Err(err) = self.grow_amortized(self.cap, 1) {
+            handle_error(err);
         }
     }
 
@@ -541,11 +548,10 @@ impl<'a, T> RawVec<'a, T> {
                 let new_size = elem_size * amount;
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
-                match realloc(self.a, self.ptr.cast(), old_layout, new_size) {
+                let new_layout = Layout::from_size_align_unchecked(new_size, align);
+                match self.a.shrink(self.ptr.cast(), old_layout, new_layout) {
                     Ok(p) => self.ptr = p.cast(),
-                    Err(_) => {
-                        handle_alloc_error(Layout::from_size_align_unchecked(new_size, align))
-                    }
+                    Err(_) => handle_alloc_error(new_layout),
                 }
             }
             self.cap = amount;
@@ -613,12 +619,46 @@ impl<'a, T> RawVec<'a, T> {
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
-            let new_cap = self.amortized_new_size(len, additional)?;
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            // Nothing we can really do about these checks, sadly.
+            let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
+
+            // This guarantees exponential growth. The doubling cannot overflow
+            // because `cap <= isize::MAX` and the type of `cap` is `usize`.
+            let cap = cmp::max(self.cap() * 2, required_cap);
+
+            // The following commented-out code is copied from the standard library.
+            // We don't use it because this would cause notable performance regression
+            // in the oxc_transformer, oxc_minifier and oxc_mangler, but would only get a
+            // tiny performance improvement in the oxc_parser.
+            //
+            // The reason is that only the oxc_parser has a lot of tiny `Vec`s without
+            // pre-reserved capacity, which can benefit from this change. Other
+            // crates don't have such cases, so the `cmp::max` calculation costs more
+            // than the potential performance improvement.
+            //
+            // ------------------ Copied from the standard library ------------------
+            //
+            // Tiny Vecs are dumb. Skip to:
+            // - 8 if the element size is 1, because any heap allocators is likely
+            //   to round up a request of less than 8 bytes to at least 8 bytes.
+            // - 4 if elements are moderate-sized (<= 1 KiB).
+            // - 1 otherwise, to avoid wasting too much space for very short Vecs.
+            // const fn min_non_zero_cap(size: usize) -> usize {
+            //     if size == 1 {
+            //         8
+            //     } else if size <= 1024 {
+            //         4
+            //     } else {
+            //         1
+            //     }
+            // }
+            // let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
+
+            let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = new_cap;
+            self.cap = cap;
 
             Ok(())
         }
@@ -631,8 +671,20 @@ impl<'a, T> RawVec<'a, T> {
 
         let res = match self.current_layout() {
             Some(layout) => unsafe {
+                // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
+                // relatively expensive and we want to avoid inlining it into the caller.
+                #[cold]
+                #[inline(never)]
+                unsafe fn grow<T>(
+                    a: &Bump,
+                    ptr: NonNull<T>,
+                    old_layout: Layout,
+                    new_layout: Layout,
+                ) -> Result<NonNull<[u8]>, AllocError> {
+                    a.grow(ptr.cast(), old_layout, new_layout)
+                }
                 debug_assert!(new_layout.align() == layout.align());
-                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+                grow(self.a, self.ptr, layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
@@ -683,81 +735,6 @@ fn capacity_overflow() -> ! {
 #[inline]
 fn layout_from_size_align(size: usize, align: usize) -> Result<Layout, AllocError> {
     Layout::from_size_align(size, align).map_err(|_| AllocError)
-}
-
-// Code copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L1917-L1936
-// Doc comment from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/alloc.rs#L322-L402
-//
-/// Returns a pointer suitable for holding data described by
-/// a new layout with `layout`’s alignment and a size given
-/// by `new_size`. To
-/// accomplish this, this may extend or shrink the allocation
-/// referenced by `ptr` to fit the new layout.
-///
-/// If this returns `Ok`, then ownership of the memory block
-/// referenced by `ptr` has been transferred to this
-/// allocator. The memory may or may not have been freed, and
-/// should be considered unusable (unless of course it was
-/// transferred back to the caller again via the return value of
-/// this method).
-///
-/// If this method returns `Err`, then ownership of the memory
-/// block has not been transferred to this allocator, and the
-/// contents of the memory block are unaltered.
-///
-/// # Safety
-///
-/// This function is unsafe because undefined behavior can result
-/// if the caller does not ensure all of the following:
-///
-/// * `ptr` must be currently allocated via this allocator,
-///
-/// * `layout` must *fit* the `ptr` (see above). (The `new_size`
-///   argument need not fit it.)
-///
-/// * `new_size` must be greater than zero.
-///
-/// * `new_size`, when rounded up to the nearest multiple of `layout.align()`,
-///   must not overflow (i.e. the rounded value must be less than `usize::MAX`).
-///
-/// (Extension subtraits might provide more specific bounds on
-/// behavior, e.g. guarantee a sentinel address or a null pointer
-/// in response to a zero-size allocation request.)
-///
-/// # Errors
-///
-/// Returns `Err` only if the new layout
-/// does not meet the allocator's size
-/// and alignment constraints of the allocator, or if reallocation
-/// otherwise fails.
-///
-/// Implementations are encouraged to return `Err` on memory
-/// exhaustion rather than panicking or aborting, but this is not
-/// a strict requirement. (Specifically: it is *legal* to
-/// implement this trait atop an underlying native allocation
-/// library that aborts on memory exhaustion.)
-///
-/// Clients wishing to abort computation in response to a
-/// reallocation error are encouraged to call the [`handle_alloc_error`] function,
-/// rather than directly invoking `panic!` or similar.
-unsafe fn realloc(
-    bump: &Bump,
-    ptr: NonNull<u8>,
-    layout: Layout,
-    new_size: usize,
-) -> Result<NonNull<[u8]>, AllocError> {
-    let old_size = layout.size();
-
-    if old_size == 0 {
-        return bump.allocate(layout);
-    }
-
-    let new_layout = layout_from_size_align(new_size, layout.align())?;
-    if new_size <= old_size {
-        bump.shrink(ptr, layout, new_layout)
-    } else {
-        bump.grow(ptr, layout, new_layout)
-    }
 }
 
 /// Handle collection allocation errors

@@ -1,5 +1,6 @@
 ---
-source: crates/oxc_language_server/src/linter/tester.rs
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/regexp_feature/index.ts
 ---
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
@@ -11,7 +12,8 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-            
+fixed: None
+
 
 code: "eslint(no-useless-escape)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-useless-escape.html"
@@ -23,3 +25,4 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+fixed: Some(FixedContent { message: Some("Replace `\\/` with `/`."), code: "/", range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } } })

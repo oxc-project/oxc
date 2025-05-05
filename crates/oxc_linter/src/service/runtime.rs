@@ -612,8 +612,14 @@ impl Runtime {
                                             fix: message.fix.map(|fix| FixWithPosition {
                                                 content: fix.content,
                                                 span: SpanPositionMessage::new(
-                                                    offset_to_position(fix.span.start, source_text),
-                                                    offset_to_position(fix.span.end, source_text),
+                                                    offset_to_position(
+                                                        section.source.start + fix.span.start,
+                                                        source_text,
+                                                    ),
+                                                    offset_to_position(
+                                                        section.source.start + fix.span.end,
+                                                        source_text,
+                                                    ),
                                                 )
                                                 .with_message(
                                                     fix.message

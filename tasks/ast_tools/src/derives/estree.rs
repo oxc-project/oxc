@@ -440,8 +440,7 @@ impl<'s> StructSerializerGenerator<'s> {
         }
 
         let value = if let Some(converter_name) = &field.estree.via {
-            let converter = self.schema.meta_by_name(converter_name);
-            let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+            let converter_path = get_converter_path(converter_name, self.krate, self.schema);
             quote!( #converter_path(#self_path) )
         } else if let Some(append_field_index) = field.estree.append_field_index {
             let append_field = &struct_def.fields[append_field_index];
@@ -511,17 +510,23 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             };
         }
 
+        let converter_path = variant.estree.via.as_deref().map(|converter_name| {
+            get_converter_path(converter_name, enum_def.file(schema).krate(), schema)
+        });
+
         if variant.is_fieldless() {
-            let value = get_fieldless_variant_value(enum_def, variant);
-            let value = string_to_tokens(value.as_ref(), false);
+            let value = if let Some(converter_path) = converter_path {
+                quote!( #converter_path(()) )
+            } else {
+                let value = get_fieldless_variant_value(enum_def, variant);
+                string_to_tokens(value.as_ref(), false)
+            };
+
             quote! {
                 Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
-            let value = if let Some(converter_name) = &variant.estree.via {
-                let converter = schema.meta_by_name(converter_name);
-                let krate = enum_def.file(schema).krate();
-                let converter_path = converter.import_path_from_crate(krate, schema);
+            let value = if let Some(converter_path) = converter_path {
                 quote!( #converter_path(it) )
             } else {
                 quote!(it)
@@ -546,9 +551,15 @@ fn generate_body_for_via_override(
     file: &File,
     schema: &Schema,
 ) -> TokenStream {
-    let converter = schema.meta_by_name(converter_name);
-    let converter_path = converter.import_path_from_crate(file.krate(), schema);
+    let converter_path = get_converter_path(converter_name, file.krate(), schema);
     quote!( #converter_path(self).serialize(serializer) )
+}
+
+/// Get path to converter from crate `from_krate`.
+/// e.g. `oxc_ast::serialize::Null` or `crate::serialize::Null`.
+fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -> TokenStream {
+    let converter = schema.meta_by_name(converter_name);
+    converter.import_path_from_crate(from_krate, schema)
 }
 
 /// Get if a struct field should be skipped when serializing.

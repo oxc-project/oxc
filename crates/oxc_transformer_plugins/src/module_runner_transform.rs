@@ -709,7 +709,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     // `key: value` or `key() {}`
     fn create_object_property(
-        key: &str,
+        key: &'static str,
         value: Option<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
@@ -850,7 +850,7 @@ mod test {
     use similar::TextDiff;
 
     use oxc_allocator::Allocator;
-    use oxc_codegen::{CodeGenerator, CodegenOptions};
+    use oxc_codegen::{Codegen, CodegenOptions};
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
@@ -885,7 +885,7 @@ mod test {
         if !ret.errors.is_empty() {
             return Err(ret.errors);
         }
-        let code = CodeGenerator::new()
+        let code = Codegen::new()
             .with_options(CodegenOptions {
                 comments: false,
                 single_quote: true,
@@ -902,7 +902,7 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
 
-        CodeGenerator::new()
+        Codegen::new()
             .with_options(CodegenOptions {
                 comments: false,
                 single_quote: true,
@@ -1871,8 +1871,8 @@ function foobar() {
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('react', { importedNames: ['default'] });
 const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['Foo', 'Slot'] });
-function Bar({ Slot = __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
-  return __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, __vite_ssr_import_0__.default.createElement(Slot, null));
+function Bar({ Slot = /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
+  return /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, /* @__PURE__ */ __vite_ssr_import_0__.default.createElement(Slot, null));
 }",
         );
     }

@@ -20,7 +20,7 @@ pub struct ArrayElementList<'a, 'b> {
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
     pub fn new(elements: &'b Vec<'a, ArrayExpressionElement<'a>>, group_id: GroupId) -> Self {
-        Self { elements, group_id: None }
+        Self { elements, group_id: Some(group_id) }
     }
 }
 

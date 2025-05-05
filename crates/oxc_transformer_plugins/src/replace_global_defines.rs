@@ -335,7 +335,6 @@ impl<'a> ReplaceGlobalDefines<'a> {
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
                 let value = self.parse_value(value);
-
                 return Some(value);
             }
         }

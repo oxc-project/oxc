@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -68,8 +68,8 @@ fn parse<'a>(
 }
 
 fn codegen(ret: &ParserReturn<'_>, minify: bool) -> String {
-    CodeGenerator::new()
-        .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+    Codegen::new()
+        .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })
         .build(&ret.program)
         .code
 }

@@ -133,6 +133,9 @@ describe('edge cases', () => {
     '`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;',
     '`�\\u{FFFD}${x}�\\u{FFFD}`;',
     '`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;',
+    // Hashbangs
+    '#!/usr/bin/env node\nlet x;',
+    '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
     assertRawAndStandardMatch('dummy.js', sourceText);
   });
@@ -193,6 +196,7 @@ function stringify(obj) {
     if (typeof value === 'bigint') return `__BIGINT__: ${value}`;
     if (typeof value === 'object' && value instanceof RegExp) return `__REGEXP__: ${value}`;
     if (value === Infinity) return `__INFINITY__`;
+    return value;
   });
 }
 

@@ -3135,7 +3135,7 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("options", &self.options);
+        state.serialize_field("options", &crate::serialize::TSImportTypeOptions(self));
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
@@ -3187,7 +3187,11 @@ impl ESTree for TSMappedType<'_> {
 
 impl ESTree for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::TSMappedTypeModifierOperatorConverter(self).serialize(serializer)
+        match self {
+            Self::True => crate::serialize::True(()).serialize(serializer),
+            Self::Plus => JsonSafeString("+").serialize(serializer),
+            Self::Minus => JsonSafeString("-").serialize(serializer),
+        }
     }
 }
 

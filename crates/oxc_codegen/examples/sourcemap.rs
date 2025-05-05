@@ -3,7 +3,7 @@ use std::{env, path::Path};
 
 use base64::{Engine, prelude::BASE64_STANDARD};
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let CodegenReturn { code, map, .. } = CodeGenerator::new()
+    let CodegenReturn { code, map, .. } = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: Some(path.to_path_buf()),
             ..CodegenOptions::default()

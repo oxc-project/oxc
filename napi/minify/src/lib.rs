@@ -42,10 +42,9 @@ pub fn minify(
     let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
 
     let mut codegen_options = match &options.codegen {
-        Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::default() },
-        None | Some(Either::A(true)) => {
-            CodegenOptions { minify: true, ..CodegenOptions::default() }
-        }
+        // Need to remove all comments.
+        Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::minify() },
+        None | Some(Either::A(true)) => CodegenOptions::minify(),
         Some(Either::B(o)) => CodegenOptions::from(o),
     };
 

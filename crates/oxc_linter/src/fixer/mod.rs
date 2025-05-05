@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -184,10 +184,10 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
-    #[expect(clippy::unused_self)]
     #[must_use]
-    pub fn codegen(self) -> CodeGenerator<'a> {
-        CodeGenerator::new()
+    pub fn codegen(self) -> Codegen<'a> {
+        Codegen::new()
+            .with_source_text(self.source_text())
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 
@@ -233,6 +233,7 @@ pub struct Message<'a> {
 }
 
 #[cfg(feature = "language_server")]
+#[derive(Debug)]
 pub struct MessageWithPosition<'a> {
     pub message: Cow<'a, str>,
     pub labels: Option<Vec<SpanPositionMessage<'a>>>,

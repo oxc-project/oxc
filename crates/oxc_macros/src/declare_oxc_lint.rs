@@ -189,10 +189,13 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
     let mut is_conditional = false;
     let fix_kinds = s
         .split(SEP)
-        .filter(|seg| {
-            let conditional = *seg == "conditional";
-            is_conditional = is_conditional || conditional;
-            !conditional
+        .filter(|seg| match *seg {
+            "conditional" => {
+                is_conditional = true;
+                false
+            }
+            "and" | "or" => false, // e.g. fix_or_suggestion
+            _ => true,
         })
         .unique()
         .map(parse_fix_kind)

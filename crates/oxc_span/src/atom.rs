@@ -230,3 +230,40 @@ impl ESTree for Atom<'_> {
         ESTree::serialize(self.as_str(), serializer);
     }
 }
+
+/// Creates an [`Atom`] using interpolation of runtime expressions.
+///
+/// Identical to [`std`'s `format!` macro](std::format), except:
+///
+/// * First argument is the allocator.
+/// * Produces an [`Atom`] instead of a [`String`].
+///
+/// The string is built in the arena, without allocating an intermediate `String`.
+///
+/// # Panics
+///
+/// Panics if a formatting trait implementation returns an error.
+///
+/// # Example
+///
+/// ```
+/// use oxc_allocator::Allocator;
+/// use oxc_span::format_atom;
+/// let allocator = Allocator::new();
+///
+/// let s1 = "foo";
+/// let s2 = "bar";
+/// let formatted = format_atom!(&allocator, "{s1}.{s2}");
+/// assert_eq!(formatted, "foo.bar");
+/// ```
+#[macro_export]
+macro_rules! format_atom {
+    ($alloc:expr, $($arg:tt)*) => {{
+        use ::std::{write, fmt::Write};
+        use $crate::{Atom, __internal::ArenaString};
+
+        let mut s = ArenaString::new_in($alloc);
+        write!(s, $($arg)*).unwrap();
+        Atom::from(s)
+    }}
+}

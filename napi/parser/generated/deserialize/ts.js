@@ -2005,12 +2005,22 @@ function deserializeTSTypeQuery(pos) {
 }
 
 function deserializeTSImportType(pos) {
+  let options = deserializeOptionBoxObjectExpression(pos + 24);
+  if (options !== null && options.properties.length === 1) {
+    const prop = options.properties[0];
+    if (
+      !prop.method && !prop.shorthand && !prop.computed &&
+      prop.key.type === 'Identifier' && prop.key.name === 'assert'
+    ) {
+      prop.key.name = 'with';
+    }
+  }
   return {
     type: 'TSImportType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     argument: deserializeTSType(pos + 8),
-    options: deserializeOptionBoxObjectExpression(pos + 24),
+    options,
     qualifier: deserializeOptionTSTypeName(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
   };
@@ -2050,8 +2060,8 @@ function deserializeTSMappedType(pos) {
     end: deserializeU32(pos + 4),
     nameType: deserializeOptionTSType(pos + 16),
     typeAnnotation: deserializeOptionTSType(pos + 32),
-    optional: deserializeTSMappedTypeModifierOperator(pos + 48),
-    readonly: deserializeTSMappedTypeModifierOperator(pos + 49),
+    optional: deserializeOptionTSMappedTypeModifierOperator(pos + 48),
+    readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 49),
     key: typeParameter.name,
     constraint: typeParameter.constraint,
   };
@@ -3973,7 +3983,7 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeIdentifierReference(pos + 8);
+      let id = deserializeBoxIdentifierReference(pos + 8);
       if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
       return id;
     case 1:
@@ -4075,7 +4085,7 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeIdentifierReference(pos + 8);
+      let id = deserializeBoxIdentifierReference(pos + 8);
       if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
       return id;
     case 1:
@@ -4088,14 +4098,22 @@ function deserializeTSTypeQueryExprName(pos) {
 }
 
 function deserializeTSMappedTypeModifierOperator(pos) {
-  const operator = deserializeU8(pos);
-  return [true, '+', '-', null][operator];
+  switch (uint8[pos]) {
+    case 0:
+      return true;
+    case 1:
+      return '+';
+    case 2:
+      return '-';
+    default:
+      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSMappedTypeModifierOperator`);
+  }
 }
 
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeIdentifierReference(pos + 8);
+      let id = deserializeBoxIdentifierReference(pos + 8);
       if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
       return id;
     case 1:
@@ -5710,6 +5728,11 @@ function deserializeOptionBoxObjectExpression(pos) {
 function deserializeOptionTSTypeName(pos) {
   if (uint8[pos] === 2) return null;
   return deserializeTSTypeName(pos);
+}
+
+function deserializeOptionTSMappedTypeModifierOperator(pos) {
+  if (uint8[pos] === 3) return null;
+  return deserializeTSMappedTypeModifierOperator(pos);
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {

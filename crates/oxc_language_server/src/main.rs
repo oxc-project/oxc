@@ -1,5 +1,3 @@
-use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
-use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use futures::future::join_all;
 use log::{debug, info};
 use oxc_linter::FixKind;
@@ -18,14 +16,18 @@ use tower_lsp_server::{
         Uri, WorkspaceEdit,
     },
 };
+// #
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use worker::WorkspaceWorker;
-
-use crate::capabilities::Capabilities;
 
 mod capabilities;
 mod code_actions;
 mod commands;
 mod linter;
+#[cfg(test)]
+mod tester;
 mod worker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
@@ -119,12 +121,21 @@ impl LanguageServer for Backend {
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         let workers = self.workspace_workers.lock().await;
+        let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
+            ConcurrentHashMap::default();
 
         // when we have only workspace folder, apply to it
         // ToDo: check if this is really safe because the client could still pass an empty settings
         if workers.len() == 1 {
             let worker = workers.first().unwrap();
-            worker.did_change_configuration(params.settings).await;
+            let Some(diagnostics) = worker.did_change_configuration(params.settings).await else {
+                return;
+            };
+            for (uri, reports) in &diagnostics.pin() {
+                new_diagnostics
+                    .pin()
+                    .insert(uri.clone(), reports.iter().map(|d| d.diagnostic.clone()).collect());
+            }
 
         // else check if the client support workspace configuration requests so we can only restart only the needed workers
         } else if self
@@ -154,16 +165,49 @@ impl LanguageServer for Backend {
             // this is a LSP specification and errors should be reported on the client side
             for (index, worker) in workers.iter().enumerate() {
                 let config = &configs[index];
-                worker.did_change_configuration(config.clone()).await;
+                let Some(diagnostics) = worker.did_change_configuration(config.clone()).await
+                else {
+                    continue;
+                };
+
+                for (uri, reports) in &diagnostics.pin() {
+                    new_diagnostics.pin().insert(
+                        uri.clone(),
+                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                    );
+                }
             }
 
             // we have multiple workspace folders and the client does not support workspace configuration requests
             // we assume that every workspace is under effect
         } else {
             for worker in workers.iter() {
-                worker.did_change_configuration(params.settings.clone()).await;
+                let Some(diagnostics) =
+                    worker.did_change_configuration(params.settings.clone()).await
+                else {
+                    continue;
+                };
+
+                for (uri, reports) in &diagnostics.pin() {
+                    new_diagnostics.pin().insert(
+                        uri.clone(),
+                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                    );
+                }
             }
         }
+
+        if new_diagnostics.is_empty() {
+            return;
+        }
+
+        let x = &new_diagnostics
+            .pin()
+            .into_iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect::<Vec<_>>();
+
+        self.publish_all_diagnostics(x).await;
     }
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {

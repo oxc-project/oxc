@@ -136,6 +136,13 @@ impl<'a> Symbol<'_, 'a> {
                 if do_type_self_usage_checks && self.is_type_self_usage(reference) {
                     continue;
                 }
+
+                if !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
+                    && self.reference_contains_type_query(reference)
+                {
+                    continue;
+                }
+
                 return true;
             }
 
@@ -778,5 +785,31 @@ impl<'a> Symbol<'_, 'a> {
         }
 
         None
+    }
+
+    pub fn has_reference_used_as_type_query(&self) -> bool {
+        self.references().any(|reference| self.reference_contains_type_query(reference))
+    }
+
+    fn reference_contains_type_query(&self, reference: &Reference) -> bool {
+        let Some(mut node) = self.get_ref_relevant_node(reference) else {
+            debug_assert!(false);
+            return false;
+        };
+
+        loop {
+            node = match node.kind() {
+                AstKind::TSTypeQuery(_) => return true,
+                AstKind::TSQualifiedName(_) | AstKind::TSTypeName(_) => {
+                    if let Some(parent) = self.nodes().parent_node(node.id()) {
+                        parent
+                    } else {
+                        debug_assert!(false);
+                        return false;
+                    }
+                }
+                _ => return false,
+            };
+        }
     }
 }

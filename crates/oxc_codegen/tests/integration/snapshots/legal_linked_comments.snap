@@ -8,6 +8,7 @@ foo;bar;
 ----------
 foo;
 bar;
+
 /*! For license information please see test.js */
 ########## 1
 /* @license */
@@ -16,6 +17,7 @@ foo;bar;
 ----------
 foo;
 bar;
+
 /*! For license information please see test.js */
 ########## 2
 /* @license */
@@ -24,6 +26,7 @@ foo;bar;
 ----------
 foo;
 bar;
+
 /*! For license information please see test.js */
 ########## 3
 /* @license */
@@ -32,6 +35,7 @@ foo;bar;
 ----------
 foo;
 bar;
+
 /*! For license information please see test.js */
 ########## 4
 /* @license *//*! KEEP */
@@ -39,6 +43,7 @@ foo;bar;
 ----------
 foo;
 bar;
+
 /*! For license information please see test.js */
 ########## 5
 function () {
@@ -52,6 +57,7 @@ function () {
 function() {
 	bar;
 }
+
 /*! For license information please see test.js */
 ########## 6
 function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
@@ -60,6 +66,7 @@ function bar() {
 	var foo;
 	function() {}
 }
+
 /*! For license information please see test.js */
 ########## 7
 function foo() {
@@ -88,7 +95,8 @@ function foo() {
 }
 /**
 * @preserve
-*//*! For license information please see test.js */
+*/
+/*! For license information please see test.js */
 ########## 8
 /**
 * @preserve
@@ -98,4 +106,5 @@ function foo() {
 /**
 * @preserve
 */
+
 /*! For license information please see test.js */

@@ -545,6 +545,12 @@ fn invalid_jsx_attribute_value(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
+    ts_error("18007", "JSX expressions may not use the comma operator")
+        .with_help("Did you mean to write an array?")
+        .with_label(span)
+}
+
 pub fn check_jsx_expression_container(
     container: &JSXExpressionContainer,
     ctx: &SemanticBuilder<'_>,
@@ -553,5 +559,9 @@ pub fn check_jsx_expression_container(
         && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttributeItem(_)))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
+    }
+
+    if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
+        ctx.error(jsx_expressions_may_not_use_the_comma_operator(container.expression.span()));
     }
 }

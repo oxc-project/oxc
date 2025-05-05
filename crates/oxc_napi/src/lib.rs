@@ -13,7 +13,7 @@ pub fn convert_utf8_to_utf16(
     source_text: &str,
     program: &mut Program,
     module_record: &mut ModuleRecord,
-    errors: &mut Vec<OxcError>,
+    errors: &mut [OxcError],
 ) -> Vec<Comment> {
     let span_converter = Utf8ToUtf16::new(source_text);
     span_converter.convert_program(program);

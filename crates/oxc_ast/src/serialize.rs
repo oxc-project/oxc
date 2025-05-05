@@ -405,7 +405,7 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `BigInt`.
 #[ast_meta]
-#[estree(ts_type = "BigInt", raw_deser = "BigInt(THIS.bigint)")]
+#[estree(ts_type = "bigint", raw_deser = "BigInt(THIS.bigint)")]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
@@ -1294,29 +1294,6 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
     }
 }
 
-#[ast_meta]
-#[estree(
-    ts_type = "true | '+' | '-' | null",
-    raw_deser = "
-        const operator = DESER[u8](POS);
-        [true, '+', '-', null][operator]
-    "
-)]
-pub struct TSMappedTypeModifierOperatorConverter<'a>(pub &'a TSMappedTypeModifierOperator);
-
-impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self.0 {
-            TSMappedTypeModifierOperator::True => true.serialize(serializer),
-            TSMappedTypeModifierOperator::Plus => JsonSafeString("+").serialize(serializer),
-            TSMappedTypeModifierOperator::Minus => JsonSafeString("-").serialize(serializer),
-            // This is typed as `undefined` (= key is not present) in TS-ESTree.
-            // But we serialize it as `null` to align result in snapshot tests.
-            TSMappedTypeModifierOperator::None => Null(()).serialize(serializer),
-        }
-    }
-}
-
 /// Serializer for `IdentifierReference` variant of `TSTypeName`.
 ///
 /// Where is an identifier called `this`, TS-ESTree presents it as a `ThisExpression`.
@@ -1324,7 +1301,7 @@ impl ESTree for TSMappedTypeModifierOperatorConverter<'_> {
 #[estree(
     ts_type = "IdentifierReference | ThisExpression",
     raw_deser = "
-        let id = DESER[IdentifierReference](POS);
+        let id = DESER[Box<IdentifierReference>](POS);
         if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
         id
     "
@@ -1412,6 +1389,83 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.end();
             }
         }
+    }
+}
+
+/// Serializer for `options` field of `TSImportType`.
+///
+/// TS-ESLint parser replaces a property of `options` called `assert` with one called `with`.
+/// <https://github.com/typescript-eslint/typescript-eslint/issues/11114>
+#[ast_meta]
+#[estree(
+    ts_type = "ObjectExpression | null",
+    raw_deser = "
+        let options = DESER[Option<Box<ObjectExpression>>](POS_OFFSET.options);
+        if (options !== null && options.properties.length === 1) {
+            const prop = options.properties[0];
+            if (
+                !prop.method && !prop.shorthand && !prop.computed
+                && prop.key.type === 'Identifier' && prop.key.name === 'assert'
+            ) {
+                prop.key.name = 'with';
+            }
+        }
+        options
+    "
+)]
+pub struct TSImportTypeOptions<'a, 'b>(pub &'b TSImportType<'a>);
+
+impl ESTree for TSImportTypeOptions<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let Some(options) = &self.0.options else {
+            Null(()).serialize(serializer);
+            return;
+        };
+
+        if options.properties.len() == 1 {
+            if let ObjectPropertyKind::ObjectProperty(prop) = &options.properties[0] {
+                if let PropertyKey::StaticIdentifier(ident) = &prop.key {
+                    if !prop.method && !prop.shorthand && !prop.computed && ident.name == "assert" {
+                        let assert_prop = TSImportTypeAssertProperty { prop, key_span: ident.span };
+
+                        let mut state = serializer.serialize_struct();
+                        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
+                        state.serialize_field("start", &options.span.start);
+                        state.serialize_field("end", &options.span.end);
+                        state.serialize_field("properties", &[assert_prop]);
+                        state.end();
+                        return;
+                    }
+                }
+            }
+        }
+
+        options.serialize(serializer);
+    }
+}
+
+struct TSImportTypeAssertProperty<'a, 'b> {
+    prop: &'b ObjectProperty<'a>,
+    key_span: Span,
+}
+
+impl ESTree for TSImportTypeAssertProperty<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.prop.span.start);
+        state.serialize_field("end", &self.prop.span.end);
+        state.serialize_field("method", &false);
+        state.serialize_field("shorthand", &false);
+        state.serialize_field("computed", &false);
+        state.serialize_field(
+            "key",
+            &IdentifierName { span: self.key_span, name: Atom::from("with") },
+        );
+        state.serialize_field("value", &self.prop.value);
+        state.serialize_field("kind", "init");
+        state.serialize_field("optional", &false);
+        state.end();
     }
 }
 

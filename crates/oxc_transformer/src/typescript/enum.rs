@@ -248,7 +248,7 @@ impl<'a> TypeScriptEnum<'a> {
                         }
                         ConstantValue::String(str) => {
                             prev_constant_value = None;
-                            ast.expression_string_literal(SPAN, str, None)
+                            ast.expression_string_literal(SPAN, ast.atom(&str), None)
                         }
                     },
                 };

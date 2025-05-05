@@ -7,7 +7,7 @@ use Tag::{
     StartLabelled, StartLineSuffix,
 };
 use oxc_span::Span;
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
     Argument, Arguments, Buffer, GroupId, TextSize, TokenText, VecBuffer, format_element,
@@ -1526,10 +1526,10 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
         f.write_element(FormatElement::Tag(StartIndent))?;
 
         match self.mode {
-            IndentMode::Soft => write!(f, [soft_line_break()])?,
-            IndentMode::Block => write!(f, [hard_line_break()])?,
+            IndentMode::Soft => write!(f, soft_line_break())?,
+            IndentMode::Block => write!(f, hard_line_break())?,
             IndentMode::SoftLineOrSpace | IndentMode::SoftSpace => {
-                write!(f, [soft_line_break_or_space()])?;
+                write!(f, soft_line_break_or_space())?;
             }
             IndentMode::HardSpace => write!(f, [hard_space(), soft_line_break()])?,
         }
@@ -2465,7 +2465,12 @@ where
         } else {
             span.start
         };
-        source_text[..start as usize].chars().rev().take_while(|c| is_line_terminator(*c)).count()
+        source_text[..start as usize]
+            .trim_end_matches(is_white_space_single_line)
+            .chars()
+            .rev()
+            .take_while(|c| is_line_terminator(*c))
+            .count()
             > 1
     }
 }

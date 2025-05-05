@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- c33eb9c ast/estree: Fix raw deser for `TSTypeReference` (#10787) (overlookmotel)
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- c33eb9c ast/estree: Fix raw deser for `TSTypeReference` (#10787) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Bug Fixes
+
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+- c8005ad ast/estree: Add line comment for hashbang in ESTree AST (#10669) (overlookmotel)
+
+### Performance
+
+- d882eaa napi/parser: Lazy load raw transfer deserializers (#10482) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+- a2ba7c3 napi/parser: Add comments about hashbang comments (#10692) (overlookmotel)
+- 3b6d52d napi/parser: Move generated deserializer files (#10481) (overlookmotel)
+
+### Testing
+
+- 14c4bbb ast/estree: Fix raw transfer tests (#10666) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Bug Fixes
+
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+- c8005ad ast/estree: Add line comment for hashbang in ESTree AST (#10669) (overlookmotel)
+
+### Performance
+
+- d882eaa napi/parser: Lazy load raw transfer deserializers (#10482) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+- a2ba7c3 napi/parser: Add comments about hashbang comments (#10692) (overlookmotel)
+- 3b6d52d napi/parser: Move generated deserializer files (#10481) (overlookmotel)
+
+### Testing
+
+- 14c4bbb ast/estree: Fix raw transfer tests (#10666) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Bug Fixes

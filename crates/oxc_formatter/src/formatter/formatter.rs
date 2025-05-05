@@ -2,14 +2,16 @@
 
 use oxc_ast::AstKind;
 
+use crate::options::FormatOptions;
+
 use super::{
     Arguments, Buffer, Comments, FormatContext, FormatState, FormatStateSnapshot, GroupId,
     VecBuffer,
     buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
+    parent_stack::ParentStack,
     prelude::*,
 };
-use crate::options::FormatOptions;
 
 /// Handles the formatting of a CST and stores the context how the CST should be formatted (user preferences).
 ///
@@ -26,28 +28,54 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     /// Returns the format options
+    #[inline]
     pub fn options(&self) -> &FormatOptions {
         self.context().options()
     }
 
     /// Returns the Context specifying how to format the current CST
+    #[inline]
     pub fn context(&self) -> &FormatContext<'ast> {
         self.state().context()
     }
 
     /// Returns a mutable reference to the context.
+    #[inline]
     pub fn context_mut(&mut self) -> &mut FormatContext<'ast> {
         self.state_mut().context_mut()
     }
 
     /// Returns the source text.
+    #[inline]
     pub fn source_text(&self) -> &'ast str {
         self.context().source_text()
+    }
+
+    /// Returns the comments from the context.
+    #[inline]
+    pub fn comments(&self) -> &Comments {
+        self.context().comments()
+    }
+
+    #[inline]
+    pub fn parent_stack(&self) -> &ParentStack<'ast> {
+        &self.state().stack
+    }
+
+    #[inline]
+    pub fn parent_kind(&self) -> AstKind<'ast> {
+        self.state().stack.parent()
+    }
+
+    #[inline]
+    pub fn parent_parent_kind(&self) -> Option<AstKind<'ast>> {
+        self.state().stack.parent2()
     }
 
     /// Creates a new group id that is unique to this document. The passed debug name is used in the
     /// [std::fmt::Debug] of the document if this is a debug build.
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
+    #[inline]
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.state().group_id(debug_name)
     }
@@ -245,23 +273,6 @@ impl Formatter<'_, '_> {
     pub fn restore_state_snapshot(&mut self, snapshot: FormatterSnapshot) {
         self.state_mut().restore_snapshot(snapshot.state);
         self.buffer.restore_snapshot(snapshot.buffer);
-    }
-}
-
-impl<'ast> Formatter<'_, 'ast> {
-    /// Returns the comments from the context.
-    pub fn comments(&self) -> &Comments {
-        self.context().comments()
-    }
-
-    pub fn parent_kind(&self) -> &AstKind<'ast> {
-        let stack = &self.state().stack;
-        stack.as_slice().get(stack.len() - 2).unwrap()
-    }
-
-    pub fn parent_parent_kind(&self) -> Option<&AstKind<'ast>> {
-        let stack = &self.state().stack;
-        stack.as_slice().get(stack.len() - 3)
     }
 }
 

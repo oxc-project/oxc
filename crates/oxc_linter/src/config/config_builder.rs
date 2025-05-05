@@ -7,7 +7,7 @@ use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
@@ -364,7 +364,7 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     if plugin_name == "eslint" {
         CompactStr::from(rule_name)
     } else {
-        CompactStr::from(format!("{plugin_name}/{rule_name}"))
+        format_compact_str!("{plugin_name}/{rule_name}")
     }
 }
 

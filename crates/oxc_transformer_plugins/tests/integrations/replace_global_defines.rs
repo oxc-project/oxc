@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -15,11 +15,12 @@ pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfi
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let ret = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     Compressor::new(&allocator, CompressOptions::default())
-        .dead_code_elimination_with_scoping(ret.scoping, &mut program);
-    let result = CodeGenerator::new()
+        .dead_code_elimination_with_scoping(scoping, &mut program);
+    let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
@@ -105,7 +106,7 @@ fn dot_nested() {
 #[test]
 fn dot_with_postfix_wildcard() {
     let config = ReplaceGlobalDefinesConfig::new(&[("import.meta.env.*", "undefined")]).unwrap();
-    test("const _ = import.meta.env.result", "const _ = undefined", config.clone());
+    test("const _ = import.meta.env.result", "const _ = void 0", config.clone());
     test("const _ = import.meta.env", "const _ = import.meta.env", config);
 }
 
@@ -118,8 +119,8 @@ fn dot_with_postfix_mixed() {
         ("import.meta", "1"),
     ])
     .unwrap();
-    test("const _ = import.meta.env.result", "const _ = undefined", config.clone());
-    test("const _ = import.meta.env.result.many.nested", "const _ = undefined", config.clone());
+    test("const _ = import.meta.env.result", "const _ = void 0", config.clone());
+    test("const _ = import.meta.env.result.many.nested", "const _ = void 0", config.clone());
     test("const _ = import.meta.env", "const _ = env", config.clone());
     test("const _ = import.meta.somethingelse", "const _ = metaProperty", config.clone());
     test("const _ = import.meta", "const _ = 1", config);
@@ -233,6 +234,15 @@ console.log(
     );
 }
 
+#[test]
+fn replace_with_undefined() {
+    let config = ReplaceGlobalDefinesConfig::new(&[("Foo", "undefined")]).unwrap();
+    test("new Foo()", "new (void 0)()", config);
+
+    let config = ReplaceGlobalDefinesConfig::new(&[("Foo", "Bar")]).unwrap();
+    test("Foo = 0", "Bar = 0", config);
+}
+
 #[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
@@ -267,7 +277,7 @@ log(__MEMBER__);
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
-    let result = CodeGenerator::new()
+    let result = Codegen::new()
         .with_options(CodegenOptions {
             single_quote: true,
             source_map_path: Some(std::path::Path::new(&"test.js.map").to_path_buf()),

@@ -823,6 +823,13 @@ fn format_signature<'a, 'b>(
             Ok(())
         });
 
+        let format_return_type = format_with(|f| {
+            if let Some(return_type) = &arrow.return_type {
+                write!(f, [":", space(), return_type])?;
+            }
+            Ok(())
+        });
+
         if is_first_or_last_call_argument {
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
@@ -833,7 +840,7 @@ fn format_signature<'a, 'b>(
                     maybe_space(!is_first_in_chain),
                     formatted_async_token,
                     group(&formatted_parameters),
-                    group(&arrow.return_type)
+                    group(&format_return_type)
                 ))]
             )?;
 
@@ -851,7 +858,8 @@ fn format_signature<'a, 'b>(
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
                     group(&format_args!(
                         formatted_async_token,
-                        formatted_parameters, arrow.return_type
+                        formatted_parameters,
+                        group(&format_return_type)
                     ))
                 ]
             )?;
