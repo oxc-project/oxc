@@ -610,6 +610,9 @@ impl<'a> Symbol<'_, 'a> {
                     if matches!(parent, AstKind::CallExpression(_)) {
                         continue;
                     }
+                    if matches!(parent, AstKind::AwaitExpression(_) | AstKind::YieldExpression(_)) {
+                        continue;
+                    }
                     debug_assert!(
                         !seq.expressions.is_empty(),
                         "empty SequenceExpressions should be a parse error."
