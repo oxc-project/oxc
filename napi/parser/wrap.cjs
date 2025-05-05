@@ -25,10 +25,10 @@ module.exports.wrap = function wrap(result) {
   };
 };
 
-function jsonParseAst(program) {
-  const parsed = JSON.parse(program);
-  visitNode(parsed, transform);
-  return parsed;
+function jsonParseAst(programJson) {
+  const program = JSON.parse(programJson);
+  visitNode(program, transform);
+  return program;
 }
 
 function transform(node) {

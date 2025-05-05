@@ -26,10 +26,10 @@ export function wrap(result) {
 }
 
 // Used by napi/playground/patch.mjs
-export function jsonParseAst(program) {
-  const parsed = JSON.parse(program);
-  visitNode(parsed, transform);
-  return parsed;
+export function jsonParseAst(programJson) {
+  const program = JSON.parse(programJson);
+  visitNode(program, transform);
+  return program;
 }
 
 function transform(node) {
