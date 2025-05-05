@@ -236,6 +236,15 @@ fn test_vars_discarded_reads() {
         }
         foo(1)
         ",
+        // https://github.com/oxc-project/oxc/issues/10806
+        "export function f1(fn: () => Promise<void>) {
+            return async () => (await fn(), 1)
+        }",
+        "export function f2(fn: () => Promise<void>) {
+            return function* () {
+                return (yield fn(), 1);
+            }
+        }",
     ];
 
     let fail = vec![
