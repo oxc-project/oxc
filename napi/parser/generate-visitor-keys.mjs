@@ -1,5 +1,8 @@
 import { visitorKeys } from '@typescript-eslint/visitor-keys';
 import { writeFileSync } from 'node:fs';
+import { join as pathJoin } from 'node:path';
+
+const PATH = pathJoin(import.meta.dirname, 'generated/visitor-keys.js');
 
 const keys = Object.entries(visitorKeys)
   .filter(([, v]) => v?.length)
@@ -14,4 +17,4 @@ ${keys}
 };
 `;
 
-writeFileSync('./generated/visitor-keys.js', code);
+writeFileSync(PATH, code);
