@@ -83,6 +83,7 @@ impl Options {
 impl LanguageServer for Backend {
     #[expect(deprecated)] // TODO: FIXME
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        let server_version = env!("CARGO_PKG_VERSION");
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
@@ -97,7 +98,7 @@ impl LanguageServer for Backend {
 
         if let Some(value) = options {
             info!("initialize: {value:?}");
-            info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
+            info!("language server version: {server_version}");
         }
 
         let capabilities = Capabilities::from(params.capabilities);
@@ -113,7 +114,10 @@ impl LanguageServer for Backend {
         })?;
 
         Ok(InitializeResult {
-            server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
+            server_info: Some(ServerInfo {
+                name: "oxc".into(),
+                version: Some(server_version.to_string()),
+            }),
             offset_encoding: None,
             capabilities: capabilities.into(),
         })
