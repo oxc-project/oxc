@@ -100,30 +100,33 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
+        let diagnostics = self.lint_file_internal(uri, content).await;
+
+        if let Some(diagnostics) = &diagnostics {
+            self.update_diagnostics(uri, diagnostics).await;
+        }
+
+        diagnostics
+    }
+
+    async fn lint_file_internal(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         if self.is_ignored(uri).await {
             return None;
         }
 
-        Some(self.update_diagnostics(uri, content).await)
+        self.server_linter.read().await.run_single(uri, content)
     }
 
-    async fn update_diagnostics(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Vec<DiagnosticReport> {
-        let diagnostics = self.server_linter.read().await.run_single(uri, content);
-        if let Some(diagnostics) = diagnostics {
-            self.diagnostics_report_map
-                .read()
-                .await
-                .pin()
-                .insert(uri.to_string(), diagnostics.clone());
-
-            return diagnostics;
-        }
-
-        vec![]
+    async fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
+        self.diagnostics_report_map
+            .read()
+            .await
+            .pin()
+            .insert(uri.to_string(), diagnostics.to_owned());
     }
 
     async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
@@ -160,10 +163,17 @@ impl WorkspaceWorker {
         is_source_fix_all_oxc: bool,
     ) -> Vec<CodeActionOrCommand> {
         let report_map = self.diagnostics_report_map.read().await;
-        let report_map_ref = report_map.pin();
-        let Some(value) = report_map_ref.get(&uri.to_string()) else {
-            return vec![];
+        let report_map_ref = report_map.pin_owned();
+        let value = match report_map_ref.get(&uri.to_string()) {
+            Some(value) => value,
+            // code actions / commands can be requested without opening the file
+            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
+            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
         };
+
+        if value.is_empty() {
+            return vec![];
+        }
 
         let reports = value
             .iter()
@@ -194,10 +204,17 @@ impl WorkspaceWorker {
 
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
         let report_map = self.diagnostics_report_map.read().await;
-        let report_map_ref = report_map.pin();
-        let Some(value) = report_map_ref.get(&uri.to_string()) else {
-            return vec![];
+        let report_map_ref = report_map.pin_owned();
+        let value = match report_map_ref.get(&uri.to_string()) {
+            Some(value) => value,
+            // code actions / commands can be requested without opening the file
+            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
+            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
         };
+
+        if value.is_empty() {
+            return vec![];
+        }
 
         let mut text_edits = vec![];
 

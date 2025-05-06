@@ -99,7 +99,7 @@ suite('code actions', () => {
     });
 
     await workspace.applyEdit(edit);
-    await window.showTextDocument(fileUri);
+    // await window.showTextDocument(fileUri); -- should also work without opening the file
 
     const codeActions: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       'vscode.executeCodeActionProvider',
