@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the targt,
+    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the target,
     /// so explicitly passing its length or Infinity is redundant.
     ///
     /// ### Examples
