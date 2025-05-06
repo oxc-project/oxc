@@ -1236,6 +1236,23 @@ fn test_ts_in_assignment() {
         .test();
 }
 
+#[test]
+fn test_loops() {
+    let pass: Vec<&str> = vec![];
+
+    let fail: Vec<&str> = vec![];
+    let fix = vec![
+        ("for (const unused of arr) {}", "for (const _unused of arr) {}"),
+        ("for (const unused in arr) {}", "for (const _unused in arr) {}"),
+        (
+            "for (const foo of arr) { console.log(foo); const unused = 1; }",
+            "for (const foo of arr) { console.log(foo);  }",
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];
