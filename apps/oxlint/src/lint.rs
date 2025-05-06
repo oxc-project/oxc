@@ -79,15 +79,17 @@ impl Runner for LintRunner {
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
-        if let Err(err) = config_search_result {
-            print_and_flush_stdout(
-                stdout,
-                &format!("Failed to parse configuration file.\n{err}\n"),
-            );
-            return CliRunResult::InvalidOptionConfig;
-        }
+        let mut oxlintrc = match config_search_result {
+            Ok(config) => config,
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to parse configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
-        let mut oxlintrc = config_search_result.unwrap();
         let mut override_builder = None;
 
         if !ignore_options.no_ignore {
