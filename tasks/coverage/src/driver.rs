@@ -81,7 +81,7 @@ impl CompilerInterface for Driver {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
-        program.to_estree_ts_json();
+        program.to_estree_ts_json_with_fixes();
         ControlFlow::Continue(())
     }
 

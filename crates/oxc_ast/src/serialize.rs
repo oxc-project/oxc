@@ -5,20 +5,22 @@ use cow_utils::CowUtils;
 use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, FlatStructSerializer, JsonSafeString,
-    LoneSurrogatesString, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer,
-    StructSerializer, ser::AppendToConcat,
+    CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
+    ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString, PrettyFixesJSSerializer,
+    PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer,
+    Serializer, StructSerializer, ser::AppendToConcat,
 };
 use oxc_span::GetSpan;
 
 /// Main serialization methods for `Program`.
 ///
-/// Note: 4 separate methods for the different serialization options, rather than 1 method
-/// with behavior controlled by flags (e.g. `fn to_estree_json(&self, with_ts: bool, pretty: bool`)
+/// Note: 8 separate methods for the different serialization options, rather than 1 method
+/// with behavior controlled by flags
+/// (e.g. `fn to_estree_json(&self, with_ts: bool, pretty: bool, fixes: bool)`)
 /// to avoid bloating binary size.
 ///
 /// Most consumers (and Oxc crates) will use only 1 of these methods, so we don't want to needlessly
-/// compile all 4 serializers when only 1 is used.
+/// compile all 8 serializers when only 1 is used.
 ///
 /// Initial capacity for serializer's buffer is an estimate based on our benchmark fixtures
 /// of ratio of source text size to JSON size.
@@ -69,6 +71,34 @@ impl Program<'_> {
         let mut serializer = PrettyJSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
+    }
+
+    /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes.
+    pub fn to_estree_ts_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let serializer = CompactFixesTSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes.
+    pub fn to_estree_js_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let serializer = CompactFixesJSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with list of fixes.
+    pub fn to_pretty_estree_ts_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let serializer = PrettyFixesTSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with list of fixes.
+    pub fn to_pretty_estree_js_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let serializer = PrettyFixesJSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
     }
 }
 
@@ -409,7 +439,9 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        // Record that this node needs fixing on JS side
+        serializer.record_fix_path();
         Null(()).serialize(serializer);
     }
 }
@@ -431,7 +463,9 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
 pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        // Record that this node needs fixing on JS side
+        serializer.record_fix_path();
         Null(()).serialize(serializer);
     }
 }

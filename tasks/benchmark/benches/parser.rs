@@ -52,7 +52,7 @@ fn bench_estree(criterion: &mut Criterion) {
                     span_converter.convert_program(&mut program);
                     span_converter.convert_comments(&mut program.comments);
 
-                    black_box(program.to_estree_ts_json());
+                    black_box(program.to_estree_ts_json_with_fixes());
                     program
                 });
             });

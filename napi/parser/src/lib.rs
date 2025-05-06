@@ -103,7 +103,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let mut comments =
         convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
 
-    let program = match ast_type {
+    let program_and_fixes = match ast_type {
         AstType::JavaScript => {
             // Add hashbang to start of comments
             if let Some(hashbang) = &program.hashbang {
@@ -118,20 +118,20 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            program.to_estree_js_json()
+            program.to_estree_js_json_with_fixes()
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // despite appearances to the contrary in AST explorers.
             // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json()
+            program.to_estree_ts_json_with_fixes()
         }
     };
 
     let module = EcmaScriptModule::from(&module_record);
 
-    ParseResult { program, module, comments, errors }
+    ParseResult { program_and_fixes, module, comments, errors }
 }
 
 /// Parse synchronously.
