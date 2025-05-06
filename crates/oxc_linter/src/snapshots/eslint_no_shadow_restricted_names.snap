@@ -269,6 +269,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:6]
+ 1 │ var [undefined] = [1]
+   ·      ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:6]
  1 │ var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;
    ·      ─────────
    ╰────
@@ -296,64 +303,218 @@ source: crates/oxc_linter/src/tester.rs
   help: Shadowing of global properties 'undefined'.
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:13]
- 1 │ var normal, undefined; undefined = 5;
-   ·             ─────────
-   ╰────
-  help: Shadowing of global properties 'undefined'.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:14]
- 1 │ try {} catch(undefined: undefined) {}
-   ·              ────────────────────
-   ╰────
-  help: Shadowing of global properties 'undefined'.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:6]
- 1 │ var [undefined] = [1]
-   ·      ─────────
+   ╭─[no_shadow_restricted_names.tsx:1:5]
+ 1 │ var undefined; undefined = 5;
+   ·     ─────────
    ╰────
   help: Shadowing of global properties 'undefined'.
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:7]
- 1 │ class undefined { }
+ 1 │ class undefined {}
    ·       ─────────
    ╰────
   help: Shadowing of global properties 'undefined'.
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:23]
- 1 │ class foo { undefined(undefined) { } }
-   ·                       ─────────
-   ╰────
-  help: Shadowing of global properties 'undefined'.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:24]
- 1 │ class foo { #undefined(undefined) { } }
-   ·                        ─────────
-   ╰────
-  help: Shadowing of global properties 'undefined'.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:7]
- 1 │ class Infinity {}
-   ·       ────────
-   ╰────
-  help: Shadowing of global properties 'Infinity'.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:10]
- 1 │ import { undefined } from "bar";
-   ·          ─────────
+   ╭─[no_shadow_restricted_names.tsx:1:8]
+ 1 │ (class undefined {})
+   ·        ─────────
    ╰────
   help: Shadowing of global properties 'undefined'.
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:8]
- 1 │ import NaN from "foo";
-   ·        ───
+ 1 │ import undefined from 'foo';
+   ·        ─────────
    ╰────
-  help: Shadowing of global properties 'NaN'.
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ import { undefined } from 'foo';
+   ·          ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:17]
+ 1 │ import { baz as undefined } from 'foo';
+   ·                 ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:13]
+ 1 │ import * as undefined from 'foo';
+   ·             ─────────
+   ╰────
+  help: Shadowing of global properties 'undefined'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·          ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:21]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                     ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:39]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                       ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:61]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                             ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:72]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                                        ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:99]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                                                                   ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·          ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:21]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                     ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:39]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                       ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:61]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                             ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:72]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                                        ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:99]
+ 1 │ function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }
+   ·                                                                                                   ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:8]
+ 1 │ const [globalThis] = [1]
+   ·        ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:6]
+ 1 │ var {globalThis} = obj; var {a: globalThis} = obj; var {a: {b: {globalThis}}} = obj; var {a, ...globalThis} = obj;
+   ·      ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:33]
+ 1 │ var {globalThis} = obj; var {a: globalThis} = obj; var {a: {b: {globalThis}}} = obj; var {a, ...globalThis} = obj;
+   ·                                 ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:65]
+ 1 │ var {globalThis} = obj; var {a: globalThis} = obj; var {a: {b: {globalThis}}} = obj; var {a, ...globalThis} = obj;
+   ·                                                                 ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:97]
+ 1 │ var {globalThis} = obj; var {a: globalThis} = obj; var {a: {b: {globalThis}}} = obj; var {a, ...globalThis} = obj;
+   ·                                                                                                 ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:5]
+ 1 │ let globalThis; globalThis = 5;
+   ·     ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:7]
+ 1 │ class globalThis {}
+   ·       ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:8]
+ 1 │ (class globalThis {})
+   ·        ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:8]
+ 1 │ import globalThis from 'foo';
+   ·        ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:10]
+ 1 │ import { globalThis } from 'foo';
+   ·          ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:17]
+ 1 │ import { baz as globalThis } from 'foo';
+   ·                 ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
+   ╭─[no_shadow_restricted_names.tsx:1:13]
+ 1 │ import * as globalThis from 'foo';
+   ·             ──────────
+   ╰────
+  help: Shadowing of global properties 'globalThis'.
