@@ -60,15 +60,13 @@ expression: json
       ]
     },
     "plugins": {
-      "default": [
-        "react",
-        "unicorn",
-        "typescript",
-        "oxc"
-      ],
-      "allOf": [
+      "default": null,
+      "anyOf": [
         {
           "$ref": "#/definitions/LintPlugins"
+        },
+        {
+          "type": "null"
         }
       ]
     },
