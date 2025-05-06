@@ -43,7 +43,7 @@ pub use crate::{
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
-    service::{LintService, LintServiceOptions},
+    service::{LintService, LintServiceOptions, RuntimeFileSystem},
     utils::read_to_string,
 };
 use crate::{

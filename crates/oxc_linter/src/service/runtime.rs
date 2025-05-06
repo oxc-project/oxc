@@ -46,11 +46,6 @@ pub struct Runtime {
     resolver: Option<Resolver>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-
-    // The language server uses more up to date source_text provided by `workspace/didChange` request.
-    // This is required to support `run: "onType"` configuration
-    #[cfg(feature = "language_server")]
-    source_text_cache: FxHashMap<Arc<OsStr>, String>,
 }
 
 /// Output of `Runtime::process_path`
@@ -179,8 +174,6 @@ impl Runtime {
             linter,
             resolver,
             file_system: Box::new(OsFileSystem),
-            #[cfg(feature = "language_server")]
-            source_text_cache: FxHashMap::default(),
         }
     }
 
@@ -229,13 +222,6 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-
-        // The language server uses more up to date source_text provided by `workspace/didChange` request.
-        // This is required to support `run: "onType"` configuration
-        #[cfg(feature = "language_server")]
-        if let Some(source_text) = self.source_text_cache.get(path.as_os_str()) {
-            return Some(Ok((source_type, source_text.clone())));
-        }
 
         let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
@@ -563,22 +549,14 @@ impl Runtime {
     pub(super) fn run_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-        path: &Arc<OsStr>,
-        source_text: &str,
     ) -> Vec<MessageWithPosition<'a>> {
         use std::sync::Mutex;
-
-        // the language server can have more up to date source_text then the filesystem
-        #[cfg(feature = "language_server")]
-        {
-            self.source_text_cache.insert(Arc::clone(path), source_text.to_owned());
-        }
 
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
-                module.content.with_dependent_mut(|_owner, dependent| {
+                module.content.with_dependent_mut(|owner, dependent| {
                     assert_eq!(module.section_module_records.len(), dependent.len());
 
                     for (record_result, section) in
@@ -609,13 +587,13 @@ impl Runtime {
                                                     let offset = labeled_span.offset() as u32;
                                                     let start_position = offset_to_position(
                                                         offset + section.source.start,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let end_position = offset_to_position(
                                                         offset
                                                             + section.source.start
                                                             + labeled_span.len() as u32,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let message = labeled_span
                                                         .label()
@@ -642,11 +620,11 @@ impl Runtime {
                                                 span: SpanPositionMessage::new(
                                                     offset_to_position(
                                                         section.source.start + fix.span.start,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     ),
                                                     offset_to_position(
                                                         section.source.start + fix.span.end,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     ),
                                                 )
                                                 .with_message(
