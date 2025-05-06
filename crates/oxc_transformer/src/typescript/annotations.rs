@@ -301,6 +301,8 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         param.accessibility = None;
+        param.readonly = false;
+        param.r#override = false;
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -322,57 +324,9 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         def: &mut MethodDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        // Collects parameter properties so that we can add an assignment
-        // for each of them in the constructor body.
-        if def.kind == MethodDefinitionKind::Constructor {
-            for param in def.value.params.items.as_mut_slice() {
-                if param.has_modifier() {
-                    if let Some(id) = param.pattern.get_binding_identifier() {
-                        self.assignments.push(Assignment {
-                            span: id.span,
-                            name: id.name,
-                            symbol_id: id.symbol_id(),
-                        });
-                    }
-                }
-
-                param.readonly = false;
-                param.accessibility = None;
-                param.r#override = false;
-            }
-        }
-
         def.accessibility = None;
         def.optional = false;
         def.r#override = false;
-    }
-
-    fn exit_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if def.kind == MethodDefinitionKind::Constructor && !self.assignments.is_empty() {
-            // When the constructor doesn't have a super call,
-            // we simply add assignments to the bottom of the function body
-            if self.has_super_call {
-                self.assignments.clear();
-            } else {
-                def.value
-                    .body
-                    .get_or_insert_with(|| {
-                        ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec())
-                    })
-                    .statements
-                    .splice(
-                        0..0,
-                        self.assignments
-                            .drain(..)
-                            .map(|assignment| assignment.create_this_property_assignment(ctx)),
-                    );
-            }
-            self.has_super_call = false;
-        }
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {

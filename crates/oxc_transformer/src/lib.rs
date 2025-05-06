@@ -452,16 +452,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         }
     }
 
-    fn exit_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.exit_method_definition(def, ctx);
-        }
-    }
-
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);

@@ -51362,8 +51362,8 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(10), ReferenceId(12)]
-rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(7)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(9), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(6)]
 Symbol reference IDs mismatch for "c":
 after transform: SymbolId(12): [ReferenceId(2)]
 rebuilt        : SymbolId(8): []
