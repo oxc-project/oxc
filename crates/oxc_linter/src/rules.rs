@@ -367,6 +367,7 @@ mod unicorn {
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
+    pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;
     pub mod no_useless_fallback_in_spread;
@@ -977,6 +978,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_unnecessary_slice_end,
     unicorn::no_accessor_recursion,
     unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
