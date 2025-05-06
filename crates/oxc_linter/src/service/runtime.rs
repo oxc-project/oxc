@@ -45,6 +45,8 @@ pub struct Runtime {
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
 
+    pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+
     // The language server uses more up to date source_text provided by `workspace/didChange` request.
     // This is required to support `run: "onType"` configuration
     #[cfg(feature = "language_server")]
@@ -140,6 +142,35 @@ impl ModuleToLint {
     }
 }
 
+/// A simple trait for the `Runtime` to load and save file from a filesystem
+/// The `Runtime` uses OsFileSystem as a default
+/// The Tester and `oxc_language_server` would like to provide the content from memory
+pub trait RuntimeFileSystem {
+    /// reads the content of a file path
+    ///
+    /// # Errors
+    /// When no valid path is provided or the content is not valid UTF-8 Stream
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+
+    /// write a file to the file system
+    ///
+    /// # Errors
+    /// When the program does not have write permission for the file system
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error>;
+}
+
+struct OsFileSystem;
+
+impl RuntimeFileSystem for OsFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        read_to_string(path)
+    }
+
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error> {
+        fs::write(path, content)
+    }
+}
+
 impl Runtime {
     pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
         let resolver = options.cross_module.then(|| {
@@ -150,11 +181,21 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
+            file_system: Box::new(OsFileSystem),
             #[cfg(feature = "language_server")]
             source_text_cache: FxHashMap::default(),
             #[cfg(test)]
             test_source: std::sync::RwLock::new(None),
         }
+    }
+
+    #[expect(dead_code)]
+    pub fn with_file_system(
+        mut self,
+        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+    ) -> Self {
+        self.file_system = file_system;
+        self
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
@@ -209,7 +250,7 @@ impl Runtime {
             return Some(Ok((source_type, source_text.clone())));
         }
 
-        let file_result = read_to_string(path).map_err(|e| {
+        let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -518,7 +559,7 @@ impl Runtime {
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
                     if let Cow::Owned(new_source_text) = new_source_text {
-                        fs::write(path, new_source_text).unwrap();
+                        me.file_system.write_file(path, new_source_text).unwrap();
                     }
                 });
             });
