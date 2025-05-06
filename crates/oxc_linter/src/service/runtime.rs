@@ -51,9 +51,6 @@ pub struct Runtime {
     // This is required to support `run: "onType"` configuration
     #[cfg(feature = "language_server")]
     source_text_cache: FxHashMap<Arc<OsStr>, String>,
-
-    #[cfg(test)]
-    pub(super) test_source: std::sync::RwLock<Option<String>>,
 }
 
 /// Output of `Runtime::process_path`
@@ -184,12 +181,9 @@ impl Runtime {
             file_system: Box::new(OsFileSystem),
             #[cfg(feature = "language_server")]
             source_text_cache: FxHashMap::default(),
-            #[cfg(test)]
-            test_source: std::sync::RwLock::new(None),
         }
     }
 
-    #[expect(dead_code)]
     pub fn with_file_system(
         mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
@@ -235,13 +229,6 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-
-        #[cfg(test)]
-        if let (true, Some(test_source)) =
-            (self.paths.contains(path.as_os_str()), &*self.test_source.read().unwrap())
-        {
-            return Some(Ok((source_type, test_source.clone())));
-        }
 
         // The language server uses more up to date source_text provided by `workspace/didChange` request.
         // This is required to support `run: "onType"` configuration
@@ -697,14 +684,11 @@ impl Runtime {
     pub(super) fn run_test_source<'a>(
         &mut self,
         allocator: &'a Allocator,
-        source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         use oxc_allocator::CloneIn;
         use std::sync::Mutex;
-
-        *self.test_source.write().unwrap() = Some(source_text.to_owned());
 
         let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {

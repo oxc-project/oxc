@@ -6,6 +6,7 @@ use std::{
 
 use oxc_diagnostics::DiagnosticSender;
 use runtime::Runtime;
+pub use runtime::RuntimeFileSystem;
 
 use crate::Linter;
 
@@ -74,10 +75,13 @@ impl LintService {
         Self { runtime }
     }
 
-    #[cfg(test)]
-    pub(crate) fn from_linter(linter: Linter, options: LintServiceOptions) -> Self {
-        let runtime = Runtime::new(linter, options);
-        Self { runtime }
+    #[must_use]
+    pub fn with_file_system(
+        mut self,
+        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+    ) -> Self {
+        self.runtime = self.runtime.with_file_system(file_system);
+        self
     }
 
     pub fn linter(&self) -> &Linter {
@@ -105,10 +109,9 @@ impl LintService {
     pub(crate) fn run_test_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-        source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {
-        self.runtime.run_test_source(allocator, source_text, check_syntax_errors, tx_error)
+        self.runtime.run_test_source(allocator, check_syntax_errors, tx_error)
     }
 }
