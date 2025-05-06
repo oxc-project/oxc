@@ -43,7 +43,8 @@
     "wasm.mjs",
     "bindings.js",
     "webcontainer-fallback.js",
-    "generated/visitor-keys.js",
+    "generated/visitor-keys.cjs",
+    "generated/visitor-keys.mjs",
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js"
   ],
