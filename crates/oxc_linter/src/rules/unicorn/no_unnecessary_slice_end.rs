@@ -13,8 +13,8 @@ use crate::{
     AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression,
 };
 
-fn no_unnecessary_slice_end_diagnostic(span: Span, arge_str: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Passing `{arge_str}` as the `end` argument is unnecessary."))
+fn no_unnecessary_slice_end_diagnostic(span: Span, arg_str: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Passing `{arg_str}` as the `end` argument is unnecessary."))
         .with_help("Consider omitting the unnecessary end argument.")
         .with_label(span)
 }
@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the target,
+    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the targt,
     /// so explicitly passing its length or Infinity is redundant.
     ///
     /// ### Examples
@@ -73,19 +73,18 @@ impl Rule for NoUnnecessarySliceEnd {
         {
             return;
         }
-        let [first_arge, second_arge] = call_expr.arguments.as_slice() else {
+        let [first_arg, second_arg] = call_expr.arguments.as_slice() else {
             return;
         };
-        let Some(arge_expr) = second_arge.as_expression().map(Expression::without_parentheses)
-        else {
+        let Some(arg_expr) = second_arg.as_expression().map(Expression::without_parentheses) else {
             return;
         };
-        match arge_expr {
+        match arg_expr {
             Expression::Identifier(ident) if ident.name.as_str() == "Infinity" => {
                 ctx.diagnostic_with_fix(
-                    no_unnecessary_slice_end_diagnostic(second_arge.span(), "Infinity"),
+                    no_unnecessary_slice_end_diagnostic(second_arg.span(), "Infinity"),
                     |fixer| {
-                        fixer.delete_range(Span::new(first_arge.span().end, second_arge.span().end))
+                        fixer.delete_range(Span::new(first_arg.span().end, second_arg.span().end))
                     },
                 );
             }
@@ -95,11 +94,11 @@ impl Rule for NoUnnecessarySliceEnd {
                         check_expression_and_get_diagnostic(member_expr, expr, true, ctx)
                     {
                         ctx.diagnostic_with_fix(
-                            no_unnecessary_slice_end_diagnostic(second_arge.span(), &msg),
+                            no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
                             |fixer| {
                                 fixer.delete_range(Span::new(
-                                    first_arge.span().end,
-                                    second_arge.span().end,
+                                    first_arg.span().end,
+                                    second_arg.span().end,
                                 ))
                             },
                         );
@@ -107,16 +106,16 @@ impl Rule for NoUnnecessarySliceEnd {
                 }
             }
             match_member_expression!(Expression) => {
-                let expr = arge_expr.to_member_expression();
+                let expr = arg_expr.to_member_expression();
                 if let Some(msg) =
                     check_expression_and_get_diagnostic(member_expr, expr, false, ctx)
                 {
                     ctx.diagnostic_with_fix(
-                        no_unnecessary_slice_end_diagnostic(second_arge.span(), &msg),
+                        no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
                         |fixer| {
                             fixer.delete_range(Span::new(
-                                first_arge.span().end,
-                                second_arge.span().end,
+                                first_arg.span().end,
+                                second_arg.span().end,
                             ))
                         },
                     );
