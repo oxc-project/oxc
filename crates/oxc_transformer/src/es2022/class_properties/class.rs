@@ -275,6 +275,12 @@ impl<'a> ClassProperties<'a, '_> {
             }
         }
 
+        // When `self.set_public_class_fields` and `self.remove_class_fields_without_initializer` are both true,
+        // we don't need to convert properties without initializers, that means `instance_prop_count != 0` but `instance_inits` may be empty.
+        if instance_inits.is_empty() {
+            return;
+        }
+
         // Scope that instance property initializers will be inserted into.
         // This is usually class constructor, but can also be a `_super` function which is created.
         let instance_inits_scope_id;

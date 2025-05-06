@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 154/250
+Passed: 154/251
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (7/23)
+# babel-plugin-transform-typescript (6/23)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -393,6 +393,11 @@ rebuilt        : SymbolId(2): []
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
 
+* use-define-for-class-fields/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 
 # babel-plugin-transform-react-jsx (42/45)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
@@ -424,7 +429,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (3/72)
+# legacy-decorators (4/73)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
