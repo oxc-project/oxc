@@ -823,30 +823,39 @@ export interface BooleanLiteral extends Span {
   type: 'Literal';
   value: boolean;
   raw: string | null;
+  regex: null;
+  bigint: null;
 }
 
 export interface NullLiteral extends Span {
   type: 'Literal';
   value: null;
   raw: 'null' | null;
+  regex: null;
+  bigint: null;
 }
 
 export interface NumericLiteral extends Span {
   type: 'Literal';
   value: number;
   raw: string | null;
+  regex: null;
+  bigint: null;
 }
 
 export interface StringLiteral extends Span {
   type: 'Literal';
   value: string;
   raw: string | null;
+  regex: null;
+  bigint: null;
 }
 
 export interface BigIntLiteral extends Span {
   type: 'Literal';
   value: bigint;
   raw: string | null;
+  regex: null;
   bigint: string;
 }
 
@@ -855,6 +864,7 @@ export interface RegExpLiteral extends Span {
   value: RegExp | null;
   raw: string | null;
   regex: { pattern: string; flags: string };
+  bigint: null;
 }
 
 export interface JSXElement extends Span {

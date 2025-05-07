@@ -1894,6 +1894,8 @@ impl ESTree for BooleanLiteral {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &crate::serialize::BooleanLiteralRaw(self));
+        state.serialize_field("regex", &crate::serialize::Null(self));
+        state.serialize_field("bigint", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -1906,6 +1908,8 @@ impl ESTree for NullLiteral {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::Null(self));
         state.serialize_field("raw", &crate::serialize::NullLiteralRaw(self));
+        state.serialize_field("regex", &crate::serialize::Null(self));
+        state.serialize_field("bigint", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -1918,6 +1922,8 @@ impl ESTree for NumericLiteral<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw);
+        state.serialize_field("regex", &crate::serialize::Null(self));
+        state.serialize_field("bigint", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -1930,6 +1936,8 @@ impl ESTree for StringLiteral<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::StringLiteralValue(self));
         state.serialize_field("raw", &self.raw);
+        state.serialize_field("regex", &crate::serialize::Null(self));
+        state.serialize_field("bigint", &crate::serialize::Null(self));
         state.end();
     }
 }
@@ -1942,6 +1950,7 @@ impl ESTree for BigIntLiteral<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::BigIntLiteralValue(self));
         state.serialize_field("raw", &self.raw);
+        state.serialize_field("regex", &crate::serialize::Null(self));
         state.serialize_field("bigint", &crate::serialize::BigIntLiteralBigint(self));
         state.end();
     }
@@ -1956,6 +1965,7 @@ impl ESTree for RegExpLiteral<'_> {
         state.serialize_field("value", &crate::serialize::RegExpLiteralValue(self));
         state.serialize_field("raw", &self.raw);
         state.serialize_field("regex", &self.regex);
+        state.serialize_field("bigint", &crate::serialize::Null(self));
         state.end();
     }
 }

@@ -20,7 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
+#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw, regex = Null, bigint = Null))]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -34,7 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
+#[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw, regex = Null, bigint = Null))]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -46,7 +46,7 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(rename = "Literal")]
+#[estree(rename = "Literal", add_fields(regex = Null, bigint = Null))]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -69,7 +69,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(rename = "Literal")]
+#[estree(rename = "Literal", add_fields(regex = Null, bigint = Null))]
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -101,8 +101,8 @@ pub struct StringLiteral<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint),
-    field_order(span, value, raw, bigint),
+    add_fields(value = BigIntLiteralValue, regex = Null, bigint = BigIntLiteralBigint),
+    field_order(span, value, raw, regex, bigint),
 )]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -124,8 +124,8 @@ pub struct BigIntLiteral<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(value = RegExpLiteralValue),
-    field_order(span, value, raw, regex),
+    add_fields(value = RegExpLiteralValue, bigint = Null),
+    field_order(span, value, raw, regex, bigint),
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code

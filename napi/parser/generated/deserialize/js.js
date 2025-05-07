@@ -1039,6 +1039,8 @@ function deserializeBooleanLiteral(pos) {
     end,
     value,
     raw: (start === 0 && end === 0) ? null : value + '',
+    regex: null,
+    bigint: null,
   };
 }
 
@@ -1051,6 +1053,8 @@ function deserializeNullLiteral(pos) {
     end,
     value: null,
     raw: (start === 0 && end === 0) ? null : 'null',
+    regex: null,
+    bigint: null,
   };
 }
 
@@ -1061,6 +1065,8 @@ function deserializeNumericLiteral(pos) {
     end: deserializeU32(pos + 4),
     value: deserializeF64(pos + 8),
     raw: deserializeOptionStr(pos + 16),
+    regex: null,
+    bigint: null,
   };
 }
 
@@ -1075,6 +1081,8 @@ function deserializeStringLiteral(pos) {
     end: deserializeU32(pos + 4),
     value,
     raw: deserializeOptionStr(pos + 24),
+    regex: null,
+    bigint: null,
   };
 }
 
@@ -1087,6 +1095,7 @@ function deserializeBigIntLiteral(pos) {
     end: deserializeU32(pos + 4),
     value: BigInt(bigint),
     raw,
+    regex: null,
     bigint,
   };
 }
@@ -1104,6 +1113,7 @@ function deserializeRegExpLiteral(pos) {
     value,
     raw: deserializeOptionStr(pos + 40),
     regex,
+    bigint: null,
   };
 }
 

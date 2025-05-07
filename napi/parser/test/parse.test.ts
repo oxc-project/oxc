@@ -157,6 +157,8 @@ describe('parse', () => {
         end: 6,
         value: Infinity,
         raw: '1e+350',
+        regex: null,
+        bigint: null,
       },
     });
   });
@@ -175,6 +177,7 @@ describe('parse', () => {
         end: 8,
         value: 123456n,
         raw: '123_456n',
+        regex: null,
         bigint: '123456',
       },
     });
@@ -195,6 +198,8 @@ describe('parse', () => {
           end: 15,
           value: '\ud800\udbff',
           raw: '"\\uD800\\uDBFF"',
+          regex: null,
+          bigint: null,
         },
       });
     });
@@ -213,6 +218,8 @@ describe('parse', () => {
           end: 12,
           value: '��',
           raw: '"�\\u{FFFD}"',
+          regex: null,
+          bigint: null,
         },
       });
     });
@@ -231,6 +238,8 @@ describe('parse', () => {
           end: 33,
           value: '��\ud800\udbff��',
           raw: '"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}"',
+          regex: null,
+          bigint: null,
         },
       });
     });
@@ -255,6 +264,7 @@ describe('parse', () => {
             pattern: 'abc',
             flags: 'gu',
           },
+          bigint: null,
         },
       });
     });
@@ -277,6 +287,7 @@ describe('parse', () => {
             pattern: '+',
             flags: '',
           },
+          bigint: null,
         },
       });
     });
