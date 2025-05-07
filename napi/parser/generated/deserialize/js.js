@@ -1289,9 +1289,9 @@ function deserializeTSThisParameter(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     name: 'this',
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
     decorators: [],
     optional: false,
+    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
   };
 }
 
@@ -1764,9 +1764,9 @@ function deserializeTSIndexSignatureName(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
-    typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 24),
     decorators: [],
     optional: false,
+    typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 24),
   };
 }
 

@@ -34,7 +34,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[estree(
     rename = "Identifier",
     add_fields(name = This, decorators = EmptyArray, optional = False),
-    field_order(span, name, type_annotation, decorators, optional),
+    field_order(span, name, decorators, optional, type_annotation),
 )]
 pub struct TSThisParameter<'a> {
     pub span: Span,
@@ -1080,7 +1080,11 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier", add_fields(decorators = EmptyArray, optional = False))]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = EmptyArray, optional = False),
+    field_order(span, name, decorators, optional, type_annotation),
+)]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
     #[estree(json_safe)]

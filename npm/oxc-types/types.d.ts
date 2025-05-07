@@ -964,9 +964,9 @@ export interface JSXText extends Span {
 export interface TSThisParameter extends Span {
   type: 'Identifier';
   name: 'this';
-  typeAnnotation: TSTypeAnnotation | null;
   decorators: [];
   optional: false;
+  typeAnnotation: TSTypeAnnotation | null;
 }
 
 export interface TSEnumDeclaration extends Span {
@@ -1294,9 +1294,9 @@ export interface TSConstructSignatureDeclaration extends Span {
 export interface TSIndexSignatureName extends Span {
   type: 'Identifier';
   name: string;
-  typeAnnotation: TSTypeAnnotation;
   decorators: [];
   optional: false;
+  typeAnnotation: TSTypeAnnotation;
 }
 
 export interface TSInterfaceHeritage extends Span {
