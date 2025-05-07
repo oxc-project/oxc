@@ -71,8 +71,7 @@ impl Derive for DeriveESTree {
 
             ///@@line_break
             use oxc_estree::{
-                ser::{AppendTo, AppendToConcat},
-                ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
+                Concat2, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
             };
         }
     }
@@ -443,16 +442,9 @@ impl<'s> StructSerializerGenerator<'s> {
             let converter_path = get_converter_path(converter_name, self.krate, self.schema);
             quote!( #converter_path(#self_path) )
         } else if let Some(append_field_index) = field.estree.append_field_index {
-            let append_field = &struct_def.fields[append_field_index];
-            let append_from_ident = append_field.ident();
-            let wrapper_name = if append_field.type_def(self.schema).is_option() {
-                "AppendTo"
-            } else {
-                "AppendToConcat"
-            };
-            let wrapper_ident = create_safe_ident(wrapper_name);
+            let append_from_ident = struct_def.fields[append_field_index].ident();
             quote! {
-                #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
+                Concat2(&#self_path.#field_name_ident, &#self_path.#append_from_ident)
             }
         } else if field.estree.json_safe {
             // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`

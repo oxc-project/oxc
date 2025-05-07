@@ -4,8 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
-    ser::{AppendTo, AppendToConcat},
+    Concat2, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::ast::comment::*;
@@ -635,7 +634,7 @@ impl ESTree for ArrayAssignmentTarget<'_> {
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
+        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
@@ -649,10 +648,7 @@ impl ESTree for ObjectAssignmentTarget<'_> {
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "properties",
-            &AppendTo { array: &self.properties, after: &self.rest },
-        );
+        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
@@ -1295,10 +1291,7 @@ impl ESTree for ObjectPattern<'_> {
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "properties",
-            &AppendTo { array: &self.properties, after: &self.rest },
-        );
+        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
@@ -1329,7 +1322,7 @@ impl ESTree for ArrayPattern<'_> {
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
+        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::TsNull(self));
@@ -1419,10 +1412,7 @@ impl ESTree for FunctionBody<'_> {
         state.serialize_field("type", &JsonSafeString("BlockStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &self.directives, after: &self.statements },
-        );
+        state.serialize_field("body", &Concat2(&self.directives, &self.statements));
         state.end();
     }
 }
@@ -3076,10 +3066,7 @@ impl ESTree for TSModuleBlock<'_> {
         state.serialize_field("type", &JsonSafeString("TSModuleBlock"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &self.directives, after: &self.body },
-        );
+        state.serialize_field("body", &Concat2(&self.directives, &self.body));
         state.end();
     }
 }

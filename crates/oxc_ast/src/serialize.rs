@@ -6,9 +6,9 @@ use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString, PrettyFixesJSSerializer,
-    PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer,
-    Serializer, StructSerializer, ser::AppendToConcat,
+    Concat2, ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString,
+    PrettyFixesJSSerializer, PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer,
+    SequenceSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
@@ -171,10 +171,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("start", &span_start);
         state.serialize_field("end", &program.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &program.directives, after: &program.body },
-        );
+        state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
         state.end();

@@ -161,6 +161,7 @@ impl TypeDef {
         }
     }
 
+    #[expect(dead_code)]
     pub fn is_option(&self) -> bool {
         matches!(self, Self::Option(_))
     }

@@ -4,8 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
-    ser::{AppendTo, AppendToConcat},
+    Concat2, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::raw_transfer_types::*;

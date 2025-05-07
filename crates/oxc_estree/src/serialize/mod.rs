@@ -8,6 +8,7 @@ use itoa::Buffer as ItoaBuffer;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 
 mod blanket;
+mod concat;
 mod config;
 mod formatter;
 mod primitives;
@@ -19,6 +20,7 @@ use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
+pub use concat::{Concat2, ConcatElement};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{FlatStructSerializer, StructSerializer};
