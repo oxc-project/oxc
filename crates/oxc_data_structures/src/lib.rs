@@ -11,6 +11,9 @@ pub mod code_buffer;
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
 
+#[cfg(feature = "nonmax")]
+pub mod nonmax;
+
 #[cfg(feature = "rope")]
 pub mod rope;
 
