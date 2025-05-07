@@ -142,14 +142,14 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             );
         }
 
-        self.buffer.print_str(r#"{"node":"#);
+        self.buffer.print_str("{\"node\":\n");
 
         node.serialize(&mut self);
 
         debug_assert_eq!(self.trace_path.len(), 1);
         debug_assert_eq!(self.trace_path[0], TracePathPart::DUMMY);
 
-        self.buffer.print_str(r#","fixes":["#);
+        self.buffer.print_str("\n,\"fixes\":[");
         if !self.fixes_buffer.is_empty() {
             let traces_buffer = mem::take(&mut self.fixes_buffer).into_string();
             self.buffer.print_str(&traces_buffer[1..]);
