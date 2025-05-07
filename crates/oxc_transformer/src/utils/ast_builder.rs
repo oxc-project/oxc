@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
@@ -103,4 +103,56 @@ pub fn create_assignment<'a>(
         binding.create_target(ReferenceFlags::Write, ctx),
         value,
     )
+}
+
+/// `super(...args);`
+pub fn create_super_call<'a>(
+    args_binding: &BoundIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    ctx.ast.expression_call(
+        SPAN,
+        ctx.ast.expression_super(SPAN),
+        NONE,
+        ctx.ast
+            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
+        false,
+    )
+}
+
+//  `constructor(params) { statements }`
+pub fn create_class_constructor_with_params<'a>(
+    stmts: ArenaVec<'a, Statement<'a>>,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    scope_id: ScopeId,
+    ctx: &TraverseCtx<'a>,
+) -> ClassElement<'a> {
+    ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
+        SPAN,
+        MethodDefinitionType::MethodDefinition,
+        ctx.ast.vec(),
+        PropertyKey::StaticIdentifier(
+            ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
+        ),
+        ctx.ast.alloc_function_with_scope_id(
+            SPAN,
+            FunctionType::FunctionExpression,
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
+            scope_id,
+        ),
+        MethodDefinitionKind::Constructor,
+        false,
+        false,
+        false,
+        false,
+        None,
+    ))
 }
