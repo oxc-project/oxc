@@ -3,7 +3,7 @@
 
 use oxc_span::{GetSpan, Span};
 
-use crate::ast::{Term, CharacterClassContents};
+use crate::ast::{CharacterClassContents, Term};
 
 impl GetSpan for Term<'_> {
     #[inline]
