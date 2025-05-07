@@ -2434,6 +2434,7 @@ function deserializeModifiers(pos) {
 
 function deserializeModifier(pos) {
   return {
+    type: 'Modifier',
     ignoreCase: deserializeBool(pos),
     multiline: deserializeBool(pos + 1),
     sticky: deserializeBool(pos + 2),

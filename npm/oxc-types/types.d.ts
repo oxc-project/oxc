@@ -1664,6 +1664,7 @@ export interface Modifiers extends Span {
 }
 
 export interface Modifier {
+  type: 'Modifier';
   ignoreCase: boolean;
   multiline: boolean;
   sticky: boolean;
@@ -1877,6 +1878,7 @@ export type Node =
   | CapturingGroup
   | IgnoreGroup
   | Modifiers
+  | Modifier
   | IndexedReference
   | NamedReference
   | FormalParameterRest;
