@@ -56,6 +56,10 @@ impl WorkspaceWorker {
             Some(ServerLinter::new(self.root_uri.get().unwrap(), options));
     }
 
+    pub async fn needs_init_linter(&self) -> bool {
+        self.server_linter.read().await.is_none()
+    }
+
     pub async fn remove_diagnostics(&self, uri: &Uri) {
         self.diagnostics_report_map.read().await.pin().remove(&uri.to_string());
     }

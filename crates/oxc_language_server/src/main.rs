@@ -88,13 +88,19 @@ impl LanguageServer for Backend {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
         });
+        let capabilities = Capabilities::from(params.capabilities);
 
         // ToDo: add support for multiple workspace folders
         // maybe fallback when the client does not support it
         let root_worker = WorkspaceWorker::new(&params.root_uri.unwrap());
-        // ToDo: only call init_linter when the client passed a valid Options struct
-        // if not and the client supports `workspace/configuration`, we should request them in `initialized`
-        root_worker.init_linter(&options.clone().unwrap_or_default()).await;
+
+        // When the client did not send our custom `initialization_options`,
+        // or the client does not support `workspace/configuration` request,
+        // start the linter. We do not start the linter when the client support the request,
+        // we will init the linter after requesting for the workspace configuration.
+        if !capabilities.workspace_configuration || options.is_some() {
+            root_worker.init_linter(&options.clone().unwrap_or_default()).await;
+        }
 
         *self.workspace_workers.lock().await = vec![root_worker];
 
@@ -103,7 +109,6 @@ impl LanguageServer for Backend {
             info!("language server version: {server_version}");
         }
 
-        let capabilities = Capabilities::from(params.capabilities);
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => {
@@ -123,6 +128,44 @@ impl LanguageServer for Backend {
             offset_encoding: None,
             capabilities: capabilities.into(),
         })
+    }
+
+    async fn initialized(&self, _params: InitializedParams) {
+        debug!("oxc initialized.");
+
+        if !self.capabilities.get().unwrap().workspace_configuration {
+            // every worker should be initialized already in `initialize` request
+            return;
+        }
+
+        let workers = &*self.workspace_workers.lock().await;
+        let needed_configurations =
+            ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
+        let needed_configurations = needed_configurations.pin_owned();
+        for worker in workers {
+            if worker.needs_init_linter().await {
+                needed_configurations.insert(worker.get_root_uri().unwrap(), worker);
+            }
+        }
+
+        let configurations =
+            self.request_workspace_configuration(needed_configurations.keys().collect()).await;
+        for (index, worker) in needed_configurations.values().enumerate() {
+            worker
+                .init_linter(
+                    configurations
+                        .get(index)
+                        .unwrap_or(&None)
+                        .as_ref()
+                        .unwrap_or(&Options::default()),
+                )
+                .await;
+        }
+    }
+
+    async fn shutdown(&self) -> Result<()> {
+        self.clear_all_diagnostics().await;
+        Ok(())
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
@@ -253,15 +296,6 @@ impl LanguageServer for Backend {
             .collect::<Vec<_>>();
 
         self.publish_all_diagnostics(x).await;
-    }
-
-    async fn initialized(&self, _params: InitializedParams) {
-        debug!("oxc initialized.");
-    }
-
-    async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
-        Ok(())
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
@@ -396,6 +430,38 @@ impl LanguageServer for Backend {
 }
 
 impl Backend {
+    /// Request the workspace configuration from the client
+    /// and return the options for each workspace folder.
+    /// The check if the client support workspace configuration, should be done before.
+    async fn request_workspace_configuration(&self, uris: Vec<&Uri>) -> Vec<Option<Options>> {
+        let length = uris.len();
+        let config_items = uris
+            .into_iter()
+            .map(|uri| ConfigurationItem {
+                scope_uri: Some(uri.clone()),
+                section: Some("oxc_language_server".into()),
+            })
+            .collect::<Vec<_>>();
+
+        let Ok(configs) = self.client.configuration(config_items).await else {
+            debug!("failed to get configuration");
+            // return none for each workspace folder
+            return vec![None; length];
+        };
+
+        let mut options = vec![];
+        for config in configs {
+            options.push(serde_json::from_value::<Options>(config).ok());
+        }
+
+        debug_assert!(
+            options.len() == length,
+            "the number of configuration items should be the same as the number of workspace folders"
+        );
+
+        options
+    }
+
     // clears all diagnostics for workspace folders
     async fn clear_all_diagnostics(&self) {
         let mut cleared_diagnostics = vec![];

@@ -12,7 +12,12 @@ import {
   workspace,
 } from 'vscode';
 
-import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  ConfigurationParams,
+  ExecuteCommandRequest,
+  MessageType,
+  ShowMessageNotification,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -213,6 +218,19 @@ export async function activate(context: ExtensionContext) {
     },
     outputChannel,
     traceOutputChannel: outputChannel,
+    middleware: {
+      workspace: {
+        configuration: (params: ConfigurationParams) => {
+          return params.items.map(item => {
+            if (item.section !== 'oxc_language_server') {
+              return null;
+            }
+
+            return configService.rootServerConfig.toLanguageServerConfig() ?? null;
+          });
+        },
+      },
+    },
   };
 
   // Create the language client and start the client.
