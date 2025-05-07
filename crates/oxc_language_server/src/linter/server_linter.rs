@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use globset::Glob;
 use ignore::gitignore::Gitignore;
-use log::warn;
+use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use tower_lsp_server::lsp_types::Uri;
 
@@ -18,9 +18,9 @@ use crate::{ConcurrentHashMap, Options};
 
 use super::config_walker::ConfigWalker;
 
-#[derive(Clone)]
 pub struct ServerLinter {
     isolated_linter: Arc<IsolatedLintHandler>,
+    gitignore_glob: Vec<Gitignore>,
 }
 
 impl ServerLinter {
@@ -67,7 +67,7 @@ impl ServerLinter {
         nested_configs
     }
 
-    pub fn create_ignore_glob(root_uri: &Uri, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
+    fn create_ignore_glob(root_uri: &Uri, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
         let mut builder = globset::GlobSetBuilder::new();
         // Collecting all ignore files
         builder.add(Glob::new("**/.eslintignore").unwrap());
@@ -119,7 +119,7 @@ impl ServerLinter {
         root_uri: &Uri,
         options: &Options,
         nested_configs: &ConcurrentHashMap<PathBuf, ConfigStore>,
-    ) -> (Self, Oxlintrc) {
+    ) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
         let relative_config_path = options.config_path.clone();
         let oxlintrc = if relative_config_path.is_some() {
@@ -171,21 +171,37 @@ impl ServerLinter {
             Linter::new(lint_options, config_store)
         };
 
-        let server_linter = ServerLinter::new_with_linter(
+        let isolated_linter = IsolatedLintHandler::new(
             linter,
             IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
         );
 
-        (server_linter, oxlintrc)
+        Self {
+            isolated_linter: Arc::new(isolated_linter),
+            gitignore_glob: Self::create_ignore_glob(root_uri, &oxlintrc),
+        }
     }
 
-    fn new_with_linter(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
-        let isolated_linter = Arc::new(IsolatedLintHandler::new(linter, options));
-
-        Self { isolated_linter }
+    fn is_ignored(&self, uri: &Uri) -> bool {
+        for gitignore in &self.gitignore_glob {
+            if let Some(uri_path) = uri.to_file_path() {
+                if !uri_path.starts_with(gitignore.path()) {
+                    continue;
+                }
+                if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
+                    debug!("ignored: {uri:?}");
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        if self.is_ignored(uri) {
+            return None;
+        }
+
         self.isolated_linter.run_single(uri, content)
     }
 }

@@ -1,6 +1,5 @@
 use std::{path::PathBuf, str::FromStr, vec};
 
-use ignore::gitignore::Gitignore;
 use log::{debug, info};
 use oxc_linter::{ConfigStore, ConfigStoreBuilder, Oxlintrc};
 use rustc_hash::FxBuildHasher;
@@ -24,7 +23,6 @@ pub struct WorkspaceWorker {
     server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: RwLock<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
-    gitignore_glob: Mutex<Vec<Gitignore>>,
     nested_configs: RwLock<ConcurrentHashMap<PathBuf, ConfigStore>>,
 }
 
@@ -34,14 +32,12 @@ impl WorkspaceWorker {
         root_uri_cell.set(root_uri.clone()).unwrap();
 
         let nested_configs = ServerLinter::create_nested_configs(root_uri, &options);
-        let (server_linter, oxlintrc) =
-            ServerLinter::create_server_linter(root_uri, &options, &nested_configs);
+        let server_linter = ServerLinter::create_server_linter(root_uri, &options, &nested_configs);
         Self {
             root_uri: root_uri_cell,
             server_linter: RwLock::new(server_linter),
             diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
             options: Mutex::new(options),
-            gitignore_glob: Mutex::new(ServerLinter::create_ignore_glob(root_uri, &oxlintrc)),
             nested_configs: RwLock::const_new(nested_configs),
         }
     }
@@ -71,10 +67,10 @@ impl WorkspaceWorker {
         *self.nested_configs.write().await = nested_configs;
     }
 
-    async fn refresh_linter_config(&self) {
+    async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
         let nested_configs = self.nested_configs.read().await;
-        let (server_linter, _) = ServerLinter::create_server_linter(
+        let server_linter = ServerLinter::create_server_linter(
             self.root_uri.get().unwrap(),
             &options,
             &nested_configs,
@@ -114,10 +110,6 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        if self.is_ignored(uri).await {
-            return None;
-        }
-
         self.server_linter.read().await.run_single(uri, content)
     }
 
@@ -274,7 +266,7 @@ impl WorkspaceWorker {
             }
         }
 
-        self.refresh_linter_config().await;
+        self.refresh_server_linter().await;
         Some(self.revalidate_diagnostics().await)
     }
 
@@ -301,27 +293,11 @@ impl WorkspaceWorker {
         }
 
         if Self::needs_linter_restart(current_option, &changed_options) {
-            self.refresh_linter_config().await;
+            self.refresh_server_linter().await;
             return Some(self.revalidate_diagnostics().await);
         }
 
         None
-    }
-
-    async fn is_ignored(&self, uri: &Uri) -> bool {
-        let gitignore_globs = &(*self.gitignore_glob.lock().await);
-        for gitignore in gitignore_globs {
-            if let Some(uri_path) = uri.to_file_path() {
-                if !uri_path.starts_with(gitignore.path()) {
-                    continue;
-                }
-                if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
-                    debug!("ignored: {uri:?}");
-                    return true;
-                }
-            }
-        }
-        false
     }
 }
 
