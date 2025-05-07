@@ -248,6 +248,7 @@ impl Oxc {
         let mut comments =
             convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut []);
 
+        // NOTE: These lines are almost the same as in `napi/parser`, so keep them in sync
         self.ast_json = if source_type.is_javascript() {
             // Add hashbang to start of comments
             if let Some(hashbang) = &program.hashbang {
@@ -262,9 +263,13 @@ impl Oxc {
                 );
             }
 
-            program.to_pretty_estree_js_json()
+            program.to_pretty_estree_js_json_with_fixes()
         } else {
-            program.to_pretty_estree_ts_json()
+            // Note: `@typescript-eslint/parser` ignores hashbangs,
+            // despite appearances to the contrary in AST explorers.
+            // So we ignore them too.
+            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+            program.to_pretty_estree_ts_json_with_fixes()
         };
         self.comments = comments;
 

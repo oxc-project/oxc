@@ -100,6 +100,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
 
+    // NOTE: These lines are almost the same as in `napi/playground`, so keep them in sync
     let mut comments =
         convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
 
