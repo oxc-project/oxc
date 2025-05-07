@@ -128,6 +128,18 @@ impl<const CAPACITY: usize, Len: UnsignedInt> InlineString<CAPACITY, Len> {
             std::str::from_utf8_unchecked(slice)
         }
     }
+
+    /// Get string as `&mut str` slice.
+    #[inline]
+    pub fn as_mut_str(&mut self) -> &mut str {
+        // SAFETY: If safety conditions of `push_unchecked` have been upheld,
+        // `self.len <= CAPACITY`, and contents of slice of `bytes` is a valid UTF-8 string
+        unsafe {
+            assert_unchecked!(self.len.to_usize() <= CAPACITY);
+            let slice = &mut self.bytes[..self.len.to_usize()];
+            std::str::from_utf8_unchecked_mut(slice)
+        }
+    }
 }
 
 impl<const CAPACITY: usize, Len: UnsignedInt> Default for InlineString<CAPACITY, Len> {
