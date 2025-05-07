@@ -28,6 +28,9 @@ use crate::assert_unchecked;
 /// * `FixedSizeString<7, u8>` = 8 bytes
 /// * `FixedSizeString<8, usize>` = 16 bytes (on 64-bit platforms)
 /// * `FixedSizeString<12, u32>` = 16 bytes
+///
+/// See also [`AnyInlineString`] trait if you need to use `InlineString`s with varying capacities
+/// as a generic type param.
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct InlineString<const CAPACITY: usize, Len: UnsignedInt> {
@@ -164,9 +167,85 @@ impl<const CAPACITY: usize, Len: UnsignedInt> Display for InlineString<CAPACITY,
     }
 }
 
-/// Trait for type which can be `len` field.
+/// `InlineString` as a trait.
 ///
-/// Private trait to prevent code outside this module implementing this trait on other types.
+/// Implemented by all `InlineString`s. All methods delegate to `InlineString`'s methods of same name.
+///
+/// Useful if need to use `InlineString`s of varying sizes as a generic param.
+//
+// Extends `Sealed` to prevent code outside this module implementing this trait on other types.
+#[expect(private_bounds, missing_docs, clippy::missing_safety_doc)]
+pub trait AnyInlineString: Sealed {
+    const CAPACITY: usize;
+    type Len: UnsignedInt;
+    fn new() -> Self;
+    fn from_str(s: &str) -> Self;
+    fn push(&mut self, byte: u8);
+    unsafe fn push_unchecked(&mut self, byte: u8);
+    fn len(&self) -> Self::Len;
+    fn len_usize(&self) -> usize;
+    fn is_empty(&self) -> bool;
+    fn as_str(&self) -> &str;
+    fn as_mut_str(&mut self) -> &mut str;
+}
+
+#[expect(clippy::inline_always)] // All methods just delegate
+impl<const CAPACITY: usize, Len: UnsignedInt> AnyInlineString for InlineString<CAPACITY, Len> {
+    const CAPACITY: usize = CAPACITY;
+    type Len = Len;
+
+    #[inline(always)]
+    fn new() -> Self {
+        Self::new()
+    }
+
+    #[inline(always)]
+    fn from_str(s: &str) -> Self {
+        Self::from_str(s)
+    }
+
+    #[inline(always)]
+    fn push(&mut self, byte: u8) {
+        self.push(byte);
+    }
+
+    #[inline(always)]
+    unsafe fn push_unchecked(&mut self, byte: u8) {
+        // SAFETY: Same safety constraints as `InlineString`'s method
+        unsafe { self.push_unchecked(byte) };
+    }
+
+    #[inline(always)]
+    fn len(&self) -> Self::Len {
+        self.len()
+    }
+
+    #[inline(always)]
+    fn len_usize(&self) -> usize {
+        self.len_usize()
+    }
+
+    #[inline(always)]
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+
+    #[inline(always)]
+    fn as_str(&self) -> &str {
+        self.as_str()
+    }
+
+    #[inline(always)]
+    fn as_mut_str(&mut self) -> &mut str {
+        self.as_mut_str()
+    }
+}
+
+impl<const CAPACITY: usize, Len: UnsignedInt> Sealed for InlineString<CAPACITY, Len> {}
+
+/// Trait for type which can be `len` field.
+//
+// Extends `Sealed` to prevent code outside this module implementing this trait on other types.
 #[expect(private_bounds)]
 pub trait UnsignedInt: Copy + PartialEq + Eq + Add + AddAssign + Sealed {
     /// Zero.
@@ -182,8 +261,9 @@ pub trait UnsignedInt: Copy + PartialEq + Eq + Add + AddAssign + Sealed {
     fn from_usize(n: usize) -> Self;
 }
 
-/// Trait which isn't public, and is a bound of `UnsignedInt`.
-/// Prevents code outside this module implementing `UnsignedInt` on any other types.
+/// Trait which isn't public, and is a bound of `AnyInlineString` and `UnsignedInt`.
+///
+/// Prevents code outside this module implementing these traits on any other types.
 trait Sealed {}
 
 macro_rules! impl_unsigned_int {
