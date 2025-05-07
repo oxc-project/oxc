@@ -3124,7 +3124,7 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("options", &crate::serialize::TSImportTypeOptions(self));
+        state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();

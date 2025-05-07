@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 6481/6481 (100.00%)
-Positive Passed: 6314/6481 (97.42%)
+Positive Passed: 6316/6481 (97.45%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularConstrainedMappedTypeNoCrash.ts
@@ -290,10 +290,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuit
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
 
