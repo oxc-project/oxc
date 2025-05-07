@@ -23,17 +23,8 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_estree = { workspace = true }
 oxc_span = { workspace = true }
 
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
-
-[features]
-default = []
-serialize = [
-  "oxc_allocator/serialize",
-  "oxc_span/serialize",
-  "oxc_estree/serialize",
-]

@@ -1,12 +1,11 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
-use oxc_estree::ESTree;
 use oxc_span::{Atom, ContentEq, Span};
 
 /// The root of the `PatternParser` result.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Pattern<'a> {
     pub span: Span,
     pub body: Disjunction<'a>,
@@ -15,7 +14,7 @@ pub struct Pattern<'a> {
 /// Pile of [`Alternative`]s separated by `|`.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Disjunction<'a> {
     pub span: Span,
     pub body: Vec<'a, Alternative<'a>>,
@@ -24,7 +23,7 @@ pub struct Disjunction<'a> {
 /// Single unit of `|` separated alternatives.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Alternative<'a> {
     pub span: Span,
     pub body: Vec<'a, Term<'a>>,
@@ -33,7 +32,7 @@ pub struct Alternative<'a> {
 /// Single unit of [`Alternative`], containing various kinds.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
     BoundaryAssertion(Box<'a, BoundaryAssertion>) = 0,
@@ -56,7 +55,7 @@ pub enum Term<'a> {
 /// e.g. `^`, `$`, `\b`, `\B`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct BoundaryAssertion {
     pub span: Span,
     pub kind: BoundaryAssertionKind,
@@ -64,7 +63,7 @@ pub struct BoundaryAssertion {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum BoundaryAssertionKind {
     Start = 0,
     End = 1,
@@ -76,7 +75,7 @@ pub enum BoundaryAssertionKind {
 /// e.g. `(?=...)`, `(?!...)`, `(?<=...)`, `(?<!...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct LookAroundAssertion<'a> {
     pub span: Span,
     pub kind: LookAroundAssertionKind,
@@ -85,7 +84,7 @@ pub struct LookAroundAssertion<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum LookAroundAssertionKind {
     Lookahead = 0,
     NegativeLookahead = 1,
@@ -97,7 +96,7 @@ pub enum LookAroundAssertionKind {
 /// e.g. `a*`, `b+`, `c?`, `d{3}`, `e{4,}`, `f{5,6}`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Quantifier<'a> {
     pub span: Span,
     pub min: u64,
@@ -110,7 +109,7 @@ pub struct Quantifier<'a> {
 /// Single character.
 #[ast]
 #[derive(Debug, Clone, Copy)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Character {
     /// This will be invalid position when `UnicodeMode` is disabled and `value` is a surrogate pair.
     pub span: Span,
@@ -121,7 +120,7 @@ pub struct Character {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum CharacterKind {
     ControlLetter = 0,
     HexadecimalEscape = 1,
@@ -140,7 +139,7 @@ pub enum CharacterKind {
 /// e.g. `\d`, `\D`, `\s`, `\S`, `\w`, `\W`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct CharacterClassEscape {
     pub span: Span,
     pub kind: CharacterClassEscapeKind,
@@ -148,7 +147,7 @@ pub struct CharacterClassEscape {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum CharacterClassEscapeKind {
     D = 0,
     NegativeD = 1,
@@ -162,7 +161,7 @@ pub enum CharacterClassEscapeKind {
 /// e.g. `\p{ASCII}`, `\P{ASCII}`, `\p{sc=Hiragana}`, `\P{sc=Hiragana}`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct UnicodePropertyEscape<'a> {
     pub span: Span,
     pub negative: bool,
@@ -175,7 +174,7 @@ pub struct UnicodePropertyEscape<'a> {
 /// The `.`.
 #[ast]
 #[derive(Debug, Clone, Copy)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Dot {
     pub span: Span,
 }
@@ -184,7 +183,7 @@ pub struct Dot {
 /// e.g. `[a-z]`, `[^A-Z]`, `[abc]`, `[a&&b&&c]`, `[[a-z]--x--y]`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct CharacterClass<'a> {
     pub span: Span,
     pub negative: bool,
@@ -198,7 +197,7 @@ pub struct CharacterClass<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum CharacterClassContentsKind {
     Union = 0,
     /// `UnicodeSetsMode` only.
@@ -209,7 +208,7 @@ pub enum CharacterClassContentsKind {
 
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, GetAddress, ESTree)]
+#[generate_derive(CloneIn, ContentEq, GetAddress)]
 pub enum CharacterClassContents<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>) = 0,
     CharacterClassEscape(Box<'a, CharacterClassEscape>) = 1,
@@ -225,7 +224,7 @@ pub enum CharacterClassContents<'a> {
 /// e.g. `a-z`, `A-Z`, `0-9`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct CharacterClassRange {
     pub span: Span,
     pub min: Character,
@@ -235,7 +234,7 @@ pub struct CharacterClassRange {
 /// `|` separated string of characters wrapped by `\q{}`.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct ClassStringDisjunction<'a> {
     pub span: Span,
     /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
@@ -246,7 +245,7 @@ pub struct ClassStringDisjunction<'a> {
 /// Single unit of [`ClassStringDisjunction`].
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct ClassString<'a> {
     pub span: Span,
     /// `true` if body is empty or contain 2 more characters.
@@ -258,7 +257,7 @@ pub struct ClassString<'a> {
 /// e.g. `(...)`, `(?<name>...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct CapturingGroup<'a> {
     pub span: Span,
     /// Group name to be referenced by [`NamedReference`].
@@ -270,7 +269,7 @@ pub struct CapturingGroup<'a> {
 /// e.g. `(?:...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct IgnoreGroup<'a> {
     pub span: Span,
     pub modifiers: Option<Modifiers>,
@@ -281,7 +280,7 @@ pub struct IgnoreGroup<'a> {
 /// e.g. `i` in `(?i:...)`, `-s` in `(?-s:...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Modifiers {
     pub span: Span,
     pub enabling: Option<Modifier>,
@@ -291,7 +290,7 @@ pub struct Modifiers {
 /// Each part of modifier in [`Modifiers`].
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct Modifier {
     pub ignore_case: bool,
     pub multiline: bool,
@@ -302,7 +301,7 @@ pub struct Modifier {
 /// e.g. `\1`, `\2`, `\3`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct IndexedReference {
     pub span: Span,
     pub index: u32,
@@ -312,7 +311,7 @@ pub struct IndexedReference {
 /// e.g. `\k<name>`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq)]
 pub struct NamedReference<'a> {
     pub span: Span,
     pub name: Atom<'a>,
