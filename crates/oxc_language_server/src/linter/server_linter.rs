@@ -24,9 +24,73 @@ pub struct ServerLinter {
 }
 
 impl ServerLinter {
+    pub fn new(root_uri: &Uri, options: &Options) -> Self {
+        let nested_configs = Self::create_nested_configs(root_uri, options);
+        let root_path = root_uri.to_file_path().unwrap();
+        let relative_config_path = options.config_path.clone();
+        let oxlintrc = if relative_config_path.is_some() {
+            let config = root_path.join(relative_config_path.unwrap());
+            if config.try_exists().is_ok_and(|exists| exists) {
+                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                    oxlintrc
+                } else {
+                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    Oxlintrc::default()
+                }
+            } else {
+                warn!(
+                    "Config file not found: {}, fallback to default config",
+                    config.to_string_lossy()
+                );
+                Oxlintrc::default()
+            }
+        } else {
+            Oxlintrc::default()
+        };
+
+        // clone because we are returning it for ignore builder
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
+
+        // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
+        let use_nested_config = options.use_nested_configs();
+
+        let use_cross_module = if use_nested_config {
+            nested_configs.pin().values().any(|config| config.plugins().has_import())
+        } else {
+            config_builder.plugins().has_import()
+        };
+
+        let config_store = config_builder.build().expect("Failed to build config store");
+
+        let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
+
+        let linter = if use_nested_config {
+            let nested_configs = nested_configs.pin();
+            let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<FxHashMap<_, _>>();
+
+            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
+        } else {
+            Linter::new(lint_options, config_store)
+        };
+
+        let isolated_linter = IsolatedLintHandler::new(
+            linter,
+            IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
+        );
+
+        Self {
+            isolated_linter: Arc::new(isolated_linter),
+            gitignore_glob: Self::create_ignore_glob(root_uri, &oxlintrc),
+        }
+    }
+
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
-    pub fn create_nested_configs(
+    fn create_nested_configs(
         root_uri: &Uri,
         options: &Options,
     ) -> ConcurrentHashMap<PathBuf, ConfigStore> {
@@ -113,73 +177,6 @@ impl ServerLinter {
         }
         gitignore_globs.push(builder.build().unwrap());
         gitignore_globs
-    }
-
-    pub fn create_server_linter(
-        root_uri: &Uri,
-        options: &Options,
-        nested_configs: &ConcurrentHashMap<PathBuf, ConfigStore>,
-    ) -> Self {
-        let root_path = root_uri.to_file_path().unwrap();
-        let relative_config_path = options.config_path.clone();
-        let oxlintrc = if relative_config_path.is_some() {
-            let config = root_path.join(relative_config_path.unwrap());
-            if config.try_exists().expect("Could not get fs metadata for config") {
-                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
-                    oxlintrc
-                } else {
-                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
-                    Oxlintrc::default()
-                }
-            } else {
-                warn!(
-                    "Config file not found: {}, fallback to default config",
-                    config.to_string_lossy()
-                );
-                Oxlintrc::default()
-            }
-        } else {
-            Oxlintrc::default()
-        };
-
-        // clone because we are returning it for ignore builder
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
-
-        // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
-        let use_nested_config = options.use_nested_configs();
-
-        let use_cross_module = if use_nested_config {
-            nested_configs.pin().values().any(|config| config.plugins().has_import())
-        } else {
-            config_builder.plugins().has_import()
-        };
-
-        let config_store = config_builder.build().expect("Failed to build config store");
-
-        let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
-
-        let linter = if use_nested_config {
-            let nested_configs = nested_configs.pin();
-            let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect::<FxHashMap<_, _>>();
-
-            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
-        } else {
-            Linter::new(lint_options, config_store)
-        };
-
-        let isolated_linter = IsolatedLintHandler::new(
-            linter,
-            IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
-        );
-
-        Self {
-            isolated_linter: Arc::new(isolated_linter),
-            gitignore_glob: Self::create_ignore_glob(root_uri, &oxlintrc),
-        }
     }
 
     fn is_ignored(&self, uri: &Uri) -> bool {

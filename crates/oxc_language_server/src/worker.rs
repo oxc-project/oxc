@@ -1,16 +1,15 @@
-use std::{path::PathBuf, str::FromStr, vec};
+use std::{str::FromStr, vec};
 
-use log::{debug, info};
-use oxc_linter::{ConfigStore, ConfigStoreBuilder, Oxlintrc};
+use log::debug;
 use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, OnceCell, RwLock};
 use tower_lsp_server::{
     UriExt,
-    lsp_types::{CodeActionOrCommand, Diagnostic, FileChangeType, FileEvent, Range, TextEdit, Uri},
+    lsp_types::{CodeActionOrCommand, Diagnostic, FileEvent, Range, TextEdit, Uri},
 };
 
 use crate::{
-    ConcurrentHashMap, OXC_CONFIG_FILE, Options, Run,
+    ConcurrentHashMap, Options, Run,
     code_actions::{
         apply_all_fix_code_action, apply_fix_code_action, ignore_this_line_code_action,
         ignore_this_rule_code_action,
@@ -23,7 +22,6 @@ pub struct WorkspaceWorker {
     server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: RwLock<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
-    nested_configs: RwLock<ConcurrentHashMap<PathBuf, ConfigStore>>,
 }
 
 impl WorkspaceWorker {
@@ -31,14 +29,12 @@ impl WorkspaceWorker {
         let root_uri_cell = OnceCell::new();
         root_uri_cell.set(root_uri.clone()).unwrap();
 
-        let nested_configs = ServerLinter::create_nested_configs(root_uri, &options);
-        let server_linter = ServerLinter::create_server_linter(root_uri, &options, &nested_configs);
+        let server_linter = ServerLinter::new(root_uri, &options);
         Self {
             root_uri: root_uri_cell,
             server_linter: RwLock::new(server_linter),
             diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
             options: Mutex::new(options),
-            nested_configs: RwLock::const_new(nested_configs),
         }
     }
 
@@ -59,22 +55,9 @@ impl WorkspaceWorker {
         self.diagnostics_report_map.read().await.pin().remove(&uri.to_string());
     }
 
-    async fn refresh_nested_configs(&self) {
-        let options = self.options.lock().await;
-        let nested_configs =
-            ServerLinter::create_nested_configs(self.root_uri.get().unwrap(), &options);
-
-        *self.nested_configs.write().await = nested_configs;
-    }
-
     async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
-        let nested_configs = self.nested_configs.read().await;
-        let server_linter = ServerLinter::create_server_linter(
-            self.root_uri.get().unwrap(),
-            &options,
-            &nested_configs,
-        );
+        let server_linter = ServerLinter::new(self.root_uri.get().unwrap(), &options);
 
         *self.server_linter.write().await = server_linter;
     }
@@ -224,48 +207,8 @@ impl WorkspaceWorker {
 
     pub async fn did_change_watched_files(
         &self,
-        file_event: &FileEvent,
+        _file_event: &FileEvent,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
-        if self.options.lock().await.use_nested_configs() {
-            let nested_configs = self.nested_configs.read().await;
-            let nested_configs = nested_configs.pin();
-            let Some(file_path) = file_event.uri.to_file_path() else {
-                info!("Unable to convert {:?} to a file path", file_event.uri);
-                return None;
-            };
-            let Some(file_name) = file_path.file_name() else {
-                info!("Unable to retrieve file name from {file_path:?}");
-                return None;
-            };
-
-            if file_name != OXC_CONFIG_FILE {
-                return None;
-            }
-
-            let Some(dir_path) = file_path.parent() else {
-                info!("Unable to retrieve parent from {file_path:?}");
-                return None;
-            };
-
-            // spellchecker:off -- "typ" is accurate
-            if file_event.typ == FileChangeType::CREATED
-                || file_event.typ == FileChangeType::CHANGED
-            {
-                // spellchecker:on
-                let oxlintrc =
-                    Oxlintrc::from_file(&file_path).expect("Failed to parse config file");
-                let config_store_builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
-                    .expect("Failed to create config store builder");
-                let config_store =
-                    config_store_builder.build().expect("Failed to build config store");
-                nested_configs.insert(dir_path.to_path_buf(), config_store);
-            // spellchecker:off -- "typ" is accurate
-            } else if file_event.typ == FileChangeType::DELETED {
-                // spellchecker:on
-                nested_configs.remove(&dir_path.to_path_buf());
-            }
-        }
-
         self.refresh_server_linter().await;
         Some(self.revalidate_diagnostics().await)
     }
@@ -287,10 +230,6 @@ impl WorkspaceWorker {
         );
 
         *self.options.lock().await = changed_options.clone();
-
-        if changed_options.use_nested_configs() != current_option.use_nested_configs() {
-            self.refresh_nested_configs().await;
-        }
 
         if Self::needs_linter_restart(current_option, &changed_options) {
             self.refresh_server_linter().await;
