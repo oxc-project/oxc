@@ -6,11 +6,11 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
 
-use crate::common::helper_loader::Helper;
+use crate::{common::helper_loader::Helper, utils::ast_builder::create_assignment};
 
 use super::{
     ClassProperties,
-    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
+    utils::{create_underscore_ident_name, create_variable_declaration},
 };
 
 // Instance properties

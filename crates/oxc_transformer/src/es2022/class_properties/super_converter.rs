@@ -6,9 +6,12 @@ use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::{TraverseCtx, ast_operations::get_var_name_from_node};
 
-use crate::{Helper, utils::ast_builder::create_prototype_member};
+use crate::{
+    Helper,
+    utils::ast_builder::{create_assignment, create_prototype_member},
+};
 
-use super::{ClassProperties, utils::create_assignment};
+use super::ClassProperties;
 
 #[derive(Debug)]
 pub(super) enum ClassPropertiesSuperConverterMode {

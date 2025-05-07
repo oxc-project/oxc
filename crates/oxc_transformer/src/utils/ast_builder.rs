@@ -1,8 +1,8 @@
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{NONE, ast::*};
-use oxc_semantic::{ScopeFlags, ScopeId};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
@@ -90,4 +90,17 @@ pub fn create_property_access<'a>(
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+}
+/// Create assignment to a binding.
+pub fn create_assignment<'a>(
+    binding: &BoundIdentifier<'a>,
+    value: Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    ctx.ast.expression_assignment(
+        SPAN,
+        AssignmentOperator::Assign,
+        binding.create_target(ReferenceFlags::Write, ctx),
+        value,
+    )
 }

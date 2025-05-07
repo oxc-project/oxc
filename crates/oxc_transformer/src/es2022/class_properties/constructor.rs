@@ -114,10 +114,9 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
-use super::{
-    ClassProperties,
-    utils::{create_assignment, exprs_into_stmts},
-};
+use crate::utils::ast_builder::create_assignment;
+
+use super::{ClassProperties, utils::exprs_into_stmts};
 
 /// Location to insert instance property initializers
 pub(super) enum InstanceInitsInsertLocation<'a> {

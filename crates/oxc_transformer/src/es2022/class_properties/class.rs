@@ -13,12 +13,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
-use crate::{TransformCtx, common::helper_loader::Helper};
+use crate::{TransformCtx, common::helper_loader::Helper, utils::ast_builder::create_assignment};
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
     constructor::InstanceInitsInsertLocation,
-    utils::{create_assignment, create_variable_declaration, exprs_into_stmts},
+    utils::{create_variable_declaration, exprs_into_stmts},
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside

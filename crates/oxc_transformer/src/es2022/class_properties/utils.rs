@@ -5,22 +5,7 @@ use std::path::PathBuf;
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
-
-/// Create assignment to a binding.
-pub(super) fn create_assignment<'a>(
-    binding: &BoundIdentifier<'a>,
-    value: Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    ctx.ast.expression_assignment(
-        SPAN,
-        AssignmentOperator::Assign,
-        binding.create_target(ReferenceFlags::Write, ctx),
-        value,
-    )
-}
 
 /// Create `var` declaration.
 pub(super) fn create_variable_declaration<'a>(
@@ -40,13 +25,12 @@ pub(super) fn create_variable_declaration<'a>(
 }
 
 /// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.
-pub(super) fn exprs_into_stmts<'a, 'c, E>(
+pub(super) fn exprs_into_stmts<'a, E>(
     exprs: E,
-    ctx: &'c TraverseCtx<'a>,
-) -> impl Iterator<Item = Statement<'a>> + 'c
+    ctx: &TraverseCtx<'a>,
+) -> impl Iterator<Item = Statement<'a>>
 where
     E: IntoIterator<Item = Expression<'a>>,
-    <E as IntoIterator>::IntoIter: 'c,
 {
     exprs.into_iter().map(|expr| ctx.ast.statement_expression(SPAN, expr))
 }
