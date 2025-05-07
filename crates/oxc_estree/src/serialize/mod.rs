@@ -20,7 +20,7 @@ use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
-pub use concat::{Concat2, ConcatElement};
+pub use concat::{Concat2, Concat3, ConcatElement};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{FlatStructSerializer, StructSerializer};

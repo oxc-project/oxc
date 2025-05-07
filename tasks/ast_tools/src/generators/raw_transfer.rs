@@ -305,40 +305,62 @@ impl<'s> StructDeserializerGenerator<'s> {
             return;
         }
 
-        let value_fn = field_type.deser_name(self.schema);
-        let pos = pos_offset(field_offset);
-        let mut value = format!("{value_fn}({pos})");
+        // Get fields to concatenate
+        // (if fields marked `#[estree(prepend_to)]` or `#[estree(append_to)]` targeting this field)
+        let mut concat_fields = [field; 3];
+        let mut concat_field_count = 1;
+        if let Some(prepend_field_index) = field.estree.prepend_field_index {
+            concat_fields[0] = &struct_def.fields[prepend_field_index];
+            concat_field_count = 2;
+        }
+        if let Some(append_field_index) = field.estree.append_field_index {
+            concat_fields[concat_field_count] = &struct_def.fields[append_field_index];
+            concat_field_count += 1;
+        }
 
-        if let Some(appended_field_index) = field.estree.append_field_index {
-            self.preamble.push(format!("const {field_name} = {value};"));
-
-            let appended_field = &struct_def.fields[appended_field_index];
-            let appended_field_type = appended_field.type_def(self.schema);
-            match appended_field_type {
-                TypeDef::Vec(vec_def) => {
-                    let appended_field_fn = vec_def.deser_name(self.schema);
-                    let appended_pos = pos_offset(struct_offset + appended_field.offset_64());
-                    self.preamble.push(format!(
-                        "{field_name}.push(...{appended_field_fn}({appended_pos}));"
-                    ));
+        let value = if concat_field_count > 1 {
+            // Concatenate fields
+            for (index, &field) in concat_fields[..concat_field_count].iter().enumerate() {
+                let field_pos = pos_offset(struct_offset + field.offset_64());
+                match field.type_def(self.schema) {
+                    TypeDef::Vec(vec_def) => {
+                        let field_fn = vec_def.deser_name(self.schema);
+                        if index == 0 {
+                            self.preamble
+                                .push(format!("const {field_name} = {field_fn}({field_pos});"));
+                        } else {
+                            self.preamble
+                                .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
+                        }
+                    }
+                    TypeDef::Option(option_def) => {
+                        let option_field_name = get_struct_field_name(field).to_string();
+                        let field_fn = option_def.deser_name(self.schema);
+                        self.preamble
+                            .push(format!("const {option_field_name} = {field_fn}({field_pos});"));
+                        if index == 0 {
+                            self.preamble.push(format!(
+                                "const {field_name} = {option_field_name} === null ? [] : [{option_field_name}];"
+                            ));
+                        } else {
+                            self.preamble.push(format!(
+                                "if ({option_field_name} !== null) {field_name}.push({option_field_name});"
+                            ));
+                        }
+                    }
+                    _ => panic!("Cannot append: `{}::{}`", struct_def.name(), field.name()),
                 }
-                TypeDef::Option(option_def) => {
-                    let appended_field_name = get_struct_field_name(appended_field).to_string();
-                    let appended_field_fn = option_def.deser_name(self.schema);
-                    let appended_pos = pos_offset(struct_offset + appended_field.offset_64());
-                    self.preamble.push(format!("
-                        const {appended_field_name} = {appended_field_fn}({appended_pos});
-                        if ({appended_field_name} !== null) {field_name}.push({appended_field_name});
-                    "));
-                }
-                _ => panic!("Cannot append: `{}::{}`", struct_def.name(), field.name()),
             }
 
-            value.clone_from(&field_name);
+            field_name.clone()
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
-            value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        }
+            self.apply_converter(converter, struct_def, struct_offset).unwrap()
+        } else {
+            let value_fn = field_type.deser_name(self.schema);
+            let pos = pos_offset(field_offset);
+            format!("{value_fn}({pos})")
+        };
 
         self.fields.insert(field_name, value);
     }
