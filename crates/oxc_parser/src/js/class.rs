@@ -471,7 +471,10 @@ impl<'a> ParserImpl<'a> {
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         let decorators = self.consume_decorators();
-        let value = if self.eat(Kind::Eq) { Some(self.parse_expr()) } else { None };
+        // Initializer[+In, ?Yield, ?Await]opt
+        let value = self
+            .eat(Kind::Eq)
+            .then(|| self.context(Context::In, Context::Yield | Context::Await, Self::parse_expr));
         self.asi();
 
         let r#type = if r#abstract {

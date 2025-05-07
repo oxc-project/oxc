@@ -1,9 +1,9 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2306/2322 (99.31%)
-Positive Passed: 2285/2322 (98.41%)
-Negative Passed: 1557/1673 (93.07%)
+AST Parsed     : 2309/2322 (99.44%)
+Positive Passed: 2288/2322 (98.54%)
+Negative Passed: 1559/1673 (93.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -34,13 +34,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-decorators/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
 
@@ -254,15 +250,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:33]
- 1 │ async( x = class { #x = await }) => {}
-   ·                                 ▲
-   ╰────
-  help: Try insert a semicolon here
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
   × 'arguments' is not allowed in class field initializer
@@ -272,15 +259,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·      ─────────
  4 │   }
    ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:32]
- 1 │ async( x = class { x = await }) => {}
-   ·                                ▲
-   ╰────
-  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
@@ -355,15 +333,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  10 │ }
     ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js:3:42]
- 2 │ 
- 3 │ C = class { static { class D { x = await } } };
-   ·                                          ─
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 
@@ -8523,6 +8492,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   }
    ╰────
 
+  × The keyword 'yield' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js:4:9]
+ 3 │     // here yield is an identifier reference
+ 4 │     p = yield + 42;
+   ·         ─────
+ 5 │   }
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:3:29]
  2 │ // await is not allowed in async arrow
@@ -8723,6 +8700,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-arrow/input.js:1:7]
  1 │ () => await 0;
    ·       ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js:2:7]
+ 1 │ export class C {
+ 2 │   p = await 0;
+   ·       ─────
+ 3 │ }
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules

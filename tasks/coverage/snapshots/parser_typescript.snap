@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6523/6531 (99.88%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1309/5754 (22.75%)
+Negative Passed: 1314/5754 (22.84%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -325,8 +325,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autolift4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/avoidListingPropertiesForTypesWithOnlyCallOrConstructSignatures.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExpressionInSyncFunction.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitInClassInAsyncFunction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitedType.ts
 
@@ -4612,8 +4610,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
@@ -5836,15 +5832,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yield
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck31.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck48.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck50.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck57.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck58.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck6.ts
 
@@ -10058,6 +10048,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │         this.bar: any;
    ╰────
   help: Try insert a semicolon here
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInClassInAsyncFunction.ts:9:15]
+  8 │     return new class {
+  9 │         baz = await bar();
+    ·               ─────
+ 10 │     };
+    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:4:7]
@@ -18654,6 +18652,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  47 │ }
     ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:3:21]
+ 2 │     class C {
+ 3 │         [await x] = await x;
+   ·                     ─────
+ 4 │         static [await x] = await x;
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:4:28]
+ 3 │         [await x] = await x;
+ 4 │         static [await x] = await x;
+   ·                            ─────
+ 5 │ 
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:6:21]
+ 5 │ 
+ 6 │         [yield 1] = yield 2;
+   ·                     ─────
+ 7 │         static [yield 3] = yield 4;
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:7:28]
+ 6 │         [yield 1] = yield 2;
+ 7 │         static [yield 3] = yield 4;
+   ·                            ─────
+ 8 │     }
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:11:21]
+ 10 │     return class {
+ 11 │         [await x] = await x;
+    ·                     ─────
+ 12 │         static [await x] = await x;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:12:28]
+ 11 │         [await x] = await x;
+ 12 │         static [await x] = await x;
+    ·                            ─────
+ 13 │ 
+    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:14:21]
+ 13 │ 
+ 14 │         [yield 1] = yield 2;
+    ·                     ─────
+ 15 │         static [yield 3] = yield 4;
+    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:15:28]
+ 14 │         [yield 1] = yield 2;
+ 15 │         static [yield 3] = yield 4;
+    ·                            ─────
+ 16 │     }
+    ╰────
+
   × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
  2 │    abstract get a();
@@ -19002,12 +19064,36 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  20 │   }
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:25:16]
- 24 │       await = 1; // legal
- 25 │       x = await; // legal (initializers have an implicit function boundary)
-    ·                ─
- 26 │     };
+  × Cannot use `await` as an identifier in an async context
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:32:12]
+ 31 │   static {
+ 32 │     (class await { }); // legal, 'await' in class expression name not bound inside of static block
+    ·            ─────
+ 33 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
+ 3 │   static {
+ 4 │     let await: any; // illegal, cannot declare a new binding for await
+   ·         ──────────
+ 5 │   }
+   ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:7:11]
+ 6 │   static {
+ 7 │     let { await } = {} as any; // illegal, cannot declare a new binding for await
+   ·           ─────
+ 8 │   }
+   ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:13:9]
+ 12 │   static {
+ 13 │     let await; // illegal, cannot declare a new binding for await
+    ·         ─────
+ 14 │   }
     ╰────
 
   × Unexpected token
@@ -22034,6 +22120,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ var s: string;
  2 │ var f: () => number = () => yield s;
    ·                             ─────
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts:7:13]
+ 6 │     class C {
+ 7 │         x = yield 0;
+   ·             ─────
+ 8 │     }
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck57.ts:3:13]
+ 2 │     class C {
+ 3 │         x = yield 0;
+   ·             ─────
+ 4 │     };
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck58.ts:3:20]
+ 2 │     class C {
+ 3 │         static x = yield 0;
+   ·                    ─────
+ 4 │     };
    ╰────
 
   × Cannot assign to this expression
