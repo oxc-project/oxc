@@ -2,10 +2,338 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 6481/6481 (100.00%)
-Positive Passed: 6478/6481 (99.95%)
+Positive Passed: 6314/6481 (97.42%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularConstrainedMappedTypeNoCrash.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularContextualMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularMappedTypeConstraint.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/circularlySimplifyingConditionalTypesNoCrash.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/classReferencedInContextualParameterWithinItsOwnBaseExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeContextualTypeSimplificationsSuceeds.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constraintOfRecursivelyMappedTypeWithConditionalIsResolvable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualComputedNonBindablePropertyType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualPropertyOfGenericMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypeSelfReferencing.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextualTypesNegatedTypeLikeConstraintInGenericMappedType3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedSymbolNamedProperties.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/contravariantOnlyInferenceFromAnnotatedFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/correlatedUnions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationAssertionNodeNotReusedWhenTypeNotEquivalent1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitArrowFunctionNoRenaming.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExactOptionalPropertyTypesNodeNotReused.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInlinedDistributiveConditional.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypeDistributivityPreservesConstraints.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePropertyFromNumericStringKey.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedAnonymousMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitQualifiedAliasTypeArgument.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationQuotedMembers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConstraints.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/definiteAssignmentOfDestructuredVariable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deleteExpressionMustBeOptional.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deleteExpressionMustBeOptional_exactOptionalPropertyTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuredMaappedTypeIsNotImplicitlyAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsAndConditionalInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericIndexedAccessMethodIntersectionCanBeAccessed.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericTupleWithSimplifiableElements.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/higherOrderMappedIndexLookupInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeNesting.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeWithNonHomomorphicInstantiationSpreadable1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importPropertyFromMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexedAccessNormalization.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexedAccessRetainsIndexSignature.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexingTypesWithNever.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferConditionalConstraintMappedMember.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferRestArgumentsMappedTuple.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferTypeConstraintInstantiationCircularity.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferenceAndSelfReferentialConstraint.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferenceUnionOfObjectsMappedContextualType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inlineMappedTypeModifierDeclarationEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/intersectionConstraintReduction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/intersectionType_useDefineForClassFields.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsWithDefaultAsNamespaceLikeMerge.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileImportPreservedWhenUsed.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromConfigPickedOverGlobalOne.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/localTypeParameterInferencePriority.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedArrayTupleIntersections.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedToToIndexSignatureInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeAndIndexSignatureRelation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeCircularReferenceInAccessor.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeContextualTypesApplied.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesHomomorphism.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesInlineForm.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceAliasSubstitution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceCircularity.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceToMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeMultiInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeNestedGenericInstantiation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeOverArrayWithBareAnyRestCanBeUsedAsRestParam1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeParameterConstraint.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeRecursiveInference2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeTupleConstraintAssignability.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithAsClauseAndLateBoundProperty2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithNameClauseAppliedToArrayType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mixinOverMappedTypeNoCrash.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeofInSwitch.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedHomomorphicMappedTypesWithArrayConstraint1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/neverAsDiscriminantType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nonNullMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nonNullableWithNullableGenericIndexedAccessArg.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/numericEnumMappedType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectLiteralEnumPropertyNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/objectRestBindingContextualInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/optionalTupleElementsAndUndefined.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeAliasWithSpreadConditionalReturnNotCircular.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/restParamUsingMappedTypeOverUnionConstraint.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/restTypeRetainsMappyness.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedContravariantInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedIntersectionInference1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedIntersectionInference2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTupleContext.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeAssignableToIndex.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeContextualTypesPerElementOfTupleConstraint.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeDeepDeclarationEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypePrimitiveConstraintProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeRecursiveInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reverseMappedUnionInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/specedNoStackBlown.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/spuriousCircularityOnTypeImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/substitutionTypeNoMergeOfAssignableType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/substitutionTypesInIndexedAccessTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/templateLiteralIntersection4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/twiceNestedKeyofIndexInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowByMutableUntypedField.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowByUntypedField.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty11.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeParameterExtendsPrimitive.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typePredicateFreshLiteralWidening.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeVariableConstraintIntersections.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/varianceProblingAndZeroOrderIndexSignatureRelationsAlign.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/varianceProblingAndZeroOrderIndexSignatureRelationsAlign2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/verbatim-declarations-parameters.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariablesFromNestedPatterns.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/controlFlow/typeGuardsTypeParameters.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/assignmentGenericLookupTypeNarrowing.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersection.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeInference2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionsAndEmptyObjects.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndForIn.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/literal/numericStringLiteralTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/isomorphicMappedTypeInference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeIndexSignatureModifiers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeOverlappingStringEnumKeys.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesArraysTuples.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesGenericTuples.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInObjectLiterals2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/partiallyNamedTuples.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersReverseMappedTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceLowerPriorityThanReturn.ts
 
