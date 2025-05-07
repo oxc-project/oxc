@@ -854,12 +854,7 @@ export interface RegExpLiteral extends Span {
   type: 'Literal';
   value: RegExp | null;
   raw: string | null;
-  regex: RegExp;
-}
-
-export interface RegExp {
-  pattern: string;
-  flags: string;
+  regex: { pattern: string; flags: string };
 }
 
 export interface JSXElement extends Span {

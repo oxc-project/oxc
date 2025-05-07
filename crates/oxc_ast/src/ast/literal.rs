@@ -146,7 +146,7 @@ pub struct RegExpLiteral<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
-#[estree(no_type)]
+#[estree(no_type, ts_alias = "{ pattern: string; flags: string; }")]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
     pub pattern: RegExpPattern<'a>,
