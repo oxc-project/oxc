@@ -262,9 +262,9 @@ impl Oxc {
                 );
             }
 
-            program.to_pretty_estree_js_json()
+            program.to_pretty_estree_js_json_with_fixes()
         } else {
-            program.to_pretty_estree_ts_json()
+            program.to_pretty_estree_ts_json_with_fixes()
         };
         self.comments = comments;
 
