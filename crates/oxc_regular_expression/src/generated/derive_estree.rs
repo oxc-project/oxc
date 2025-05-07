@@ -310,7 +310,6 @@ impl ESTree for Modifiers {
 impl ESTree for Modifier {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("Modifier"));
         state.serialize_field("ignoreCase", &self.ignore_case);
         state.serialize_field("multiline", &self.multiline);
         state.serialize_field("sticky", &self.sticky);
