@@ -7,6 +7,7 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod consistent_type_specifier_style;
     pub mod exports_last;
     pub mod group_exports;
     pub mod no_absolute_path;
@@ -705,6 +706,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::valid_typeof,
     eslint::vars_on_top,
     eslint::yoda,
+    import::consistent_type_specifier_style,
     import::default,
     import::export,
     import::exports_last,
