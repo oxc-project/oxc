@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, Span};
+use oxc_span::{Atom, ContentEq, Span};
 
 /// The root of the `PatternParser` result.
 #[ast]
@@ -50,26 +50,6 @@ pub enum Term<'a> {
     IgnoreGroup(Box<'a, IgnoreGroup<'a>>) = 9,
     IndexedReference(Box<'a, IndexedReference>) = 10,
     NamedReference(Box<'a, NamedReference<'a>>) = 11,
-}
-
-impl GetSpan for Term<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        match self {
-            Term::BoundaryAssertion(it) => it.span,
-            Term::LookAroundAssertion(it) => it.span,
-            Term::Quantifier(it) => it.span,
-            Term::Character(it) => it.span,
-            Term::Dot(it) => it.span,
-            Term::CharacterClassEscape(it) => it.span,
-            Term::UnicodePropertyEscape(it) => it.span,
-            Term::CharacterClass(it) => it.span,
-            Term::CapturingGroup(it) => it.span,
-            Term::IgnoreGroup(it) => it.span,
-            Term::IndexedReference(it) => it.span,
-            Term::NamedReference(it) => it.span,
-        }
-    }
 }
 
 /// Simple form of assertion.
@@ -239,20 +219,6 @@ pub enum CharacterClassContents<'a> {
     NestedCharacterClass(Box<'a, CharacterClass<'a>>) = 4,
     /// `UnicodeSetsMode` only
     ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>) = 5,
-}
-
-impl GetSpan for CharacterClassContents<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        match self {
-            CharacterClassContents::CharacterClassRange(it) => it.span,
-            CharacterClassContents::CharacterClassEscape(it) => it.span,
-            CharacterClassContents::UnicodePropertyEscape(it) => it.span,
-            CharacterClassContents::Character(it) => it.span,
-            CharacterClassContents::NestedCharacterClass(it) => it.span,
-            CharacterClassContents::ClassStringDisjunction(it) => it.span,
-        }
-    }
 }
 
 /// `-` separated range of characters.
