@@ -4917,22 +4917,16 @@ impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
     type Cloned = RegExpPattern<'new_alloc>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Raw(it) => RegExpPattern::Raw(CloneIn::clone_in(it, allocator)),
-            Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
-            Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
+        RegExpPattern {
+            text: CloneIn::clone_in(&self.text, allocator),
+            pattern: CloneIn::clone_in(&self.pattern, allocator),
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Raw(it) => RegExpPattern::Raw(CloneIn::clone_in_with_semantic_ids(it, allocator)),
-            Self::Invalid(it) => {
-                RegExpPattern::Invalid(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Pattern(it) => {
-                RegExpPattern::Pattern(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
+        RegExpPattern {
+            text: CloneIn::clone_in_with_semantic_ids(&self.text, allocator),
+            pattern: CloneIn::clone_in_with_semantic_ids(&self.pattern, allocator),
         }
     }
 }

@@ -197,7 +197,7 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
     fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {
         walk::walk_reg_exp_literal(self, literal);
 
-        let Some(pattern) = literal.regex.pattern.as_pattern() else {
+        let Some(pattern) = &literal.regex.pattern.pattern else {
             return;
         };
         let printed1 = pattern.to_string();

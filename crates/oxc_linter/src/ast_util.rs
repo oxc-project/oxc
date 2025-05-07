@@ -786,9 +786,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
     }
 
     match key {
-        PropertyKey::RegExpLiteral(regex) => {
-            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
-        }
+        PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
         PropertyKey::TemplateLiteral(template) => {
             if template.expressions.is_empty() && template.quasis.len() == 1 {

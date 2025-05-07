@@ -1973,7 +1973,7 @@ impl ESTree for RegExpLiteral<'_> {
 impl ESTree for RegExp<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("pattern", &self.pattern);
+        state.serialize_field("pattern", &self.pattern.text);
         state.serialize_field("flags", &self.flags);
         state.end();
     }
@@ -1981,7 +1981,9 @@ impl ESTree for RegExp<'_> {
 
 impl ESTree for RegExpPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::RegExpPatternConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("pattern", &self.text);
+        state.end();
     }
 }
 

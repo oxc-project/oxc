@@ -355,27 +355,18 @@ impl<'a> ParserImpl<'a> {
 
         // Parse pattern if options is enabled and also flags are valid
         #[cfg(feature = "regular_expression")]
-        let pattern = {
-            (self.options.parse_regular_expression && !flags_error)
-                .then_some(())
-                .map(|()| {
-                    self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
-                })
-                .map_or_else(
-                    || RegExpPattern::Raw(pattern_text),
-                    |pat| {
-                        pat.map_or_else(
-                            || RegExpPattern::Invalid(pattern_text),
-                            RegExpPattern::Pattern,
-                        )
-                    },
-                )
+        let pattern = if self.options.parse_regular_expression && !flags_error {
+            self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
+        } else {
+            None
         };
         #[cfg(not(feature = "regular_expression"))]
         let pattern = {
-            let _ = (flags_start, flags_text, flags_error);
-            RegExpPattern::Raw(pattern_text)
+            let _ = (flags_text, flags_error);
+            None
         };
+
+        let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
 
         self.ast.reg_exp_literal(
             self.end_span(span),

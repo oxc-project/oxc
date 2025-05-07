@@ -77,10 +77,10 @@ impl Rule for NoUselessEscape {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(literal)
-                if literal.regex.pattern.len() + literal.regex.flags.iter().count()
+                if literal.regex.pattern.text.len() + literal.regex.flags.iter().count()
                     != literal.span.size() as usize =>
             {
-                if let Some(pattern) = literal.regex.pattern.as_pattern() {
+                if let Some(pattern) = &literal.regex.pattern.pattern {
                     let mut finder = UselessEscapeFinder {
                         useless_escape_spans: vec![],
                         character_classes: vec![],

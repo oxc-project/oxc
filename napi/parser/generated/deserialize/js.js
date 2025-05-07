@@ -1109,8 +1109,14 @@ function deserializeRegExpLiteral(pos) {
 
 function deserializeRegExp(pos) {
   return {
-    pattern: deserializeRegExpPattern(pos),
+    pattern: deserializeStr(pos),
     flags: deserializeRegExpFlags(pos + 24),
+  };
+}
+
+function deserializeRegExpPattern(pos) {
+  return {
+    pattern: deserializeStr(pos),
   };
 }
 
@@ -3419,19 +3425,6 @@ function deserializeModuleExportName(pos) {
   }
 }
 
-function deserializeRegExpPattern(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return deserializeStr(pos + 8);
-    case 1:
-      return deserializeStr(pos + 8);
-    case 2:
-      return deserializeBoxPattern(pos + 8);
-    default:
-      throw new Error(`Unexpected discriminant ${uint8[pos]} for RegExpPattern`);
-  }
-}
-
 function deserializeJSXElementName(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -5206,6 +5199,11 @@ function deserializeF64(pos) {
 
 function deserializeBoxPattern(pos) {
   return deserializePattern(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxPattern(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxPattern(pos);
 }
 
 function deserializeU8(pos) {

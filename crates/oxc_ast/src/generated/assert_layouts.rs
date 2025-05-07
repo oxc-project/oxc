@@ -796,6 +796,8 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 24);
     assert!(align_of::<RegExpPattern>() == 8);
+    assert!(offset_of!(RegExpPattern, text) == 0);
+    assert!(offset_of!(RegExpPattern, pattern) == 16);
 
     assert!(size_of::<RegExpFlags>() == 1);
     assert!(align_of::<RegExpFlags>() == 1);
@@ -2189,6 +2191,8 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12);
     assert!(align_of::<RegExpPattern>() == 4);
+    assert!(offset_of!(RegExpPattern, text) == 0);
+    assert!(offset_of!(RegExpPattern, pattern) == 8);
 
     assert!(size_of::<RegExpFlags>() == 1);
     assert!(align_of::<RegExpFlags>() == 1);

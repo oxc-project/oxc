@@ -1496,6 +1496,12 @@ impl ContentEq for RegExp<'_> {
     }
 }
 
+impl ContentEq for RegExpPattern<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.text, &other.text)
+    }
+}
+
 impl ContentEq for JSXElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_element, &other.opening_element)

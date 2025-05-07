@@ -80,10 +80,7 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         };
 
-        let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
-        let pattern_text = pattern_text.as_ref();
-
-        let Some(err_kind) = check_regex(regex, pattern_text) else {
+        let Some(err_kind) = check_regex(regex) else {
             return;
         };
 
@@ -149,7 +146,8 @@ enum ErrorKind {
     EndsWith(Vec<u32>),
 }
 
-fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
+fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
+    let pattern_text = regexp_lit.regex.pattern.text.as_str();
     if regexp_lit.regex.flags.intersects(RegExpFlags::M)
         || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
             && is_useless_case_sensitive_regex_flag(pattern_text))
@@ -157,7 +155,8 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
         return None;
     }
 
-    let alternatives = regexp_lit.regex.pattern.as_pattern().map(|pattern| &pattern.body.body)?;
+    let alternatives =
+        regexp_lit.regex.pattern.pattern.as_ref().map(|pattern| &pattern.body.body)?;
     // Must not be something with multiple alternatives like `/^a|b/`
     if alternatives.len() > 1 {
         return None;

@@ -79,7 +79,7 @@ impl Rule for PreferStringReplaceAll {
         let pattern = &call_expr.arguments[0];
         match method_name_str {
             "replaceAll" => {
-                if let Some(k) = get_pattern_replacement(pattern, ctx) {
+                if let Some(k) = get_pattern_replacement(pattern) {
                     ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
                         // foo.replaceAll(/hello world/g, bar) => foo.replaceAll("hello world", bar)
                         fixer.replace(pattern.span(), format!("{k:?}"))
@@ -115,10 +115,7 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
     false
 }
 
-fn get_pattern_replacement<'a>(
-    expr: &'a Argument<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<CompactStr> {
+fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
     let Argument::RegExpLiteral(reg_exp_literal) = expr else {
         return None;
     };
@@ -130,7 +127,8 @@ fn get_pattern_replacement<'a>(
     let pattern_terms = reg_exp_literal
         .regex
         .pattern
-        .as_pattern()
+        .pattern
+        .as_deref()
         .filter(|pattern| pattern.body.body.len() == 1)
         .and_then(|pattern| pattern.body.body.first().map(|it| &it.body))?;
     let is_simple_string = pattern_terms.iter().all(|term| matches!(term, Term::Character(_)));
@@ -139,10 +137,7 @@ fn get_pattern_replacement<'a>(
         return None;
     }
 
-    let pattern_text = reg_exp_literal.regex.pattern.source_text(ctx.source_text());
-    let pattern_text = pattern_text.as_ref();
-
-    Some(CompactStr::new(pattern_text))
+    Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str()))
 }
 
 #[test]

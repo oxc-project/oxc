@@ -471,16 +471,6 @@ impl ESTree for RegExpLiteralValue<'_, '_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "string")]
-pub struct RegExpPatternConverter<'a, 'b>(pub &'b RegExpPattern<'a>);
-
-impl ESTree for RegExpPatternConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.to_string().serialize(serializer);
-    }
-}
-
-#[ast_meta]
 #[estree(
     ts_type = "string",
     raw_deser = "

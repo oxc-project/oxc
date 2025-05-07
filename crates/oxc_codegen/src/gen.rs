@@ -1,7 +1,7 @@
-use std::borrow::Cow;
 use std::ops::Not;
 
 use cow_utils::CowUtils;
+
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
@@ -1353,19 +1353,21 @@ impl GenExpr for BigIntLiteral<'_> {
 impl Gen for RegExpLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
-        let last = p.last_byte();
-        let pattern_text = p.source_text.map_or_else(
-            || Cow::Owned(self.regex.pattern.to_string()),
-            |src| self.regex.pattern.source_text(src),
-        );
         // Avoid forming a single-line comment or "</script" sequence
+        let last = p.last_byte();
         if last == Some(b'/')
-            || (last == Some(b'<') && pattern_text.cow_to_ascii_lowercase().starts_with("script"))
+            || (last == Some(b'<')
+                && self
+                    .regex
+                    .pattern
+                    .text
+                    .get(..6)
+                    .is_some_and(|first_six| first_six.cow_to_ascii_lowercase() == "script"))
         {
             p.print_hard_space();
         }
         p.print_ascii_byte(b'/');
-        p.print_str(pattern_text.as_ref());
+        p.print_str(self.regex.pattern.text.as_str());
         p.print_ascii_byte(b'/');
         p.print_str(self.regex.flags.to_inline_string().as_str());
         p.prev_reg_exp_end = p.code().len();

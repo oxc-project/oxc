@@ -119,9 +119,9 @@ impl SourceCleaner {
 
 impl<'a> Visit<'a> for SourceCleaner {
     fn visit_reg_exp_literal(&mut self, regexp: &RegExpLiteral<'a>) {
-        let RegExpPattern::Raw(pattern) = regexp.regex.pattern else { unreachable!() };
-        let span = Span::sized(regexp.span.start, u32::try_from(pattern.len()).unwrap() + 2);
-        let text = convert_to_string(pattern);
+        let pattern_text = regexp.regex.pattern.text.as_str();
+        let span = Span::sized(regexp.span.start, u32::try_from(pattern_text.len()).unwrap() + 2);
+        let text = convert_to_string(pattern_text);
         self.replace(span, text);
     }
 

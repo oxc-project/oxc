@@ -12,7 +12,7 @@ where
 {
     match node.kind() {
         AstKind::RegExpLiteral(reg) => {
-            if let Some(pat) = reg.regex.pattern.as_pattern() {
+            if let Some(pat) = &reg.regex.pattern.pattern {
                 cb(pat, reg.span);
             }
         }

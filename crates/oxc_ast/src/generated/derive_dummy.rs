@@ -1635,7 +1635,7 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Raw(Dummy::dummy(allocator))
+        Self { text: Dummy::dummy(allocator), pattern: Dummy::dummy(allocator) }
     }
 }
 
