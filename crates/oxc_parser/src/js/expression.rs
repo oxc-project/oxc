@@ -1040,10 +1040,11 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let lhs_span = self.start_span();
 
+        // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             let left = self.parse_private_identifier();
             self.expect(Kind::In);
-            let right = self.parse_binary_expression_or_higher(Precedence::Lowest);
+            let right = self.parse_binary_expression_or_higher(Precedence::Compare);
             if let Expression::PrivateInExpression(private_in_expr) = right {
                 let error = diagnostics::private_in_private(private_in_expr.span);
                 return self.fatal_error(error);

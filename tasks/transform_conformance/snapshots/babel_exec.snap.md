@@ -420,29 +420,20 @@ AssertionError: expected [Function] to throw error including 'right-hand side of
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
 AssertionError: expected true to be false // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js:29:15
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js
 ReferenceError: transformAsync is not defined
