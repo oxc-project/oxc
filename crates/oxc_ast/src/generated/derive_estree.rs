@@ -3166,7 +3166,7 @@ impl ESTree for TSMappedType<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("nameType", &self.name_type);
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("optional", &self.optional);
+        state.serialize_field("optional", &crate::serialize::TSMappedTypeOptional(self));
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("key", &crate::serialize::TSMappedTypeKey(self));
         state.serialize_field("constraint", &crate::serialize::TSMappedTypeConstraint(self));

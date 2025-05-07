@@ -1375,7 +1375,7 @@ export interface TSMappedType extends Span {
   type: 'TSMappedType';
   nameType: TSType | null;
   typeAnnotation: TSType | null;
-  optional: TSMappedTypeModifierOperator | null;
+  optional: TSMappedTypeModifierOperator | false;
   readonly: TSMappedTypeModifierOperator | null;
   key: TSTypeParameter['name'];
   constraint: TSTypeParameter['constraint'];

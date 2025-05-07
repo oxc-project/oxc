@@ -1286,6 +1286,30 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     }
 }
 
+/// Serializer for `optional` field of `TSMappedType`.
+///
+/// `None` is serialized as `false`.
+#[ast_meta]
+#[estree(
+    ts_type = "TSMappedTypeModifierOperator | false",
+    raw_deser = "
+        let optional = DESER[Option<TSMappedTypeModifierOperator>](POS_OFFSET.optional) || false;
+        if (optional === null) optional = false;
+        optional
+    "
+)]
+pub struct TSMappedTypeOptional<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeOptional<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(optional) = self.0.optional {
+            optional.serialize(serializer);
+        } else {
+            False(()).serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `key` and `constraint` field of `TSMappedType`.
 #[ast_meta]
 #[estree(

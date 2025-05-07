@@ -1447,6 +1447,7 @@ pub struct TSMappedType<'a> {
     /// type Qux = { [P in keyof T]: T[P] }
     /// //                         ^  None
     /// ```
+    #[estree(via = TSMappedTypeOptional)]
     pub optional: Option<TSMappedTypeModifierOperator>,
     /// Readonly modifier before keyed index signature
     ///

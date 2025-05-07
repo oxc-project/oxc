@@ -1897,6 +1897,8 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
+  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 48) || false;
+  if (optional === null) optional = false;
   const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   return {
     type: 'TSMappedType',
@@ -1904,7 +1906,7 @@ function deserializeTSMappedType(pos) {
     end: deserializeU32(pos + 4),
     nameType: deserializeOptionTSType(pos + 16),
     typeAnnotation: deserializeOptionTSType(pos + 32),
-    optional: deserializeOptionTSMappedTypeModifierOperator(pos + 48),
+    optional,
     readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 49),
     key: typeParameter.name,
     constraint: typeParameter.constraint,
