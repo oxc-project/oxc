@@ -292,7 +292,6 @@ pub struct Modifiers {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
-#[estree(no_type)]
 pub struct Modifier {
     pub ignore_case: bool,
     pub multiline: bool,
