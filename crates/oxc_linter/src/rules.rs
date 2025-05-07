@@ -150,6 +150,7 @@ mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
@@ -577,24 +578,13 @@ oxc_macros::declare_all_lint_rules! {
     eslint::grouped_accessor_pairs,
     eslint::guard_for_in,
     eslint::init_declarations,
-    eslint::max_nested_callbacks,
-    eslint::max_lines_per_function,
     eslint::max_classes_per_file,
     eslint::max_depth,
+    eslint::max_lines_per_function,
     eslint::max_lines,
+    eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
-    eslint::no_lonely_if,
-    eslint::no_useless_call,
-    eslint::no_unneeded_ternary,
-    eslint::no_extra_label,
-    eslint::no_multi_assign,
-    eslint::no_nested_ternary,
-    eslint::no_labels,
-    eslint::no_lone_blocks,
-    eslint::no_restricted_imports,
-    eslint::no_object_constructor,
-    eslint::no_duplicate_imports,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
@@ -603,6 +593,18 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_duplicate_imports,
+    eslint::no_extra_label,
+    eslint::no_labels,
+    eslint::no_lone_blocks,
+    eslint::no_lonely_if,
+    eslint::no_multi_assign,
+    eslint::no_nested_ternary,
+    eslint::no_object_constructor,
+    eslint::no_restricted_imports,
+    eslint::no_unneeded_ternary,
+    eslint::no_useless_backreference,
+    eslint::no_useless_call,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
     eslint::no_console,
