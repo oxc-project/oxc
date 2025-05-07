@@ -30,7 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, directives, source_type, hashbang), via = ProgramConverter)]
+#[estree(field_order(span, body, source_type, hashbang), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -40,9 +40,8 @@ pub struct Program<'a> {
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
-    #[estree(rename = "body")]
+    #[estree(prepend_to = "body")]
     pub directives: Vec<'a, Directive<'a>>,
-    #[estree(append_to = "directives")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1852,9 +1851,9 @@ pub enum FormalParameterKind {
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
-    #[estree(rename = "body")]
+    #[estree(prepend_to = "statements")]
     pub directives: Vec<'a, Directive<'a>>,
-    #[estree(append_to = "directives")]
+    #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 
