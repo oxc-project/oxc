@@ -76,6 +76,25 @@ impl<'a> TypeScript<'a, '_> {
         }
     }
 
+    pub(super) fn transform_class_on_exit(
+        &self,
+        class: &mut Class<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.remove_class_fields_without_initializer {
+            return;
+        }
+
+        class.body.body.retain(|element| {
+            if let ClassElement::PropertyDefinition(prop) = element {
+                if prop.value.is_none() {
+                    return false;
+                }
+            }
+            true
+        });
+    }
+
     // Creates `this.name = name`
     fn create_this_property_assignment(
         span: Span,

@@ -49,6 +49,8 @@ pub struct TypeScript<'a, 'ctx> {
     namespace: TypeScriptNamespace<'a, 'ctx>,
     module: TypeScriptModule<'a, 'ctx>,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
+    // Options
+    remove_class_fields_without_initializer: bool,
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
@@ -60,6 +62,8 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
             namespace: TypeScriptNamespace::new(options, ctx),
             module: TypeScriptModule::new(options.only_remove_type_imports, ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
+            remove_class_fields_without_initializer: !options.allow_declare_fields
+                || options.remove_class_fields_without_initializer,
         }
     }
 }
@@ -114,6 +118,10 @@ impl<'a> Traverse<'a> for TypeScript<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_class(class, ctx);
         Self::transform_class(class, ctx);
+    }
+
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class_on_exit(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {

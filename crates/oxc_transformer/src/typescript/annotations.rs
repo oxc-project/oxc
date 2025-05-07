@@ -27,7 +27,6 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     has_jsx_fragment: bool,
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
-    remove_class_fields_without_initializer: bool,
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
@@ -53,8 +52,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
-            remove_class_fields_without_initializer: !options.allow_declare_fields
-                || options.remove_class_fields_without_initializer,
         }
     }
 }
@@ -230,11 +227,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                     && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
-                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
-                    && !prop.declare
-                    && !(self.remove_class_fields_without_initializer
-                        && prop.value.is_none()
-                        && prop.decorators.is_empty())
+                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition) && !prop.declare
             }
             ClassElement::AccessorProperty(prop) => {
                 matches!(prop.r#type, AccessorPropertyType::AccessorProperty)

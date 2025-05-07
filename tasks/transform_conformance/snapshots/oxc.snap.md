@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 154/251
+Passed: 152/251
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,12 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (6/23)
+# babel-plugin-transform-typescript (4/23)
+* allow-declare-fields-false/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -389,6 +394,11 @@ rebuilt        : SymbolId(2): [ReferenceId(2)]
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
+
+* remove-class-properties-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
