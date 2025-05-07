@@ -1,7 +1,10 @@
 use std::{
-    env, fs,
+    env,
+    ffi::OsStr,
+    fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
+    sync::Arc,
     time::Instant,
 };
 
@@ -166,71 +169,16 @@ impl Runner for LintRunner {
         let paths = walker.paths();
         let number_of_files = paths.len();
 
-        // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
-        // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
-        let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
-
         let handler = GraphicalReportHandler::new();
 
-        if search_for_nested_configs {
-            // get all of the unique directories among the paths to use for search for
-            // oxlint config files in those directories and their ancestors
-            // e.g. `/some/file.js` will check `/some` and `/`
-            //      `/some/other/file.js` will check `/some/other`, `/some`, and `/`
-            let mut directories = FxHashSet::default();
-            for path in &paths {
-                let path = Path::new(path);
-                // Start from the file's parent directory and walk up the tree
-                let mut current = path.parent();
-                while let Some(dir) = current {
-                    // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
-                    // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
-                    directories.insert(dir);
-                    current = dir.parent();
-                }
+        let nested_configs = if search_for_nested_configs {
+            match Self::get_nested_configs(stdout, &handler, &filters, &paths) {
+                Ok(v) => v,
+                Err(v) => return v,
             }
-            for directory in directories {
-                if let Ok(config) = Self::find_oxlint_config_in_directory(directory) {
-                    nested_oxlintrc.insert(directory, config);
-                }
-            }
-
-            // iterate over each config and build the ConfigStore
-            for (dir, oxlintrc) in nested_oxlintrc {
-                // TODO(refactor): clean up all of the error handling in this function
-                let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
-                    Ok(builder) => builder,
-                    Err(e) => {
-                        print_and_flush_stdout(
-                            stdout,
-                            &format!(
-                                "Failed to parse configuration file.\n{}\n",
-                                render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                            ),
-                        );
-
-                        return CliRunResult::InvalidOptionConfig;
-                    }
-                }
-                .with_filters(&filters);
-
-                match builder.build() {
-                    Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
-                    Err(diagnostic) => {
-                        print_and_flush_stdout(
-                            stdout,
-                            &format!(
-                                "Failed to parse configuration file.\n{}\n",
-                                render_report(&handler, &diagnostic)
-                            ),
-                        );
-
-                        return CliRunResult::InvalidOptionConfig;
-                    }
-                };
-            }
-        }
+        } else {
+            FxHashMap::default()
+        };
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
@@ -445,6 +393,76 @@ impl LintRunner {
         }
 
         Ok(filters)
+    }
+
+    fn get_nested_configs(
+        stdout: &mut dyn Write,
+        handler: &GraphicalReportHandler,
+        filters: &Vec<LintFilter>,
+        paths: &Vec<Arc<OsStr>>,
+    ) -> Result<FxHashMap<PathBuf, ConfigStore>, CliRunResult> {
+        // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
+        // per-file or per-directory basis, to avoid calling `.parent()` on every path.
+        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
+        let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
+        // get all of the unique directories among the paths to use for search for
+        // oxlint config files in those directories and their ancestors
+        // e.g. `/some/file.js` will check `/some` and `/`
+        //      `/some/other/file.js` will check `/some/other`, `/some`, and `/`
+        let mut directories = FxHashSet::default();
+        for path in paths {
+            let path = Path::new(path);
+            // Start from the file's parent directory and walk up the tree
+            let mut current = path.parent();
+            while let Some(dir) = current {
+                // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
+                // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
+                directories.insert(dir);
+                current = dir.parent();
+            }
+        }
+        for directory in directories {
+            if let Ok(config) = Self::find_oxlint_config_in_directory(directory) {
+                nested_oxlintrc.insert(directory, config);
+            }
+        }
+
+        // iterate over each config and build the ConfigStore
+        for (dir, oxlintrc) in nested_oxlintrc {
+            // TODO(refactor): clean up all of the error handling in this function
+            let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+                Ok(builder) => builder,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to parse configuration file.\n{}\n",
+                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            }
+            .with_filters(filters);
+
+            match builder.build() {
+                Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
+                Err(diagnostic) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to parse configuration file.\n{}\n",
+                            render_report(handler, &diagnostic)
+                        ),
+                    );
+
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            };
+        }
+
+        Ok(nested_configs)
     }
 
     // finds the oxlint config
