@@ -26,10 +26,9 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
-    ignore_type_of_test_name: bool,
     ignore_type_of_describe_name: bool,
     disallowed_words: Vec<CompactStr>,
-    ignore_space: bool,
+    allow_arguments: bool,
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
@@ -42,10 +41,11 @@ impl std::ops::Deref for ValidTitle {
     }
 }
 
+// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks that the titles of Jest blocks are valid.
+    /// Checks that the titles of Vitest blocks are valid.
     ///
     /// Titles must be:
     /// - not empty,
@@ -53,14 +53,14 @@ declare_oxc_lint!(
     /// - not prefixed with their block name,
     /// - have no leading or trailing spaces.
     ///
-    /// Why is this bad?
+    /// ### Why is this bad?
     ///
     /// Titles that are not valid can be misleading and make it harder to understand the purpose of the test.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
+    /// ```js
     /// describe('', () => {});
     /// describe('foo', () => {
     ///   it('', () => {});
@@ -71,26 +71,27 @@ declare_oxc_lint!(
     /// xit('', () => {});
     /// xtest('', () => {});
     /// ```
+    ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```js
     /// describe('foo', () => {});
     /// it('bar', () => {});
     /// test('baz', () => {});
     /// ```
     ///
     /// ### Options
+    ///
     /// interface Options {
-    ///     ignoreSpaces?: boolean;
-    ///     ignoreTypeOfTestName?: boolean;
     ///     ignoreTypeOfDescribeName?: boolean;
     ///     disallowedWords?: string[];
+    ///     allowArguments?: boolean;
     ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
     ValidTitle,
-    jest,
+    vitest,
     correctness,
-    conditional_fix
+    conditional_fix,
 );
 
 impl Rule for ValidTitle {
@@ -103,9 +104,8 @@ impl Rule for ValidTitle {
                 .unwrap_or_default()
         };
 
-        let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
-        let ignore_space = get_as_bool("ignoreSpaces");
+        let allow_arguments = get_as_bool("allowArguments");
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
@@ -120,10 +120,9 @@ impl Rule for ValidTitle {
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
         Self(Box::new(ValidTitleConfig {
-            ignore_type_of_test_name,
             ignore_type_of_describe_name,
             disallowed_words,
-            ignore_space,
+            allow_arguments,
             must_not_match_patterns,
             must_match_patterns,
         }))
@@ -161,8 +160,8 @@ impl ValidTitle {
         };
 
         let need_report_name = match jest_fn_call.kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => !self.ignore_type_of_test_name,
             JestFnKind::General(JestGeneralFnKind::Describe) => !self.ignore_type_of_describe_name,
+            JestFnKind::General(JestGeneralFnKind::Test) => true,
             _ => unreachable!(),
         };
 
@@ -194,12 +193,12 @@ impl ValidTitle {
                 if does_binary_expression_contain_string_node(binary_expr) {
                     return;
                 }
-                if need_report_name {
+                if need_report_name && !self.allow_arguments {
                     Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
             _ => {
-                if need_report_name {
+                if need_report_name && !self.allow_arguments {
                     Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
@@ -328,7 +327,7 @@ fn validate_title(
     }
 
     let trimmed_title = title.trim();
-    if !valid_title.ignore_space && trimmed_title != title {
+    if trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
             fixer.replace(span.shrink(1), trimmed_title.to_string())
@@ -439,10 +438,69 @@ fn test() {
         (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([
-              { "ignoreTypeOfDescribeName": false, "disallowedWords": ["correct"] },
+                { "ignoreTypeOfDescribeName": false, "disallowedWords": ["incorrectly"] }
             ])),
         ),
         ("it('correctly sets the value', () => {});", Some(serde_json::json!([]))),
+        // TODO: Unsure if we support the { "vitest": { "typecheck": true }} option
+        //      (
+        //          "
+        //              function foo(){}
+        //              describe(foo, () => {
+        //                  test('item', () => {
+        //                  expect(0).toBe(0)
+        //                  })
+        //              })
+        // ",
+        //          Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        //      ),
+        //      (
+        //          "
+        //              declare const outerName: string;
+        //              describe(outerName, () => {
+        //                  test('item', () => {
+        //                      expect(0).toBe(0)
+        //                  })
+        //              })
+        //      ",
+        //          Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        //      ),
+        //      (
+        //          "
+        //              declare const outerName: 'a';
+        //              describe(outerName, () => {
+        //                  test('item', () => {
+        //                      expect(0).toBe(0)
+        //                  })
+        //              })
+        //          ",
+        //          Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        //      ),
+        //      (
+        //          "
+        //              declare const outerName: `${'a'}`;
+        //              describe(outerName, () => {
+        //                  test('item', () => {
+        //                      expect(0).toBe(0)
+        //                  })
+        //              })
+        //          ",
+        //          Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        //      ),
+        //      (
+        //          "
+        //              class foo{}
+        //              describe(foo, () => {
+        //                  test('item', () => {
+        //                      expect(0).toBe(0)
+        //                  })
+        //              })
+        //          ",
+        //          Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        //      ),
+        ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("test(baz, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
         ("describe('the correct way to properly handle all the things', () => {});", None),
         ("test('that all is as it should be', () => {});", None),
         (
@@ -471,17 +529,17 @@ fn test() {
         ),
         (
             "
-            describe('things to test', () => {
-                describe('unit tests #unit', () => {
-                it('is true', () => {
-                    expect(true).toBe(true);
-                });
-                });
+                describe('things to test', () => {
+                    describe('unit tests #unit', () => {
+                        it('is true', () => {
+                            expect(true).toBe(true);
+                        });
+                    });
 
-                describe('e2e tests #e2e', () => {
-                it('is another test #jest4life', () => {});
+                    describe('e2e tests #e2e', () => {
+                        it('is another test #jest4life', () => {});
+                    });
                 });
-            });
             ",
             Some(serde_json::json!([{ "mustMatch": { "test": "^[^#]+$|(?:#(?:unit|e2e))" } }])),
         ),
@@ -542,49 +600,32 @@ fn test() {
         ("someFn('foo', function () {})", None),
         (
             "
-                describe('foo', () => {
-                it('bar', () => {})
-                })
-            ",
+                export const myTest = test.extend({
+                    archive: []
+			    })
+			",
             None,
         ),
-        (
-            "it(`GIVEN...
-            `, () => {});",
-            Some(serde_json::json!([{ "ignoreSpaces": true }])),
-        ),
-        ("describe('foo', function () {})", None),
-        ("fdescribe('foo', function () {})", None),
-        ("xdescribe('foo', function () {})", None),
-        ("xdescribe(`foo`, function () {})", None),
-        ("test('foo', function () {})", None),
-        ("test('foo', function () {})", None),
-        ("xtest('foo', function () {})", None),
-        ("xtest(`foo`, function () {})", None),
-        ("test('foo test', function () {})", None),
-        ("xtest('foo test', function () {})", None),
-        ("it('foo', function () {})", None),
-        ("fit('foo', function () {})", None),
-        ("xit('foo', function () {})", None),
-        ("xit(`foo`, function () {})", None),
-        ("it('foos it correctly', function () {})", None),
+        ("const localTest = test.extend({})", None),
         (
             "
-                describe('foo', () => {
-                it('bar', () => {})
+                import { it } from 'vitest'
+
+                const test = it.extend({
+                    fixture: [
+                        async ({}, use) => {
+                            setup()
+                            await use()
+                            teardown()
+                        },
+                        { auto: true }
+                    ],
                 })
-            ",
+
+                test('', () => {})
+			",
             None,
         ),
-        (
-            "
-                describe('foo', () => {
-                it('describes things correctly', () => {})
-                })
-            ",
-            None,
-        ),
-        ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
     ];
 
     let fail = vec![
@@ -612,195 +653,52 @@ fn test() {
             "test(`that the value is set properly`, function () {})",
             Some(serde_json::json!([{ "disallowedWords": ["properly"] }])),
         ),
-        // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //                 it('is true', () => {
-        //                     expect(true).toBe(true);
-        //                 });
-        //             });
+        ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
+        (
+            "
+                describe('things to test', () => {
+                    describe('unit tests #unit', () => {
+                        it('is true', () => {
+                            expect(true).toBe(true);
+                        });
+                    });
 
-        //             describe('e2e tests #e4e', () => {
-        //                 it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //         {
-        //             "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#,
-        //             "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))",
-        //         },
-        //     ])),
-        // ),
-        // (
-        //     "
-        //         import { describe, describe as context, it as thisTest } from '@jest/globals';
+                    describe('e2e tests #e4e', () => {
+                        it('is another test #e2e #vitest4life', () => {});
+                    });
+                });
+            ",
+            Some(serde_json::json!([{
+                "mustNotMatch": r"(?:#(?!unit|e2e))\w+",
+                "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))"
+            }])),
+        ),
+        (
+            "
+                describe('things to test', () => {
+                    describe('unit tests #unit', () => {
+                        it('is true', () => {
+                            expect(true).toBe(true);
+                        });
+                    });
 
-        //         describe('things to test', () => {
-        //             context('unit tests #unit', () => {
-        //             thisTest('is true', () => {
-        //                 expect(true).toBe(true);
-        //             });
-        //             });
-
-        //             context('e2e tests #e4e', () => {
-        //                 thisTest('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //         ",
-        //     Some(
-        //         serde_json::json!([ { "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#, "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))", }, ]),
-        //     ),
-        // ),
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //                 it('is true', () => {
-        //                     expect(true).toBe(true);
-        //                 });
-        //             });
-
-        //             describe('e2e tests #e4e', () => {
-        //                 it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "mustNotMatch": [
-        //           r#"(?:#(?!unit|e2e))\w+"#,
-        //           "Please include '#unit' or '#e2e' in titles",
-        //         ],
-        //         "mustMatch": [
-        //           "^[^#]+$|(?:#(?:unit|e2e))",
-        //           "Please include '#unit' or '#e2e' in titles",
-        //         ],
-        //       },
-        //     ])),
-        // ),
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //                 it('is true', () => {
-        //                     expect(true).toBe(true);
-        //                 });
-        //             });
-
-        //             describe('e2e tests #e4e', () => {
-        //                 it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "mustNotMatch": { "describe": [r#"(?:#(?!unit|e2e))\w+"#] },
-        //         "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
-        //       },
-        //     ])),
-        // ),
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //                 it('is true', () => {
-        //                     expect(true).toBe(true);
-        //                 });
-        //             });
-
-        //             describe('e2e tests #e4e', () => {
-        //                 it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "mustNotMatch": {
-        //           "describe": [
-        //             r#"(?:#(?!unit|e2e))\w+"#,
-        //             "Please include '#unit' or '#e2e' in describe titles",
-        //           ],
-        //         },
-        //         "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
-        //       },
-        //     ])),
-        // ),
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //             it('is true', () => {
-        //                 expect(true).toBe(true);
-        //             });
-        //             });
-
-        //             describe('e2e tests #e4e', () => {
-        //                 it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "mustNotMatch": { "describe": r#"(?:#(?!unit|e2e))\w+"# },
-        //         "mustMatch": { "it": "^[^#]+$|(?:#(?:unit|e2e))" },
-        //       },
-        //     ])),
-        // ),
-        // (
-        //     "
-        //         describe('things to test', () => {
-        //             describe('unit tests #unit', () => {
-        //             it('is true #jest4life', () => {
-        //                 expect(true).toBe(true);
-        //             });
-        //             });
-
-        //             describe('e2e tests #e4e', () => {
-        //             it('is another test #e2e #jest4life', () => {});
-        //             });
-        //         });
-        //     ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "mustNotMatch": {
-        //           "describe": [
-        //             r#"(?:#(?!unit|e2e))\w+"#,
-        //             "Please include '#unit' or '#e2e' in describe titles",
-        //           ],
-        //         },
-        //         "mustMatch": {
-        //           "it": [
-        //             "^[^#]+$|(?:#(?:unit|e2e))",
-        //             "Please include '#unit' or '#e2e' in it titles",
-        //           ],
-        //         },
-        //       },
-        //     ])),
-        // ),
+                    describe('e2e tests #e4e', () => {
+                        it('is another test #e2e #vitest4life', () => {});
+                    });
+                });
+            ",
+            Some(serde_json::json!([{
+                "mustNotMatch": [r"(?:#(?!unit|e2e))\w+", "Please include '#unit' or '#e2e' in titles"],
+                "mustMatch": ["^[^#]+$|(?:#(?:unit|e2e))", "Please include '#unit' or '#e2e' in titles"]
+            }])),
+        ),
         (
             "test('the correct way to properly handle all things', () => {});",
             Some(serde_json::json!([{ "mustMatch": "#(?:unit|integration|e2e)" }])),
         ),
         (
-            "describe('the test', () => {});",
-            Some(serde_json::json!([
-              { "mustMatch": { "describe": "#(?:unit|integration|e2e)" } },
-            ])),
-        ),
-        (
-            "xdescribe('the test', () => {});",
-            Some(serde_json::json!([
-              { "mustMatch": { "describe": "#(?:unit|integration|e2e)" } },
-            ])),
-        ),
-        (
             "describe.skip('the test', () => {});",
-            Some(serde_json::json!([
-              { "mustMatch": { "describe": "#(?:unit|integration|e2e)" } },
-            ])),
+            Some(serde_json::json!([{ "mustMatch": { "describe": "(?:unit|integration|e2e)" } }])),
         ),
         ("it.each([])(1, () => {});", None),
         ("it.skip.each([])(1, () => {});", None),
@@ -808,20 +706,6 @@ fn test() {
         ("it(123, () => {});", None),
         ("it.concurrent(123, () => {});", None),
         ("it(1 + 2 + 3, () => {});", None),
-        ("it.concurrent(1 + 2 + 3, () => {});", None),
-        (
-            "test.skip(123, () => {});",
-            Some(serde_json::json!([{ "ignoreTypeOfDescribeName": true }])),
-        ),
-        ("describe(String(/.+/), () => {});", None),
-        (
-            "describe(myFunction, () => 1);",
-            Some(serde_json::json!([{ "ignoreTypeOfDescribeName": false }])),
-        ),
-        ("describe(myFunction, () => {});", None),
-        ("xdescribe(myFunction, () => {});", None),
-        ("describe(6, function () {})", None),
-        ("describe.skip(123, () => {});", None),
         ("describe('', function () {})", None),
         (
             "
@@ -832,101 +716,24 @@ fn test() {
             None,
         ),
         ("it('', function () {})", None),
+        // TODO: Unsure if we support the { "vitest": { "typecheck": true }} option
+        // (
+        //     "it('', function () {})",
+        //     Some(serde_json::json!({ "settings": { "vitest": { "typecheck": true } } })),
+        // ),
         ("it.concurrent('', function () {})", None),
         ("test('', function () {})", None),
         ("test.concurrent('', function () {})", None),
-        ("test(``, function () {})", None),
         ("test.concurrent(``, function () {})", None),
         ("xdescribe('', () => {})", None),
-        ("xit('', () => {})", None),
-        ("xtest('', () => {})", None),
         ("describe(' foo', function () {})", None),
         ("describe.each()(' foo', function () {})", None),
         ("describe.only.each()(' foo', function () {})", None),
         ("describe(' foo foe fum', function () {})", None),
         ("describe('foo foe fum ', function () {})", None),
-        ("fdescribe(' foo', function () {})", None),
-        ("fdescribe(' foo', function () {})", None),
-        ("xdescribe(' foo', function () {})", None),
-        ("it(' foo', function () {})", None),
-        ("it.concurrent(' foo', function () {})", None),
-        ("fit(' foo', function () {})", None),
         ("it.skip(' foo', function () {})", None),
         ("fit('foo ', function () {})", None),
         ("it.skip('foo ', function () {})", None),
-        (
-            "
-                import { test as testThat } from '@jest/globals';
-
-                testThat('foo works ', () => {});
-            ",
-            None,
-        ),
-        ("xit(' foo', function () {})", None),
-        ("test(' foo', function () {})", None),
-        ("test.concurrent(' foo', function () {})", None),
-        ("test(` foo`, function () {})", None),
-        ("test.concurrent(` foo`, function () {})", None),
-        ("test(` foo bar bang`, function () {})", None),
-        ("test.concurrent(` foo bar bang`, function () {})", None),
-        ("test(` foo bar bang  `, function () {})", None),
-        ("test.concurrent(` foo bar bang  `, function () {})", None),
-        ("xtest(' foo', function () {})", None),
-        ("xtest(' foo  ', function () {})", None),
-        (
-            "
-                describe(' foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-            None,
-        ),
-        (
-            "
-                describe('foo', () => {
-                    it(' bar', () => {})
-                })
-            ",
-            None,
-        ),
-        ("describe('describe foo', function () {})", None),
-        ("fdescribe('describe foo', function () {})", None),
-        ("xdescribe('describe foo', function () {})", None),
-        ("describe('describe foo', function () {})", None),
-        ("fdescribe(`describe foo`, function () {})", None),
-        ("test('test foo', function () {})", None),
-        ("xtest('test foo', function () {})", None),
-        ("test(`test foo`, function () {})", None),
-        ("test(`test foo test`, function () {})", None),
-        ("it('it foo', function () {})", None),
-        ("fit('it foo', function () {})", None),
-        ("xit('it foo', function () {})", None),
-        ("it('it foos it correctly', function () {})", None),
-        (
-            "
-                describe('describe foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-            None,
-        ),
-        (
-            "
-                describe('describe foo', () => {
-                    it('describes things correctly', () => {})
-                })
-            ",
-            None,
-        ),
-        (
-            "
-                describe('foo', () => {
-                    it('it bar', () => {})
-                })
-            ",
-            None,
-        ),
-        ("it(abc, function () {})", None),
     ];
 
     let fix = vec![
@@ -938,121 +745,13 @@ fn test() {
         ),
         ("describe(' foo foe fum', function () {})", "describe('foo foe fum', function () {})"),
         ("describe('foo foe fum ', function () {})", "describe('foo foe fum', function () {})"),
-        ("fdescribe(' foo', function () {})", "fdescribe('foo', function () {})"),
-        ("fdescribe(' foo', function () {})", "fdescribe('foo', function () {})"),
-        ("xdescribe(' foo', function () {})", "xdescribe('foo', function () {})"),
-        ("it(' foo', function () {})", "it('foo', function () {})"),
-        ("it.concurrent(' foo', function () {})", "it.concurrent('foo', function () {})"),
-        ("fit(' foo', function () {})", "fit('foo', function () {})"),
         ("it.skip(' foo', function () {})", "it.skip('foo', function () {})"),
         ("fit('foo ', function () {})", "fit('foo', function () {})"),
         ("it.skip('foo ', function () {})", "it.skip('foo', function () {})"),
-        (
-            "
-                import { test as testThat } from '@jest/globals';
-
-                testThat('foo works ', () => {});
-            ",
-            "
-                import { test as testThat } from '@jest/globals';
-
-                testThat('foo works', () => {});
-            ",
-        ),
-        ("xit(' foo', function () {})", "xit('foo', function () {})"),
-        ("test(' foo', function () {})", "test('foo', function () {})"),
-        ("test.concurrent(' foo', function () {})", "test.concurrent('foo', function () {})"),
-        ("test(` foo`, function () {})", "test(`foo`, function () {})"),
-        ("test.concurrent(` foo`, function () {})", "test.concurrent(`foo`, function () {})"),
-        ("test(` foo bar bang`, function () {})", "test(`foo bar bang`, function () {})"),
-        (
-            "test.concurrent(` foo bar bang`, function () {})",
-            "test.concurrent(`foo bar bang`, function () {})",
-        ),
-        ("test(` foo bar bang  `, function () {})", "test(`foo bar bang`, function () {})"),
-        (
-            "test.concurrent(` foo bar bang  `, function () {})",
-            "test.concurrent(`foo bar bang`, function () {})",
-        ),
-        ("xtest(' foo', function () {})", "xtest('foo', function () {})"),
-        ("xtest(' foo  ', function () {})", "xtest('foo', function () {})"),
-        (
-            "
-                describe(' foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-            "
-                describe('foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-        ),
-        (
-            "
-                describe('foo', () => {
-                    it(' bar', () => {})
-                })
-            ",
-            "
-                describe('foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-        ),
-        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
-        ("fdescribe('describe foo', function () {})", "fdescribe('foo', function () {})"),
-        ("xdescribe('describe foo', function () {})", "xdescribe('foo', function () {})"),
-        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
-        ("fdescribe(`describe foo`, function () {})", "fdescribe(`foo`, function () {})"),
-        ("test('test foo', function () {})", "test('foo', function () {})"),
-        ("xtest('test foo', function () {})", "xtest('foo', function () {})"),
-        ("test(`test foo`, function () {})", "test(`foo`, function () {})"),
-        ("test(`test foo test`, function () {})", "test(`foo test`, function () {})"),
-        ("it('it foo', function () {})", "it('foo', function () {})"),
-        ("fit('it foo', function () {})", "fit('foo', function () {})"),
-        ("xit('it foo', function () {})", "xit('foo', function () {})"),
-        ("it('it foos it correctly', function () {})", "it('foos it correctly', function () {})"),
-        (
-            "
-                describe('describe foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-            "
-                describe('foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-        ),
-        (
-            "
-                describe('describe foo', () => {
-                    it('describes things correctly', () => {})
-                })
-            ",
-            "
-                describe('foo', () => {
-                    it('describes things correctly', () => {})
-                })
-            ",
-        ),
-        (
-            "
-                describe('foo', () => {
-                    it('it bar', () => {})
-                })
-            ",
-            "
-                describe('foo', () => {
-                    it('bar', () => {})
-                })
-            ",
-        ),
     ];
 
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
