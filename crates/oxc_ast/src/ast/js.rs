@@ -40,7 +40,7 @@ pub struct Program<'a> {
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
-    #[estree(prepend_to = "body")]
+    #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -868,7 +868,7 @@ pub use match_assignment_target_pattern;
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    #[estree(append_to = "elements")]
+    #[estree(append_to = elements)]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -885,7 +885,7 @@ pub struct ArrayAssignmentTarget<'a> {
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    #[estree(append_to = "properties")]
+    #[estree(append_to = properties)]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -1579,7 +1579,7 @@ pub struct AssignmentPattern<'a> {
 pub struct ObjectPattern<'a> {
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
-    #[estree(append_to = "properties")]
+    #[estree(append_to = properties)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1606,7 +1606,7 @@ pub struct BindingProperty<'a> {
 pub struct ArrayPattern<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    #[estree(append_to = "elements")]
+    #[estree(append_to = elements)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1851,7 +1851,7 @@ pub enum FormalParameterKind {
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
-    #[estree(prepend_to = "statements")]
+    #[estree(prepend_to = statements)]
     pub directives: Vec<'a, Directive<'a>>,
     #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,

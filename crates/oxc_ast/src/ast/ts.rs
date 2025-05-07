@@ -1266,7 +1266,7 @@ pub enum TSModuleDeclarationBody<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSModuleBlock<'a> {
     pub span: Span,
-    #[estree(prepend_to = "body")]
+    #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
