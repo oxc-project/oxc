@@ -19,22 +19,21 @@ use crate::{
 
 pub struct WorkspaceWorker {
     root_uri: OnceCell<Uri>,
-    server_linter: RwLock<ServerLinter>,
+    server_linter: RwLock<Option<ServerLinter>>,
     diagnostics_report_map: RwLock<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
 }
 
 impl WorkspaceWorker {
-    pub fn new(root_uri: &Uri, options: Options) -> Self {
+    pub fn new(root_uri: &Uri) -> Self {
         let root_uri_cell = OnceCell::new();
         root_uri_cell.set(root_uri.clone()).unwrap();
 
-        let server_linter = ServerLinter::new(root_uri, &options);
         Self {
             root_uri: root_uri_cell,
-            server_linter: RwLock::new(server_linter),
+            server_linter: RwLock::new(None),
             diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
-            options: Mutex::new(options),
+            options: Mutex::new(Options::default()),
         }
     }
 
@@ -51,6 +50,12 @@ impl WorkspaceWorker {
         false
     }
 
+    pub async fn init_linter(&self, options: &Options) {
+        *self.options.lock().await = options.clone();
+        *self.server_linter.write().await =
+            Some(ServerLinter::new(self.root_uri.get().unwrap(), options));
+    }
+
     pub async fn remove_diagnostics(&self, uri: &Uri) {
         self.diagnostics_report_map.read().await.pin().remove(&uri.to_string());
     }
@@ -59,7 +64,7 @@ impl WorkspaceWorker {
         let options = self.options.lock().await;
         let server_linter = ServerLinter::new(self.root_uri.get().unwrap(), &options);
 
-        *self.server_linter.write().await = server_linter;
+        *self.server_linter.write().await = Some(server_linter);
     }
 
     fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
@@ -93,7 +98,11 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        self.server_linter.read().await.run_single(uri, content)
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return None;
+        };
+
+        server_linter.run_single(uri, content)
     }
 
     async fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
@@ -109,9 +118,14 @@ impl WorkspaceWorker {
             self.diagnostics_report_map.read().await.len(),
             FxBuildHasher,
         );
-        let linter = self.server_linter.read().await;
+        let server_linter = self.server_linter.read().await;
+        let Some(server_linter) = &*server_linter else {
+            debug!("no server_linter initialized in the worker");
+            return diagnostics_map;
+        };
         for uri in self.diagnostics_report_map.read().await.pin().keys() {
-            if let Some(diagnostics) = linter.run_single(&Uri::from_str(uri).unwrap(), None) {
+            if let Some(diagnostics) = server_linter.run_single(&Uri::from_str(uri).unwrap(), None)
+            {
                 diagnostics_map.pin().insert(uri.clone(), diagnostics);
             }
         }
@@ -250,18 +264,14 @@ mod tests {
 
     #[test]
     fn test_get_root_uri() {
-        let worker =
-            WorkspaceWorker::new(&Uri::from_str("file:///root/").unwrap(), Options::default());
+        let worker = WorkspaceWorker::new(&Uri::from_str("file:///root/").unwrap());
 
         assert_eq!(worker.get_root_uri(), Some(Uri::from_str("file:///root/").unwrap()));
     }
 
     #[test]
     fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(
-            &Uri::from_str("file:///path/to/root").unwrap(),
-            Options::default(),
-        );
+        let worker = WorkspaceWorker::new(&Uri::from_str("file:///path/to/root").unwrap());
 
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())

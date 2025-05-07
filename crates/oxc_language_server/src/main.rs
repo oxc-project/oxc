@@ -91,8 +91,10 @@ impl LanguageServer for Backend {
 
         // ToDo: add support for multiple workspace folders
         // maybe fallback when the client does not support it
-        let root_worker =
-            WorkspaceWorker::new(&params.root_uri.unwrap(), options.clone().unwrap_or_default());
+        let root_worker = WorkspaceWorker::new(&params.root_uri.unwrap());
+        // ToDo: only call init_linter when the client passed a valid Options struct
+        // if not and the client supports `workspace/configuration`, we should request them in `initialized`
+        root_worker.init_linter(&options.clone().unwrap_or_default()).await;
 
         *self.workspace_workers.lock().await = vec![root_worker];
 
