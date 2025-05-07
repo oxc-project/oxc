@@ -233,10 +233,8 @@ impl WorkspaceWorker {
 
     pub async fn did_change_configuration(
         &self,
-        options: serde_json::value::Value,
+        changed_options: &Options,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
-        let changed_options = serde_json::from_value::<Options>(options).unwrap_or_default();
-
         let current_option = &self.options.lock().await.clone();
 
         debug!(
@@ -249,7 +247,7 @@ impl WorkspaceWorker {
 
         *self.options.lock().await = changed_options.clone();
 
-        if Self::needs_linter_restart(current_option, &changed_options) {
+        if Self::needs_linter_restart(current_option, changed_options) {
             self.refresh_server_linter().await;
             return Some(self.revalidate_diagnostics().await);
         }

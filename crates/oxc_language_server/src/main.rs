@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use log::{debug, info};
+use log::{debug, info, warn};
 use oxc_linter::FixKind;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
@@ -172,50 +172,46 @@ impl LanguageServer for Backend {
         let workers = self.workspace_workers.lock().await;
         let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
             ConcurrentHashMap::default();
+        let options = serde_json::from_value::<Options>(params.settings).ok();
 
-        // when we have only workspace folder, apply to it
-        // ToDo: check if this is really safe because the client could still pass an empty settings
-        if workers.len() == 1 {
-            let worker = workers.first().unwrap();
-            let Some(diagnostics) = worker.did_change_configuration(params.settings).await else {
-                return;
-            };
-            for (uri, reports) in &diagnostics.pin() {
-                new_diagnostics
-                    .pin()
-                    .insert(uri.clone(), reports.iter().map(|d| d.diagnostic.clone()).collect());
+        // the client passed valid options.
+        if let Some(options) = options {
+            for worker in workers.iter() {
+                let Some(diagnostics) = worker.did_change_configuration(&options).await else {
+                    continue;
+                };
+
+                for (uri, reports) in &diagnostics.pin() {
+                    new_diagnostics.pin().insert(
+                        uri.clone(),
+                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                    );
+                }
             }
-
-        // else check if the client support workspace configuration requests so we can only restart only the needed workers
+        // else check if the client support workspace configuration requests
         } else if self
             .capabilities
             .get()
             .is_some_and(|capabilities| capabilities.workspace_configuration)
         {
-            let mut config_items = vec![];
-            for worker in workers.iter() {
-                let Some(uri) = worker.get_root_uri() else {
-                    continue;
-                };
-                // ToDo: this is broken in VSCode. Check how we can get the language server configuration from the client
-                // changing `section` to `oxc` will return the client configuration.
-                config_items.push(ConfigurationItem {
-                    scope_uri: Some(uri),
-                    section: Some("oxc_language_server".into()),
-                });
-            }
-
-            let Ok(configs) = self.client.configuration(config_items).await else {
-                debug!("failed to get configuration");
-                return;
-            };
+            let configs = self
+                .request_workspace_configuration(
+                    workers
+                        .iter()
+                        .map(|worker| worker.get_root_uri().unwrap())
+                        .collect::<Vec<_>>()
+                        .iter()
+                        .collect(),
+                )
+                .await;
 
             // we expect that the client is sending all the configuration items in order and completed
             // this is a LSP specification and errors should be reported on the client side
             for (index, worker) in workers.iter().enumerate() {
-                let config = &configs[index];
-                let Some(diagnostics) = worker.did_change_configuration(config.clone()).await
-                else {
+                let Some(config) = &configs[index] else {
+                    continue;
+                };
+                let Some(diagnostics) = worker.did_change_configuration(config).await else {
                     continue;
                 };
 
@@ -226,24 +222,11 @@ impl LanguageServer for Backend {
                     );
                 }
             }
-
-            // we have multiple workspace folders and the client does not support workspace configuration requests
-            // we assume that every workspace is under effect
         } else {
-            for worker in workers.iter() {
-                let Some(diagnostics) =
-                    worker.did_change_configuration(params.settings.clone()).await
-                else {
-                    continue;
-                };
-
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
-                }
-            }
+            warn!(
+                "could not update the configuration for a worker. Send a custom configuration with `workspace/didChangeConfiguration` or support `workspace/configuration`."
+            );
+            return;
         }
 
         if new_diagnostics.is_empty() {
