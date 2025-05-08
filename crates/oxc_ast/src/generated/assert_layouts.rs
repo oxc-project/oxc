@@ -604,22 +604,22 @@ const _: () = {
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    assert!(size_of::<PropertyDefinition>() == 104);
+    assert!(size_of::<PropertyDefinition>() == 96);
     assert!(align_of::<PropertyDefinition>() == 8);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, r#type) == 8);
     assert!(offset_of!(PropertyDefinition, decorators) == 16);
     assert!(offset_of!(PropertyDefinition, key) == 48);
-    assert!(offset_of!(PropertyDefinition, value) == 64);
-    assert!(offset_of!(PropertyDefinition, computed) == 80);
-    assert!(offset_of!(PropertyDefinition, r#static) == 81);
-    assert!(offset_of!(PropertyDefinition, declare) == 82);
-    assert!(offset_of!(PropertyDefinition, r#override) == 83);
-    assert!(offset_of!(PropertyDefinition, optional) == 84);
-    assert!(offset_of!(PropertyDefinition, definite) == 85);
-    assert!(offset_of!(PropertyDefinition, readonly) == 86);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 88);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 96);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 64);
+    assert!(offset_of!(PropertyDefinition, value) == 72);
+    assert!(offset_of!(PropertyDefinition, computed) == 88);
+    assert!(offset_of!(PropertyDefinition, r#static) == 89);
+    assert!(offset_of!(PropertyDefinition, declare) == 90);
+    assert!(offset_of!(PropertyDefinition, r#override) == 91);
+    assert!(offset_of!(PropertyDefinition, optional) == 92);
+    assert!(offset_of!(PropertyDefinition, definite) == 93);
+    assert!(offset_of!(PropertyDefinition, readonly) == 94);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 95);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);
@@ -1999,22 +1999,22 @@ const _: () = {
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    assert!(size_of::<PropertyDefinition>() == 60);
+    assert!(size_of::<PropertyDefinition>() == 56);
     assert!(align_of::<PropertyDefinition>() == 4);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, r#type) == 8);
     assert!(offset_of!(PropertyDefinition, decorators) == 12);
     assert!(offset_of!(PropertyDefinition, key) == 28);
-    assert!(offset_of!(PropertyDefinition, value) == 36);
-    assert!(offset_of!(PropertyDefinition, computed) == 44);
-    assert!(offset_of!(PropertyDefinition, r#static) == 45);
-    assert!(offset_of!(PropertyDefinition, declare) == 46);
-    assert!(offset_of!(PropertyDefinition, r#override) == 47);
-    assert!(offset_of!(PropertyDefinition, optional) == 48);
-    assert!(offset_of!(PropertyDefinition, definite) == 49);
-    assert!(offset_of!(PropertyDefinition, readonly) == 50);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 52);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 56);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 36);
+    assert!(offset_of!(PropertyDefinition, value) == 40);
+    assert!(offset_of!(PropertyDefinition, computed) == 48);
+    assert!(offset_of!(PropertyDefinition, r#static) == 49);
+    assert!(offset_of!(PropertyDefinition, declare) == 50);
+    assert!(offset_of!(PropertyDefinition, r#override) == 51);
+    assert!(offset_of!(PropertyDefinition, optional) == 52);
+    assert!(offset_of!(PropertyDefinition, definite) == 53);
+    assert!(offset_of!(PropertyDefinition, readonly) == 54);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 55);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);

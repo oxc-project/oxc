@@ -6590,6 +6590,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6598,7 +6599,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn class_element_property_definition<T1>(
@@ -6607,6 +6607,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6615,7 +6616,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
@@ -6626,6 +6626,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
@@ -6634,7 +6635,6 @@ impl<'a> AstBuilder<'a> {
             optional,
             definite,
             readonly,
-            type_annotation,
             accessibility,
         ))
     }
@@ -6832,6 +6832,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6840,7 +6841,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn property_definition<T1>(
@@ -6849,6 +6849,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6857,7 +6858,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> PropertyDefinition<'a>
     where
@@ -6868,6 +6868,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation: type_annotation.into_in(self.allocator),
             value,
             computed,
             r#static,
@@ -6876,7 +6877,6 @@ impl<'a> AstBuilder<'a> {
             optional,
             definite,
             readonly,
-            type_annotation: type_annotation.into_in(self.allocator),
             accessibility,
         }
     }
@@ -6891,6 +6891,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6899,7 +6900,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn alloc_property_definition<T1>(
@@ -6908,6 +6908,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6916,7 +6917,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> Box<'a, PropertyDefinition<'a>>
     where
@@ -6928,6 +6928,7 @@ impl<'a> AstBuilder<'a> {
                 r#type,
                 decorators,
                 key,
+                type_annotation,
                 value,
                 computed,
                 r#static,
@@ -6936,7 +6937,6 @@ impl<'a> AstBuilder<'a> {
                 optional,
                 definite,
                 readonly,
-                type_annotation,
                 accessibility,
             ),
             self.allocator,

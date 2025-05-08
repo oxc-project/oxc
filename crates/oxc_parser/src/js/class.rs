@@ -482,6 +482,7 @@ impl<'a> ParserImpl<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
@@ -490,7 +491,6 @@ impl<'a> ParserImpl<'a> {
             optional,
             definite,
             readonly,
-            type_annotation,
             accessibility,
         )
     }

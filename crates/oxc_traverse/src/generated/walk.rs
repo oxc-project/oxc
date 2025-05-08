@@ -2621,18 +2621,18 @@ unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_KEY) as *mut PropertyKey,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::PropertyDefinitionTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_property_definition(&mut *node, ctx);

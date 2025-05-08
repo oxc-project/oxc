@@ -3889,6 +3889,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
             r#type: CloneIn::clone_in(&self.r#type, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             computed: CloneIn::clone_in(&self.computed, allocator),
             r#static: CloneIn::clone_in(&self.r#static, allocator),
@@ -3897,7 +3898,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
             optional: CloneIn::clone_in(&self.optional, allocator),
             definite: CloneIn::clone_in(&self.definite, allocator),
             readonly: CloneIn::clone_in(&self.readonly, allocator),
-            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             accessibility: CloneIn::clone_in(&self.accessibility, allocator),
         }
     }
@@ -3908,6 +3908,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
             r#type: CloneIn::clone_in_with_semantic_ids(&self.r#type, allocator),
             decorators: CloneIn::clone_in_with_semantic_ids(&self.decorators, allocator),
             key: CloneIn::clone_in_with_semantic_ids(&self.key, allocator),
+            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
             value: CloneIn::clone_in_with_semantic_ids(&self.value, allocator),
             computed: CloneIn::clone_in_with_semantic_ids(&self.computed, allocator),
             r#static: CloneIn::clone_in_with_semantic_ids(&self.r#static, allocator),
@@ -3916,7 +3917,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
             optional: CloneIn::clone_in_with_semantic_ids(&self.optional, allocator),
             definite: CloneIn::clone_in_with_semantic_ids(&self.definite, allocator),
             readonly: CloneIn::clone_in_with_semantic_ids(&self.readonly, allocator),
-            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
             accessibility: CloneIn::clone_in_with_semantic_ids(&self.accessibility, allocator),
         }
     }

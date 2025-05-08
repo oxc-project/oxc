@@ -1248,6 +1248,7 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             r#type: Dummy::dummy(allocator),
             decorators: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
@@ -1256,7 +1257,6 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             optional: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
-            type_annotation: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
         }
     }

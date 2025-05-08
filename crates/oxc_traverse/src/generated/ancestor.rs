@@ -158,8 +158,8 @@ pub(crate) enum AncestorType {
     MethodDefinitionValue = 135,
     PropertyDefinitionDecorators = 136,
     PropertyDefinitionKey = 137,
-    PropertyDefinitionValue = 138,
-    PropertyDefinitionTypeAnnotation = 139,
+    PropertyDefinitionTypeAnnotation = 138,
+    PropertyDefinitionValue = 139,
     StaticBlockBody = 140,
     AccessorPropertyDecorators = 141,
     AccessorPropertyKey = 142,
@@ -577,10 +577,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::PropertyDefinitionDecorators as u16,
     PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a, 't>) =
         AncestorType::PropertyDefinitionKey as u16,
-    PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a, 't>) =
-        AncestorType::PropertyDefinitionValue as u16,
     PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a, 't>) =
         AncestorType::PropertyDefinitionTypeAnnotation as u16,
+    PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a, 't>) =
+        AncestorType::PropertyDefinitionValue as u16,
     StaticBlockBody(StaticBlockWithoutBody<'a, 't>) = AncestorType::StaticBlockBody as u16,
     AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a, 't>) =
         AncestorType::AccessorPropertyDecorators as u16,
@@ -1324,8 +1324,8 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::PropertyDefinitionDecorators(_)
                 | Self::PropertyDefinitionKey(_)
-                | Self::PropertyDefinitionValue(_)
                 | Self::PropertyDefinitionTypeAnnotation(_)
+                | Self::PropertyDefinitionValue(_)
         )
     }
 
@@ -2335,8 +2335,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::MethodDefinitionValue(a) => a.address(),
             Self::PropertyDefinitionDecorators(a) => a.address(),
             Self::PropertyDefinitionKey(a) => a.address(),
-            Self::PropertyDefinitionValue(a) => a.address(),
             Self::PropertyDefinitionTypeAnnotation(a) => a.address(),
+            Self::PropertyDefinitionValue(a) => a.address(),
             Self::StaticBlockBody(a) => a.address(),
             Self::AccessorPropertyDecorators(a) => a.address(),
             Self::AccessorPropertyKey(a) => a.address(),
@@ -8562,6 +8562,8 @@ pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE: usize = offset_of!(PropertyDef
 pub(crate) const OFFSET_PROPERTY_DEFINITION_DECORATORS: usize =
     offset_of!(PropertyDefinition, decorators);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_KEY: usize = offset_of!(PropertyDefinition, key);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION: usize =
+    offset_of!(PropertyDefinition, type_annotation);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_VALUE: usize = offset_of!(PropertyDefinition, value);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_COMPUTED: usize =
     offset_of!(PropertyDefinition, computed);
@@ -8577,8 +8579,6 @@ pub(crate) const OFFSET_PROPERTY_DEFINITION_DEFINITE: usize =
     offset_of!(PropertyDefinition, definite);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_READONLY: usize =
     offset_of!(PropertyDefinition, readonly);
-pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION: usize =
-    offset_of!(PropertyDefinition, type_annotation);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY: usize =
     offset_of!(PropertyDefinition, accessibility);
 
@@ -8607,6 +8607,14 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
     pub fn key(self) -> &'t PropertyKey<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
@@ -8651,14 +8659,6 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
     #[inline]
     pub fn readonly(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
     }
 
     #[inline]
@@ -8707,6 +8707,14 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn value(self) -> &'t Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
@@ -8750,14 +8758,6 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn accessibility(self) -> &'t Option<TSAccessibility> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
@@ -8767,101 +8767,6 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutKey<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct PropertyDefinitionWithoutValue<'a, 't>(
-    pub(crate) *const PropertyDefinition<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn r#type(self) -> &'t PropertyDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
-                as *const PropertyDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn definite(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn readonly(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -8957,6 +8862,101 @@ impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PropertyDefinitionWithoutValue<'a, 't>(
+    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

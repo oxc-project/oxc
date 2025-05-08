@@ -866,10 +866,10 @@ function deserializePropertyDefinition(pos) {
     type: deserializePropertyDefinitionType(pos + 8),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    static: deserializeBool(pos + 81),
-    computed: deserializeBool(pos + 80),
+    static: deserializeBool(pos + 89),
+    computed: deserializeBool(pos + 88),
     key: deserializePropertyKey(pos + 48),
-    value: deserializeOptionExpression(pos + 64),
+    value: deserializeOptionExpression(pos + 72),
   };
 }
 

@@ -2112,6 +2112,13 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Type annotation on the property.
+    ///
+    /// e.g. `class Foo { x: number; }`
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Initialized value in the declaration.
     ///
     /// ## Example
@@ -2164,11 +2171,6 @@ pub struct PropertyDefinition<'a> {
     /// `true` when declared with a `readonly` modifier
     #[ts]
     pub readonly: bool,
-    /// Type annotation on the property.
-    ///
-    /// Will only ever be [`Some`] for TypeScript files.
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.
