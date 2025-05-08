@@ -8,11 +8,12 @@ const oxcTypes = require('./estree_field_orders.json');
 const types = [...new Set([...Object.keys(eslintTypes), ...Object.keys(oxcTypes)])];
 types.sort();
 
-const DUMMY_FIELD_MISMATCHES = [
+const VIRTUAL_FIELD_MISMATCHES = [
   'ArrayPattern',
   'AssignmentPattern',
   'ObjectPattern',
   'RestElement',
+  'TSMappedType',
 ];
 
 const TS_ESLINT_IS_WRONG = [
@@ -41,7 +42,7 @@ combinedTypes = combinedTypes.filter(o => o.oxc && o.eslint);
 // Compare field orders
 let errors = '';
 for (const { type, oxc, eslint } of combinedTypes) {
-  if (DUMMY_FIELD_MISMATCHES.includes(type) || TS_ESLINT_IS_WRONG.includes(type)) continue;
+  if (VIRTUAL_FIELD_MISMATCHES.includes(type) || TS_ESLINT_IS_WRONG.includes(type)) continue;
 
   const error = compare(oxc, eslint);
   if (error) errors += `${type}: ${error}\n\n`;
