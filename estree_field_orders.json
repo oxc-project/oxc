@@ -243,7 +243,7 @@
     ["key", "value", "shorthand", "computed", "method", "kind", "optional"]
   ],
   "PropertyDefinition": [
-    ["decorators", "key", "value", "computed", "static", "declare", "override", "optional", "definite", "readonly", "typeAnnotation", "accessibility"]
+    ["decorators", "key", "typeAnnotation", "value", "computed", "static", "declare", "override", "optional", "definite", "readonly", "accessibility"]
   ],
   "RegExp": [
     ["pattern", "flags"]
@@ -283,7 +283,7 @@
     ["decorators", "key", "value", "kind", "computed", "static", "override", "optional", "accessibility"]
   ],
   "TSAbstractPropertyDefinition": [
-    ["decorators", "key", "value", "computed", "static", "declare", "override", "optional", "definite", "readonly", "typeAnnotation", "accessibility"]
+    ["decorators", "key", "typeAnnotation", "value", "computed", "static", "declare", "override", "optional", "definite", "readonly", "accessibility"]
   ],
   "TSAnyKeyword": [
     []

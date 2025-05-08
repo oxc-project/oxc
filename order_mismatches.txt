@@ -1,7 +1,3 @@
-PropertyDefinition: Order mismatch: value
-Oxc: decorators, key, value, computed, static, declare, override, optional, definite, readonly, typeAnnotation, accessibility
-TS : decorators, key, typeAnnotation, value
-
 TSImportType: Order mismatch: options
 Oxc: argument, options, qualifier, typeArguments
 TS : argument, qualifier, typeArguments, options
