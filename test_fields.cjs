@@ -22,6 +22,8 @@ const TS_ESLINT_IS_WRONG = [
   // e.g. `type T = import('foo', {assert:{}}).qualifier`
   // e.g. `type T = import('foo', {assert:{}})<T>`
   'TSImportType',
+  // `objectType` should be before `indexType`
+  'TSIndexedAccessType',
 ];
 
 // Combine Oxc and TS-ESLint types

@@ -1,7 +1,3 @@
-TSIndexedAccessType: Order mismatch: objectType
-Oxc: objectType, indexType
-TS : indexType, objectType
-
 TSMappedType: Order mismatch: nameType
 Oxc: nameType, typeAnnotation, optional, readonly, key, constraint
 TS : key, constraint, nameType, typeAnnotation
