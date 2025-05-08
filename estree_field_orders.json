@@ -218,7 +218,7 @@
     ["decorators", "key", "value", "kind", "computed", "static", "override", "optional", "accessibility"]
   ],
   "NewExpression": [
-    ["callee", "arguments", "typeArguments"]
+    ["callee", "typeArguments", "arguments"]
   ],
   "ObjectExpression": [
     ["properties"]
