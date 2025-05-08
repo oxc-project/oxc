@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RAngle);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
-        self.ast.expression_ts_type_assertion(self.end_span(span), expression, type_annotation)
+        self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {

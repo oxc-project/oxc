@@ -3226,8 +3226,8 @@ impl ESTree for TSTypeAssertion<'_> {
         state.serialize_field("type", &JsonSafeString("TSTypeAssertion"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("expression", &self.expression);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("expression", &self.expression);
         state.end();
     }
 }

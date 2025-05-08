@@ -2377,8 +2377,8 @@ impl ContentEq for TSSatisfiesExpression<'_> {
 
 impl ContentEq for TSTypeAssertion<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.expression, &other.expression)
     }
 }
 

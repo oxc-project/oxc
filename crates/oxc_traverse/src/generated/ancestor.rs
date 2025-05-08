@@ -302,8 +302,8 @@ pub(crate) enum AncestorType {
     TSAsExpressionTypeAnnotation = 279,
     TSSatisfiesExpressionExpression = 280,
     TSSatisfiesExpressionTypeAnnotation = 281,
-    TSTypeAssertionExpression = 282,
-    TSTypeAssertionTypeAnnotation = 283,
+    TSTypeAssertionTypeAnnotation = 282,
+    TSTypeAssertionExpression = 283,
     TSImportEqualsDeclarationId = 284,
     TSImportEqualsDeclarationModuleReference = 285,
     TSExternalModuleReferenceExpression = 286,
@@ -859,10 +859,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSSatisfiesExpressionExpression as u16,
     TSSatisfiesExpressionTypeAnnotation(TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSSatisfiesExpressionTypeAnnotation as u16,
-    TSTypeAssertionExpression(TSTypeAssertionWithoutExpression<'a, 't>) =
-        AncestorType::TSTypeAssertionExpression as u16,
     TSTypeAssertionTypeAnnotation(TSTypeAssertionWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSTypeAssertionTypeAnnotation as u16,
+    TSTypeAssertionExpression(TSTypeAssertionWithoutExpression<'a, 't>) =
+        AncestorType::TSTypeAssertionExpression as u16,
     TSImportEqualsDeclarationId(TSImportEqualsDeclarationWithoutId<'a, 't>) =
         AncestorType::TSImportEqualsDeclarationId as u16,
     TSImportEqualsDeclarationModuleReference(
@@ -1802,7 +1802,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_type_assertion(self) -> bool {
-        matches!(self, Self::TSTypeAssertionExpression(_) | Self::TSTypeAssertionTypeAnnotation(_))
+        matches!(self, Self::TSTypeAssertionTypeAnnotation(_) | Self::TSTypeAssertionExpression(_))
     }
 
     #[inline]
@@ -2479,8 +2479,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSAsExpressionTypeAnnotation(a) => a.address(),
             Self::TSSatisfiesExpressionExpression(a) => a.address(),
             Self::TSSatisfiesExpressionTypeAnnotation(a) => a.address(),
-            Self::TSTypeAssertionExpression(a) => a.address(),
             Self::TSTypeAssertionTypeAnnotation(a) => a.address(),
+            Self::TSTypeAssertionExpression(a) => a.address(),
             Self::TSImportEqualsDeclarationId(a) => a.address(),
             Self::TSImportEqualsDeclarationModuleReference(a) => a.address(),
             Self::TSExternalModuleReferenceExpression(a) => a.address(),
@@ -15132,39 +15132,10 @@ impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_TYPE_ASSERTION_SPAN: usize = offset_of!(TSTypeAssertion, span);
-pub(crate) const OFFSET_TS_TYPE_ASSERTION_EXPRESSION: usize =
-    offset_of!(TSTypeAssertion, expression);
 pub(crate) const OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION: usize =
     offset_of!(TSTypeAssertion, type_annotation);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSTypeAssertionWithoutExpression<'a, 't>(
-    pub(crate) *const TSTypeAssertion<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t TSType<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION)
-                as *const TSType<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
+pub(crate) const OFFSET_TS_TYPE_ASSERTION_EXPRESSION: usize =
+    offset_of!(TSTypeAssertion, expression);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -15189,6 +15160,35 @@ impl<'a, 't> TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAssertionWithoutExpression<'a, 't>(
+    pub(crate) *const TSTypeAssertion<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

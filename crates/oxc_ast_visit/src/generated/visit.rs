@@ -3992,8 +3992,8 @@ pub mod walk {
         let kind = AstKind::TSTypeAssertion(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.visit_expression(&it.expression);
         visitor.leave_node(kind);
     }
 

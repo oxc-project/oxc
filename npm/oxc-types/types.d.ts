@@ -1398,8 +1398,8 @@ export interface TSSatisfiesExpression extends Span {
 
 export interface TSTypeAssertion extends Span {
   type: 'TSTypeAssertion';
-  expression: Expression;
   typeAnnotation: TSType;
+  expression: Expression;
 }
 
 export interface TSImportEqualsDeclaration extends Span {
