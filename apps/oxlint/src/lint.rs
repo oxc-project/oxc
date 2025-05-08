@@ -293,18 +293,16 @@ impl Runner for LintRunner {
             }
         }
 
-        let mut lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+        let tx_error = diagnostic_service.sender().clone();
 
-        let number_of_rules = lint_service.linter().number_of_rules();
+        let number_of_rules = linter.number_of_rules();
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        rayon::spawn({
-            let tx_error = diagnostic_service.sender().clone();
-            move || {
-                lint_service.run(&tx_error);
-            }
+        rayon::spawn(move || {
+            let mut lint_service = LintService::new(&linter, options);
+            lint_service.run(&tx_error);
         });
 
         let diagnostic_result = diagnostic_service.run(stdout);

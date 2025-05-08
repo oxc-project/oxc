@@ -137,9 +137,9 @@ impl IsolatedLintHandler {
             vec![Arc::from(path.as_os_str())],
         )
         .with_cross_module(self.options.use_cross_module);
-        // ToDo: do not clone the linter
+
         let mut lint_service =
-            LintService::new(self.linter.clone(), lint_service_options).with_file_system(Box::new(
+            LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
                 IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
             ));
         let result = lint_service.run_source(allocator);

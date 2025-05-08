@@ -38,11 +38,11 @@ use crate::fixer::{FixWithPosition, MessageWithPosition};
 #[cfg(feature = "language_server")]
 use crate::service::offset_to_position::{SpanPositionMessage, offset_to_position};
 
-pub struct Runtime {
+pub struct Runtime<'l> {
     cwd: Box<Path>,
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
-    pub(super) linter: Linter,
+    pub(super) linter: &'l Linter,
     resolver: Option<Resolver>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
@@ -163,8 +163,8 @@ impl RuntimeFileSystem for OsFileSystem {
     }
 }
 
-impl Runtime {
-    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+impl<'l> Runtime<'l> {
+    pub(super) fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });

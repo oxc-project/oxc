@@ -515,7 +515,7 @@ impl Tester {
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options =
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
-        let mut lint_service = LintService::new(linter, options).with_file_system(Box::new(
+        let mut lint_service = LintService::new(&linter, options).with_file_system(Box::new(
             TesterFileSystem::new(path_to_lint, source_text.to_string()),
         ));
 
