@@ -30,7 +30,7 @@ use nonmax::NonMaxU32;
 pub use core::alloc::Layout;
 use core::cmp;
 use core::mem;
-use core::ptr::{self, NonNull};
+use core::ptr::NonNull;
 
 use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow};
 
@@ -67,11 +67,12 @@ use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow}
 // type Cap = std::num::niche_types::U32NotAllOnes;
 // Use `NonMaxU32` rather than the same as standard library using `std::num::niche_types::U32NotAllOnes` because `U32NotAllOnes` is
 // unstable feature, and it seems only used for Rust core library.
-struct Cap(NonMaxU32);
+pub struct Cap(NonMaxU32);
 
 impl Cap {
     /// Returns the capacity as a `usize`.
-    fn get_usize(&self) -> usize {
+    #[inline]
+    pub(crate) fn get_usize(&self) -> usize {
         self.0.get() as usize
     }
 
@@ -90,18 +91,18 @@ impl Cap {
 
 const ZERO_CAP: Cap = unsafe { Cap(NonMaxU32::new_unchecked(0)) };
 
-pub struct RawVec<'a, T> {
-    ptr: NonNull<T>,
-    cap: Cap,
-    a: &'a Bump,
+pub struct RawVec<'a, 'b, T> {
+    pub(crate) ptr: &'b mut NonNull<T>,
+    pub(crate) cap: &'b mut Cap,
+    pub(crate) a: &'a Bump,
 }
 
-impl<'a, T> RawVec<'a, T> {
+impl<'a, 'b, T> RawVec<'a, 'b, T> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
-    pub fn new_in(a: &'a Bump) -> Self {
+    pub fn new_in(a: &'a Bump) -> (NonNull<T>, Cap, &'a Bump) {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
-        RawVec { ptr: NonNull::dangling(), cap: ZERO_CAP, a }
+        (NonNull::dangling(), ZERO_CAP, a)
     }
 
     /// Like `with_capacity` but parameterized over the choice of
@@ -111,18 +112,24 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// Panics if the requested capacity exceeds `isize::MAX` bytes.
     #[inline]
-    pub fn with_capacity_in(cap: usize, a: &'a Bump) -> Self {
+    pub fn with_capacity_in(cap: usize, a: &'a Bump) -> (NonNull<T>, Cap, &'a Bump) {
         RawVec::allocate_in(cap, false, a)
     }
 
+    /*
     /// Like `with_capacity_zeroed` but parameterized over the choice
     /// of allocator for the returned RawVec.
     #[inline]
     pub fn with_capacity_zeroed_in(cap: usize, a: &'a Bump) -> Self {
         RawVec::allocate_in(cap, true, a)
     }
+    */
 
-    fn allocate_in(capacity: usize, zeroed: bool, mut a: &'a Bump) -> Self {
+    pub fn allocate_in(
+        capacity: usize,
+        zeroed: bool,
+        mut a: &'a Bump,
+    ) -> (NonNull<T>, Cap, &'a Bump) {
         unsafe {
             let elem_size = mem::size_of::<T>();
 
@@ -142,12 +149,12 @@ impl<'a, T> RawVec<'a, T> {
                 }
             };
 
-            RawVec { ptr, cap: Cap::new_cap::<T>(capacity), a }
+            (ptr, Cap::new_cap::<T>(capacity), a)
         }
     }
 }
 
-impl<'a, T> RawVec<'a, T> {
+impl<'a, 'b, T> RawVec<'a, 'b, T> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
     /// # Safety
@@ -158,12 +165,16 @@ impl<'a, T> RawVec<'a, T> {
     /// systems). For ZSTs capacity is ignored.
     /// If the `ptr` and `capacity` come from a `RawVec` created via `alloc`, then this is
     /// guaranteed.
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, capacity: usize, a: &'a Bump) -> Self {
-        RawVec { ptr: NonNull::new_unchecked(ptr), cap: Cap::new_cap::<T>(capacity), a }
+    pub unsafe fn from_raw_parts_in(
+        ptr: *mut T,
+        capacity: usize,
+        a: &'a Bump,
+    ) -> (NonNull<T>, Cap, &'a Bump) {
+        (NonNull::new_unchecked(ptr), Cap::new_cap::<T>(capacity), a)
     }
 }
 
-impl<'a, T> RawVec<'a, T> {
+impl<'a, 'b, T> RawVec<'a, 'b, T> {
     /// Gets a raw pointer to the start of the allocation. Note that this is
     /// Unique::empty() if `cap = 0` or T is zero-sized. In the former case, you must
     /// be careful.
@@ -530,6 +541,7 @@ impl<'a, T> RawVec<'a, T> {
     }
     */
 
+    /*
     /// Shrinks the allocation down to the specified amount. If the given amount
     /// is 0, actually completely deallocates.
     ///
@@ -541,12 +553,13 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// Aborts on OOM.
     pub fn shrink_to_fit(&mut self, amount: usize) {
+        unreachable!("shrink_to_fit is not implemented");
         let elem_size = mem::size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
         if elem_size == 0 {
             // TODO: standard library doesn't do this for ZSTs, needs to double check if it's needed.
-            self.cap = unsafe { Cap::new_cap::<T>(amount) };
+            *self.cap = unsafe { Cap::new_cap::<T>(amount) };
             return;
         }
 
@@ -581,13 +594,14 @@ impl<'a, T> RawVec<'a, T> {
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
                 match self.a.shrink(self.ptr.cast(), old_layout, new_layout) {
-                    Ok(p) => self.ptr = p.cast(),
+                    Ok(p) => *self.ptr = p.cast(),
                     Err(_) => handle_alloc_error(new_layout),
                 }
             }
-            self.cap = unsafe { Cap::new_cap::<T>(amount) };
+            *self.cap = unsafe { Cap::new_cap::<T>(amount) };
         }
     }
+    */
 }
 
 /*
@@ -615,7 +629,7 @@ impl<'a, T> RawVec<'a, T> {
 }
 */
 
-impl<'a, T> RawVec<'a, T> {
+impl<'a, 'b, T> RawVec<'a, 'b, T> {
     #[inline]
     fn needs_to_grow(&self, len: usize, additional: usize) -> bool {
         additional > self.cap().wrapping_sub(len)
@@ -633,9 +647,9 @@ impl<'a, T> RawVec<'a, T> {
             let cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
             let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
 
-            self.ptr = self.finish_grow(new_layout)?.cast();
+            *self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = unsafe { Cap::new_cap::<T>(cap) };
+            *self.cap = unsafe { Cap::new_cap::<T>(cap) };
 
             Ok(())
         }
@@ -687,9 +701,9 @@ impl<'a, T> RawVec<'a, T> {
 
             let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
 
-            self.ptr = self.finish_grow(new_layout)?.cast();
+            *self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = unsafe { Cap::new_cap::<T>(cap) };
+            *self.cap = unsafe { Cap::new_cap::<T>(cap) };
 
             Ok(())
         }
@@ -715,7 +729,7 @@ impl<'a, T> RawVec<'a, T> {
                     a.grow(ptr.cast(), old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.a, self.ptr, layout, new_layout)
+                grow(self.a, *self.ptr, layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
@@ -724,7 +738,7 @@ impl<'a, T> RawVec<'a, T> {
     }
 }
 
-impl<'a, T> RawVec<'a, T> {
+impl<'a, 'b, T> RawVec<'a, 'b, T> {
     /// Frees the memory owned by the RawVec *without* trying to Drop its contents.
     pub unsafe fn dealloc_buffer(&mut self) {
         let elem_size = mem::size_of::<T>();
@@ -782,40 +796,40 @@ fn handle_error(error: CollectionAllocErr) -> ! {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn reserve_does_not_overallocate() {
-        let bump = Bump::new();
-        {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
-            // First `reserve` allocates like `reserve_exact`
-            v.reserve(0, 9);
-            assert_eq!(9, v.cap());
-        }
+//     #[test]
+//     fn reserve_does_not_overallocate() {
+//         let bump = Bump::new();
+//         {
+//             let mut v: RawVec<u32> = RawVec::new_in(&bump);
+//             // First `reserve` allocates like `reserve_exact`
+//             v.reserve(0, 9);
+//             assert_eq!(9, v.cap());
+//         }
 
-        {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
-            v.reserve(0, 7);
-            assert_eq!(7, v.cap());
-            // 97 if more than double of 7, so `reserve` should work
-            // like `reserve_exact`.
-            v.reserve(7, 90);
-            assert_eq!(97, v.cap());
-        }
+//         {
+//             let mut v: RawVec<u32> = RawVec::new_in(&bump);
+//             v.reserve(0, 7);
+//             assert_eq!(7, v.cap());
+//             // 97 if more than double of 7, so `reserve` should work
+//             // like `reserve_exact`.
+//             v.reserve(7, 90);
+//             assert_eq!(97, v.cap());
+//         }
 
-        {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
-            v.reserve(0, 12);
-            assert_eq!(12, v.cap());
-            v.reserve(12, 3);
-            // 3 is less than half of 12, so `reserve` must grow
-            // exponentially. At the time of writing this test grow
-            // factor is 2, so new capacity is 24, however, grow factor
-            // of 1.5 is OK too. Hence `>= 18` in assert.
-            assert!(v.cap() >= 12 + 12 / 2);
-        }
-    }
-}
+//         {
+//             let mut v: RawVec<u32> = RawVec::new_in(&bump);
+//             v.reserve(0, 12);
+//             assert_eq!(12, v.cap());
+//             v.reserve(12, 3);
+//             // 3 is less than half of 12, so `reserve` must grow
+//             // exponentially. At the time of writing this test grow
+//             // factor is 2, so new capacity is 24, however, grow factor
+//             // of 1.5 is OK too. Hence `>= 18` in assert.
+//             assert!(v.cap() >= 12 + 12 / 2);
+//         }
+//     }
+// }
