@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2309/2322 (99.44%)
 Positive Passed: 2288/2322 (98.54%)
-Negative Passed: 1559/1673 (93.19%)
+Negative Passed: 1560/1673 (93.25%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -177,8 +177,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 
@@ -6151,140 +6149,44 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap either expression by parentheses
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/class-contructor-call/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/class-contructor-call/input.js:1:6]
  1 │ new C?.b.d()
-   · ────────────
+   ·      ──
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:8]
  1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:2:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:8]
  1 │ new foo?.bar();
+   ·        ──
  2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.[0];
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.[0];
-   · ────────────
- 4 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:8]
  1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:2:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:8]
  1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.[0];
-   · ────────────
- 4 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:1]
- 1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:2:1]
- 1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.bar!()
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.bar!()
-   · ───────────────
- 4 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:4:1]
- 3 │ new foo?.bar!()
- 4 │ new foo?.[0];
-   · ────────────
- 5 │ new foo?.bar![0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:5:1]
- 4 │ new foo?.[0];
- 5 │ new foo?.bar![0];
-   · ────────────────
- 6 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:1]
- 1 │ new foo?.bar();
-   · ──────────────
- 2 │ new foo.bar?.();
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:2:1]
- 1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.bar!()
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.bar!()
-   · ───────────────
- 4 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:4:1]
- 3 │ new foo?.bar!()
- 4 │ new foo?.[0];
-   · ────────────
- 5 │ new foo?.bar![0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:5:1]
- 4 │ new foo?.[0];
- 5 │ new foo?.bar![0];
-   · ────────────────
- 6 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-constructor/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-constructor/input.js:1:6]
  1 │ new a?.();
-   · ─────
+   ·      ──
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
@@ -13071,6 +12973,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ T = number
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]
+ 1 │ f?.<string>[1];
+   ·  ──
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]

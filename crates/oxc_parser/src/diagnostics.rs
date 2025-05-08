@@ -253,6 +253,17 @@ pub fn new_optional_chain(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_new_optional_chain(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid optional chain from new expression.").with_label(span)
+}
+
+#[cold]
+pub fn decorator_optional(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expression must be enclosed in parentheses to be used as a decorator.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn for_loop_async_of(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The left-hand side of a `for...of` statement may not be `async`")
         .with_label(span)

@@ -1,9 +1,9 @@
 commit: 15392346
 
 parser_typescript Summary:
-AST Parsed     : 6523/6531 (99.88%)
-Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1314/5754 (22.84%)
+AST Parsed     : 6521/6528 (99.89%)
+Positive Passed: 6509/6528 (99.71%)
+Negative Passed: 1315/5757 (22.84%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4476,6 +4476,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unusedVariab
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.2.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_destructuring.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_jsx.tsx
@@ -5967,6 +5969,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-arguments.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts
 
@@ -9159,17 +9163,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
     · ────
  65 │     var y = _;
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:13:12]
- 12 │ 
- 13 │ { @x?.["y"] class C {} }
-    ·            ▲
- 14 │ 
-    ╰────
-  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
 
@@ -13131,11 +13124,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ 
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[typescript/tests/cases/compiler/invalidOptionalChainFromNewExpression.ts:5:1]
+  × Invalid optional chain from new expression.
+   ╭─[typescript/tests/cases/compiler/invalidOptionalChainFromNewExpression.ts:5:6]
  4 │ 
  5 │ new A?.b()   // error
-   · ──────────
+   ·      ──
  6 │ new A()?.b() // ok
    ╰────
 
@@ -23722,6 +23715,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·           ─
  3 │ }
    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:9:4]
+  8 │ 
+  9 │ { @x?.y class C {} }
+    ·    ────
+ 10 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:11:4]
+ 10 │ 
+ 11 │ { @x?.y() class C {} }
+    ·    ──────
+ 12 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:13:4]
+ 12 │ 
+ 13 │ { @x?.["y"] class C {} }
+    ·    ────────
+ 14 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:15:4]
+ 14 │ 
+ 15 │ { @x?.() class C {} }
+    ·    ─────
+ 16 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:31:14]
+ 30 │ 
+ 31 │ { class C { @x?.y m() {} } }
+    ·              ────
+ 32 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:33:14]
+ 32 │ 
+ 33 │ { class C { @x?.y() m() {} } }
+    ·              ──────
+ 34 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:35:14]
+ 34 │ 
+ 35 │ { class C { @x?.["y"] m() {} } }
+    ·              ────────
+ 36 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:37:14]
+ 36 │ 
+ 37 │ { class C { @x?.() m() {} } }
+    ·              ─────
+ 38 │ 
+    ╰────
 
   × Private identifier '#foo' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-privateFieldAccess.ts:3:13]

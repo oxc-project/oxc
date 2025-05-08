@@ -655,6 +655,9 @@ impl<'a> ParserImpl<'a> {
         if !in_optional_chain {
             return lhs;
         }
+        if self.ctx.has_decorator() {
+            self.error(diagnostics::decorator_optional(lhs.span()));
+        }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
             expr.expression = self.map_to_chain_expression(
@@ -691,7 +694,12 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let span = self.start_span();
         let lhs = self.parse_primary_expression();
-        self.parse_member_expression_rest(span, lhs, in_optional_chain)
+        self.parse_member_expression_rest(
+            span,
+            lhs,
+            in_optional_chain,
+            /* allow_optional_chain */ true,
+        )
     }
 
     /// Section 13.3 Super Call
@@ -719,60 +727,60 @@ impl<'a> ParserImpl<'a> {
         lhs_span: u32,
         lhs: Expression<'a>,
         in_optional_chain: &mut bool,
+        allow_optional_chain: bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
         loop {
             if self.fatal_error.is_some() {
                 return lhs;
             }
-            lhs = match self.cur_kind() {
-                Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false),
-                Kind::QuestionDot => {
-                    *in_optional_chain = true;
-                    match self.peek_kind() {
-                        Kind::LBrack if !self.ctx.has_decorator() => {
-                            self.bump_any(); // bump `?.`
-                            self.parse_computed_member_expression(lhs_span, lhs, true)
-                        }
-                        Kind::PrivateIdentifier => {
-                            self.parse_static_member_expression(lhs_span, lhs, true)
-                        }
-                        kind if kind.is_identifier_name() => {
-                            self.parse_static_member_expression(lhs_span, lhs, true)
-                        }
-                        Kind::Bang
-                        | Kind::LAngle
-                        | Kind::LParen
-                        | Kind::NoSubstitutionTemplate
-                        | Kind::ShiftLeft
-                        | Kind::TemplateHead
-                        | Kind::LBrack => break,
-                        _ => {
-                            return self.unexpected();
-                        }
-                    }
-                }
-                // computed member expression is not allowed in decorator
-                // class C { @dec ["1"]() { } }
-                //                ^
-                Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.parse_computed_member_expression(lhs_span, lhs, false)
-                }
-                Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
+
+            let mut question_dot = false;
+            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) && {
+                let peek_kind = self.peek_kind();
+                peek_kind == Kind::LBrack
+                    || peek_kind.is_identifier_or_keyword()
+                    || peek_kind.is_template_start_of_tagged_template()
+            } {
+                self.bump_any();
+                *in_optional_chain = true;
+                question_dot = true;
+                self.cur_kind().is_identifier_or_keyword()
+            } else {
+                self.eat(Kind::Dot)
+            };
+
+            if is_property_access {
+                lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
+                continue;
+            }
+
+            if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
+                lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
+                continue;
+            }
+
+            if self.cur_kind().is_template_start_of_tagged_template() {
+                let (expr, type_parameters) =
+                    if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
+                        let expr = instantiation_expr.unbox();
+                        (expr.expression, Some(expr.type_arguments))
+                    } else {
+                        (lhs, None)
+                    };
+                lhs =
+                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters);
+                continue;
+            }
+
+            if !question_dot {
+                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line && self.is_ts {
                     self.bump_any();
-                    self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
+                    lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
+                    continue;
                 }
-                kind if kind.is_template_start_of_tagged_template() => {
-                    let (expr, type_parameters) =
-                        if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                            let expr = instantiation_expr.unbox();
-                            (expr.expression, Some(expr.type_arguments))
-                        } else {
-                            (lhs, None)
-                        };
-                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)
-                }
-                Kind::LAngle | Kind::ShiftLeft => {
+
+                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
                     if let Some(Some(arguments)) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
@@ -783,12 +791,11 @@ impl<'a> ParserImpl<'a> {
                         );
                         continue;
                     }
-                    break;
                 }
-                _ => break,
-            };
+            }
+
+            return lhs;
         }
-        lhs
     }
 
     /// Section 13.3 `MemberExpression`
@@ -799,7 +806,6 @@ impl<'a> ParserImpl<'a> {
         lhs: Expression<'a>,
         optional: bool,
     ) -> Expression<'a> {
-        self.bump_any(); // advance `.` or `?.`
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
             self.ast.member_expression_private_field_expression(
@@ -843,16 +849,29 @@ impl<'a> ParserImpl<'a> {
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
             };
         }
-        let rhs_span = self.start_span();
 
+        let rhs_span = self.start_span();
         let mut optional = false;
-        let mut callee = self.parse_member_expression_or_higher(&mut optional);
+        let mut callee = {
+            let lhs = self.parse_primary_expression();
+            self.parse_member_expression_rest(
+                rhs_span,
+                lhs,
+                &mut optional,
+                /* allow_optional_chain */ false,
+            )
+        };
 
         let mut type_arguments = None;
         if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
             let instantiation_expr = instantiation_expr.unbox();
             type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
+        }
+
+        if self.at(Kind::QuestionDot) {
+            let error = diagnostics::invalid_new_optional_chain(self.cur_token().span());
+            return self.fatal_error(error);
         }
 
         // parse `new ident` without arguments
@@ -895,23 +914,32 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let mut lhs = lhs;
         while self.fatal_error.is_none() {
-            let mut type_arguments = None;
-            lhs = self.parse_member_expression_rest(lhs_span, lhs, in_optional_chain);
-            let optional_call = self.eat(Kind::QuestionDot);
-            *in_optional_chain = if optional_call { true } else { *in_optional_chain };
+            lhs = self.parse_member_expression_rest(
+                lhs_span,
+                lhs,
+                in_optional_chain,
+                /* allow_optional_chain */ true,
+            );
+            let question_dot_span = self.at(Kind::QuestionDot).then(|| self.cur_token().span());
+            let question_dot = question_dot_span.is_some();
+            if question_dot {
+                self.bump_any();
+                *in_optional_chain = true;
+            }
 
-            if optional_call {
+            let mut type_arguments = None;
+            if question_dot {
                 if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
                     type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
-                    lhs = self.parse_tagged_template(lhs_span, lhs, optional_call, type_arguments);
+                    lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);
                     continue;
                 }
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !optional_call {
+                if !question_dot {
                     if let Expression::TSInstantiationExpression(expr) = lhs {
                         let expr = expr.unbox();
                         type_arguments.replace(expr.type_arguments);
@@ -919,10 +947,16 @@ impl<'a> ParserImpl<'a> {
                     }
                 }
 
-                lhs =
-                    self.parse_call_arguments(lhs_span, lhs, optional_call, type_arguments.take());
+                lhs = self.parse_call_arguments(lhs_span, lhs, question_dot, type_arguments.take());
                 continue;
             }
+
+            if let Some(span) = question_dot_span {
+                // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
+                let error = diagnostics::unexpected_token(span);
+                return self.fatal_error(error);
+            }
+
             break;
         }
 
