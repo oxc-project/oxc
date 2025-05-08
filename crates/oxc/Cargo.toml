@@ -77,5 +77,8 @@ serialize = [
   "oxc_syntax/serialize",
 ]
 
+# Only for conformance tests
+conformance = ["oxc_ast_visit/conformance"]
+
 [package.metadata.docs.rs]
 all-features = true

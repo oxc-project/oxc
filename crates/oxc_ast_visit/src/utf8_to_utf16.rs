@@ -9,6 +9,20 @@ use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 use crate::VisitMut;
 
 /// Convert UTF-8 span offsets to UTF-16.
+///
+/// ## `ascending_order`
+///
+/// Several methods have an `ascending_order` option.
+///
+/// If converter will be called with offsets in ascending order, provide `ascending_order: true`.
+/// This is the case if processing an AST which has come direct from the parser.
+/// If AST has been modified since parsing (e.g. `oxc_transformer`), then offsets in AST
+/// may not be in order, so provided `ascending_order: false`.
+///
+/// If debug assertions are enabled and `ascending_order == true`, converter will panic
+/// if offsets are converted out of order.
+///
+/// This option has no effect when debug assertions are disabled (release mode).
 pub struct Utf8ToUtf16 {
     translations: Vec<Translation>,
 }
@@ -40,7 +54,14 @@ impl Utf8ToUtf16 {
         // Remove the dummy entry.
         // Therefore, `translations` always has at least 2 entries, if it has any.
         if translations.len() == 1 {
-            translations.clear();
+            // In conformance tests, force offset conversion to happen on all inputs,
+            // even if they are pure ASCII, to ensure that visitation order always results in
+            // offsets being processed in ascending order
+            if cfg!(feature = "conformance") {
+                translations.push(Translation { utf8_offset: u32::MAX, utf16_difference: 0 });
+            } else {
+                translations.clear();
+            }
         }
 
         Self { translations }
@@ -52,26 +73,32 @@ impl Utf8ToUtf16 {
     /// It will also correctly handle offsets in any order, but at a performance cost.
     ///
     /// Returns `None` if the source text is entirely ASCII, and so requires no conversion.
-    pub fn converter(&self) -> Option<Utf8ToUtf16Converter> {
+    ///
+    /// See docs for [`Utf8ToUtf16`] for details of the `ascending_order` option.
+    pub fn converter(&self, ascending_order: bool) -> Option<Utf8ToUtf16Converter> {
         if self.translations.is_empty() {
             None
         } else {
             // SAFETY: `translations` contains at least 2 entries if it's not empty.
             // We just checked it's not empty.
-            Some(unsafe { Utf8ToUtf16Converter::new(&self.translations) })
+            Some(unsafe { Utf8ToUtf16Converter::new(&self.translations, ascending_order) })
         }
     }
 
     /// Convert all spans in AST to UTF-16.
-    pub fn convert_program(&self, program: &mut Program<'_>) {
-        if let Some(mut converter) = self.converter() {
+    ///
+    /// See docs for [`Utf8ToUtf16`] for details of the `ascending_order` option.
+    pub fn convert_program(&self, program: &mut Program<'_>, ascending_order: bool) {
+        if let Some(mut converter) = self.converter(ascending_order) {
             converter.visit_program(program);
         }
     }
 
     /// Convert all spans in comments to UTF-16.
-    pub fn convert_comments(&self, comments: &mut [Comment]) {
-        if let Some(mut converter) = self.converter() {
+    ///
+    /// See docs for [`Utf8ToUtf16`] for details of the `ascending_order` option.
+    pub fn convert_comments(&self, comments: &mut [Comment], ascending_order: bool) {
+        if let Some(mut converter) = self.converter(ascending_order) {
             for comment in comments {
                 converter.convert_span(&mut comment.span);
             }
@@ -79,8 +106,14 @@ impl Utf8ToUtf16 {
     }
 
     /// Convert all spans in `ModuleRecord` to UTF-16.
-    pub fn convert_module_record(&self, module_record: &mut ModuleRecord<'_>) {
-        if let Some(mut converter) = self.converter() {
+    ///
+    /// See docs for [`Utf8ToUtf16`] for details of the `ascending_order` option.
+    pub fn convert_module_record(
+        &self,
+        module_record: &mut ModuleRecord<'_>,
+        ascending_order: bool,
+    ) {
+        if let Some(mut converter) = self.converter(ascending_order) {
             converter.visit_module_record(module_record);
         }
     }
@@ -126,6 +159,14 @@ pub struct Utf8ToUtf16Converter<'t> {
     range_start_utf16: u32,
     /// Index of current `Translation`
     index: u32,
+    /// Previous UTF-8 offset which [`Utf8ToUtf16Converter::convert_offset`] was called with.
+    /// Only used for debug assertions.
+    #[cfg(debug_assertions)]
+    previous_offset_utf8: u32,
+    /// `true` if offsets will be converted in ascending order.
+    /// Only used for debug assertions.
+    #[cfg(debug_assertions)]
+    ascending_order: bool,
 }
 
 impl<'t> Utf8ToUtf16Converter<'t> {
@@ -133,13 +174,24 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     ///
     /// # SAFETY
     /// `translations` must contain at least 2 entries.
-    unsafe fn new(translations: &'t [Translation]) -> Self {
+    #[cfg_attr(not(debug_assertions), expect(unused_variables))]
+    unsafe fn new(translations: &'t [Translation], ascending_order: bool) -> Self {
         debug_assert!(translations.len() >= 2);
 
         // SAFETY: Caller guarantees `translations` contains at least 2 entries
         let range_len_utf8 = unsafe { translations.get_unchecked(1) }.utf8_offset;
 
-        Self { translations, range_start_utf8: 0, range_start_utf16: 0, range_len_utf8, index: 0 }
+        Self {
+            translations,
+            range_start_utf8: 0,
+            range_start_utf16: 0,
+            range_len_utf8,
+            index: 0,
+            #[cfg(debug_assertions)]
+            previous_offset_utf8: 0,
+            #[cfg(debug_assertions)]
+            ascending_order,
+        }
     }
 
     /// Reset this [`Utf8ToUtf16Converter`] to starting position.
@@ -151,11 +203,20 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         // SAFETY: Caller guaranteed `translations` contains at least 2 entries in `new`
         self.range_len_utf8 = unsafe { self.translations.get_unchecked(1) }.utf8_offset;
         self.index = 0;
+
+        #[cfg(debug_assertions)]
+        {
+            self.previous_offset_utf8 = 0;
+        }
     }
 
     /// Convert UTF-8 offset to UTF-16.
     ///
     /// Conversion is faster if `convert_offset` is called with offsets in ascending order.
+    ///
+    /// # Panics
+    /// Panics if `offset` is less than previous offset `convert_offset` was called with, debug assertions
+    /// are enabled, and `Utf8ToUtf16Converter` was created with `ascending_order: true`.
     //
     // This method is optimized for the offset being within the current range.
     // This will be the case if `convert_offset` is called with offsets in ascending order,
@@ -170,6 +231,12 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     #[inline(always)]
     pub fn convert_offset(&mut self, offset: &mut u32) {
         let utf8_offset = *offset;
+
+        #[cfg(debug_assertions)]
+        if self.ascending_order {
+            assert!(utf8_offset >= self.previous_offset_utf8);
+            self.previous_offset_utf8 = utf8_offset;
+        }
 
         // When AST has been modified, it may contain unspanned AST nodes.
         // Offset 0 always translates to 0.
@@ -202,6 +269,11 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         // Find the range containing this offset
         let utf8_offset = *offset;
         let (next_index, range_end_utf8) = if utf8_offset < self.range_start_utf8 {
+            #[cfg(debug_assertions)]
+            {
+                assert!(!self.ascending_order);
+            }
+
             self.find_range_before(utf8_offset)
         } else {
             self.find_range_after(utf8_offset)
@@ -558,8 +630,8 @@ mod test {
         );
 
         let span_converter = Utf8ToUtf16::new(program.source_text);
-        span_converter.convert_program(&mut program);
-        span_converter.convert_comments(&mut program.comments);
+        span_converter.convert_program(&mut program, true);
+        span_converter.convert_comments(&mut program.comments, true);
 
         assert_eq!(program.span, Span::new(0, 11));
         assert_eq!(program.body[1].span(), Span::new(1, 5));
@@ -651,7 +723,7 @@ mod test {
 
         for (text, translations) in cases_vec {
             let table = Utf8ToUtf16::new(text);
-            let converter = table.converter();
+            let converter = table.converter(false);
             if let Some(mut converter) = converter {
                 // Iterate in forwards order
                 for &(utf8_offset, expected_utf16_offset) in &translations {

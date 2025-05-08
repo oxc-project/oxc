@@ -16,10 +16,10 @@ pub fn convert_utf8_to_utf16(
     errors: &mut [OxcError],
 ) -> Vec<Comment> {
     let span_converter = Utf8ToUtf16::new(source_text);
-    span_converter.convert_program(program);
+    span_converter.convert_program(program, true);
 
     // Convert comments
-    let mut offset_converter = span_converter.converter();
+    let mut offset_converter = span_converter.converter(true);
     let comments = program
         .comments
         .iter()
@@ -42,10 +42,10 @@ pub fn convert_utf8_to_utf16(
         .collect::<Vec<_>>();
 
     // Convert spans in module record to UTF-16
-    span_converter.convert_module_record(module_record);
+    span_converter.convert_module_record(module_record, true);
 
     // Convert spans in errors to UTF-16
-    if let Some(mut converter) = span_converter.converter() {
+    if let Some(mut converter) = span_converter.converter(true) {
         for error in errors {
             for label in &mut error.labels {
                 converter.convert_offset(&mut label.start);

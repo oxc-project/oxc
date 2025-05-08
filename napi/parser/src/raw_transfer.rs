@@ -152,10 +152,10 @@ pub unsafe fn parse_sync_raw(
 
         // Convert spans to UTF-16
         let span_converter = Utf8ToUtf16::new(source_text);
-        span_converter.convert_program(&mut program);
-        span_converter.convert_comments(&mut comments);
-        span_converter.convert_module_record(&mut module_record);
-        if let Some(mut converter) = span_converter.converter() {
+        span_converter.convert_program(&mut program, true);
+        span_converter.convert_comments(&mut comments, true);
+        span_converter.convert_module_record(&mut module_record, true);
+        if let Some(mut converter) = span_converter.converter(true) {
             for error in &mut errors {
                 for label in &mut error.labels {
                     converter.convert_span(&mut label.span);
