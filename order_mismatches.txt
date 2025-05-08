@@ -1,7 +1,3 @@
-TSMethodSignature: Order mismatch: key
-Oxc: key, computed, optional, kind, typeParameters, params, returnType, accessibility, readonly, static
-TS : typeParameters, key, params, returnType
-
 TSNamedTupleMember: Order mismatch: elementType
 Oxc: elementType, label, optional
 TS : label, elementType

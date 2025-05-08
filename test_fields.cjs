@@ -17,7 +17,8 @@ const VIRTUAL_FIELD_MISMATCHES = [
 ];
 
 const TS_ESLINT_IS_WRONG = [
-  // `local` should be before `exported` e.g. `export { local as exported }`
+  // `local` should be before `exported`
+  // e.g. `export { local as exported }`
   'ExportSpecifier',
   // `options` should be before `qualifier` and `type_arguments`
   // e.g. `type T = import('foo', {assert:{}}).qualifier`
@@ -25,6 +26,9 @@ const TS_ESLINT_IS_WRONG = [
   'TSImportType',
   // `objectType` should be before `indexType`
   'TSIndexedAccessType',
+  // `key` should be before `typeParameters`
+  // e.g. `interface Foo { bar<T>(a: number): string; }`
+  'TSMethodSignature',
 ];
 
 // Combine Oxc and TS-ESLint types
