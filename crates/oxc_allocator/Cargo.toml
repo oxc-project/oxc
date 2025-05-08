@@ -25,9 +25,9 @@ oxc_estree = { workspace = true, optional = true }
 allocator-api2 = { workspace = true }
 bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more", "allocator-api2"] }
+nonmax = { workspace = true }
 rustc-hash = { workspace = true }
 simdutf8 = { workspace = true }
-nonmax = { workspace = true }
 
 serde = { workspace = true, optional = true }
 
