@@ -1,7 +1,3 @@
-TSImportType: Order mismatch: options
-Oxc: argument, options, qualifier, typeArguments
-TS : argument, qualifier, typeArguments, options
-
 TSIndexedAccessType: Order mismatch: objectType
 Oxc: objectType, indexType
 TS : indexType, objectType

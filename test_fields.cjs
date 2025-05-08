@@ -16,7 +16,12 @@ const DUMMY_FIELD_MISMATCHES = [
 ];
 
 const TS_ESLINT_IS_WRONG = [
-  'ExportSpecifier', // `local` should be before `exported` e.g. `export { local as exported }`
+  // `local` should be before `exported` e.g. `export { local as exported }`
+  'ExportSpecifier',
+  // `options` should be before `qualifier` and `type_arguments`
+  // e.g. `type T = import('foo', {assert:{}}).qualifier`
+  // e.g. `type T = import('foo', {assert:{}})<T>`
+  'TSImportType',
 ];
 
 // Combine Oxc and TS-ESLint types
