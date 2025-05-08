@@ -1,0 +1,51 @@
+NewExpression: Order mismatch: arguments
+Oxc: callee, arguments, typeArguments
+TS : callee, typeArguments, arguments
+
+ObjectPattern: Order mismatch: properties
+Oxc: properties, decorators, optional, typeAnnotation
+TS : decorators, properties, typeAnnotation
+
+PropertyDefinition: Order mismatch: value
+Oxc: decorators, key, value, computed, static, declare, override, optional, definite, readonly, typeAnnotation, accessibility
+TS : decorators, key, typeAnnotation, value
+
+RestElement: Order mismatch: argument
+Oxc: argument, decorators, optional, typeAnnotation, value
+TS : decorators, argument, typeAnnotation
+
+TSImportType: Order mismatch: options
+Oxc: argument, options, qualifier, typeArguments
+TS : argument, qualifier, typeArguments, options
+
+TSIndexedAccessType: Order mismatch: objectType
+Oxc: objectType, indexType
+TS : indexType, objectType
+
+TSMappedType: Order mismatch: nameType
+Oxc: nameType, typeAnnotation, optional, readonly, key, constraint
+TS : key, constraint, nameType, typeAnnotation
+
+TSMethodSignature: Order mismatch: key
+Oxc: key, computed, optional, kind, typeParameters, params, returnType, accessibility, readonly, static
+TS : typeParameters, key, params, returnType
+
+TSNamedTupleMember: Order mismatch: elementType
+Oxc: elementType, label, optional
+TS : label, elementType
+
+TSPropertySignature: Order mismatch: key
+Oxc: computed, optional, readonly, key, typeAnnotation, accessibility, static
+TS : typeAnnotation, key
+
+TSTypeAssertion: Order mismatch: expression
+Oxc: expression, typeAnnotation
+TS : typeAnnotation, expression
+
+TSTypePredicate: Order mismatch: parameterName
+Oxc: parameterName, asserts, typeAnnotation
+TS : typeAnnotation, parameterName
+
+TaggedTemplateExpression: Order mismatch: quasi
+Oxc: tag, quasi, typeArguments
+TS : tag, typeArguments, quasi

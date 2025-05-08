@@ -1,0 +1,53 @@
+'use strict';
+
+const eslintTypes = require('@typescript-eslint/visitor-keys').visitorKeys;
+const oxcTypes = require('./estree_field_orders.json');
+
+const types = [...new Set([...Object.keys(eslintTypes), ...Object.keys(oxcTypes)])];
+types.sort();
+
+const DUMMY_FIELD_MISMATCHES = [
+  'ArrayPattern',
+  'AssignmentPattern'
+];
+
+const TS_ESLINT_IS_WRONG = [
+  'ExportSpecifier' // `local` should be before `exported` e.g. `export { local as exported }`
+];
+
+// Combine Oxc and TS-ESLint types
+let combinedTypes = types.map((key) => {
+  let oxc = oxcTypes[key];
+  oxc = oxc ? oxc[0] : null;
+  return { type: key, oxc, eslint: eslintTypes[key] || null };
+})
+
+// Filter out types which don't exist in both ASTs
+combinedTypes = combinedTypes.filter(o => o.oxc && o.eslint);
+
+// console.log(compared);
+
+// Compare field orders
+for (const {type, oxc, eslint} of combinedTypes) {
+  if (DUMMY_FIELD_MISMATCHES.includes(type) || TS_ESLINT_IS_WRONG.includes(type)) continue;
+
+  const error = compare(oxc, eslint);
+  if (error) console.log(`${type}: ${error}\n`);
+}
+console.log("Done");
+
+function compare(oxc, eslint) {
+  const missingFields = eslint.filter(key => !oxc.includes(key));
+  if (missingFields.length > 0) {
+    return `Missing fields: ${missingFields.join(', ')}`;
+  }
+
+  let lastIndex = -1;
+  for (const key of eslint) {
+    const index = oxc.indexOf(key);
+    if (index < lastIndex) {
+      return `Order mismatch: ${key}\nOxc: ${oxc.join(', ')}\nTS : ${eslint.join(', ')}`;
+    }
+    lastIndex = index;
+  }
+}

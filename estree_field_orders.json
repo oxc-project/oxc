@@ -1,6 +1,6 @@
 {
   "AccessorProperty": [
-    ["decorators", "key", "value", "computed", "static", "override", "definite", "typeAnnotation", "accessibility", "declare", "optional", "readonly"]
+    ["decorators", "key", "typeAnnotation", "value", "computed", "static", "override", "definite", "accessibility", "declare", "optional", "readonly"]
   ],
   "ArrayExpression": [
     ["elements"]
@@ -157,7 +157,7 @@
     []
   ],
   "JSXElement": [
-    ["openingElement", "closingElement", "children"]
+    ["openingElement", "children", "closingElement"]
   ],
   "JSXEmptyExpression": [
     []
@@ -166,7 +166,7 @@
     ["expression"]
   ],
   "JSXFragment": [
-    ["openingFragment", "closingFragment", "children"]
+    ["openingFragment", "children", "closingFragment"]
   ],
   "JSXIdentifier": [
     ["name"]
@@ -178,7 +178,7 @@
     ["namespace", "name"]
   ],
   "JSXOpeningElement": [
-    ["name", "attributes", "typeArguments", "selfClosing"]
+    ["name", "typeArguments", "attributes", "selfClosing"]
   ],
   "JSXOpeningFragment": [
     ["attributes", "selfClosing"]
@@ -277,7 +277,7 @@
     ["discriminant", "cases"]
   ],
   "TSAbstractAccessorProperty": [
-    ["decorators", "key", "value", "computed", "static", "override", "definite", "typeAnnotation", "accessibility", "declare", "optional", "readonly"]
+    ["decorators", "key", "typeAnnotation", "value", "computed", "static", "override", "definite", "accessibility", "declare", "optional", "readonly"]
   ],
   "TSAbstractMethodDefinition": [
     ["decorators", "key", "value", "kind", "computed", "static", "override", "optional", "accessibility"]
