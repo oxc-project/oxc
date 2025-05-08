@@ -4,10 +4,9 @@
     "target": "es2021",
     "lib": ["ES2021"],
     "outDir": "dist",
-    "rootDir": "client",
     "sourceMap": true,
     "strict": true
   },
-  "include": ["./client"],
+  "include": ["./client", "./tests"],
   "exclude": ["node_modules", ".vscode-test"]
 }
