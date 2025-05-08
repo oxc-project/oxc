@@ -397,7 +397,7 @@
     ["id", "body", "kind", "declare", "global"]
   ],
   "TSNamedTupleMember": [
-    ["elementType", "label", "optional"]
+    ["label", "elementType", "optional"]
   ],
   "TSNamespaceExportDeclaration": [
     ["id"]
