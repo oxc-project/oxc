@@ -1307,10 +1307,10 @@ function deserializeJSXOpeningElement(pos) {
     type: 'JSXOpeningElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    attributes: deserializeVecJSXAttributeItem(pos + 24),
+    attributes: deserializeVecJSXAttributeItem(pos + 32),
     name: deserializeJSXElementName(pos + 8),
     selfClosing: false,
-    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 56),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 

@@ -3224,18 +3224,18 @@ unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME) as *mut JSXElementName,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
-        as *mut Vec<JSXAttributeItem>)
-    {
-        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+        as *mut Vec<JSXAttributeItem>)
+    {
+        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_opening_element(&mut *node, ctx);

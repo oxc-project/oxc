@@ -1265,10 +1265,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_jsx_opening_element(&mut self, it: &JSXOpeningElement<'a>) {
-        self.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.visit_jsx_attribute_items(&it.attributes);
     }
 
     #[inline(always)]

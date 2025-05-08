@@ -75,11 +75,11 @@ pub struct JSXOpeningElement<'a> {
     pub span: Span,
     /// The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     pub name: JSXElementName<'a>,
-    /// List of JSX attributes. In React-like applications, these become props.
-    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// List of JSX attributes. In React-like applications, these become props.
+    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
 }
 
 /// JSX Closing Element

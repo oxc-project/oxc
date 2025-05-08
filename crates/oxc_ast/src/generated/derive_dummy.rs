@@ -1661,8 +1661,8 @@ impl<'a> Dummy<'a> for JSXOpeningElement<'a> {
         Self {
             span: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
-            attributes: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            attributes: Dummy::dummy(allocator),
         }
     }
 }

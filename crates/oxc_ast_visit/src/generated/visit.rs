@@ -2939,10 +2939,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_element_name(&it.name);
-        visitor.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_jsx_attribute_items(&it.attributes);
         visitor.leave_node(kind);
     }
 

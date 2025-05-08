@@ -8656,15 +8656,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
     pub fn jsx_opening_element<T1>(
         self,
         span: Span,
         name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
     ) -> JSXOpeningElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -8672,8 +8672,8 @@ impl<'a> AstBuilder<'a> {
         JSXOpeningElement {
             span,
             name,
-            attributes,
             type_arguments: type_arguments.into_in(self.allocator),
+            attributes,
         }
     }
 
@@ -8685,21 +8685,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
     pub fn alloc_jsx_opening_element<T1>(
         self,
         span: Span,
         name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
     ) -> Box<'a, JSXOpeningElement<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.jsx_opening_element(span, name, attributes, type_arguments),
+            self.jsx_opening_element(span, name, type_arguments, attributes),
             self.allocator,
         )
     }

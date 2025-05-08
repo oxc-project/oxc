@@ -195,8 +195,8 @@ pub(crate) enum AncestorType {
     JSXElementChildren = 172,
     JSXElementClosingElement = 173,
     JSXOpeningElementName = 174,
-    JSXOpeningElementAttributes = 175,
-    JSXOpeningElementTypeArguments = 176,
+    JSXOpeningElementTypeArguments = 175,
+    JSXOpeningElementAttributes = 176,
     JSXClosingElementName = 177,
     JSXFragmentOpeningFragment = 178,
     JSXFragmentChildren = 179,
@@ -648,10 +648,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXElementClosingElement as u16,
     JSXOpeningElementName(JSXOpeningElementWithoutName<'a, 't>) =
         AncestorType::JSXOpeningElementName as u16,
-    JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a, 't>) =
-        AncestorType::JSXOpeningElementAttributes as u16,
     JSXOpeningElementTypeArguments(JSXOpeningElementWithoutTypeArguments<'a, 't>) =
         AncestorType::JSXOpeningElementTypeArguments as u16,
+    JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a, 't>) =
+        AncestorType::JSXOpeningElementAttributes as u16,
     JSXClosingElementName(JSXClosingElementWithoutName<'a, 't>) =
         AncestorType::JSXClosingElementName as u16,
     JSXFragmentOpeningFragment(JSXFragmentWithoutOpeningFragment<'a, 't>) =
@@ -1440,8 +1440,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::JSXOpeningElementName(_)
-                | Self::JSXOpeningElementAttributes(_)
                 | Self::JSXOpeningElementTypeArguments(_)
+                | Self::JSXOpeningElementAttributes(_)
         )
     }
 
@@ -2372,8 +2372,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::JSXElementChildren(a) => a.address(),
             Self::JSXElementClosingElement(a) => a.address(),
             Self::JSXOpeningElementName(a) => a.address(),
-            Self::JSXOpeningElementAttributes(a) => a.address(),
             Self::JSXOpeningElementTypeArguments(a) => a.address(),
+            Self::JSXOpeningElementAttributes(a) => a.address(),
             Self::JSXClosingElementName(a) => a.address(),
             Self::JSXFragmentOpeningFragment(a) => a.address(),
             Self::JSXFragmentChildren(a) => a.address(),
@@ -10552,10 +10552,10 @@ impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
 
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_SPAN: usize = offset_of!(JSXOpeningElement, span);
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_NAME: usize = offset_of!(JSXOpeningElement, name);
-pub(crate) const OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES: usize =
-    offset_of!(JSXOpeningElement, attributes);
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS: usize =
     offset_of!(JSXOpeningElement, type_arguments);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES: usize =
+    offset_of!(JSXOpeningElement, attributes);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10571,60 +10571,23 @@ impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
     }
 
     #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn attributes(self) -> &'t Vec<'a, JSXAttributeItem<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
                 as *const Vec<'a, JSXAttributeItem<'a>>)
         }
     }
-
-    #[inline]
-    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for JSXOpeningElementWithoutName<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct JSXOpeningElementWithoutAttributes<'a, 't>(
-    pub(crate) *const JSXOpeningElement<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn name(self) -> &'t JSXElementName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
-                as *const JSXElementName<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -10662,6 +10625,43 @@ impl<'a, 't> JSXOpeningElementWithoutTypeArguments<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXOpeningElementWithoutAttributes<'a, 't>(
+    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t JSXElementName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
+                as *const JSXElementName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

@@ -19030,7 +19030,7 @@ Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(6), ScopeId(9)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 Symbol reference IDs mismatch for "TestObject":
-after transform: SymbolId(4): [ReferenceId(11), ReferenceId(16)]
+after transform: SymbolId(4): [ReferenceId(11), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Unresolved references mismatch:
 after transform: ["Function", "React"]

@@ -4960,8 +4960,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
         JSXOpeningElement {
             span: CloneIn::clone_in(&self.span, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
-            attributes: CloneIn::clone_in(&self.attributes, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
+            attributes: CloneIn::clone_in(&self.attributes, allocator),
         }
     }
 
@@ -4969,8 +4969,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
         JSXOpeningElement {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             name: CloneIn::clone_in_with_semantic_ids(&self.name, allocator),
-            attributes: CloneIn::clone_in_with_semantic_ids(&self.attributes, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
+            attributes: CloneIn::clone_in_with_semantic_ids(&self.attributes, allocator),
         }
     }
 }
