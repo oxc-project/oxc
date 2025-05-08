@@ -12,6 +12,7 @@ const DUMMY_FIELD_MISMATCHES = [
   'ArrayPattern',
   'AssignmentPattern',
   'ObjectPattern',
+  'RestElement',
 ];
 
 const TS_ESLINT_IS_WRONG = [

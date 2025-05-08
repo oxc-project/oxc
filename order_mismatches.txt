@@ -2,10 +2,6 @@ PropertyDefinition: Order mismatch: value
 Oxc: decorators, key, value, computed, static, declare, override, optional, definite, readonly, typeAnnotation, accessibility
 TS : decorators, key, typeAnnotation, value
 
-RestElement: Order mismatch: argument
-Oxc: argument, decorators, optional, typeAnnotation, value
-TS : decorators, argument, typeAnnotation
-
 TSImportType: Order mismatch: options
 Oxc: argument, options, qualifier, typeArguments
 TS : argument, qualifier, typeArguments, options
