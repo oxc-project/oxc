@@ -32,6 +32,9 @@ const TS_ESLINT_IS_WRONG = [
   // `key` should be before `typeParameters`
   // e.g. `interface Foo { bar: number }`
   'TSPropertySignature',
+  // `parameterName` should be before `typeAnnotation`
+  // e.g. `function isString(x: unknown): x is string {}`
+  'TSTypePredicate'
 ];
 
 // Combine Oxc and TS-ESLint types

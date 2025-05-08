@@ -1,3 +1,0 @@
-TSTypePredicate: Order mismatch: parameterName
-Oxc: parameterName, asserts, typeAnnotation
-TS : typeAnnotation, parameterName
