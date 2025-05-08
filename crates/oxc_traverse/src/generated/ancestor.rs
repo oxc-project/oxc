@@ -192,15 +192,15 @@ pub(crate) enum AncestorType {
     V8IntrinsicExpressionName = 169,
     V8IntrinsicExpressionArguments = 170,
     JSXElementOpeningElement = 171,
-    JSXElementClosingElement = 172,
-    JSXElementChildren = 173,
+    JSXElementChildren = 172,
+    JSXElementClosingElement = 173,
     JSXOpeningElementName = 174,
     JSXOpeningElementAttributes = 175,
     JSXOpeningElementTypeArguments = 176,
     JSXClosingElementName = 177,
     JSXFragmentOpeningFragment = 178,
-    JSXFragmentClosingFragment = 179,
-    JSXFragmentChildren = 180,
+    JSXFragmentChildren = 179,
+    JSXFragmentClosingFragment = 180,
     JSXNamespacedNameNamespace = 181,
     JSXNamespacedNameName = 182,
     JSXMemberExpressionObject = 183,
@@ -643,9 +643,9 @@ pub enum Ancestor<'a, 't> {
         AncestorType::V8IntrinsicExpressionArguments as u16,
     JSXElementOpeningElement(JSXElementWithoutOpeningElement<'a, 't>) =
         AncestorType::JSXElementOpeningElement as u16,
+    JSXElementChildren(JSXElementWithoutChildren<'a, 't>) = AncestorType::JSXElementChildren as u16,
     JSXElementClosingElement(JSXElementWithoutClosingElement<'a, 't>) =
         AncestorType::JSXElementClosingElement as u16,
-    JSXElementChildren(JSXElementWithoutChildren<'a, 't>) = AncestorType::JSXElementChildren as u16,
     JSXOpeningElementName(JSXOpeningElementWithoutName<'a, 't>) =
         AncestorType::JSXOpeningElementName as u16,
     JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a, 't>) =
@@ -656,10 +656,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXClosingElementName as u16,
     JSXFragmentOpeningFragment(JSXFragmentWithoutOpeningFragment<'a, 't>) =
         AncestorType::JSXFragmentOpeningFragment as u16,
-    JSXFragmentClosingFragment(JSXFragmentWithoutClosingFragment<'a, 't>) =
-        AncestorType::JSXFragmentClosingFragment as u16,
     JSXFragmentChildren(JSXFragmentWithoutChildren<'a, 't>) =
         AncestorType::JSXFragmentChildren as u16,
+    JSXFragmentClosingFragment(JSXFragmentWithoutClosingFragment<'a, 't>) =
+        AncestorType::JSXFragmentClosingFragment as u16,
     JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a, 't>) =
         AncestorType::JSXNamespacedNameNamespace as u16,
     JSXNamespacedNameName(JSXNamespacedNameWithoutName<'a, 't>) =
@@ -1430,8 +1430,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::JSXElementOpeningElement(_)
-                | Self::JSXElementClosingElement(_)
                 | Self::JSXElementChildren(_)
+                | Self::JSXElementClosingElement(_)
         )
     }
 
@@ -1455,8 +1455,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::JSXFragmentOpeningFragment(_)
-                | Self::JSXFragmentClosingFragment(_)
                 | Self::JSXFragmentChildren(_)
+                | Self::JSXFragmentClosingFragment(_)
         )
     }
 
@@ -2369,15 +2369,15 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::V8IntrinsicExpressionName(a) => a.address(),
             Self::V8IntrinsicExpressionArguments(a) => a.address(),
             Self::JSXElementOpeningElement(a) => a.address(),
-            Self::JSXElementClosingElement(a) => a.address(),
             Self::JSXElementChildren(a) => a.address(),
+            Self::JSXElementClosingElement(a) => a.address(),
             Self::JSXOpeningElementName(a) => a.address(),
             Self::JSXOpeningElementAttributes(a) => a.address(),
             Self::JSXOpeningElementTypeArguments(a) => a.address(),
             Self::JSXClosingElementName(a) => a.address(),
             Self::JSXFragmentOpeningFragment(a) => a.address(),
-            Self::JSXFragmentClosingFragment(a) => a.address(),
             Self::JSXFragmentChildren(a) => a.address(),
+            Self::JSXFragmentClosingFragment(a) => a.address(),
             Self::JSXNamespacedNameNamespace(a) => a.address(),
             Self::JSXNamespacedNameName(a) => a.address(),
             Self::JSXMemberExpressionObject(a) => a.address(),
@@ -10435,9 +10435,9 @@ impl<'a, 't> GetAddress for V8IntrinsicExpressionWithoutArguments<'a, 't> {
 pub(crate) const OFFSET_JSX_ELEMENT_SPAN: usize = offset_of!(JSXElement, span);
 pub(crate) const OFFSET_JSX_ELEMENT_OPENING_ELEMENT: usize =
     offset_of!(JSXElement, opening_element);
+pub(crate) const OFFSET_JSX_ELEMENT_CHILDREN: usize = offset_of!(JSXElement, children);
 pub(crate) const OFFSET_JSX_ELEMENT_CLOSING_ELEMENT: usize =
     offset_of!(JSXElement, closing_element);
-pub(crate) const OFFSET_JSX_ELEMENT_CHILDREN: usize = offset_of!(JSXElement, children);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10453,60 +10453,23 @@ impl<'a, 't> JSXElementWithoutOpeningElement<'a, 't> {
     }
 
     #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+
+    #[inline]
     pub fn closing_element(self) -> &'t Option<Box<'a, JSXClosingElement<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
                 as *const Option<Box<'a, JSXClosingElement<'a>>>)
         }
     }
-
-    #[inline]
-    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
-                as *const Vec<'a, JSXChild<'a>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for JSXElementWithoutOpeningElement<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct JSXElementWithoutClosingElement<'a, 't>(
-    pub(crate) *const JSXElement<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn opening_element(self) -> &'t Box<'a, JSXOpeningElement<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
-                as *const Box<'a, JSXOpeningElement<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
-                as *const Vec<'a, JSXChild<'a>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -10544,6 +10507,43 @@ impl<'a, 't> JSXElementWithoutChildren<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for JSXElementWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXElementWithoutClosingElement<'a, 't>(
+    pub(crate) *const JSXElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_element(self) -> &'t Box<'a, JSXOpeningElement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
+                as *const Box<'a, JSXOpeningElement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -10695,9 +10695,9 @@ impl<'a, 't> GetAddress for JSXClosingElementWithoutName<'a, 't> {
 pub(crate) const OFFSET_JSX_FRAGMENT_SPAN: usize = offset_of!(JSXFragment, span);
 pub(crate) const OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT: usize =
     offset_of!(JSXFragment, opening_fragment);
+pub(crate) const OFFSET_JSX_FRAGMENT_CHILDREN: usize = offset_of!(JSXFragment, children);
 pub(crate) const OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT: usize =
     offset_of!(JSXFragment, closing_fragment);
-pub(crate) const OFFSET_JSX_FRAGMENT_CHILDREN: usize = offset_of!(JSXFragment, children);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10713,60 +10713,23 @@ impl<'a, 't> JSXFragmentWithoutOpeningFragment<'a, 't> {
     }
 
     #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+
+    #[inline]
     pub fn closing_fragment(self) -> &'t JSXClosingFragment {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
                 as *const JSXClosingFragment)
         }
     }
-
-    #[inline]
-    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
-                as *const Vec<'a, JSXChild<'a>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for JSXFragmentWithoutOpeningFragment<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct JSXFragmentWithoutClosingFragment<'a, 't>(
-    pub(crate) *const JSXFragment<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> JSXFragmentWithoutClosingFragment<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn opening_fragment(self) -> &'t JSXOpeningFragment {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
-                as *const JSXOpeningFragment)
-        }
-    }
-
-    #[inline]
-    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
-                as *const Vec<'a, JSXChild<'a>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for JSXFragmentWithoutClosingFragment<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -10804,6 +10767,43 @@ impl<'a, 't> JSXFragmentWithoutChildren<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for JSXFragmentWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutClosingFragment<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_fragment(self) -> &'t JSXOpeningFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+                as *const JSXOpeningFragment)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutClosingFragment<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

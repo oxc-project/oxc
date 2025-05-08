@@ -2926,10 +2926,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_element(&it.opening_element);
+        visitor.visit_jsx_children(&it.children);
         if let Some(closing_element) = &it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&it.children);
         visitor.leave_node(kind);
     }
 
@@ -2961,8 +2961,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_fragment(&it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.visit_jsx_children(&it.children);
+        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.leave_node(kind);
     }
 

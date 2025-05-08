@@ -25,8 +25,8 @@ impl<'a> ParserImpl<'a> {
         self.ast.alloc_jsx_fragment(
             self.end_span(span),
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         )
     }
 
@@ -73,7 +73,7 @@ impl<'a> ParserImpl<'a> {
             }
             Some(closing_element)
         };
-        self.ast.alloc_jsx_element(self.end_span(span), opening_element, closing_element, children)
+        self.ast.alloc_jsx_element(self.end_span(span), opening_element, children, closing_element)
     }
 
     /// `JSXOpeningElement` :

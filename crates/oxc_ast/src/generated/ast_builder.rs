@@ -1047,15 +1047,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn expression_jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -1064,8 +1064,8 @@ impl<'a> AstBuilder<'a> {
         Expression::JSXElement(self.alloc_jsx_element(
             span,
             opening_element,
-            closing_element,
             children,
+            closing_element,
         ))
     }
 
@@ -1076,21 +1076,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn expression_jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> Expression<'a> {
         Expression::JSXFragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 
@@ -8598,15 +8598,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXElement<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -8615,8 +8615,8 @@ impl<'a> AstBuilder<'a> {
         JSXElement {
             span,
             opening_element: opening_element.into_in(self.allocator),
-            closing_element: closing_element.into_in(self.allocator),
             children,
+            closing_element: closing_element.into_in(self.allocator),
         }
     }
 
@@ -8628,22 +8628,22 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn alloc_jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> Box<'a, JSXElement<'a>>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
         Box::new_in(
-            self.jsx_element(span, opening_element, closing_element, children),
+            self.jsx_element(span, opening_element, children, closing_element),
             self.allocator,
         )
     }
@@ -8746,17 +8746,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXFragment<'a> {
-        JSXFragment { span, opening_fragment, closing_fragment, children }
+        JSXFragment { span, opening_fragment, children, closing_fragment }
     }
 
     /// Build a [`JSXFragment`], and store it in the memory arena.
@@ -8767,18 +8767,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn alloc_jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> Box<'a, JSXFragment<'a>> {
         Box::new_in(
-            self.jsx_fragment(span, opening_fragment, closing_fragment, children),
+            self.jsx_fragment(span, opening_fragment, children, closing_fragment),
             self.allocator,
         )
     }
@@ -9324,15 +9324,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_attribute_value_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXAttributeValue<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -9341,8 +9341,8 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::Element(self.alloc_jsx_element(
             span,
             opening_element,
-            closing_element,
             children,
+            closing_element,
         ))
     }
 
@@ -9353,21 +9353,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_attribute_value_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXAttributeValue<'a> {
         JSXAttributeValue::Fragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 
@@ -9426,21 +9426,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_child_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXChild<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
-        JSXChild::Element(self.alloc_jsx_element(span, opening_element, closing_element, children))
+        JSXChild::Element(self.alloc_jsx_element(span, opening_element, children, closing_element))
     }
 
     /// Build a [`JSXChild::Fragment`].
@@ -9450,21 +9450,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_child_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXChild<'a> {
         JSXChild::Fragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 

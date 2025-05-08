@@ -1136,7 +1136,7 @@ function deserializeRegExpFlags(pos) {
 }
 
 function deserializeJSXElement(pos) {
-  const closingElement = deserializeOptionBoxJSXClosingElement(pos + 16);
+  const closingElement = deserializeOptionBoxJSXClosingElement(pos + 48);
   const openingElement = deserializeBoxJSXOpeningElement(pos + 8);
   if (closingElement === null) openingElement.selfClosing = true;
   return {
@@ -1145,7 +1145,7 @@ function deserializeJSXElement(pos) {
     end: deserializeU32(pos + 4),
     openingElement,
     closingElement,
-    children: deserializeVecJSXChild(pos + 24),
+    children: deserializeVecJSXChild(pos + 16),
   };
 }
 
@@ -1175,8 +1175,8 @@ function deserializeJSXFragment(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     openingFragment: deserializeJSXOpeningFragment(pos + 8),
-    closingFragment: deserializeJSXClosingFragment(pos + 16),
-    children: deserializeVecJSXChild(pos + 24),
+    closingFragment: deserializeJSXClosingFragment(pos + 48),
+    children: deserializeVecJSXChild(pos + 16),
   };
 }
 
@@ -4871,15 +4871,6 @@ function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(uint32[pos >> 2]);
 }
 
-function deserializeBoxJSXClosingElement(pos) {
-  return deserializeJSXClosingElement(uint32[pos >> 2]);
-}
-
-function deserializeOptionBoxJSXClosingElement(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxJSXClosingElement(pos);
-}
-
 function deserializeVecJSXChild(pos) {
   const arr = [],
     pos32 = pos >> 2,
@@ -4890,6 +4881,15 @@ function deserializeVecJSXChild(pos) {
     pos += 16;
   }
   return arr;
+}
+
+function deserializeBoxJSXClosingElement(pos) {
+  return deserializeJSXClosingElement(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxJSXClosingElement(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxJSXClosingElement(pos);
 }
 
 function deserializeVecJSXAttributeItem(pos) {

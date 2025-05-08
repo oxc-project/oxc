@@ -1647,8 +1647,8 @@ impl<'a> Dummy<'a> for JSXElement<'a> {
         Self {
             span: Dummy::dummy(allocator),
             opening_element: Dummy::dummy(allocator),
-            closing_element: Dummy::dummy(allocator),
             children: Dummy::dummy(allocator),
+            closing_element: Dummy::dummy(allocator),
         }
     }
 }
@@ -1684,8 +1684,8 @@ impl<'a> Dummy<'a> for JSXFragment<'a> {
         Self {
             span: Dummy::dummy(allocator),
             opening_fragment: Dummy::dummy(allocator),
-            closing_fragment: Dummy::dummy(allocator),
             children: Dummy::dummy(allocator),
+            closing_fragment: Dummy::dummy(allocator),
         }
     }
 }

@@ -4938,8 +4938,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXElement<'_> {
         JSXElement {
             span: CloneIn::clone_in(&self.span, allocator),
             opening_element: CloneIn::clone_in(&self.opening_element, allocator),
-            closing_element: CloneIn::clone_in(&self.closing_element, allocator),
             children: CloneIn::clone_in(&self.children, allocator),
+            closing_element: CloneIn::clone_in(&self.closing_element, allocator),
         }
     }
 
@@ -4947,8 +4947,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXElement<'_> {
         JSXElement {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             opening_element: CloneIn::clone_in_with_semantic_ids(&self.opening_element, allocator),
-            closing_element: CloneIn::clone_in_with_semantic_ids(&self.closing_element, allocator),
             children: CloneIn::clone_in_with_semantic_ids(&self.children, allocator),
+            closing_element: CloneIn::clone_in_with_semantic_ids(&self.closing_element, allocator),
         }
     }
 }
@@ -5000,8 +5000,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXFragment<'_> {
         JSXFragment {
             span: CloneIn::clone_in(&self.span, allocator),
             opening_fragment: CloneIn::clone_in(&self.opening_fragment, allocator),
-            closing_fragment: CloneIn::clone_in(&self.closing_fragment, allocator),
             children: CloneIn::clone_in(&self.children, allocator),
+            closing_fragment: CloneIn::clone_in(&self.closing_fragment, allocator),
         }
     }
 
@@ -5012,11 +5012,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXFragment<'_> {
                 &self.opening_fragment,
                 allocator,
             ),
+            children: CloneIn::clone_in_with_semantic_ids(&self.children, allocator),
             closing_fragment: CloneIn::clone_in_with_semantic_ids(
                 &self.closing_fragment,
                 allocator,
             ),
-            children: CloneIn::clone_in_with_semantic_ids(&self.children, allocator),
         }
     }
 }

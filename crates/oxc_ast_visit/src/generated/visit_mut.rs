@@ -3042,10 +3042,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_opening_element(&mut it.opening_element);
+        visitor.visit_jsx_children(&mut it.children);
         if let Some(closing_element) = &mut it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&mut it.children);
         visitor.leave_node(kind);
     }
 
@@ -3083,8 +3083,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_opening_fragment(&mut it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&mut it.closing_fragment);
         visitor.visit_jsx_children(&mut it.children);
+        visitor.visit_jsx_closing_fragment(&mut it.closing_fragment);
         visitor.leave_node(kind);
     }
 

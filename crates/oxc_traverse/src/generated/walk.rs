@@ -3194,17 +3194,17 @@ unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
             as *mut Box<JSXOpeningElement>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
-        as *mut Option<Box<JSXClosingElement>>)
-    {
-        ctx.retag_stack(AncestorType::JSXElementClosingElement);
-        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.retag_stack(AncestorType::JSXElementChildren);
     for item in
         &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN) as *mut Vec<JSXChild>)
     {
         walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+        as *mut Option<Box<JSXClosingElement>>)
+    {
+        ctx.retag_stack(AncestorType::JSXElementClosingElement);
+        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_element(&mut *node, ctx);
@@ -3274,6 +3274,12 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXOpeningFragment,
         ctx,
     );
+    ctx.retag_stack(AncestorType::JSXFragmentChildren);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::JSXFragmentClosingFragment);
     walk_jsx_closing_fragment(
         traverser,
@@ -3281,12 +3287,6 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXClosingFragment,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXFragmentChildren);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
-    {
-        walk_jsx_child(traverser, item as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_fragment(&mut *node, ctx);
 }

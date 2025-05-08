@@ -1505,8 +1505,8 @@ impl ContentEq for RegExpPattern<'_> {
 impl ContentEq for JSXElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_element, &other.opening_element)
-            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
             && ContentEq::content_eq(&self.children, &other.children)
+            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
     }
 }
 
@@ -1527,8 +1527,8 @@ impl ContentEq for JSXClosingElement<'_> {
 impl ContentEq for JSXFragment<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_fragment, &other.opening_fragment)
-            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
             && ContentEq::content_eq(&self.children, &other.children)
+            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
     }
 }
 

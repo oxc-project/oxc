@@ -806,8 +806,8 @@ const _: () = {
     assert!(align_of::<JSXElement>() == 8);
     assert!(offset_of!(JSXElement, span) == 0);
     assert!(offset_of!(JSXElement, opening_element) == 8);
-    assert!(offset_of!(JSXElement, closing_element) == 16);
-    assert!(offset_of!(JSXElement, children) == 24);
+    assert!(offset_of!(JSXElement, children) == 16);
+    assert!(offset_of!(JSXElement, closing_element) == 48);
 
     assert!(size_of::<JSXOpeningElement>() == 64);
     assert!(align_of::<JSXOpeningElement>() == 8);
@@ -825,8 +825,8 @@ const _: () = {
     assert!(align_of::<JSXFragment>() == 8);
     assert!(offset_of!(JSXFragment, span) == 0);
     assert!(offset_of!(JSXFragment, opening_fragment) == 8);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16);
-    assert!(offset_of!(JSXFragment, children) == 24);
+    assert!(offset_of!(JSXFragment, children) == 16);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 48);
 
     assert!(size_of::<JSXOpeningFragment>() == 8);
     assert!(align_of::<JSXOpeningFragment>() == 8);
@@ -2201,8 +2201,8 @@ const _: () = {
     assert!(align_of::<JSXElement>() == 4);
     assert!(offset_of!(JSXElement, span) == 0);
     assert!(offset_of!(JSXElement, opening_element) == 8);
-    assert!(offset_of!(JSXElement, closing_element) == 12);
-    assert!(offset_of!(JSXElement, children) == 16);
+    assert!(offset_of!(JSXElement, children) == 12);
+    assert!(offset_of!(JSXElement, closing_element) == 28);
 
     assert!(size_of::<JSXOpeningElement>() == 36);
     assert!(align_of::<JSXOpeningElement>() == 4);
@@ -2220,8 +2220,8 @@ const _: () = {
     assert!(align_of::<JSXFragment>() == 4);
     assert!(offset_of!(JSXFragment, span) == 0);
     assert!(offset_of!(JSXFragment, opening_fragment) == 8);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16);
-    assert!(offset_of!(JSXFragment, children) == 24);
+    assert!(offset_of!(JSXFragment, children) == 16);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 32);
 
     assert!(size_of::<JSXOpeningFragment>() == 8);
     assert!(align_of::<JSXOpeningFragment>() == 4);
