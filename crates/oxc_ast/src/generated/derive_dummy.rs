@@ -192,8 +192,8 @@ impl<'a> Dummy<'a> for TaggedTemplateExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             tag: Dummy::dummy(allocator),
-            quasi: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            quasi: Dummy::dummy(allocator),
         }
     }
 }

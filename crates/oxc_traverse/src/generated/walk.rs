@@ -495,13 +495,6 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
-    walk_template_literal(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-            as *mut TemplateLiteral,
-        ctx,
-    );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
@@ -509,6 +502,13 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
+    walk_template_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut TemplateLiteral,
+        ctx,
+    );
     ctx.pop_stack(pop_token);
     traverser.exit_tagged_template_expression(&mut *node, ctx);
 }

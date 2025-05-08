@@ -513,7 +513,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         lhs: Expression<'a>,
         in_optional_chain: bool,
-        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+        type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Expression<'a> {
         let quasi = self.parse_template_literal(true);
         let span = self.end_span(span);
@@ -525,7 +525,7 @@ impl<'a> ParserImpl<'a> {
         if in_optional_chain {
             self.error(diagnostics::optional_chain_tagged_template(quasi.span));
         }
-        self.ast.expression_tagged_template(span, lhs, quasi, type_parameters)
+        self.ast.expression_tagged_template(span, lhs, type_arguments, quasi)
     }
 
     pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement<'a> {
@@ -761,7 +761,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.cur_kind().is_template_start_of_tagged_template() {
-                let (expr, type_parameters) =
+                let (expr, type_arguments) =
                     if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
                         let expr = instantiation_expr.unbox();
                         (expr.expression, Some(expr.type_arguments))
@@ -769,7 +769,7 @@ impl<'a> ParserImpl<'a> {
                         (lhs, None)
                     };
                 lhs =
-                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters);
+                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_arguments);
                 continue;
             }
 

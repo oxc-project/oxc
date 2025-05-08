@@ -1070,8 +1070,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TaggedTemplateExpression<'_> {
         TaggedTemplateExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             tag: CloneIn::clone_in(&self.tag, allocator),
-            quasi: CloneIn::clone_in(&self.quasi, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
+            quasi: CloneIn::clone_in(&self.quasi, allocator),
         }
     }
 
@@ -1079,8 +1079,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TaggedTemplateExpression<'_> {
         TaggedTemplateExpression {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             tag: CloneIn::clone_in_with_semantic_ids(&self.tag, allocator),
-            quasi: CloneIn::clone_in_with_semantic_ids(&self.quasi, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
+            quasi: CloneIn::clone_in_with_semantic_ids(&self.quasi, allocator),
         }
     }
 }

@@ -934,15 +934,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn expression_tagged_template<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -950,8 +950,8 @@ impl<'a> AstBuilder<'a> {
         Expression::TaggedTemplateExpression(self.alloc_tagged_template_expression(
             span,
             tag,
-            quasi,
             type_arguments,
+            quasi,
         ))
     }
 
@@ -1720,15 +1720,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> TaggedTemplateExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1736,8 +1736,8 @@ impl<'a> AstBuilder<'a> {
         TaggedTemplateExpression {
             span,
             tag,
-            quasi,
             type_arguments: type_arguments.into_in(self.allocator),
+            quasi,
         }
     }
 
@@ -1749,21 +1749,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn alloc_tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> Box<'a, TaggedTemplateExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.tagged_template_expression(span, tag, quasi, type_arguments),
+            self.tagged_template_expression(span, tag, type_arguments, quasi),
             self.allocator,
         )
     }

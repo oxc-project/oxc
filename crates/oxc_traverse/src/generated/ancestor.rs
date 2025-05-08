@@ -31,8 +31,8 @@ pub(crate) enum AncestorType {
     TemplateLiteralQuasis = 8,
     TemplateLiteralExpressions = 9,
     TaggedTemplateExpressionTag = 10,
-    TaggedTemplateExpressionQuasi = 11,
-    TaggedTemplateExpressionTypeArguments = 12,
+    TaggedTemplateExpressionTypeArguments = 11,
+    TaggedTemplateExpressionQuasi = 12,
     ComputedMemberExpressionObject = 13,
     ComputedMemberExpressionExpression = 14,
     StaticMemberExpressionObject = 15,
@@ -355,10 +355,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TemplateLiteralExpressions as u16,
     TaggedTemplateExpressionTag(TaggedTemplateExpressionWithoutTag<'a, 't>) =
         AncestorType::TaggedTemplateExpressionTag as u16,
-    TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a, 't>) =
-        AncestorType::TaggedTemplateExpressionQuasi as u16,
     TaggedTemplateExpressionTypeArguments(TaggedTemplateExpressionWithoutTypeArguments<'a, 't>) =
         AncestorType::TaggedTemplateExpressionTypeArguments as u16,
+    TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a, 't>) =
+        AncestorType::TaggedTemplateExpressionQuasi as u16,
     ComputedMemberExpressionObject(ComputedMemberExpressionWithoutObject<'a, 't>) =
         AncestorType::ComputedMemberExpressionObject as u16,
     ComputedMemberExpressionExpression(ComputedMemberExpressionWithoutExpression<'a, 't>) =
@@ -919,8 +919,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::TaggedTemplateExpressionTag(_)
-                | Self::TaggedTemplateExpressionQuasi(_)
                 | Self::TaggedTemplateExpressionTypeArguments(_)
+                | Self::TaggedTemplateExpressionQuasi(_)
         )
     }
 
@@ -2208,8 +2208,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TemplateLiteralQuasis(a) => a.address(),
             Self::TemplateLiteralExpressions(a) => a.address(),
             Self::TaggedTemplateExpressionTag(a) => a.address(),
-            Self::TaggedTemplateExpressionQuasi(a) => a.address(),
             Self::TaggedTemplateExpressionTypeArguments(a) => a.address(),
+            Self::TaggedTemplateExpressionQuasi(a) => a.address(),
             Self::ComputedMemberExpressionObject(a) => a.address(),
             Self::ComputedMemberExpressionExpression(a) => a.address(),
             Self::StaticMemberExpressionObject(a) => a.address(),
@@ -2898,10 +2898,10 @@ pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN: usize =
     offset_of!(TaggedTemplateExpression, span);
 pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG: usize =
     offset_of!(TaggedTemplateExpression, tag);
-pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI: usize =
-    offset_of!(TaggedTemplateExpression, quasi);
 pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS: usize =
     offset_of!(TaggedTemplateExpression, type_arguments);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI: usize =
+    offset_of!(TaggedTemplateExpression, quasi);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -2919,62 +2919,23 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
     }
 
     #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn quasi(self) -> &'t TemplateLiteral<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
                 as *const TemplateLiteral<'a>)
         }
     }
-
-    #[inline]
-    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTag<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TaggedTemplateExpressionWithoutQuasi<'a, 't>(
-    pub(crate) *const TaggedTemplateExpression<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn tag(self) -> &'t Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG)
-                as *const Expression<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -3014,6 +2975,45 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TaggedTemplateExpressionWithoutQuasi<'a, 't>(
+    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn tag(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

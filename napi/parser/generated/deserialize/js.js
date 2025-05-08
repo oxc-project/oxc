@@ -148,7 +148,7 @@ function deserializeTaggedTemplateExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     tag: deserializeExpression(pos + 8),
-    quasi: deserializeTemplateLiteral(pos + 24),
+    quasi: deserializeTemplateLiteral(pos + 32),
   };
 }
 

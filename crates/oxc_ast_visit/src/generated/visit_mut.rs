@@ -1564,10 +1564,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.tag);
-        visitor.visit_template_literal(&mut it.quasi);
         if let Some(type_arguments) = &mut it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_template_literal(&mut it.quasi);
         visitor.leave_node(kind);
     }
 

@@ -282,8 +282,8 @@ impl ContentEq for TemplateLiteral<'_> {
 impl ContentEq for TaggedTemplateExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.tag, &other.tag)
-            && ContentEq::content_eq(&self.quasi, &other.quasi)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.quasi, &other.quasi)
     }
 }
 

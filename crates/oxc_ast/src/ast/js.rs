@@ -433,18 +433,21 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-/// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
+/// `` tag`Hello, ${name}` `` in `` const foo = tag`Hello, ${name}`; ``.
 ///
-/// Represents a tagged template expression, which can include a tag and a quasi.
+/// Or with TS type arguments:
+/// ```ts
+/// const foo = tag<T>`Hello, ${name}`;
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TaggedTemplateExpression<'a> {
     pub span: Span,
     pub tag: Expression<'a>,
-    pub quasi: TemplateLiteral<'a>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub quasi: TemplateLiteral<'a>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
