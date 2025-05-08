@@ -78,7 +78,7 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise(call_expr).is_none() {
+        if is_promise(call_expr).is_none_or(|v| v == "withResolvers") {
             return;
         }
 
@@ -137,6 +137,7 @@ fn test() {
             "async function hi() { await thing().then() }",
             Some(serde_json::json!({ "strict": false })),
         ),
+        ("const { promise, resolve } = Promise.withResolvers()", None),
     ];
 
     let fail = vec![
