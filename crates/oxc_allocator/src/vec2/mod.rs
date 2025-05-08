@@ -92,7 +92,6 @@
 
 #![expect(
     clippy::semicolon_if_nothing_returned,
-    clippy::needless_pass_by_ref_mut,
     clippy::needless_for_each,
     clippy::needless_lifetimes,
     clippy::cloned_instead_of_copied,
@@ -127,7 +126,7 @@ use core::slice;
 // use std::io;
 
 mod raw_vec;
-use raw_vec::RawVec;
+use raw_vec::{Cap, RawVec};
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -542,8 +541,10 @@ macro_rules! vec {
 /// [`reserve`]: struct.Vec.html#method.reserve
 /// [owned slice]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 pub struct Vec<'bump, T: 'bump> {
-    buf: RawVec<'bump, T>,
     len: usize,
+    ptr: NonNull<T>,
+    cap: Cap,
+    a: &'bump Bump,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -566,7 +567,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn new_in(bump: &'bump Bump) -> Vec<'bump, T> {
-        Vec { buf: RawVec::new_in(bump), len: 0 }
+        let (ptr, cap, a) = RawVec::new_in(bump);
+        Vec { ptr, cap, a, len: 0 }
     }
 
     /// Constructs a new, empty `Vec<'bump, T>` with the specified capacity.
@@ -603,7 +605,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, bump: &'bump Bump) -> Vec<'bump, T> {
-        Vec { buf: RawVec::with_capacity_in(capacity, bump), len: 0 }
+        let (ptr, cap, a) = RawVec::with_capacity_in(capacity, bump);
+        Vec { ptr, cap, a, len: 0 }
     }
 
     /// Construct a new `Vec` from the given iterator's items.
@@ -687,7 +690,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         capacity: usize,
         bump: &'bump Bump,
     ) -> Vec<'bump, T> {
-        Vec { buf: RawVec::from_raw_parts_in(ptr, capacity, bump), len: length }
+        let (ptr, cap, a) = RawVec::from_raw_parts_in(ptr, capacity, bump);
+        Vec { ptr, len: length, cap, a }
     }
 
     /// Returns a shared reference to the allocator backing this `Vec`.
@@ -707,7 +711,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     #[must_use]
     pub fn bump(&self) -> &'bump Bump {
-        self.buf.bump()
+        self.a
+    }
+
+    #[inline]
+    #[must_use]
+    fn buf(&mut self) -> RawVec<T> {
+        RawVec { ptr: &mut self.ptr, cap: &mut self.cap, a: self.a }
     }
 
     /// Returns the number of elements the vector can hold without
@@ -724,7 +734,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.buf.cap()
+        // TODO: should the same as `RawVec` be used here?
+        self.cap.get_usize()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -748,7 +759,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve(&mut self, additional: usize) {
-        self.buf.reserve(self.len, additional);
+        let len = self.len;
+        self.buf().reserve(len, additional);
     }
 
     /// Reserves the minimum capacity for exactly `additional` more elements to
@@ -775,7 +787,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
-        self.buf.reserve_exact(self.len, additional);
+        let len = self.len;
+        self.buf().reserve_exact(len, additional);
     }
 
     /// Attempts to reserve capacity for at least `additional` more elements to be inserted
@@ -799,7 +812,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve(self.len, additional)
+        let len = self.len;
+        self.buf().try_reserve(len, additional)
     }
 
     /// Attempts to reserve the minimum capacity for exactly `additional` more elements to
@@ -826,9 +840,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve_exact(self.len, additional)
+        let len = self.len;
+        self.buf().try_reserve_exact(len, additional)
     }
 
+    /*
     /// Shrinks the capacity of the vector as much as possible.
     ///
     /// It will drop down as close as possible to the length but the allocator
@@ -848,10 +864,12 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 3);
     /// ```
     pub fn shrink_to_fit(&mut self) {
+        let len = self.len;
         if self.capacity() != self.len {
-            self.buf.shrink_to_fit(self.len);
+            self.buf().shrink_to_fit(len);
         }
     }
+    */
 
     /// Converts the vector into `&'bump [T]`.
     ///
@@ -1046,7 +1064,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn as_ptr(&self) -> *const T {
         // We shadow the slice method of the same name to avoid going through
         // `deref`, which creates an intermediate reference.
-        let ptr = self.buf.ptr();
+
+        // TODO: check if `self.buf().ptr()` is equivalent to `self.ptr.as_ptr()`
+        let ptr = self.ptr.as_ptr();
         unsafe {
             if ptr.is_null() {
                 core::hint::unreachable_unchecked();
@@ -1088,7 +1108,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn as_mut_ptr(&mut self) -> *mut T {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
-        let ptr = self.buf.ptr();
+        let ptr = self.buf().ptr();
         unsafe {
             if ptr.is_null() {
                 core::hint::unreachable_unchecked();
@@ -1236,8 +1256,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         assert!(index <= len);
 
         // space for the new element
-        if len == self.buf.cap() {
-            self.buf.grow_one();
+        if len == self.buf().cap() {
+            self.buf().grow_one();
         }
 
         unsafe {
@@ -1564,11 +1584,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
-        if self.len == self.buf.cap() {
-            self.buf.grow_one();
+        if self.len == self.buf().cap() {
+            self.buf().grow_one();
         }
         unsafe {
-            let end = self.buf.ptr().add(self.len);
+            let end = self.buf().ptr().add(self.len);
             ptr::write(end, value);
             self.len += 1;
         }
@@ -1803,7 +1823,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         assert!(at <= self.len(), "`at` out of bounds");
 
         let other_len = self.len - at;
-        let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
+        let mut other = Vec::with_capacity_in(other_len, self.a);
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -2156,7 +2176,7 @@ impl<'bump, T: 'bump + PartialEq> Vec<'bump, T> {
 impl<'bump, T: 'bump + Clone> Clone for Vec<'bump, T> {
     #[cfg(not(test))]
     fn clone(&self) -> Vec<'bump, T> {
-        let mut v = Vec::with_capacity_in(self.len(), self.buf.bump());
+        let mut v = Vec::with_capacity_in(self.len(), self.a);
         v.extend(self.iter().cloned());
         v
     }
@@ -2167,7 +2187,7 @@ impl<'bump, T: 'bump + Clone> Clone for Vec<'bump, T> {
     // NB see the slice::hack module in slice.rs for more information
     #[cfg(test)]
     fn clone(&self) -> Vec<'bump, T> {
-        let mut v = Vec::new_in(self.buf.bump());
+        let mut v = Vec::new_in(self.a);
         v.extend(self.iter().cloned());
         v
     }
@@ -2207,7 +2227,8 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
 
     fn deref(&self) -> &[T] {
         unsafe {
-            let p = self.buf.ptr();
+            // TODO: check if `self.buf().ptr()` is equivalent to `self.ptr.as_ptr()`
+            let p = self.ptr.as_ptr();
             // assume(!p.is_null());
             slice::from_raw_parts(p, self.len)
         }
@@ -2217,7 +2238,7 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
 impl<'bump, T: 'bump> ops::DerefMut for Vec<'bump, T> {
     fn deref_mut(&mut self) -> &mut [T] {
         unsafe {
-            let ptr = self.buf.ptr();
+            let ptr = self.buf().ptr();
             // assume(!ptr.is_null());
             slice::from_raw_parts_mut(ptr, self.len)
         }
@@ -2779,7 +2800,7 @@ impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.bump());
+            let mut collected = Vec::new_in(self.drain.vec.as_ref().a);
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.
@@ -2822,7 +2843,7 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     unsafe fn move_tail(&mut self, extra_capacity: usize) {
         let vec = self.vec.as_mut();
         let used_capacity = self.tail_start + self.tail_len;
-        vec.buf.reserve(used_capacity, extra_capacity);
+        vec.buf().reserve(used_capacity, extra_capacity);
 
         let new_tail_start = self.tail_start + extra_capacity;
         let src = vec.as_ptr().add(self.tail_start);
