@@ -457,7 +457,7 @@
     ["typeAnnotation"]
   ],
   "TSTypeAssertion": [
-    ["expression", "typeAnnotation"]
+    ["typeAnnotation", "expression"]
   ],
   "TSTypeLiteral": [
     ["members"]
