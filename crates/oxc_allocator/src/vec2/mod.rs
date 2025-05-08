@@ -121,6 +121,7 @@ use core::ops::{Index, IndexMut, RangeBounds};
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
+use std::ops::{AddAssign, SubAssign};
 
 // #[cfg(feature = "std")]
 // use std::io;
@@ -540,8 +541,46 @@ macro_rules! vec {
 /// [`insert`]: struct.Vec.html#method.insert
 /// [`reserve`]: struct.Vec.html#method.reserve
 /// [owned slice]: https://doc.rust-lang.org/std/boxed/struct.Box.html
+struct Len(u32);
+impl Len {
+    #[inline]
+    fn get_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
+
+impl From<usize> for Len {
+    #[expect(clippy::cast_possible_truncation)]
+    fn from(len: usize) -> Self {
+        debug_assert!(len <= u32::MAX as usize);
+        Len(len as u32)
+    }
+}
+
+impl AddAssign<usize> for Len {
+    #[expect(clippy::cast_possible_truncation)]
+    fn add_assign(&mut self, rhs: usize) {
+        debug_assert!(self.0 as usize + rhs <= u32::MAX as usize);
+        self.0 += rhs as u32;
+    }
+}
+
+impl SubAssign<usize> for Len {
+    #[expect(clippy::cast_possible_truncation)]
+    fn sub_assign(&mut self, rhs: usize) {
+        debug_assert!(self.0 as usize >= rhs);
+        self.0 -= rhs as u32;
+    }
+}
+
+impl From<Len> for usize {
+    fn from(len: Len) -> Self {
+        len.0 as usize
+    }
+}
+
 pub struct Vec<'bump, T: 'bump> {
-    len: usize,
+    len: Len,
     ptr: NonNull<T>,
     cap: Cap,
     a: &'bump Bump,
@@ -568,7 +607,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn new_in(bump: &'bump Bump) -> Vec<'bump, T> {
         let (ptr, cap, a) = RawVec::new_in(bump);
-        Vec { ptr, cap, a, len: 0 }
+        Vec { ptr, cap, a, len: Len::from(0) }
     }
 
     /// Constructs a new, empty `Vec<'bump, T>` with the specified capacity.
@@ -606,7 +645,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn with_capacity_in(capacity: usize, bump: &'bump Bump) -> Vec<'bump, T> {
         let (ptr, cap, a) = RawVec::with_capacity_in(capacity, bump);
-        Vec { ptr, cap, a, len: 0 }
+        Vec { ptr, cap, a, len: Len::from(0) }
     }
 
     /// Construct a new `Vec` from the given iterator's items.
@@ -691,7 +730,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         bump: &'bump Bump,
     ) -> Vec<'bump, T> {
         let (ptr, cap, a) = RawVec::from_raw_parts_in(ptr, capacity, bump);
-        Vec { ptr, len: length, cap, a }
+        Vec { ptr, len: Len::from(length), cap, a }
     }
 
     /// Returns a shared reference to the allocator backing this `Vec`.
@@ -759,7 +798,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve(&mut self, additional: usize) {
-        let len = self.len;
+        let len = self.len.get_usize();
         self.buf().reserve(len, additional);
     }
 
@@ -787,7 +826,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
-        let len = self.len;
+        let len = self.len.get_usize();
         self.buf().reserve_exact(len, additional);
     }
 
@@ -812,7 +851,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        let len = self.len;
+        let len = self.len.get_usize();
         self.buf().try_reserve(len, additional)
     }
 
@@ -840,7 +879,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        let len = self.len;
+        let len = self.len.get_usize();
         self.buf().try_reserve_exact(len, additional)
     }
 
@@ -973,9 +1012,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
     pub fn truncate(&mut self, len: usize) {
-        let current_len = self.len;
+        let current_len = self.len.get_usize();
         unsafe {
-            let mut ptr = self.as_mut_ptr().add(self.len);
+            let mut ptr = self.as_mut_ptr().add(current_len);
             // Set the final length at the end, keeping in mind that
             // dropping an element might panic. Works around a missed
             // optimization, as seen in the following issue:
@@ -1190,7 +1229,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub unsafe fn set_len(&mut self, new_len: usize) {
-        self.len = new_len;
+        self.len = new_len.into();
     }
 
     /// Removes an element from the vector and returns it.
@@ -1225,7 +1264,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
             let hole: *mut T = &mut self[index];
-            let last = ptr::read(self.get_unchecked(self.len - 1));
+            let last = ptr::read(self.get_unchecked(self.len.get_usize() - 1));
             self.len -= 1;
             ptr::replace(hole, last)
         }
@@ -1584,11 +1623,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
-        if self.len == self.buf().cap() {
+        if self.len.get_usize() == self.buf().cap() {
             self.buf().grow_one();
         }
         unsafe {
-            let end = self.buf().ptr().add(self.len);
+            let end = self.buf().ptr().add(self.len.get_usize());
             ptr::write(end, value);
             self.len += 1;
         }
@@ -1612,7 +1651,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
-        if self.len == 0 {
+        if self.len.get_usize() == 0 {
             None
         } else {
             unsafe {
@@ -1773,7 +1812,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn len(&self) -> usize {
-        self.len
+        self.len.get_usize()
     }
 
     /// Returns `true` if the vector contains no elements.
@@ -1822,7 +1861,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn split_off(&mut self, at: usize) -> Self {
         assert!(at <= self.len(), "`at` out of bounds");
 
-        let other_len = self.len - at;
+        let other_len = self.len.get_usize() - at;
         let mut other = Vec::with_capacity_in(other_len, self.a);
 
         // Unsafely `set_len` and copy items to `other`.
@@ -2116,14 +2155,14 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 // that the optimizer will see does not alias with any stores through the Vec's data
 // pointer. This is a workaround for alias analysis issue #32155
 struct SetLenOnDrop<'a> {
-    len: &'a mut usize,
+    len: &'a mut Len,
     local_len: usize,
 }
 
 impl<'a> SetLenOnDrop<'a> {
     #[inline]
-    fn new(len: &'a mut usize) -> Self {
-        SetLenOnDrop { local_len: *len, len }
+    fn new(len: &'a mut Len) -> Self {
+        SetLenOnDrop { local_len: len.get_usize(), len }
     }
 
     #[inline]
@@ -2140,7 +2179,7 @@ impl<'a> SetLenOnDrop<'a> {
 impl<'a> Drop for SetLenOnDrop<'a> {
     #[inline]
     fn drop(&mut self) {
-        *self.len = self.local_len;
+        *self.len = self.local_len.into();
     }
 }
 
@@ -2230,7 +2269,7 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
             // TODO: check if `self.buf().ptr()` is equivalent to `self.ptr.as_ptr()`
             let p = self.ptr.as_ptr();
             // assume(!p.is_null());
-            slice::from_raw_parts(p, self.len)
+            slice::from_raw_parts(p, self.len.get_usize())
         }
     }
 }
@@ -2240,7 +2279,7 @@ impl<'bump, T: 'bump> ops::DerefMut for Vec<'bump, T> {
         unsafe {
             let ptr = self.buf().ptr();
             // assume(!ptr.is_null());
-            slice::from_raw_parts_mut(ptr, self.len)
+            slice::from_raw_parts_mut(ptr, self.len.get_usize())
         }
     }
 }
@@ -2823,7 +2862,7 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
         let vec = self.vec.as_mut();
-        let range_start = vec.len;
+        let range_start = vec.len.get_usize();
         let range_end = self.tail_start;
         let range_slice =
             slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
