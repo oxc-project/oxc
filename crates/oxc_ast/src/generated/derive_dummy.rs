@@ -296,8 +296,8 @@ impl<'a> Dummy<'a> for NewExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             callee: Dummy::dummy(allocator),
-            arguments: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            arguments: Dummy::dummy(allocator),
             pure: Dummy::dummy(allocator),
         }
     }

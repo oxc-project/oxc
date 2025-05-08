@@ -224,7 +224,7 @@ function deserializeNewExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     callee: deserializeExpression(pos + 8),
-    arguments: deserializeVecArgument(pos + 24),
+    arguments: deserializeVecArgument(pos + 32),
   };
 }
 

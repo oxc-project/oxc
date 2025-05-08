@@ -352,8 +352,8 @@ impl ContentEq for CallExpression<'_> {
 impl ContentEq for NewExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
-            && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }

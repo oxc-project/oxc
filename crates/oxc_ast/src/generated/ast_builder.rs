@@ -827,15 +827,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn expression_new<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -843,8 +843,8 @@ impl<'a> AstBuilder<'a> {
         Expression::NewExpression(self.alloc_new_expression(
             span,
             callee,
-            arguments,
             type_arguments,
+            arguments,
         ))
     }
 
@@ -855,16 +855,16 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn expression_new_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> Expression<'a>
     where
@@ -873,8 +873,8 @@ impl<'a> AstBuilder<'a> {
         Expression::NewExpression(self.alloc_new_expression_with_pure(
             span,
             callee,
-            arguments,
             type_arguments,
+            arguments,
             pure,
         ))
     }
@@ -2133,15 +2133,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> NewExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -2149,8 +2149,8 @@ impl<'a> AstBuilder<'a> {
         NewExpression {
             span,
             callee,
-            arguments,
             type_arguments: type_arguments.into_in(self.allocator),
+            arguments,
             pure: Default::default(),
         }
     }
@@ -2163,20 +2163,20 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.new_expression(span, callee, arguments, type_arguments), self.allocator)
+        Box::new_in(self.new_expression(span, callee, type_arguments, arguments), self.allocator)
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -2187,16 +2187,16 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn new_expression_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> NewExpression<'a>
     where
@@ -2205,8 +2205,8 @@ impl<'a> AstBuilder<'a> {
         NewExpression {
             span,
             callee,
-            arguments,
             type_arguments: type_arguments.into_in(self.allocator),
+            arguments,
             pure,
         }
     }
@@ -2219,23 +2219,23 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn alloc_new_expression_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.new_expression_with_pure(span, callee, arguments, type_arguments, pure),
+            self.new_expression_with_pure(span, callee, type_arguments, arguments, pure),
             self.allocator,
         )
     }

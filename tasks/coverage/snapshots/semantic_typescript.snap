@@ -16788,7 +16788,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
 Symbol reference IDs mismatch for "ConcreteClass":
-after transform: SymbolId(8): [ReferenceId(8), ReferenceId(11), ReferenceId(13)]
+after transform: SymbolId(8): [ReferenceId(8), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(7)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceErasedSignatures.ts

@@ -43,8 +43,8 @@ pub(crate) enum AncestorType {
     CallExpressionTypeArguments = 20,
     CallExpressionArguments = 21,
     NewExpressionCallee = 22,
-    NewExpressionArguments = 23,
-    NewExpressionTypeArguments = 24,
+    NewExpressionTypeArguments = 23,
+    NewExpressionArguments = 24,
     MetaPropertyMeta = 25,
     MetaPropertyProperty = 26,
     SpreadElementArgument = 27,
@@ -379,10 +379,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::CallExpressionArguments as u16,
     NewExpressionCallee(NewExpressionWithoutCallee<'a, 't>) =
         AncestorType::NewExpressionCallee as u16,
-    NewExpressionArguments(NewExpressionWithoutArguments<'a, 't>) =
-        AncestorType::NewExpressionArguments as u16,
     NewExpressionTypeArguments(NewExpressionWithoutTypeArguments<'a, 't>) =
         AncestorType::NewExpressionTypeArguments as u16,
+    NewExpressionArguments(NewExpressionWithoutArguments<'a, 't>) =
+        AncestorType::NewExpressionArguments as u16,
     MetaPropertyMeta(MetaPropertyWithoutMeta<'a, 't>) = AncestorType::MetaPropertyMeta as u16,
     MetaPropertyProperty(MetaPropertyWithoutProperty<'a, 't>) =
         AncestorType::MetaPropertyProperty as u16,
@@ -960,8 +960,8 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::NewExpressionCallee(_)
-                | Self::NewExpressionArguments(_)
                 | Self::NewExpressionTypeArguments(_)
+                | Self::NewExpressionArguments(_)
         )
     }
 
@@ -2220,8 +2220,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::CallExpressionTypeArguments(a) => a.address(),
             Self::CallExpressionArguments(a) => a.address(),
             Self::NewExpressionCallee(a) => a.address(),
-            Self::NewExpressionArguments(a) => a.address(),
             Self::NewExpressionTypeArguments(a) => a.address(),
+            Self::NewExpressionArguments(a) => a.address(),
             Self::MetaPropertyMeta(a) => a.address(),
             Self::MetaPropertyProperty(a) => a.address(),
             Self::SpreadElementArgument(a) => a.address(),
@@ -3424,9 +3424,9 @@ impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
 
 pub(crate) const OFFSET_NEW_EXPRESSION_SPAN: usize = offset_of!(NewExpression, span);
 pub(crate) const OFFSET_NEW_EXPRESSION_CALLEE: usize = offset_of!(NewExpression, callee);
-pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
 pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS: usize =
     offset_of!(NewExpression, type_arguments);
+pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
 pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, pure);
 
 #[repr(transparent)]
@@ -3443,18 +3443,18 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
     }
 
     #[inline]
-    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
-                as *const Vec<'a, Argument<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
         }
     }
 
@@ -3465,47 +3465,6 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for NewExpressionWithoutCallee<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct NewExpressionWithoutArguments<'a, 't>(
-    pub(crate) *const NewExpression<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn callee(self) -> &'t Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_CALLEE) as *const Expression<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn pure(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
-    }
-}
-
-impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -3547,6 +3506,47 @@ impl<'a, 't> NewExpressionWithoutTypeArguments<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for NewExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct NewExpressionWithoutArguments<'a, 't>(
+    pub(crate) *const NewExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

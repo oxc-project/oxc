@@ -1256,8 +1256,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
         NewExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             callee: CloneIn::clone_in(&self.callee, allocator),
-            arguments: CloneIn::clone_in(&self.arguments, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
+            arguments: CloneIn::clone_in(&self.arguments, allocator),
             pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
@@ -1266,8 +1266,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
         NewExpression {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             callee: CloneIn::clone_in_with_semantic_ids(&self.callee, allocator),
-            arguments: CloneIn::clone_in_with_semantic_ids(&self.arguments, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
+            arguments: CloneIn::clone_in_with_semantic_ids(&self.arguments, allocator),
             pure: CloneIn::clone_in_with_semantic_ids(&self.pure, allocator),
         }
     }

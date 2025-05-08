@@ -621,10 +621,10 @@ pub struct CallExpression<'a> {
 pub struct NewExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
-    pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    pub arguments: Vec<'a, Argument<'a>>,
     #[builder(default)]
     #[estree(skip)]
     pub pure: bool,

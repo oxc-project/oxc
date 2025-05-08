@@ -663,18 +663,18 @@ unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_CALLEE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::NewExpressionArguments);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
-    {
-        walk_argument(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::NewExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_new_expression(&mut *node, ctx);

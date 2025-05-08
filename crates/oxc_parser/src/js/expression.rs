@@ -902,7 +902,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::new_optional_chain(span));
         }
 
-        self.ast.expression_new(span, callee, arguments, type_arguments)
+        self.ast.expression_new(span, callee, type_arguments, arguments)
     }
 
     /// Section 13.3 Call Expression

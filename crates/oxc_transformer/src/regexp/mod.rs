@@ -187,7 +187,7 @@ impl<'a> RegExp<'a, '_> {
             )),
         ]);
 
-        *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
+        *expr = ctx.ast.expression_new(regexp.span, callee, NONE, arguments);
     }
 
     /// Check if the regular expression contains any unsupported syntax.

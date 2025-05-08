@@ -147,8 +147,8 @@ const _: () = {
     assert!(align_of::<NewExpression>() == 8);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
-    assert!(offset_of!(NewExpression, arguments) == 24);
-    assert!(offset_of!(NewExpression, type_arguments) == 56);
+    assert!(offset_of!(NewExpression, type_arguments) == 24);
+    assert!(offset_of!(NewExpression, arguments) == 32);
     assert!(offset_of!(NewExpression, pure) == 64);
 
     assert!(size_of::<MetaProperty>() == 56);
@@ -1542,8 +1542,8 @@ const _: () = {
     assert!(align_of::<NewExpression>() == 4);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
-    assert!(offset_of!(NewExpression, arguments) == 16);
-    assert!(offset_of!(NewExpression, type_arguments) == 32);
+    assert!(offset_of!(NewExpression, type_arguments) == 16);
+    assert!(offset_of!(NewExpression, arguments) == 20);
     assert!(offset_of!(NewExpression, pure) == 36);
 
     assert!(size_of::<MetaProperty>() == 40);

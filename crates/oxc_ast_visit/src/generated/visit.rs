@@ -1637,10 +1637,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
-        visitor.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
     }
 

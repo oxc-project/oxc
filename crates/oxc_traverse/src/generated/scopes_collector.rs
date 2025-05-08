@@ -324,10 +324,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
         self.visit_expression(&it.callee);
-        self.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.visit_arguments(&it.arguments);
     }
 
     #[inline(always)]
