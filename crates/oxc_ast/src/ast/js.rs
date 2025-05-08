@@ -2323,8 +2323,9 @@ pub enum AccessorPropertyType {
 #[estree(
     add_fields(declare = TsFalse, optional = TsFalse, readonly = TsFalse),
     field_order(
-      r#type, span, key, value, computed, r#static, decorators, definite, type_annotation,
-      accessibility, optional, r#override, readonly, declare)
+        r#type, span, key, type_annotation, value, computed, r#static, decorators, definite,
+        accessibility, optional, r#override, readonly, declare
+    )
 )]
 pub struct AccessorProperty<'a> {
     pub span: Span,
@@ -2336,6 +2337,11 @@ pub struct AccessorProperty<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Type annotation on the property.
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a>>,
     /// Property was declared with a computed key
@@ -2348,11 +2354,6 @@ pub struct AccessorProperty<'a> {
     /// Property has a `!` after its key.
     #[ts]
     pub definite: bool,
-    /// Type annotation on the property.
-    ///
-    /// Will only ever be [`Some`] for TypeScript files.
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.

@@ -1625,12 +1625,12 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("key", &self.key);
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
         state.serialize_field("computed", &self.computed);
         state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("decorators", &self.decorators);
         state.serialize_ts_field("definite", &self.definite);
-        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
         state.serialize_ts_field("optional", &crate::serialize::TsFalse(self));
         state.serialize_ts_field("override", &self.r#override);

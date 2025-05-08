@@ -6648,12 +6648,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
@@ -6662,12 +6662,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
@@ -6678,12 +6678,12 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
             r#override,
             definite,
-            type_annotation,
             accessibility,
         ))
     }
@@ -7212,12 +7212,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
@@ -7226,12 +7226,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a>
     where
@@ -7242,12 +7242,12 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation: type_annotation.into_in(self.allocator),
             value,
             computed,
             r#static,
             r#override,
             definite,
-            type_annotation: type_annotation.into_in(self.allocator),
             accessibility,
         }
     }
@@ -7262,12 +7262,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
@@ -7276,12 +7276,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> Box<'a, AccessorProperty<'a>>
     where
@@ -7293,12 +7293,12 @@ impl<'a> AstBuilder<'a> {
                 r#type,
                 decorators,
                 key,
+                type_annotation,
                 value,
                 computed,
                 r#static,
                 r#override,
                 definite,
-                type_annotation,
                 accessibility,
             ),
             self.allocator,

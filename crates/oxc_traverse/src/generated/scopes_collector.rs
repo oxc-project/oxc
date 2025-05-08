@@ -1047,11 +1047,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            self.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            self.visit_expression(value);
         }
     }
 

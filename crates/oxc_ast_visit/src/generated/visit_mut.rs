@@ -2750,11 +2750,11 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
-        if let Some(value) = &mut it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut it.value {
+            visitor.visit_expression(value);
         }
     }
 

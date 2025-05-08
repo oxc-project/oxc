@@ -897,9 +897,9 @@ function deserializeAccessorProperty(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     key: deserializePropertyKey(pos + 48),
-    value: deserializeOptionExpression(pos + 64),
-    computed: deserializeBool(pos + 80),
-    static: deserializeBool(pos + 81),
+    value: deserializeOptionExpression(pos + 72),
+    computed: deserializeBool(pos + 88),
+    static: deserializeBool(pos + 89),
   };
 }
 

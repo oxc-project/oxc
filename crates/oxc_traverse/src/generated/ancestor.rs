@@ -163,8 +163,8 @@ pub(crate) enum AncestorType {
     StaticBlockBody = 140,
     AccessorPropertyDecorators = 141,
     AccessorPropertyKey = 142,
-    AccessorPropertyValue = 143,
-    AccessorPropertyTypeAnnotation = 144,
+    AccessorPropertyTypeAnnotation = 143,
+    AccessorPropertyValue = 144,
     ImportExpressionSource = 145,
     ImportExpressionOptions = 146,
     ImportDeclarationSpecifiers = 147,
@@ -586,10 +586,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::AccessorPropertyDecorators as u16,
     AccessorPropertyKey(AccessorPropertyWithoutKey<'a, 't>) =
         AncestorType::AccessorPropertyKey as u16,
-    AccessorPropertyValue(AccessorPropertyWithoutValue<'a, 't>) =
-        AncestorType::AccessorPropertyValue as u16,
     AccessorPropertyTypeAnnotation(AccessorPropertyWithoutTypeAnnotation<'a, 't>) =
         AncestorType::AccessorPropertyTypeAnnotation as u16,
+    AccessorPropertyValue(AccessorPropertyWithoutValue<'a, 't>) =
+        AncestorType::AccessorPropertyValue as u16,
     ImportExpressionSource(ImportExpressionWithoutSource<'a, 't>) =
         AncestorType::ImportExpressionSource as u16,
     ImportExpressionOptions(ImportExpressionWithoutOptions<'a, 't>) =
@@ -1340,8 +1340,8 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::AccessorPropertyDecorators(_)
                 | Self::AccessorPropertyKey(_)
-                | Self::AccessorPropertyValue(_)
                 | Self::AccessorPropertyTypeAnnotation(_)
+                | Self::AccessorPropertyValue(_)
         )
     }
 
@@ -2340,8 +2340,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::StaticBlockBody(a) => a.address(),
             Self::AccessorPropertyDecorators(a) => a.address(),
             Self::AccessorPropertyKey(a) => a.address(),
-            Self::AccessorPropertyValue(a) => a.address(),
             Self::AccessorPropertyTypeAnnotation(a) => a.address(),
+            Self::AccessorPropertyValue(a) => a.address(),
             Self::ImportExpressionSource(a) => a.address(),
             Self::ImportExpressionOptions(a) => a.address(),
             Self::ImportDeclarationSpecifiers(a) => a.address(),
@@ -9001,14 +9001,14 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorPrope
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
     offset_of!(AccessorProperty, decorators);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProperty, key);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
+    offset_of!(AccessorProperty, type_annotation);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_COMPUTED: usize = offset_of!(AccessorProperty, computed);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorProperty, r#static);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_OVERRIDE: usize =
     offset_of!(AccessorProperty, r#override);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_DEFINITE: usize = offset_of!(AccessorProperty, definite);
-pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
-    offset_of!(AccessorProperty, type_annotation);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY: usize =
     offset_of!(AccessorProperty, accessibility);
 
@@ -9041,6 +9041,14 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     }
 
     #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn value(self) -> &'t Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
@@ -9066,14 +9074,6 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     #[inline]
     pub fn definite(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
     }
 
     #[inline]
@@ -9122,6 +9122,14 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn value(self) -> &'t Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
@@ -9150,14 +9158,6 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn accessibility(self) -> &'t Option<TSAccessibility> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
@@ -9167,86 +9167,6 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutKey<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct AccessorPropertyWithoutValue<'a, 't>(
-    pub(crate) *const AccessorProperty<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn r#type(self) -> &'t AccessorPropertyType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
-                as *const AccessorPropertyType)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn definite(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -9327,6 +9247,86 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AccessorPropertyWithoutValue<'a, 't>(
+    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

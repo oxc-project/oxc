@@ -644,19 +644,19 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1);
     assert!(align_of::<AccessorPropertyType>() == 1);
 
-    assert!(size_of::<AccessorProperty>() == 104);
+    assert!(size_of::<AccessorProperty>() == 96);
     assert!(align_of::<AccessorProperty>() == 8);
     assert!(offset_of!(AccessorProperty, span) == 0);
     assert!(offset_of!(AccessorProperty, r#type) == 8);
     assert!(offset_of!(AccessorProperty, decorators) == 16);
     assert!(offset_of!(AccessorProperty, key) == 48);
-    assert!(offset_of!(AccessorProperty, value) == 64);
-    assert!(offset_of!(AccessorProperty, computed) == 80);
-    assert!(offset_of!(AccessorProperty, r#static) == 81);
-    assert!(offset_of!(AccessorProperty, r#override) == 82);
-    assert!(offset_of!(AccessorProperty, definite) == 83);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 88);
-    assert!(offset_of!(AccessorProperty, accessibility) == 96);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 64);
+    assert!(offset_of!(AccessorProperty, value) == 72);
+    assert!(offset_of!(AccessorProperty, computed) == 88);
+    assert!(offset_of!(AccessorProperty, r#static) == 89);
+    assert!(offset_of!(AccessorProperty, r#override) == 90);
+    assert!(offset_of!(AccessorProperty, definite) == 91);
+    assert!(offset_of!(AccessorProperty, accessibility) == 92);
 
     assert!(size_of::<ImportExpression>() == 48);
     assert!(align_of::<ImportExpression>() == 8);
@@ -2045,12 +2045,12 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, r#type) == 8);
     assert!(offset_of!(AccessorProperty, decorators) == 12);
     assert!(offset_of!(AccessorProperty, key) == 28);
-    assert!(offset_of!(AccessorProperty, value) == 36);
-    assert!(offset_of!(AccessorProperty, computed) == 44);
-    assert!(offset_of!(AccessorProperty, r#static) == 45);
-    assert!(offset_of!(AccessorProperty, r#override) == 46);
-    assert!(offset_of!(AccessorProperty, definite) == 47);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 48);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 36);
+    assert!(offset_of!(AccessorProperty, value) == 40);
+    assert!(offset_of!(AccessorProperty, computed) == 48);
+    assert!(offset_of!(AccessorProperty, r#static) == 49);
+    assert!(offset_of!(AccessorProperty, r#override) == 50);
+    assert!(offset_of!(AccessorProperty, definite) == 51);
     assert!(offset_of!(AccessorProperty, accessibility) == 52);
 
     assert!(size_of::<ImportExpression>() == 28);

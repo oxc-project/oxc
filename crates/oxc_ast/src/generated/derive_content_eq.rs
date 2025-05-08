@@ -1249,12 +1249,12 @@ impl ContentEq for AccessorProperty<'_> {
         ContentEq::content_eq(&self.r#type, &other.r#type)
             && ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.definite, &other.definite)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }

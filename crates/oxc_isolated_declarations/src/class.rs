@@ -512,12 +512,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         self.ast.vec(),
                         property.key.clone_in(self.ast.allocator),
+                        type_annotation,
                         None,
                         property.computed,
                         property.r#static,
                         property.r#override,
                         property.definite,
-                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);

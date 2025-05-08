@@ -723,12 +723,12 @@ export type AccessorPropertyType = 'AccessorProperty' | 'TSAbstractAccessorPrope
 export interface AccessorProperty extends Span {
   type: AccessorPropertyType;
   key: PropertyKey;
+  typeAnnotation?: TSTypeAnnotation | null;
   value: Expression | null;
   computed: boolean;
   static: boolean;
   decorators?: Array<Decorator>;
   definite?: boolean;
-  typeAnnotation?: TSTypeAnnotation | null;
   accessibility?: TSAccessibility | null;
   optional?: false;
   override?: boolean;

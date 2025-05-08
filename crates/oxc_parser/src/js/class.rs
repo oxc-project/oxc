@@ -534,12 +534,12 @@ impl<'a> ParserImpl<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
             r#override,
             definite,
-            type_annotation,
             accessibility,
         )
     }
