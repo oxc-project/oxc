@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+const pathJoin = require('node:path').join;
 const eslintTypes = require('@typescript-eslint/visitor-keys').visitorKeys;
 const oxcTypes = require('./estree_field_orders.json');
 
@@ -28,13 +30,16 @@ combinedTypes = combinedTypes.filter(o => o.oxc && o.eslint);
 // console.log(compared);
 
 // Compare field orders
+let errors = '';
 for (const {type, oxc, eslint} of combinedTypes) {
   if (DUMMY_FIELD_MISMATCHES.includes(type) || TS_ESLINT_IS_WRONG.includes(type)) continue;
 
   const error = compare(oxc, eslint);
-  if (error) console.log(`${type}: ${error}\n`);
+  if (error) errors += `${type}: ${error}\n\n`;
 }
-console.log("Done");
+errors = errors.slice(0, -1);
+
+fs.writeFileSync(pathJoin(__dirname, 'order_mismatches.txt'), errors);
 
 function compare(oxc, eslint) {
   const missingFields = eslint.filter(key => !oxc.includes(key));

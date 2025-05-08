@@ -496,7 +496,7 @@
     []
   ],
   "TaggedTemplateExpression": [
-    ["tag", "quasi", "typeArguments"]
+    ["tag", "typeArguments", "quasi"]
   ],
   "TemplateElement": [
     ["value", "tail"]

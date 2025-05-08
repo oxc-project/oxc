@@ -45,7 +45,3 @@ TS : typeAnnotation, expression
 TSTypePredicate: Order mismatch: parameterName
 Oxc: parameterName, asserts, typeAnnotation
 TS : typeAnnotation, parameterName
-
-TaggedTemplateExpression: Order mismatch: quasi
-Oxc: tag, quasi, typeArguments
-TS : tag, typeArguments, quasi
