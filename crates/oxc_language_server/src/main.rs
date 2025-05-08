@@ -92,7 +92,7 @@ impl LanguageServer for Backend {
 
         // ToDo: add support for multiple workspace folders
         // maybe fallback when the client does not support it
-        let root_worker = WorkspaceWorker::new(&params.root_uri.unwrap());
+        let root_worker = WorkspaceWorker::new(params.root_uri.unwrap());
 
         // When the client did not send our custom `initialization_options`,
         // or the client does not support `workspace/configuration` request,
@@ -144,7 +144,7 @@ impl LanguageServer for Backend {
         let needed_configurations = needed_configurations.pin_owned();
         for worker in workers {
             if worker.needs_init_linter().await {
-                needed_configurations.insert(worker.get_root_uri().unwrap(), worker);
+                needed_configurations.insert(worker.get_root_uri().clone(), worker);
             }
         }
 
@@ -200,12 +200,7 @@ impl LanguageServer for Backend {
         {
             let configs = self
                 .request_workspace_configuration(
-                    workers
-                        .iter()
-                        .map(|worker| worker.get_root_uri().unwrap())
-                        .collect::<Vec<_>>()
-                        .iter()
-                        .collect(),
+                    workers.iter().map(worker::WorkspaceWorker::get_root_uri).collect(),
                 )
                 .await;
 

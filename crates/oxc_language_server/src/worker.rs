@@ -2,7 +2,7 @@ use std::{str::FromStr, vec};
 
 use log::debug;
 use rustc_hash::FxBuildHasher;
-use tokio::sync::{Mutex, OnceCell, RwLock};
+use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
     lsp_types::{CodeActionOrCommand, Diagnostic, FileEvent, Range, TextEdit, Uri},
@@ -18,42 +18,36 @@ use crate::{
 };
 
 pub struct WorkspaceWorker {
-    root_uri: OnceCell<Uri>,
+    root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
     diagnostics_report_map: RwLock<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
 }
 
 impl WorkspaceWorker {
-    pub fn new(root_uri: &Uri) -> Self {
-        let root_uri_cell = OnceCell::new();
-        root_uri_cell.set(root_uri.clone()).unwrap();
-
+    pub fn new(root_uri: Uri) -> Self {
         Self {
-            root_uri: root_uri_cell,
+            root_uri,
             server_linter: RwLock::new(None),
             diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
             options: Mutex::new(Options::default()),
         }
     }
 
-    pub fn get_root_uri(&self) -> Option<Uri> {
-        self.root_uri.get().cloned()
+    pub fn get_root_uri(&self) -> &Uri {
+        &self.root_uri
     }
 
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(root_uri) = self.root_uri.get() {
-            if let Some(path) = uri.to_file_path() {
-                return path.starts_with(root_uri.to_file_path().unwrap());
-            }
+        if let Some(path) = uri.to_file_path() {
+            return path.starts_with(self.root_uri.to_file_path().unwrap());
         }
         false
     }
 
     pub async fn init_linter(&self, options: &Options) {
         *self.options.lock().await = options.clone();
-        *self.server_linter.write().await =
-            Some(ServerLinter::new(self.root_uri.get().unwrap(), options));
+        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
     }
 
     pub async fn needs_init_linter(&self) -> bool {
@@ -66,7 +60,7 @@ impl WorkspaceWorker {
 
     async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
-        let server_linter = ServerLinter::new(self.root_uri.get().unwrap(), &options);
+        let server_linter = ServerLinter::new(&self.root_uri, &options);
 
         *self.server_linter.write().await = Some(server_linter);
     }
@@ -266,14 +260,14 @@ mod tests {
 
     #[test]
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(&Uri::from_str("file:///root/").unwrap());
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
 
-        assert_eq!(worker.get_root_uri(), Some(Uri::from_str("file:///root/").unwrap()));
+        assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
 
     #[test]
     fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(&Uri::from_str("file:///path/to/root").unwrap());
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap());
 
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
