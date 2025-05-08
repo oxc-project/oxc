@@ -1,7 +1,3 @@
-ObjectPattern: Order mismatch: properties
-Oxc: properties, decorators, optional, typeAnnotation
-TS : decorators, properties, typeAnnotation
-
 PropertyDefinition: Order mismatch: value
 Oxc: decorators, key, value, computed, static, declare, override, optional, definite, readonly, typeAnnotation, accessibility
 TS : decorators, key, typeAnnotation, value

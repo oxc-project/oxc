@@ -10,11 +10,12 @@ types.sort();
 
 const DUMMY_FIELD_MISMATCHES = [
   'ArrayPattern',
-  'AssignmentPattern'
+  'AssignmentPattern',
+  'ObjectPattern',
 ];
 
 const TS_ESLINT_IS_WRONG = [
-  'ExportSpecifier' // `local` should be before `exported` e.g. `export { local as exported }`
+  'ExportSpecifier', // `local` should be before `exported` e.g. `export { local as exported }`
 ];
 
 // Combine Oxc and TS-ESLint types
@@ -22,7 +23,7 @@ let combinedTypes = types.map((key) => {
   let oxc = oxcTypes[key];
   oxc = oxc ? oxc[0] : null;
   return { type: key, oxc, eslint: eslintTypes[key] || null };
-})
+});
 
 // Filter out types which don't exist in both ASTs
 combinedTypes = combinedTypes.filter(o => o.oxc && o.eslint);
@@ -31,7 +32,7 @@ combinedTypes = combinedTypes.filter(o => o.oxc && o.eslint);
 
 // Compare field orders
 let errors = '';
-for (const {type, oxc, eslint} of combinedTypes) {
+for (const { type, oxc, eslint } of combinedTypes) {
   if (DUMMY_FIELD_MISMATCHES.includes(type) || TS_ESLINT_IS_WRONG.includes(type)) continue;
 
   const error = compare(oxc, eslint);
