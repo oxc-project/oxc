@@ -20327,6 +20327,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:3:5]
+ 2 │     accessor accessor a: any;
+ 3 │     readonly accessor b: any;
+   ·     ────────
+ 4 │     declare accessor c: any;
+   ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:4:5]
+ 3 │     readonly accessor b: any;
+ 4 │     declare accessor c: any;
+   ·     ───────
+ 5 │     accessor public d: any;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:15]
   9 │     accessor static h: any;

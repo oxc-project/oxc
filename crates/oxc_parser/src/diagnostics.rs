@@ -570,6 +570,15 @@ pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic
         .with_label(modifier.span)
 }
 
+/// TS(1243)
+pub fn accessor_modifier(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error(
+        "1243",
+        format!("'accessor' modifier cannot be used with '{}' modifier.", modifier.kind),
+    )
+    .with_label(modifier.span)
+}
+
 /// TS(1354)
 #[cold]
 pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {

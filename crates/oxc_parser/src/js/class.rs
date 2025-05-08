@@ -304,16 +304,11 @@ impl<'a> ParserImpl<'a> {
             if optional {
                 self.error(diagnostics::optional_accessor_property(optional_span));
             }
-            Some(self.parse_class_accessor_property(
-                span,
-                key,
-                computed,
-                r#static,
-                r#abstract,
-                r#override,
-                definite,
-                accessibility,
-            ))
+            Some(
+                self.parse_class_accessor_property(
+                    span, key, computed, r#static, definite, &modifiers,
+                ),
+            )
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             if !computed {
                 if let Some((name, span)) = key.prop_name() {
@@ -515,32 +510,38 @@ impl<'a> ParserImpl<'a> {
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
-        r#abstract: bool,
-        r#override: bool,
         definite: bool,
-        accessibility: Option<TSAccessibility>,
+        modifiers: &Modifiers<'a>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         self.asi();
-        let r#type = if r#abstract {
+        let r#type = if modifiers.contains(ModifierKind::Abstract) {
             AccessorPropertyType::TSAbstractAccessorProperty
         } else {
             AccessorPropertyType::AccessorProperty
         };
-        let decorators = self.consume_decorators();
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::ACCESSIBILITY
+                | ModifierFlags::ACCESSOR
+                | ModifierFlags::STATIC
+                | ModifierFlags::ABSTRACT
+                | ModifierFlags::OVERRIDE,
+            diagnostics::accessor_modifier,
+        );
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
-            decorators,
+            self.consume_decorators(),
             key,
             type_annotation,
             value,
             computed,
             r#static,
-            r#override,
+            modifiers.contains(ModifierKind::Override),
             definite,
-            accessibility,
+            modifiers.accessibility(),
         )
     }
 }

@@ -11886,6 +11886,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │ }
    ╰────
 
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:2:3]
+ 1 │ abstract class Foo {
+ 2 │   declare accessor prop7: number;
+   ·   ───────
+ 3 │   private accessor #p: any;
+   ╰────
+
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:3:3]
  2 │   declare accessor prop7: number;
@@ -11901,6 +11909,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
  8 │   abstract accessor f = 1;
    ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:9:3]
+  8 │   abstract accessor f = 1;
+  9 │   readonly accessor g;
+    ·   ────────
+ 10 │ }
+    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts:2:14]

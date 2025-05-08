@@ -1377,6 +1377,15 @@ rebuilt        : ["x"]
    `----
 
 
+  x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:14:3]
+ 13 |   abstract accessor f = 1;
+ 14 |   readonly accessor g;
+    :   ^^^^^^^^
+ 15 | }
+    `----
+
+
 * class/accessor-allowDeclareFields-true/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1387,6 +1396,15 @@ rebuilt        : ["x"]
    :   ^^^^^^^
  9 | 
    `----
+
+
+  x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:14:3]
+ 13 |   abstract accessor f = 1;
+ 14 |   readonly accessor g;
+    :   ^^^^^^^^
+ 15 | }
+    `----
 
 
 * class/head/input.ts
