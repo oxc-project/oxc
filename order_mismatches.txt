@@ -1,7 +1,3 @@
-TSPropertySignature: Order mismatch: key
-Oxc: computed, optional, readonly, key, typeAnnotation, accessibility, static
-TS : typeAnnotation, key
-
 TSTypeAssertion: Order mismatch: expression
 Oxc: expression, typeAnnotation
 TS : typeAnnotation, expression

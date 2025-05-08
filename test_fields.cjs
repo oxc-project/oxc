@@ -29,6 +29,9 @@ const TS_ESLINT_IS_WRONG = [
   // `key` should be before `typeParameters`
   // e.g. `interface Foo { bar<T>(a: number): string; }`
   'TSMethodSignature',
+  // `key` should be before `typeParameters`
+  // e.g. `interface Foo { bar: number }`
+  'TSPropertySignature',
 ];
 
 // Combine Oxc and TS-ESLint types
