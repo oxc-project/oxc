@@ -2068,8 +2068,8 @@ impl<'a> Dummy<'a> for TSNamedTupleMember<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            element_type: Dummy::dummy(allocator),
             label: Dummy::dummy(allocator),
+            element_type: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
         }
     }

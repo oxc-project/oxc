@@ -1427,8 +1427,8 @@ function deserializeTSNamedTupleMember(pos) {
     type: 'TSNamedTupleMember',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    elementType: deserializeTSTupleElement(pos + 8),
-    label: deserializeIdentifierName(pos + 24),
+    label: deserializeIdentifierName(pos + 8),
+    elementType: deserializeTSTupleElement(pos + 32),
     optional: deserializeBool(pos + 48),
   };
 }

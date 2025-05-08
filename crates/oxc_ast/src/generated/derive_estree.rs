@@ -2525,8 +2525,8 @@ impl ESTree for TSNamedTupleMember<'_> {
         state.serialize_field("type", &JsonSafeString("TSNamedTupleMember"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("elementType", &self.element_type);
         state.serialize_field("label", &self.label);
+        state.serialize_field("elementType", &self.element_type);
         state.serialize_field("optional", &self.optional);
         state.end();
     }

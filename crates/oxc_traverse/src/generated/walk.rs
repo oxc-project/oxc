@@ -4166,19 +4166,19 @@ unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_named_tuple_member(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
-        ancestor::TSNamedTupleMemberWithoutElementType(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberLabel(
+        ancestor::TSNamedTupleMemberWithoutLabel(node, PhantomData),
     ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSNamedTupleMemberElementType);
     walk_ts_tuple_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
             as *mut TSTupleElement,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSNamedTupleMemberLabel);
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
         ctx,
     );
     ctx.pop_stack(pop_token);

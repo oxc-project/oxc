@@ -230,8 +230,8 @@ pub(crate) enum AncestorType {
     TSIndexedAccessTypeObjectType = 207,
     TSIndexedAccessTypeIndexType = 208,
     TSTupleTypeElementTypes = 209,
-    TSNamedTupleMemberElementType = 210,
-    TSNamedTupleMemberLabel = 211,
+    TSNamedTupleMemberLabel = 210,
+    TSNamedTupleMemberElementType = 211,
     TSOptionalTypeTypeAnnotation = 212,
     TSRestTypeTypeAnnotation = 213,
     TSTypeReferenceTypeName = 214,
@@ -713,10 +713,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSIndexedAccessTypeIndexType as u16,
     TSTupleTypeElementTypes(TSTupleTypeWithoutElementTypes<'a, 't>) =
         AncestorType::TSTupleTypeElementTypes as u16,
-    TSNamedTupleMemberElementType(TSNamedTupleMemberWithoutElementType<'a, 't>) =
-        AncestorType::TSNamedTupleMemberElementType as u16,
     TSNamedTupleMemberLabel(TSNamedTupleMemberWithoutLabel<'a, 't>) =
         AncestorType::TSNamedTupleMemberLabel as u16,
+    TSNamedTupleMemberElementType(TSNamedTupleMemberWithoutElementType<'a, 't>) =
+        AncestorType::TSNamedTupleMemberElementType as u16,
     TSOptionalTypeTypeAnnotation(TSOptionalTypeWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSOptionalTypeTypeAnnotation as u16,
     TSRestTypeTypeAnnotation(TSRestTypeWithoutTypeAnnotation<'a, 't>) =
@@ -1571,7 +1571,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_named_tuple_member(self) -> bool {
-        matches!(self, Self::TSNamedTupleMemberElementType(_) | Self::TSNamedTupleMemberLabel(_))
+        matches!(self, Self::TSNamedTupleMemberLabel(_) | Self::TSNamedTupleMemberElementType(_))
     }
 
     #[inline]
@@ -2407,8 +2407,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSIndexedAccessTypeObjectType(a) => a.address(),
             Self::TSIndexedAccessTypeIndexType(a) => a.address(),
             Self::TSTupleTypeElementTypes(a) => a.address(),
-            Self::TSNamedTupleMemberElementType(a) => a.address(),
             Self::TSNamedTupleMemberLabel(a) => a.address(),
+            Self::TSNamedTupleMemberElementType(a) => a.address(),
             Self::TSOptionalTypeTypeAnnotation(a) => a.address(),
             Self::TSRestTypeTypeAnnotation(a) => a.address(),
             Self::TSTypeReferenceTypeName(a) => a.address(),
@@ -11782,47 +11782,11 @@ impl<'a, 't> GetAddress for TSTupleTypeWithoutElementTypes<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN: usize = offset_of!(TSNamedTupleMember, span);
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL: usize = offset_of!(TSNamedTupleMember, label);
 pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE: usize =
     offset_of!(TSNamedTupleMember, element_type);
-pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL: usize = offset_of!(TSNamedTupleMember, label);
 pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL: usize =
     offset_of!(TSNamedTupleMember, optional);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSNamedTupleMemberWithoutElementType<'a, 't>(
-    pub(crate) *const TSNamedTupleMember<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn label(self) -> &'t IdentifierName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL)
-                as *const IdentifierName<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL) as *const bool)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11854,6 +11818,42 @@ impl<'a, 't> TSNamedTupleMemberWithoutLabel<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNamedTupleMemberWithoutElementType<'a, 't>(
+    pub(crate) *const TSNamedTupleMember<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn label(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL)
+                as *const IdentifierName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

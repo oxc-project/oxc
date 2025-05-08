@@ -1002,8 +1002,8 @@ const _: () = {
     assert!(size_of::<TSNamedTupleMember>() == 56);
     assert!(align_of::<TSNamedTupleMember>() == 8);
     assert!(offset_of!(TSNamedTupleMember, span) == 0);
-    assert!(offset_of!(TSNamedTupleMember, element_type) == 8);
-    assert!(offset_of!(TSNamedTupleMember, label) == 24);
+    assert!(offset_of!(TSNamedTupleMember, label) == 8);
+    assert!(offset_of!(TSNamedTupleMember, element_type) == 32);
     assert!(offset_of!(TSNamedTupleMember, optional) == 48);
 
     assert!(size_of::<TSOptionalType>() == 24);
@@ -2397,8 +2397,8 @@ const _: () = {
     assert!(size_of::<TSNamedTupleMember>() == 36);
     assert!(align_of::<TSNamedTupleMember>() == 4);
     assert!(offset_of!(TSNamedTupleMember, span) == 0);
-    assert!(offset_of!(TSNamedTupleMember, element_type) == 8);
-    assert!(offset_of!(TSNamedTupleMember, label) == 16);
+    assert!(offset_of!(TSNamedTupleMember, label) == 8);
+    assert!(offset_of!(TSNamedTupleMember, element_type) == 24);
     assert!(offset_of!(TSNamedTupleMember, optional) == 32);
 
     assert!(size_of::<TSOptionalType>() == 16);
