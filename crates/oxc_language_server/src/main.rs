@@ -148,6 +148,10 @@ impl LanguageServer for Backend {
             }
         }
 
+        if needed_configurations.is_empty() {
+            return;
+        }
+
         let configurations =
             self.request_workspace_configuration(needed_configurations.keys().collect()).await;
         for (index, worker) in needed_configurations.values().enumerate() {
