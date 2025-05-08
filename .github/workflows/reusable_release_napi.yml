@@ -101,12 +101,11 @@ jobs:
             build: |
               pnpm build --target wasm32-wasip1-threads
 
-          # Parser raw transfer is not supported on big-endian systems.
-          # - os: ubuntu-latest
-          # target: s390x-unknown-linux-gnu
-          # build: |
-          # export CFLAGS="-fuse-ld=lld"
-          # pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: |
+              export CFLAGS="-fuse-ld=lld"
+              pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
