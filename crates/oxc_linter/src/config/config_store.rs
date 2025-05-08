@@ -1,6 +1,9 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{LintConfig, LintPlugins, overrides::OxlintOverrides};
 use crate::{RuleWithSeverity, rules::RULES};
@@ -20,57 +23,47 @@ impl Clone for ResolvedLinterState {
 }
 
 #[derive(Debug, Clone)]
-struct Config {
+pub struct Config {
     /// The basic linter state for this configuration.
-    base: ResolvedLinterState,
+    pub(crate) base: ResolvedLinterState,
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
-    overrides: OxlintOverrides,
+    pub(crate) overrides: OxlintOverrides,
 }
 
-/// Resolves a lint configuration for a given file, by applying overrides based on the file's path.
-#[derive(Debug, Clone)]
-pub struct ConfigStore {
-    base: Config,
-}
-
-impl ConfigStore {
+impl Config {
     pub fn new(
-        base_rules: Vec<RuleWithSeverity>,
-        base_config: LintConfig,
+        rules: Vec<RuleWithSeverity>,
+        config: LintConfig,
         overrides: OxlintOverrides,
     ) -> Self {
-        let base = ResolvedLinterState {
-            rules: Arc::from(base_rules.into_boxed_slice()),
-            config: Arc::new(base_config),
-        };
-        Self { base: Config { base, overrides } }
-    }
-
-    pub fn number_of_rules(&self) -> usize {
-        self.base.base.rules.len()
-    }
-
-    pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
-        &self.base.base.rules
+        Config {
+            base: ResolvedLinterState {
+                rules: Arc::from(rules.into_boxed_slice()),
+                config: Arc::new(config),
+            },
+            overrides,
+        }
     }
 
     pub fn plugins(&self) -> LintPlugins {
-        self.base.base.config.plugins
+        self.base.config.plugins
     }
 
-    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
-        // TODO: based on the `path` provided, resolve the configuration file to use.
-        let resolved_config = &self.base;
-        Self::apply_overrides(resolved_config, path)
+    pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+        &self.base.rules
     }
 
-    fn apply_overrides(config: &Config, path: &Path) -> ResolvedLinterState {
-        if config.overrides.is_empty() {
-            return config.base.clone();
+    pub fn number_of_rules(&self) -> usize {
+        self.base.rules.len()
+    }
+
+    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
+        if self.overrides.is_empty() {
+            return self.base.clone();
         }
 
-        let relative_path = config
+        let relative_path = self
             .base
             .config
             .path
@@ -81,18 +74,18 @@ impl ConfigStore {
             .unwrap_or(path);
 
         let overrides_to_apply =
-            config.overrides.iter().filter(|config| config.files.is_match(relative_path));
+            self.overrides.iter().filter(|config| config.files.is_match(relative_path));
 
         let mut overrides_to_apply = overrides_to_apply.peekable();
 
         if overrides_to_apply.peek().is_none() {
-            return config.base.clone();
+            return self.base.clone();
         }
 
-        let mut env = config.base.config.env.clone();
-        let mut globals = config.base.config.globals.clone();
-        let mut plugins = config.base.config.plugins;
-        let mut rules = config
+        let mut env = self.base.config.env.clone();
+        let mut globals = self.base.config.globals.clone();
+        let mut plugins = self.base.config.plugins;
+        let mut rules = self
             .base
             .rules
             .iter()
@@ -124,13 +117,13 @@ impl ConfigStore {
             }
         }
 
-        let config = if plugins == config.base.config.plugins
-            && env == config.base.config.env
-            && globals == config.base.config.globals
+        let config: Arc<LintConfig> = if plugins == self.base.config.plugins
+            && env == self.base.config.env
+            && globals == self.base.config.globals
         {
-            Arc::clone(&config.base.config)
+            Arc::clone(&self.base.config)
         } else {
-            let mut config = (*config.base.config).clone();
+            let mut config = (*self.base.config).clone();
 
             config.plugins = plugins;
             config.env = env;
@@ -143,12 +136,65 @@ impl ConfigStore {
     }
 }
 
+/// Resolves a lint configuration for a given file, by applying overrides based on the file's path.
+#[derive(Debug, Clone)]
+pub struct ConfigStore {
+    base: Config,
+
+    nested_configs: FxHashMap<PathBuf, Config>,
+}
+
+impl ConfigStore {
+    pub fn new(base_config: Config, nested_configs: FxHashMap<PathBuf, Config>) -> Self {
+        Self { base: base_config, nested_configs }
+    }
+
+    pub fn number_of_rules(&self) -> Option<usize> {
+        self.nested_configs.is_empty().then_some(self.base.base.rules.len())
+    }
+
+    pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+        &self.base.base.rules
+    }
+
+    pub fn plugins(&self) -> LintPlugins {
+        self.base.base.config.plugins
+    }
+
+    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
+        let resolved_config = if self.nested_configs.is_empty() {
+            &self.base
+        } else if let Some(config) = self.get_nearest_config(path) {
+            config
+        } else {
+            &self.base
+        };
+
+        Config::apply_overrides(resolved_config, path)
+    }
+
+    fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
+        // TODO(perf): should we cache the computed nearest config for every directory,
+        // so we don't have to recompute it for every file?
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if let Some(config) = self.nested_configs.get(dir) {
+                return Some(config);
+            }
+            current = dir.parent();
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use rustc_hash::FxHashMap;
+
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
         AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity,
-        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
+        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, config_store::Config},
     };
 
     macro_rules! from_json {
@@ -173,7 +219,10 @@ mod test {
             "files": ["*.test.{ts,tsx}"],
             "rules": {}
         }]);
-        let store = ConfigStore::new(base_rules, LintConfig::default(), overrides);
+        let store = ConfigStore::new(
+            Config::new(base_rules, LintConfig::default(), overrides),
+            FxHashMap::default(),
+        );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
         let rules_for_test_file = store.resolve("App.test.tsx".as_ref());
@@ -195,7 +244,10 @@ mod test {
             "plugins": ["react", "typescript", "unicorn", "oxc", "jsx-a11y"],
             "rules": {}
         }]);
-        let store = ConfigStore::new(base_rules, LintConfig::default(), overrides);
+        let store = ConfigStore::new(
+            Config::new(base_rules, LintConfig::default(), overrides),
+            FxHashMap::default(),
+        );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
         let rules_for_test_file = store.resolve("App.test.tsx".as_ref());
@@ -218,8 +270,11 @@ mod test {
             }
         }]);
 
-        let store = ConfigStore::new(base_rules, LintConfig::default(), overrides);
-        assert_eq!(store.number_of_rules(), 1);
+        let store = ConfigStore::new(
+            Config::new(base_rules, LintConfig::default(), overrides),
+            FxHashMap::default(),
+        );
+        assert_eq!(store.number_of_rules(), Some(1));
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
         assert_eq!(rules_for_source_file.rules.len(), 1);
@@ -238,8 +293,11 @@ mod test {
             }
         }]);
 
-        let store = ConfigStore::new(base_rules, LintConfig::default(), overrides);
-        assert_eq!(store.number_of_rules(), 1);
+        let store = ConfigStore::new(
+            Config::new(base_rules, LintConfig::default(), overrides),
+            FxHashMap::default(),
+        );
+        assert_eq!(store.number_of_rules(), Some(1));
 
         assert_eq!(store.resolve("App.tsx".as_ref()).rules.len(), 1);
         assert_eq!(store.resolve("src/App.tsx".as_ref()).rules.len(), 2);
@@ -258,8 +316,11 @@ mod test {
             }
         }]);
 
-        let store = ConfigStore::new(base_rules, LintConfig::default(), overrides);
-        assert_eq!(store.number_of_rules(), 1);
+        let store = ConfigStore::new(
+            Config::new(base_rules, LintConfig::default(), overrides),
+            FxHashMap::default(),
+        );
+        assert_eq!(store.number_of_rules(), Some(1));
 
         let app = store.resolve("App.tsx".as_ref()).rules;
         assert_eq!(app.len(), 1);
@@ -287,7 +348,8 @@ mod test {
             "plugins": ["typescript"],
         }]);
 
-        let store = ConfigStore::new(vec![], base_config, overrides);
+        let store =
+            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
         assert_eq!(store.base.base.config.plugins, LintPlugins::IMPORT);
 
         let app = store.resolve("other.mjs".as_ref()).config;
@@ -320,7 +382,8 @@ mod test {
             },
         }]);
 
-        let store = ConfigStore::new(vec![], base_config, overrides);
+        let store =
+            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
         assert!(!store.base.base.config.env.contains("React"));
 
         let app = store.resolve("App.tsx".as_ref()).config;
@@ -344,7 +407,8 @@ mod test {
             },
         }]);
 
-        let store = ConfigStore::new(vec![], base_config, overrides);
+        let store =
+            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
         assert!(store.base.base.config.env.contains("es2024"));
 
         let app = store.resolve("App.tsx".as_ref()).config;
@@ -369,7 +433,8 @@ mod test {
             },
         }]);
 
-        let store = ConfigStore::new(vec![], base_config, overrides);
+        let store =
+            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
         assert!(!store.base.base.config.globals.is_enabled("React"));
         assert!(!store.base.base.config.globals.is_enabled("Secret"));
 
@@ -399,7 +464,8 @@ mod test {
             },
         }]);
 
-        let store = ConfigStore::new(vec![], base_config, overrides);
+        let store =
+            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
         assert!(store.base.base.config.globals.is_enabled("React"));
         assert!(store.base.base.config.globals.is_enabled("Secret"));
 

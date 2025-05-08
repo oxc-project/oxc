@@ -7,7 +7,7 @@ use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc};
+use oxc_linter::{Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc};
 use tower_lsp_server::UriExt;
 
 use crate::linter::{
@@ -61,21 +61,24 @@ impl ServerLinter {
             config_builder.plugins().has_import()
         };
 
-        let config_store = config_builder.build().expect("Failed to build config store");
+        let base_config = config_builder.build().expect("Failed to build config store");
 
         let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
 
-        let linter = if use_nested_config {
-            let nested_configs = nested_configs.pin();
-            let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect::<FxHashMap<_, _>>();
+        let config_store = ConfigStore::new(
+            base_config,
+            if use_nested_config {
+                let nested_configs = nested_configs.pin();
+                nested_configs
+                    .iter()
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect::<FxHashMap<_, _>>()
+            } else {
+                FxHashMap::default()
+            },
+        );
 
-            Linter::new_with_nested_configs(lint_options, config_store, nested_configs_copy)
-        } else {
-            Linter::new(lint_options, config_store)
-        };
+        let linter = Linter::new(lint_options, config_store);
 
         let isolated_linter = IsolatedLintHandler::new(
             linter,
@@ -93,7 +96,7 @@ impl ServerLinter {
     fn create_nested_configs(
         root_uri: &Uri,
         options: &Options,
-    ) -> ConcurrentHashMap<PathBuf, ConfigStore> {
+    ) -> ConcurrentHashMap<PathBuf, Config> {
         // nested config is disabled, no need to search for configs
         if !options.use_nested_configs() {
             return ConcurrentHashMap::default();

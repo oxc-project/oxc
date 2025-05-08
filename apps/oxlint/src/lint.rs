@@ -12,8 +12,8 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
+    LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -269,15 +269,10 @@ impl Runner for LintRunner {
             _ => None,
         };
 
-        let linter = if nested_configs.is_empty() {
-            Linter::new(LintOptions::default(), lint_config)
+        let linter =
+            Linter::new(LintOptions::default(), ConfigStore::new(lint_config, nested_configs))
                 .with_fix(fix_options.fix_kind())
-                .with_report_unused_directives(report_unused_directives)
-        } else {
-            Linter::new_with_nested_configs(LintOptions::default(), lint_config, nested_configs)
-                .with_fix(fix_options.fix_kind())
-                .with_report_unused_directives(report_unused_directives)
-        };
+                .with_report_unused_directives(report_unused_directives);
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -400,11 +395,11 @@ impl LintRunner {
         handler: &GraphicalReportHandler,
         filters: &Vec<LintFilter>,
         paths: &Vec<Arc<OsStr>>,
-    ) -> Result<FxHashMap<PathBuf, ConfigStore>, CliRunResult> {
+    ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
-        let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
+        let mut nested_configs = FxHashMap::<PathBuf, Config>::default();
         // get all of the unique directories among the paths to use for search for
         // oxlint config files in those directories and their ancestors
         // e.g. `/some/file.js` will check `/some` and `/`

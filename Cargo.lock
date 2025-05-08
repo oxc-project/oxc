@@ -1639,6 +1639,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
@@ -2018,6 +2019,7 @@ dependencies = [
  "oxc_index",
  "oxc_linter",
  "oxc_napi",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]

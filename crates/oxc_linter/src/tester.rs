@@ -9,12 +9,13 @@ use std::{
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AllowWarnDeny, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions, Linter,
-    Oxlintrc, RuleEnum, RuleWithSeverity,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
+    Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
     fixer::{FixKind, Fixer},
     options::LintOptions,
     read_to_string,
@@ -483,16 +484,19 @@ impl Tester {
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let linter = Linter::new(
             self.lint_options,
-            eslint_config
-                .as_ref()
-                .map_or_else(ConfigStoreBuilder::empty, |v| {
-                    ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-                        .unwrap()
-                })
-                .with_plugins(self.plugins)
-                .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
-                .build()
-                .unwrap(),
+            ConfigStore::new(
+                eslint_config
+                    .as_ref()
+                    .map_or_else(ConfigStoreBuilder::empty, |v| {
+                        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                            .unwrap()
+                    })
+                    .with_plugins(self.plugins)
+                    .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+                    .build()
+                    .unwrap(),
+                FxHashMap::default(),
+            ),
         )
         .with_fix(fix.into());
 

@@ -12,12 +12,11 @@ use oxc_span::{CompactStr, format_compact_str};
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     RuleWithSeverity,
-    config::{
-        ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules,
-        overrides::OxlintOverride,
-    },
+    config::{ESLintRule, LintPlugins, OxlintOverrides, OxlintRules, overrides::OxlintOverride},
     rules::RULES,
 };
+
+use super::Config;
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
@@ -72,7 +71,7 @@ impl ConfigStoreBuilder {
     /// will be applied on top of a default [`Oxlintrc`].
     ///
     /// # Example
-    /// Here's how to create a [`ConfigStore`] from a `.oxlintrc.json` file.
+    /// Here's how to create a [`Config`] from a `.oxlintrc.json` file.
     /// ```ignore
     /// use oxc_linter::{ConfigBuilder, Oxlintrc};
     /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
@@ -301,7 +300,7 @@ impl ConfigStoreBuilder {
     }
 
     /// # Errors
-    pub fn build(self) -> Result<ConfigStore, OxcDiagnostic> {
+    pub fn build(self) -> Result<Config, OxcDiagnostic> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -312,7 +311,8 @@ impl ConfigStoreBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|r| r.id());
-        Ok(ConfigStore::new(rules, self.config, self.overrides))
+
+        Ok(Config::new(rules, self.config, self.overrides))
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -386,7 +386,7 @@ impl Debug for ConfigStoreBuilder {
     }
 }
 
-/// An error that can occur while building a [`ConfigStore`] from an [`Oxlintrc`].
+/// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
@@ -656,7 +656,7 @@ mod test {
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
         let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build().unwrap();
-        for rule in linter.rules().iter() {
+        for rule in linter.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
@@ -1030,14 +1030,14 @@ mod test {
         assert!(config.rules().is_empty());
     }
 
-    fn config_store_from_path(path: &str) -> ConfigStore {
+    fn config_store_from_path(path: &str) -> Config {
         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::from_file(&PathBuf::from(path)).unwrap())
             .unwrap()
             .build()
             .unwrap()
     }
 
-    fn config_store_from_str(s: &str) -> ConfigStore {
+    fn config_store_from_str(s: &str) -> Config {
         ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap())
             .unwrap()
             .build()
