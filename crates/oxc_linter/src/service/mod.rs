@@ -65,12 +65,12 @@ impl LintServiceOptions {
     }
 }
 
-pub struct LintService {
-    runtime: Runtime,
+pub struct LintService<'l> {
+    runtime: Runtime<'l>,
 }
 
-impl LintService {
-    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+impl<'l> LintService<'l> {
+    pub fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
         let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
@@ -82,10 +82,6 @@ impl LintService {
     ) -> Self {
         self.runtime = self.runtime.with_file_system(file_system);
         self
-    }
-
-    pub fn linter(&self) -> &Linter {
-        &self.runtime.linter
     }
 
     /// # Panics
