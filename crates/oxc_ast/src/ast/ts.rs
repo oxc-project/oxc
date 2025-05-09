@@ -1336,7 +1336,16 @@ pub enum TSTypeQueryExprName<'a> {
 }
 }
 
-/// `type foo = import('foo')`
+/// `import('foo')` in `type Foo = import('foo');`
+///
+/// ```ts
+/// //                       ______________ options
+/// type Foo = import('foo', { assert: {} })<T>;
+/// //                ^^^^^ argument        ^^^ type_arguments
+///
+/// type Foo = import('foo').bar;
+/// //                       ^^^ qualifier
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
