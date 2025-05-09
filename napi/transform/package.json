@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.68.1",
+  "version": "0.69.0",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {

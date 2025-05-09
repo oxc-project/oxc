@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.69.0] - 2025-05-09
+
+### Features
+
+- d066516 ast_tools: Support `#[estree(prepend_to)]` (#10849) (overlookmotel)
+
+### Bug Fixes
+
+- 6e47699 semantic, syntax: TS value module cannot be referenced as type (#10918) (Dunqing)
+
+### Refactor
+
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+- faf0a95 syntax: Rename `NameSpaceModule` to `NamespaceModule` (#10917) (Dunqing)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
 ## [0.68.0] - 2025-05-03
 
 ### Features
