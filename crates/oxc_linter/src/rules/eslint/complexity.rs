@@ -29,7 +29,7 @@ impl Default for ComplexityVariant {
     }
 }
 
-/// The cyclomatic complexity rule. It reports a warning if a function’s
+/// The perceived complexity rule. It reports a warning if a function’s
 /// complexity (i.e. number of independent paths) exceeds the allowed maximum.
 #[derive(Debug, Default, Clone)]
 pub struct Complexity {
@@ -50,15 +50,15 @@ fn complexity_diagnostic(name: &str, complexity: usize, max: usize, span: Span) 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces a maximum cyclomatic complexity allowed in a program.
+    /// Enforces a maximum perceived complexity allowed in a program.
     ///
     /// ### Why is this bad?
     ///
-    /// High cyclomatic complexity makes code harder to understand, maintain, and test.
+    /// High perceived complexity makes code harder to understand, maintain, and test.
     ///
     /// ### Examples
     ///
-    /// For example, with the default `{ "max": 20 }` option:
+    /// For example, with the default `{ "max": 0 }` option:
     /// ```js
     /// function foo(a) {
     ///     if (a) {            // +1
@@ -69,16 +69,16 @@ declare_oxc_lint!(
     ///         }
     ///     }
     /// }
-    /// // Base complexity is 1; this function has complexity 4.
+    /// // Base complexity is 0; this function has complexity 3.
     /// ```
     ///
     /// ### Options
     ///
     /// #### max
     ///
-    /// `{ type: number, default: 20 }`
+    /// `{ type: number, default: 0 }`
     ///
-    /// Maximum allowed cyclomatic complexity.
+    /// Maximum allowed perceived complexity.
     Complexity,
     eslint,
     pedantic
@@ -128,26 +128,99 @@ impl Rule for Complexity {
     }
 }
 
-/// Computes the cyclomatic complexity for a given function node.
-/// It starts at 1 and adds 1 for every decision point encountered
-/// in nodes that are directly within the function (excluding nested functions).
+/// Computes the perceived complexity for a given function node.
 fn compute_complexity<'a>(
     function_node: &AstNode<'a>,
     nodes: &'a AstNodes<'a>,
     variant: ComplexityVariant,
 ) -> usize {
-    let mut complexity = 1; // initial path
+    let mut complexity = 0; // initial path
     for node in nodes.iter() {
         // Skip the function node itself.
         if node.id() == function_node.id() {
             continue;
         }
         // Count the node only if the first encountered function ancestor is `function_node`.
-        if is_in_function(function_node, node, nodes) && is_decision_point(node, variant) {
-            complexity += 1;
+        if is_in_function(function_node, node, nodes) {
+            // Add complexity for decision points
+            if is_decision_point(node, variant) {
+                complexity += 1;
+            }
+            
+            // Special handling for if statements with else branches
+            if let AstKind::IfStatement(if_stmt) = node.kind() {
+                if let Some(alternate) = &if_stmt.alternate {
+                    // Check if this is an "else if" construction
+                    let is_else_if = matches!(alternate, oxc_ast::ast::Statement::IfStatement(_));
+                    
+                    if !is_else_if {
+                        complexity += 1;
+                    }
+                }
+            }
+
+            // Special handling for switch statements with default cases
+            if let AstKind::SwitchStatement(switch_stmt) = node.kind() {
+                if switch_stmt.cases.iter().any(|case| case.test.is_none()) {
+                    complexity += 1;
+                }
+            }
+
+            // Special handling for logical expressions
+            if let AstKind::LogicalExpression(_) = node.kind() {
+                if !has_logical_expression_parent(node, nodes) {
+                    let operator_sequences = count_logical_operator_sequences(node);
+                    complexity += operator_sequences;
+                }
+            }
         }
     }
     complexity
+}
+
+/// Checks if the node has a logical expression as its parent
+fn has_logical_expression_parent<'a>(
+    node: &AstNode<'a>,
+    nodes: &'a AstNodes<'a>,
+) -> bool {
+    if let Some(parent_id) = nodes.parent_id(node.id()) {
+        let parent = nodes.get_node(parent_id);
+        matches!(parent.kind(), AstKind::LogicalExpression(_))
+    } else {
+        false
+    }
+}
+
+fn count_logical_operator_sequences<'a>(
+    node: &AstNode<'a>,
+) -> usize {
+    use oxc_syntax::operator::LogicalOperator;
+    
+    fn count_sequences(
+        expr: &oxc_ast::ast::LogicalExpression,
+        current_op: Option<LogicalOperator>,
+        count: &mut usize,
+    ) {
+        if current_op.is_none() || current_op != Some(expr.operator) {
+            *count += 1;
+        }
+        
+        if let oxc_ast::ast::Expression::LogicalExpression(left_expr) = &expr.left {
+            count_sequences(left_expr, Some(expr.operator), count);
+        }
+        
+        if let oxc_ast::ast::Expression::LogicalExpression(right_expr) = &expr.right {
+            count_sequences(right_expr, Some(expr.operator), count);
+        }
+    }
+    
+    let mut sequence_count = 0;
+
+    if let AstKind::LogicalExpression(expr) = node.kind() {
+        count_sequences(expr, None, &mut sequence_count);
+    }
+    
+    sequence_count
 }
 
 /// Returns true if the given `node` is directly inside the specified function.
@@ -165,16 +238,7 @@ fn is_in_function<'a>(
     false
 }
 
-/// Returns true if the given node is a decision point that increases cyclomatic complexity.
-///
-/// The following AST node kinds (if present) contribute to the complexity:
-/// - IfStatement, ForStatement, ForInStatement, ForOfStatement, WhileStatement, DoWhileStatement
-/// - ConditionalExpression, LogicalExpression, CatchClause, AssignmentPattern
-/// - SwitchCase (if a test is present)
-/// - SwitchStatement (only if the variant is "modified")
-/// - In an AssignmentExpression, if the operator is a logical assignment operator
-/// - In a MemberExpression or CallExpression, if the optional chaining flag is set
-fn is_decision_point(node: &AstNode, variant: ComplexityVariant) -> bool {
+fn is_decision_point(node: &AstNode, _variant: ComplexityVariant) -> bool {
     match node.kind() {
         AstKind::IfStatement(_) => true,
         AstKind::ForStatement(_) => true,
@@ -183,29 +247,13 @@ fn is_decision_point(node: &AstNode, variant: ComplexityVariant) -> bool {
         AstKind::WhileStatement(_) => true,
         AstKind::DoWhileStatement(_) => true,
         AstKind::ConditionalExpression(_) => true,
-        AstKind::LogicalExpression(_) => true,
         AstKind::CatchClause(_) => true,
         AstKind::AssignmentPattern(_) => true,
-        AstKind::SwitchCase(switch_case) => {
-            // Count only non-default cases (i.e. if there is a test expression).
-            switch_case.test.is_some()
-        }
-        AstKind::SwitchStatement(_) => {
-            // In the modified variant, also count the switch statement itself.
-            variant == ComplexityVariant::Modified
-        }
+        AstKind::SwitchStatement(_) => true,
         AstKind::AssignmentExpression(assign_expr) => {
             // If the assignment operator has short-circuiting behavior,
             // count it as a decision point.
             is_logical_assignment_operator(assign_expr.operator)
-        }
-        AstKind::MemberExpression(member_expr) => {
-            // Count optional chaining.
-            member_expr.optional()
-        }
-        AstKind::CallExpression(call_expr) => {
-            // Count optional chaining on calls.
-            call_expr.optional
         }
         _ => false,
     }
@@ -229,5 +277,100 @@ fn get_function_name(node: &AstNode) -> String {
             }
         }
         _ => "function".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    #[test]
+    fn test_compute_complexity_directly() {
+        // Test cases with expected complexity values
+        let test_cases = vec![
+            // Basic function
+            ("function simple() { return true; }", 0), 
+            
+            // optional chaining on member expressions (obj?.prop)
+            ("function optChain(obj) { return obj?.prop; }", 0),
+
+            // optional chaining on call expressions (func?.())
+            ("function optionalCall(func) { return func?.(); }", 0),
+            
+            // Function with one if
+            ("function oneIf(a) { if (a) { return true; } return false; }", 1),
+
+            // Function with one if-else
+            ("function oneIf(a) { if (a) { return true; } else { return false; } }", 2), 
+            
+            // Function with if-else if
+            ("function ifElseIf(a, b) { if (a) { return 1; } else if (b) { return 2; } return 0; }", 2),
+        
+            // Function with ternary
+            ("function ternary(val) { return val ? 'yes' : 'no'; }", 1),
+
+            // Function with nullish coalescing
+            ("function nullishCoalescing(val) { return val ?? 'default'; }", 1),
+
+            // Function with nullish coalescing assignment
+            ("function nullishAssign(obj) { obj.val ??= 'default'; return obj; }", 1),
+            
+            // Function with try-catch
+            ("function tryCatch() { try { return true; } catch(e) { return false; } }", 1),
+
+            // switch statement
+            ("function switchTest(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; } }", 1),
+
+            // switch statement with default vase
+            ("function switchTest(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; default: return 'other'; } }", 2),                
+            
+            // Function with logical assignment
+            ("function logAssign(obj) { obj.val ||= 'default'; return obj; }", 1),
+
+            // Function with same logical && expression sequence: +1 for if; +1 for all &&
+            ("function logicalTest(a, b, c){ if(a && b && c) {}}", 2),
+
+            // Function with same logical || expression sequence: +1 for if; +1 for all ||
+            ("function logicalTest(a, b, c){ if(a || b || c) {}}", 2),
+
+            // Function with two continuous logical sequences: +1 for if; +1 for all &&; +1 for all ||
+            ("function logicalTest(a, b, c, d, e){ if(a && b && c || d || e) {}}", 3),
+
+            // Function with two mixed logical sequences: +1 for if; +1 for &&; +1 for ||; +1 for && (new)
+            ("function logicalTest(a, b, c, d, e){ if(a && b || c && d) {}}", 4),            
+        ];
+        
+        for (js, expected) in &test_cases {
+            let complexity = get_test_complexity(js, ComplexityVariant::Classic);
+            assert_eq!(complexity, *expected, "Classic variant failed for: {}", js);
+        }
+        
+    }
+    
+    // Helper function to prepare AST and call compute_complexity
+    fn get_test_complexity(js: &str, variant: ComplexityVariant) -> usize {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        
+        // Parse the source code
+        let ret = Parser::new(&allocator, js, source_type).parse();
+        let program = ret.program;
+        
+        // Build semantic model
+        let semantic_builder = SemanticBuilder::new();
+        let semantic = semantic_builder.build(&program);
+        let nodes = semantic.semantic.nodes();
+        
+        // Find the first function node in the program
+        let function_node = nodes.iter()
+            .find(|node| is_function_node(node))
+            .expect("No function node found in test code");
+            
+        // Call the function we're testing
+        compute_complexity(function_node, nodes, variant)
     }
 }
