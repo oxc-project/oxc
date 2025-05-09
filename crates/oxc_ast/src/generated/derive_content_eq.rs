@@ -1900,8 +1900,8 @@ impl ContentEq for TSTupleType<'_> {
 
 impl ContentEq for TSNamedTupleMember<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.element_type, &other.element_type)
-            && ContentEq::content_eq(&self.label, &other.label)
+        ContentEq::content_eq(&self.label, &other.label)
+            && ContentEq::content_eq(&self.element_type, &other.element_type)
             && ContentEq::content_eq(&self.optional, &other.optional)
     }
 }

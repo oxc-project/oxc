@@ -10563,21 +10563,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn ts_type_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> TSType<'a> {
         TSType::TSNamedTupleMember(self.alloc_ts_named_tuple_member(
             span,
-            element_type,
             label,
+            element_type,
             optional,
         ))
     }
@@ -11170,18 +11170,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn ts_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
-        TSNamedTupleMember { span, element_type, label, optional }
+        TSNamedTupleMember { span, label, element_type, optional }
     }
 
     /// Build a [`TSNamedTupleMember`], and store it in the memory arena.
@@ -11191,18 +11191,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn alloc_ts_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> Box<'a, TSNamedTupleMember<'a>> {
-        Box::new_in(self.ts_named_tuple_member(span, element_type, label, optional), self.allocator)
+        Box::new_in(self.ts_named_tuple_member(span, label, element_type, optional), self.allocator)
     }
 
     /// Build a [`TSOptionalType`].

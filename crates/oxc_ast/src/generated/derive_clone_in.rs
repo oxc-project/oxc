@@ -6229,8 +6229,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSNamedTupleMember<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSNamedTupleMember {
             span: CloneIn::clone_in(&self.span, allocator),
-            element_type: CloneIn::clone_in(&self.element_type, allocator),
             label: CloneIn::clone_in(&self.label, allocator),
+            element_type: CloneIn::clone_in(&self.element_type, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
         }
     }
@@ -6238,8 +6238,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSNamedTupleMember<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSNamedTupleMember {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            element_type: CloneIn::clone_in_with_semantic_ids(&self.element_type, allocator),
             label: CloneIn::clone_in_with_semantic_ids(&self.label, allocator),
+            element_type: CloneIn::clone_in_with_semantic_ids(&self.element_type, allocator),
             optional: CloneIn::clone_in_with_semantic_ids(&self.optional, allocator),
         }
     }

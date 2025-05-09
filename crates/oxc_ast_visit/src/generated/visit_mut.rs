@@ -3536,8 +3536,8 @@ pub mod walk_mut {
         let kind = AstType::TSNamedTupleMember;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_tuple_element(&mut it.element_type);
         visitor.visit_identifier_name(&mut it.label);
+        visitor.visit_ts_tuple_element(&mut it.element_type);
         visitor.leave_node(kind);
     }
 

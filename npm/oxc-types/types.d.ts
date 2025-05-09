@@ -1092,8 +1092,8 @@ export interface TSTupleType extends Span {
 
 export interface TSNamedTupleMember extends Span {
   type: 'TSNamedTupleMember';
-  elementType: TSTupleElement;
   label: IdentifierName;
+  elementType: TSTupleElement;
   optional: boolean;
 }
 

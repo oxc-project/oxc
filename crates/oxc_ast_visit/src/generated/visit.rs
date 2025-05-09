@@ -3369,8 +3369,8 @@ pub mod walk {
         let kind = AstKind::TSNamedTupleMember(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.visit_identifier_name(&it.label);
+        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.leave_node(kind);
     }
 

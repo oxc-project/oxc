@@ -490,7 +490,8 @@ pub struct TSTupleType<'a> {
 /// ## Example
 /// ```ts
 /// type Foo = [first: string, second: number];
-/// //          ^^^^^^^^^^^^^
+/// //          ^^^^^^^^^^^^^ TSNamedTupleMember
+/// //    label ^^^^^  ^^^^^^ element_type
 /// ```
 ///
 /// ## Reference
@@ -500,8 +501,8 @@ pub struct TSTupleType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamedTupleMember<'a> {
     pub span: Span,
-    pub element_type: TSTupleElement<'a>,
     pub label: IdentifierName<'a>,
+    pub element_type: TSTupleElement<'a>,
     pub optional: bool,
 }
 

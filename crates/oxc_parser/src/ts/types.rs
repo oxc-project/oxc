@@ -873,8 +873,8 @@ impl<'a> ParserImpl<'a> {
             return if dotdotdot {
                 let type_annotation = self.ast.ts_type_named_tuple_member(
                     self.end_span(member_span),
-                    element_type,
                     label,
+                    element_type,
                     // TODO: A tuple member cannot be both optional and rest. (TS5085)
                     // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
                     optional,
@@ -883,8 +883,8 @@ impl<'a> ParserImpl<'a> {
             } else {
                 TSTupleElement::from(self.ast.ts_type_named_tuple_member(
                     span,
-                    element_type,
                     label,
+                    element_type,
                     optional,
                 ))
             };
