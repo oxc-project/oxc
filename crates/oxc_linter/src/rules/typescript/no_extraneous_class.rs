@@ -69,18 +69,17 @@ declare_oxc_lint!(
     /// ```
     NoExtraneousClass,
     typescript,
-    suspicious
+    suspicious,
+    dangerous_suggestion
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {
-    let diagnostic = OxcDiagnostic::warn("Unexpected empty class.").with_label(span);
-    if has_decorators {
-        diagnostic.with_help(
-            r#"Set "allowWithDecorator": true in your config to allow empty decorated classes"#,
-        )
+    let help = if has_decorators {
+        r#"Set "allowWithDecorator": true in your config to allow empty decorated classes"#
     } else {
-        diagnostic
-    }
+        "Delete this class"
+    };
+    OxcDiagnostic::warn("Unexpected empty class.").with_label(span).with_help(help)
 }
 
 fn only_static_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
@@ -147,7 +146,22 @@ impl Rule for NoExtraneousClass {
                         unsafe { std::hint::assert_unchecked(start <= u32::MAX as usize) };
                         span = span.shrink_left(start as u32);
                     }
-                    ctx.diagnostic(empty_class_diagnostic(span, !class.decorators.is_empty()));
+                    let has_decorators = !class.decorators.is_empty();
+                    ctx.diagnostic_with_suggestion(
+                        empty_class_diagnostic(span, has_decorators),
+                        |fixer| {
+                            if has_decorators {
+                                return fixer.noop();
+                            }
+                            if let Some(AstKind::ExportNamedDeclaration(decl)) =
+                                ctx.nodes().parent_kind(node.id())
+                            {
+                                fixer.delete(decl)
+                            } else {
+                                fixer.delete(class)
+                            }
+                        },
+                    );
                 }
             }
             [ClassElement::MethodDefinition(constructor)] if constructor.kind.is_constructor() => {
@@ -308,5 +322,18 @@ fn test() {
         ("abstract class Foo { constructor() {} }", None),
     ];
 
-    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("class Foo {}", "", None, FixKind::DangerousSuggestion),
+        ("export class Foo {}", "", None, FixKind::DangerousSuggestion),
+        (
+            "@foo class Foo {}",
+            "@foo class Foo {}",
+            Some(json!([{ "allowWithDecorator": false }])),
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
+    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
