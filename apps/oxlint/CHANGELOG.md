@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- 4c62348 linter: Regex/no-useless-backreference (#10773) (camc314)
+
+### Refactor
+
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+- e132aba linter: Extract nested config searching to a fn (#10860) (camc314)
+- efb4fb8 oxlint: Avoid result unwrap (#10836) (camc314)
+
 ## [0.16.9] - 2025-05-02
 
 ### Features

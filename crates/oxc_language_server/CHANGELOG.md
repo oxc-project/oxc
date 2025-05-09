@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- e1bc037 language_server: Request for workspace configuration when client did not send them in `initialize` (#10789) (Sysix)
+- 3bd339b language_server: Provide commands / code actions for unopened files (#10815) (Sysix)
+
+### Bug Fixes
+
+- f3cc3a2 language_server: Request client for configuration when no configuration is passed in `workspace/didChangeConfiguration` (#10871) (Sysix)
+- 24fcb1e language_server: Return server version `initialize` response (#10810) (Sysix)
+
+### Performance
+
+- 00ffbc9 language_server: Do not request for configuration when all workers are ready (#10897) (Sysix)
+- 96cca22 language_server: Use `simdutf8` when reading files from file system (#10814) (Sysix)
+
+### Refactor
+
+- 553ab5b language_server: Remove `OnceCell` from `WorkspaceWorker.root_uri` (#10898) (Sysix)
+- f43fd18 language_server: Move the initialization of `ServerLinter` into a separate call (#10776) (Sysix)
+- 39e0463 language_server: Move `nested_configs` to `ServerLinter` (#10775) (Sysix)
+- 9ec13f6 language_server: Move `gitignore_glob` to `ServerLinter` (#10762) (Sysix)
+- 3d47159 language_server: Use `IsolatedLintHandlerFileSystem` (#10830) (Sysix)
+- 3d794f6 language_server: Move functions related to `ServerLinter` to `ServerLinter` (#10761) (Sysix)
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+
 ## [0.16.9] - 2025-05-02
 
 ### Bug Fixes

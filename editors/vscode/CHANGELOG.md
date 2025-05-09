@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- e1bc037 language_server: Request for workspace configuration when client did not send them in `initialize` (#10789) (Sysix)
+- 3bd339b language_server: Provide commands / code actions for unopened files (#10815) (Sysix)
+
 ## [0.16.9] - 2025-05-02
 
 ### Bug Fixes
