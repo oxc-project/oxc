@@ -562,6 +562,17 @@ fn test() {
             ])),
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/10910
+        (
+          "
+          /**
+           * @see [@parcel/watcher](https://github.com/parcel-bundler/watcher)
+           */
+          function quux (foo) { }
+      ",
+          Some(serde_json::json!([ { "definedTags": [] } ])),
+          None,
+      ),
     ];
 
     let fail = vec![

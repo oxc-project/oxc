@@ -22,6 +22,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
     // So, find `@` to split comment and each tag.
     // But `@` can be found inside of `{}` (e.g. `{@see link}`), it should be distinguished.
     let mut in_braces = false;
+    let mut in_square_braces = false;
     // Also, `@` is often found inside of backtick(` or ```), like markdown.
     let mut in_backticks = false;
     let mut comment_found = false;
@@ -30,7 +31,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
 
     let mut chars = source_text.chars().peekable();
     while let Some(ch) = chars.next() {
-        let can_parse = !(in_braces || in_backticks);
+        let can_parse = !(in_braces || in_backticks || in_square_braces);
         match ch {
             // NOTE: For now, only odd backtick(s) are handled.
             // - 1 backtick: inline code
@@ -45,6 +46,8 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
             }
             '{' => in_braces = true,
             '}' => in_braces = false,
+            '[' => in_square_braces = true,
+            ']' => in_square_braces = false,
             '@' if can_parse => {
                 let part = &source_text[start..end];
                 let span = Span::new(
