@@ -42,7 +42,7 @@ pub fn print_rules(mut args: Arguments) {
         return;
     }
 
-    let git_ref = args.opt_value_from_str("--git-ref").unwrap();
+    let git_ref: Option<String> = args.opt_value_from_str("--git-ref").unwrap();
     let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
     let rules_dir = args.opt_value_from_str::<_, PathBuf>(["-r", "--rule-docs"]).unwrap();
 
@@ -78,13 +78,14 @@ pub fn print_rules(mut args: Arguments) {
             !rules_dir.is_file(),
             "Cannot write rule docs to a file. Please specify a directory."
         );
-        write_rule_doc_pages(&table, &rules_dir, git_ref.unwrap_or("main".to_string()).as_str());
+        write_rule_doc_pages(&table, &rules_dir);
+        write_version_data(&rules_dir, git_ref.unwrap_or("main".to_string()).as_str());
     }
 
     println!("Done.");
 }
 
-fn write_rule_doc_pages(table: &RuleTable, outdir: &Path, git_ref: &str) {
+fn write_rule_doc_pages(table: &RuleTable, outdir: &Path) {
     for rule in table.sections.iter().flat_map(|section| &section.rows) {
         let plugin_path = outdir.join(&rule.plugin);
         fs::create_dir_all(&plugin_path).unwrap();
@@ -92,8 +93,12 @@ fn write_rule_doc_pages(table: &RuleTable, outdir: &Path, git_ref: &str) {
         if page_path.exists() {
             fs::remove_file(&page_path).unwrap();
         }
-        println!("{}", page_path.display());
-        let docs = render_rule_docs_page(rule, git_ref).unwrap();
+        let docs = render_rule_docs_page(rule).unwrap();
         fs::write(&page_path, docs).unwrap();
     }
+}
+
+fn write_version_data(outdir: &Path, git_ref: &str) {
+    let data = format!(r#"export default {{ load() {{ return "{git_ref}" }} }} "#);
+    fs::write(outdir.join("version.data.js"), data).unwrap();
 }
