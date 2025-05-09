@@ -8,6 +8,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::{EnvOptions, TransformCtx};
 
 pub mod arrow_function_converter;
+mod computed_key;
 mod duplicate;
 pub mod helper_loader;
 pub mod module_imports;

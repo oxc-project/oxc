@@ -14,15 +14,16 @@ use oxc_traverse::{
 use crate::{
     TransformCtx,
     common::helper_loader::Helper,
-    utils::ast_builder::{create_bind_call, create_call_call, create_member_callee},
+    utils::ast_builder::{
+        create_assignment, create_bind_call, create_call_call, create_member_callee,
+    },
 };
 
 use super::{
     ClassProperties, ResolvedPrivateProp,
     class_details::ResolvedGetSetPrivateProp,
     utils::{
-        create_assignment, create_underscore_ident_name,
-        debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
+        create_underscore_ident_name, debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
     },
 };
 

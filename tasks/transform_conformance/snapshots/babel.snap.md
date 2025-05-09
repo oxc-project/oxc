@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 714/1191
+Passed: 713/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1354,7 +1354,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/158)
+# babel-plugin-transform-typescript (48/158)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1416,6 +1416,9 @@ rebuilt        : ["D"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+* class/parameter-properties-late-super/input.ts
+x Output mismatch
 
 * class/private-method-override/input.ts
 Scope children mismatch:
