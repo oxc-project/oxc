@@ -107,7 +107,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["console", "delint", "fileNames", "process", "readFileSync", "ts"]
 rebuilt        : ScopeId(0): ["delint", "fileNames", "ts"]
 Symbol reference IDs mismatch for "ts":
-after transform: SymbolId(3): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(23), ReferenceId(25), ReferenceId(28), ReferenceId(30), ReferenceId(32), ReferenceId(34), ReferenceId(37), ReferenceId(40), ReferenceId(50), ReferenceId(54)]
+after transform: SymbolId(3): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(14), ReferenceId(15), ReferenceId(18), ReferenceId(23), ReferenceId(25), ReferenceId(28), ReferenceId(29), ReferenceId(32), ReferenceId(34), ReferenceId(37), ReferenceId(40), ReferenceId(50), ReferenceId(54)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(19), ReferenceId(21), ReferenceId(24), ReferenceId(27), ReferenceId(29), ReferenceId(32), ReferenceId(44), ReferenceId(48)]
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
@@ -19422,7 +19422,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Symbol reference IDs mismatch for "C1":
-after transform: SymbolId(5): [ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+after transform: SymbolId(5): [ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(3): [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mapConstructor.ts

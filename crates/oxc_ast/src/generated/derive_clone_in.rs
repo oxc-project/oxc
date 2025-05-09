@@ -7577,16 +7577,16 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeAssertion<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSTypeAssertion {
             span: CloneIn::clone_in(&self.span, allocator),
-            expression: CloneIn::clone_in(&self.expression, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSTypeAssertion {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            expression: CloneIn::clone_in_with_semantic_ids(&self.expression, allocator),
             type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
+            expression: CloneIn::clone_in_with_semantic_ids(&self.expression, allocator),
         }
     }
 }

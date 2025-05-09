@@ -4213,8 +4213,8 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAssertion;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_expression(&mut it.expression);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.visit_expression(&mut it.expression);
         visitor.leave_node(kind);
     }
 

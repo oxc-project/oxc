@@ -1541,13 +1541,21 @@ pub struct TSSatisfiesExpression<'a> {
     pub type_annotation: TSType<'a>,
 }
 
+/// TypeScript Type Assertion
+///
+/// ## Example
+/// ```ts
+/// //                ___ expression
+/// let foo = <number>bar;
+/// //        ^^^^^^^^ type_annotation
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAssertion<'a> {
     pub span: Span,
-    pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
+    pub expression: Expression<'a>,
 }
 
 #[ast(visit)]

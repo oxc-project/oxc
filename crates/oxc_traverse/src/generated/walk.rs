@@ -5370,18 +5370,18 @@ unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionExpression(
-        ancestor::TSTypeAssertionWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
+        ancestor::TSTypeAssertionWithoutTypeAnnotation(node, PhantomData),
     ));
-    walk_expression(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSTypeAssertionTypeAnnotation);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSTypeAssertionExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
         ctx,
     );
     ctx.pop_stack(pop_token);

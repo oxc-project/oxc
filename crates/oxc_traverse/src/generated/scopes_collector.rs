@@ -1943,8 +1943,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
-        self.visit_expression(&it.expression);
         self.visit_ts_type(&it.type_annotation);
+        self.visit_expression(&it.expression);
     }
 
     #[inline(always)]

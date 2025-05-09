@@ -1319,8 +1319,8 @@ const _: () = {
     assert!(size_of::<TSTypeAssertion>() == 40);
     assert!(align_of::<TSTypeAssertion>() == 8);
     assert!(offset_of!(TSTypeAssertion, span) == 0);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 24);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8);
+    assert!(offset_of!(TSTypeAssertion, expression) == 24);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 64);
     assert!(align_of::<TSImportEqualsDeclaration>() == 8);
@@ -2714,8 +2714,8 @@ const _: () = {
     assert!(size_of::<TSTypeAssertion>() == 24);
     assert!(align_of::<TSTypeAssertion>() == 4);
     assert!(offset_of!(TSTypeAssertion, span) == 0);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 16);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8);
+    assert!(offset_of!(TSTypeAssertion, expression) == 16);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 40);
     assert!(align_of::<TSImportEqualsDeclaration>() == 4);

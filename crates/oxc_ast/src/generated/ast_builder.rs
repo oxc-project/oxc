@@ -1140,16 +1140,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn expression_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::TSTypeAssertion(self.alloc_ts_type_assertion(span, expression, type_annotation))
+        Expression::TSTypeAssertion(self.alloc_ts_type_assertion(span, type_annotation, expression))
     }
 
     /// Build an [`Expression::TSNonNullExpression`].
@@ -2718,19 +2718,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn simple_assignment_target_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::TSTypeAssertion(self.alloc_ts_type_assertion(
             span,
-            expression,
             type_annotation,
+            expression,
         ))
     }
 
@@ -14142,16 +14142,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> TSTypeAssertion<'a> {
-        TSTypeAssertion { span, expression, type_annotation }
+        TSTypeAssertion { span, type_annotation, expression }
     }
 
     /// Build a [`TSTypeAssertion`], and store it in the memory arena.
@@ -14161,16 +14161,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn alloc_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> Box<'a, TSTypeAssertion<'a>> {
-        Box::new_in(self.ts_type_assertion(span, expression, type_annotation), self.allocator)
+        Box::new_in(self.ts_type_assertion(span, type_annotation, expression), self.allocator)
     }
 
     /// Build a [`TSImportEqualsDeclaration`].

@@ -1948,8 +1948,8 @@ function deserializeTSTypeAssertion(pos) {
     type: 'TSTypeAssertion',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    expression: deserializeExpression(pos + 8),
-    typeAnnotation: deserializeTSType(pos + 24),
+    typeAnnotation: deserializeTSType(pos + 8),
+    expression: deserializeExpression(pos + 24),
   };
 }
 

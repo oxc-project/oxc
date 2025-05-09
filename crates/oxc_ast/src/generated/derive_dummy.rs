@@ -2728,8 +2728,8 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            expression: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
+            expression: Dummy::dummy(allocator),
         }
     }
 }
