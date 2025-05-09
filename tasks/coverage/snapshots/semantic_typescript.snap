@@ -798,9 +798,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(7)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["WinJS"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayconcat.ts
 Scope children mismatch:
@@ -2269,6 +2266,9 @@ rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(9): Span { start: 594, end: 596 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m1":
+after transform: SymbolId(9): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(10), ReferenceId(11)]
+rebuilt        : SymbolId(6): [ReferenceId(7), ReferenceId(8), ReferenceId(20)]
 Symbol flags mismatch for "m2":
 after transform: SymbolId(13): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
@@ -2281,9 +2281,6 @@ rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m3":
 after transform: SymbolId(14): Span { start: 714, end: 716 }
 rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m1", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/clinterfaces.ts
 Bindings mismatch:
@@ -2969,9 +2966,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(15): Span { start: 524, end: 526 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["exports", "require"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientVar.ts
 Bindings mismatch:
@@ -4455,6 +4449,9 @@ rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(39): Span { start: 717, end: 718 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(39): [ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(80), ReferenceId(82), ReferenceId(83), ReferenceId(84), ReferenceId(104), ReferenceId(105), ReferenceId(116), ReferenceId(117)]
+rebuilt        : SymbolId(5): [ReferenceId(88), ReferenceId(100), ReferenceId(101), ReferenceId(104), ReferenceId(107), ReferenceId(119), ReferenceId(120), ReferenceId(159), ReferenceId(204), ReferenceId(205), ReferenceId(206)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(39): [Span { start: 717, end: 718 }, Span { start: 905, end: 906 }]
 rebuilt        : SymbolId(5): []
@@ -4552,7 +4549,7 @@ Reference symbol mismatch for "Enum1":
 after transform: SymbolId(0) "Enum1"
 rebuilt        : SymbolId(2) "Enum1"
 Unresolved references mismatch:
-after transform: ["A", "A0"]
+after transform: ["A0"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constIndexedAccess.ts
@@ -4669,9 +4666,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Test":
 after transform: SymbolId(0): Span { start: 7, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Test"]
-rebuilt        : []
+Symbol reference IDs mismatch for "Test":
+after transform: SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(13), ReferenceId(14)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constructorArgs.ts
 Scope children mismatch:
@@ -6267,6 +6264,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(13), ReferenceId(14), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35), ReferenceId(36), ReferenceId(37), ReferenceId(38), ReferenceId(39), ReferenceId(40), ReferenceId(41), ReferenceId(60), ReferenceId(61)]
+rebuilt        : SymbolId(0): [ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29)]
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(9), ReferenceId(16), ReferenceId(43)]
 rebuilt        : SymbolId(2): [ReferenceId(1)]
@@ -6274,7 +6274,7 @@ Symbol reference IDs mismatch for "B":
 after transform: SymbolId(3): [ReferenceId(2), ReferenceId(10), ReferenceId(17), ReferenceId(45)]
 rebuilt        : SymbolId(3): [ReferenceId(3)]
 Unresolved references mismatch:
-after transform: ["Array", "C"]
+after transform: ["Array"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
@@ -6354,7 +6354,7 @@ Reference symbol mismatch for "templa":
 after transform: SymbolId(0) "templa"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["IElementController", "mvc", "require"]
+after transform: ["IElementController", "require"]
 rebuilt        : ["require", "templa"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
@@ -6511,12 +6511,12 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(1): Span { start: 19, end: 20 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m":
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(19), ReferenceId(20)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(13)]
 Symbol reference IDs mismatch for "g":
 after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 rebuilt        : SymbolId(5): [ReferenceId(10), ReferenceId(11)]
-Unresolved references mismatch:
-after transform: ["m"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationStringLiteral.ts
 Scope children mismatch:
@@ -6545,12 +6545,12 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(1): Span { start: 19, end: 20 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(9), ReferenceId(16), ReferenceId(17)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(10)]
 Symbol reference IDs mismatch for "g":
 after transform: SymbolId(5): [ReferenceId(5), ReferenceId(8)]
 rebuilt        : SymbolId(5): [ReferenceId(9)]
-Unresolved references mismatch:
-after transform: ["m"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeAlias.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -6575,9 +6575,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(3): Span { start: 34, end: 35 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m"]
-rebuilt        : []
+Symbol reference IDs mismatch for "m":
+after transform: SymbolId(3): [ReferenceId(3), ReferenceId(10), ReferenceId(13), ReferenceId(14)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeQuery.ts
 Scope flags mismatch:
@@ -6612,12 +6612,12 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(1): Span { start: 19, end: 20 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m":
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(16), ReferenceId(17)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(13)]
 Symbol reference IDs mismatch for "g":
 after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 rebuilt        : SymbolId(5): [ReferenceId(10), ReferenceId(11)]
-Unresolved references mismatch:
-after transform: ["m"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationUnionType.ts
 Scope children mismatch:
@@ -6635,12 +6635,12 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(1): Span { start: 42, end: 43 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(13), ReferenceId(19), ReferenceId(20)]
+rebuilt        : SymbolId(2): [ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(19)]
 Symbol reference IDs mismatch for "g":
 after transform: SymbolId(5): [ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 rebuilt        : SymbolId(6): [ReferenceId(15), ReferenceId(18)]
-Unresolved references mismatch:
-after transform: ["m", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorAccessors.ts
 Scope flags mismatch:
@@ -6667,9 +6667,9 @@ rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(3): Span { start: 84, end: 86 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+Symbol reference IDs mismatch for "m2":
+after transform: SymbolId(3): [ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(25), ReferenceId(26)]
+rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(5), ReferenceId(10), ReferenceId(11)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorParameterOfFunction.ts
 Scope flags mismatch:
@@ -6696,9 +6696,9 @@ rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(19): Span { start: 534, end: 536 }
 rebuilt        : SymbolId(20): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+Symbol reference IDs mismatch for "m2":
+after transform: SymbolId(19): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(24), ReferenceId(25)]
+rebuilt        : SymbolId(20): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(21)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorReturnTypeOfFunction.ts
 Scope flags mismatch:
@@ -6725,9 +6725,9 @@ rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(11): Span { start: 613, end: 615 }
 rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+Symbol reference IDs mismatch for "m2":
+after transform: SymbolId(11): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(24), ReferenceId(25)]
+rebuilt        : SymbolId(12): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(21)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorTypeAlias.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -6814,12 +6814,12 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "m1":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
 Symbol flags mismatch for "e":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Unresolved references mismatch:
-after transform: ["m1"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofModule.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -7039,6 +7039,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(4): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(4): [ReferenceId(0), ReferenceId(11), ReferenceId(13)]
+rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(11)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
@@ -7051,9 +7054,6 @@ rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "C":
 after transform: SymbolId(6): Span { start: 61, end: 62 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
 Scope children mismatch:
@@ -8482,7 +8482,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Function", "RegExp", "express"]
+after transform: ["Function", "RegExp"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
@@ -13319,6 +13319,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "MsPortalFx":
 after transform: SymbolId(0): Span { start: 7, end: 17 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "MsPortalFx":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(24), ReferenceId(25), ReferenceId(36), ReferenceId(37)]
+rebuilt        : SymbolId(0): [ReferenceId(42), ReferenceId(43), ReferenceId(63), ReferenceId(64)]
 Symbol redeclarations mismatch for "MsPortalFx":
 after transform: SymbolId(0): [Span { start: 7, end: 17 }, Span { start: 526, end: 536 }]
 rebuilt        : SymbolId(0): []
@@ -13346,9 +13349,6 @@ rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "ViewModels":
 after transform: SymbolId(20): Span { start: 537, end: 547 }
 rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Dialogs", "MsPortalFx", "console"]
-rebuilt        : ["Dialogs", "console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 Bindings mismatch:
@@ -13366,9 +13366,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 58, end: 59 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["A", "B"]
-rebuilt        : ["A"]
+Symbol reference IDs mismatch for "B":
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule2.ts
 Scope children mismatch:
@@ -13596,9 +13596,9 @@ rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "EM":
 after transform: SymbolId(0) "EM"
 rebuilt        : <None>
-Unresolved reference IDs mismatch for "EM":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["EM"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
 Symbol reference IDs mismatch for "ext":
@@ -13743,15 +13743,15 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Events":
 after transform: SymbolId(0): Span { start: 7, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Events":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol flags mismatch for "Consumer":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Consumer":
 after transform: SymbolId(5): Span { start: 217, end: 225 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Events"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/fatArrowfunctionAsType.ts
 Bindings mismatch:
@@ -14081,9 +14081,9 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(0): Span { start: 7, end: 9 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["m1", "require"]
-rebuilt        : ["require"]
+Symbol reference IDs mismatch for "m1":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionDeclarationWithResolutionOfTypeNamedArguments01.ts
 Scope children mismatch:
@@ -14592,9 +14592,9 @@ rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "B":
 after transform: SymbolId(1) "B"
 rebuilt        : <None>
-Unresolved reference IDs mismatch for "B":
-after transform: [ReferenceId(0), ReferenceId(1)]
-rebuilt        : [ReferenceId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["B"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/funduleOfFunctionWithoutReturnTypeAnnotation.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -14801,6 +14801,9 @@ rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "PortalFx":
 after transform: SymbolId(17): Span { start: 1491, end: 1499 }
 rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "PortalFx":
+after transform: SymbolId(17): [ReferenceId(42), ReferenceId(47), ReferenceId(50), ReferenceId(78), ReferenceId(79)]
+rebuilt        : SymbolId(10): [ReferenceId(33), ReferenceId(34)]
 Symbol flags mismatch for "ViewModels":
 after transform: SymbolId(18): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
@@ -14823,7 +14826,7 @@ Reference symbol mismatch for "ko":
 after transform: SymbolId(8) "ko"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["PortalFx", "require"]
+after transform: ["require"]
 rebuilt        : ["ko", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassWithStaticFactory.ts
@@ -14882,9 +14885,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 7, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Foo"]
-rebuilt        : []
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassesInModule2.ts
 Scope children mismatch:
@@ -15264,6 +15267,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(3): Span { start: 45, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "M":
+after transform: SymbolId(3): [ReferenceId(6), ReferenceId(15), ReferenceId(16)]
+rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(12)]
 Symbol flags mismatch for "C":
 after transform: SymbolId(4): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(Class)
@@ -15273,9 +15279,6 @@ rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(5), ReferenceId(6)]
 Symbol redeclarations mismatch for "C":
 after transform: SymbolId(4): [Span { start: 66, end: 67 }, Span { start: 100, end: 101 }]
 rebuilt        : SymbolId(4): []
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericOfACloduleType2.ts
 Scope flags mismatch:
@@ -15293,6 +15296,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(3): Span { start: 45, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "M":
+after transform: SymbolId(3): [ReferenceId(6), ReferenceId(15), ReferenceId(16)]
+rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(12)]
 Symbol flags mismatch for "C":
 after transform: SymbolId(4): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(Class)
@@ -15308,9 +15314,6 @@ rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(7): Span { start: 217, end: 218 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericOverloadSignatures.ts
 Scope children mismatch:
@@ -17429,9 +17432,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
+Symbol reference IDs mismatch for "M":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
 Bindings mismatch:
@@ -17688,6 +17691,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -17700,9 +17706,6 @@ rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 30, end: 31 }, Span { start: 136, end: 137 }]
 rebuilt        : SymbolId(2): []
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces1.ts
 Bindings mismatch:
@@ -17723,6 +17726,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -17735,9 +17741,6 @@ rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 33, end: 34 }, Span { start: 107, end: 108 }]
 rebuilt        : SymbolId(2): []
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces2.ts
 Bindings mismatch:
@@ -17758,6 +17761,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -17770,9 +17776,6 @@ rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 33, end: 34 }, Span { start: 100, end: 101 }]
 rebuilt        : SymbolId(2): []
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces3.ts
 Bindings mismatch:
@@ -17793,6 +17796,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(Interface | ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -17805,9 +17811,6 @@ rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 23, end: 24 }, Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(2): []
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/interMixingModulesInterfaces4.ts
 Bindings mismatch:
@@ -18396,6 +18399,9 @@ rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "enums":
 after transform: SymbolId(27): Span { start: 1443, end: 1448 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "enums":
+after transform: SymbolId(27): [ReferenceId(103), ReferenceId(104), ReferenceId(117), ReferenceId(118)]
+rebuilt        : SymbolId(5): [ReferenceId(40), ReferenceId(41)]
 Symbol flags mismatch for "A":
 after transform: SymbolId(28): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
@@ -18414,9 +18420,6 @@ rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(40): [ReferenceId(102), ReferenceId(116)]
 rebuilt        : SymbolId(11): [ReferenceId(39)]
-Unresolved references mismatch:
-after transform: ["enums"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionTypeWithLeadingOperator.ts
 Scope children mismatch:
@@ -19016,11 +19019,8 @@ Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["React"]
+after transform: []
 rebuilt        : ["React", "createComponentClass"]
-Unresolved reference IDs mismatch for "React":
-after transform: [ReferenceId(2), ReferenceId(4)]
-rebuilt        : [ReferenceId(1), ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
 Scope children mismatch:
@@ -20392,6 +20392,9 @@ rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(16): Span { start: 685, end: 688 }
 rebuilt        : SymbolId(16): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(16): [ReferenceId(9), ReferenceId(22), ReferenceId(23)]
+rebuilt        : SymbolId(16): [ReferenceId(8), ReferenceId(9)]
 Symbol flags mismatch for "A1":
 after transform: SymbolId(21): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(22): SymbolFlags(BlockScopedVariable)
@@ -20407,9 +20410,6 @@ rebuilt        : SymbolId(25): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B1":
 after transform: SymbolId(24): Span { start: 868, end: 870 }
 rebuilt        : SymbolId(25): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Foo"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName.ts
 Bindings mismatch:
@@ -20434,9 +20434,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["D3"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationCollidingNamesInAugmentation1.ts
 Scope children mismatch:
@@ -21409,15 +21406,15 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(8), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(1): Span { start: 29, end: 30 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/namespacesDeclaration1.ts
 Bindings mismatch:
@@ -21434,9 +21431,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Q2", "Q4"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/narrowByBooleanComparison.ts
 Scope children mismatch:
@@ -23844,15 +23838,15 @@ rebuilt        : SymbolId(70): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(69): Span { start: 11550, end: 11563 }
 rebuilt        : SymbolId(70): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(69): [ReferenceId(48), ReferenceId(49), ReferenceId(50), ReferenceId(51), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(55), ReferenceId(56), ReferenceId(57), ReferenceId(58), ReferenceId(59), ReferenceId(108), ReferenceId(109), ReferenceId(110), ReferenceId(111), ReferenceId(112), ReferenceId(113), ReferenceId(114), ReferenceId(115), ReferenceId(116), ReferenceId(117), ReferenceId(118), ReferenceId(119), ReferenceId(168), ReferenceId(169), ReferenceId(170), ReferenceId(171), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(175), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(210), ReferenceId(211)]
+rebuilt        : SymbolId(70): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(46), ReferenceId(47), ReferenceId(52), ReferenceId(53), ReferenceId(82), ReferenceId(83), ReferenceId(88), ReferenceId(89), ReferenceId(90), ReferenceId(91)]
 Symbol reference IDs mismatch for "privateClass":
 after transform: SymbolId(70): [ReferenceId(120), ReferenceId(121), ReferenceId(122), ReferenceId(123), ReferenceId(124), ReferenceId(125), ReferenceId(126), ReferenceId(127), ReferenceId(136), ReferenceId(137), ReferenceId(138), ReferenceId(139), ReferenceId(140), ReferenceId(141), ReferenceId(142), ReferenceId(143), ReferenceId(152), ReferenceId(153), ReferenceId(154), ReferenceId(155), ReferenceId(160), ReferenceId(161), ReferenceId(162), ReferenceId(163)]
 rebuilt        : SymbolId(72): [ReferenceId(58), ReferenceId(59), ReferenceId(60), ReferenceId(61), ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(73)]
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(71): [ReferenceId(128), ReferenceId(129), ReferenceId(130), ReferenceId(131), ReferenceId(132), ReferenceId(133), ReferenceId(134), ReferenceId(135), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(148), ReferenceId(149), ReferenceId(150), ReferenceId(151), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(197)]
 rebuilt        : SymbolId(73): [ReferenceId(57), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameAccessorDeclFile.ts
 Scope children mismatch:
@@ -24003,9 +23997,9 @@ rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(10): Span { start: 1050, end: 1063 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(10): [ReferenceId(4), ReferenceId(5), ReferenceId(12), ReferenceId(13), ReferenceId(18), ReferenceId(19), ReferenceId(36), ReferenceId(37)]
+rebuilt        : SymbolId(9): [ReferenceId(16), ReferenceId(17)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyFunc.ts
 Scope flags mismatch:
@@ -24089,15 +24083,15 @@ rebuilt        : SymbolId(118): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(153): Span { start: 9961, end: 9974 }
 rebuilt        : SymbolId(118): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(153): [ReferenceId(56), ReferenceId(58), ReferenceId(60), ReferenceId(61), ReferenceId(62), ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(68), ReferenceId(70), ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(136), ReferenceId(138), ReferenceId(140), ReferenceId(141), ReferenceId(142), ReferenceId(143), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(148), ReferenceId(150), ReferenceId(152), ReferenceId(153), ReferenceId(154), ReferenceId(155), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(216), ReferenceId(218), ReferenceId(220), ReferenceId(221), ReferenceId(222), ReferenceId(223), ReferenceId(224), ReferenceId(225), ReferenceId(226), ReferenceId(227), ReferenceId(228), ReferenceId(230), ReferenceId(232), ReferenceId(233), ReferenceId(234), ReferenceId(235), ReferenceId(236), ReferenceId(237), ReferenceId(238), ReferenceId(239), ReferenceId(270), ReferenceId(271)]
+rebuilt        : SymbolId(118): [ReferenceId(66), ReferenceId(67)]
 Symbol reference IDs mismatch for "privateClass":
 after transform: SymbolId(154): [ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(170), ReferenceId(171), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(180), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(186), ReferenceId(194), ReferenceId(195), ReferenceId(196), ReferenceId(197), ReferenceId(198), ReferenceId(199), ReferenceId(200), ReferenceId(208), ReferenceId(210), ReferenceId(212), ReferenceId(214)]
 rebuilt        : SymbolId(120): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(155): [ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(168), ReferenceId(169), ReferenceId(175), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(187), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(201), ReferenceId(202), ReferenceId(203), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(209), ReferenceId(211), ReferenceId(213), ReferenceId(215), ReferenceId(217), ReferenceId(219), ReferenceId(229), ReferenceId(231), ReferenceId(257)]
 rebuilt        : SymbolId(121): [ReferenceId(41)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionReturnTypeDeclFile.ts
 Bindings mismatch:
@@ -24142,15 +24136,15 @@ rebuilt        : SymbolId(42): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(65): Span { start: 13824, end: 13837 }
 rebuilt        : SymbolId(42): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(65): [ReferenceId(60), ReferenceId(61), ReferenceId(62), ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(68), ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(81), ReferenceId(142), ReferenceId(143), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(148), ReferenceId(149), ReferenceId(150), ReferenceId(151), ReferenceId(152), ReferenceId(153), ReferenceId(154), ReferenceId(155), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(160), ReferenceId(161), ReferenceId(162), ReferenceId(163), ReferenceId(224), ReferenceId(225), ReferenceId(226), ReferenceId(227), ReferenceId(228), ReferenceId(229), ReferenceId(230), ReferenceId(231), ReferenceId(232), ReferenceId(233), ReferenceId(234), ReferenceId(235), ReferenceId(236), ReferenceId(237), ReferenceId(238), ReferenceId(239), ReferenceId(240), ReferenceId(241), ReferenceId(242), ReferenceId(243), ReferenceId(244), ReferenceId(245), ReferenceId(288), ReferenceId(289)]
+rebuilt        : SymbolId(42): [ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(60), ReferenceId(61), ReferenceId(66), ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(108), ReferenceId(109), ReferenceId(114), ReferenceId(117), ReferenceId(118), ReferenceId(119), ReferenceId(120), ReferenceId(121)]
 Symbol reference IDs mismatch for "privateClass":
 after transform: SymbolId(66): [ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(175), ReferenceId(180), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(186), ReferenceId(187), ReferenceId(196), ReferenceId(197), ReferenceId(198), ReferenceId(199), ReferenceId(200), ReferenceId(201), ReferenceId(202), ReferenceId(203), ReferenceId(212), ReferenceId(214), ReferenceId(216), ReferenceId(218), ReferenceId(220), ReferenceId(222)]
 rebuilt        : SymbolId(44): [ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(88), ReferenceId(89), ReferenceId(90), ReferenceId(91), ReferenceId(100), ReferenceId(106)]
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(67): [ReferenceId(168), ReferenceId(169), ReferenceId(170), ReferenceId(171), ReferenceId(176), ReferenceId(177), ReferenceId(178), ReferenceId(179), ReferenceId(188), ReferenceId(189), ReferenceId(190), ReferenceId(191), ReferenceId(192), ReferenceId(193), ReferenceId(194), ReferenceId(195), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(207), ReferenceId(208), ReferenceId(209), ReferenceId(210), ReferenceId(211), ReferenceId(213), ReferenceId(215), ReferenceId(217), ReferenceId(219), ReferenceId(221), ReferenceId(223), ReferenceId(269)]
 rebuilt        : SymbolId(45): [ReferenceId(75), ReferenceId(82), ReferenceId(83), ReferenceId(84), ReferenceId(85), ReferenceId(92), ReferenceId(93), ReferenceId(94), ReferenceId(95), ReferenceId(103), ReferenceId(107)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGetter.ts
 Symbol flags mismatch for "m1":
@@ -24523,15 +24517,15 @@ rebuilt        : SymbolId(38): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(173): Span { start: 10023, end: 10036 }
 rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(173): [ReferenceId(50), ReferenceId(51), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(55), ReferenceId(56), ReferenceId(57), ReferenceId(58), ReferenceId(59), ReferenceId(60), ReferenceId(61), ReferenceId(62), ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(118), ReferenceId(119), ReferenceId(120), ReferenceId(121), ReferenceId(122), ReferenceId(123), ReferenceId(124), ReferenceId(125), ReferenceId(126), ReferenceId(127), ReferenceId(128), ReferenceId(129), ReferenceId(130), ReferenceId(131), ReferenceId(132), ReferenceId(133), ReferenceId(134), ReferenceId(135), ReferenceId(220), ReferenceId(221)]
+rebuilt        : SymbolId(38): [ReferenceId(34), ReferenceId(35)]
 Symbol reference IDs mismatch for "privateClass":
 after transform: SymbolId(174): [ReferenceId(136), ReferenceId(137), ReferenceId(138), ReferenceId(139), ReferenceId(140), ReferenceId(141), ReferenceId(148), ReferenceId(149), ReferenceId(150), ReferenceId(151), ReferenceId(152), ReferenceId(153), ReferenceId(160), ReferenceId(161), ReferenceId(162), ReferenceId(163), ReferenceId(168), ReferenceId(169), ReferenceId(170), ReferenceId(171), ReferenceId(176), ReferenceId(178)]
 rebuilt        : SymbolId(40): []
 Symbol reference IDs mismatch for "publicClass":
 after transform: SymbolId(175): [ReferenceId(142), ReferenceId(143), ReferenceId(144), ReferenceId(145), ReferenceId(146), ReferenceId(147), ReferenceId(154), ReferenceId(155), ReferenceId(156), ReferenceId(157), ReferenceId(158), ReferenceId(159), ReferenceId(164), ReferenceId(165), ReferenceId(166), ReferenceId(167), ReferenceId(172), ReferenceId(173), ReferenceId(174), ReferenceId(175), ReferenceId(177), ReferenceId(179), ReferenceId(180), ReferenceId(181), ReferenceId(182), ReferenceId(183), ReferenceId(184), ReferenceId(185), ReferenceId(207)]
 rebuilt        : SymbolId(41): [ReferenceId(21)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfClass.ts
 Symbol reference IDs mismatch for "privateClass":
@@ -24566,15 +24560,15 @@ rebuilt        : SymbolId(38): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(53): Span { start: 2605, end: 2618 }
 rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(53): [ReferenceId(22), ReferenceId(26), ReferenceId(52), ReferenceId(56), ReferenceId(102), ReferenceId(103)]
+rebuilt        : SymbolId(38): [ReferenceId(42), ReferenceId(43)]
 Symbol reference IDs mismatch for "privateClassInPrivateModule":
 after transform: SymbolId(54): [ReferenceId(60), ReferenceId(68)]
 rebuilt        : SymbolId(40): []
 Symbol reference IDs mismatch for "publicClassInPrivateModule":
 after transform: SymbolId(55): [ReferenceId(64), ReferenceId(72), ReferenceId(95)]
 rebuilt        : SymbolId(41): [ReferenceId(29)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParametersOfInterface.ts
 Scope children mismatch:
@@ -24639,6 +24633,9 @@ rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "privateModule":
 after transform: SymbolId(45): Span { start: 4805, end: 4818 }
 rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "privateModule":
+after transform: SymbolId(45): [ReferenceId(60), ReferenceId(61), ReferenceId(122), ReferenceId(123), ReferenceId(194), ReferenceId(195)]
+rebuilt        : SymbolId(10): [ReferenceId(10), ReferenceId(11)]
 Symbol reference IDs mismatch for "privateClassInPrivateModule":
 after transform: SymbolId(46): [ReferenceId(124), ReferenceId(130), ReferenceId(134), ReferenceId(143), ReferenceId(147), ReferenceId(150), ReferenceId(156), ReferenceId(160), ReferenceId(169), ReferenceId(173)]
 rebuilt        : SymbolId(12): []
@@ -24651,9 +24648,6 @@ rebuilt        : SymbolId(14): []
 Symbol reference IDs mismatch for "publicClassInPrivateModuleT":
 after transform: SymbolId(50): [ReferenceId(127), ReferenceId(133), ReferenceId(135), ReferenceId(140), ReferenceId(146), ReferenceId(148), ReferenceId(153), ReferenceId(159), ReferenceId(161), ReferenceId(166), ReferenceId(172), ReferenceId(174), ReferenceId(178), ReferenceId(182), ReferenceId(193)]
 rebuilt        : SymbolId(15): [ReferenceId(9)]
-Unresolved references mismatch:
-after transform: ["privateModule"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyVar.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -31191,18 +31185,27 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "TopLevelModule1":
 after transform: SymbolId(0): Span { start: 14, end: 29 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "TopLevelModule1":
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(10), ReferenceId(12), ReferenceId(24), ReferenceId(28), ReferenceId(30), ReferenceId(38), ReferenceId(40), ReferenceId(50), ReferenceId(84), ReferenceId(85)]
+rebuilt        : SymbolId(0): [ReferenceId(57), ReferenceId(58)]
 Symbol flags mismatch for "SubModule1":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "SubModule1":
 after transform: SymbolId(1): Span { start: 50, end: 60 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "SubModule1":
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(22), ReferenceId(48), ReferenceId(62), ReferenceId(64)]
+rebuilt        : SymbolId(2): [ReferenceId(35), ReferenceId(36)]
 Symbol flags mismatch for "SubSubModule1":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "SubSubModule1":
 after transform: SymbolId(2): Span { start: 85, end: 98 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "SubSubModule1":
+after transform: SymbolId(2): [ReferenceId(2), ReferenceId(16), ReferenceId(20), ReferenceId(36), ReferenceId(46), ReferenceId(52), ReferenceId(58), ReferenceId(60)]
+rebuilt        : SymbolId(4): [ReferenceId(27), ReferenceId(28)]
 Symbol reference IDs mismatch for "ClassA":
 after transform: SymbolId(3): [ReferenceId(0), ReferenceId(18), ReferenceId(55)]
 rebuilt        : SymbolId(6): [ReferenceId(10)]
@@ -31233,15 +31236,15 @@ rebuilt        : SymbolId(50): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "TopLevelModule2":
 after transform: SymbolId(49): Span { start: 4299, end: 4314 }
 rebuilt        : SymbolId(50): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "TopLevelModule2":
+after transform: SymbolId(49): [ReferenceId(32), ReferenceId(44), ReferenceId(92), ReferenceId(93)]
+rebuilt        : SymbolId(50): [ReferenceId(65), ReferenceId(66)]
 Symbol flags mismatch for "SubModule3":
 after transform: SymbolId(50): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(52): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "SubModule3":
 after transform: SymbolId(50): Span { start: 4335, end: 4345 }
 rebuilt        : SymbolId(52): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["SubModule1", "SubSubModule1", "TopLevelModule1", "TopLevelModule2"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeVal.ts
 Bindings mismatch:
@@ -33135,9 +33138,9 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "X":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["Promise", "X", "arguments", "require"]
-rebuilt        : ["Promise", "arguments", "require"]
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5), ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncUseStrict_es5.ts
 Bindings mismatch:
@@ -45558,6 +45561,9 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(6), ReferenceId(9), ReferenceId(10)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 90, end: 91 }]
 rebuilt        : SymbolId(1): []
@@ -45567,6 +45573,9 @@ rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "X":
 after transform: SymbolId(5): Span { start: 294, end: 295 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(5): [ReferenceId(4), ReferenceId(21), ReferenceId(22), ReferenceId(31), ReferenceId(32)]
+rebuilt        : SymbolId(8): [ReferenceId(22), ReferenceId(23), ReferenceId(33), ReferenceId(34)]
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(5): [Span { start: 294, end: 295 }, Span { start: 366, end: 367 }]
 rebuilt        : SymbolId(8): []
@@ -45594,9 +45603,6 @@ rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Z":
 after transform: SymbolId(10): Span { start: 414, end: 415 }
 rebuilt        : SymbolId(18): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["A", "X", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedInterfacesOfTheSameName.ts
 Bindings mismatch:
@@ -45828,7 +45834,7 @@ Symbol span mismatch for "moduleA":
 after transform: SymbolId(0): Span { start: 7, end: 14 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "moduleA":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(13), ReferenceId(14)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(13), ReferenceId(14)]
 rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(6)]
 Symbol flags mismatch for "clodule":
 after transform: SymbolId(6): SymbolFlags(Class | ValueModule)
@@ -45855,7 +45861,7 @@ Symbol flags mismatch for "fundule":
 after transform: SymbolId(9): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(10): SymbolFlags(Function)
 Symbol reference IDs mismatch for "fundule":
-after transform: SymbolId(9): [ReferenceId(8), ReferenceId(17), ReferenceId(18)]
+after transform: SymbolId(9): [ReferenceId(8), ReferenceId(10), ReferenceId(17), ReferenceId(18)]
 rebuilt        : SymbolId(10): [ReferenceId(10), ReferenceId(11)]
 Symbol redeclarations mismatch for "fundule":
 after transform: SymbolId(9): [Span { start: 490, end: 497 }, Span { start: 539, end: 546 }]
@@ -45872,9 +45878,6 @@ rebuilt        : SymbolId(12): []
 Symbol redeclarations mismatch for "Point":
 after transform: SymbolId(10): [Span { start: 570, end: 575 }, Span { start: 622, end: 634 }]
 rebuilt        : SymbolId(12): []
-Unresolved references mismatch:
-after transform: ["fundule", "moduleA", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleBody/moduleWithStatementsOfEveryKind.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -47676,9 +47679,9 @@ rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "string":
 after transform: SymbolId(0) "string"
 rebuilt        : <None>
-Unresolved reference IDs mismatch for "string":
-after transform: [ReferenceId(1)]
-rebuilt        : [ReferenceId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["string"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration12.ts
 Bindings mismatch:
@@ -47987,11 +47990,8 @@ Symbol span mismatch for "M":
 after transform: SymbolId(6): Span { start: 198, end: 199 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "M":
-after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
+after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
 rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(12), ReferenceId(23), ReferenceId(24)]
-Unresolved references mismatch:
-after transform: ["Date", "M", "Object", "require", "undefined"]
-rebuilt        : ["Date", "Object", "require", "undefined"]
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(10), ReferenceId(11)]
 rebuilt        : [ReferenceId(14)]
@@ -48637,11 +48637,8 @@ Symbol span mismatch for "M":
 after transform: SymbolId(6): Span { start: 198, end: 199 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "M":
-after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
+after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
 rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(12), ReferenceId(23), ReferenceId(24)]
-Unresolved references mismatch:
-after transform: ["Date", "M", "Object", "require", "undefined"]
-rebuilt        : ["Date", "Object", "require", "undefined"]
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(10), ReferenceId(11)]
 rebuilt        : [ReferenceId(14)]

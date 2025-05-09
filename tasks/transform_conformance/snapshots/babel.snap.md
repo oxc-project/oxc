@@ -2033,9 +2033,9 @@ rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Reference symbol mismatch for "LongNameModule":
 after transform: SymbolId(0) "LongNameModule"
 rebuilt        : <None>
-Unresolved reference IDs mismatch for "LongNameModule":
-after transform: [ReferenceId(5)]
-rebuilt        : [ReferenceId(0)]
+Unresolved references mismatch:
+after transform: ["console"]
+rebuilt        : ["LongNameModule", "console"]
 
 * namespace/clobber-class/input.ts
 Symbol flags mismatch for "A":
