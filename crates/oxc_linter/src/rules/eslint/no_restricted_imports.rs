@@ -281,7 +281,7 @@ declare_oxc_lint!(
     ///
     /// ```json
     /// {"rules: {"no-restricted-imports": ["error", { "paths": ["import1", "import2"] }]}}
-    /// ``
+    /// ```
     ///
     /// Examples of **incorrect** code for `paths`:
     ///
@@ -303,7 +303,7 @@ declare_oxc_lint!(
     ///     "message": "Please use import-quux instead."
     ///   }]
     /// }]
-    /// ````
+    /// ```
     ///
     /// ##### importNames
     ///
@@ -448,7 +448,7 @@ declare_oxc_lint!(
     /// like Lookahead and Lookbehinds.
     ///
     /// Examples of **incorrect** code for `regex` option:
-    /// ````js
+    /// ```js
     /// /*eslint no-restricted-imports: ["error", { patterns: [{
     ///   regex: "@app/(api|enums).*",
     /// }]}]*/
