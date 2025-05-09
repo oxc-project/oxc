@@ -573,6 +573,16 @@ fn test() {
           Some(serde_json::json!([ { "definedTags": [] } ])),
           None,
       ),
+        (
+          "
+          /**
+           * @see [[[[]@foo]
+           */
+          function quux (foo) { }
+      ",
+          None,
+          None,
+      ),
     ];
 
     let fail = vec![
