@@ -34,7 +34,7 @@ impl<'a> Symbol<'_, 'a> {
             SymbolFlags::TypeAlias.union(SymbolFlags::TypeParameter).union(SymbolFlags::Interface);
         const ENUM: SymbolFlags = SymbolFlags::Enum.union(SymbolFlags::EnumMember);
         const NAMESPACE_LIKE: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::ValueModule);
+            SymbolFlags::NamespaceModule.union(SymbolFlags::ValueModule);
 
         !self.flags().intersects(
             IMPORT.union(TYPE).union(ENUM).union(NAMESPACE_LIKE).union(SymbolFlags::CatchVariable),

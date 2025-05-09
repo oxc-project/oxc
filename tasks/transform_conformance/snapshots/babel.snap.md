@@ -1712,7 +1712,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | Ambient)
+after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol reference IDs mismatch for "N":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]

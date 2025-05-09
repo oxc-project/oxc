@@ -425,7 +425,7 @@ fn test_module_like_declarations() {
 
     SemanticTester::ts("module A { export type x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::NamespaceModule)
         .test();
 
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");

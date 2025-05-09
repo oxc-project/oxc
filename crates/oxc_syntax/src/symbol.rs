@@ -123,7 +123,9 @@ bitflags! {
         const ConstEnum               = 1 << 11;
         const EnumMember              = 1 << 12;
         const TypeParameter           = 1 << 13;
-        const NameSpaceModule         = 1 << 14;
+        /// Uninstantiated module
+        const NamespaceModule         = 1 << 14;
+        /// Instantiated module
         const ValueModule             = 1 << 15;
         /// Declared with `declare` modifier, like `declare function x() {}`.
         //
@@ -256,8 +258,8 @@ impl SymbolFlags {
     }
 
     #[inline]
-    pub fn is_namespace(&self) -> bool {
-        self.contains(Self::NameSpaceModule)
+    pub fn is_namespace_module(&self) -> bool {
+        self.contains(Self::NamespaceModule)
     }
 
     #[inline]
@@ -268,7 +270,7 @@ impl SymbolFlags {
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NameSpaceModule)
+        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NamespaceModule)
     }
 
     /// If true, then the symbol can be referenced by a value reference

@@ -343,7 +343,7 @@ Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 17, end: 20 }
