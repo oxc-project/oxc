@@ -24,6 +24,8 @@ target/
 /editors/vscode/out/
 /editors/vscode/*.vsix
 /editors/vscode/test_workspace/
+/editors/vscode/test_workspace_second/
+/editors/vscode/*.test.code-workspace
 
 # Cloned conformance repos
 tasks/coverage/babel/
