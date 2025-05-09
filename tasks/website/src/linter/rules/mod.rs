@@ -70,7 +70,7 @@ pub fn print_rules(mut args: Arguments) {
         fs::write(table_path, rules_table).unwrap();
     }
 
-    if let Some(rules_dir) = rules_dir {
+    if let Some(rules_dir) = &rules_dir {
         eprintln!("Rendering rule doc pages...");
         let rules_dir = pwd.join(rules_dir);
         if !rules_dir.exists() {
@@ -85,7 +85,7 @@ pub fn print_rules(mut args: Arguments) {
         write_version_data(&rules_dir, git_ref.unwrap_or("main".to_string()).as_str());
     }
 
-    eprintln!("Done.");
+    eprintln!("Done. Written rules to {rules_dir:?}",);
 }
 
 fn write_rule_doc_pages(g: SchemaGenerator, table: &RuleTable, outdir: &Path) {

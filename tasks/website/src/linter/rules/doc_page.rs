@@ -120,7 +120,7 @@ impl Context {
 
         if schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::Object)) {
             rendered = format!(
-                "\nThis rule accepts a configuration object with the following properties:\n\n{rendered}\n"
+                "\nThis rule accepts a configuration object with the following properties:\n{rendered}\n"
             );
         }
 
