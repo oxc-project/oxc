@@ -212,7 +212,7 @@ impl<'a> TypeScript<'a, '_> {
 
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element {
-                if prop.value.is_none() {
+                if prop.value.is_none() && !prop.key.is_private_identifier() {
                     return false;
                 }
             }

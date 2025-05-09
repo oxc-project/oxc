@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 152/252
+Passed: 152/253
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/24)
+# babel-plugin-transform-typescript (4/25)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -402,6 +402,11 @@ rebuilt        : []
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
+
+* ts-private-field-with-remove-class-fields-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["ArrayBufferView", "Transferable", "WeakMap", "babelHelpers", "kTransferable", "kValue"]
+rebuilt        : ["WeakMap", "babelHelpers", "kTransferable", "kValue"]
 
 * use-define-for-class-fields/input.ts
 Unresolved references mismatch:
