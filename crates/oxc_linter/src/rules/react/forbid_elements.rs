@@ -1,5 +1,5 @@
 use lazy_regex::Regex;
-use oxc_ast::{ast::Argument, AstKind};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -7,12 +7,21 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    context::{ContextHost, LintContext}, rule::Rule, utils::{get_element_type, is_react_function_call}, AstNode
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::{get_element_type, is_react_function_call},
 };
 
-fn forbid_elements_diagnostic(element: CompactStr, help: Option<CompactStr>, span: Span) -> OxcDiagnostic {
+fn forbid_elements_diagnostic(
+    element: CompactStr,
+    help: Option<CompactStr>,
+    span: Span,
+) -> OxcDiagnostic {
     if let Some(help) = help {
-        return OxcDiagnostic::warn(format!("<{element}> is forbidden.")).with_help(help).with_label(span);
+        return OxcDiagnostic::warn(format!("<{element}> is forbidden."))
+            .with_help(help)
+            .with_label(span);
     }
 
     OxcDiagnostic::warn(format!("<{element}> is forbidden.")).with_label(span)
@@ -66,16 +75,22 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn add_configuration_forbid_from_object(forbid_elements: &mut Vec<ForbidElement>, forbid_value: &serde_json::Value) {
+fn add_configuration_forbid_from_object(
+    forbid_elements: &mut Vec<ForbidElement>,
+    forbid_value: &serde_json::Value,
+) {
     let Some(forbid_array) = forbid_value.as_array() else {
         return;
     };
 
     for forbid_value in forbid_array {
         match forbid_value {
-            Value::String(element_name) => forbid_elements.push(ForbidElement { element: CompactStr::new(element_name), message: None }),
+            Value::String(element_name) => forbid_elements
+                .push(ForbidElement { element: CompactStr::new(element_name), message: None }),
             Value::Object(_) => {
-                if let Ok(forbid_element) = serde_json::from_value::<ForbidElement>(forbid_value.clone()) {
+                if let Ok(forbid_element) =
+                    serde_json::from_value::<ForbidElement>(forbid_value.clone())
+                {
                     forbid_elements.push(forbid_element)
                 }
             }
@@ -90,7 +105,11 @@ impl Rule for ForbidElements {
             AstKind::JSXOpeningElement(jsx_el) => {
                 let name = &get_element_type(ctx, jsx_el);
 
-                self.add_diagnostic_if_invalid_element(ctx, CompactStr::new(name), jsx_el.name.span());
+                self.add_diagnostic_if_invalid_element(
+                    ctx,
+                    CompactStr::new(name),
+                    jsx_el.name.span(),
+                );
             }
             AstKind::CallExpression(call_expr) => {
                 if !is_react_function_call(call_expr, r"createElement") {
@@ -106,25 +125,38 @@ impl Rule for ForbidElements {
                         if !Regex::new(r"^[A-Z_]").unwrap().is_match(it.name.as_str()) {
                             return;
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, CompactStr::new(it.name.as_str()), it.span);
+                        self.add_diagnostic_if_invalid_element(
+                            ctx,
+                            CompactStr::new(it.name.as_str()),
+                            it.span,
+                        );
                     }
                     Argument::StringLiteral(str) => {
                         if !Regex::new(r"^[a-z][^.]*$").unwrap().is_match(str.value.as_str()) {
                             return;
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, CompactStr::new(str.value.as_str()), str.span);
+                        self.add_diagnostic_if_invalid_element(
+                            ctx,
+                            CompactStr::new(str.value.as_str()),
+                            str.span,
+                        );
                     }
                     Argument::StaticMemberExpression(member_expression) => {
                         let Some(it) = member_expression.object.get_identifier_reference() else {
                             return;
                         };
-                        self.add_diagnostic_if_invalid_element(ctx, CompactStr::new(format!("{}.{}", it.name, member_expression.property.name).as_str()), member_expression.span);
+                        self.add_diagnostic_if_invalid_element(
+                            ctx,
+                            CompactStr::new(
+                                format!("{}.{}", it.name, member_expression.property.name).as_str(),
+                            ),
+                            member_expression.span,
+                        );
                     }
                     _ => {}
                 }
-
             }
-            _ => ()
+            _ => (),
         }
     }
 
@@ -137,10 +169,13 @@ impl Rule for ForbidElements {
                     match config {
                         Value::Object(obj) => {
                             if let Some(forbid_value) = obj.get("forbid") {
-                                add_configuration_forbid_from_object(&mut forbid_elements, forbid_value);
+                                add_configuration_forbid_from_object(
+                                    &mut forbid_elements,
+                                    forbid_value,
+                                );
                             }
                         }
-                        _ => ()
+                        _ => (),
                     }
                 }
             }
@@ -167,7 +202,11 @@ impl ForbidElements {
                 continue;
             }
 
-            ctx.diagnostic(forbid_elements_diagnostic(forbid_element.element.clone(), forbid_element.message.clone(), span));
+            ctx.diagnostic(forbid_elements_diagnostic(
+                forbid_element.element.clone(),
+                forbid_element.message.clone(),
+                span,
+            ));
         }
     }
 }
