@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{AstKind, ast::*};
 
 use crate::{
     format_args,
@@ -18,21 +18,17 @@ impl<'a> Format<'a> for Vec<'a, TSTypeParameter<'a>> {
         // Thus, we have to add a trailing comma when there is a single type parameter.
         // The comma can be omitted in the case where the single parameter has a constraint,
         // i.i. an `extends` clause.
-        // TODO
-        // let trailing_separator = if node.len() == 1
-        // // This only concern sources that allow JSX or a restricted standard variant.
-        // && !f.options().source_type().variant().is_standard()
-        // && node.syntax().grand_parent().kind()
-        // == Some(JsSyntaxKind::JS_ARROW_FUNCTION_EXPRESSION)
-        // // Ignore Type parameter with an `extends` clause or a default type.
-        // && !node.first().and_then(|param| param.ok())
-        // .is_some_and(|type_parameter| type_parameter.constraint().is_some() || type_parameter.default().is_some())
-        // {
-        // TrailingSeparator::Mandatory
-        // } else {
-        // FormatTrailingCommas::ES5.trailing_separator(f.options())
-        // };
-        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
+        let trailing_separator = if self.len() == 1
+        // This only concern sources that allow JSX or a restricted standard variant.
+        && f.context().source_type().is_jsx()
+        && matches!(f.parent_stack().parent2(), Some(AstKind::ArrowFunctionExpression(_)))
+        // Ignore Type parameter with an `extends` clause or a default type.
+        && !self.first().is_some_and(|t| t.constraint.is_some() || t.default.is_some())
+        {
+            TrailingSeparator::Mandatory
+        } else {
+            FormatTrailingCommas::ES5.trailing_separator(f.options())
+        };
 
         f.join_with(&soft_line_break_or_space())
             .entries(
