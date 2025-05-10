@@ -400,6 +400,8 @@ export interface TransformOptions {
    * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
   target?: string | Array<string>
+  /** Transform target module. */
+  targetModule?: 'esm' | 'cjs' | undefined
   /** Behaviour for runtime helpers. */
   helpers?: Helpers
   /** Define Plugin */
