@@ -342,7 +342,7 @@ impl<'a> Lexer<'a> {
                             // so there must be 2 more bytes to read
                             let next2 = unsafe { pos.add(1).read2() };
                             if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                                && self.token.lone_surrogates
+                                && self.token.lone_surrogates()
                             {
                                 str.push_str("\u{FFFD}fffd");
                             } else {
@@ -387,7 +387,7 @@ impl<'a> Lexer<'a> {
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
-        self.token.start = self.offset() - 1;
+        self.token.set_start(self.offset() - 1);
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
         self.finish_next(kind)
@@ -395,8 +395,8 @@ impl<'a> Lexer<'a> {
 
     /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
-        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
-        self.token.escaped = true;
+        self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
+        self.token.set_escaped(true);
     }
 
     pub(crate) fn get_template_string(&self, span_start: u32) -> Option<&'a str> {
@@ -445,10 +445,10 @@ mod test {
             let mut lexer = Lexer::new(&allocator, &source_text, SourceType::default(), unique);
             let token = lexer.next_token();
             assert_eq!(
-                token.kind,
+                token.kind(),
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
             );
-            let escaped = lexer.escaped_templates[&0];
+            let escaped = lexer.escaped_templates[&token.start()];
             assert_eq!(escaped, Some(expected_escaped.as_str()));
         }
 

@@ -12,12 +12,14 @@ impl Lexer<'_> {
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
     pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags, bool) {
-        self.token.start = self.offset()
-            - match kind {
-                Kind::Slash => 1,
-                Kind::SlashEq => 2,
-                _ => unreachable!(),
-            };
+        self.token.set_start(
+            self.offset()
+                - match kind {
+                    Kind::Slash => 1,
+                    Kind::SlashEq => 2,
+                    _ => unreachable!(),
+                },
+        );
         let (pattern_end, flags, flags_error) = self.read_regex();
         self.lookahead.clear();
         let token = self.finish_next(Kind::RegExp);
