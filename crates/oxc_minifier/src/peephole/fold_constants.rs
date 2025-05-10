@@ -111,8 +111,7 @@ impl<'a> PeepholeOptimizations {
         }
         let object = member_expr.object();
         let ty = object.value_type(&ctx);
-        (ty.is_null() || ty.is_undefined())
-            .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
+        ty.is_nullish().then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
 
     /// Try to fold a AND / OR node.
@@ -255,7 +254,46 @@ impl<'a> PeepholeOptimizations {
                 // non-nullish condition => this expression evaluates to the left side.
                 Some(logical_expr.left.take_in(ctx.ast.allocator))
             }
-            ValueType::Undetermined => None,
+            ValueType::Undetermined => match Self::is_nullish(left) {
+                Some(true) => Some(logical_expr.right.take_in(ctx.ast.allocator)),
+                Some(false) => Some(logical_expr.left.take_in(ctx.ast.allocator)),
+                None => None,
+            },
+        }
+    }
+
+    fn is_nullish(expr: &Expression<'a>) -> Option<bool> {
+        match expr.get_inner_expression() {
+            Expression::NullLiteral(_) => Some(true),
+            Expression::ImportExpression(_)
+            | Expression::BinaryExpression(_)
+            | Expression::UpdateExpression(_) => Some(false),
+            Expression::Identifier(id) => match id.name.as_str() {
+                "undefined" => Some(true),
+                "NaN" | "Infinity" => Some(false),
+                _ => None,
+            },
+            Expression::LogicalExpression(expr) => {
+                let left = Self::is_nullish(&expr.left);
+                let right = Self::is_nullish(&expr.right);
+
+                if expr.operator.is_and() {
+                    match (left, right) {
+                        (Some(false), _) => Some(false),
+                        (Some(true), Some(true)) => Some(true),
+                        _ => None,
+                    }
+                } else {
+                    match (left, right) {
+                        (Some(false), _) | (Some(true), Some(false)) => Some(false),
+                        (Some(true), Some(true)) => Some(true),
+                        _ => None,
+                    }
+                }
+            }
+            Expression::UnaryExpression(expr) => Some(expr.operator == UnaryOperator::Void),
+            Expression::SequenceExpression(s) => s.expressions.last().and_then(Self::is_nullish),
+            _ => None,
         }
     }
 
