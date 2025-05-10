@@ -19,7 +19,7 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, Module, ProposalOptions,
         RewriteExtensionsMode,
     },
     transformer_plugins::{
@@ -130,6 +130,10 @@ pub struct TransformOptions {
     /// @see [esbuild#target](https://esbuild.github.io/api/#target)
     pub target: Option<Either<String, Vec<String>>>,
 
+    /// Transform target module.
+    #[napi(ts_type = "'esm' | 'cjs' | undefined")]
+    pub target_module: Option<String>,
+
     /// Behaviour for runtime helpers.
     pub helpers: Option<Helpers>,
 
@@ -154,6 +158,12 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             Some(Either::B(list)) => EnvOptions::from_target_list(&list)?,
             _ => EnvOptions::default(),
         };
+        let module = match options.target_module.as_deref() {
+            Some("esm") => Module::ESM,
+            Some("cjs") => Module::CommonJS,
+            _ => Module::Preserve,
+        };
+        let env = EnvOptions { module, ..env };
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
