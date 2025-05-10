@@ -41,7 +41,7 @@ impl Lexer<'_> {
         match self.peek_byte() {
             Some(b'-') => {
                 self.consume_char();
-                if self.token.is_on_new_line
+                if self.token.is_on_new_line()
                     && self.source_type.is_script()
                     && self.next_ascii_byte_eq(b'>')
                 {

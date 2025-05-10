@@ -46,7 +46,7 @@ impl<'a> ParserImpl<'a> {
             // AsyncGeneratorMethod
             Kind::Async
                 if (class_element_name || peek_kind == Kind::Star)
-                    && !self.peek_token().is_on_new_line =>
+                    && !self.peek_token().is_on_new_line() =>
             {
                 self.parse_property_definition_method()
             }
