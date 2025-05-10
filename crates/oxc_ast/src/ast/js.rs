@@ -2593,8 +2593,8 @@ pub struct ExportAllDeclaration<'a> {
 ///
 /// ```ts
 /// //       ____ export_kind
-/// import { type Foo as Bar } from './foo';
-/// //   exported ^^^    ^^^ local
+/// export { type Foo as Bar };
+/// //      local ^^^    ^^^ exported
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
