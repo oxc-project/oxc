@@ -44,7 +44,7 @@ fn main() -> Result<(), String> {
     }
 
     if show_estree {
-        Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(&source_text).convert_program(&mut program, true);
         if source_type.is_javascript() {
             println!("ESTree AST:");
             println!("{}", program.to_pretty_estree_js_json());

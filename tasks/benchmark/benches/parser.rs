@@ -49,8 +49,8 @@ fn bench_estree(criterion: &mut Criterion) {
                     .program;
                 runner.run(|| {
                     let span_converter = Utf8ToUtf16::new(program.source_text);
-                    span_converter.convert_program(&mut program);
-                    span_converter.convert_comments(&mut program.comments);
+                    span_converter.convert_program(&mut program, true);
+                    span_converter.convert_comments(&mut program.comments, true);
 
                     black_box(program.to_estree_ts_json_with_fixes());
                     program
