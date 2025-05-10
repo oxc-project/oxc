@@ -59,6 +59,13 @@ struct Options {
     flags: FxHashMap<String, String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct WorkspaceOption {
+    workspace_uri: Uri,
+    options: Options,
+}
+
 impl Options {
     fn use_nested_configs(&self) -> bool {
         !self.flags.contains_key("disable_nested_config") || self.config_path.is_some()
@@ -85,9 +92,32 @@ impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         let server_version = env!("CARGO_PKG_VERSION");
         let options = params.initialization_options.and_then(|mut value| {
-            let settings = value.get_mut("settings")?.take();
-            serde_json::from_value::<Options>(settings).ok()
+            // the client supports the new settings object
+            if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
+            {
+                // ToDo: validate they have the same length as params.workspace_folders
+                return Some(new_settings);
+            }
+
+            let deprecated_settings =
+                serde_json::from_value::<Options>(value.get_mut("settings")?.take()).ok();
+
+            // the client has deprecated settings and has a deprecated root uri.
+            // handle all things like the old way
+            if deprecated_settings.is_some() && params.root_uri.is_some() {
+                return Some(vec![WorkspaceOption {
+                    workspace_uri: params.root_uri.clone().unwrap(),
+                    options: deprecated_settings.unwrap(),
+                }]);
+            }
+
+            // no workspace options could be generated fallback to default one or request when possible
+            None
         });
+
+        info!("initialize: {options:?}");
+        info!("language server version: {server_version}");
+
         let capabilities = Capabilities::from(params.capabilities);
 
         // ToDo: add support for multiple workspace folders
@@ -99,15 +129,18 @@ impl LanguageServer for Backend {
         // start the linter. We do not start the linter when the client support the request,
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
-            root_worker.init_linter(&options.clone().unwrap_or_default()).await;
+            root_worker
+                .init_linter(
+                    &options
+                        .unwrap_or_default()
+                        .first()
+                        .map(|workspace_options| workspace_options.options.clone())
+                        .unwrap_or_default(),
+                )
+                .await;
         }
 
         *self.workspace_workers.lock().await = vec![root_worker];
-
-        if let Some(value) = options {
-            info!("initialize: {value:?}");
-            info!("language server version: {server_version}");
-        }
 
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
@@ -176,12 +209,38 @@ impl LanguageServer for Backend {
         let workers = self.workspace_workers.lock().await;
         let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
             ConcurrentHashMap::default();
-        let options = serde_json::from_value::<Options>(params.settings).ok();
+
+        // new valid configuration is passed
+        let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
+            .ok()
+            .or_else(|| {
+                // fallback to old configuration
+                let options = serde_json::from_value::<Options>(params.settings).ok()?;
+
+                // for all workers (default only one)
+                let options = workers
+                    .iter()
+                    .map(|worker| WorkspaceOption {
+                        workspace_uri: worker.get_root_uri().clone(),
+                        options: options.clone(),
+                    })
+                    .collect();
+
+                Some(options)
+            });
 
         // the client passed valid options.
         if let Some(options) = options {
-            for worker in workers.iter() {
-                let Some(diagnostics) = worker.did_change_configuration(&options).await else {
+            for option in options {
+                let Some(worker) = workers
+                    .iter()
+                    .find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
+                else {
+                    continue;
+                };
+
+                let Some(diagnostics) = worker.did_change_configuration(&option.options).await
+                else {
                     continue;
                 };
 
