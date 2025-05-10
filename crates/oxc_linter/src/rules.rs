@@ -285,6 +285,7 @@ mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
+    pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
@@ -893,6 +894,7 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
     react::exhaustive_deps,
+    react::forbid_elements,
     react::forward_ref_uses_ref,
     react::iframe_missing_sandbox,
     react::jsx_filename_extension,
