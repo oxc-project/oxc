@@ -38,3 +38,4 @@ serde_json = { workspace = true }
 [features]
 from_raw_parts = []
 serialize = ["dep:serde", "oxc_estree/serialize"]
+allocator_api = ["hashbrown/nightly", "bumpalo/allocator_api", "allocator-api2/nightly"]
