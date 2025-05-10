@@ -180,7 +180,11 @@ impl Runner for LintRunner {
             FxHashMap::default()
         };
 
-        enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
 
         let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
             Some(oxlintrc.clone())
@@ -1152,5 +1156,11 @@ mod test {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_plugins_in_overrides_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
     }
 }

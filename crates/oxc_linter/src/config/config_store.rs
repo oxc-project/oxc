@@ -85,6 +85,13 @@ impl Config {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
+
+        for override_config in overrides_to_apply.clone() {
+            if let Some(override_plugins) = override_config.plugins {
+                plugins |= override_plugins;
+            }
+        }
+
         let mut rules = self
             .base
             .rules
@@ -102,10 +109,6 @@ impl Config {
         for override_config in overrides_to_apply {
             if !override_config.rules.is_empty() {
                 override_config.rules.override_rules(&mut rules, &all_rules);
-            }
-
-            if let Some(override_plugins) = override_config.plugins {
-                plugins |= override_plugins;
             }
 
             if let Some(override_env) = &override_config.env {
@@ -136,11 +139,14 @@ impl Config {
     }
 }
 
-/// Resolves a lint configuration for a given file, by applying overrides based on the file's path.
+/// Stores the configuration state for the linter including:
+/// 1. the root configuration (base)
+/// 2. any nested configurations (`nested_configs`)
+///
+/// If an explicit config has been provided `-c config.json`, then `nested_configs` will be empty
 #[derive(Debug, Clone)]
 pub struct ConfigStore {
     base: Config,
-
     nested_configs: FxHashMap<PathBuf, Config>,
 }
 

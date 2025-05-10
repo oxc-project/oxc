@@ -36,7 +36,7 @@ pub struct LintConfig {
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
         Self {
-            plugins: config.plugins,
+            plugins: config.plugins.unwrap_or_default(),
             settings: config.settings,
             env: config.env,
             globals: config.globals,
