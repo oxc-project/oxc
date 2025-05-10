@@ -68,7 +68,7 @@ Handle Warnings
 
 Output
     -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
-                              `default`, `github`, `json`, `junit`, `stylish`, `unix`
+                              `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
 
 Miscellaneous
         --silent              Do not display any diagnostics
