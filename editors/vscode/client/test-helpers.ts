@@ -29,7 +29,8 @@ export type OxlintConfig = {
   ignorePatterns?: OxlintConfigIgnorePatterns;
 };
 
-export const WORKSPACE_DIR = workspace.workspaceFolders![0].uri;
+export const WORKSPACE_FOLDER = workspace.workspaceFolders![0];
+export const WORKSPACE_DIR = WORKSPACE_FOLDER.uri;
 
 const rootOxlintConfigUri = Uri.joinPath(WORKSPACE_DIR, '.oxlintrc.json');
 

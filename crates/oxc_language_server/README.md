@@ -87,6 +87,11 @@ The server will revalidate the diagnostics for all open files and send one or mo
 
 Note: When nested configuration is active, the client should send all `.oxlintrc.json` configurations to the server after the [initialized](#initialized) response.
 
+#### [workspace/didChangeWorkspaceFolders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_didChangeWorkspaceFolders)
+
+The server expects this request when adding or removing workspace folders.
+The server will request the specific workspace configuration, if the client supports it.
+
 #### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 
 Executes a [Command](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand) if it exists. See [Server Capabilities](#server-capabilities)

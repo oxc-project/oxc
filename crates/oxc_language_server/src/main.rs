@@ -11,9 +11,9 @@ use tower_lsp_server::{
     lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, ServerInfo,
-        Uri, WorkspaceEdit,
+        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, ServerInfo, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -88,9 +88,10 @@ impl Options {
 }
 
 impl LanguageServer for Backend {
-    #[expect(deprecated)] // TODO: FIXME
+    #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         let server_version = env!("CARGO_PKG_VERSION");
+        // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
         let options = params.initialization_options.and_then(|mut value| {
             // the client supports the new settings object
             if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
@@ -120,27 +121,43 @@ impl LanguageServer for Backend {
 
         let capabilities = Capabilities::from(params.capabilities);
 
-        // ToDo: add support for multiple workspace folders
-        // maybe fallback when the client does not support it
-        let root_worker = WorkspaceWorker::new(params.root_uri.unwrap());
+        // client sent workspace folders
+        let workers = if let Some(workspace_folders) = &params.workspace_folders {
+            workspace_folders
+                .iter()
+                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri.clone()))
+                .collect()
+        // client sent deprecated root uri
+        } else if let Some(root_uri) = params.root_uri {
+            vec![WorkspaceWorker::new(root_uri)]
+        // client is in single file mode, create no workers
+        } else {
+            vec![]
+        };
 
         // When the client did not send our custom `initialization_options`,
         // or the client does not support `workspace/configuration` request,
         // start the linter. We do not start the linter when the client support the request,
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
-            root_worker
-                .init_linter(
-                    &options
-                        .unwrap_or_default()
-                        .first()
-                        .map(|workspace_options| workspace_options.options.clone())
-                        .unwrap_or_default(),
-                )
-                .await;
+            for worker in &workers {
+                worker
+                    .init_linter(
+                        &options
+                            .clone()
+                            .unwrap_or_default()
+                            .iter()
+                            .find(|workspace_option| {
+                                worker.is_responsible_for_uri(&workspace_option.workspace_uri)
+                            })
+                            .map(|workspace_options| workspace_options.options.clone())
+                            .unwrap_or_default(),
+                    )
+                    .await;
+            }
         }
 
-        *self.workspace_workers.lock().await = vec![root_worker];
+        *self.workspace_workers.lock().await = workers;
 
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
@@ -337,6 +354,51 @@ impl LanguageServer for Backend {
             .collect::<Vec<_>>();
 
         self.publish_all_diagnostics(x).await;
+    }
+
+    async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
+        let mut workers = self.workspace_workers.lock().await;
+        let mut cleared_diagnostics = vec![];
+
+        for folder in params.event.removed {
+            let Some((index, worker)) = workers
+                .iter()
+                .enumerate()
+                .find(|(_, worker)| worker.is_responsible_for_uri(&folder.uri))
+            else {
+                continue;
+            };
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
+            workers.remove(index);
+        }
+
+        self.publish_all_diagnostics(&cleared_diagnostics).await;
+
+        // client support `workspace/configuration` request
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
+        {
+            let configurations = self
+                .request_workspace_configuration(
+                    params.event.added.iter().map(|w| &w.uri).collect(),
+                )
+                .await;
+
+            for (index, folder) in params.event.added.iter().enumerate() {
+                let worker = WorkspaceWorker::new(folder.uri.clone());
+                // get the configuration from the response and init the linter
+                let options = configurations.get(index).unwrap_or(&None);
+                worker.init_linter(options.as_ref().unwrap_or(&Options::default())).await;
+                workers.push(worker);
+            }
+        // client does not support the request
+        } else {
+            for folder in params.event.added {
+                let worker = WorkspaceWorker::new(folder.uri);
+                // use default options
+                worker.init_linter(&Options::default()).await;
+                workers.push(worker);
+            }
+        }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
