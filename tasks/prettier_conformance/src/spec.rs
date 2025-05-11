@@ -51,7 +51,7 @@ impl VisitMut<'_> for SpecParser {
     //
     // runFormatTest(import.meta, parser, {});
     // runFormatTest(import.meta, parser, { semi: false });
-    // ````
+    // ```
     fn visit_variable_declarator(&mut self, decl: &mut VariableDeclarator<'_>) {
         let Some(name) = decl.id.get_identifier_name() else { return };
         if !matches!(name.as_str(), "parser" | "parsers") {

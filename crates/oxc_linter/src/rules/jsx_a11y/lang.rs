@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// ```jsx
     /// <html>
     /// <html lang="foo">
-    /// ````
+    /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
