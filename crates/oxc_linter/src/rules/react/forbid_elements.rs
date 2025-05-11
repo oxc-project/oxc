@@ -1,8 +1,7 @@
-use lazy_regex::Regex;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, Span};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -108,12 +107,24 @@ fn add_configuration_forbid_from_object(
                 if let Ok(forbid_element) =
                     serde_json::from_value::<ForbidElement>(forbid_value.clone())
                 {
-                    forbid_elements.push(forbid_element)
+                    forbid_elements.push(forbid_element);
                 }
             }
             _ => (),
         }
     }
+}
+
+// Match /^[A-Z_]/
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L109
+fn is_valid_identifier(str: &Atom) -> bool {
+    str.chars().next().is_some_and(|c| c.is_uppercase() || c == '_')
+}
+
+// Match /^[a-z][^.]*$/
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L111
+fn is_valid_literal(str: &Atom) -> bool {
+    str.chars().next().is_some_and(|c| c.is_lowercase() && str.chars().skip(1).all(|ch| ch != '.'))
 }
 
 impl Rule for ForbidElements {
@@ -139,7 +150,7 @@ impl Rule for ForbidElements {
 
                 match argument {
                     Argument::Identifier(it) => {
-                        if !Regex::new(r"^[A-Z_]").unwrap().is_match(it.name.as_str()) {
+                        if !is_valid_identifier(&it.name) {
                             return;
                         }
                         self.add_diagnostic_if_invalid_element(
@@ -149,7 +160,7 @@ impl Rule for ForbidElements {
                         );
                     }
                     Argument::StringLiteral(str) => {
-                        if !Regex::new(r"^[a-z][^.]*$").unwrap().is_match(str.value.as_str()) {
+                        if !is_valid_literal(&str.value) {
                             return;
                         }
                         self.add_diagnostic_if_invalid_element(
@@ -183,16 +194,13 @@ impl Rule for ForbidElements {
         match &value {
             Value::Array(configs) => {
                 for config in configs {
-                    match config {
-                        Value::Object(obj) => {
-                            if let Some(forbid_value) = obj.get("forbid") {
-                                add_configuration_forbid_from_object(
-                                    &mut forbid_elements,
-                                    forbid_value,
-                                );
-                            }
+                    if let Value::Object(obj) = config {
+                        if let Some(forbid_value) = obj.get("forbid") {
+                            add_configuration_forbid_from_object(
+                                &mut forbid_elements,
+                                forbid_value,
+                            );
                         }
-                        _ => (),
                     }
                 }
             }
