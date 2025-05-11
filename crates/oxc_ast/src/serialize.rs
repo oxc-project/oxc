@@ -1163,13 +1163,32 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 
     // Flatten `body`, and nest `id`
     if (body !== null && body.type === 'TSModuleDeclaration') {
-        id = {
-            type: 'TSQualifiedName',
-            start: body.id.start,
-            end: id.end,
-            left: body.id,
-            right: id,
-        };
+        let innerId = body.id;
+        if (innerId.type === 'Identifier') {
+            id = {
+                type: 'TSQualifiedName',
+                start: id.start,
+                end: innerId.end,
+                left: id,
+                right: innerId,
+            };
+        } else {
+            // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
+            // this module on left, and previous `left` of innermost `TSQualifiedName` on right
+            while (true) {
+                innerId.start = id.start;
+                if (innerId.left.type === 'Identifier') break;
+                innerId = innerId.left;
+            }
+            innerId.left = {
+                type: 'TSQualifiedName',
+                start: id.start,
+                end: innerId.left.end,
+                left: id,
+                right: innerId.left,
+            };
+            id = body.id;
+        }
         body = Object.hasOwn(body, 'body') ? body.body : null;
     }
 
