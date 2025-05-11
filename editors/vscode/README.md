@@ -51,4 +51,4 @@ Following configuration are supported via `settings.json` and can be changed for
 ## Testing
 
 Run `pnpm server:build:debug` to build the language server.
-After that, you can test the vscode plugin + E2E Tests with `pnm test`
+After that, you can test the vscode plugin + E2E Tests with `pnm test`.
