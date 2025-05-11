@@ -1,9 +1,8 @@
 use futures::future::join_all;
 use log::{debug, info, warn};
-use oxc_linter::FixKind;
-use rustc_hash::{FxBuildHasher, FxHashMap};
-use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, str::FromStr};
+use options::{Options, Run, WorkspaceOption};
+use rustc_hash::FxBuildHasher;
+use std::str::FromStr;
 use tokio::sync::{Mutex, OnceCell, SetError};
 use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
@@ -26,6 +25,7 @@ mod capabilities;
 mod code_actions;
 mod commands;
 mod linter;
+mod options;
 #[cfg(test)]
 mod tester;
 mod worker;
@@ -44,49 +44,6 @@ struct Backend {
     capabilities: OnceCell<Capabilities>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-pub enum Run {
-    OnSave,
-    #[default]
-    OnType,
-}
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-struct Options {
-    run: Run,
-    config_path: Option<String>,
-    flags: FxHashMap<String, String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-struct WorkspaceOption {
-    workspace_uri: Uri,
-    options: Options,
-}
-
-impl Options {
-    fn use_nested_configs(&self) -> bool {
-        !self.flags.contains_key("disable_nested_config") || self.config_path.is_some()
-    }
-
-    fn fix_kind(&self) -> FixKind {
-        self.flags.get("fix_kind").map_or(FixKind::SafeFix, |kind| match kind.as_str() {
-            "safe_fix" => FixKind::SafeFix,
-            "safe_fix_or_suggestion" => FixKind::SafeFixOrSuggestion,
-            "dangerous_fix" => FixKind::DangerousFix,
-            "dangerous_fix_or_suggestion" => FixKind::DangerousFixOrSuggestion,
-            "none" => FixKind::None,
-            "all" => FixKind::All,
-            _ => {
-                info!("invalid fix_kind flag `{kind}`, fallback to `safe_fix`");
-                FixKind::SafeFix
-            }
-        })
-    }
-}
-
 impl LanguageServer for Backend {
     #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
@@ -100,8 +57,7 @@ impl LanguageServer for Backend {
                 return Some(new_settings);
             }
 
-            let deprecated_settings =
-                serde_json::from_value::<Options>(value.get_mut("settings")?.take()).ok();
+            let deprecated_settings = Options::try_from(value.get_mut("settings")?.take()).ok();
 
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
