@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn forbid_elements_diagnostic(
-    element: CompactStr,
+    element: &CompactStr,
     help: Option<CompactStr>,
     span: Span,
 ) -> OxcDiagnostic {
@@ -49,26 +49,43 @@ struct ForbidElement {
     message: Option<CompactStr>,
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Allows you to configure a list of forbidden elements and to specify their desired replacements.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// You may want to forbid usage of certain elements in favor of others, (e.g. forbid all <div /> and use <Box /> instead)
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// // [1, { "forbid": ["button"] }]
+    /// <button />
+    /// React.createElement('button');
+    ///
+    /// // [1, { "forbid": ["Modal"] }]
+    /// <Modal />
+    /// React.createElement(Modal);
+    ///
+    /// // [1, { "forbid": ["Namespaced.Element"] }]
+    /// <Namespaced.Element />
+    /// React.createElement(Namespaced.Element);
+    ///
+    /// // [1, { "forbid": [{ "element": "button", "message": "use <Button> instead" }, "input"] }]
+    /// <div><button /><input /></div>
+    /// React.createElement('div', {}, React.createElement('button', {}, React.createElement('input')));
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// // [1, { "forbid": ["button"] }]
+    /// <Button />
+    ///
+    /// // [1, { "forbid": [{ "element": "button" }] }]
+    /// <Button />
     /// ```
     ForbidElements,
     react,
@@ -107,7 +124,7 @@ impl Rule for ForbidElements {
 
                 self.add_diagnostic_if_invalid_element(
                     ctx,
-                    CompactStr::new(name),
+                    &CompactStr::new(name),
                     jsx_el.name.span(),
                 );
             }
@@ -127,7 +144,7 @@ impl Rule for ForbidElements {
                         }
                         self.add_diagnostic_if_invalid_element(
                             ctx,
-                            CompactStr::new(it.name.as_str()),
+                            &CompactStr::new(it.name.as_str()),
                             it.span,
                         );
                     }
@@ -137,7 +154,7 @@ impl Rule for ForbidElements {
                         }
                         self.add_diagnostic_if_invalid_element(
                             ctx,
-                            CompactStr::new(str.value.as_str()),
+                            &CompactStr::new(str.value.as_str()),
                             str.span,
                         );
                     }
@@ -147,7 +164,7 @@ impl Rule for ForbidElements {
                         };
                         self.add_diagnostic_if_invalid_element(
                             ctx,
-                            CompactStr::new(
+                            &CompactStr::new(
                                 format!("{}.{}", it.name, member_expression.property.name).as_str(),
                             ),
                             member_expression.span,
@@ -196,14 +213,14 @@ impl Rule for ForbidElements {
 }
 
 impl ForbidElements {
-    fn add_diagnostic_if_invalid_element(&self, ctx: &LintContext, name: CompactStr, span: Span) {
+    fn add_diagnostic_if_invalid_element(&self, ctx: &LintContext, name: &CompactStr, span: Span) {
         for forbid_element in &self.forbid_elements {
             if forbid_element.element.as_str() != name.as_str() {
                 continue;
             }
 
             ctx.diagnostic(forbid_elements_diagnostic(
-                forbid_element.element.clone(),
+                &forbid_element.element,
                 forbid_element.message.clone(),
                 span,
             ));
