@@ -74,14 +74,14 @@ declare_oxc_lint!(
     ///     <a href="#" onClick={foo}>Perform action</a>
     ///     <a onClick={foo}>Perform action</a>
     /// </>
-    /// ````
+    /// ```
     ///
     /// All these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:
     ///
     /// ```jsx
     /// <button onClick={foo}>Perform action</button>
     /// ```
-    /// `
+    ///
     /// ### Why is this bad?
     /// There are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:
     /// - it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link
