@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, CompactStr, GetSpan, Span};
-use serde::Deserialize;
+use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn forbid_elements_diagnostic(
-    element: &CompactStr,
+    element: &str,
     help: Option<CompactStr>,
     span: Span,
 ) -> OxcDiagnostic {
@@ -39,13 +39,7 @@ impl std::ops::Deref for ForbidElements {
 
 #[derive(Debug, Default, Clone)]
 pub struct ForbidElementsConfig {
-    forbid_elements: Vec<ForbidElement>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ForbidElement {
-    element: CompactStr,
-    message: Option<CompactStr>,
+    forbid_elements: FxHashMap<CompactStr, Option<CompactStr>>,
 }
 
 declare_oxc_lint!(
@@ -90,42 +84,6 @@ declare_oxc_lint!(
     react,
     restriction,
 );
-
-fn add_configuration_forbid_from_object(
-    forbid_elements: &mut Vec<ForbidElement>,
-    forbid_value: &serde_json::Value,
-) {
-    let Some(forbid_array) = forbid_value.as_array() else {
-        return;
-    };
-
-    for forbid_value in forbid_array {
-        match forbid_value {
-            Value::String(element_name) => forbid_elements
-                .push(ForbidElement { element: CompactStr::new(element_name), message: None }),
-            Value::Object(_) => {
-                if let Ok(forbid_element) =
-                    serde_json::from_value::<ForbidElement>(forbid_value.clone())
-                {
-                    forbid_elements.push(forbid_element);
-                }
-            }
-            _ => (),
-        }
-    }
-}
-
-// Match /^[A-Z_]/
-// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L109
-fn is_valid_identifier(str: &Atom) -> bool {
-    str.chars().next().is_some_and(|c| c.is_uppercase() || c == '_')
-}
-
-// Match /^[a-z][^.]*$/
-// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L111
-fn is_valid_literal(str: &Atom) -> bool {
-    str.chars().next().is_some_and(|c| c.is_lowercase() && str.chars().skip(1).all(|ch| ch != '.'))
-}
 
 impl Rule for ForbidElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -189,7 +147,7 @@ impl Rule for ForbidElements {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut forbid_elements: Vec<ForbidElement> = Vec::new();
+        let mut forbid_elements: FxHashMap<CompactStr, Option<CompactStr>> = FxHashMap::default();
 
         match &value {
             Value::Array(configs) => {
@@ -216,24 +174,54 @@ impl Rule for ForbidElements {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
+        ctx.source_type().is_jsx() && !self.forbid_elements.is_empty()
     }
 }
 
 impl ForbidElements {
     fn add_diagnostic_if_invalid_element(&self, ctx: &LintContext, name: &CompactStr, span: Span) {
-        for forbid_element in &self.forbid_elements {
-            if forbid_element.element.as_str() != name.as_str() {
-                continue;
-            }
-
-            ctx.diagnostic(forbid_elements_diagnostic(
-                &forbid_element.element,
-                forbid_element.message.clone(),
-                span,
-            ));
+        if let Some(forbid_element) = self.forbid_elements.get(name.as_str()) {
+            ctx.diagnostic(forbid_elements_diagnostic(name.as_str(), forbid_element.clone(), span));
         }
     }
+}
+
+fn add_configuration_forbid_from_object(
+    forbid_elements: &mut FxHashMap<CompactStr, Option<CompactStr>>,
+    forbid_value: &serde_json::Value,
+) {
+    let Some(forbid_array) = forbid_value.as_array() else {
+        return;
+    };
+
+    for forbid_value in forbid_array {
+        match forbid_value {
+            Value::String(element_name) => {
+                forbid_elements.insert(CompactStr::new(element_name), None);
+            }
+            Value::Object(object) => {
+                if let Some(element_name) = object.get("element").and_then(|el| el.as_str()) {
+                    forbid_elements.insert(
+                        CompactStr::new(element_name),
+                        object.get("message").and_then(|el| (el.as_str())).map(CompactStr::new),
+                    );
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+// Match /^[A-Z_]/
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L109
+fn is_valid_identifier(str: &Atom) -> bool {
+    str.chars().next().is_some_and(|c| c.is_uppercase() || c == '_')
+}
+
+// Match /^[a-z][^.]*$/
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L111
+fn is_valid_literal(str: &Atom) -> bool {
+    str.chars().next().is_some_and(|c| c.is_lowercase() && str.chars().skip(1).all(|ch| ch != '.'))
 }
 
 #[test]
@@ -246,7 +234,6 @@ fn test() {
         ("<Button />", Some(serde_json::json!([{ "forbid": ["button"] }]))),
         ("<Button />", Some(serde_json::json!([{ "forbid": [{ "element": "button" }] }]))),
         ("React.createElement(button)", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        // (r#"createElement("button")"#, Some(serde_json::json!([{ "forbid": ["button"] }]))),
         (
             r#"NotReact.createElement("button")"#,
             Some(serde_json::json!([{ "forbid": ["button"] }])),
@@ -270,19 +257,19 @@ fn test() {
         (
             "<dotted.Component />",
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "dotted.Component", "message": "that ain\"t cool" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "dotted.Component", "message": "that ain\"t cool" }] }]),
             ),
         ),
         (
             "<button />",
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "button", "message": "use <Button> instead" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }] }]),
             ),
         ),
         (
             "<button><input /></button>",
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "button" },            { "element": "input" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "button" }, { "element": "input" }] }]),
             ),
         ),
         (
@@ -296,7 +283,7 @@ fn test() {
         (
             "<button />",
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "button", "message": "use <Button> instead" },            { "element": "button", "message": "use <Button2> instead" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }, { "element": "button", "message": "use <Button2> instead" } ] }]),
             ),
         ),
         (
@@ -310,7 +297,7 @@ fn test() {
         (
             "React.createElement(dotted.Component)",
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "dotted.Component", "message": "that ain\"t cool" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "dotted.Component", "message": "that ain\"t cool" }] }]),
             ),
         ),
         (
@@ -321,13 +308,13 @@ fn test() {
         (
             r#"React.createElement("button")"#,
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "button", "message": "use <Button> instead" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }] }]),
             ),
         ),
         (
             r#"React.createElement("button", {}, React.createElement("input"))"#,
             Some(
-                serde_json::json!([        {          "forbid": [            { "element": "button" }, { "element": "input" },          ],        },      ]),
+                serde_json::json!([{ "forbid": [{ "element": "button" }, { "element": "input" }] }]),
             ),
         ),
     ];
