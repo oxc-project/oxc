@@ -221,7 +221,7 @@ fn is_valid_identifier(str: &Atom) -> bool {
 // Match /^[a-z][^.]*$/
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L111
 fn is_valid_literal(str: &Atom) -> bool {
-    str.chars().next().is_some_and(|c| c.is_lowercase() && str.chars().skip(1).all(|ch| ch != '.'))
+    str.chars().next().is_some_and(char::is_lowercase) && !str.contains('.')
 }
 
 #[test]
