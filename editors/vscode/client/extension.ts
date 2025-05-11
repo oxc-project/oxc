@@ -193,6 +193,8 @@ export async function activate(context: ExtensionContext) {
     debug: run,
   };
 
+  let firstWorkspaceUri = workspace.workspaceFolders?.at(0)?.uri;
+
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
@@ -213,9 +215,12 @@ export async function activate(context: ExtensionContext) {
       // Notify the server about file config changes in the workspace
       fileEvents: fileWatchers,
     },
-    initializationOptions: {
-      settings: configService.rootServerConfig.toLanguageServerConfig(),
-    },
+    initializationOptions: firstWorkspaceUri
+      ? [{
+        workspaceUri: firstWorkspaceUri.toString(),
+        options: configService.rootServerConfig.toLanguageServerConfig(),
+      }]
+      : null,
     outputChannel,
     traceOutputChannel: outputChannel,
     middleware: {
@@ -279,19 +284,26 @@ export async function activate(context: ExtensionContext) {
     if (client === undefined) {
       return;
     }
+    let firstWorkspaceUri = workspace.workspaceFolders?.at(0)?.uri;
 
     // update the initializationOptions for a possible restart
-    client.clientOptions.initializationOptions = { settings };
+    client.clientOptions.initializationOptions = firstWorkspaceUri
+      ? [{ workspaceUri: firstWorkspaceUri.toString(), options: settings }]
+      : null;
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(settings.configPath);
-
       if (client.isRunning()) {
         await client.restart();
       }
     } else if (client.isRunning()) {
-      await client.sendNotification('workspace/didChangeConfiguration', { settings });
+      await client.sendNotification(
+        'workspace/didChangeConfiguration',
+        {
+          settings: firstWorkspaceUri ? [{ workspaceUri: firstWorkspaceUri.toString(), options: settings }] : null,
+        },
+      );
     }
   };
 
