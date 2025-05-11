@@ -462,7 +462,10 @@ impl<'a> Codegen<'a> {
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
             for stmt in &stmt.body {
-                p.print_semicolon_if_needed();
+                if p.needs_semicolon {
+                    p.print_ascii_byte(b';');
+                    p.needs_semicolon = false;
+                }
                 stmt.print(p, ctx);
             }
         });
