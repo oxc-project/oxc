@@ -1,4 +1,4 @@
-use std::{str::FromStr, vec};
+use std::{str::FromStr, sync::Arc, vec};
 
 use log::debug;
 use rustc_hash::FxBuildHasher;
@@ -20,7 +20,7 @@ use crate::{
 pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
-    diagnostics_report_map: RwLock<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+    diagnostics_report_map: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
 }
 
@@ -29,7 +29,7 @@ impl WorkspaceWorker {
         Self {
             root_uri,
             server_linter: RwLock::new(None),
-            diagnostics_report_map: RwLock::new(ConcurrentHashMap::default()),
+            diagnostics_report_map: Arc::new(ConcurrentHashMap::default()),
             options: Mutex::new(Options::default()),
         }
     }
@@ -54,8 +54,8 @@ impl WorkspaceWorker {
         self.server_linter.read().await.is_none()
     }
 
-    pub async fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics_report_map.read().await.pin().remove(&uri.to_string());
+    pub fn remove_diagnostics(&self, uri: &Uri) {
+        self.diagnostics_report_map.pin().remove(&uri.to_string());
     }
 
     async fn refresh_server_linter(&self) {
@@ -85,7 +85,7 @@ impl WorkspaceWorker {
         let diagnostics = self.lint_file_internal(uri, content).await;
 
         if let Some(diagnostics) = &diagnostics {
-            self.update_diagnostics(uri, diagnostics).await;
+            self.update_diagnostics(uri, diagnostics);
         }
 
         diagnostics
@@ -103,17 +103,13 @@ impl WorkspaceWorker {
         server_linter.run_single(uri, content)
     }
 
-    async fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
-        self.diagnostics_report_map
-            .read()
-            .await
-            .pin()
-            .insert(uri.to_string(), diagnostics.to_owned());
+    fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
+        self.diagnostics_report_map.pin().insert(uri.to_string(), diagnostics.to_owned());
     }
 
     async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
         let diagnostics_map = ConcurrentHashMap::with_capacity_and_hasher(
-            self.diagnostics_report_map.read().await.len(),
+            self.diagnostics_report_map.len(),
             FxBuildHasher,
         );
         let server_linter = self.server_linter.read().await;
@@ -121,22 +117,22 @@ impl WorkspaceWorker {
             debug!("no server_linter initialized in the worker");
             return diagnostics_map;
         };
-        for uri in self.diagnostics_report_map.read().await.pin().keys() {
+
+        for uri in self.diagnostics_report_map.pin_owned().keys() {
             if let Some(diagnostics) = server_linter.run_single(&Uri::from_str(uri).unwrap(), None)
             {
+                self.diagnostics_report_map.pin().insert(uri.clone(), diagnostics.clone());
                 diagnostics_map.pin().insert(uri.clone(), diagnostics);
+            } else {
+                self.diagnostics_report_map.pin().remove(uri);
             }
         }
-
-        *self.diagnostics_report_map.write().await = diagnostics_map.clone();
 
         diagnostics_map
     }
 
-    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
+    pub fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
         self.diagnostics_report_map
-            .read()
-            .await
             .pin()
             .keys()
             .map(|uri| (uri.clone(), vec![]))
@@ -149,8 +145,7 @@ impl WorkspaceWorker {
         range: &Range,
         is_source_fix_all_oxc: bool,
     ) -> Vec<CodeActionOrCommand> {
-        let report_map = self.diagnostics_report_map.read().await;
-        let report_map_ref = report_map.pin_owned();
+        let report_map_ref = self.diagnostics_report_map.pin_owned();
         let value = match report_map_ref.get(&uri.to_string()) {
             Some(value) => value,
             // code actions / commands can be requested without opening the file
@@ -190,8 +185,7 @@ impl WorkspaceWorker {
     }
 
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let report_map = self.diagnostics_report_map.read().await;
-        let report_map_ref = report_map.pin_owned();
+        let report_map_ref = self.diagnostics_report_map.pin_owned();
         let value = match report_map_ref.get(&uri.to_string()) {
             Some(value) => value,
             // code actions / commands can be requested without opening the file

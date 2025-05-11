@@ -349,7 +349,7 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_diagnostics(&params.text_document.uri);
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -448,7 +448,7 @@ impl Backend {
     async fn clear_all_diagnostics(&self) {
         let mut cleared_diagnostics = vec![];
         for worker in self.workspace_workers.lock().await.iter() {
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
         }
         self.publish_all_diagnostics(&cleared_diagnostics).await;
     }
