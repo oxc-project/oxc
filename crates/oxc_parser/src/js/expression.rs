@@ -290,9 +290,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let token = self.cur_token();
         let src = self.cur_src();
-        let value = match token.kind {
+        let value = match token.kind() {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, token.kind, token.has_separator())
+                parse_int(src, token.kind(), token.has_separator())
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src, token.has_separator())
@@ -303,7 +303,7 @@ impl<'a> ParserImpl<'a> {
             self.set_fatal_error(diagnostics::invalid_number(err, token.span()));
             0.0 // Dummy value
         });
-        let base = match token.kind {
+        let base = match token.kind() {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -334,7 +334,7 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let _value = parse_big_int(src, token.kind, token.has_separator())
+        let _value = parse_big_int(src, token.kind(), token.has_separator())
             .map_err(|err| diagnostics::invalid_number(err, token.span()));
         self.bump_any();
         self.ast.big_int_literal(self.end_span(span), raw, base)
@@ -346,10 +346,10 @@ impl<'a> ParserImpl<'a> {
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
         }
-        let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
+        let pattern_start = self.cur_token().start() + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
-        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
+        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end() as usize];
         let raw = self.cur_src();
         self.bump_any();
 
@@ -406,7 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
-        let lone_surrogates = self.cur_token().lone_surrogates;
+        let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -547,13 +547,13 @@ impl<'a> ParserImpl<'a> {
         // Also replace `\r` with `\n` in `raw`.
         // If contains `\r`, then `escaped` must be `true` (because `\r` needs unescaping),
         // so we can skip searching for `\r` in common case where contains no escapes.
-        let (cooked, lone_surrogates) = if self.cur_token().escaped {
+        let (cooked, lone_surrogates) = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
             let cooked = self.cur_template_string().map(Atom::from);
             if cooked.is_some() && raw.contains('\r') {
                 raw = self.ast.atom(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
             }
-            (cooked, self.cur_token().lone_surrogates)
+            (cooked, self.cur_token().lone_surrogates())
         } else {
             (Some(raw), false)
         };
@@ -774,7 +774,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if !question_dot {
-                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line && self.is_ts {
+                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && self.is_ts {
                     self.bump_any();
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
@@ -1021,7 +1021,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher();
         // ++ -- postfix update expressions
-        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line {
+        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(self.cur_kind());
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
@@ -1131,7 +1131,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
-                if self.cur_token().is_on_new_line {
+                if self.cur_token().is_on_new_line() {
                     break;
                 }
                 self.bump_any();
@@ -1396,7 +1396,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Await) {
             let peek_token = self.peek_token();
             // Allow arrow expression `await => {}`
-            if peek_token.kind == Kind::Arrow {
+            if peek_token.kind() == Kind::Arrow {
                 return false;
             }
             if self.ctx.has_await() {
@@ -1405,13 +1405,13 @@ impl<'a> ParserImpl<'a> {
             // The following expressions are ambiguous
             // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u, await ``, await of []
             if matches!(
-                peek_token.kind,
+                peek_token.kind(),
                 Kind::Of | Kind::LParen | Kind::LBrack | Kind::Slash | Kind::RegExp
             ) {
                 return false;
             }
 
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
         }
         false
     }
@@ -1420,13 +1420,13 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Yield) {
             let peek_token = self.peek_token();
             // Allow arrow expression `yield => {}`
-            if peek_token.kind == Kind::Arrow {
+            if peek_token.kind() == Kind::Arrow {
                 return false;
             }
             if self.ctx.has_yield() {
                 return true;
             }
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
         }
         false
     }
