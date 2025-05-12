@@ -326,7 +326,7 @@ impl ESTree for MethodDefinitionKey<'_, '_> {
     }
 }
 
-/// Serializer for `ArrowFunctionExpression`'s `body` field.
+/// Serializer for `body` field of `ArrowFunctionExpression`.
 ///
 /// Serialize as either an expression (if `expression` property is set),
 /// or a `BlockStatement` (if it's not).
@@ -350,7 +350,7 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
     }
 }
 
-/// Serializer for `AssignmentTargetPropertyIdentifier`'s `init` field
+/// Serializer for `init` field of `AssignmentTargetPropertyIdentifier`
 /// (which is renamed to `value` in ESTree AST).
 #[ast_meta]
 #[estree(

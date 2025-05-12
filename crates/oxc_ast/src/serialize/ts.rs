@@ -27,7 +27,7 @@ impl ESTree for TSEnumMemberComputed<'_, '_> {
 
 /// Serializer for `directive` field of `ExpressionStatement`.
 ///
-/// This field is always `null`, and only appears in the TS AST, not JS ESTree.
+/// This field is always `null`, and only appears in the TS-ESTree AST, not JS ESTree.
 #[ast_meta]
 #[estree(ts_type = "string | null", raw_deser = "null")]
 #[ts]
