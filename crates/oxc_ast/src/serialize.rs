@@ -746,9 +746,9 @@ impl ESTree for FormalParameterConverter<'_, '_> {
         params
     "
 )]
-pub struct FunctionFormalParameters<'a, 'b>(pub &'b Function<'a>);
+pub struct FunctionParams<'a, 'b>(pub &'b Function<'a>);
 
-impl ESTree for FunctionFormalParameters<'_, '_> {
+impl ESTree for FunctionParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
 
@@ -1469,11 +1469,9 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
         params
     "
 )]
-pub struct TSCallSignatureDeclarationFormalParameters<'a, 'b>(
-    pub &'b TSCallSignatureDeclaration<'a>,
-);
+pub struct TSCallSignatureDeclarationParams<'a, 'b>(pub &'b TSCallSignatureDeclaration<'a>);
 
-impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
+impl ESTree for TSCallSignatureDeclarationParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let v = self.0;
         serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
@@ -1493,9 +1491,9 @@ impl ESTree for TSCallSignatureDeclarationFormalParameters<'_, '_> {
         params
     "
 )]
-pub struct TSMethodSignatureFormalParameters<'a, 'b>(pub &'b TSMethodSignature<'a>);
+pub struct TSMethodSignatureParams<'a, 'b>(pub &'b TSMethodSignature<'a>);
 
-impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
+impl ESTree for TSMethodSignatureParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let v = self.0;
         serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
@@ -1515,9 +1513,9 @@ impl ESTree for TSMethodSignatureFormalParameters<'_, '_> {
         params
     "
 )]
-pub struct TSFunctionTypeFormalParameters<'a, 'b>(pub &'b TSFunctionType<'a>);
+pub struct TSFunctionTypeParams<'a, 'b>(pub &'b TSFunctionType<'a>);
 
-impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
+impl ESTree for TSFunctionTypeParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let v = self.0;
         serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
@@ -1525,9 +1523,9 @@ impl ESTree for TSFunctionTypeFormalParameters<'_, '_> {
 }
 
 /// Shared serialization logic used by:
-/// - `TSCallSignatureDeclarationFormalParameters`
-/// - `TSMethodSignatureFormalParameters`
-/// - `TSFunctionTypeFormalParameters`
+/// - `TSCallSignatureDeclarationParams`
+/// - `TSMethodSignatureParams`
+/// - `TSFunctionTypeParams`
 fn serialize_formal_params_with_this_param<'a, S: Serializer>(
     this_param: Option<&TSThisParameter<'a>>,
     params: &FormalParameters<'a>,

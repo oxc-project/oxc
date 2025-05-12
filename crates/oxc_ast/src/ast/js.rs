@@ -1727,7 +1727,7 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    #[estree(via = FunctionFormalParameters)]
+    #[estree(via = FunctionParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
