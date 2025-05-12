@@ -209,7 +209,7 @@ impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
 #[estree(
     ts_type = "TSMappedTypeModifierOperator | false",
     raw_deser = "
-        let optional = DESER[Option<TSMappedTypeModifierOperator>](POS_OFFSET.optional) || false;
+        let optional = DESER[Option<TSMappedTypeModifierOperator>](POS_OFFSET.optional);
         if (optional === null) optional = false;
         optional
     "
