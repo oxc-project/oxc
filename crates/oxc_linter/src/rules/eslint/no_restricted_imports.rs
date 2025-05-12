@@ -1276,47 +1276,43 @@ fn get_diagnostic_from_import_name_result_pattern(
             diagnostic_pattern(span, pattern.message.clone(), source)
         }
         ImportNameResult::DefaultDisallowed => {
-            let diagnostic = match &pattern.import_names {
-                Some(import_names) => diagnostic_pattern_and_everything(
+            if let Some(import_names) = &pattern.import_names {
+                return diagnostic_pattern_and_everything(
                     span,
                     pattern.message.clone(),
                     import_names.join(", ").as_str(),
                     source,
-                ),
-                _ => match &pattern.import_name_pattern {
-                    Some(import_name_patterns) => {
-                        diagnostic_pattern_and_everything_with_regex_import_name(
-                            span,
-                            pattern.message.clone(),
-                            import_name_patterns,
-                            source,
-                        )
-                    }
-                    _ => match &pattern.allow_import_name_pattern {
-                        Some(allow_import_name_pattern) => {
-                            diagnostic_everything_with_allowed_import_name_pattern(
-                                span,
-                                pattern.message.clone(),
-                                source,
-                                allow_import_name_pattern.as_str(),
-                            )
-                        }
-                        _ => match &pattern.allow_import_names {
-                            Some(allowed_import_names) => {
-                                diagnostic_everything_with_allowed_import_name(
-                                    span,
-                                    pattern.message.clone(),
-                                    source,
-                                    allowed_import_names.join(", ").as_str(),
-                                )
-                            }
-                            _ => diagnostic_pattern(span, pattern.message.clone(), source),
-                        },
-                    },
-                },
-            };
+                );
+            }
 
-            diagnostic
+            if let Some(import_name_patterns) = &pattern.import_name_pattern {
+                return diagnostic_pattern_and_everything_with_regex_import_name(
+                    span,
+                    pattern.message.clone(),
+                    import_name_patterns,
+                    source,
+                );
+            }
+
+            if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                return diagnostic_everything_with_allowed_import_name_pattern(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                );
+            }
+
+            if let Some(allowed_import_names) = &pattern.allow_import_names {
+                return diagnostic_everything_with_allowed_import_name(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                );
+            }
+
+            diagnostic_pattern(span, pattern.message.clone(), source)
         }
         ImportNameResult::NameDisallowed(name_span) => match &pattern.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
