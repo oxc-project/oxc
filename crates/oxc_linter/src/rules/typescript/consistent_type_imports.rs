@@ -103,7 +103,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentTypeImports,
     typescript,
-    nursery,
+    style,
     conditional_fix
 );
 
