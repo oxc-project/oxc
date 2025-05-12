@@ -72,12 +72,8 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             return None;
         }
 
-        // Skip types in `oxc_regular_expression`, `oxc_syntax`, and `napi/parser` crates.
-        // They don't appear in ESTree AST.
-        if matches!(
-            struct_def.file(schema).krate(),
-            "oxc_regular_expression" | "oxc_syntax" | "napi/parser"
-        ) {
+        // Skip types in `oxc_syntax` and `napi/parser` crates. They don't appear in ESTree AST.
+        if matches!(struct_def.file(schema).krate(), "oxc_syntax" | "napi/parser") {
             return None;
         }
 
