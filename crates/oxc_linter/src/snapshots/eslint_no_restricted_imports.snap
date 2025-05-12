@@ -787,6 +787,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: foo is forbidden, use bar instead
 
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import {x} from "foo"; import {x2} from "./index.mjs"; import {x3} from "index";
+   · ──────────────────────
+   ╰────
+  help: foo is forbidden, use bar instead
+
+  ⚠ eslint(no-restricted-imports): './index.mjs' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:24]
+ 1 │ import {x} from "foo"; import {x2} from "./index.mjs"; import {x3} from "index";
+   ·                        ───────────────────────────────
+   ╰────
+  help: foo is forbidden, use bar instead
+
+  ⚠ eslint(no-restricted-imports): 'index' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:56]
+ 1 │ import {x} from "foo"; import {x2} from "./index.mjs"; import {x3} from "index";
+   ·                                                        ─────────────────────────
+   ╰────
+  help: foo is forbidden, use bar instead
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';

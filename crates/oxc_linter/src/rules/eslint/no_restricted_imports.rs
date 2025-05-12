@@ -1,4 +1,6 @@
-use ignore::gitignore::GitignoreBuilder;
+use std::borrow::Cow;
+
+use globset::GlobBuilder;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
@@ -10,7 +12,6 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;
-use std::borrow::Cow;
 
 use crate::{
     ModuleRecord,
@@ -856,30 +857,37 @@ impl RestrictedPattern {
             return GlobResult::None;
         };
 
-        let mut builder = GitignoreBuilder::new("");
-        // returns always OK, will be fixed in the next version
-        let _ = builder.case_insensitive(!self.case_sensitive.unwrap_or(false));
+        let case_insensitive = !self.case_sensitive.unwrap_or(false);
 
-        for group in groups {
-            // returns always OK
-            let _ = builder.add_line(None, group.as_str());
+        let mut decision = GlobResult::None;
+
+        for raw_pat in groups {
+            let (negated, pat) = match raw_pat.strip_prefix('!') {
+                Some(rest) => (true, rest),
+                None => (false, raw_pat.as_str()),
+            };
+
+            // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03e830892e787686917509c17860456db1/crates/ignore/src/gitignore.rs#L436-L516
+            let mut pat = pat.to_string();
+
+            if !pat.starts_with('/') && !pat.chars().any(|c| c == '/') && (!pat.starts_with("**")) {
+                pat = format!("**/{pat}");
+            }
+
+            let Ok(glob) = GlobBuilder::new(&pat)
+                .case_insensitive(case_insensitive)
+                .build()
+                .map(|g| g.compile_matcher())
+            else {
+                continue;
+            };
+
+            if glob.is_match(name) {
+                decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
+            }
         }
 
-        let Ok(gitignore) = builder.build() else {
-            return GlobResult::None;
-        };
-
-        let matched = gitignore.matched(name, false);
-
-        if matched.is_whitelist() {
-            return GlobResult::Whitelist;
-        }
-
-        if matched.is_none() {
-            return GlobResult::None;
-        }
-
-        GlobResult::Found
+        decision
     }
 
     fn get_regex_result(&self, name: &str) -> bool {
@@ -1761,6 +1769,12 @@ fn test() {
                     "importNamePattern": "^Foo"
                 }]
             }])),
+        ),
+        (
+            r#"import a from "./index.mjs";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["[@a-z]*", "!.*/**"], "message": "foo is forbidden, use bar instead" }] }]),
+            ),
         ),
     ];
 
@@ -2983,6 +2997,12 @@ fn test() {
                     "caseSensitive": false
                 }]
             }])),
+        ),
+        (
+            r#"import {x} from "foo"; import {x2} from "./index.mjs"; import {x3} from "index";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["[@a-z]*", "!.*/**","./index.mjs"], "message": "foo is forbidden, use bar instead" }] }]),
+            ),
         ),
         // (
         //     "
