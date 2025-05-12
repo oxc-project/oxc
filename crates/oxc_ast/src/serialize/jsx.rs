@@ -47,7 +47,7 @@ pub struct JSXOpeningElementSelfClosing<'a, 'b>(#[expect(dead_code)] pub &'b JSX
 
 impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
     fn serialize<S: Serializer>(&self, _serializer: S) {
-        unreachable!()
+        unreachable!();
     }
 }
 
