@@ -159,7 +159,7 @@ oxc_resolver = "9"
 oxc_sourcemap = "3"
 
 #
-allocator-api2 = "0.2.21"
+allocator-api2 = "=0.2.21"
 base64 = "0.22.1"
 bitflags = "2.9.0"
 bpaf = "0.9.19"
@@ -183,27 +183,27 @@ flate2 = "1.1.1"
 futures = "0.3.31"
 globset = "0.4.16"
 handlebars = "6.3.2"
-hashbrown = { version = "0.15.2", default-features = false }
+hashbrown = { version = "0.15.3", default-features = false }
 humansize = "2.1.3"
 ignore = "0.4.23"
-insta = "1.42.2"
+insta = "1.43.1"
 itertools = "0.14.0"
 itoa = "1.0.15"
-javascript-globals = "1.0.0"
+javascript-globals = "1.1.0"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy-regex = "3.4.1"
 lazy_static = "1.5.0"
 log = "0.4.27"
-markdown = "1.0.0-alpha.23"
+markdown = "1.0.0"
 memchr = "2.7.4"
 miette = { package = "oxc-miette", version = "2.2.1", features = ["fancy-no-syscall"] }
-mimalloc-safe = "0.1.50"
+mimalloc-safe = "0.1.52"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 papaya = "0.2.1"
-petgraph = { version = "0.8.0", default-features = false }
+petgraph = { version = "0.8.1", default-features = false }
 phf = "0.11.3"
 pico-args = "0.5.0"
 prettyplease = "0.2.32"
@@ -214,18 +214,18 @@ rust-lapper = "1.1.0"
 ryu-js = "1.0.2"
 saphyr = "0.0.4"
 schemars = "0.8.22"
-self_cell = "1.1.0"
+self_cell = "1.2.0"
 seq-macro = "0.3.6"
 sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.7.0"
 similar-asserts = "1.7.0"
 smallvec = "1.15.0"
-tempfile = "3.19.1"
-tokio = { version = "1.44.2", default-features = false }
+tempfile = "3.20.0"
+tokio = { version = "1.45.0", default-features = false }
 tower-lsp-server = "0.21.1"
 tracing-subscriber = "0.3.19"
-ureq = { version = "3.0.10", default-features = false }
+ureq = { version = "3.0.11", default-features = false }
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
