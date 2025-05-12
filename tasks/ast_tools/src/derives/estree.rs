@@ -2,7 +2,6 @@
 
 use std::{borrow::Cow, fs};
 
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashMap;
@@ -11,7 +10,7 @@ use crate::{
     Result,
     codegen::{Codegen, DeriveId},
     schema::{Def, EnumDef, FieldDef, File, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::create_safe_ident,
+    utils::{create_safe_ident, write_it},
 };
 
 use super::{
@@ -251,24 +250,111 @@ fn parse_js_only_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
 
 /// Initialize `estree.field_order` on all structs.
 fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
+    fn add_field_names(struct_def: &StructDef, field_names: &mut Vec<String>, schema: &Schema) {
+        for field in &struct_def.fields {
+            if matches!(field.name(), "type" | "span") {
+                continue;
+            }
+
+            if should_skip_field(field, schema) {
+                continue;
+            }
+            if should_flatten_field(field, schema) {
+                let field_type = field.type_def(schema);
+                if let TypeDef::Struct(field_struct_def) = field_type {
+                    add_field_names(field_struct_def, field_names, schema);
+                } else {
+                    field_names.push(format!("{} (flattened)", field.camel_name()));
+                }
+                continue;
+            }
+
+            let name = field.estree.rename.clone().unwrap_or_else(|| field.camel_name());
+            field_names.push(name);
+        }
+
+        for (name, _) in &struct_def.estree.add_fields {
+            field_names.push(name.clone());
+        }
+    }
+
+    let mut field_orders = FxHashMap::<String, Vec<Vec<String>>>::default();
+    for type_def in &schema.types {
+        let TypeDef::Struct(struct_def) = type_def else { continue };
+
+        if struct_def.file(schema).krate() != "oxc_ast"
+            || matches!(struct_def.name(), "RegExpFlags" | "Comment")
+        {
+            continue;
+        }
+
+        let mut field_names = vec![];
+        add_field_names(struct_def, &mut field_names, schema);
+
+        let mut type_names = vec![];
+        for field in &struct_def.fields {
+            if field.name() != "type" {
+                continue;
+            }
+
+            let type_enum = field.type_def(schema).as_enum().unwrap();
+            for variant in &type_enum.variants {
+                assert!(variant.is_fieldless());
+                let variant_name =
+                    variant.estree.rename.clone().unwrap_or_else(|| variant.name.clone());
+                type_names.push(variant_name);
+            }
+
+            break;
+        }
+
+        if type_names.is_empty() {
+            let struct_name =
+                struct_def.estree.rename.clone().unwrap_or_else(|| struct_def.name().to_string());
+            type_names.push(struct_name);
+        }
+
+        for type_name in type_names {
+            let entry = field_orders.entry(type_name).or_default();
+            entry.push(field_names.clone());
+        }
+    }
+
+    let mut field_orders = field_orders.into_iter().collect::<Vec<_>>();
+    field_orders.sort_unstable_by(|(name1, _), (name2, _)| name1.cmp(name2));
+
+    let mut json = "{\n".to_string();
+    for (i, (type_name, field_names_vecs)) in field_orders.iter().enumerate() {
+        write_it!(json, "  \"{type_name}\": [\n");
+
+        for (i, field_names) in field_names_vecs.iter().enumerate() {
+            write_it!(json, "    [");
+            for (i, field_name) in field_names.iter().enumerate() {
+                if i > 0 {
+                    write_it!(json, ", ");
+                }
+                write_it!(json, r#""{field_name}""#);
+            }
+
+            if i < field_names_vecs.len() - 1 {
+                json.push_str("],\n");
+            } else {
+                json.push_str("]\n");
+            }
+        }
+
+        if i < field_orders.len() - 1 {
+            json.push_str("  ],\n");
+        } else {
+            json.push_str("  ]\n");
+        }
+    }
+    json.push_str("}\n");
+    fs::write("estree_field_orders.json", json.as_bytes()).unwrap();
+
     // Note: Outside the loop to avoid allocating temporary `Vec`s on each turn of the loop.
     // Instead, reuse this `Vec` over and over.
     let mut field_indices_temp = vec![];
-
-    // Mapping from type name to field names, in ESTree order
-    // (both type name and field names are their names in ESTree AST, not Rust AST).
-    // Some ESTree types have multiple Rust types that map to them e.g. `Literal`, `Identifier`.
-    // In that case, include the field names of all variants.
-    // e.g. Field names for `Literal` include both `regex` and `bigint`.
-    let mut field_orders = FxHashMap::<String, Vec<String>>::default();
-    let mut record_fields = |struct_name, field_names: &[String]| {
-        let target_field_names = field_orders.entry(struct_name).or_default();
-        for field_name in field_names {
-            if !target_field_names.contains(field_name) {
-                target_field_names.push(field_name.clone());
-            }
-        }
-    };
 
     for type_id in schema.types.indices() {
         let Some(struct_def) = schema.types[type_id].as_struct() else { continue };
@@ -346,6 +432,7 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
         }
 
         // Record field names
+        /*
         let struct_def = schema.struct_def(type_id);
         if struct_def.file(schema).krate() == "oxc_ast"
             && !matches!(struct_def.name(), "RegExpFlags" | "Comment")
@@ -405,9 +492,11 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
                 record_fields(struct_name, &fields_names);
             }
         }
+        */
     }
 
     // Print field orders to stdout as JSON
+    /*
     let mut field_orders = field_orders.into_iter().collect::<Vec<_>>();
     field_orders.sort_unstable_by(|(name1, _), (name2, _)| name1.cmp(name2));
     let field_orders_str = field_orders
@@ -421,6 +510,7 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
         .join(",\n");
     let field_orders_str = format!("[\n{field_orders_str}\n]\n");
     fs::write("estree_field_orders.json", field_orders_str.as_bytes()).unwrap();
+    */
 }
 
 /// Generate implementation of `ESTree` for a struct or enum.
