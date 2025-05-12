@@ -610,11 +610,11 @@ impl ESTree for ElisionConverter<'_> {
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
                 argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
                 /* IF_TS */
+                decorators: [],
+                optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
                 typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<BindingRestElement>.argument.type_annotation
                 ),
-                optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
-                decorators: [],
                 value: null,
                 /* END_IF_TS */
             });
@@ -649,9 +649,9 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
         state.serialize_field("argument", &rest.argument.kind);
-        state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
-        state.serialize_ts_field("optional", &rest.argument.optional);
         state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("optional", &rest.argument.optional);
+        state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("value", &Null(()));
         state.end();
     }

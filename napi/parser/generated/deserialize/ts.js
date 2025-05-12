@@ -858,11 +858,11 @@ function deserializeFormalParameters(pos) {
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
       argument: deserializeBindingPatternKind(pos + 8),
+      decorators: [],
+      optional: deserializeBool(pos + 32),
       typeAnnotation: deserializeOptionBoxTSTypeAnnotation(
         pos + 24,
       ),
-      optional: deserializeBool(pos + 32),
-      decorators: [],
       value: null,
     });
   }
