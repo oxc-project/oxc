@@ -65,8 +65,9 @@ use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow}
 #[allow(missing_debug_implementations)]
 pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
-    cap: usize,
     a: &'a Bump,
+    cap: usize,
+    pub(super) len: usize,
 }
 
 impl<'a, T> RawVec<'a, T> {
@@ -74,7 +75,7 @@ impl<'a, T> RawVec<'a, T> {
     /// the returned RawVec.
     pub fn new_in(a: &'a Bump) -> Self {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
-        RawVec { ptr: NonNull::dangling(), cap: 0, a }
+        RawVec { ptr: NonNull::dangling(), a, cap: 0, len: 0 }
     }
 
     /// Like `with_capacity` but parameterized over the choice of
@@ -111,7 +112,7 @@ impl<'a, T> RawVec<'a, T> {
                 }
             };
 
-            RawVec { ptr, cap, a }
+            RawVec { ptr, cap, a, len: 0 }
         }
     }
 }
@@ -124,8 +125,8 @@ impl<'a, T> RawVec<'a, T> {
     /// The ptr must be allocated (via the given allocator `a`), and with the given capacity. The
     /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
     /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, cap: usize, a: &'a Bump) -> Self {
-        RawVec { ptr: NonNull::new_unchecked(ptr), cap, a }
+    pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
+        RawVec { ptr: NonNull::new_unchecked(ptr), a, cap, len }
     }
 }
 
