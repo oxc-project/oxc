@@ -27,7 +27,6 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     has_jsx_fragment: bool,
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
-    remove_class_fields_without_initializer: bool,
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
@@ -53,8 +52,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
-            remove_class_fields_without_initializer: !options.allow_declare_fields
-                || options.remove_class_fields_without_initializer,
         }
     }
 }
@@ -230,11 +227,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                     && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
-                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
-                    && !prop.declare
-                    && !(self.remove_class_fields_without_initializer
-                        && prop.value.is_none()
-                        && prop.decorators.is_empty())
+                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition) && !prop.declare
             }
             ClassElement::AccessorProperty(prop) => {
                 matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
@@ -301,6 +294,8 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         param.accessibility = None;
+        param.readonly = false;
+        param.r#override = false;
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -322,57 +317,9 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         def: &mut MethodDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        // Collects parameter properties so that we can add an assignment
-        // for each of them in the constructor body.
-        if def.kind == MethodDefinitionKind::Constructor {
-            for param in def.value.params.items.as_mut_slice() {
-                if param.has_modifier() {
-                    if let Some(id) = param.pattern.get_binding_identifier() {
-                        self.assignments.push(Assignment {
-                            span: id.span,
-                            name: id.name,
-                            symbol_id: id.symbol_id(),
-                        });
-                    }
-                }
-
-                param.readonly = false;
-                param.accessibility = None;
-                param.r#override = false;
-            }
-        }
-
         def.accessibility = None;
         def.optional = false;
         def.r#override = false;
-    }
-
-    fn exit_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if def.kind == MethodDefinitionKind::Constructor && !self.assignments.is_empty() {
-            // When the constructor doesn't have a super call,
-            // we simply add assignments to the bottom of the function body
-            if self.has_super_call {
-                self.assignments.clear();
-            } else {
-                def.value
-                    .body
-                    .get_or_insert_with(|| {
-                        ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec())
-                    })
-                    .statements
-                    .splice(
-                        0..0,
-                        self.assignments
-                            .drain(..)
-                            .map(|assignment| assignment.create_this_property_assignment(ctx)),
-                    );
-            }
-            self.has_super_call = false;
-        }
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {

@@ -76,12 +76,12 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
-        let mut type_annotations = None;
+        let mut type_annotation = None;
         let mut value = None;
 
         if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                type_annotations = property.type_annotation.clone_in(self.ast.allocator);
+                type_annotation = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
@@ -101,10 +101,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.infer_type_from_expression(expr)
                 };
 
-                type_annotations = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
+                type_annotation = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
             }
 
-            if type_annotations.is_none() && value.is_none() {
+            if type_annotation.is_none() && value.is_none() {
                 self.error(property_must_have_explicit_type(property.key.span()));
             }
         }
@@ -114,6 +114,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.r#type,
             self.ast.vec(),
             property.key.clone_in(self.ast.allocator),
+            type_annotation,
             value,
             property.computed,
             property.r#static,
@@ -122,7 +123,6 @@ impl<'a> IsolatedDeclarations<'a> {
             property.optional,
             property.definite,
             property.readonly,
-            type_annotations,
             Self::transform_accessibility(property.accessibility),
         )
     }
@@ -178,6 +178,7 @@ impl<'a> IsolatedDeclarations<'a> {
             r#type,
             self.ast.vec(),
             key,
+            NONE,
             None,
             false,
             r#static,
@@ -186,7 +187,6 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             false,
-            NONE,
             accessibility,
         )
     }
@@ -206,6 +206,7 @@ impl<'a> IsolatedDeclarations<'a> {
             PropertyDefinitionType::PropertyDefinition,
             self.ast.vec(),
             key,
+            type_annotation,
             None,
             false,
             false,
@@ -214,7 +215,6 @@ impl<'a> IsolatedDeclarations<'a> {
             param.pattern.optional,
             false,
             param.readonly,
-            type_annotation,
             Self::transform_accessibility(param.accessibility),
         ))
     }
@@ -512,12 +512,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         self.ast.vec(),
                         property.key.clone_in(self.ast.allocator),
+                        type_annotation,
                         None,
                         property.computed,
                         property.r#static,
                         property.r#override,
                         property.definite,
-                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);
@@ -540,8 +540,8 @@ impl<'a> IsolatedDeclarations<'a> {
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(
-                SPAN, r#type, decorators, ident, None, false, false, false, false, false, false,
-                false, NONE, None,
+                SPAN, r#type, decorators, ident, NONE, None, false, false, false, false, false,
+                false, false, None,
             );
 
             elements.insert(0, element);

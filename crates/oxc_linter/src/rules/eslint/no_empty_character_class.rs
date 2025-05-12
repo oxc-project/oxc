@@ -39,14 +39,12 @@ declare_oxc_lint!(
 impl Rule for NoEmptyCharacterClass {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            let Some(pattern) = lit.regex.pattern.as_pattern() else {
+            let Some(pattern) = &lit.regex.pattern.pattern else {
                 return;
             };
 
             // Skip if the pattern doesn't contain a `[` or `]` character
-            if memchr2(b'[', b']', lit.regex.pattern.source_text(ctx.source_text()).as_bytes())
-                .is_none()
-            {
+            if memchr2(b'[', b']', lit.regex.pattern.text.as_bytes()).is_none() {
                 return;
             }
 

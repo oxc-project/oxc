@@ -80,6 +80,8 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
+rustc-hash = { workspace = true }
+
 # Only for NAPI benchmark
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

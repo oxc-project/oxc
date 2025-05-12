@@ -18,7 +18,6 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     env:
       name: ${{ inputs.name }}
@@ -32,25 +31,19 @@ jobs:
           file-url: https://unpkg.com/oxc-${{ inputs.name }}@latest/package.json
           file-name: napi/${{ inputs.name }}/package.json
 
-      - name: Set version name
+      - name: Show version
         if: steps.version.outputs.changed == 'true'
         env:
-          VERSION_NUMBER: ${{ steps.version.outputs.version }}
-          VERSION_TYPE: ${{ steps.version.outputs.version_type }}
-        run: |
-          echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_NUMBER})"
-          echo "version=${VERSION_NUMBER}" >> $GITHUB_ENV
+          version: ${{ steps.version.outputs.version }}
+        run: echo "version=${version}"
 
   build:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
-    name: Package ${{ matrix.target }}
+    name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
-      version: ${{ needs.check.outputs.version }}
       name: ${{ inputs.name }}
-    outputs:
-      version: ${{ env.version }}
     defaults:
       run:
         shell: bash
@@ -60,24 +53,68 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            build: |
+              pnpm build --target x86_64-pc-windows-msvc
+
           - os: windows-latest
             target: aarch64-pc-windows-msvc
+            build: |
+              pnpm build --target aarch64-pc-windows-msvc
+
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            build: |
+              pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            build: |
+              pnpm build --target x86_64-unknown-linux-musl -x
+
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            build: |
+              pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
+
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
+            build: |
+              pnpm build --target aarch64-unknown-linux-musl -x
+
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
+            build: |
+              pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+
           - os: macos-latest
             target: x86_64-apple-darwin
+            build: |
+              pnpm build --target x86_64-apple-darwin
+
           - os: macos-latest
             target: aarch64-apple-darwin
+            build: |
+              pnpm build --target aarch64-apple-darwin
+
           - os: ubuntu-latest
             target: wasm32-wasip1-threads
+            build: |
+              pnpm build --target wasm32-wasip1-threads
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: |
+              export CFLAGS="-fuse-ld=lld"
+              pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm build --target riscv64gc-unknown-linux-gnu
 
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -91,24 +128,12 @@ jobs:
         with:
           version: 0.13.0
 
-      - name: Build with zig cross
-        if: ${{ contains(matrix.target, 'musl') }}
-        working-directory: napi/${{ inputs.name }}
-        run: pnpm build -x --target ${{ matrix.target }}
-        env:
-          CC: clang # for mimalloc
-
-      - name: Build with napi cross
-        if: ${{ contains(matrix.target, 'gnu') }}
-        working-directory: napi/${{ inputs.name }}
-        run: pnpm build --use-napi-cross --target ${{ matrix.target }}
-        env:
-          CC: clang # for mimalloc
-
       - name: Build
-        if: ${{ !contains(matrix.target, 'gnu') && !contains(matrix.target, 'musl') }}
         working-directory: napi/${{ inputs.name }}
-        run: pnpm build --target ${{ matrix.target }}
+        run: ${{ matrix.build }}
+        shell: bash
+        env:
+          CC: clang # for mimalloc
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -117,10 +142,58 @@ jobs:
             napi/${{ inputs.name }}/*.node
             napi/${{ inputs.name }}/*.wasm
 
+  build-freebsd:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    name: Build FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - name: Build
+        id: build
+        uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d # v0.27.0
+        env:
+          DEBUG: napi:*
+          RUSTUP_IO_THREADS: 1
+        with:
+          operating_system: freebsd
+          version: "14.0"
+          memory: 8G
+          cpu_count: 3
+          environment_variables: "DEBUG RUSTUP_IO_THREADS"
+          shell: bash
+          run: |
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake
+            curl https://sh.rustup.rs -sSf --output rustup.sh
+            sh rustup.sh -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            echo "~~~~ rustc --version ~~~~"
+            rustc --version
+            echo "~~~~ node -v ~~~~"
+            node -v
+            pwd
+            ls -lah
+            whoami
+            env
+            cd napi/${{ inputs.name }}
+            export COREPACK_INTEGRITY_KEYS=0
+            sudo corepack enable
+            pnpm install
+            pnpm build --target x86_64-unknown-freebsd
+            rm -rf node_modules
+            rm -rf target
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bindings-freebsd
+          path: napi/${{ inputs.name }}/*.node
+          if-no-files-found: error
+
   publish:
     name: Publish NAPI
     needs:
       - build
+      - build-freebsd
     runs-on: ubuntu-latest
     permissions:
       id-token: write # for `pnpm publish --provenance`

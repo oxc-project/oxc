@@ -34,7 +34,7 @@ impl<'a> Symbol<'_, 'a> {
             SymbolFlags::TypeAlias.union(SymbolFlags::TypeParameter).union(SymbolFlags::Interface);
         const ENUM: SymbolFlags = SymbolFlags::Enum.union(SymbolFlags::EnumMember);
         const NAMESPACE_LIKE: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::ValueModule);
+            SymbolFlags::NamespaceModule.union(SymbolFlags::ValueModule);
 
         !self.flags().intersects(
             IMPORT.union(TYPE).union(ENUM).union(NAMESPACE_LIKE).union(SymbolFlags::CatchVariable),
@@ -607,9 +607,15 @@ impl<'a> Symbol<'_, 'a> {
                     }
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
-                    if matches!(parent, AstKind::CallExpression(_)) {
+                    if matches!(
+                        parent,
+                        AstKind::CallExpression(_)
+                            | AstKind::AwaitExpression(_)
+                            | AstKind::YieldExpression(_)
+                    ) {
                         continue;
                     }
+
                     debug_assert!(
                         !seq.expressions.is_empty(),
                         "empty SequenceExpressions should be a parse error."

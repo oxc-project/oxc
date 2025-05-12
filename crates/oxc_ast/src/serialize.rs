@@ -5,20 +5,22 @@ use cow_utils::CowUtils;
 use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, FlatStructSerializer, JsonSafeString,
-    LoneSurrogatesString, PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer,
-    StructSerializer, ser::AppendToConcat,
+    CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
+    Concat2, ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString,
+    PrettyFixesJSSerializer, PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer,
+    SequenceSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
 /// Main serialization methods for `Program`.
 ///
-/// Note: 4 separate methods for the different serialization options, rather than 1 method
-/// with behavior controlled by flags (e.g. `fn to_estree_json(&self, with_ts: bool, pretty: bool`)
+/// Note: 8 separate methods for the different serialization options, rather than 1 method
+/// with behavior controlled by flags
+/// (e.g. `fn to_estree_json(&self, with_ts: bool, pretty: bool, fixes: bool)`)
 /// to avoid bloating binary size.
 ///
 /// Most consumers (and Oxc crates) will use only 1 of these methods, so we don't want to needlessly
-/// compile all 4 serializers when only 1 is used.
+/// compile all 8 serializers when only 1 is used.
 ///
 /// Initial capacity for serializer's buffer is an estimate based on our benchmark fixtures
 /// of ratio of source text size to JSON size.
@@ -69,6 +71,34 @@ impl Program<'_> {
         let mut serializer = PrettyJSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
+    }
+
+    /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes.
+    pub fn to_estree_ts_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let serializer = CompactFixesTSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes.
+    pub fn to_estree_js_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let serializer = CompactFixesJSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with list of fixes.
+    pub fn to_pretty_estree_ts_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let serializer = PrettyFixesTSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with list of fixes.
+    pub fn to_pretty_estree_js_json_with_fixes(&self) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let serializer = PrettyFixesJSSerializer::with_capacity(capacity);
+        serializer.serialize_with_fixes(self)
     }
 }
 
@@ -141,10 +171,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("start", &span_start);
         state.serialize_field("end", &program.span.end);
-        state.serialize_field(
-            "body",
-            &AppendToConcat { array: &program.directives, after: &program.body },
-        );
+        state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
         state.end();
@@ -409,7 +436,9 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        // Record that this node needs fixing on JS side
+        serializer.record_fix_path();
         Null(()).serialize(serializer);
     }
 }
@@ -431,18 +460,10 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
 pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        // Record that this node needs fixing on JS side
+        serializer.record_fix_path();
         Null(()).serialize(serializer);
-    }
-}
-
-#[ast_meta]
-#[estree(ts_type = "string")]
-pub struct RegExpPatternConverter<'a, 'b>(pub &'b RegExpPattern<'a>);
-
-impl ESTree for RegExpPatternConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.to_string().serialize(serializer);
     }
 }
 
@@ -1142,13 +1163,32 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 
     // Flatten `body`, and nest `id`
     if (body !== null && body.type === 'TSModuleDeclaration') {
-        id = {
-            type: 'TSQualifiedName',
-            start: body.id.start,
-            end: id.end,
-            left: body.id,
-            right: id,
-        };
+        let innerId = body.id;
+        if (innerId.type === 'Identifier') {
+            id = {
+                type: 'TSQualifiedName',
+                start: id.start,
+                end: innerId.end,
+                left: id,
+                right: innerId,
+            };
+        } else {
+            // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
+            // this module on left, and previous `left` of innermost `TSQualifiedName` on right
+            while (true) {
+                innerId.start = id.start;
+                if (innerId.left.type === 'Identifier') break;
+                innerId = innerId.left;
+            }
+            innerId.left = {
+                type: 'TSQualifiedName',
+                start: id.start,
+                end: innerId.left.end,
+                left: id,
+                right: innerId.left,
+            };
+            id = body.id;
+        }
         body = Object.hasOwn(body, 'body') ? body.body : null;
     }
 
@@ -1262,6 +1302,30 @@ pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         self.0.kind.is_global().serialize(serializer);
+    }
+}
+
+/// Serializer for `optional` field of `TSMappedType`.
+///
+/// `None` is serialized as `false`.
+#[ast_meta]
+#[estree(
+    ts_type = "TSMappedTypeModifierOperator | false",
+    raw_deser = "
+        let optional = DESER[Option<TSMappedTypeModifierOperator>](POS_OFFSET.optional) || false;
+        if (optional === null) optional = false;
+        optional
+    "
+)]
+pub struct TSMappedTypeOptional<'a, 'b>(pub &'b TSMappedType<'a>);
+
+impl ESTree for TSMappedTypeOptional<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(optional) = self.0.optional {
+            optional.serialize(serializer);
+        } else {
+            False(()).serialize(serializer);
+        }
     }
 }
 
@@ -1389,83 +1453,6 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.end();
             }
         }
-    }
-}
-
-/// Serializer for `options` field of `TSImportType`.
-///
-/// TS-ESLint parser replaces a property of `options` called `assert` with one called `with`.
-/// <https://github.com/typescript-eslint/typescript-eslint/issues/11114>
-#[ast_meta]
-#[estree(
-    ts_type = "ObjectExpression | null",
-    raw_deser = "
-        let options = DESER[Option<Box<ObjectExpression>>](POS_OFFSET.options);
-        if (options !== null && options.properties.length === 1) {
-            const prop = options.properties[0];
-            if (
-                !prop.method && !prop.shorthand && !prop.computed
-                && prop.key.type === 'Identifier' && prop.key.name === 'assert'
-            ) {
-                prop.key.name = 'with';
-            }
-        }
-        options
-    "
-)]
-pub struct TSImportTypeOptions<'a, 'b>(pub &'b TSImportType<'a>);
-
-impl ESTree for TSImportTypeOptions<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let Some(options) = &self.0.options else {
-            Null(()).serialize(serializer);
-            return;
-        };
-
-        if options.properties.len() == 1 {
-            if let ObjectPropertyKind::ObjectProperty(prop) = &options.properties[0] {
-                if let PropertyKey::StaticIdentifier(ident) = &prop.key {
-                    if !prop.method && !prop.shorthand && !prop.computed && ident.name == "assert" {
-                        let assert_prop = TSImportTypeAssertProperty { prop, key_span: ident.span };
-
-                        let mut state = serializer.serialize_struct();
-                        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
-                        state.serialize_field("start", &options.span.start);
-                        state.serialize_field("end", &options.span.end);
-                        state.serialize_field("properties", &[assert_prop]);
-                        state.end();
-                        return;
-                    }
-                }
-            }
-        }
-
-        options.serialize(serializer);
-    }
-}
-
-struct TSImportTypeAssertProperty<'a, 'b> {
-    prop: &'b ObjectProperty<'a>,
-    key_span: Span,
-}
-
-impl ESTree for TSImportTypeAssertProperty<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("Property"));
-        state.serialize_field("start", &self.prop.span.start);
-        state.serialize_field("end", &self.prop.span.end);
-        state.serialize_field("method", &false);
-        state.serialize_field("shorthand", &false);
-        state.serialize_field("computed", &false);
-        state.serialize_field(
-            "key",
-            &IdentifierName { span: self.key_span, name: Atom::from("with") },
-        );
-        state.serialize_field("value", &self.prop.value);
-        state.serialize_field("kind", "init");
-        state.serialize_field("optional", &false);
-        state.end();
     }
 }
 

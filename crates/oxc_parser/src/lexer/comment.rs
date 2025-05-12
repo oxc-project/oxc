@@ -36,7 +36,7 @@ impl<'a> Lexer<'a> {
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder
-                        .add_line_comment(self.token.start, self.source.offset_of(pos), self.source.whole());
+                        .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
                     // SAFETY: Safe to consume `\r` or `\n` as both are ASCII
                     pos = unsafe { pos.add(1) };
                     // We've found the end. Do not continue searching.
@@ -51,7 +51,7 @@ impl<'a> Lexer<'a> {
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
                             self.trivia_builder
-                                .add_line_comment(self.token.start, self.source.offset_of(pos), self.source.whole());
+                                .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
                             // Advance `pos` to after this char.
                             // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                             // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
@@ -70,19 +70,19 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
-                self.trivia_builder.add_line_comment(self.token.start, self.offset(), self.source.whole());
+                self.trivia_builder.add_line_comment(self.token.start(), self.offset(), self.source.whole());
                 return Kind::Skip;
             },
         };
 
-        self.token.is_on_new_line = true;
+        self.token.set_is_on_new_line(true);
         Kind::Skip
     }
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
         // If `is_on_new_line` is already set, go directly to faster search which only looks for `*/`
-        if self.token.is_on_new_line {
+        if self.token.is_on_new_line() {
             return self.skip_multi_line_comment_after_line_break(self.source.position());
         }
 
@@ -119,7 +119,7 @@ impl<'a> Lexer<'a> {
                         let next2 = unsafe { pos.add(1).read2() };
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
-                            self.token.is_on_new_line = true;
+                            self.token.set_is_on_new_line(true);
                             // Ideally we'd go on to `skip_multi_line_comment_after_line_break` here
                             // but can't do that easily because can't use `return` in a closure.
                             // But irregular line breaks are rare anyway.
@@ -134,7 +134,7 @@ impl<'a> Lexer<'a> {
                 } else {
                     // Regular line break.
                     // No need to look for more line breaks, so switch to faster search just for `*/`.
-                    self.token.is_on_new_line = true;
+                    self.token.set_is_on_new_line(true);
                     // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
                     let after_line_break = unsafe { pos.add(1) };
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
@@ -146,7 +146,11 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.trivia_builder.add_block_comment(self.token.start, self.offset(), self.source.whole());
+        self.trivia_builder.add_block_comment(
+            self.token.start(),
+            self.offset(),
+            self.source.whole(),
+        );
         Kind::Skip
     }
 
@@ -167,7 +171,7 @@ impl<'a> Lexer<'a> {
             // SAFETY: `pos + index + 2` is end of `*/`, so a valid `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });
             self.trivia_builder.add_block_comment(
-                self.token.start,
+                self.token.start(),
                 self.offset(),
                 self.source.whole(),
             );
@@ -187,7 +191,7 @@ impl<'a> Lexer<'a> {
             }
             self.consume_char();
         }
-        self.token.is_on_new_line = true;
+        self.token.set_is_on_new_line(true);
         Kind::HashbangComment
     }
 }

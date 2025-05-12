@@ -9,15 +9,18 @@ use std::{
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AllowWarnDeny, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions, Linter,
-    Oxlintrc, RuleEnum, RuleWithSeverity,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
+    Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
     fixer::{FixKind, Fixer},
     options::LintOptions,
+    read_to_string,
     rules::RULES,
+    service::RuntimeFileSystem,
 };
 
 #[derive(Eq, PartialEq)]
@@ -162,6 +165,31 @@ where
             kind: kind.into(),
             rule_config: config,
         }
+    }
+}
+
+struct TesterFileSystem {
+    path_to_lint: PathBuf,
+    source_text: String,
+}
+
+impl TesterFileSystem {
+    pub fn new(path_to_lint: PathBuf, source_text: String) -> Self {
+        Self { path_to_lint, source_text }
+    }
+}
+
+impl RuntimeFileSystem for TesterFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        if path == self.path_to_lint {
+            return Ok(self.source_text.clone());
+        }
+
+        read_to_string(path)
+    }
+
+    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+        panic!("writing file should not be allowed in Tester");
     }
 }
 
@@ -456,16 +484,19 @@ impl Tester {
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let linter = Linter::new(
             self.lint_options,
-            eslint_config
-                .as_ref()
-                .map_or_else(ConfigStoreBuilder::empty, |v| {
-                    ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-                        .unwrap()
-                })
-                .with_plugins(self.plugins)
-                .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
-                .build()
-                .unwrap(),
+            ConfigStore::new(
+                eslint_config
+                    .as_ref()
+                    .map_or_else(ConfigStoreBuilder::empty, |v| {
+                        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                            .unwrap()
+                    })
+                    .with_plugins(self.plugins)
+                    .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+                    .build()
+                    .unwrap(),
+                FxHashMap::default(),
+            ),
         )
         .with_fix(fix.into());
 
@@ -484,9 +515,12 @@ impl Tester {
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options =
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
-        let mut lint_service = LintService::from_linter(linter, options);
+        let mut lint_service = LintService::new(&linter, options).with_file_system(Box::new(
+            TesterFileSystem::new(path_to_lint, source_text.to_string()),
+        ));
+
         let (sender, _receiver) = mpsc::channel();
-        let result = lint_service.run_test_source(&allocator, source_text, false, &sender);
+        let result = lint_service.run_test_source(&allocator, false, &sender);
 
         if result.is_empty() {
             return TestResult::Passed;

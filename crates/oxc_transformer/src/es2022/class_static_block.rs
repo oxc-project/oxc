@@ -116,6 +116,7 @@ impl ClassStaticBlock {
             PropertyDefinitionType::PropertyDefinition,
             ctx.ast.vec(),
             key,
+            NONE,
             Some(expr),
             false,
             true,
@@ -124,7 +125,6 @@ impl ClassStaticBlock {
             false,
             false,
             false,
-            NONE,
             None,
         )
     }

@@ -38,7 +38,7 @@ declare_oxc_lint!(
 impl Rule for NoDivRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            let Some(pattern) = lit.regex.pattern.as_pattern() else { return };
+            let Some(pattern) = &lit.regex.pattern.pattern else { return };
             if pattern
                 .body
                 .body

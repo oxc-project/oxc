@@ -151,9 +151,7 @@ fn is_object_or_class_method(parent_node: &AstNode) -> bool {
     match parent_node.kind() {
         AstKind::MethodDefinition(_) => true,
         AstKind::ObjectProperty(property) => {
-            property.method
-                || property.kind == PropertyKind::Get
-                || property.kind == PropertyKind::Set
+            property.method || matches!(property.kind, PropertyKind::Get | PropertyKind::Set)
         }
         _ => false,
     }
@@ -169,37 +167,23 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
     match parent_node.kind() {
         AstKind::VariableDeclarator(declarator) => {
             matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_))
-                && matches!(declarator.init.as_ref().unwrap(), Expression::FunctionExpression(function_expression)
-                        if get_function_identifier(function_expression) == get_function_identifier(function)
-                )
+                && declarator.init.as_ref().is_some_and(|init| is_same_function(init, function))
         }
-        AstKind::ObjectProperty(property) => {
-            matches!(&property.value, Expression::FunctionExpression(function_expression)
-                if get_function_identifier(function_expression) == get_function_identifier(function)
-            )
-        }
+        AstKind::ObjectProperty(property) => is_same_function(&property.value, function),
         AstKind::PropertyDefinition(definition) => {
-            matches!(&definition.value.as_ref().unwrap(), Expression::FunctionExpression(function_expression)
-                if get_function_identifier(function_expression) == get_function_identifier(function)
-            )
+            definition.value.as_ref().is_some_and(|value| is_same_function(value, function))
         }
         AstKind::AssignmentExpression(expression) => {
             matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
-                && matches!(&expression.right, Expression::FunctionExpression(function_expression)
-                        if get_function_identifier(function_expression) == get_function_identifier(function)
-                )
+                && is_same_function(&expression.right, function)
         }
         AstKind::AssignmentTargetWithDefault(target) => {
             matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
-                && matches!(&target.init, Expression::FunctionExpression(function_expression)
-                    if get_function_identifier(function_expression) == get_function_identifier(function)
-                )
+                && is_same_function(&target.init, function)
         }
         AstKind::AssignmentPattern(pattern) => {
             matches!(pattern.left.kind, BindingPatternKind::BindingIdentifier(_))
-                && matches!(&pattern.right, Expression::FunctionExpression(function_expression)
-                    if get_function_identifier(function_expression) == get_function_identifier(function)
-                )
+                && is_same_function(&pattern.right, function)
         }
         AstKind::ObjectAssignmentTarget(target) => {
             for property in &target.properties {
@@ -223,6 +207,12 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
         }
         _ => false,
     }
+}
+
+fn is_same_function<'a>(fn1: &Expression<'a>, fn2: &Function<'a>) -> bool {
+    matches!(fn1, Expression::FunctionExpression(function_expression)
+        if get_function_identifier(function_expression) == get_function_identifier(fn2)
+    )
 }
 
 /**
@@ -369,15 +359,12 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
                 return decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed);
             }
             AstKind::ObjectProperty(prop) => {
-                return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) { Some(name) } else { None }
-                });
+                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
             }
             AstKind::PropertyDefinition(prop) => {
-                return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) { Some(name) } else { None }
-                });
+                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
             }
+
             _ => return None,
         }
     }

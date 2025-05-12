@@ -197,8 +197,7 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
             return left_num.raw == right_num.raw;
         }
         (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {
-            return left_regexp.regex.pattern.source_text(ctx.source_text())
-                == right_regexp.regex.pattern.source_text(ctx.source_text())
+            return left_regexp.regex.pattern.text == right_regexp.regex.pattern.text
                 && left_regexp.regex.flags == right_regexp.regex.flags;
         }
         (Expression::BooleanLiteral(left_bool), Expression::BooleanLiteral(right_bool)) => {

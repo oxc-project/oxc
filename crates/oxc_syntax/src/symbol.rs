@@ -123,7 +123,9 @@ bitflags! {
         const ConstEnum               = 1 << 11;
         const EnumMember              = 1 << 12;
         const TypeParameter           = 1 << 13;
-        const NameSpaceModule         = 1 << 14;
+        /// Uninstantiated module
+        const NamespaceModule         = 1 << 14;
+        /// Instantiated module
         const ValueModule             = 1 << 15;
         /// Declared with `declare` modifier, like `declare function x() {}`.
         //
@@ -139,7 +141,9 @@ bitflags! {
         const BlockScoped = Self::BlockScopedVariable.bits() | Self::Enum.bits() | Self::Class.bits();
 
         const Value = Self::Variable.bits() | Self::Class.bits() | Self::Function.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
-        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
+        const Type = Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
+        const Namespace = Self::ValueModule.bits() | Self::NamespaceModule.bits() | Self::Enum.bits();
+
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
@@ -256,8 +260,8 @@ impl SymbolFlags {
     }
 
     #[inline]
-    pub fn is_namespace(&self) -> bool {
-        self.contains(Self::NameSpaceModule)
+    pub fn is_namespace_module(&self) -> bool {
+        self.contains(Self::NamespaceModule)
     }
 
     #[inline]
@@ -268,7 +272,7 @@ impl SymbolFlags {
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::NameSpaceModule)
+        self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::Namespace)
     }
 
     /// If true, then the symbol can be referenced by a value reference

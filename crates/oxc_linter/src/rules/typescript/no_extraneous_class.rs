@@ -5,10 +5,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(renameAll = "camelCase", default)]
 pub struct NoExtraneousClass {
     allow_constructor_only: bool,
     allow_empty: bool,
@@ -19,26 +21,33 @@ pub struct NoExtraneousClass {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule reports when a class has no non-static members,
-    /// such as for a class used exclusively as a static namespace.
-    /// This rule also reports classes that have only a constructor and no fields.
-    /// Those classes can generally be replaced with a standalone function.
+    /// This rule reports when a class has no non-static members, such as for a
+    /// class used exclusively as a static namespace.  This rule also reports
+    /// classes that have only a constructor and no fields.  Those classes can
+    /// generally be replaced with a standalone function.
     ///
     /// ### Why is this bad?
     ///
-    /// Users who come from a OOP paradigm may wrap their utility functions in an extra class,
-    /// instead of putting them at the top level of an ECMAScript module.
-    /// Doing so is generally unnecessary in JavaScript and TypeScript projects.
+    /// Users who come from a OOP paradigm may wrap their utility functions in
+    /// an extra class, instead of putting them at the top level of an
+    /// ECMAScript module.  Doing so is generally unnecessary in JavaScript and
+    /// TypeScript projects.
     ///
-    /// Wrapper classes add extra cognitive complexity to code without adding any structural improvements
+    /// * Wrapper classes add extra cognitive complexity to code without adding
+    ///   any structural improvements
+    ///   * Whatever would be put on them, such as utility functions, are already
+    ///     organized by virtue of being in a module.
+    ///   * As an alternative, you can `import * as ...` the module to get all of them
+    ///     in a single object.
+    /// * IDEs can't provide as good suggestions for static class or namespace
+    ///   imported properties when you start typing property names
+    /// * It's more difficult to statically analyze code for unused variables,
+    ///   etc.  when they're all on the class (see: [Finding dead code (and dead
+    ///   types) in TypeScript](https://effectivetypescript.com/2020/10/20/tsprune/)).
     ///
-    /// Whatever would be put on them, such as utility functions, are already organized by virtue of being in a module.
-    ///
-    /// As an alternative, you can import * as ... the module to get all of them in a single object.
-    /// IDEs can't provide as good suggestions for static class or namespace imported properties when you start typing property names
-    ///
-    /// It's more difficult to statically analyze code for unused variables, etc.
-    /// when they're all on the class (see: Finding dead code (and dead types) in TypeScript).
+    /// This rule also reports classes that have only a constructor and no
+    /// fields. Those classes can generally be replaced with a standalone
+    /// function.
     ///
     /// ### Example
     /// ```ts
@@ -60,19 +69,29 @@ declare_oxc_lint!(
     /// ```
     NoExtraneousClass,
     typescript,
-    suspicious
+    suspicious,
+    dangerous_suggestion
 );
 
-fn empty_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected empty class.").with_label(span)
+fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {
+    let help = if has_decorators {
+        r#"Set "allowWithDecorator": true in your config to allow empty decorated classes"#
+    } else {
+        "Delete this class"
+    };
+    OxcDiagnostic::warn("Unexpected empty class.").with_label(span).with_help(help)
 }
 
 fn only_static_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected class with only static properties.").with_label(span)
+    OxcDiagnostic::warn("Unexpected class with only static properties.")
+        .with_label(span)
+        .with_help("Try using standalone functions instead of static methods")
 }
 
 fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected class with only a constructor.").with_label(span)
+    OxcDiagnostic::warn("Unexpected class with only a constructor.")
+        .with_label(span)
+        .with_help("Try replacing this class with a standalone function or deleting it entirely")
 }
 
 impl Rule for NoExtraneousClass {
@@ -115,7 +134,34 @@ impl Rule for NoExtraneousClass {
         match body.as_slice() {
             [] => {
                 if !self.allow_empty {
-                    ctx.diagnostic(empty_no_extraneous_class_diagnostic(class.span));
+                    let mut span = class.span;
+                    #[expect(clippy::checked_conversions, clippy::cast_possible_truncation)]
+                    if let Some(decorator) = class.decorators.last() {
+                        span = Span::new(decorator.span.end, span.end);
+                        // NOTE: there will always be a 'c' because of 'class' keyword.
+                        let start = ctx.source_range(span).find('c').unwrap();
+                        // SAFETY: source files are guaranteed to be less than
+                        // 2^32 characters, so conversion will never fail. Using
+                        // unchecked assert here removes a useless bounds check.
+                        unsafe { std::hint::assert_unchecked(start <= u32::MAX as usize) };
+                        span = span.shrink_left(start as u32);
+                    }
+                    let has_decorators = !class.decorators.is_empty();
+                    ctx.diagnostic_with_suggestion(
+                        empty_class_diagnostic(span, has_decorators),
+                        |fixer| {
+                            if has_decorators {
+                                return fixer.noop();
+                            }
+                            if let Some(AstKind::ExportNamedDeclaration(decl)) =
+                                ctx.nodes().parent_kind(node.id())
+                            {
+                                fixer.delete(decl)
+                            } else {
+                                fixer.delete(class)
+                            }
+                        },
+                    );
                 }
             }
             [ClassElement::MethodDefinition(constructor)] if constructor.kind.is_constructor() => {
@@ -138,6 +184,7 @@ impl Rule for NoExtraneousClass {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
         (
@@ -146,7 +193,7 @@ fn test() {
 			  public prop = 1;
 			  constructor() {}
 			}
-			    ",
+            ",
             None,
         ),
         (
@@ -158,26 +205,12 @@ fn test() {
 			  }
 			  constructor() {}
 			}
-			    ",
+            ",
             None,
         ),
-        (
-            "
-			class Foo {
-			  constructor(public bar: string) {}
-			}
-			    ",
-            None,
-        ),
-        ("class Foo {}", Some(serde_json::json!([{ "allowEmpty": true }]))),
-        (
-            "
-			class Foo {
-			  constructor() {}
-			}
-			      ",
-            Some(serde_json::json!([{ "allowConstructorOnly": true }])),
-        ),
+        ("class Foo { constructor(public bar: string) {} }", None),
+        ("class Foo {}", Some(json!([{ "allowEmpty": true }]))),
+        ("class Foo { constructor() {} }", Some(json!([{ "allowConstructorOnly": true }]))),
         (
             "
 			export class Bar {
@@ -187,7 +220,7 @@ fn test() {
 			  }
 			}
 			      ",
-            Some(serde_json::json!([{ "allowStaticOnly": true }])),
+            Some(json!([{ "allowStaticOnly": true }])),
         ),
         (
             "
@@ -196,16 +229,10 @@ fn test() {
 			    return 'I am foo!';
 			  }
 			}
-			    ",
+		    ",
             None,
         ),
-        (
-            "
-			@FooDecorator
-			class Foo {}
-			      ",
-            Some(serde_json::json!([{ "allowWithDecorator": true }])),
-        ),
+        ("@FooDecorator class Foo {} ", Some(json!([{ "allowWithDecorator": true }]))),
         (
             "
 			@FooDecorator
@@ -216,25 +243,11 @@ fn test() {
 			    });
 			  }
 			}
-			      ",
-            Some(serde_json::json!([{ "allowWithDecorator": true }])),
+            ",
+            Some(json!([{ "allowWithDecorator": true }])),
         ),
-        (
-            "
-			abstract class Foo {
-			  abstract property: string;
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			abstract class Foo {
-			  abstract method(): string;
-			}
-			    ",
-            None,
-        ),
+        ("abstract class Foo { abstract property: string; }", None),
+        ("abstract class Foo { abstract method(): string; }", None),
     ];
 
     let fail = vec![
@@ -258,14 +271,7 @@ fn test() {
 			      ",
             None,
         ),
-        (
-            "
-			class Foo {
-			  constructor() {}
-			}
-			      ",
-            None,
-        ),
+        ("class Foo { constructor() {} }", None),
         (
             "
 			export class AClass {
@@ -280,20 +286,23 @@ fn test() {
 			      ",
             None,
         ),
-        (
-            "
-			export default class {
-			  static hello() {}
-			}
-			      ",
-            None,
-        ),
+        ("export default class { static hello() {} }", None),
         (
             "
 			@FooDecorator
 			class Foo {}
-			      ",
-            Some(serde_json::json!([{ "allowWithDecorator": false }])),
+            ",
+            Some(json!([{ "allowWithDecorator": false }])),
+        ),
+        (
+            "
+			@FooDecorator({
+              wowThisDecoratorIsQuiteLarge: true,
+              itShouldNotBeIncludedIn: 'the diagnostic span',
+            })
+			class Foo {}
+            ",
+            Some(json!([{ "allowWithDecorator": false }])),
         ),
         (
             "
@@ -305,32 +314,26 @@ fn test() {
 			    });
 			  }
 			}
-			      ",
-            Some(serde_json::json!([{ "allowWithDecorator": false }])),
+			",
+            Some(json!([{ "allowWithDecorator": false }])),
         ),
+        ("abstract class Foo {}", None),
+        ("abstract class Foo { static property: string; }", None),
+        ("abstract class Foo { constructor() {} }", None),
+    ];
+
+    let fix = vec![
+        ("class Foo {}", "", None, FixKind::DangerousSuggestion),
+        ("export class Foo {}", "", None, FixKind::DangerousSuggestion),
         (
-            "
-			abstract class Foo {}
-			      ",
-            None,
-        ),
-        (
-            "
-			abstract class Foo {
-			  static property: string;
-			}
-			      ",
-            None,
-        ),
-        (
-            "
-			abstract class Foo {
-			  constructor() {}
-			}
-			      ",
-            None,
+            "@foo class Foo {}",
+            "@foo class Foo {}",
+            Some(json!([{ "allowWithDecorator": false }])),
+            FixKind::DangerousSuggestion,
         ),
     ];
 
-    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

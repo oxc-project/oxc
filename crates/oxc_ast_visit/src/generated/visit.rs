@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`.
 
 //! Visitor Pattern
 //!
@@ -1554,10 +1554,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.tag);
-        visitor.visit_template_literal(&it.quasi);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_template_literal(&it.quasi);
         visitor.leave_node(kind);
     }
 
@@ -1637,10 +1637,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
-        visitor.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
     }
 
@@ -2598,11 +2598,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
         visitor.leave_node(kind);
     }
@@ -2652,11 +2652,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
     }
 
@@ -2926,10 +2926,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_element(&it.opening_element);
+        visitor.visit_jsx_children(&it.children);
         if let Some(closing_element) = &it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&it.children);
         visitor.leave_node(kind);
     }
 
@@ -2939,10 +2939,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_element_name(&it.name);
-        visitor.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_jsx_attribute_items(&it.attributes);
         visitor.leave_node(kind);
     }
 
@@ -2961,8 +2961,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_fragment(&it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.visit_jsx_children(&it.children);
+        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.leave_node(kind);
     }
 
@@ -3369,8 +3369,8 @@ pub mod walk {
         let kind = AstKind::TSNamedTupleMember(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.visit_identifier_name(&it.label);
+        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.leave_node(kind);
     }
 
@@ -3992,8 +3992,8 @@ pub mod walk {
         let kind = AstKind::TSTypeAssertion(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.visit_expression(&it.expression);
         visitor.leave_node(kind);
     }
 

@@ -114,10 +114,11 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
-use super::{
-    ClassProperties,
-    utils::{create_assignment, exprs_into_stmts},
+use crate::utils::ast_builder::{
+    create_assignment, create_class_constructor_with_params, create_super_call,
 };
+
+use super::{ClassProperties, utils::exprs_into_stmts};
 
 /// Location to insert instance property initializers
 pub(super) enum InstanceInitsInsertLocation<'a> {
@@ -238,39 +239,14 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO: Should these have the span of the original `PropertyDefinition`s?
         stmts.extend(exprs_into_stmts(inits, ctx));
 
-        let ctor = ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
+        let params = ctx.ast.alloc_formal_parameters(
             SPAN,
-            MethodDefinitionType::MethodDefinition,
+            FormalParameterKind::FormalParameter,
             ctx.ast.vec(),
-            PropertyKey::StaticIdentifier(
-                ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
-            ),
-            ctx.ast.alloc_function_with_scope_id(
-                SPAN,
-                FunctionType::FunctionExpression,
-                None,
-                false,
-                false,
-                false,
-                NONE,
-                NONE,
-                ctx.ast.alloc_formal_parameters(
-                    SPAN,
-                    FormalParameterKind::FormalParameter,
-                    ctx.ast.vec(),
-                    params_rest,
-                ),
-                NONE,
-                Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
-                constructor_scope_id,
-            ),
-            MethodDefinitionKind::Constructor,
-            false,
-            false,
-            false,
-            false,
-            None,
-        ));
+            params_rest,
+        );
+
+        let ctor = create_class_constructor_with_params(stmts, params, constructor_scope_id, ctx);
 
         // TODO(improve-on-babel): Could push constructor onto end of elements, instead of inserting as first
         body.body.insert(0, ctor);
@@ -813,19 +789,4 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
             }
         }
     }
-}
-
-/// `super(...args);`
-fn create_super_call<'a>(
-    args_binding: &BoundIdentifier<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    ctx.ast.expression_call(
-        SPAN,
-        ctx.ast.expression_super(SPAN),
-        NONE,
-        ctx.ast
-            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
-        false,
-    )
 }

@@ -1,34 +1,33 @@
 import { strictEqual } from 'assert';
-import { Uri, workspace, WorkspaceEdit } from 'vscode';
-import { VSCodeConfig } from './VSCodeConfig.js';
+import { workspace } from 'vscode';
+import { VSCodeConfig } from '../client/VSCodeConfig.js';
+import { testSingleFolderMode } from './test-helpers.js';
 
 const conf = workspace.getConfiguration('oxc');
 
-suite('Config', () => {
+suite('VSCodeConfig', () => {
   setup(async () => {
     const keys = ['enable', 'trace.server', 'path.server'];
 
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
-  suiteTeardown(async () => {
-    const WORKSPACE_DIR = workspace.workspaceFolders![0].uri.toString();
-    const file = Uri.parse(WORKSPACE_DIR + '/.vscode/settings.json');
-    const edit = new WorkspaceEdit();
-    edit.deleteFile(file);
-    await workspace.applyEdit(edit);
+  teardown(async () => {
+    const keys = ['enable', 'trace.server', 'path.server'];
+
+    await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
-  test('default values on initialization', () => {
-    const config = new VSCodeConfig(conf);
+  testSingleFolderMode('default values on initialization', () => {
+    const config = new VSCodeConfig();
 
     strictEqual(config.enable, true);
     strictEqual(config.trace, 'off');
     strictEqual(config.binPath, '');
   });
 
-  test('updating values updates the workspace configuration', async () => {
-    const config = new VSCodeConfig(conf);
+  testSingleFolderMode('updating values updates the workspace configuration', async () => {
+    const config = new VSCodeConfig();
 
     await Promise.all([
       config.updateEnable(false),

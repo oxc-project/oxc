@@ -1,8 +1,10 @@
 use std::{env, path::Path, rc::Rc, sync::Arc};
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, ModuleRecord};
+use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, ModuleRecord};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -41,7 +43,11 @@ fn bench_linter(criterion: &mut Criterion) {
             let semantic = Rc::new(semantic);
             let lint_config =
                 ConfigStoreBuilder::all().build().expect("Failed to build config store");
-            let linter = Linter::new(LintOptions::default(), lint_config).with_fix(FixKind::All);
+            let linter = Linter::new(
+                LintOptions::default(),
+                ConfigStore::new(lint_config, FxHashMap::default()),
+            )
+            .with_fix(FixKind::All);
             b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
         });
     }

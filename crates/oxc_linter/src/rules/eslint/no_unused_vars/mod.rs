@@ -346,7 +346,7 @@ impl NoUnusedVars {
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
         const AMBIENT_NAMESPACE_FLAGS: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::Ambient);
+            SymbolFlags::NamespaceModule.union(SymbolFlags::Ambient);
         let flags = symbol.flags();
 
         // 1. ignore enum members. Only enums get checked

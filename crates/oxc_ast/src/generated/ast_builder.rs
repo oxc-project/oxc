@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`.
 
 //! AST node factories
 
@@ -827,15 +827,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn expression_new<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -843,8 +843,8 @@ impl<'a> AstBuilder<'a> {
         Expression::NewExpression(self.alloc_new_expression(
             span,
             callee,
-            arguments,
             type_arguments,
+            arguments,
         ))
     }
 
@@ -855,16 +855,16 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn expression_new_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> Expression<'a>
     where
@@ -873,8 +873,8 @@ impl<'a> AstBuilder<'a> {
         Expression::NewExpression(self.alloc_new_expression_with_pure(
             span,
             callee,
-            arguments,
             type_arguments,
+            arguments,
             pure,
         ))
     }
@@ -934,15 +934,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn expression_tagged_template<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -950,8 +950,8 @@ impl<'a> AstBuilder<'a> {
         Expression::TaggedTemplateExpression(self.alloc_tagged_template_expression(
             span,
             tag,
-            quasi,
             type_arguments,
+            quasi,
         ))
     }
 
@@ -1047,15 +1047,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn expression_jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -1064,8 +1064,8 @@ impl<'a> AstBuilder<'a> {
         Expression::JSXElement(self.alloc_jsx_element(
             span,
             opening_element,
-            closing_element,
             children,
+            closing_element,
         ))
     }
 
@@ -1076,21 +1076,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn expression_jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> Expression<'a> {
         Expression::JSXFragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 
@@ -1140,16 +1140,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn expression_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::TSTypeAssertion(self.alloc_ts_type_assertion(span, expression, type_annotation))
+        Expression::TSTypeAssertion(self.alloc_ts_type_assertion(span, type_annotation, expression))
     }
 
     /// Build an [`Expression::TSNonNullExpression`].
@@ -1720,15 +1720,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> TaggedTemplateExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -1736,8 +1736,8 @@ impl<'a> AstBuilder<'a> {
         TaggedTemplateExpression {
             span,
             tag,
-            quasi,
             type_arguments: type_arguments.into_in(self.allocator),
+            quasi,
         }
     }
 
@@ -1749,21 +1749,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `tag`
-    /// * `quasi`
     /// * `type_arguments`
+    /// * `quasi`
     #[inline]
     pub fn alloc_tagged_template_expression<T1>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
         type_arguments: T1,
+        quasi: TemplateLiteral<'a>,
     ) -> Box<'a, TaggedTemplateExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.tagged_template_expression(span, tag, quasi, type_arguments),
+            self.tagged_template_expression(span, tag, type_arguments, quasi),
             self.allocator,
         )
     }
@@ -2133,15 +2133,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> NewExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -2149,8 +2149,8 @@ impl<'a> AstBuilder<'a> {
         NewExpression {
             span,
             callee,
-            arguments,
             type_arguments: type_arguments.into_in(self.allocator),
+            arguments,
             pure: Default::default(),
         }
     }
@@ -2163,20 +2163,20 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn alloc_new_expression<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Box::new_in(self.new_expression(span, callee, arguments, type_arguments), self.allocator)
+        Box::new_in(self.new_expression(span, callee, type_arguments, arguments), self.allocator)
     }
 
     /// Build a [`NewExpression`] with `pure`.
@@ -2187,16 +2187,16 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn new_expression_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> NewExpression<'a>
     where
@@ -2205,8 +2205,8 @@ impl<'a> AstBuilder<'a> {
         NewExpression {
             span,
             callee,
-            arguments,
             type_arguments: type_arguments.into_in(self.allocator),
+            arguments,
             pure,
         }
     }
@@ -2219,23 +2219,23 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
-    /// * `arguments`
     /// * `type_arguments`
-    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `pure`
     #[inline]
     pub fn alloc_new_expression_with_pure<T1>(
         self,
         span: Span,
         callee: Expression<'a>,
-        arguments: Vec<'a, Argument<'a>>,
         type_arguments: T1,
+        arguments: Vec<'a, Argument<'a>>,
         pure: bool,
     ) -> Box<'a, NewExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.new_expression_with_pure(span, callee, arguments, type_arguments, pure),
+            self.new_expression_with_pure(span, callee, type_arguments, arguments, pure),
             self.allocator,
         )
     }
@@ -2718,19 +2718,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn simple_assignment_target_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::TSTypeAssertion(self.alloc_ts_type_assertion(
             span,
-            expression,
             type_annotation,
+            expression,
         ))
     }
 
@@ -6590,6 +6590,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6598,7 +6599,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn class_element_property_definition<T1>(
@@ -6607,6 +6607,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6615,7 +6616,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
@@ -6626,6 +6626,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
@@ -6634,7 +6635,6 @@ impl<'a> AstBuilder<'a> {
             optional,
             definite,
             readonly,
-            type_annotation,
             accessibility,
         ))
     }
@@ -6648,12 +6648,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
@@ -6662,12 +6662,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
@@ -6678,12 +6678,12 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation,
             value,
             computed,
             r#static,
             r#override,
             definite,
-            type_annotation,
             accessibility,
         ))
     }
@@ -6832,6 +6832,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6840,7 +6841,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn property_definition<T1>(
@@ -6849,6 +6849,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6857,7 +6858,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> PropertyDefinition<'a>
     where
@@ -6868,6 +6868,7 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation: type_annotation.into_in(self.allocator),
             value,
             computed,
             r#static,
@@ -6876,7 +6877,6 @@ impl<'a> AstBuilder<'a> {
             optional,
             definite,
             readonly,
-            type_annotation: type_annotation.into_in(self.allocator),
             accessibility,
         }
     }
@@ -6891,6 +6891,7 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
@@ -6899,7 +6900,6 @@ impl<'a> AstBuilder<'a> {
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn alloc_property_definition<T1>(
@@ -6908,6 +6908,7 @@ impl<'a> AstBuilder<'a> {
         r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -6916,7 +6917,6 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         definite: bool,
         readonly: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> Box<'a, PropertyDefinition<'a>>
     where
@@ -6928,6 +6928,7 @@ impl<'a> AstBuilder<'a> {
                 r#type,
                 decorators,
                 key,
+                type_annotation,
                 value,
                 computed,
                 r#static,
@@ -6936,7 +6937,6 @@ impl<'a> AstBuilder<'a> {
                 optional,
                 definite,
                 readonly,
-                type_annotation,
                 accessibility,
             ),
             self.allocator,
@@ -7212,12 +7212,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
@@ -7226,12 +7226,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a>
     where
@@ -7242,12 +7242,12 @@ impl<'a> AstBuilder<'a> {
             r#type,
             decorators,
             key,
+            type_annotation: type_annotation.into_in(self.allocator),
             value,
             computed,
             r#static,
             r#override,
             definite,
-            type_annotation: type_annotation.into_in(self.allocator),
             accessibility,
         }
     }
@@ -7262,12 +7262,12 @@ impl<'a> AstBuilder<'a> {
     /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
-    /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
@@ -7276,12 +7276,12 @@ impl<'a> AstBuilder<'a> {
         r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
+        type_annotation: T1,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
-        type_annotation: T1,
         accessibility: Option<TSAccessibility>,
     ) -> Box<'a, AccessorProperty<'a>>
     where
@@ -7293,12 +7293,12 @@ impl<'a> AstBuilder<'a> {
                 r#type,
                 decorators,
                 key,
+                type_annotation,
                 value,
                 computed,
                 r#static,
                 r#override,
                 definite,
-                type_annotation,
                 accessibility,
             ),
             self.allocator,
@@ -8598,15 +8598,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXElement<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -8615,8 +8615,8 @@ impl<'a> AstBuilder<'a> {
         JSXElement {
             span,
             opening_element: opening_element.into_in(self.allocator),
-            closing_element: closing_element.into_in(self.allocator),
             children,
+            closing_element: closing_element.into_in(self.allocator),
         }
     }
 
@@ -8628,22 +8628,22 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn alloc_jsx_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> Box<'a, JSXElement<'a>>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
         Box::new_in(
-            self.jsx_element(span, opening_element, closing_element, children),
+            self.jsx_element(span, opening_element, children, closing_element),
             self.allocator,
         )
     }
@@ -8656,15 +8656,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
     pub fn jsx_opening_element<T1>(
         self,
         span: Span,
         name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
     ) -> JSXOpeningElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
@@ -8672,8 +8672,8 @@ impl<'a> AstBuilder<'a> {
         JSXOpeningElement {
             span,
             name,
-            attributes,
             type_arguments: type_arguments.into_in(self.allocator),
+            attributes,
         }
     }
 
@@ -8685,21 +8685,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     /// * `type_arguments`: Type parameters for generic JSX elements.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
     pub fn alloc_jsx_opening_element<T1>(
         self,
         span: Span,
         name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_arguments: T1,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
     ) -> Box<'a, JSXOpeningElement<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.jsx_opening_element(span, name, attributes, type_arguments),
+            self.jsx_opening_element(span, name, type_arguments, attributes),
             self.allocator,
         )
     }
@@ -8746,17 +8746,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXFragment<'a> {
-        JSXFragment { span, opening_fragment, closing_fragment, children }
+        JSXFragment { span, opening_fragment, children, closing_fragment }
     }
 
     /// Build a [`JSXFragment`], and store it in the memory arena.
@@ -8767,18 +8767,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn alloc_jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> Box<'a, JSXFragment<'a>> {
         Box::new_in(
-            self.jsx_fragment(span, opening_fragment, closing_fragment, children),
+            self.jsx_fragment(span, opening_fragment, children, closing_fragment),
             self.allocator,
         )
     }
@@ -9324,15 +9324,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_attribute_value_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXAttributeValue<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
@@ -9341,8 +9341,8 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::Element(self.alloc_jsx_element(
             span,
             opening_element,
-            closing_element,
             children,
+            closing_element,
         ))
     }
 
@@ -9353,21 +9353,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_attribute_value_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXAttributeValue<'a> {
         JSXAttributeValue::Fragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 
@@ -9426,21 +9426,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element.
     /// * `children`: Children of the element.
+    /// * `closing_element`: Closing tag of the element.
     #[inline]
     pub fn jsx_child_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
-        closing_element: T2,
         children: Vec<'a, JSXChild<'a>>,
+        closing_element: T2,
     ) -> JSXChild<'a>
     where
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
-        JSXChild::Element(self.alloc_jsx_element(span, opening_element, closing_element, children))
+        JSXChild::Element(self.alloc_jsx_element(span, opening_element, children, closing_element))
     }
 
     /// Build a [`JSXChild::Fragment`].
@@ -9450,21 +9450,21 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
+    /// * `closing_fragment`: `</>`
     #[inline]
     pub fn jsx_child_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
+        closing_fragment: JSXClosingFragment,
     ) -> JSXChild<'a> {
         JSXChild::Fragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
-            closing_fragment,
             children,
+            closing_fragment,
         ))
     }
 
@@ -10563,21 +10563,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn ts_type_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> TSType<'a> {
         TSType::TSNamedTupleMember(self.alloc_ts_named_tuple_member(
             span,
-            element_type,
             label,
+            element_type,
             optional,
         ))
     }
@@ -11170,18 +11170,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn ts_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
-        TSNamedTupleMember { span, element_type, label, optional }
+        TSNamedTupleMember { span, label, element_type, optional }
     }
 
     /// Build a [`TSNamedTupleMember`], and store it in the memory arena.
@@ -11191,18 +11191,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `element_type`
     /// * `label`
+    /// * `element_type`
     /// * `optional`
     #[inline]
     pub fn alloc_ts_named_tuple_member(
         self,
         span: Span,
-        element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
+        element_type: TSTupleElement<'a>,
         optional: bool,
     ) -> Box<'a, TSNamedTupleMember<'a>> {
-        Box::new_in(self.ts_named_tuple_member(span, element_type, label, optional), self.allocator)
+        Box::new_in(self.ts_named_tuple_member(span, label, element_type, optional), self.allocator)
     }
 
     /// Build a [`TSOptionalType`].
@@ -14142,16 +14142,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> TSTypeAssertion<'a> {
-        TSTypeAssertion { span, expression, type_annotation }
+        TSTypeAssertion { span, type_annotation, expression }
     }
 
     /// Build a [`TSTypeAssertion`], and store it in the memory arena.
@@ -14161,16 +14161,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
     /// * `type_annotation`
+    /// * `expression`
     #[inline]
     pub fn alloc_ts_type_assertion(
         self,
         span: Span,
-        expression: Expression<'a>,
         type_annotation: TSType<'a>,
+        expression: Expression<'a>,
     ) -> Box<'a, TSTypeAssertion<'a>> {
-        Box::new_in(self.ts_type_assertion(span, expression, type_annotation), self.allocator)
+        Box::new_in(self.ts_type_assertion(span, type_annotation, expression), self.allocator)
     }
 
     /// Build a [`TSImportEqualsDeclaration`].

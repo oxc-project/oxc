@@ -51,7 +51,7 @@ impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
-                if let Some(span) = Self::find_literal_to_report(lit, ctx) {
+                if let Some(span) = Self::find_literal_to_report(lit) {
                     ctx.diagnostic(no_regex_spaces_diagnostic(span)); // /a  b/
                 }
             }
@@ -73,14 +73,13 @@ impl Rule for NoRegexSpaces {
 }
 
 impl NoRegexSpaces {
-    fn find_literal_to_report(literal: &RegExpLiteral, ctx: &LintContext) -> Option<Span> {
-        let pattern_text = literal.regex.pattern.source_text(ctx.source_text());
-        let pattern_text = pattern_text.as_ref();
+    fn find_literal_to_report(literal: &RegExpLiteral) -> Option<Span> {
+        let pattern_text = literal.regex.pattern.text.as_str();
         if !Self::has_double_space(pattern_text) {
             return None;
         }
 
-        let pattern = literal.regex.pattern.as_pattern()?;
+        let pattern = literal.regex.pattern.pattern.as_deref()?;
         find_consecutive_spaces(pattern)
     }
 

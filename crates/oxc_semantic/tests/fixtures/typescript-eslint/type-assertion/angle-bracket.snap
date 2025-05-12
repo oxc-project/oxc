@@ -25,9 +25,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-assertion/
         "references": [
           {
             "flags": "ReferenceFlags(Read)",
-            "id": 0,
+            "id": 1,
             "name": "x",
-            "node_id": 11
+            "node_id": 14
           }
         ]
       },
@@ -39,9 +39,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-assertion/
         "references": [
           {
             "flags": "ReferenceFlags(Type)",
-            "id": 1,
+            "id": 0,
             "name": "T",
-            "node_id": 14
+            "node_id": 13
           }
         ]
       }

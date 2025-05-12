@@ -15,7 +15,7 @@ use std::{
 
 use crate::vec2::Vec as InnerVec;
 #[cfg(any(feature = "serialize", test))]
-use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
@@ -245,6 +245,15 @@ impl<T: Serialize> Serialize for Vec<'_, T> {
 impl<T: ESTree> ESTree for Vec<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.as_slice().serialize(serializer);
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<T: ESTree> ConcatElement for Vec<'_, T> {
+    fn push_to_sequence<S: SequenceSerializer>(&self, seq: &mut S) {
+        for element in self {
+            seq.serialize_element(element);
+        }
     }
 }
 

@@ -13,12 +13,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
-use crate::{TransformCtx, common::helper_loader::Helper};
+use crate::{TransformCtx, common::helper_loader::Helper, utils::ast_builder::create_assignment};
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
     constructor::InstanceInitsInsertLocation,
-    utils::{create_assignment, create_variable_declaration, exprs_into_stmts},
+    utils::{create_variable_declaration, exprs_into_stmts},
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
@@ -273,6 +273,12 @@ impl<'a> ClassProperties<'a, '_> {
                 }
                 ClassElement::StaticBlock(_) => {}
             }
+        }
+
+        // When `self.set_public_class_fields` and `self.remove_class_fields_without_initializer` are both true,
+        // we don't need to convert properties without initializers, that means `instance_prop_count != 0` but `instance_inits` may be empty.
+        if instance_inits.is_empty() {
+            return;
         }
 
         // Scope that instance property initializers will be inserted into.
@@ -869,12 +875,12 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), "WeakMap"));
     let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakMap"), symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, ctx.ast.vec(), NONE, true)
+    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "WeakSet");
     let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakSet"), symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, ctx.ast.vec(), NONE, true)
+    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }

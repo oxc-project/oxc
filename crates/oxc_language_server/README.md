@@ -15,12 +15,9 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
   - `source.fixAll.oxc`, behaves the same as `quickfix` only used when the `CodeActionContext#only` contains
     `source.fixAll.oxc`.
 
-## Supported LSP Specifications from Server
+## Workspace Options
 
-### [initialize](https://microsoft.github.io/language-server-protocol/specification#initialize)
-
-Returns the [Server Capabilities](#server-capabilities).\
-Initialization Options:
+These options can be passed with [initialize](#initialize), [workspace/didChangeConfiguration](#workspace/didChangeConfiguration) and [workspace/configuration](#workspace/configuration).
 
 | Option Key   | Value(s)               | Default    | Description                                                                                          |
 | ------------ | ---------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
@@ -28,12 +25,34 @@ Initialization Options:
 | `configPath` | `<string>` \| `null`   | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration              |
 | `flags`      | `Map<string, string>`  | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config` |
 
+## Supported LSP Specifications from Server
+
+### [initialize](https://microsoft.github.io/language-server-protocol/specification#initialize)
+
+Returns the [Server Capabilities](#server-capabilities).\
+The client can pass the workspace options like following:
+
+```json
+{
+  "initializationOptions": [{
+    "workspaceUri": "file://workspace-directory",
+    "options": {
+      "run": "onType",
+      "configPath": null,
+      "flags": {}
+    }
+  }]
+}
+```
+
 #### Flags
 
 - `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
 - `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
 
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
+
+When the client did not pass the workspace configuration in [initialize](#initialize), the server will request the configuration for every workspace with [workspace/configuration](#workspace/configuration).
 
 ### [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)
 
@@ -43,7 +62,22 @@ The server will reset the diagnostics for all open files and send one or more [t
 
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
-The server expects this request when settings like `run`, `flags` or `configPath` are changed.
+The client can pass the workspace options like following:
+
+```json
+{
+  "settings": [{
+    "workspaceUri": "file://workspace-directory",
+    "options": {
+      "run": "onType",
+      "configPath": null,
+      "flags": {}
+    }
+  }]
+}
+```
+
+When the client does not pass workspace options, the server will request them with [workspace/configuration](#workspace/configuration).
 The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
@@ -52,6 +86,11 @@ The server expects this request when one oxlint configuration is changed, added 
 The server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 Note: When nested configuration is active, the client should send all `.oxlintrc.json` configurations to the server after the [initialized](#initialized) response.
+
+#### [workspace/didChangeWorkspaceFolders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_didChangeWorkspaceFolders)
+
+The server expects this request when adding or removing workspace folders.
+The server will request the specific workspace configuration, if the client supports it.
 
 #### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 
@@ -86,3 +125,24 @@ Returns a list of [CodeAction](https://microsoft.github.io/language-server-proto
 #### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
 
 Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
+
+# Optional LSP Specifications from Client
+
+### Workspace
+
+#### [workspace/configuration](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_configuration)
+
+The server will request workspace configurations. The server expects the received items to match the order of the requested items.
+Only will be requested when the `ClientCapabilities` has `workspace.configuration` set to true.
+
+The client can return a response like:
+
+```json
+{
+    [{
+        "run": "onType",
+        "configPath": null,
+        "flags": {}
+    }]
+}
+```

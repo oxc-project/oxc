@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.69.0] - 2025-05-09
+
+### Features
+
+- 05bf1be data_structures: Add `InlineString::as_mut_str` method (#10856) (overlookmotel)
+
+### Performance
+
+- 2d4b8c9 data_structures: Optimize `InlineString` (#10850) (overlookmotel)
+
 ## [0.61.0] - 2025-03-20
 
 ### Features

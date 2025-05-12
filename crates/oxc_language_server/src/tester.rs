@@ -96,12 +96,15 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    fn create_workspace_worker(&self) -> WorkspaceWorker {
+    async fn create_workspace_worker(&self) -> WorkspaceWorker {
         let absolute_path = std::env::current_dir()
             .expect("could not get current dir")
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
-        WorkspaceWorker::new(&uri, self.options.clone().unwrap_or_default())
+        let worker = WorkspaceWorker::new(uri);
+        worker.init_linter(&self.options.clone().unwrap_or_default()).await;
+
+        worker
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
@@ -111,6 +114,7 @@ impl Tester<'_> {
         let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
         let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
             self.create_workspace_worker()
+                .await
                 .lint_file(&uri, None)
                 .await
                 .expect("lint file is ignored")

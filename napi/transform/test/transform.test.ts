@@ -33,20 +33,17 @@ describe('simple', () => {
   });
 
   it('uses the `sourcemap` option', () => {
-    const ret = transform('test.ts', code, { typescript: { declaration: {} }, sourcemap: true });
-    expect(ret.declarationMap).toStrictEqual(
-      {
-        'mappings': 'AAAA,OAAO,cAAM,EAAE,GAAG,CAAE',
-        'names': [],
-        'sources': [
-          'test.ts',
-        ],
-        'sourcesContent': [
-          'export class A<T> {}',
-        ],
-        'version': 3,
-      },
-    );
+    const ret = transform('test.ts', code, {
+      typescript: { declaration: {} },
+      sourcemap: true,
+    });
+    expect(ret.declarationMap).toStrictEqual({
+      mappings: 'AAAA,OAAO,cAAM,EAAE,GAAG,CAAE',
+      names: [],
+      sources: ['test.ts'],
+      sourcesContent: ['export class A<T> {}'],
+      version: 3,
+    });
   });
 });
 
@@ -155,7 +152,9 @@ console.log(bar)
       console.log(bar);
       "
     `);
-    expect(ret.declaration).toEqual('declare const _default: () => void;\nexport = _default;\n');
+    expect(ret.declaration).toEqual(
+      'declare const _default: () => void;\nexport = _default;\n',
+    );
   });
 });
 
@@ -239,7 +238,7 @@ describe('define plugin', () => {
     const code = 'declare let __TEST_DEFINE__: string; console.log({ __TEST_DEFINE__ });';
     const ret = transform('test.ts', code, {
       define: {
-        '__TEST_DEFINE__': '"replaced"',
+        __TEST_DEFINE__: '"replaced"',
       },
     });
     expect(ret.code).toEqual('console.log({ __TEST_DEFINE__: "replaced" });\n');
@@ -249,7 +248,7 @@ describe('define plugin', () => {
     const code = 'new Foo()';
     const ret = transform('test.js', code, {
       define: {
-        'Foo': 'undefined',
+        Foo: 'undefined',
       },
     });
     // Replaced `undefined` with `void 0` by DCE.
@@ -266,7 +265,9 @@ describe('inject plugin', () => {
         'Object.assign': 'foo',
       },
     });
-    expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
+    expect(ret.code).toEqual(
+      'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n',
+    );
   });
 });
 
@@ -382,6 +383,12 @@ describe('typescript', () => {
           @dec
           c: number;
         }
+        class StaticFoo {
+          static a: number;
+          static b: number = 1;
+          @dec
+          static c: number;
+        }
       `;
       const ret = transform('test.ts', code, {
         assumptions: {
@@ -396,16 +403,18 @@ describe('typescript', () => {
         },
       });
       expect(ret.code).toMatchInlineSnapshot(`
-        "import _decorate from "@oxc-project/runtime/helpers/decorate";
-        class Foo {
-        	constructor() {
-        		this.b = 1;
-        		this.c = void 0;
-        	}
-        }
-        _decorate([dec], Foo.prototype, "c", void 0);
-        "
-      `);
+				"import _decorate from "@oxc-project/runtime/helpers/decorate";
+				class Foo {
+					constructor() {
+						this.b = 1;
+					}
+				}
+				_decorate([dec], Foo.prototype, "c", void 0);
+				class StaticFoo {}
+				_decorate([dec], StaticFoo, "c", void 0);
+				StaticFoo.b = 1;
+				"
+			`);
     });
   });
 });

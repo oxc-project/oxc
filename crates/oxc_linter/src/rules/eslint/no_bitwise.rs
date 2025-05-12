@@ -94,7 +94,7 @@ declare_oxc_lint!(
     ///
     /// ```javascript
     /// const b = a|0;
-    /// ``````
+    /// ```
     NoBitwise,
     eslint,
     restriction

@@ -1,9 +1,9 @@
 commit: 15392346
 
 parser_typescript Summary:
-AST Parsed     : 6523/6531 (99.88%)
-Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1309/5754 (22.75%)
+AST Parsed     : 6521/6528 (99.89%)
+Positive Passed: 6509/6528 (99.71%)
+Negative Passed: 1315/5757 (22.84%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -325,8 +325,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autolift4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/avoidListingPropertiesForTypesWithOnlyCallOrConstructSignatures.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExpressionInSyncFunction.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitInClassInAsyncFunction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitedType.ts
 
@@ -4478,6 +4476,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unusedVariab
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.2.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_destructuring.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_jsx.tsx
@@ -4611,8 +4611,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts
 
@@ -5836,15 +5834,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yield
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck31.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck48.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck50.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck57.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck58.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck6.ts
 
@@ -5977,6 +5969,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-arguments.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts
 
@@ -9170,17 +9164,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
  65 │     var y = _;
     ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:13:12]
- 12 │ 
- 13 │ { @x?.["y"] class C {} }
-    ·            ▲
- 14 │ 
-    ╰────
-  help: Try insert a semicolon here
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -10058,6 +10041,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │         this.bar: any;
    ╰────
   help: Try insert a semicolon here
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInClassInAsyncFunction.ts:9:15]
+  8 │     return new class {
+  9 │         baz = await bar();
+    ·               ─────
+ 10 │     };
+    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:4:7]
@@ -13133,11 +13124,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ 
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[typescript/tests/cases/compiler/invalidOptionalChainFromNewExpression.ts:5:1]
+  × Invalid optional chain from new expression.
+   ╭─[typescript/tests/cases/compiler/invalidOptionalChainFromNewExpression.ts:5:6]
  4 │ 
  5 │ new A?.b()   // error
-   · ──────────
+   ·      ──
  6 │ new A()?.b() // ok
    ╰────
 
@@ -18654,6 +18645,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  47 │ }
     ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:3:21]
+ 2 │     class C {
+ 3 │         [await x] = await x;
+   ·                     ─────
+ 4 │         static [await x] = await x;
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:4:28]
+ 3 │         [await x] = await x;
+ 4 │         static [await x] = await x;
+   ·                            ─────
+ 5 │ 
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:6:21]
+ 5 │ 
+ 6 │         [yield 1] = yield 2;
+   ·                     ─────
+ 7 │         static [yield 3] = yield 4;
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:7:28]
+ 6 │         [yield 1] = yield 2;
+ 7 │         static [yield 3] = yield 4;
+   ·                            ─────
+ 8 │     }
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:11:21]
+ 10 │     return class {
+ 11 │         [await x] = await x;
+    ·                     ─────
+ 12 │         static [await x] = await x;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:12:28]
+ 11 │         [await x] = await x;
+ 12 │         static [await x] = await x;
+    ·                            ─────
+ 13 │ 
+    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:14:21]
+ 13 │ 
+ 14 │         [yield 1] = yield 2;
+    ·                     ─────
+ 15 │         static [yield 3] = yield 4;
+    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:15:28]
+ 14 │         [yield 1] = yield 2;
+ 15 │         static [yield 3] = yield 4;
+    ·                            ─────
+ 16 │     }
+    ╰────
+
   × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
  2 │    abstract get a();
@@ -19002,12 +19057,36 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  20 │   }
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:25:16]
- 24 │       await = 1; // legal
- 25 │       x = await; // legal (initializers have an implicit function boundary)
-    ·                ─
- 26 │     };
+  × Cannot use `await` as an identifier in an async context
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:32:12]
+ 31 │   static {
+ 32 │     (class await { }); // legal, 'await' in class expression name not bound inside of static block
+    ·            ─────
+ 33 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
+ 3 │   static {
+ 4 │     let await: any; // illegal, cannot declare a new binding for await
+   ·         ──────────
+ 5 │   }
+   ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:7:11]
+ 6 │   static {
+ 7 │     let { await } = {} as any; // illegal, cannot declare a new binding for await
+   ·           ─────
+ 8 │   }
+   ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:13:9]
+ 12 │   static {
+ 13 │     let await; // illegal, cannot declare a new binding for await
+    ·         ─────
+ 14 │   }
     ╰────
 
   × Unexpected token
@@ -20247,6 +20326,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     readonly accessor b: any;
    ╰────
   help: Remove the duplicate modifier.
+
+  × TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:3:5]
+ 2 │     accessor accessor a: any;
+ 3 │     readonly accessor b: any;
+   ·     ────────
+ 4 │     declare accessor c: any;
+   ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:4:5]
+ 3 │     readonly accessor b: any;
+ 4 │     declare accessor c: any;
+   ·     ───────
+ 5 │     accessor public d: any;
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:15]
@@ -22036,6 +22131,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                             ─────
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts:7:13]
+ 6 │     class C {
+ 7 │         x = yield 0;
+   ·             ─────
+ 8 │     }
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck57.ts:3:13]
+ 2 │     class C {
+ 3 │         x = yield 0;
+   ·             ─────
+ 4 │     };
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck58.ts:3:20]
+ 2 │     class C {
+ 3 │         static x = yield 0;
+   ·                    ─────
+ 4 │     };
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/compoundExponentiationAssignmentLHSIsValue.ts:7:9]
  6 │     constructor() {
@@ -23612,6 +23731,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·           ─
  3 │ }
    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:9:4]
+  8 │ 
+  9 │ { @x?.y class C {} }
+    ·    ────
+ 10 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:11:4]
+ 10 │ 
+ 11 │ { @x?.y() class C {} }
+    ·    ──────
+ 12 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:13:4]
+ 12 │ 
+ 13 │ { @x?.["y"] class C {} }
+    ·    ────────
+ 14 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:15:4]
+ 14 │ 
+ 15 │ { @x?.() class C {} }
+    ·    ─────
+ 16 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:31:14]
+ 30 │ 
+ 31 │ { class C { @x?.y m() {} } }
+    ·              ────
+ 32 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:33:14]
+ 32 │ 
+ 33 │ { class C { @x?.y() m() {} } }
+    ·              ──────
+ 34 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:35:14]
+ 34 │ 
+ 35 │ { class C { @x?.["y"] m() {} } }
+    ·              ────────
+ 36 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:37:14]
+ 36 │ 
+ 37 │ { class C { @x?.() m() {} } }
+    ·              ─────
+ 38 │ 
+    ╰────
 
   × Private identifier '#foo' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-privateFieldAccess.ts:3:13]

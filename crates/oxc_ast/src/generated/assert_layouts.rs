@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/assert_layouts.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/assert_layouts.rs`.
 
 #![allow(unused_imports)]
 
@@ -95,8 +95,8 @@ const _: () = {
     assert!(align_of::<TaggedTemplateExpression>() == 8);
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
-    assert!(offset_of!(TaggedTemplateExpression, quasi) == 24);
-    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 96);
+    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 24);
+    assert!(offset_of!(TaggedTemplateExpression, quasi) == 32);
 
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
@@ -147,8 +147,8 @@ const _: () = {
     assert!(align_of::<NewExpression>() == 8);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
-    assert!(offset_of!(NewExpression, arguments) == 24);
-    assert!(offset_of!(NewExpression, type_arguments) == 56);
+    assert!(offset_of!(NewExpression, type_arguments) == 24);
+    assert!(offset_of!(NewExpression, arguments) == 32);
     assert!(offset_of!(NewExpression, pure) == 64);
 
     assert!(size_of::<MetaProperty>() == 56);
@@ -604,22 +604,22 @@ const _: () = {
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    assert!(size_of::<PropertyDefinition>() == 104);
+    assert!(size_of::<PropertyDefinition>() == 96);
     assert!(align_of::<PropertyDefinition>() == 8);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, r#type) == 8);
     assert!(offset_of!(PropertyDefinition, decorators) == 16);
     assert!(offset_of!(PropertyDefinition, key) == 48);
-    assert!(offset_of!(PropertyDefinition, value) == 64);
-    assert!(offset_of!(PropertyDefinition, computed) == 80);
-    assert!(offset_of!(PropertyDefinition, r#static) == 81);
-    assert!(offset_of!(PropertyDefinition, declare) == 82);
-    assert!(offset_of!(PropertyDefinition, r#override) == 83);
-    assert!(offset_of!(PropertyDefinition, optional) == 84);
-    assert!(offset_of!(PropertyDefinition, definite) == 85);
-    assert!(offset_of!(PropertyDefinition, readonly) == 86);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 88);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 96);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 64);
+    assert!(offset_of!(PropertyDefinition, value) == 72);
+    assert!(offset_of!(PropertyDefinition, computed) == 88);
+    assert!(offset_of!(PropertyDefinition, r#static) == 89);
+    assert!(offset_of!(PropertyDefinition, declare) == 90);
+    assert!(offset_of!(PropertyDefinition, r#override) == 91);
+    assert!(offset_of!(PropertyDefinition, optional) == 92);
+    assert!(offset_of!(PropertyDefinition, definite) == 93);
+    assert!(offset_of!(PropertyDefinition, readonly) == 94);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 95);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);
@@ -644,19 +644,19 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1);
     assert!(align_of::<AccessorPropertyType>() == 1);
 
-    assert!(size_of::<AccessorProperty>() == 104);
+    assert!(size_of::<AccessorProperty>() == 96);
     assert!(align_of::<AccessorProperty>() == 8);
     assert!(offset_of!(AccessorProperty, span) == 0);
     assert!(offset_of!(AccessorProperty, r#type) == 8);
     assert!(offset_of!(AccessorProperty, decorators) == 16);
     assert!(offset_of!(AccessorProperty, key) == 48);
-    assert!(offset_of!(AccessorProperty, value) == 64);
-    assert!(offset_of!(AccessorProperty, computed) == 80);
-    assert!(offset_of!(AccessorProperty, r#static) == 81);
-    assert!(offset_of!(AccessorProperty, r#override) == 82);
-    assert!(offset_of!(AccessorProperty, definite) == 83);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 88);
-    assert!(offset_of!(AccessorProperty, accessibility) == 96);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 64);
+    assert!(offset_of!(AccessorProperty, value) == 72);
+    assert!(offset_of!(AccessorProperty, computed) == 88);
+    assert!(offset_of!(AccessorProperty, r#static) == 89);
+    assert!(offset_of!(AccessorProperty, r#override) == 90);
+    assert!(offset_of!(AccessorProperty, definite) == 91);
+    assert!(offset_of!(AccessorProperty, accessibility) == 92);
 
     assert!(size_of::<ImportExpression>() == 48);
     assert!(align_of::<ImportExpression>() == 8);
@@ -796,6 +796,8 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 24);
     assert!(align_of::<RegExpPattern>() == 8);
+    assert!(offset_of!(RegExpPattern, text) == 0);
+    assert!(offset_of!(RegExpPattern, pattern) == 16);
 
     assert!(size_of::<RegExpFlags>() == 1);
     assert!(align_of::<RegExpFlags>() == 1);
@@ -804,15 +806,15 @@ const _: () = {
     assert!(align_of::<JSXElement>() == 8);
     assert!(offset_of!(JSXElement, span) == 0);
     assert!(offset_of!(JSXElement, opening_element) == 8);
-    assert!(offset_of!(JSXElement, closing_element) == 16);
-    assert!(offset_of!(JSXElement, children) == 24);
+    assert!(offset_of!(JSXElement, children) == 16);
+    assert!(offset_of!(JSXElement, closing_element) == 48);
 
     assert!(size_of::<JSXOpeningElement>() == 64);
     assert!(align_of::<JSXOpeningElement>() == 8);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
     assert!(offset_of!(JSXOpeningElement, name) == 8);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 24);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 56);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 24);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 32);
 
     assert!(size_of::<JSXClosingElement>() == 24);
     assert!(align_of::<JSXClosingElement>() == 8);
@@ -823,8 +825,8 @@ const _: () = {
     assert!(align_of::<JSXFragment>() == 8);
     assert!(offset_of!(JSXFragment, span) == 0);
     assert!(offset_of!(JSXFragment, opening_fragment) == 8);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16);
-    assert!(offset_of!(JSXFragment, children) == 24);
+    assert!(offset_of!(JSXFragment, children) == 16);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 48);
 
     assert!(size_of::<JSXOpeningFragment>() == 8);
     assert!(align_of::<JSXOpeningFragment>() == 8);
@@ -1000,8 +1002,8 @@ const _: () = {
     assert!(size_of::<TSNamedTupleMember>() == 56);
     assert!(align_of::<TSNamedTupleMember>() == 8);
     assert!(offset_of!(TSNamedTupleMember, span) == 0);
-    assert!(offset_of!(TSNamedTupleMember, element_type) == 8);
-    assert!(offset_of!(TSNamedTupleMember, label) == 24);
+    assert!(offset_of!(TSNamedTupleMember, label) == 8);
+    assert!(offset_of!(TSNamedTupleMember, element_type) == 32);
     assert!(offset_of!(TSNamedTupleMember, optional) == 48);
 
     assert!(size_of::<TSOptionalType>() == 24);
@@ -1317,8 +1319,8 @@ const _: () = {
     assert!(size_of::<TSTypeAssertion>() == 40);
     assert!(align_of::<TSTypeAssertion>() == 8);
     assert!(offset_of!(TSTypeAssertion, span) == 0);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 24);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8);
+    assert!(offset_of!(TSTypeAssertion, expression) == 24);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 64);
     assert!(align_of::<TSImportEqualsDeclaration>() == 8);
@@ -1488,8 +1490,8 @@ const _: () = {
     assert!(align_of::<TaggedTemplateExpression>() == 4);
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
-    assert!(offset_of!(TaggedTemplateExpression, quasi) == 16);
-    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 56);
+    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 16);
+    assert!(offset_of!(TaggedTemplateExpression, quasi) == 20);
 
     assert!(size_of::<TemplateElement>() == 28);
     assert!(align_of::<TemplateElement>() == 4);
@@ -1540,8 +1542,8 @@ const _: () = {
     assert!(align_of::<NewExpression>() == 4);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
-    assert!(offset_of!(NewExpression, arguments) == 16);
-    assert!(offset_of!(NewExpression, type_arguments) == 32);
+    assert!(offset_of!(NewExpression, type_arguments) == 16);
+    assert!(offset_of!(NewExpression, arguments) == 20);
     assert!(offset_of!(NewExpression, pure) == 36);
 
     assert!(size_of::<MetaProperty>() == 40);
@@ -1997,22 +1999,22 @@ const _: () = {
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    assert!(size_of::<PropertyDefinition>() == 60);
+    assert!(size_of::<PropertyDefinition>() == 56);
     assert!(align_of::<PropertyDefinition>() == 4);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, r#type) == 8);
     assert!(offset_of!(PropertyDefinition, decorators) == 12);
     assert!(offset_of!(PropertyDefinition, key) == 28);
-    assert!(offset_of!(PropertyDefinition, value) == 36);
-    assert!(offset_of!(PropertyDefinition, computed) == 44);
-    assert!(offset_of!(PropertyDefinition, r#static) == 45);
-    assert!(offset_of!(PropertyDefinition, declare) == 46);
-    assert!(offset_of!(PropertyDefinition, r#override) == 47);
-    assert!(offset_of!(PropertyDefinition, optional) == 48);
-    assert!(offset_of!(PropertyDefinition, definite) == 49);
-    assert!(offset_of!(PropertyDefinition, readonly) == 50);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 52);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 56);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 36);
+    assert!(offset_of!(PropertyDefinition, value) == 40);
+    assert!(offset_of!(PropertyDefinition, computed) == 48);
+    assert!(offset_of!(PropertyDefinition, r#static) == 49);
+    assert!(offset_of!(PropertyDefinition, declare) == 50);
+    assert!(offset_of!(PropertyDefinition, r#override) == 51);
+    assert!(offset_of!(PropertyDefinition, optional) == 52);
+    assert!(offset_of!(PropertyDefinition, definite) == 53);
+    assert!(offset_of!(PropertyDefinition, readonly) == 54);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 55);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);
@@ -2043,12 +2045,12 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, r#type) == 8);
     assert!(offset_of!(AccessorProperty, decorators) == 12);
     assert!(offset_of!(AccessorProperty, key) == 28);
-    assert!(offset_of!(AccessorProperty, value) == 36);
-    assert!(offset_of!(AccessorProperty, computed) == 44);
-    assert!(offset_of!(AccessorProperty, r#static) == 45);
-    assert!(offset_of!(AccessorProperty, r#override) == 46);
-    assert!(offset_of!(AccessorProperty, definite) == 47);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 48);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 36);
+    assert!(offset_of!(AccessorProperty, value) == 40);
+    assert!(offset_of!(AccessorProperty, computed) == 48);
+    assert!(offset_of!(AccessorProperty, r#static) == 49);
+    assert!(offset_of!(AccessorProperty, r#override) == 50);
+    assert!(offset_of!(AccessorProperty, definite) == 51);
     assert!(offset_of!(AccessorProperty, accessibility) == 52);
 
     assert!(size_of::<ImportExpression>() == 28);
@@ -2189,6 +2191,8 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12);
     assert!(align_of::<RegExpPattern>() == 4);
+    assert!(offset_of!(RegExpPattern, text) == 0);
+    assert!(offset_of!(RegExpPattern, pattern) == 8);
 
     assert!(size_of::<RegExpFlags>() == 1);
     assert!(align_of::<RegExpFlags>() == 1);
@@ -2197,15 +2201,15 @@ const _: () = {
     assert!(align_of::<JSXElement>() == 4);
     assert!(offset_of!(JSXElement, span) == 0);
     assert!(offset_of!(JSXElement, opening_element) == 8);
-    assert!(offset_of!(JSXElement, closing_element) == 12);
-    assert!(offset_of!(JSXElement, children) == 16);
+    assert!(offset_of!(JSXElement, children) == 12);
+    assert!(offset_of!(JSXElement, closing_element) == 28);
 
     assert!(size_of::<JSXOpeningElement>() == 36);
     assert!(align_of::<JSXOpeningElement>() == 4);
     assert!(offset_of!(JSXOpeningElement, span) == 0);
     assert!(offset_of!(JSXOpeningElement, name) == 8);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 16);
-    assert!(offset_of!(JSXOpeningElement, type_arguments) == 32);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 16);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 20);
 
     assert!(size_of::<JSXClosingElement>() == 16);
     assert!(align_of::<JSXClosingElement>() == 4);
@@ -2216,8 +2220,8 @@ const _: () = {
     assert!(align_of::<JSXFragment>() == 4);
     assert!(offset_of!(JSXFragment, span) == 0);
     assert!(offset_of!(JSXFragment, opening_fragment) == 8);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16);
-    assert!(offset_of!(JSXFragment, children) == 24);
+    assert!(offset_of!(JSXFragment, children) == 16);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 32);
 
     assert!(size_of::<JSXOpeningFragment>() == 8);
     assert!(align_of::<JSXOpeningFragment>() == 4);
@@ -2393,8 +2397,8 @@ const _: () = {
     assert!(size_of::<TSNamedTupleMember>() == 36);
     assert!(align_of::<TSNamedTupleMember>() == 4);
     assert!(offset_of!(TSNamedTupleMember, span) == 0);
-    assert!(offset_of!(TSNamedTupleMember, element_type) == 8);
-    assert!(offset_of!(TSNamedTupleMember, label) == 16);
+    assert!(offset_of!(TSNamedTupleMember, label) == 8);
+    assert!(offset_of!(TSNamedTupleMember, element_type) == 24);
     assert!(offset_of!(TSNamedTupleMember, optional) == 32);
 
     assert!(size_of::<TSOptionalType>() == 16);
@@ -2710,8 +2714,8 @@ const _: () = {
     assert!(size_of::<TSTypeAssertion>() == 24);
     assert!(align_of::<TSTypeAssertion>() == 4);
     assert!(offset_of!(TSTypeAssertion, span) == 0);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 16);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8);
+    assert!(offset_of!(TSTypeAssertion, expression) == 16);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 40);
     assert!(align_of::<TSImportEqualsDeclaration>() == 4);

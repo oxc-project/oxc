@@ -41,7 +41,7 @@ pub struct ParserOptions {
 
 #[napi]
 pub struct ParseResult {
-    pub(crate) program: String,
+    pub(crate) program_and_fixes: String,
     pub(crate) module: EcmaScriptModule,
     pub(crate) comments: Vec<Comment>,
     pub(crate) errors: Vec<OxcError>,
@@ -51,7 +51,7 @@ pub struct ParseResult {
 impl ParseResult {
     #[napi(getter, ts_return_type = "import(\"@oxc-project/types\").Program")]
     pub fn get_program(&mut self) -> String {
-        mem::take(&mut self.program)
+        mem::take(&mut self.program_and_fixes)
     }
 
     #[napi(getter)]

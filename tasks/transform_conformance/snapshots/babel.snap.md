@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 714/1191
+Passed: 713/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1354,7 +1354,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/158)
+# babel-plugin-transform-typescript (48/158)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1377,6 +1377,15 @@ rebuilt        : ["x"]
    `----
 
 
+  x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:14:3]
+ 13 |   abstract accessor f = 1;
+ 14 |   readonly accessor g;
+    :   ^^^^^^^^
+ 15 | }
+    `----
+
+
 * class/accessor-allowDeclareFields-true/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1389,6 +1398,15 @@ rebuilt        : ["x"]
    `----
 
 
+  x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:14:3]
+ 13 |   abstract accessor f = 1;
+ 14 |   readonly accessor g;
+    :   ^^^^^^^^
+ 15 | }
+    `----
+
+
 * class/head/input.ts
 Unresolved references mismatch:
 after transform: ["D", "I"]
@@ -1398,6 +1416,9 @@ rebuilt        : ["D"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+* class/parameter-properties-late-super/input.ts
+x Output mismatch
 
 * class/private-method-override/input.ts
 Scope children mismatch:
@@ -1691,7 +1712,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | Ambient)
+after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol reference IDs mismatch for "N":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
@@ -2012,9 +2033,9 @@ rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Reference symbol mismatch for "LongNameModule":
 after transform: SymbolId(0) "LongNameModule"
 rebuilt        : <None>
-Unresolved reference IDs mismatch for "LongNameModule":
-after transform: [ReferenceId(5)]
-rebuilt        : [ReferenceId(0)]
+Unresolved references mismatch:
+after transform: ["console"]
+rebuilt        : ["LongNameModule", "console"]
 
 * namespace/clobber-class/input.ts
 Symbol flags mismatch for "A":

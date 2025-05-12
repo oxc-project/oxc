@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/dummy.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/dummy.rs`.
 
 #![allow(unused_variables, clippy::inline_always)]
 
@@ -192,8 +192,8 @@ impl<'a> Dummy<'a> for TaggedTemplateExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             tag: Dummy::dummy(allocator),
-            quasi: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            quasi: Dummy::dummy(allocator),
         }
     }
 }
@@ -296,8 +296,8 @@ impl<'a> Dummy<'a> for NewExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             callee: Dummy::dummy(allocator),
-            arguments: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            arguments: Dummy::dummy(allocator),
             pure: Dummy::dummy(allocator),
         }
     }
@@ -1248,6 +1248,7 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             r#type: Dummy::dummy(allocator),
             decorators: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
@@ -1256,7 +1257,6 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             optional: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
-            type_annotation: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
         }
     }
@@ -1333,12 +1333,12 @@ impl<'a> Dummy<'a> for AccessorProperty<'a> {
             r#type: Dummy::dummy(allocator),
             decorators: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
-            type_annotation: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
         }
     }
@@ -1635,7 +1635,7 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Raw(Dummy::dummy(allocator))
+        Self { text: Dummy::dummy(allocator), pattern: Dummy::dummy(allocator) }
     }
 }
 
@@ -1647,8 +1647,8 @@ impl<'a> Dummy<'a> for JSXElement<'a> {
         Self {
             span: Dummy::dummy(allocator),
             opening_element: Dummy::dummy(allocator),
-            closing_element: Dummy::dummy(allocator),
             children: Dummy::dummy(allocator),
+            closing_element: Dummy::dummy(allocator),
         }
     }
 }
@@ -1661,8 +1661,8 @@ impl<'a> Dummy<'a> for JSXOpeningElement<'a> {
         Self {
             span: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
-            attributes: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+            attributes: Dummy::dummy(allocator),
         }
     }
 }
@@ -1684,8 +1684,8 @@ impl<'a> Dummy<'a> for JSXFragment<'a> {
         Self {
             span: Dummy::dummy(allocator),
             opening_fragment: Dummy::dummy(allocator),
-            closing_fragment: Dummy::dummy(allocator),
             children: Dummy::dummy(allocator),
+            closing_fragment: Dummy::dummy(allocator),
         }
     }
 }
@@ -2068,8 +2068,8 @@ impl<'a> Dummy<'a> for TSNamedTupleMember<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            element_type: Dummy::dummy(allocator),
             label: Dummy::dummy(allocator),
+            element_type: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
         }
     }
@@ -2728,8 +2728,8 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            expression: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
+            expression: Dummy::dummy(allocator),
         }
     }
 }

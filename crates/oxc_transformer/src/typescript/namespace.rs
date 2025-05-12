@@ -107,7 +107,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let flags = ctx.scoping().symbol_flags(symbol_id);
 
         // If it's a namespace, we need additional checks to determine if it can return early.
-        if flags.is_namespace() {
+        if flags.is_namespace_module() {
             // Don't need further check because NO `ValueModule` namespace redeclaration
             if !flags.is_value_module() {
                 return;
@@ -149,7 +149,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 .flags;
 
             // Return if the current declaration is a namespace
-            if current_declaration_flags.is_namespace() {
+            if current_declaration_flags.is_namespace_module() {
                 return;
             }
         }

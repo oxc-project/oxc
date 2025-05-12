@@ -38,20 +38,14 @@ use crate::fixer::{FixWithPosition, MessageWithPosition};
 #[cfg(feature = "language_server")]
 use crate::service::offset_to_position::{SpanPositionMessage, offset_to_position};
 
-pub struct Runtime {
+pub struct Runtime<'l> {
     cwd: Box<Path>,
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
-    pub(super) linter: Linter,
+    pub(super) linter: &'l Linter,
     resolver: Option<Resolver>,
 
-    // The language server uses more up to date source_text provided by `workspace/didChange` request.
-    // This is required to support `run: "onType"` configuration
-    #[cfg(feature = "language_server")]
-    source_text_cache: FxHashMap<Arc<OsStr>, String>,
-
-    #[cfg(test)]
-    pub(super) test_source: std::sync::RwLock<Option<String>>,
+    pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 }
 
 /// Output of `Runtime::process_path`
@@ -140,8 +134,37 @@ impl ModuleToLint {
     }
 }
 
-impl Runtime {
-    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+/// A simple trait for the `Runtime` to load and save file from a filesystem
+/// The `Runtime` uses OsFileSystem as a default
+/// The Tester and `oxc_language_server` would like to provide the content from memory
+pub trait RuntimeFileSystem {
+    /// reads the content of a file path
+    ///
+    /// # Errors
+    /// When no valid path is provided or the content is not valid UTF-8 Stream
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+
+    /// write a file to the file system
+    ///
+    /// # Errors
+    /// When the program does not have write permission for the file system
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error>;
+}
+
+struct OsFileSystem;
+
+impl RuntimeFileSystem for OsFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        read_to_string(path)
+    }
+
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error> {
+        fs::write(path, content)
+    }
+}
+
+impl<'l> Runtime<'l> {
+    pub(super) fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
@@ -150,11 +173,16 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
-            #[cfg(feature = "language_server")]
-            source_text_cache: FxHashMap::default(),
-            #[cfg(test)]
-            test_source: std::sync::RwLock::new(None),
+            file_system: Box::new(OsFileSystem),
         }
+    }
+
+    pub fn with_file_system(
+        mut self,
+        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+    ) -> Self {
+        self.file_system = file_system;
+        self
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
@@ -195,21 +223,7 @@ impl Runtime {
         }
         let source_type = source_type.unwrap_or_default();
 
-        #[cfg(test)]
-        if let (true, Some(test_source)) =
-            (self.paths.contains(path.as_os_str()), &*self.test_source.read().unwrap())
-        {
-            return Some(Ok((source_type, test_source.clone())));
-        }
-
-        // The language server uses more up to date source_text provided by `workspace/didChange` request.
-        // This is required to support `run: "onType"` configuration
-        #[cfg(feature = "language_server")]
-        if let Some(source_text) = self.source_text_cache.get(path.as_os_str()) {
-            return Some(Ok((source_type, source_text.clone())));
-        }
-
-        let file_result = read_to_string(path).map_err(|e| {
+        let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -518,7 +532,7 @@ impl Runtime {
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
                     if let Cow::Owned(new_source_text) = new_source_text {
-                        fs::write(path, new_source_text).unwrap();
+                        me.file_system.write_file(path, new_source_text).unwrap();
                     }
                 });
             });
@@ -535,22 +549,14 @@ impl Runtime {
     pub(super) fn run_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-        path: &Arc<OsStr>,
-        source_text: &str,
     ) -> Vec<MessageWithPosition<'a>> {
         use std::sync::Mutex;
-
-        // the language server can have more up to date source_text then the filesystem
-        #[cfg(feature = "language_server")]
-        {
-            self.source_text_cache.insert(Arc::clone(path), source_text.to_owned());
-        }
 
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
-                module.content.with_dependent_mut(|_owner, dependent| {
+                module.content.with_dependent_mut(|owner, dependent| {
                     assert_eq!(module.section_module_records.len(), dependent.len());
 
                     for (record_result, section) in
@@ -581,13 +587,13 @@ impl Runtime {
                                                     let offset = labeled_span.offset() as u32;
                                                     let start_position = offset_to_position(
                                                         offset + section.source.start,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let end_position = offset_to_position(
                                                         offset
                                                             + section.source.start
                                                             + labeled_span.len() as u32,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let message = labeled_span
                                                         .label()
@@ -614,11 +620,11 @@ impl Runtime {
                                                 span: SpanPositionMessage::new(
                                                     offset_to_position(
                                                         section.source.start + fix.span.start,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     ),
                                                     offset_to_position(
                                                         section.source.start + fix.span.end,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     ),
                                                 )
                                                 .with_message(
@@ -656,14 +662,11 @@ impl Runtime {
     pub(super) fn run_test_source<'a>(
         &mut self,
         allocator: &'a Allocator,
-        source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         use oxc_allocator::CloneIn;
         use std::sync::Mutex;
-
-        *self.test_source.write().unwrap() = Some(source_text.to_owned());
 
         let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {

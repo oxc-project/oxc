@@ -7,7 +7,6 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_regular_expression::ast::Pattern;
 use oxc_span::ContentEq;
 
 use crate::ast::*;
@@ -133,77 +132,7 @@ impl Display for BigIntLiteral<'_> {
 
 impl Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "/{}/{}", self.pattern, self.flags)
-    }
-}
-
-impl<'a> RegExpPattern<'a> {
-    /// Returns the number of characters in the pattern.
-    pub fn len(&self) -> usize {
-        match self {
-            Self::Raw(it) | Self::Invalid(it) => it.len(),
-            Self::Pattern(it) => it.span.size() as usize,
-        }
-    }
-
-    /// Returns `true` if the pattern is empty (i.e. has a
-    /// [len](RegExpPattern::len) of `0`).
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Returns the string as this regular expression would appear in source code.
-    pub fn source_text(&self, source_text: &'a str) -> Cow<str> {
-        match self {
-            Self::Raw(raw) | Self::Invalid(raw) => Cow::Borrowed(raw),
-            Self::Pattern(pat) if pat.span.is_unspanned() => Cow::Owned(pat.to_string()),
-            Self::Pattern(pat) => Cow::Borrowed(pat.span.source_text(source_text)),
-        }
-    }
-
-    /// # Panics
-    /// If `self` is anything but `RegExpPattern::Pattern`.
-    pub fn require_pattern(&self) -> &Pattern<'a> {
-        if let Some(it) = self.as_pattern() {
-            it
-        } else {
-            unreachable!(
-                "Required `{}` to be `{}`",
-                stringify!(RegExpPattern),
-                stringify!(Pattern)
-            );
-        }
-    }
-
-    /// Flatten this regular expression into a compiled [`Pattern`], returning
-    /// [`None`] if the pattern is invalid or not parsed.
-    pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
-        if let Self::Pattern(it) = self { Some(it.as_ref()) } else { None }
-    }
-}
-
-impl ContentEq for RegExpPattern<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        let self_str = match self {
-            Self::Raw(s) | Self::Invalid(s) => *s,
-            Self::Pattern(p) => &p.to_string(),
-        };
-
-        let other_str = match other {
-            Self::Raw(s) | Self::Invalid(s) => *s,
-            Self::Pattern(p) => &p.to_string(),
-        };
-
-        self_str == other_str
-    }
-}
-
-impl Display for RegExpPattern<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Raw(it) | Self::Invalid(it) => it.fmt(f),
-            Self::Pattern(it) => it.fmt(f),
-        }
+        write!(f, "/{}/{}", self.pattern.text, self.flags)
     }
 }
 

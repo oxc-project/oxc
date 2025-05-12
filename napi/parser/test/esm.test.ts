@@ -91,8 +91,9 @@ describe('export type', () => {
     ['export { type foo }', true],
     ["export type { foo } from 'mod'", true],
     ['export type Foo = {}', true],
-    ['export interface Bar {}', true],
-    ['export namespace Baz {}', false], // namespace isn't considered a typed export
+    ['export interface Foo {}', true],
+    ['export default interface Foo {}', true],
+    ['export namespace Foo {}', false], // namespace isn't considered a typed export
   ] as const;
   test.each(inputs)('%s', (source, isType) => {
     const ret = parseSync('test.ts', source);

@@ -39,13 +39,13 @@ impl<'a> Lexer<'a> {
             }
             c if is_irregular_whitespace(c) => {
                 self.consume_char();
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
+                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
                 Kind::Skip
             }
             c if is_irregular_line_terminator(c) => {
                 self.consume_char();
-                self.token.is_on_new_line = true;
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
+                self.token.set_is_on_new_line(true);
+                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
                 Kind::Skip
             }
             _ => {
@@ -135,7 +135,7 @@ impl<'a> Lexer<'a> {
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
             UnicodeEscape::CodePoint(ch) => {
-                if ch == '\u{FFFD}' && self.token.lone_surrogates {
+                if ch == '\u{FFFD}' && self.token.lone_surrogates() {
                     // Lossy replacement character is being used as an escape marker. Escape it.
                     text.push_str("\u{FFFD}fffd");
                 } else {
@@ -156,8 +156,8 @@ impl<'a> Lexer<'a> {
     fn string_lone_surrogate(&mut self, code_point: u32, text: &mut String<'a>) {
         debug_assert!(code_point <= 0xFFFF);
 
-        if !self.token.lone_surrogates {
-            self.token.lone_surrogates = true;
+        if !self.token.lone_surrogates() {
+            self.token.set_lone_surrogates(true);
 
             // We use `\u{FFFD}` (the lossy replacement character) as a marker indicating the start
             // of a lone surrogate. e.g. `\u{FFFD}d800` (which will be output as `\ud800`).

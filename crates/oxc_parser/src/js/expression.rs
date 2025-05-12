@@ -290,9 +290,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let token = self.cur_token();
         let src = self.cur_src();
-        let value = match token.kind {
+        let value = match token.kind() {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, token.kind, token.has_separator())
+                parse_int(src, token.kind(), token.has_separator())
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src, token.has_separator())
@@ -303,7 +303,7 @@ impl<'a> ParserImpl<'a> {
             self.set_fatal_error(diagnostics::invalid_number(err, token.span()));
             0.0 // Dummy value
         });
-        let base = match token.kind {
+        let base = match token.kind() {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -334,7 +334,7 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let _value = parse_big_int(src, token.kind, token.has_separator())
+        let _value = parse_big_int(src, token.kind(), token.has_separator())
             .map_err(|err| diagnostics::invalid_number(err, token.span()));
         self.bump_any();
         self.ast.big_int_literal(self.end_span(span), raw, base)
@@ -346,36 +346,27 @@ impl<'a> ParserImpl<'a> {
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
         }
-        let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
+        let pattern_start = self.cur_token().start() + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
-        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
+        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end() as usize];
         let raw = self.cur_src();
         self.bump_any();
 
         // Parse pattern if options is enabled and also flags are valid
         #[cfg(feature = "regular_expression")]
-        let pattern = {
-            (self.options.parse_regular_expression && !flags_error)
-                .then_some(())
-                .map(|()| {
-                    self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
-                })
-                .map_or_else(
-                    || RegExpPattern::Raw(pattern_text),
-                    |pat| {
-                        pat.map_or_else(
-                            || RegExpPattern::Invalid(pattern_text),
-                            RegExpPattern::Pattern,
-                        )
-                    },
-                )
+        let pattern = if self.options.parse_regular_expression && !flags_error {
+            self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
+        } else {
+            None
         };
         #[cfg(not(feature = "regular_expression"))]
         let pattern = {
-            let _ = (flags_start, flags_text, flags_error);
-            RegExpPattern::Raw(pattern_text)
+            let _ = (flags_text, flags_error);
+            None
         };
+
+        let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
 
         self.ast.reg_exp_literal(
             self.end_span(span),
@@ -415,7 +406,7 @@ impl<'a> ParserImpl<'a> {
         }
         let value = self.cur_string();
         let span = self.start_span();
-        let lone_surrogates = self.cur_token().lone_surrogates;
+        let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
         let span = self.end_span(span);
         // SAFETY:
@@ -522,7 +513,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         lhs: Expression<'a>,
         in_optional_chain: bool,
-        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+        type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Expression<'a> {
         let quasi = self.parse_template_literal(true);
         let span = self.end_span(span);
@@ -534,7 +525,7 @@ impl<'a> ParserImpl<'a> {
         if in_optional_chain {
             self.error(diagnostics::optional_chain_tagged_template(quasi.span));
         }
-        self.ast.expression_tagged_template(span, lhs, quasi, type_parameters)
+        self.ast.expression_tagged_template(span, lhs, type_arguments, quasi)
     }
 
     pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement<'a> {
@@ -556,13 +547,13 @@ impl<'a> ParserImpl<'a> {
         // Also replace `\r` with `\n` in `raw`.
         // If contains `\r`, then `escaped` must be `true` (because `\r` needs unescaping),
         // so we can skip searching for `\r` in common case where contains no escapes.
-        let (cooked, lone_surrogates) = if self.cur_token().escaped {
+        let (cooked, lone_surrogates) = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
             let cooked = self.cur_template_string().map(Atom::from);
             if cooked.is_some() && raw.contains('\r') {
                 raw = self.ast.atom(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
             }
-            (cooked, self.cur_token().lone_surrogates)
+            (cooked, self.cur_token().lone_surrogates())
         } else {
             (Some(raw), false)
         };
@@ -664,6 +655,9 @@ impl<'a> ParserImpl<'a> {
         if !in_optional_chain {
             return lhs;
         }
+        if self.ctx.has_decorator() {
+            self.error(diagnostics::decorator_optional(lhs.span()));
+        }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
             expr.expression = self.map_to_chain_expression(
@@ -700,7 +694,12 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let span = self.start_span();
         let lhs = self.parse_primary_expression();
-        self.parse_member_expression_rest(span, lhs, in_optional_chain)
+        self.parse_member_expression_rest(
+            span,
+            lhs,
+            in_optional_chain,
+            /* allow_optional_chain */ true,
+        )
     }
 
     /// Section 13.3 Super Call
@@ -728,60 +727,60 @@ impl<'a> ParserImpl<'a> {
         lhs_span: u32,
         lhs: Expression<'a>,
         in_optional_chain: &mut bool,
+        allow_optional_chain: bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
         loop {
             if self.fatal_error.is_some() {
                 return lhs;
             }
-            lhs = match self.cur_kind() {
-                Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false),
-                Kind::QuestionDot => {
-                    *in_optional_chain = true;
-                    match self.peek_kind() {
-                        Kind::LBrack if !self.ctx.has_decorator() => {
-                            self.bump_any(); // bump `?.`
-                            self.parse_computed_member_expression(lhs_span, lhs, true)
-                        }
-                        Kind::PrivateIdentifier => {
-                            self.parse_static_member_expression(lhs_span, lhs, true)
-                        }
-                        kind if kind.is_identifier_name() => {
-                            self.parse_static_member_expression(lhs_span, lhs, true)
-                        }
-                        Kind::Bang
-                        | Kind::LAngle
-                        | Kind::LParen
-                        | Kind::NoSubstitutionTemplate
-                        | Kind::ShiftLeft
-                        | Kind::TemplateHead
-                        | Kind::LBrack => break,
-                        _ => {
-                            return self.unexpected();
-                        }
-                    }
-                }
-                // computed member expression is not allowed in decorator
-                // class C { @dec ["1"]() { } }
-                //                ^
-                Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.parse_computed_member_expression(lhs_span, lhs, false)
-                }
-                Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
+
+            let mut question_dot = false;
+            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) && {
+                let peek_kind = self.peek_kind();
+                peek_kind == Kind::LBrack
+                    || peek_kind.is_identifier_or_keyword()
+                    || peek_kind.is_template_start_of_tagged_template()
+            } {
+                self.bump_any();
+                *in_optional_chain = true;
+                question_dot = true;
+                self.cur_kind().is_identifier_or_keyword()
+            } else {
+                self.eat(Kind::Dot)
+            };
+
+            if is_property_access {
+                lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
+                continue;
+            }
+
+            if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
+                lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
+                continue;
+            }
+
+            if self.cur_kind().is_template_start_of_tagged_template() {
+                let (expr, type_arguments) =
+                    if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
+                        let expr = instantiation_expr.unbox();
+                        (expr.expression, Some(expr.type_arguments))
+                    } else {
+                        (lhs, None)
+                    };
+                lhs =
+                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_arguments);
+                continue;
+            }
+
+            if !question_dot {
+                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && self.is_ts {
                     self.bump_any();
-                    self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
+                    lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
+                    continue;
                 }
-                kind if kind.is_template_start_of_tagged_template() => {
-                    let (expr, type_parameters) =
-                        if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                            let expr = instantiation_expr.unbox();
-                            (expr.expression, Some(expr.type_arguments))
-                        } else {
-                            (lhs, None)
-                        };
-                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)
-                }
-                Kind::LAngle | Kind::ShiftLeft => {
+
+                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
                     if let Some(Some(arguments)) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
@@ -792,12 +791,11 @@ impl<'a> ParserImpl<'a> {
                         );
                         continue;
                     }
-                    break;
                 }
-                _ => break,
-            };
+            }
+
+            return lhs;
         }
-        lhs
     }
 
     /// Section 13.3 `MemberExpression`
@@ -808,7 +806,6 @@ impl<'a> ParserImpl<'a> {
         lhs: Expression<'a>,
         optional: bool,
     ) -> Expression<'a> {
-        self.bump_any(); // advance `.` or `?.`
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
             self.ast.member_expression_private_field_expression(
@@ -852,16 +849,29 @@ impl<'a> ParserImpl<'a> {
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
             };
         }
-        let rhs_span = self.start_span();
 
+        let rhs_span = self.start_span();
         let mut optional = false;
-        let mut callee = self.parse_member_expression_or_higher(&mut optional);
+        let mut callee = {
+            let lhs = self.parse_primary_expression();
+            self.parse_member_expression_rest(
+                rhs_span,
+                lhs,
+                &mut optional,
+                /* allow_optional_chain */ false,
+            )
+        };
 
         let mut type_arguments = None;
         if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
             let instantiation_expr = instantiation_expr.unbox();
             type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
+        }
+
+        if self.at(Kind::QuestionDot) {
+            let error = diagnostics::invalid_new_optional_chain(self.cur_token().span());
+            return self.fatal_error(error);
         }
 
         // parse `new ident` without arguments
@@ -892,7 +902,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::new_optional_chain(span));
         }
 
-        self.ast.expression_new(span, callee, arguments, type_arguments)
+        self.ast.expression_new(span, callee, type_arguments, arguments)
     }
 
     /// Section 13.3 Call Expression
@@ -904,23 +914,32 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let mut lhs = lhs;
         while self.fatal_error.is_none() {
-            let mut type_arguments = None;
-            lhs = self.parse_member_expression_rest(lhs_span, lhs, in_optional_chain);
-            let optional_call = self.eat(Kind::QuestionDot);
-            *in_optional_chain = if optional_call { true } else { *in_optional_chain };
+            lhs = self.parse_member_expression_rest(
+                lhs_span,
+                lhs,
+                in_optional_chain,
+                /* allow_optional_chain */ true,
+            );
+            let question_dot_span = self.at(Kind::QuestionDot).then(|| self.cur_token().span());
+            let question_dot = question_dot_span.is_some();
+            if question_dot {
+                self.bump_any();
+                *in_optional_chain = true;
+            }
 
-            if optional_call {
+            let mut type_arguments = None;
+            if question_dot {
                 if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
                     type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
-                    lhs = self.parse_tagged_template(lhs_span, lhs, optional_call, type_arguments);
+                    lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);
                     continue;
                 }
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !optional_call {
+                if !question_dot {
                     if let Expression::TSInstantiationExpression(expr) = lhs {
                         let expr = expr.unbox();
                         type_arguments.replace(expr.type_arguments);
@@ -928,10 +947,16 @@ impl<'a> ParserImpl<'a> {
                     }
                 }
 
-                lhs =
-                    self.parse_call_arguments(lhs_span, lhs, optional_call, type_arguments.take());
+                lhs = self.parse_call_arguments(lhs_span, lhs, question_dot, type_arguments.take());
                 continue;
             }
+
+            if let Some(span) = question_dot_span {
+                // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
+                let error = diagnostics::unexpected_token(span);
+                return self.fatal_error(error);
+            }
+
             break;
         }
 
@@ -996,7 +1021,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher();
         // ++ -- postfix update expressions
-        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line {
+        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(self.cur_kind());
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
@@ -1049,10 +1074,11 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let lhs_span = self.start_span();
 
+        // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             let left = self.parse_private_identifier();
             self.expect(Kind::In);
-            let right = self.parse_binary_expression_or_higher(Precedence::Lowest);
+            let right = self.parse_binary_expression_or_higher(Precedence::Compare);
             if let Expression::PrivateInExpression(private_in_expr) = right {
                 let error = diagnostics::private_in_private(private_in_expr.span);
                 return self.fatal_error(error);
@@ -1105,7 +1131,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
-                if self.cur_token().is_on_new_line {
+                if self.cur_token().is_on_new_line() {
                     break;
                 }
                 self.bump_any();
@@ -1370,7 +1396,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Await) {
             let peek_token = self.peek_token();
             // Allow arrow expression `await => {}`
-            if peek_token.kind == Kind::Arrow {
+            if peek_token.kind() == Kind::Arrow {
                 return false;
             }
             if self.ctx.has_await() {
@@ -1379,13 +1405,13 @@ impl<'a> ParserImpl<'a> {
             // The following expressions are ambiguous
             // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u, await ``, await of []
             if matches!(
-                peek_token.kind,
+                peek_token.kind(),
                 Kind::Of | Kind::LParen | Kind::LBrack | Kind::Slash | Kind::RegExp
             ) {
                 return false;
             }
 
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
         }
         false
     }
@@ -1394,13 +1420,13 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Yield) {
             let peek_token = self.peek_token();
             // Allow arrow expression `yield => {}`
-            if peek_token.kind == Kind::Arrow {
+            if peek_token.kind() == Kind::Arrow {
                 return false;
             }
             if self.ctx.has_yield() {
                 return true;
             }
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
         }
         false
     }

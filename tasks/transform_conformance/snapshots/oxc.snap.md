@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 154/250
+Passed: 152/253
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,12 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (7/23)
+# babel-plugin-transform-typescript (4/25)
+* allow-declare-fields-false/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -338,7 +343,7 @@ Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 17, end: 20 }
@@ -390,8 +395,76 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
+* remove-class-properties-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
+
+* ts-private-field-with-remove-class-fields-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["ArrayBufferView", "Transferable", "WeakMap", "babelHelpers", "kTransferable", "kValue"]
+rebuilt        : ["WeakMap", "babelHelpers", "kTransferable", "kValue"]
+
+* use-define-for-class-fields/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
+* use-define-for-class-fields-without-class-properties/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(8), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(11), ScopeId(15)]
+Scope children mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(12): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(1))
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+Scope parent mismatch:
+after transform: ScopeId(13): Some(ScopeId(0))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(7): [ScopeId(8), ScopeId(9), ScopeId(10)]
+Scope parent mismatch:
+after transform: ScopeId(16): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(0))
+rebuilt        : ScopeId(9): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(15): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(7))
+Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(11): [ScopeId(12), ScopeId(13), ScopeId(14)]
+Scope parent mismatch:
+after transform: ScopeId(17): Some(ScopeId(0))
+rebuilt        : ScopeId(12): Some(ScopeId(11))
+Scope children mismatch:
+after transform: ScopeId(8): [ScopeId(9), ScopeId(10)]
+rebuilt        : ScopeId(15): [ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20)]
+Scope parent mismatch:
+after transform: ScopeId(18): Some(ScopeId(0))
+rebuilt        : ScopeId(17): Some(ScopeId(15))
+Scope parent mismatch:
+after transform: ScopeId(19): Some(ScopeId(0))
+rebuilt        : ScopeId(19): Some(ScopeId(15))
+Scope parent mismatch:
+after transform: ScopeId(20): Some(ScopeId(0))
+rebuilt        : ScopeId(20): Some(ScopeId(15))
+Unresolved references mismatch:
+after transform: ["a", "b", "c", "console", "dce", "e", "x", "y", "z"]
+rebuilt        : ["a", "b", "c", "console", "e", "x", "y", "z"]
 
 
 # babel-plugin-transform-react-jsx (42/45)
@@ -424,7 +497,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (3/72)
+# legacy-decorators (4/73)
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]

@@ -66,6 +66,8 @@ pub struct ESTreeStructField {
     pub via: Option<String>,
     /// TS type of this field.
     pub ts_type: Option<String>,
+    /// Field index of field to prepend to this one
+    pub prepend_field_index: Option<usize>,
     /// Field index of field to append to this one
     pub append_field_index: Option<usize>,
     /// Skip this struct field.

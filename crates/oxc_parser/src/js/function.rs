@@ -24,7 +24,7 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::Function)
             || self.at(Kind::Async)
                 && self.peek_at(Kind::Function)
-                && !self.peek_token().is_on_new_line
+                && !self.peek_token().is_on_new_line()
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
@@ -303,7 +303,7 @@ impl<'a> ParserImpl<'a> {
         let mut delegate = false;
         let mut argument = None;
 
-        if !self.cur_token().is_on_new_line {
+        if !self.cur_token().is_on_new_line() {
             delegate = self.eat(Kind::Star);
             let not_assignment_expr = matches!(
                 self.cur_kind(),

@@ -1,14 +1,21 @@
-use oxc_ast::{AstKind, ast::JSXElementName};
+use oxc_ast::{
+    AstKind,
+    ast::{JSXAttributeItem, JSXElementName},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_img_element_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prevent usage of `<img>` element due to slower LCP and higher bandwidth.")
-        .with_help("See https://nextjs.org/docs/messages/no-img-element")
-        .with_label(span)
+fn no_img_element_diagnostic(span: Span, src_span: Option<Span>) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::warn("Using `<img>` could result in slower LCP and higher bandwidth.")
+		.with_help("Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.\nSee https://nextjs.org/docs/messages/no-img-element")
+        .with_label(span.label("Use `<Image />` from `next/image` instead."));
+    if let Some(src_span) = src_span {
+        diagnostic = diagnostic.and_label(src_span.label("Use a static image import instead."));
+    }
+    diagnostic
 }
 
 #[derive(Debug, Default, Clone)]
@@ -17,16 +24,45 @@ pub struct NoImgElement;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevent the usage of `<img>` element due to slower
+    /// [LCP](https://nextjs.org/learn/seo/lcp) and higher bandwidth.
     ///
     /// ### Why is this bad?
     ///
+    /// `<img>` elements are not optimized for performance and can result in
+    /// slower LCP and higher bandwidth.  Using [`<Image />`](https://nextjs.org/docs/pages/api-reference/components/image)
+    /// from `next/image` will automatically optimize images and serve them as
+    /// static assets.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
+    /// export function MyComponent() {
+    /// 	return (
+    /// 		<div>
+    /// 			<img src="/test.png" alt="Test picture" />
+    /// 		</div>
+    /// 	);
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// import Image from "next/image";
+    /// import testImage from "./test.png"
+    /// export function MyComponent() {
+    /// 	return (
+    /// 		<div>
+    ///             <Image src={testImage} alt="Test picture" />
+    ///         </div>
+    ///     );
+    /// }
     /// ```
     NoImgElement,
     nextjs,
-    correctness
+    correctness,
+    pending // TODO: add `import Image from "next/image"` (if missing), then change `<img />` to `<Image />`
 );
 
 impl Rule for NoImgElement {
@@ -39,18 +75,16 @@ impl Rule for NoImgElement {
             return;
         };
 
-        if jsx_opening_element_name.name.as_str() != "img" {
+        if jsx_opening_element_name.name != "img" {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-        let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
+        // first two are self, parent. third is grandparent
+        let Some(grandparent) = ctx.nodes().ancestor_kinds(node.id()).nth(2) else {
             return;
         };
 
-        if let AstKind::JSXElement(maybe_picture_jsx_elem) = parent.kind() {
+        if let AstKind::JSXElement(maybe_picture_jsx_elem) = grandparent {
             if let JSXElementName::Identifier(jsx_opening_element_name) =
                 &maybe_picture_jsx_elem.opening_element.name
             {
@@ -60,7 +94,18 @@ impl Rule for NoImgElement {
             }
         }
 
-        ctx.diagnostic(no_img_element_diagnostic(jsx_opening_element_name.span));
+        let src_span: Option<Span> = jsx_opening_element
+            .attributes
+            .iter()
+            .filter_map(JSXAttributeItem::as_attribute)
+            .find_map(|attr| {
+                let ident = attr.name.as_identifier()?;
+                let value = attr.value.as_ref()?;
+                let lit = value.as_string_literal()?;
+                (ident.name == "src").then(|| lit.span())
+            });
+
+        ctx.diagnostic(no_img_element_diagnostic(jsx_opening_element_name.span, src_span));
     }
 }
 
@@ -146,6 +191,13 @@ fn test() {
 			          );
 			        }
 			      }"#,
+        // src is not a string literal, so diagnostic won't label it.
+        "
+		import somePicture from './foo.png';
+		export const MyComponent = () => (
+		   <img src={somePicture.src} alt='foo' />
+		);
+		",
     ];
 
     Tester::new(NoImgElement::NAME, NoImgElement::PLUGIN, pass, fail).test_and_snapshot();

@@ -192,50 +192,50 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
     output_as_type: &mut bool,
     schema: &'s Schema,
 ) {
-    let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
-        let appended_field = &struct_def.fields[append_field_index];
-        let appended_type = appended_field.type_def(schema);
-        let appended_type = match appended_type {
-            TypeDef::Option(option_def) => option_def.inner_type(schema),
-            TypeDef::Vec(vec_def) => vec_def.inner_type(schema),
-            _ => panic!(
-                "Appended field must be `Option<T>` or `Vec<T>`: `{}::{}`",
-                struct_def.name(),
-                appended_field.name()
-            ),
-        };
-        let appended_type_name = ts_type_name(appended_type, schema);
+    // Get fields to concatenate
+    // (if fields marked `#[estree(prepend_to)]` or `#[estree(append_to)]` targeting this field)
+    let mut concat_fields = [field; 3];
+    let mut concat_field_count = 1;
+    if let Some(prepend_field_index) = field.estree.prepend_field_index {
+        concat_fields[0] = &struct_def.fields[prepend_field_index];
+        concat_field_count = 2;
+    }
+    if let Some(append_field_index) = field.estree.append_field_index {
+        concat_fields[concat_field_count] = &struct_def.fields[append_field_index];
+        concat_field_count += 1;
+    }
 
-        let field_type = field.type_def(schema);
-        let (vec_def, is_option) = match field_type {
-            TypeDef::Vec(vec_def) => (vec_def, false),
-            TypeDef::Option(option_def) => {
-                let vec_def = option_def.inner_type(schema).as_vec().unwrap();
-                (vec_def, true)
+    let field_type_name = if concat_field_count > 1 {
+        // Combine types of concatenated fields
+        let mut field_type_name = "Array<".to_string();
+        let mut include_null = false;
+        for (index, &field) in concat_fields[..concat_field_count].iter().enumerate() {
+            let field_type = match field.type_def(schema) {
+                TypeDef::Option(option_def) => option_def.inner_type(schema),
+                TypeDef::Vec(vec_def) => match vec_def.inner_type(schema) {
+                    TypeDef::Option(option_def) => {
+                        include_null = true;
+                        option_def.inner_type(schema)
+                    }
+                    field_type => field_type,
+                },
+                _ => panic!(
+                    "Appended field must be `Option<T>` or `Vec<T>`: `{}::{}`",
+                    struct_def.name(),
+                    field.name()
+                ),
+            };
+
+            if index > 0 {
+                field_type_name.push_str(" | ");
             }
-            _ => panic!(
-                "Can only append a field to a `Vec<T>` or `Option<Vec<T>>`: `{}::{}`",
-                struct_def.name(),
-                field.name()
-            ),
-        };
-
-        let mut inner_type = vec_def.inner_type(schema);
-        let mut inner_is_option = false;
-        if let TypeDef::Option(option_def) = inner_type {
-            inner_is_option = true;
-            inner_type = option_def.inner_type(schema);
+            field_type_name.push_str(&ts_type_name(field_type, schema));
         }
-        let inner_type_name = ts_type_name(inner_type, schema);
-        let mut field_type_name = format!("Array<{inner_type_name} | {appended_type_name}");
-        if inner_is_option {
+
+        if include_null {
             field_type_name.push_str(" | null");
         }
         field_type_name.push('>');
-        if is_option {
-            field_type_name.push_str(" | null");
-        }
-
         Cow::Owned(field_type_name)
     } else if let Some(converter_name) = &field.estree.via {
         let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {

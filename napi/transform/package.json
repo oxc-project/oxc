@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.68.1",
+  "version": "0.69.0",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
@@ -48,9 +48,12 @@
       "aarch64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
       "x86_64-unknown-linux-musl",
+      "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "armv7-unknown-linux-gnueabihf",
+      "s390x-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
       "wasm32-wasip1-threads"

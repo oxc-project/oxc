@@ -282,10 +282,6 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
-        // ignore all TypeScript syntax as they overload
-        if decl.declaration.is_typescript_syntax() {
-            return;
-        }
         let exported_name = &decl.exported;
 
         let local_name = match &decl.declaration {
@@ -302,6 +298,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                 || ExportLocalName::Null,
                 |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
             ),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
+                ExportLocalName::Name(NameSpan::new(t.id.name, t.id.span))
+            }
             _ => ExportLocalName::Null,
         };
         let export_entry = ExportEntry {
@@ -311,7 +310,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             import_name: ExportImportName::default(),
             export_name: ExportExportName::Default(exported_name.span()),
             local_name,
-            is_type: false,
+            is_type: decl.is_typescript_syntax(),
         };
         self.add_export_entry(export_entry);
     }
@@ -403,7 +402,7 @@ mod module_record_tests {
     use crate::Parser;
 
     fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
-        let source_type = SourceType::mjs();
+        let source_type = SourceType::ts();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         ret.module_record
     }
@@ -713,5 +712,16 @@ mod module_record_tests {
         assert_eq!(module_record.dynamic_imports.len(), 1);
         assert_eq!(module_record.dynamic_imports[0].span, Span::new(0, 13));
         assert_eq!(module_record.dynamic_imports[0].module_request, Span::new(7, 12));
+    }
+
+    #[test]
+    fn export_default_interface() {
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export default interface Foo {}");
+        assert_eq!(module_record.local_export_entries.len(), 1);
+        let entry = &module_record.local_export_entries[0];
+        assert_eq!(entry.local_name.name().unwrap().as_str(), "Foo");
+        assert!(entry.export_name.is_default());
+        assert!(entry.is_type);
     }
 }

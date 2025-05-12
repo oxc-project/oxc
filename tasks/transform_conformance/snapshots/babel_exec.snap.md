@@ -45,8 +45,8 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:1325:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:944:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:1325:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:944:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.2.0/node_modules/chai/chai.js:1618:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
@@ -414,35 +414,26 @@ ReferenceError: _Foo_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
 AssertionError: expected [Function] to throw error including 'right-hand side of \'in\' should be a…' but got '_Class_brand is not defined'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:1325:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:944:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:1325:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:944:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.2.0/node_modules/chai/chai.js:1618:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
 AssertionError: expected true to be false // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js:29:15
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
-TypeError: right-hand side of 'in' should be an object, got number
-    at _checkInRHS (./npm/runtime/src/helpers/checkInRHS.js:3:30)
-    at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:10:12)
-    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:12:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:11
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js
 ReferenceError: transformAsync is not defined
@@ -454,8 +445,8 @@ ReferenceError: transformAsync is not defined
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:1325:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.2/node_modules/@vitest/expect/dist/index.js:944:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:1325:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@3.1.3/node_modules/@vitest/expect/dist/index.js:944:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.2.0/node_modules/chai/chai.js:1618:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 

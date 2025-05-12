@@ -30,7 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, directives, source_type, hashbang), via = ProgramConverter)]
+#[estree(field_order(span, body, source_type, hashbang), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -40,9 +40,8 @@ pub struct Program<'a> {
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
-    #[estree(rename = "body")]
+    #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
-    #[estree(append_to = "directives")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -434,18 +433,21 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-/// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
+/// `` tag`Hello, ${name}` `` in `` const foo = tag`Hello, ${name}`; ``.
 ///
-/// Represents a tagged template expression, which can include a tag and a quasi.
+/// Or with TS type arguments:
+/// ```ts
+/// const foo = tag<T>`Hello, ${name}`;
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TaggedTemplateExpression<'a> {
     pub span: Span,
     pub tag: Expression<'a>,
-    pub quasi: TemplateLiteral<'a>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub quasi: TemplateLiteral<'a>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
@@ -619,10 +621,10 @@ pub struct CallExpression<'a> {
 pub struct NewExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
-    pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    pub arguments: Vec<'a, Argument<'a>>,
     #[builder(default)]
     #[estree(skip)]
     pub pure: bool,
@@ -869,7 +871,7 @@ pub use match_assignment_target_pattern;
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    #[estree(append_to = "elements")]
+    #[estree(append_to = elements)]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -886,7 +888,7 @@ pub struct ArrayAssignmentTarget<'a> {
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    #[estree(append_to = "properties")]
+    #[estree(append_to = properties)]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -1580,7 +1582,7 @@ pub struct AssignmentPattern<'a> {
 pub struct ObjectPattern<'a> {
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
-    #[estree(append_to = "properties")]
+    #[estree(append_to = properties)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1607,7 +1609,7 @@ pub struct BindingProperty<'a> {
 pub struct ArrayPattern<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    #[estree(append_to = "elements")]
+    #[estree(append_to = elements)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1852,9 +1854,9 @@ pub enum FormalParameterKind {
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
-    #[estree(rename = "body")]
+    #[estree(prepend_to = statements)]
     pub directives: Vec<'a, Directive<'a>>,
-    #[estree(append_to = "directives")]
+    #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 
@@ -2110,6 +2112,13 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Type annotation on the property.
+    ///
+    /// e.g. `class Foo { x: number; }`
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Initialized value in the declaration.
     ///
     /// ## Example
@@ -2162,11 +2171,6 @@ pub struct PropertyDefinition<'a> {
     /// `true` when declared with a `readonly` modifier
     #[ts]
     pub readonly: bool,
-    /// Type annotation on the property.
-    ///
-    /// Will only ever be [`Some`] for TypeScript files.
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.
@@ -2324,8 +2328,9 @@ pub enum AccessorPropertyType {
 #[estree(
     add_fields(declare = TsFalse, optional = TsFalse, readonly = TsFalse),
     field_order(
-      r#type, span, key, value, computed, r#static, decorators, definite, type_annotation,
-      accessibility, optional, r#override, readonly, declare)
+        r#type, span, key, type_annotation, value, computed, r#static, decorators, definite,
+        accessibility, optional, r#override, readonly, declare
+    )
 )]
 pub struct AccessorProperty<'a> {
     pub span: Span,
@@ -2337,6 +2342,11 @@ pub struct AccessorProperty<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Type annotation on the property.
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a>>,
     /// Property was declared with a computed key
@@ -2349,11 +2359,6 @@ pub struct AccessorProperty<'a> {
     /// Property has a `!` after its key.
     #[ts]
     pub definite: bool,
-    /// Type annotation on the property.
-    ///
-    /// Will only ever be [`Some`] for TypeScript files.
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.

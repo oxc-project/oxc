@@ -1,5 +1,5 @@
 # Auto-generated code, DO NOT EDIT DIRECTLY!
-# To edit this generated file you have to edit `tasks/ast_tools/src/main.rs`
+# To edit this generated file you have to edit `tasks/ast_tools/src/main.rs`.
 
 src:
   - '.github/generated/ast_changes_watch_list.yml'
@@ -31,7 +31,6 @@ src:
   - 'crates/oxc_regular_expression/src/generated/assert_layouts.rs'
   - 'crates/oxc_regular_expression/src/generated/derive_clone_in.rs'
   - 'crates/oxc_regular_expression/src/generated/derive_content_eq.rs'
-  - 'crates/oxc_regular_expression/src/generated/derive_estree.rs'
   - 'crates/oxc_regular_expression/src/generated/derive_get_address.rs'
   - 'crates/oxc_span/src/generated/assert_layouts.rs'
   - 'crates/oxc_span/src/generated/derive_dummy.rs'

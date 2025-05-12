@@ -215,9 +215,9 @@ impl<'a> Lexer<'a> {
     }
 
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.token.kind = kind;
-        self.token.end = self.offset();
-        debug_assert!(self.token.start <= self.token.end);
+        self.token.set_kind(kind);
+        self.token.set_end(self.offset());
+        debug_assert!(self.token.start() <= self.token.end());
         let token = self.token;
         self.trivia_builder.handle_token(token);
         self.token = Token::default();
@@ -243,7 +243,7 @@ impl<'a> Lexer<'a> {
 
     /// Get the current unterminated token range
     fn unterminated_range(&self) -> Span {
-        Span::new(self.token.start, self.offset())
+        Span::new(self.token.start(), self.offset())
     }
 
     /// Consume the current char if not at EOF
@@ -322,7 +322,7 @@ impl<'a> Lexer<'a> {
         self.trivia_builder.has_no_side_effects_comment = false;
         loop {
             let offset = self.offset();
-            self.token.start = offset;
+            self.token.set_start(offset);
 
             let Some(byte) = self.peek_byte() else {
                 return Kind::Eof;

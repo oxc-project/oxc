@@ -172,7 +172,7 @@ impl<'a> ParserImpl<'a> {
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
     fn parse_import_attributes(&mut self) -> Option<WithClause<'a>> {
         let attributes_keyword = match self.cur_kind() {
-            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name(),
+            Kind::Assert if !self.cur_token().is_on_new_line() => self.parse_identifier_name(),
             Kind::With => self.parse_identifier_name(),
             _ => {
                 return None;
@@ -403,7 +403,7 @@ impl<'a> ParserImpl<'a> {
                     self.parse_class_declaration(decl_span, &modifiers),
                 )
             }
-            _ if self.at(Kind::Interface) && !self.peek_token().is_on_new_line && self.is_ts => {
+            _ if self.at(Kind::Interface) && !self.peek_token().is_on_new_line() && self.is_ts => {
                 let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());
                 match decl {
                     Declaration::TSInterfaceDeclaration(decl) => {

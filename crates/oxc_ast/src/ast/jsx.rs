@@ -33,18 +33,19 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, opening_element, closing_element, children))]
 pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
     /// Opening tag of the element.
     #[estree(via = JSXElementOpening)]
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
-    /// Closing tag of the element.
-    /// [`None`] for self-closing tags.
-    pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
     /// Children of the element.
     /// This can be text, other elements, or expressions.
     pub children: Vec<'a, JSXChild<'a>>,
+    /// Closing tag of the element.
+    /// [`None`] for self-closing tags.
+    pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
 }
 
 /// JSX Opening Element
@@ -74,11 +75,11 @@ pub struct JSXOpeningElement<'a> {
     pub span: Span,
     /// The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     pub name: JSXElementName<'a>,
-    /// List of JSX attributes. In React-like applications, these become props.
-    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// List of JSX attributes. In React-like applications, these become props.
+    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
 }
 
 /// JSX Closing Element
@@ -113,15 +114,16 @@ pub struct JSXClosingElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, opening_fragment, closing_fragment, children))]
 pub struct JSXFragment<'a> {
     /// Node location in source code
     pub span: Span,
     /// `<>`
     pub opening_fragment: JSXOpeningFragment,
-    /// `</>`
-    pub closing_fragment: JSXClosingFragment,
     /// Elements inside the fragment.
     pub children: Vec<'a, JSXChild<'a>>,
+    /// `</>`
+    pub closing_fragment: JSXClosingFragment,
 }
 
 /// JSX Opening Fragment (`<>`)

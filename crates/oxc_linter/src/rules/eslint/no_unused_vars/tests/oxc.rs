@@ -236,6 +236,15 @@ fn test_vars_discarded_reads() {
         }
         foo(1)
         ",
+        // https://github.com/oxc-project/oxc/issues/10806
+        "export function f1(fn: () => Promise<void>) {
+            return async () => (await fn(), 1)
+        }",
+        "export function f2(fn: () => Promise<void>) {
+            return function* () {
+                return (yield fn(), 1);
+            }
+        }",
     ];
 
     let fail = vec![
@@ -1225,6 +1234,23 @@ fn test_ts_in_assignment() {
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-assignment-ts")
         .test();
+}
+
+#[test]
+fn test_loops() {
+    let pass: Vec<&str> = vec![];
+
+    let fail: Vec<&str> = vec![];
+    let fix = vec![
+        ("for (const unused of arr) {}", "for (const _unused of arr) {}"),
+        ("for (const unused in arr) {}", "for (const _unused in arr) {}"),
+        (
+            "for (const foo of arr) { console.log(foo); const unused = 1; }",
+            "for (const foo of arr) { console.log(foo);  }",
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
 }
 
 // #[test]

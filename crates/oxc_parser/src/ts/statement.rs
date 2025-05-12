@@ -190,10 +190,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn is_at_interface_declaration(&mut self) -> bool {
-        if !self.at(Kind::Interface) || self.peek_token().is_on_new_line {
+        if !self.at(Kind::Interface) || self.peek_token().is_on_new_line() {
             false
         } else {
-            self.peek_token().kind.is_binding_identifier() || self.peek_at(Kind::LCurly)
+            self.peek_token().kind().is_binding_identifier() || self.peek_at(Kind::LCurly)
         }
     }
 
@@ -241,7 +241,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn is_nth_at_modifier(&mut self, n: u8, is_constructor_parameter: bool) -> bool {
         let nth = self.nth(n);
         if !(matches!(
-            nth.kind,
+            nth.kind(),
             Kind::Public
                 | Kind::Protected
                 | Kind::Private
@@ -257,16 +257,16 @@ impl<'a> ParserImpl<'a> {
 
         let next = self.nth(n + 1);
 
-        if next.is_on_new_line {
+        if next.is_on_new_line() {
             false
         } else {
             let followed_by_any_member =
-                matches!(next.kind, Kind::PrivateIdentifier | Kind::LBrack)
-                    || next.kind.is_literal_property_name();
-            let followed_by_class_member = !is_constructor_parameter && next.kind == Kind::Star;
+                matches!(next.kind(), Kind::PrivateIdentifier | Kind::LBrack)
+                    || next.kind().is_literal_property_name();
+            let followed_by_class_member = !is_constructor_parameter && next.kind() == Kind::Star;
             // allow `...` for error recovery
             let followed_by_parameter = is_constructor_parameter
-                && matches!(next.kind, Kind::LCurly | Kind::LBrack | Kind::Dot3);
+                && matches!(next.kind(), Kind::LCurly | Kind::LBrack | Kind::Dot3);
 
             followed_by_any_member || followed_by_class_member || followed_by_parameter
         }
@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RAngle);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
-        self.ast.expression_ts_type_assertion(self.end_span(span), expression, type_annotation)
+        self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {
@@ -516,11 +516,11 @@ impl<'a> ParserImpl<'a> {
                 Kind::Interface | Kind::Type => {
                     self.bump_any();
                     return self.cur_kind().is_binding_identifier()
-                        && !self.cur_token().is_on_new_line;
+                        && !self.cur_token().is_on_new_line();
                 }
                 Kind::Module | Kind::Namespace => {
                     self.bump_any();
-                    return !self.cur_token().is_on_new_line
+                    return !self.cur_token().is_on_new_line()
                         && (self.cur_kind().is_binding_identifier()
                             || self.cur_kind() == Kind::Str);
                 }
@@ -533,7 +533,7 @@ impl<'a> ParserImpl<'a> {
                 | Kind::Public
                 | Kind::Readonly => {
                     self.bump_any();
-                    if self.cur_token().is_on_new_line {
+                    if self.cur_token().is_on_new_line() {
                         return false;
                     }
                 }

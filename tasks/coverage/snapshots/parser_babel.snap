@@ -1,9 +1,9 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2306/2322 (99.31%)
-Positive Passed: 2285/2322 (98.41%)
-Negative Passed: 1557/1673 (93.07%)
+AST Parsed     : 2309/2322 (99.44%)
+Positive Passed: 2288/2322 (98.54%)
+Negative Passed: 1560/1673 (93.25%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -34,13 +34,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-decorators/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
 
@@ -182,8 +178,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts
@@ -254,15 +248,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js:1:33]
- 1 │ async( x = class { #x = await }) => {}
-   ·                                 ▲
-   ╰────
-  help: Try insert a semicolon here
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
   × 'arguments' is not allowed in class field initializer
@@ -272,15 +257,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ·      ─────────
  4 │   }
    ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js:1:32]
- 1 │ async( x = class { x = await }) => {}
-   ·                                ▲
-   ╰────
-  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
@@ -355,15 +331,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  10 │ }
     ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js:3:42]
- 2 │ 
- 3 │ C = class { static { class D { x = await } } };
-   ·                                          ─
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 
@@ -6182,140 +6149,44 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap either expression by parentheses
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/class-contructor-call/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/class-contructor-call/input.js:1:6]
  1 │ new C?.b.d()
-   · ────────────
+   ·      ──
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:8]
  1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:2:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:8]
  1 │ new foo?.bar();
+   ·        ──
  2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.[0];
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.[0];
-   · ────────────
- 4 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:8]
  1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:2:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:8]
  1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.[0];
-   · ────────────
- 4 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:1]
- 1 │ new foo?.bar();
-   · ──────────────
+   ·        ──
  2 │ new foo.bar?.();
    ╰────
 
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:2:1]
- 1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.bar!()
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.bar!()
-   · ───────────────
- 4 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:4:1]
- 3 │ new foo?.bar!()
- 4 │ new foo?.[0];
-   · ────────────
- 5 │ new foo?.bar![0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:5:1]
- 4 │ new foo?.[0];
- 5 │ new foo?.bar![0];
-   · ────────────────
- 6 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:1]
- 1 │ new foo?.bar();
-   · ──────────────
- 2 │ new foo.bar?.();
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:2:1]
- 1 │ new foo?.bar();
- 2 │ new foo.bar?.();
-   · ───────────
- 3 │ new foo?.bar!()
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:3:1]
- 2 │ new foo.bar?.();
- 3 │ new foo?.bar!()
-   · ───────────────
- 4 │ new foo?.[0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:4:1]
- 3 │ new foo?.bar!()
- 4 │ new foo?.[0];
-   · ────────────
- 5 │ new foo?.bar![0];
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:5:1]
- 4 │ new foo?.[0];
- 5 │ new foo?.bar![0];
-   · ────────────────
- 6 │ 
-   ╰────
-
-  × Optional chaining cannot appear in the callee of new expressions
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-constructor/input.js:1:1]
+  × Invalid optional chain from new expression.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-constructor/input.js:1:6]
  1 │ new a?.();
-   · ─────
+   ·      ──
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
@@ -8523,6 +8394,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   }
    ╰────
 
+  × The keyword 'yield' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js:4:9]
+ 3 │     // here yield is an identifier reference
+ 4 │     p = yield + 42;
+   ·         ─────
+ 5 │   }
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:3:29]
  2 │ // await is not allowed in async arrow
@@ -8723,6 +8602,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-arrow/input.js:1:7]
  1 │ () => await 0;
    ·       ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js:2:7]
+ 1 │ export class C {
+ 2 │   p = await 0;
+   ·       ─────
+ 3 │ }
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -11999,6 +11886,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │ }
    ╰────
 
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:2:3]
+ 1 │ abstract class Foo {
+ 2 │   declare accessor prop7: number;
+   ·   ───────
+ 3 │   private accessor #p: any;
+   ╰────
+
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:3:3]
  2 │   declare accessor prop7: number;
@@ -12014,6 +11909,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
  8 │   abstract accessor f = 1;
    ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:9:3]
+  8 │   abstract accessor f = 1;
+  9 │   readonly accessor g;
+    ·   ────────
+ 10 │ }
+    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts:2:14]
@@ -13086,6 +12989,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ T = number
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]
+ 1 │ f?.<string>[1];
+   ·  ──
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]

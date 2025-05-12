@@ -10,6 +10,10 @@ fn cases() {
     test_same("({ foo(): string {} });\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
+    test_same("class C {\n\tp = await(0);\n}\n");
+    test_same(
+        "class Foo {\n\t#name: string;\n\tf() {\n\t\t#name in other && this.#name === other.#name;\n\t}\n}\n",
+    );
 }
 
 #[test]

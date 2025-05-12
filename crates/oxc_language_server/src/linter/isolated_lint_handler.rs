@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
@@ -12,9 +11,10 @@ use tower_lsp_server::{
 };
 
 use oxc_allocator::Allocator;
+use oxc_linter::RuntimeFileSystem;
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader,
+    loader::Loader, read_to_string,
 };
 
 use super::error_with_position::{
@@ -31,6 +31,31 @@ pub struct IsolatedLintHandlerOptions {
 pub struct IsolatedLintHandler {
     linter: Linter,
     options: IsolatedLintHandlerOptions,
+}
+
+pub struct IsolatedLintHandlerFileSystem {
+    path_to_lint: PathBuf,
+    source_text: String,
+}
+
+impl IsolatedLintHandlerFileSystem {
+    pub fn new(path_to_lint: PathBuf, source_text: String) -> Self {
+        Self { path_to_lint, source_text }
+    }
+}
+
+impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        if path == self.path_to_lint {
+            return Ok(self.source_text.clone());
+        }
+
+        read_to_string(path)
+    }
+
+    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+        panic!("writing file should not be allowed in Language Server");
+    }
 }
 
 impl IsolatedLintHandler {
@@ -103,7 +128,7 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
-        let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
+        let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
         debug!("lint {path:?}");
 
@@ -112,10 +137,12 @@ impl IsolatedLintHandler {
             vec![Arc::from(path.as_os_str())],
         )
         .with_cross_module(self.options.use_cross_module);
-        // ToDo: do not clone the linter
-        let path_arc = Arc::from(path.as_os_str());
-        let mut lint_service = LintService::new(self.linter.clone(), lint_service_options);
-        let result = lint_service.run_source(allocator, &path_arc, &source_text);
+
+        let mut lint_service =
+            LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
+                IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
+            ));
+        let result = lint_service.run_source(allocator);
 
         Some(result)
     }

@@ -166,7 +166,7 @@ macro_rules! handle_string_literal_escape {
                         $lexer.source.next_byte_unchecked();
                         let next1 = $lexer.source.next_byte_unchecked();
                         let next2 = $lexer.source.next_byte_unchecked();
-                        if $lexer.token.lone_surrogates
+                        if $lexer.token.lone_surrogates()
                             && [next1, next2] == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
                         {
                             let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
@@ -240,17 +240,17 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_strings.insert(self.token.start, s);
-        self.token.escaped = true;
+        self.escaped_strings.insert(self.token.start(), s);
+        self.token.set_escaped(true);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
-        if token.escaped {
-            return self.escaped_strings[&token.start];
+        if token.escaped() {
+            return self.escaped_strings[&token.start()];
         }
 
-        let raw = &self.source.whole()[token.start as usize..token.end as usize];
-        match token.kind {
+        let raw = &self.source.whole()[token.start() as usize..token.end() as usize];
+        match token.kind() {
             Kind::Str => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes
             }

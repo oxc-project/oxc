@@ -4,21 +4,26 @@ import {
   commands,
   ExtensionContext,
   FileSystemWatcher,
-  RelativePattern,
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
+  Uri,
   window,
   workspace,
 } from 'vscode';
 
-import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  ConfigurationParams,
+  ExecuteCommandRequest,
+  MessageType,
+  ShowMessageNotification,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
-import { oxlintConfigFileName } from './VSCodeConfig';
+import { oxlintConfigFileName } from './WorkspaceConfig';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -117,7 +122,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
-  const fileWatchers = createFileEventWatchers(configService.rootServerConfig.configPath);
+  const fileWatchers = createFileEventWatchers(configService.getOxlintCustomConfigs());
 
   context.subscriptions.push(
     applyAllFixesFile,
@@ -208,11 +213,25 @@ export async function activate(context: ExtensionContext) {
       // Notify the server about file config changes in the workspace
       fileEvents: fileWatchers,
     },
-    initializationOptions: {
-      settings: configService.rootServerConfig.toLanguageServerConfig(),
-    },
+    initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,
+    middleware: {
+      workspace: {
+        configuration: (params: ConfigurationParams) => {
+          return params.items.map(item => {
+            if (item.section !== 'oxc_language_server') {
+              return null;
+            }
+            if (item.scopeUri === undefined) {
+              return null;
+            }
+
+            return configService.getWorkspaceConfig(Uri.parse(item.scopeUri))?.toLanguageServerConfig() ?? null;
+          });
+        },
+      },
+    },
   };
 
   // Create the language client and start the client.
@@ -254,8 +273,40 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(onDeleteFilesDispose);
 
+  const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
+    let needRestart = false;
+    for (const folder of event.added) {
+      const workspaceConfig = configService.addWorkspaceConfig(folder);
+
+      if (workspaceConfig.isCustomConfigPath) {
+        needRestart = true;
+      }
+    }
+    for (const folder of event.removed) {
+      const workspaceConfig = configService.getWorkspaceConfig(folder.uri);
+      if (workspaceConfig?.isCustomConfigPath) {
+        needRestart = true;
+      }
+      configService.removeWorkspaceConfig(folder);
+    }
+
+    if (client === undefined) {
+      return;
+    }
+
+    if (needRestart) {
+      client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
+      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.getOxlintCustomConfigs());
+
+      if (client.isRunning()) {
+        await client.restart();
+      }
+    }
+  });
+
+  context.subscriptions.push(onDidChangeWorkspaceFoldersDispose);
+
   configService.onConfigChange = async function onConfigChange(event) {
-    let settings = this.rootServerConfig.toLanguageServerConfig();
     updateStatsBar(this.vsCodeConfig.enable);
 
     if (client === undefined) {
@@ -263,17 +314,22 @@ export async function activate(context: ExtensionContext) {
     }
 
     // update the initializationOptions for a possible restart
-    client.clientOptions.initializationOptions = { settings };
+    client.clientOptions.initializationOptions = this.languageServerConfig;
 
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(settings.configPath);
+      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(this.getOxlintCustomConfigs());
 
       if (client.isRunning()) {
         await client.restart();
       }
     } else if (client.isRunning()) {
-      await client.sendNotification('workspace/didChangeConfiguration', { settings });
+      await client.sendNotification(
+        'workspace/didChangeConfiguration',
+        {
+          settings: this.languageServerConfig,
+        },
+      );
     }
   };
 
@@ -312,22 +368,18 @@ export async function deactivate(): Promise<void> {
 }
 
 // FileSystemWatcher are not ready on the start and can take some seconds on bigger repositories
-function createFileEventWatchers(configRelativePath: string | null): FileSystemWatcher[] {
+function createFileEventWatchers(configAbsolutePaths: string[]): FileSystemWatcher[] {
   // cleanup old watchers
   globalWatchers.forEach((watcher) => watcher.dispose());
   globalWatchers.length = 0;
 
   // create new watchers
-  let localWatchers;
-  if (configRelativePath !== null) {
-    localWatchers = (workspace.workspaceFolders || []).map((workspaceFolder) =>
-      workspace.createFileSystemWatcher(new RelativePattern(workspaceFolder, configRelativePath))
-    );
-  } else {
-    localWatchers = [
-      workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
-    ];
+  let localWatchers: FileSystemWatcher[] = [];
+  if (configAbsolutePaths.length) {
+    localWatchers = configAbsolutePaths.map((path) => workspace.createFileSystemWatcher(path));
   }
+
+  localWatchers.push(workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`));
 
   // assign watchers to global variable, so we can cleanup them on next call
   globalWatchers.push(...localWatchers);

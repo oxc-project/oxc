@@ -71,8 +71,8 @@ impl Derive for DeriveESTree {
 
             ///@@line_break
             use oxc_estree::{
-                ser::{AppendTo, AppendToConcat},
-                ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
+                Concat2, Concat3, ESTree, FlatStructSerializer,
+                JsonSafeString, Serializer, StructSerializer,
             };
         }
     }
@@ -153,8 +153,8 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::String("via", value) => {
                 struct_def.fields[field_index].estree.via = Some(value);
             }
-            AttrPart::String("append_to", value) => {
-                // Find field this field is to be appended to
+            AttrPart::String(attr @ ("prepend_to" | "append_to"), value) => {
+                // Find field this field is to be prepended/appended to
                 let target_field_index = struct_def
                     .fields
                     .iter()
@@ -163,15 +163,20 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     .map(|(field_index, _)| field_index)
                     .ok_or(())?;
                 if target_field_index == field_index {
-                    // Can't append field to itself
+                    // Can't prepend/append field to itself
                     return Err(());
                 }
                 let target_field = &mut struct_def.fields[target_field_index];
-                if target_field.estree.append_field_index.is_some() {
-                    // Can't append twice to same field
+                let other_field_index_mut = if attr == "prepend_to" {
+                    &mut target_field.estree.prepend_field_index
+                } else {
+                    &mut target_field.estree.append_field_index
+                };
+                if other_field_index_mut.is_some() {
+                    // Can't prepend/append twice to same field
                     return Err(());
                 }
-                target_field.estree.append_field_index = Some(field_index);
+                *other_field_index_mut = Some(field_index);
                 struct_def.fields[field_index].estree.skip = true;
             }
             AttrPart::String("ts_type", value) => {
@@ -442,17 +447,22 @@ impl<'s> StructSerializerGenerator<'s> {
         let value = if let Some(converter_name) = &field.estree.via {
             let converter_path = get_converter_path(converter_name, self.krate, self.schema);
             quote!( #converter_path(#self_path) )
-        } else if let Some(append_field_index) = field.estree.append_field_index {
-            let append_field = &struct_def.fields[append_field_index];
-            let append_from_ident = append_field.ident();
-            let wrapper_name = if append_field.type_def(self.schema).is_option() {
-                "AppendTo"
+        } else if let Some(prepend_field_index) = field.estree.prepend_field_index {
+            let prepend_from_ident = struct_def.fields[prepend_field_index].ident();
+            if let Some(append_field_index) = field.estree.append_field_index {
+                let append_from_ident = struct_def.fields[append_field_index].ident();
+                quote! {
+                    Concat3(&#self_path.#prepend_from_ident, &#self_path.#field_name_ident, &#self_path.#append_from_ident)
+                }
             } else {
-                "AppendToConcat"
-            };
-            let wrapper_ident = create_safe_ident(wrapper_name);
+                quote! {
+                    Concat2(&#self_path.#prepend_from_ident, &#self_path.#field_name_ident)
+                }
+            }
+        } else if let Some(append_field_index) = field.estree.append_field_index {
+            let append_from_ident = struct_def.fields[append_field_index].ident();
             quote! {
-                #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
+                Concat2(&#self_path.#field_name_ident, &#self_path.#append_from_ident)
             }
         } else if field.estree.json_safe {
             // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`
@@ -505,8 +515,9 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let variant_ident = variant.ident();
 
         if should_skip_enum_variant(variant) {
+            let pattern = if variant.is_fieldless() { quote!() } else { quote!((_)) };
             return quote! {
-                Self::#variant_ident => { unreachable!("This enum variant is skipped.") }
+                Self::#variant_ident #pattern => unreachable!("This enum variant is skipped."),
             };
         }
 

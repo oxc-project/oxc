@@ -23,26 +23,38 @@ export function wrap(result) {
   };
 }
 
-// Used by napi/playground/patch.mjs
-export function jsonParseAst(program) {
-  return JSON.parse(program, transform);
+// Used by `napi/playground/patch.mjs`.
+//
+// Set `value` field of `Literal`s which are `BigInt`s or `RegExp`s.
+//
+// Returned JSON contains an array `fixes` with paths to these nodes
+// e.g. for `123n; foo(/xyz/)`, `fixes` will be
+// `[["body", 0, "expression"], ["body", 1, "expression", "arguments", 2]]`.
+//
+// Walk down the AST to these nodes and alter them.
+// Compiling the list of fixes on Rust side avoids having to do a full AST traversal on JS side
+// to locate the likely very few `Literal`s which need fixing.
+export function jsonParseAst(programJson) {
+  const { node: program, fixes } = JSON.parse(programJson);
+  for (const fixPath of fixes) {
+    applyFix(program, fixPath);
+  }
+  return program;
 }
 
-function transform(key, value) {
-  // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.
-  // This is not possible to do on Rust side, as neither can be represented correctly in JSON.
-  if (value === null && key === 'value' && Object.hasOwn(this, 'type') && this.type === 'Literal') {
-    if (Object.hasOwn(this, 'bigint')) {
-      return BigInt(this.bigint);
-    }
-    if (Object.hasOwn(this, 'regex')) {
-      const { regex } = this;
-      try {
-        return RegExp(regex.pattern, regex.flags);
-      } catch (_err) {
-        // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
-      }
+function applyFix(program, fixPath) {
+  let node = program;
+  for (const key of fixPath) {
+    node = node[key];
+  }
+
+  if (node.bigint) {
+    node.value = BigInt(node.bigint);
+  } else {
+    try {
+      node.value = RegExp(node.regex.pattern, node.regex.flags);
+    } catch (_err) {
+      // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
     }
   }
-  return value;
 }

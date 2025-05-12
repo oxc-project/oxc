@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.10] - 2025-05-09
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- 4c62348 linter: Regex/no-useless-backreference (#10773) (camc314)
+- d7ebdd7 linter: Add unicorn/no-unnecessary-slice-end rule (#10826) (yefan)
+
+### Bug Fixes
+
+- 7d09973 linter: False positive with `withResolvers` in prefer-await-to-then (#10896) (camc314)
+- 9b94300 linter: Mark fixer as dangerous for erasing-op (#10868) (camc314)
+- ae70cc1 linter: Add missing option to `no-shadow-restricted-names` (#10827) (camc314)
+- b2c287f linter/no-unused-vars: Fixer cannot delete usused for in/of iterators (#10824) (DonIsaac)
+- 5ce0a68 linter/no-unused-vars: Recognize parameters used in await/yield expressions within comma expressions (#10808) (magic-akari)
+
+### Performance
+
+- 96cca22 language_server: Use `simdutf8` when reading files from file system (#10814) (Sysix)
+
+### Documentation
+
+- efaadd3 linter: Fix a few incorrect backticks in `no_restricted_imports` (#10914) (Boshen)
+- ccda8f0 linter: Improve no-plusplus docs (#10885) (Peter Cardenas)
+- 5f15809 linter: Improve docs for jsdoc/require-property (#10705) (camc314)
+
+### Refactor
+
+- 3d47159 language_server: Use `IsolatedLintHandlerFileSystem` (#10830) (Sysix)
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+- 243c247 linter: Able to use custom file system in runtime (#10828) (Sysix)
+
+### Testing
+
+- 47b946d linter: Use `TesterFileSystem` for `Runtime`s filesystem (#10829) (Sysix)
+
 ## [0.16.9] - 2025-05-02
 
 - a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)

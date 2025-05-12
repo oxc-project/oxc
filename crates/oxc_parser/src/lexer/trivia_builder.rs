@@ -79,12 +79,12 @@ impl TriviaBuilder {
 
     pub fn handle_token(&mut self, token: Token) {
         let len = self.comments.len();
-        self.previous_kind = token.kind;
+        self.previous_kind = token.kind();
         if self.processed < len {
             // All unprocessed preceding comments are leading comments attached to this token start.
             for comment in &mut self.comments[self.processed..] {
                 comment.position = CommentPosition::Leading;
-                comment.attached_to = token.start;
+                comment.attached_to = token.start();
             }
             self.processed = len;
         }
