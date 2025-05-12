@@ -14,6 +14,7 @@ mod import {
     pub mod no_anonymous_default_export;
     pub mod no_empty_named_blocks;
     pub mod no_mutable_exports;
+    pub mod no_unassigned_import;
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
     pub mod default;
@@ -715,6 +716,7 @@ oxc_macros::declare_all_lint_rules! {
     import::exports_last,
     import::first,
     import::group_exports,
+    import::no_unassigned_import,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,

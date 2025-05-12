@@ -1,0 +1,20 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-unassigned-import): A `require()` style import is forbidden.
+   ╭─[no_unassigned_import.tsx:1:1]
+ 1 │ require('should')
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no_unassigned_import.tsx:1:1]
+ 1 │ import 'foo'
+   · ────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no_unassigned_import.tsx:1:1]
+ 1 │ import '../styles/app.css'
+   · ──────────────────────────
+   ╰────
