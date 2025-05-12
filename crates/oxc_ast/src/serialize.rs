@@ -6,7 +6,7 @@ use crate::ast::*;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    Concat2, ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString,
+    Concat2, ConcatElement, ESTree, FlatStructSerializer, JsonSafeString, LoneSurrogatesString,
     PrettyFixesJSSerializer, PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer,
     SequenceSerializer, Serializer, StructSerializer,
 };
@@ -627,15 +627,17 @@ pub struct FormalParametersConverter<'a, 'b>(pub &'b FormalParameters<'a>);
 impl ESTree for FormalParametersConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
-        for item in &self.0.items {
-            seq.serialize_element(item);
-        }
+        self.0.push_to_sequence(&mut seq);
+        seq.end();
+    }
+}
 
-        if let Some(rest) = &self.0.rest {
+impl ConcatElement for FormalParameters<'_> {
+    fn push_to_sequence<S: SequenceSerializer>(&self, seq: &mut S) {
+        self.items.push_to_sequence(seq);
+        if let Some(rest) = &self.rest {
             seq.serialize_element(&FormalParametersRest(rest));
         }
-
-        seq.end();
     }
 }
 
@@ -750,23 +752,12 @@ pub struct FunctionParams<'a, 'b>(pub &'b Function<'a>);
 
 impl ESTree for FunctionParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut seq = serializer.serialize_sequence();
-
+        let func = self.0;
         if S::INCLUDE_TS_FIELDS {
-            if let Some(this_param) = &self.0.this_param {
-                seq.serialize_element(this_param);
-            }
+            Concat2(&func.this_param, func.params.as_ref()).serialize(serializer);
+        } else {
+            func.params.serialize(serializer);
         }
-
-        for item in &self.0.params.items {
-            seq.serialize_element(item);
-        }
-
-        if let Some(rest) = &self.0.params.rest {
-            seq.serialize_element(&FormalParametersRest(rest));
-        }
-
-        seq.end();
     }
 }
 
@@ -1473,8 +1464,8 @@ pub struct TSCallSignatureDeclarationParams<'a, 'b>(pub &'b TSCallSignatureDecla
 
 impl ESTree for TSCallSignatureDeclarationParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let v = self.0;
-        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+        let decl = self.0;
+        Concat2(&decl.this_param, decl.params.as_ref()).serialize(serializer);
     }
 }
 
@@ -1495,8 +1486,8 @@ pub struct TSMethodSignatureParams<'a, 'b>(pub &'b TSMethodSignature<'a>);
 
 impl ESTree for TSMethodSignatureParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let v = self.0;
-        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+        let sig = self.0;
+        Concat2(&sig.this_param, sig.params.as_ref()).serialize(serializer);
     }
 }
 
@@ -1517,35 +1508,9 @@ pub struct TSFunctionTypeParams<'a, 'b>(pub &'b TSFunctionType<'a>);
 
 impl ESTree for TSFunctionTypeParams<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let v = self.0;
-        serialize_formal_params_with_this_param(v.this_param.as_deref(), &v.params, serializer);
+        let fn_type = self.0;
+        Concat2(&fn_type.this_param, fn_type.params.as_ref()).serialize(serializer);
     }
-}
-
-/// Shared serialization logic used by:
-/// - `TSCallSignatureDeclarationParams`
-/// - `TSMethodSignatureParams`
-/// - `TSFunctionTypeParams`
-fn serialize_formal_params_with_this_param<'a, S: Serializer>(
-    this_param: Option<&TSThisParameter<'a>>,
-    params: &FormalParameters<'a>,
-    serializer: S,
-) {
-    let mut seq = serializer.serialize_sequence();
-
-    if let Some(this_param) = this_param {
-        seq.serialize_element(this_param);
-    }
-
-    for item in &params.items {
-        seq.serialize_element(item);
-    }
-
-    if let Some(rest) = &params.rest {
-        seq.serialize_element(&FormalParametersRest(rest));
-    }
-
-    seq.end();
 }
 
 // --------------------
