@@ -877,9 +877,9 @@ function deserializeFormalParameter(pos) {
   if (accessibility === null && !readonly && !override) {
     param = {
       ...deserializeBindingPatternKind(pos + 40),
-      typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 56),
-      optional: deserializeBool(pos + 64),
       decorators: deserializeVecDecorator(pos + 8),
+      optional: deserializeBool(pos + 64),
+      typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 56),
     };
   } else {
     param = {

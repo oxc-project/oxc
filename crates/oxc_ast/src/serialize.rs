@@ -677,9 +677,9 @@ impl ESTree for FormalParametersRest<'_, '_> {
         if (accessibility === null && !readonly && !override) {
             param = {
                 ...DESER[BindingPatternKind](POS_OFFSET.pattern.kind),
-                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation),
-                optional: DESER[bool](POS_OFFSET.pattern.optional),
                 decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+                optional: DESER[bool](POS_OFFSET.pattern.optional),
+                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation),
             };
         } else {
             param = {
@@ -720,9 +720,9 @@ impl ESTree for FormalParameterConverter<'_, '_> {
             } else {
                 let mut state = serializer.serialize_struct();
                 param.pattern.kind.serialize(FlatStructSerializer(&mut state));
-                state.serialize_field("typeAnnotation", &param.pattern.type_annotation);
-                state.serialize_field("optional", &param.pattern.optional);
                 state.serialize_field("decorators", &param.decorators);
+                state.serialize_field("optional", &param.pattern.optional);
+                state.serialize_field("typeAnnotation", &param.pattern.type_annotation);
                 state.end();
             }
         } else {
