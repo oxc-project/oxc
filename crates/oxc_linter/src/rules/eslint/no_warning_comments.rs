@@ -142,7 +142,7 @@ impl Rule for NoWarningComments {
 }
 
 /// Constructs a diagnostic for a warning comment.
-fn no_warning_comments_diagnostic(matched_term: &str, comment: &str, span: Span) -> OxcDiagnostic {
+fn no_warning_comments_diagnostic(matched_term: &str, _comment: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unresolved '{}' comment.", matched_term)).with_label(span)
 }
 
