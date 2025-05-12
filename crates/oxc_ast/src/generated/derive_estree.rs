@@ -200,7 +200,7 @@ impl ESTree for ArrayExpressionElement<'_> {
 
 impl ESTree for Elision {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::ElisionConverter(self).serialize(serializer)
+        crate::serialize::Null(self).serialize(serializer)
     }
 }
 

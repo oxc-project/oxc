@@ -584,17 +584,6 @@ impl TemplateElementValue<'_, '_> {
 // Various
 // --------------------
 
-/// Serialize `ArrayExpressionElement::Elision` variant as `null`.
-#[ast_meta]
-#[estree(ts_type = "null", raw_deser = "null")]
-pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
-
-impl ESTree for ElisionConverter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        Null(()).serialize(serializer);
-    }
-}
-
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
 /// and `argument` field flattened.
 #[ast_meta]

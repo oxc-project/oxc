@@ -334,11 +334,10 @@ pub enum ArrayExpressionElement<'a> {
 /// empty slot in `const array = [1, , 2];`
 ///
 /// Array Expression Elision Element
-/// Serialized as `null` in JSON AST. See `serialize.rs`.
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = ElisionConverter)]
+#[estree(via = Null)]
 pub struct Elision {
     pub span: Span,
 }
