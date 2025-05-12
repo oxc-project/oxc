@@ -61,37 +61,46 @@ declare_oxc_lint!(
     /// - `if`, `for`, `while`, or `do...while` statement
     /// - `?`: ternary expression
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// if (false) {
-    ///    doSomethingUnfinished();
+    ///   doSomethingUnfinished();
     /// }
     ///
     /// if (new Boolean(x)) {
-    ///     doSomethingAlways();
+    ///   doSomethingAlways();
     /// }
     /// if (x ||= true) {
-    ///     doSomethingAlways();
+    ///   doSomethingAlways();
     /// }
     ///
     /// do {
-    ///     doSomethingForever();
+    ///   doSomethingForever();
     /// } while (x = -1);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// if (x === 0) {
-    ///     doSomething();
+    ///   doSomething();
     /// }
     ///
     /// while (typeof x === "undefined") {
-    ///     doSomething();
+    ///   doSomething();
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### checkLoops
+    ///
+    /// `{ type: "all" | "allExceptWhileTrue" | "none" | boolean, default: "allExceptWhileTrue" }`
+    ///
+    /// - `"all"` or `true` disallows constant expressions in loops
+    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+    /// - `"none"` or `false` allows constant expressions in loops
     NoConstantCondition,
     eslint,
     correctness
