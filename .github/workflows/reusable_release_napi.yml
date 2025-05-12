@@ -89,7 +89,7 @@ jobs:
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
             build: |
-              pnpm build --target armv7-unknown-linux-musleabihf --use-napi-cross
+              pnpm build --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
