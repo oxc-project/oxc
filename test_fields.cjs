@@ -2,10 +2,11 @@
 
 const fs = require('node:fs');
 const pathJoin = require('node:path').join;
+const eslintTypes = require('eslint-visitor-keys').KEYS;
 const tseslintTypes = require('@typescript-eslint/visitor-keys').visitorKeys;
 const oxcTypes = require('./estree_field_orders.json');
 
-const types = [...new Set([...Object.keys(tseslintTypes), ...Object.keys(oxcTypes)])];
+const types = [...new Set([...Object.keys(eslintTypes), ...Object.keys(tseslintTypes), ...Object.keys(oxcTypes)])];
 types.sort();
 
 const VIRTUAL_FIELD_MISMATCHES = [
@@ -41,7 +42,7 @@ const TS_ESLINT_IS_WRONG = [
 let combinedTypes = types.map((key) => {
   let oxc = oxcTypes[key];
   oxc = oxc ? oxc[0] : null;
-  return { type: key, oxc, tseslint: tseslintTypes[key] || null };
+  return { type: key, oxc, eslint: eslintTypes[key] || null, tseslint: tseslintTypes[key] || null };
 });
 
 // Filter out types which don't exist in both TS-ESLint and Oxc ASTs

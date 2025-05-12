@@ -14,6 +14,7 @@
     "@napi-rs/cli": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.32.0",
     "emnapi": "1.4.3",
+    "eslint-visitor-keys": "^4.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
