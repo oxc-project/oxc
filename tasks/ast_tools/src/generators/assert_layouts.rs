@@ -301,8 +301,8 @@ fn calculate_layout_for_box() -> Layout {
 /// They have a single niche on the first field - the pointer which is `NonNull`.
 fn calculate_layout_for_vec() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(24, 8, Niche::new(0, 8, 1, 0)),
-        layout_32: PlatformLayout::from_size_align_niche(24, 4, Niche::new(0, 4, 1, 0)),
+        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
     }
 }
 

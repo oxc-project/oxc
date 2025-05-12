@@ -9,17 +9,17 @@ use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
-    assert!(size_of::<Pattern>() == 40);
+    assert!(size_of::<Pattern>() == 48);
     assert!(align_of::<Pattern>() == 8);
     assert!(offset_of!(Pattern, span) == 0);
     assert!(offset_of!(Pattern, body) == 8);
 
-    assert!(size_of::<Disjunction>() == 32);
+    assert!(size_of::<Disjunction>() == 40);
     assert!(align_of::<Disjunction>() == 8);
     assert!(offset_of!(Disjunction, span) == 0);
     assert!(offset_of!(Disjunction, body) == 8);
 
-    assert!(size_of::<Alternative>() == 32);
+    assert!(size_of::<Alternative>() == 40);
     assert!(align_of::<Alternative>() == 8);
     assert!(offset_of!(Alternative, span) == 0);
     assert!(offset_of!(Alternative, body) == 8);
@@ -35,7 +35,7 @@ const _: () = {
     assert!(size_of::<BoundaryAssertionKind>() == 1);
     assert!(align_of::<BoundaryAssertionKind>() == 1);
 
-    assert!(size_of::<LookAroundAssertion>() == 48);
+    assert!(size_of::<LookAroundAssertion>() == 56);
     assert!(align_of::<LookAroundAssertion>() == 8);
     assert!(offset_of!(LookAroundAssertion, span) == 0);
     assert!(offset_of!(LookAroundAssertion, kind) == 8);
@@ -81,7 +81,7 @@ const _: () = {
     assert!(align_of::<Dot>() == 8);
     assert!(offset_of!(Dot, span) == 0);
 
-    assert!(size_of::<CharacterClass>() == 40);
+    assert!(size_of::<CharacterClass>() == 48);
     assert!(align_of::<CharacterClass>() == 8);
     assert!(offset_of!(CharacterClass, span) == 0);
     assert!(offset_of!(CharacterClass, negative) == 8);
@@ -101,25 +101,25 @@ const _: () = {
     assert!(offset_of!(CharacterClassRange, min) == 8);
     assert!(offset_of!(CharacterClassRange, max) == 24);
 
-    assert!(size_of::<ClassStringDisjunction>() == 40);
+    assert!(size_of::<ClassStringDisjunction>() == 48);
     assert!(align_of::<ClassStringDisjunction>() == 8);
     assert!(offset_of!(ClassStringDisjunction, span) == 0);
     assert!(offset_of!(ClassStringDisjunction, strings) == 8);
     assert!(offset_of!(ClassStringDisjunction, body) == 16);
 
-    assert!(size_of::<ClassString>() == 40);
+    assert!(size_of::<ClassString>() == 48);
     assert!(align_of::<ClassString>() == 8);
     assert!(offset_of!(ClassString, span) == 0);
     assert!(offset_of!(ClassString, strings) == 8);
     assert!(offset_of!(ClassString, body) == 16);
 
-    assert!(size_of::<CapturingGroup>() == 56);
+    assert!(size_of::<CapturingGroup>() == 64);
     assert!(align_of::<CapturingGroup>() == 8);
     assert!(offset_of!(CapturingGroup, span) == 0);
     assert!(offset_of!(CapturingGroup, name) == 8);
     assert!(offset_of!(CapturingGroup, body) == 24);
 
-    assert!(size_of::<IgnoreGroup>() == 56);
+    assert!(size_of::<IgnoreGroup>() == 64);
     assert!(align_of::<IgnoreGroup>() == 8);
     assert!(offset_of!(IgnoreGroup, span) == 0);
     assert!(offset_of!(IgnoreGroup, modifiers) == 8);
@@ -150,17 +150,17 @@ const _: () = {
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
-    assert!(size_of::<Pattern>() == 40);
+    assert!(size_of::<Pattern>() == 32);
     assert!(align_of::<Pattern>() == 4);
     assert!(offset_of!(Pattern, span) == 0);
     assert!(offset_of!(Pattern, body) == 8);
 
-    assert!(size_of::<Disjunction>() == 32);
+    assert!(size_of::<Disjunction>() == 24);
     assert!(align_of::<Disjunction>() == 4);
     assert!(offset_of!(Disjunction, span) == 0);
     assert!(offset_of!(Disjunction, body) == 8);
 
-    assert!(size_of::<Alternative>() == 32);
+    assert!(size_of::<Alternative>() == 24);
     assert!(align_of::<Alternative>() == 4);
     assert!(offset_of!(Alternative, span) == 0);
     assert!(offset_of!(Alternative, body) == 8);
@@ -176,7 +176,7 @@ const _: () = {
     assert!(size_of::<BoundaryAssertionKind>() == 1);
     assert!(align_of::<BoundaryAssertionKind>() == 1);
 
-    assert!(size_of::<LookAroundAssertion>() == 44);
+    assert!(size_of::<LookAroundAssertion>() == 36);
     assert!(align_of::<LookAroundAssertion>() == 4);
     assert!(offset_of!(LookAroundAssertion, span) == 0);
     assert!(offset_of!(LookAroundAssertion, kind) == 8);
@@ -222,7 +222,7 @@ const _: () = {
     assert!(align_of::<Dot>() == 4);
     assert!(offset_of!(Dot, span) == 0);
 
-    assert!(size_of::<CharacterClass>() == 36);
+    assert!(size_of::<CharacterClass>() == 28);
     assert!(align_of::<CharacterClass>() == 4);
     assert!(offset_of!(CharacterClass, span) == 0);
     assert!(offset_of!(CharacterClass, negative) == 8);
@@ -242,25 +242,25 @@ const _: () = {
     assert!(offset_of!(CharacterClassRange, min) == 8);
     assert!(offset_of!(CharacterClassRange, max) == 24);
 
-    assert!(size_of::<ClassStringDisjunction>() == 36);
+    assert!(size_of::<ClassStringDisjunction>() == 28);
     assert!(align_of::<ClassStringDisjunction>() == 4);
     assert!(offset_of!(ClassStringDisjunction, span) == 0);
     assert!(offset_of!(ClassStringDisjunction, strings) == 8);
     assert!(offset_of!(ClassStringDisjunction, body) == 12);
 
-    assert!(size_of::<ClassString>() == 36);
+    assert!(size_of::<ClassString>() == 28);
     assert!(align_of::<ClassString>() == 4);
     assert!(offset_of!(ClassString, span) == 0);
     assert!(offset_of!(ClassString, strings) == 8);
     assert!(offset_of!(ClassString, body) == 12);
 
-    assert!(size_of::<CapturingGroup>() == 48);
+    assert!(size_of::<CapturingGroup>() == 40);
     assert!(align_of::<CapturingGroup>() == 4);
     assert!(offset_of!(CapturingGroup, span) == 0);
     assert!(offset_of!(CapturingGroup, name) == 8);
     assert!(offset_of!(CapturingGroup, body) == 16);
 
-    assert!(size_of::<IgnoreGroup>() == 56);
+    assert!(size_of::<IgnoreGroup>() == 48);
     assert!(align_of::<IgnoreGroup>() == 4);
     assert!(offset_of!(IgnoreGroup, span) == 0);
     assert!(offset_of!(IgnoreGroup, modifiers) == 8);
