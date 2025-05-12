@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use oxc::{
     allocator::Allocator,
-    codegen::Codegen,
+    codegen::{Codegen, CodegenOptions},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     parser::Parser,
@@ -181,6 +181,9 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
     let ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&ret.program);
-    let printed = Codegen::new().build(&ret.program).code;
+    let printed = Codegen::new()
+        .with_options(CodegenOptions { comments: false, ..CodegenOptions::default() })
+        .build(&ret.program)
+        .code;
     (printed, ret.errors)
 }

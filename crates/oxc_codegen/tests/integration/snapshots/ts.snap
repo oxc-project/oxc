@@ -307,9 +307,9 @@ import 'module-name';
 import {} from "mod";
 export let name1, name2;
 export const name3 = 1, name4 = 2;
-export function functionName() {}
+export function functionName() {/* … */}
 export class ClassName {}
-export function* generatorFunctionName() {}
+export function* generatorFunctionName() {/* … */}
 export const { name5, name2: bar } = o;
 export const [name6, name7] = array;
 export { name8, name81 };
