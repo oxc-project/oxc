@@ -1916,7 +1916,7 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
-  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 48) || false;
+  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 48);
   if (optional === null) optional = false;
   const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   return {
