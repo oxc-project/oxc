@@ -4,13 +4,13 @@ permissions: {}
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.yml"
-      - "!.github/workflows/ci.yml"
-      - "!.github/actions/clone-submodules/action.yml"
+  # pull_request:
+  #   types: [opened, synchronize]
+  #   paths-ignore:
+  #     - "**/*.md"
+  #     - "**/*.yml"
+  #     - "!.github/workflows/ci.yml"
+  #     - "!.github/actions/clone-submodules/action.yml"
   push:
     branches:
       - main
