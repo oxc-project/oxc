@@ -107,7 +107,7 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.is_expression() || class.is_typescript_syntax() {
+        if class.is_expression() || class.declare {
             return;
         }
 

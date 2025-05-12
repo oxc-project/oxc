@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 152/253
+Passed: 152/254
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -497,7 +497,18 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (4/73)
+# legacy-decorators (4/74)
+* oxc/metadata/abstract-class/input.ts
+Symbol reference IDs mismatch for "Dependency":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(1): [ReferenceId(6), ReferenceId(7)]
+Symbol span mismatch for "AbstractClass":
+after transform: SymbolId(2): Span { start: 69, end: 82 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "AbstractClass":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 69, end: 82 }
+
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]

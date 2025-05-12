@@ -808,7 +808,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Check if a class or its elements have decorators.
     fn check_class_has_decorated(class: &Class<'a>) -> ClassDecoratorInfo {
         // Legacy decorator does not allow in class expression.
-        if class.is_expression() || class.is_typescript_syntax() {
+        if class.is_expression() || class.declare {
             return ClassDecoratorInfo::default();
         }
 
