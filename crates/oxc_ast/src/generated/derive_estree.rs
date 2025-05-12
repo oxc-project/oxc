@@ -1731,11 +1731,7 @@ impl ESTree for ImportNamespaceSpecifier<'_> {
 impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("WithClause"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributesKeyword", &self.attributes_keyword);
-        state.serialize_field("withEntries", &self.with_entries);
+        state.serialize_field("attributes", &self.with_entries);
         state.end();
     }
 }

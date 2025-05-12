@@ -221,7 +221,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     ts_type = "Array<ImportAttribute>",
     raw_deser = "
         const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
-        withClause === null ? [] : withClause.withEntries
+        withClause === null ? [] : withClause.attributes
     "
 )]
 pub struct ImportDeclarationWithClause<'a, 'b>(pub &'b ImportDeclaration<'a>);
@@ -241,7 +241,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
     ts_type = "Array<ImportAttribute>",
     raw_deser = "
         const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
-        withClause === null ? [] : withClause.withEntries
+        withClause === null ? [] : withClause.attributes
     "
 )]
 pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
@@ -261,7 +261,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
     ts_type = "Array<ImportAttribute>",
     raw_deser = "
         const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
-        withClause === null ? [] : withClause.withEntries
+        withClause === null ? [] : withClause.attributes
     "
 )]
 pub struct ExportAllDeclarationWithClause<'a, 'b>(pub &'b ExportAllDeclaration<'a>);

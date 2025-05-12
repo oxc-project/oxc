@@ -2491,10 +2491,13 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_ts_def)]
+#[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
+    #[estree(skip)]
     pub span: Span,
+    #[estree(skip)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[estree(rename = "attributes")]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
