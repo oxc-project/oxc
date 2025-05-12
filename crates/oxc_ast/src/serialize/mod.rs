@@ -136,7 +136,7 @@ impl Program<'_> {
         const first = body[0];
         start = first.start;
         if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
-            const {declaration} = first;
+            const { declaration } = first;
             if (
                 declaration !== null && declaration.type === 'ClassDeclaration'
                 && declaration.decorators.length > 0

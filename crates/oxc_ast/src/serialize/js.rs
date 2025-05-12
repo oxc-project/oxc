@@ -357,7 +357,7 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
     ts_type = "IdentifierReference | AssignmentTargetWithDefault",
     raw_deser = "
         const init = DESER[Option<Expression>](POS_OFFSET.init),
-            keyCopy = {...THIS.key},
+            keyCopy = { ...THIS.key },
             value = init === null
                 ? keyCopy
                 : {
