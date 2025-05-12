@@ -1079,9 +1079,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
-        self.convert_offset(&mut it.span.start);
-        match (it.shorthand, &mut it.key, &mut it.value) {
+    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+        self.convert_offset(&mut prop.span.start);
+        match (prop.shorthand, &mut prop.key, &mut prop.value) {
             (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
                 self.visit_identifier_name(key);
                 value.span = key.span;
@@ -1091,12 +1091,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
                 self.visit_expression(value);
             }
         }
-        self.convert_offset(&mut it.span.end);
+        self.convert_offset(&mut prop.span.end);
     }
 
-    fn visit_binding_property(&mut self, it: &mut BindingProperty<'a>) {
-        self.convert_offset(&mut it.span.start);
-        match (it.shorthand, &mut it.key, &mut it.value) {
+    fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
+        self.convert_offset(&mut prop.span.start);
+        match (prop.shorthand, &mut prop.key, &mut prop.value) {
             (
                 true,
                 PropertyKey::StaticIdentifier(key),
@@ -1118,7 +1118,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
                 self.visit_binding_pattern(value);
             }
         }
-        self.convert_offset(&mut it.span.end);
+        self.convert_offset(&mut prop.span.end);
     }
 
     fn visit_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
@@ -1143,9 +1143,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         }
     }
 
-    fn visit_export_specifier(&mut self, it: &mut ExportSpecifier<'a>) {
-        self.convert_offset(&mut it.span.start);
-        match (&mut it.local, &mut it.exported) {
+    fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
+        self.convert_offset(&mut specifier.span.start);
+        match (&mut specifier.local, &mut specifier.exported) {
             (
                 ModuleExportName::IdentifierReference(local),
                 ModuleExportName::IdentifierName(exported),
@@ -1171,36 +1171,36 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
                 self.visit_module_export_name(exported);
             }
         }
-        self.convert_offset(&mut it.span.end);
+        self.convert_offset(&mut specifier.span.end);
     }
 
-    fn visit_import_specifier(&mut self, it: &mut ImportSpecifier<'a>) {
-        self.convert_offset(&mut it.span.start);
-        match &mut it.imported {
-            ModuleExportName::IdentifierName(imported) if imported.span == it.local.span => {
+    fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
+        self.convert_offset(&mut specifier.span.start);
+        match &mut specifier.imported {
+            ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
                 self.visit_identifier_name(imported);
-                it.local.span = imported.span;
+                specifier.local.span = imported.span;
             }
             imported => {
                 self.visit_module_export_name(imported);
-                self.visit_binding_identifier(&mut it.local);
+                self.visit_binding_identifier(&mut specifier.local);
             }
         }
-        self.convert_offset(&mut it.span.end);
+        self.convert_offset(&mut specifier.span.end);
     }
 
-    fn visit_with_clause(&mut self, it: &mut WithClause<'a>) {
-        self.visit_import_attributes(&mut it.with_entries);
+    fn visit_with_clause(&mut self, with_clause: &mut WithClause<'a>) {
+        self.visit_import_attributes(&mut with_clause.with_entries);
     }
 
-    fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {
-        self.convert_offset(&mut it.span.start);
-        for (quasi, expression) in it.quasis.iter_mut().zip(&mut it.expressions) {
+    fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
+        self.convert_offset(&mut lit.span.start);
+        for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
             self.visit_template_element(quasi);
             self.visit_expression(expression);
         }
-        self.visit_template_element(it.quasis.last_mut().unwrap());
-        self.convert_offset(&mut it.span.end);
+        self.visit_template_element(lit.quasis.last_mut().unwrap());
+        self.convert_offset(&mut lit.span.end);
     }
 }
 

@@ -96,11 +96,11 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             #(#methods)*
 
             ///@@line_break
-            fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+                self.convert_offset(&mut prop.span.start);
 
                 // If shorthand, span of `key` and `value` are the same
-                match (it.shorthand, &mut it.key, &mut it.value) {
+                match (prop.shorthand, &mut prop.key, &mut prop.value) {
                     (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
                         self.visit_identifier_name(key);
                         value.span = key.span;
@@ -111,15 +111,15 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut prop.span.end);
             }
 
             ///@@line_break
-            fn visit_binding_property(&mut self, it: &mut BindingProperty<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
+                self.convert_offset(&mut prop.span.start);
 
                 // If shorthand, span of `key` and `value` are the same
-                match (it.shorthand, &mut it.key, &mut it.value) {
+                match (prop.shorthand, &mut prop.key, &mut prop.value) {
                     (
                         true,
                         PropertyKey::StaticIdentifier(key),
@@ -142,7 +142,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut prop.span.end);
             }
 
             ///@@line_break
@@ -170,14 +170,14 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             }
 
             ///@@line_break
-            fn visit_export_specifier(&mut self, it: &mut ExportSpecifier<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
+                self.convert_offset(&mut specifier.span.start);
 
                 // `local` and `exported` have same span if e.g.:
                 // * `export {x}`
                 // * `export {x} from 'foo.js;`
                 // * `export {"a-b"} from 'foo.js';`
-                match (&mut it.local, &mut it.exported) {
+                match (&mut specifier.local, &mut specifier.exported) {
                     (
                         ModuleExportName::IdentifierReference(local),
                         ModuleExportName::IdentifierName(exported),
@@ -205,48 +205,48 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut specifier.span.end);
             }
 
             ///@@line_break
-            fn visit_import_specifier(&mut self, it: &mut ImportSpecifier<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
+                self.convert_offset(&mut specifier.span.start);
 
                 // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
-                match &mut it.imported {
-                    ModuleExportName::IdentifierName(imported) if imported.span == it.local.span => {
+                match &mut specifier.imported {
+                    ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
                         self.visit_identifier_name(imported);
-                        it.local.span = imported.span;
+                        specifier.local.span = imported.span;
                     }
                     imported => {
                         self.visit_module_export_name(imported);
-                        self.visit_binding_identifier(&mut it.local);
+                        self.visit_binding_identifier(&mut specifier.local);
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut specifier.span.end);
             }
 
             ///@@line_break
-            fn visit_with_clause(&mut self, it: &mut WithClause<'a>) {
+            fn visit_with_clause(&mut self, with_clause: &mut WithClause<'a>) {
                 // `WithClause::attributes_keyword` has a span before start of the `WithClause`.
                 // ESTree does not include that node, nor the span of the `WithClause` itself,
                 // so skip processing those spans.
-                self.visit_import_attributes(&mut it.with_entries);
+                self.visit_import_attributes(&mut with_clause.with_entries);
             }
 
             ///@@line_break
-            fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
+                self.convert_offset(&mut lit.span.start);
 
                 // Visit `quasis` and `expressions` in source order. The two `Vec`s are interleaved.
-                for (quasi, expression) in it.quasis.iter_mut().zip(&mut it.expressions) {
+                for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
                     self.visit_template_element(quasi);
                     self.visit_expression(expression);
                 }
-                self.visit_template_element(it.quasis.last_mut().unwrap());
+                self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut lit.span.end);
             }
         }
 
