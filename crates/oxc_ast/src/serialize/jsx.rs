@@ -17,9 +17,9 @@ use super::EmptyArray;
         openingElement
     "
 )]
-pub struct JSXElementOpening<'a, 'b>(pub &'b JSXElement<'a>);
+pub struct JSXElementOpeningElement<'a, 'b>(pub &'b JSXElement<'a>);
 
-impl ESTree for JSXElementOpening<'_, '_> {
+impl ESTree for JSXElementOpeningElement<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let element = self.0;
         let opening_element = element.opening_element.as_ref();

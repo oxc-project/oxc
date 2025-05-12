@@ -725,7 +725,7 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
         state.serialize_field("key", &self.binding);
         state.serialize_field(
             "value",
-            &crate::serialize::js::AssignmentTargetPropertyIdentifierValue(self),
+            &crate::serialize::js::AssignmentTargetPropertyIdentifierInit(self),
         );
         state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -1999,7 +1999,10 @@ impl ESTree for JSXElement<'_> {
         state.serialize_field("type", &JsonSafeString("JSXElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("openingElement", &crate::serialize::jsx::JSXElementOpening(self));
+        state.serialize_field(
+            "openingElement",
+            &crate::serialize::jsx::JSXElementOpeningElement(self),
+        );
         state.serialize_field("closingElement", &self.closing_element);
         state.serialize_field("children", &self.children);
         state.end();

@@ -962,7 +962,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierValue)]
+    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierInit)]
     pub init: Option<Expression<'a>>,
 }
 

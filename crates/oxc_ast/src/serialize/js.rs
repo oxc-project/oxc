@@ -375,11 +375,11 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
         value
     "
 )]
-pub struct AssignmentTargetPropertyIdentifierValue<'a>(
+pub struct AssignmentTargetPropertyIdentifierInit<'a>(
     pub &'a AssignmentTargetPropertyIdentifier<'a>,
 );
 
-impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
+impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(init) = &self.0.init {
             let mut state = serializer.serialize_struct();
