@@ -62,11 +62,22 @@ use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow}
 /// `shrink_to_fit`, and `from_box` will actually set RawVec's private capacity
 /// field. This allows zero-sized types to not be special-cased by consumers of
 /// this type.
+#[expect(clippy::cast_possible_truncation)]
+#[inline]
+pub const fn usize_to_u32(n: usize) -> u32 {
+    n as u32
+}
+
+#[inline]
+pub const fn u32_to_usize(n: u32) -> usize {
+    n as usize
+}
+
 #[allow(missing_debug_implementations)]
 pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
     a: &'a Bump,
-    cap: usize,
+    cap: u32,
     pub(super) len: usize,
 }
 
@@ -112,7 +123,7 @@ impl<'a, T> RawVec<'a, T> {
                 }
             };
 
-            RawVec { ptr, cap, a, len: 0 }
+            RawVec { ptr, a, cap: 0, len: 0 }
         }
     }
 }
@@ -126,7 +137,7 @@ impl<'a, T> RawVec<'a, T> {
     /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
     /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
     pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
-        RawVec { ptr: NonNull::new_unchecked(ptr), a, cap, len }
+        RawVec { ptr: NonNull::new_unchecked(ptr), a, cap: usize_to_u32(cap), len }
     }
 }
 
@@ -143,7 +154,7 @@ impl<'a, T> RawVec<'a, T> {
     /// This will always be `usize::MAX` if `T` is zero-sized.
     #[inline(always)]
     pub fn cap(&self) -> usize {
-        if mem::size_of::<T>() == 0 { !0 } else { self.cap }
+        if mem::size_of::<T>() == 0 { !0 } else { u32_to_usize(self.cap) }
     }
 
     /// Returns a shared reference to the allocator backing this RawVec.
@@ -159,7 +170,7 @@ impl<'a, T> RawVec<'a, T> {
             // checks to get our current layout.
             unsafe {
                 let align = mem::align_of::<T>();
-                let size = mem::size_of::<T>() * self.cap;
+                let size = mem::size_of::<T>() * u32_to_usize(self.cap);
                 Some(Layout::from_size_align_unchecked(size, align))
             }
         }
@@ -438,7 +449,7 @@ impl<'a, T> RawVec<'a, T> {
     // mark as `#[inline]` because this function is common case in the oxc_parser.
     #[inline]
     pub fn grow_one(&mut self) {
-        if let Err(err) = self.grow_amortized(self.cap, 1) {
+        if let Err(err) = self.grow_amortized(u32_to_usize(self.cap), 1) {
             handle_error(err);
         }
     }
@@ -516,12 +527,12 @@ impl<'a, T> RawVec<'a, T> {
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
         if elem_size == 0 {
-            self.cap = amount;
+            self.cap = usize_to_u32(amount);
             return;
         }
 
         // This check is my waterloo; it's the only thing Vec wouldn't have to do.
-        assert!(self.cap >= amount, "Tried to shrink to a larger capacity");
+        assert!(self.cap >= usize_to_u32(amount), "Tried to shrink to a larger capacity");
 
         if amount == 0 {
             // We want to create a new zero-length vector within the
@@ -535,7 +546,7 @@ impl<'a, T> RawVec<'a, T> {
                 self.dealloc_buffer();
                 ptr::write(self, RawVec::new_in(a));
             }
-        } else if self.cap != amount {
+        } else if u32_to_usize(self.cap) != amount {
             unsafe {
                 // We know here that our `amount` is greater than zero. This
                 // implies, via the assert above, that capacity is also greater
@@ -545,7 +556,7 @@ impl<'a, T> RawVec<'a, T> {
                 // We also know that `self.cap` is greater than `amount`, and
                 // consequently we don't need runtime checks for creating either
                 // layout
-                let old_size = elem_size * self.cap;
+                let old_size = elem_size * u32_to_usize(self.cap);
                 let new_size = elem_size * amount;
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
@@ -555,7 +566,7 @@ impl<'a, T> RawVec<'a, T> {
                     Err(_) => handle_alloc_error(new_layout),
                 }
             }
-            self.cap = amount;
+            self.cap = usize_to_u32(amount);
         }
     }
 }
@@ -605,7 +616,7 @@ impl<'a, T> RawVec<'a, T> {
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = new_cap;
+            self.cap = usize_to_u32(new_cap);
 
             Ok(())
         }
@@ -659,7 +670,7 @@ impl<'a, T> RawVec<'a, T> {
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = cap;
+            self.cap = usize_to_u32(cap);
 
             Ok(())
         }
