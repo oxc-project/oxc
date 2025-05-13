@@ -166,13 +166,13 @@ impl<T: Case> Suite<T> for AcornJsxSuite<T> {
     }
 }
 
-pub struct AcornJsxCase {
+pub struct EstreeJsxCase {
     path: PathBuf,
     code: String,
     result: TestResult,
 }
 
-impl Case for AcornJsxCase {
+impl Case for EstreeJsxCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { path, code, result: TestResult::ToBeRun }
     }
