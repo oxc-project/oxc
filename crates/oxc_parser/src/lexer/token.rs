@@ -37,8 +37,8 @@ pub struct Token(u128);
 impl Default for Token {
     fn default() -> Self {
         let mut token = Self(0);
-        // Kind::default() is Kind::Eof. Kind::Eof as u8 needs to be set.
-        // Assuming Kind::Eof will be 1 after #[repr(u8)] (Undetermined = 0, Eof = 1)
+        // `Kind::default()` is `Kind::Eof`. `Kind::Eof as u8` needs to be set.
+        // Assuming `Kind::Eof` will be 1 after `#[repr(u8)]` (Undetermined = 0, Eof = 1)
         token.set_kind(Kind::default());
         token
     }
@@ -47,7 +47,7 @@ impl Default for Token {
 impl Token {
     #[inline]
     pub(super) fn new_on_new_line() -> Self {
-        // Start with a default token, then set the flag.
+        // Start with a default token, then set the flag
         let mut token = Self::default();
         token.0 |= IS_ON_NEW_LINE_FLAG;
         token
@@ -55,7 +55,8 @@ impl Token {
 
     #[inline]
     pub fn kind(&self) -> Kind {
-        // SAFETY: This conversion is safe because Kind is #[repr(u8)] and we ensure the value stored is a valid Kind variant.
+        // SAFETY: This conversion is safe because `Kind` is `#[repr(u8)]`,
+        // and we ensure the value stored is a valid `Kind` variant
         unsafe { std::mem::transmute(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
 
@@ -101,13 +102,13 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_kind(&mut self, kind: Kind) {
-        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current kind bits
+        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
         self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
 
     #[inline]
     pub(crate) fn set_start(&mut self, start: u32) {
-        self.0 &= !(START_MASK << START_SHIFT); // Clear current start bits
+        self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
         self.0 |= u128::from(start) << START_SHIFT;
     }
 
@@ -130,7 +131,7 @@ impl Token {
     pub(crate) fn set_end(&mut self, end: u32) {
         let start = self.start();
         debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
-        self.0 &= !(END_MASK << END_SHIFT); // Clear current end bits
+        self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
         self.0 |= u128::from(end) << END_SHIFT;
     }
 }
