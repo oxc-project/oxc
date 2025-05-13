@@ -2,4 +2,5 @@ commit: 578ac4df
 
 minifier_babel Summary:
 AST Parsed     : 1732/1732 (100.00%)
-Positive Passed: 1732/1732 (100.00%)
+Positive Passed: 1731/1732 (99.94%)
+Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/06-regex/input.js

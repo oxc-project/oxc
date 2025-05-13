@@ -1592,10 +1592,10 @@ fn test_remove_dead_expr() {
     test("`stuff ${x ? 1 : 2} ${y}`", "x, `${y}`;");
     test("`stuff ${x} ${y ? 1 : 2}`", "`${x}`, y;");
     test("`stuff ${x} ${y ? 1 : 2} ${z}`", "`${x}`, y, `${z}`;");
-    test("'a' + b + 'c' + d", "'' + b + d;");
+    test("'a' + b + 'c' + d", "b + d;");
     test("a + 'b' + c + 'd'", "a + '' + c;");
     test("a + b + 'c' + 'd'", "a + b + '';");
-    test("'a' + 'b' + c + d", "'' + c + d;");
+    test("'a' + 'b' + c + d", "c + d;");
     test("(a + '') + (b + '')", "a + (b + '');");
     // test("with (a) []", "with (a) ;");
     // test("var a; with (b) a", "var a;with (b) a;");
