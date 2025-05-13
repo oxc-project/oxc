@@ -136,11 +136,12 @@ impl Token {
 }
 
 #[cfg(test)]
-mod size_asserts {
+mod test {
     use super::Kind;
     use super::Token;
-    // Test new size
-    const _: () = assert!(std::mem::size_of::<Token>() == 16);
+
+    // Test size of `Token`
+    const _: () = assert!(size_of::<Token>() == 16);
 
     // Test default token values
     #[test]
