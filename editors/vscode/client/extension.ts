@@ -24,6 +24,7 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from
 import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
 import { oxlintConfigFileName } from './WorkspaceConfig';
+import path = require('node:path');
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -178,14 +179,28 @@ export async function activate(context: ExtensionContext) {
     );
   }
 
+  const serverEnv: Record<string, string> = {
+    ...process.env,
+    RUST_LOG: process.env.RUST_LOG || 'info',
+  };
+
+  if (configService.vsCodeConfig.nodePath) {
+    outputChannel.info(`adding node path to PATH: ${configService.vsCodeConfig.nodePath}`);
+
+    // Find the PATH environment variable regardless of case (Windows uses 'Path')
+    const pathKey = Object.keys(serverEnv).find(key => key.toUpperCase() === 'PATH') || 'PATH';
+    if (serverEnv[pathKey]) {
+      serverEnv[pathKey] = serverEnv[pathKey].concat(path.delimiter, configService.vsCodeConfig.nodePath);
+    } else {
+      serverEnv[pathKey] = configService.vsCodeConfig.nodePath;
+    }
+  }
+
   const command = await findBinary();
   const run: Executable = {
     command: command!,
     options: {
-      env: {
-        ...process.env,
-        RUST_LOG: process.env.RUST_LOG || 'info',
-      },
+      env: serverEnv,
     },
   };
   const serverOptions: ServerOptions = {
@@ -316,7 +331,10 @@ export async function activate(context: ExtensionContext) {
     // update the initializationOptions for a possible restart
     client.clientOptions.initializationOptions = this.languageServerConfig;
 
-    if (configService.effectsWorkspaceConfigPathChange(event)) {
+    if (configService.vsCodeConfig.effectsNodePathChange(event)) {
+      // restart the extension
+      await commands.executeCommand('workbench.action.reloadWindow');
+    } else if (configService.effectsWorkspaceConfigPathChange(event)) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(this.getOxlintCustomConfigs());
 

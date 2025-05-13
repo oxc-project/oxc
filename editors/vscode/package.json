@@ -64,16 +64,6 @@
       "type": "object",
       "title": "oxc",
       "properties": {
-        "oxc.lint.run": {
-          "scope": "resource",
-          "type": "string",
-          "enum": [
-            "onSave",
-            "onType"
-          ],
-          "default": "onType",
-          "description": "Run the linter on save (onSave) or on type (onType)"
-        },
         "oxc.enable": {
           "type": "boolean",
           "default": true,
@@ -100,6 +90,21 @@
           "type": "string",
           "scope": "window",
           "description": "Path to Oxc language server binary. Mostly for testing the language server."
+        },
+        "oxc.path.node": {
+          "type": "string",
+          "scope": "window",
+          "description": "The path of `node` which will be added to `PATH` server environment."
+        },
+        "oxc.lint.run": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "onSave",
+            "onType"
+          ],
+          "default": "onType",
+          "description": "Run the linter on save (onSave) or on type (onType)"
         },
         "oxc.configPath": {
           "type": [

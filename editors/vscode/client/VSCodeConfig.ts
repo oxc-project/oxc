@@ -1,10 +1,11 @@
-import { workspace } from 'vscode';
+import { ConfigurationChangeEvent, workspace } from 'vscode';
 import { ConfigService } from './ConfigService';
 
 export class VSCodeConfig implements VSCodeConfigInterface {
   private _enable!: boolean;
   private _trace!: TraceLevel;
   private _binPath: string | undefined;
+  private _nodePath: string | undefined;
 
   constructor() {
     this.refresh();
@@ -18,6 +19,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     this._enable = this.configuration.get<boolean>('enable') ?? true;
     this._trace = this.configuration.get<TraceLevel>('trace.server') || 'off';
     this._binPath = this.configuration.get<string>('path.server');
+    this._nodePath = this.configuration.get<string>('path.node');
   }
 
   get enable(): boolean {
@@ -46,6 +48,19 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     this._binPath = value;
     return this.configuration.update('path.server', value);
   }
+
+  get nodePath(): string | undefined {
+    return this._nodePath;
+  }
+
+  updateNodePath(value: string | undefined): PromiseLike<void> {
+    this._nodePath = value;
+    return this.configuration.update('path.node', value);
+  }
+
+  public effectsNodePathChange(event: ConfigurationChangeEvent): boolean {
+    return event.affectsConfiguration(`${ConfigService.namespace}.path.node`);
+  }
 }
 
 type TraceLevel = 'off' | 'messages' | 'verbose';
@@ -72,4 +87,10 @@ interface VSCodeConfigInterface {
    * @default undefined
    */
   binPath: string | undefined;
+  /**
+   * Path to Node binary
+   * `oxc.path.node`
+   * @default undefined
+   */
+  nodePath: string | undefined;
 }
