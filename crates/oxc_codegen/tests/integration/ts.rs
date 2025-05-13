@@ -2,7 +2,7 @@ use oxc_codegen::CodegenOptions;
 
 use crate::{
     snapshot, snapshot_options,
-    tester::{test_same, test_tsx},
+    tester::{test, test_same, test_tsx},
 };
 
 #[test]
@@ -13,6 +13,10 @@ fn cases() {
     test_same("class C {\n\tp = await(0);\n}\n");
     test_same(
         "class Foo {\n\t#name: string;\n\tf() {\n\t\t#name in other && this.#name === other.#name;\n\t}\n}\n",
+    );
+    test(
+        "class C {\n\tstatic\nstatic\n\tstatic\na() {}\n}\n",
+        "class C {\n\tstatic static;\n\tstatic a() {}\n}\n",
     );
 }
 

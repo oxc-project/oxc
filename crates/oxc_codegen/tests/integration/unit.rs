@@ -75,6 +75,11 @@ fn class() {
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
     test_minify("class { static [computed] }", "class{static[computed]}");
+
+    test(
+        "class C {\n\tstatic\nstatic\n\tstatic\na() {}\n}\n",
+        "class C {\n\tstatic static;\n\tstatic a() {}\n}\n",
+    );
 }
 
 #[test]
