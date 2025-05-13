@@ -617,7 +617,8 @@ impl<'a, T> RawVec<'a, T> {
             // panic.
 
             let new_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
-            let new_layout = Layout::array::<T>(new_cap as usize).map_err(|_| CapacityOverflow)?;
+            let new_layout =
+                Layout::array::<T>(u32_to_usize(new_cap)).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
@@ -671,7 +672,7 @@ impl<'a, T> RawVec<'a, T> {
             // }
             // let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
 
-            let new_layout = Layout::array::<T>(cap as usize).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(u32_to_usize(cap)).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
