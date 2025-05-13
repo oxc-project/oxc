@@ -78,7 +78,7 @@ pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
     a: &'a Bump,
     cap: u32,
-    pub(super) len: usize,
+    pub(super) len: u32,
 }
 
 impl<'a, T> RawVec<'a, T> {
@@ -137,7 +137,12 @@ impl<'a, T> RawVec<'a, T> {
     /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
     /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
     pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
-        RawVec { ptr: NonNull::new_unchecked(ptr), a, cap: usize_to_u32(cap), len }
+        RawVec {
+            ptr: NonNull::new_unchecked(ptr),
+            a,
+            cap: usize_to_u32(cap),
+            len: usize_to_u32(len),
+        }
     }
 }
 
