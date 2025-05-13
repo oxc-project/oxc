@@ -4,146 +4,142 @@ use oxc_span::Span;
 
 use super::kind::Kind;
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct Token {
-    /// Token Kind
-    kind: Kind,
+// Bit layout for u128:
+// - Bits 0-31 (32 bits): `start`
+// - Bits 32-63 (32 bits): `end`
+// - Bits 64-71 (8 bits): `kind` (as u8)
+// - Bit 72 (1 bit): `is_on_new_line`
+// - Bit 73 (1 bit): `escaped`
+// - Bit 74 (1 bit): `lone_surrogates`
+// - Bit 75 (1 bit): `has_separator`
 
-    /// Start offset in source
-    start: u32,
+const START_SHIFT: u32 = 0;
+const END_SHIFT: u32 = 32;
+const KIND_SHIFT: u32 = 64;
+const IS_ON_NEW_LINE_SHIFT: u32 = 72;
+const ESCAPED_SHIFT: u32 = 73;
+const LONE_SURROGATES_SHIFT: u32 = 74;
+const HAS_SEPARATOR_SHIFT: u32 = 75;
 
-    /// End offset in source
-    end: u32,
+const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
+const KIND_MASK: u128 = 0xFF; // 8 bits
+const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 
-    /// Indicates the token is on a newline
-    is_on_new_line: bool,
+const IS_ON_NEW_LINE_FLAG: u128 = 1 << IS_ON_NEW_LINE_SHIFT;
+const ESCAPED_FLAG: u128 = 1 << ESCAPED_SHIFT;
+const LONE_SURROGATES_FLAG: u128 = 1 << LONE_SURROGATES_SHIFT;
+const HAS_SEPARATOR_FLAG: u128 = 1 << HAS_SEPARATOR_SHIFT;
 
-    /// True if the identifier / string / template kinds has escaped strings.
-    /// The escaped strings are saved in [Lexer::escaped_strings] and [Lexer::escaped_templates] by
-    /// [Token::start].
-    ///
-    /// [Lexer::escaped_strings]: [super::Lexer::escaped_strings]
-    /// [Lexer::escaped_templates]: [super::Lexer::escaped_templates]
-    escaped: bool,
+#[derive(Debug, Clone, Copy)]
+#[repr(transparent)]
+pub struct Token(u128);
 
-    /// True if a string contains lone surrogates.
-    lone_surrogates: bool,
-
-    /// True if for numeric literal tokens that contain separator characters (`_`).
-    ///
-    /// Numeric literals are defined in Section 12.9.3 of the ECMAScript
-    /// standard and include [`Kind::Decimal`], [`Kind::Binary`],
-    /// [`Kind::Octal`], [`Kind::Hex`], etc.
-    has_separator: bool,
-
-    // Padding to fill to 16 bytes.
-    // This makes copying a `Token` 1 x xmmword load & store, rather than 1 x dword + 1 x qword
-    // and `Token::default()` is 1 x xmmword store, rather than 1 x dword + 1 x qword.
-    _padding2: u16,
+impl Default for Token {
+    fn default() -> Self {
+        let mut token = Self(0);
+        // Kind::default() is Kind::Eof. Kind::Eof as u8 needs to be set.
+        // Assuming Kind::Eof will be 1 after #[repr(u8)] (Undetermined = 0, Eof = 1)
+        token.set_kind(Kind::default());
+        token
+    }
 }
 
 impl Token {
     #[inline]
     pub(super) fn new_on_new_line() -> Self {
-        Self { is_on_new_line: true, ..Self::default() }
+        // Start with a default token, then set the flag.
+        let mut token = Self::default();
+        token.0 |= IS_ON_NEW_LINE_FLAG;
+        token
     }
 
     #[inline]
     pub fn kind(&self) -> Kind {
-        self.kind
+        // SAFETY: This conversion is safe because Kind is #[repr(u8)] and we ensure the value stored is a valid Kind variant.
+        unsafe { std::mem::transmute(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
 
     #[inline]
     pub fn start(&self) -> u32 {
-        self.start
-    }
-
-    #[cfg(test)]
-    #[inline]
-    fn len(self) -> u32 {
-        self.end - self.start
+        ((self.0 >> START_SHIFT) & START_MASK) as u32
     }
 
     #[inline]
     pub fn end(&self) -> u32 {
-        self.end
+        ((self.0 >> END_SHIFT) & END_MASK) as u32
     }
 
     #[inline]
     pub fn is_on_new_line(&self) -> bool {
-        self.is_on_new_line
+        (self.0 & IS_ON_NEW_LINE_FLAG) != 0
     }
 
     #[inline]
     pub fn escaped(&self) -> bool {
-        self.escaped
+        (self.0 & ESCAPED_FLAG) != 0
     }
 
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
-        self.lone_surrogates
+        (self.0 & LONE_SURROGATES_FLAG) != 0
     }
 
     #[inline]
     pub fn span(&self) -> Span {
-        Span::new(self.start, self.end)
+        Span::new(self.start(), self.end())
     }
 
     #[inline]
-    pub(crate) fn has_separator(&self) -> bool {
-        self.has_separator
+    pub fn has_separator(&self) -> bool {
+        (self.0 & HAS_SEPARATOR_FLAG) != 0
     }
 
     #[inline]
     pub(crate) fn set_has_separator(&mut self) {
-        self.has_separator = true;
+        self.0 |= HAS_SEPARATOR_FLAG;
     }
 
-    // Helper to set kind, used in Default and potentially elsewhere
     #[inline]
     pub(crate) fn set_kind(&mut self, kind: Kind) {
-        self.kind = kind;
+        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current kind bits
+        self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
 
     #[inline]
     pub(crate) fn set_start(&mut self, start: u32) {
-        self.start = start;
+        self.0 &= !(START_MASK << START_SHIFT); // Clear current start bits
+        self.0 |= u128::from(start) << START_SHIFT;
     }
 
     #[inline]
     pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
-        self.is_on_new_line = value;
+        self.0 = (self.0 & !IS_ON_NEW_LINE_FLAG) | (u128::from(value) * IS_ON_NEW_LINE_FLAG);
     }
 
     #[inline]
     pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.escaped = escaped;
+        self.0 = (self.0 & !ESCAPED_FLAG) | (u128::from(escaped) * ESCAPED_FLAG);
     }
 
     #[inline]
     pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
-        self.lone_surrogates = value;
+        self.0 = (self.0 & !LONE_SURROGATES_FLAG) | (u128::from(value) * LONE_SURROGATES_FLAG);
     }
 
     #[inline]
     pub(crate) fn set_end(&mut self, end: u32) {
-        debug_assert!(end >= self.start, "end should not be before start");
-        self.end = end;
-    }
-
-    #[cfg(test)]
-    #[inline]
-    fn set_len(&mut self, len: u32) {
-        self.end = self.start + len;
+        let start = self.start();
+        debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
+        self.0 &= !(END_MASK << END_SHIFT); // Clear current end bits
+        self.0 |= u128::from(end) << END_SHIFT;
     }
 }
 
 #[cfg(test)]
-mod test {
+mod size_asserts {
     use super::Kind;
     use super::Token;
-
-    // Test token size
+    // Test new size
     const _: () = assert!(std::mem::size_of::<Token>() == 16);
 
     // Test default token values
@@ -151,7 +147,6 @@ mod test {
     fn default_token_values() {
         let token = Token::default();
         assert_eq!(token.start(), 0);
-        assert_eq!(token.len(), 0u32);
         assert_eq!(token.end(), 0);
         assert_eq!(token.kind(), Kind::Eof); // Kind::default() is Eof
         assert!(!token.is_on_new_line());
@@ -164,7 +159,6 @@ mod test {
     fn new_on_new_line_token_values() {
         let token = Token::new_on_new_line();
         assert_eq!(token.start(), 0);
-        assert_eq!(token.len(), 0u32);
         assert_eq!(token.end(), 0);
         assert_eq!(token.kind(), Kind::Eof);
         assert!(token.is_on_new_line());
@@ -177,7 +171,7 @@ mod test {
     fn token_creation_and_retrieval() {
         let kind = Kind::Ident;
         let start = 100u32;
-        let len = 5u32;
+        let end = start + 5u32;
         let is_on_new_line = true;
         let escaped = false;
         let lone_surrogates = true;
@@ -186,7 +180,7 @@ mod test {
         let mut token = Token::default();
         token.set_kind(kind);
         token.set_start(start);
-        token.set_len(len);
+        token.set_end(end);
         token.set_is_on_new_line(is_on_new_line);
         token.set_escaped(escaped);
         token.set_lone_surrogates(lone_surrogates);
@@ -197,8 +191,7 @@ mod test {
 
         assert_eq!(token.kind(), kind);
         assert_eq!(token.start(), start);
-        assert_eq!(token.len(), len);
-        assert_eq!(token.end(), start + len);
+        assert_eq!(token.end(), end);
         assert_eq!(token.is_on_new_line(), is_on_new_line);
         assert_eq!(token.escaped(), escaped);
         assert_eq!(token.lone_surrogates(), lone_surrogates);
@@ -210,7 +203,7 @@ mod test {
         let mut token = Token::default();
         token.set_kind(Kind::Ident);
         token.set_start(10);
-        token.set_len(5);
+        token.set_end(15);
         // is_on_new_line, escaped, lone_surrogates, has_separator are false by default from Token::default()
 
         assert_eq!(token.start(), 10);
@@ -222,19 +215,18 @@ mod test {
         let mut token_for_set_end = Token::default();
         token_for_set_end.set_kind(Kind::Ident);
         token_for_set_end.set_start(10);
-        token_for_set_end.set_len(5);
+        token_for_set_end.set_end(15);
 
         assert_eq!(token_for_set_end.end(), 15);
         token_for_set_end.set_end(30);
         assert_eq!(token_for_set_end.start(), 10);
-        assert_eq!(token_for_set_end.len(), 20u32);
         assert_eq!(token_for_set_end.end(), 30);
 
         // Test that other flags are not affected by set_start
         let mut token_with_flags = Token::default();
         token_with_flags.set_kind(Kind::Str);
         token_with_flags.set_start(30);
-        token_with_flags.set_len(3);
+        token_with_flags.set_end(33);
         token_with_flags.set_is_on_new_line(true);
         token_with_flags.set_escaped(true);
         token_with_flags.set_lone_surrogates(true);
@@ -251,7 +243,7 @@ mod test {
         let mut token_with_flags2 = Token::default();
         token_with_flags2.set_kind(Kind::Str);
         token_with_flags2.set_start(50);
-        token_with_flags2.set_len(2);
+        token_with_flags2.set_end(52);
         token_with_flags2.set_is_on_new_line(true);
         // escaped is false by default
         token_with_flags2.set_lone_surrogates(true);
@@ -273,7 +265,7 @@ mod test {
         let mut token_flags_test_newline = Token::default();
         token_flags_test_newline.set_kind(Kind::Str);
         token_flags_test_newline.set_start(60);
-        token_flags_test_newline.set_len(2);
+        token_flags_test_newline.set_end(62);
         // is_on_new_line is false by default
         token_flags_test_newline.set_escaped(true);
         token_flags_test_newline.set_lone_surrogates(true);
@@ -295,7 +287,7 @@ mod test {
         let mut token_flags_test_lone_surrogates = Token::default();
         token_flags_test_lone_surrogates.set_kind(Kind::Str);
         token_flags_test_lone_surrogates.set_start(70);
-        token_flags_test_lone_surrogates.set_len(2);
+        token_flags_test_lone_surrogates.set_end(72);
         token_flags_test_lone_surrogates.set_is_on_new_line(true);
         token_flags_test_lone_surrogates.set_escaped(true);
         // lone_surrogates is false by default
