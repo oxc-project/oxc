@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 713/1191
+Passed: 712/1190
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2713,7 +2713,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (133/145)
+# babel-plugin-transform-react-jsx (132/144)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 
