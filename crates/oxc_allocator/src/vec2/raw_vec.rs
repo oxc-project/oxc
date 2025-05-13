@@ -527,17 +527,17 @@ impl<'a, T> RawVec<'a, T> {
     /// # Aborts
     ///
     /// Aborts on OOM.
-    pub fn shrink_to_fit(&mut self, amount: usize) {
+    pub fn shrink_to_fit(&mut self, amount: u32) {
         let elem_size = mem::size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
         if elem_size == 0 {
-            self.cap = usize_to_u32(amount);
+            self.cap = amount;
             return;
         }
 
         // This check is my waterloo; it's the only thing Vec wouldn't have to do.
-        assert!(self.cap >= usize_to_u32(amount), "Tried to shrink to a larger capacity");
+        assert!(self.cap >= amount, "Tried to shrink to a larger capacity");
 
         if amount == 0 {
             // We want to create a new zero-length vector within the
@@ -551,7 +551,7 @@ impl<'a, T> RawVec<'a, T> {
                 self.dealloc_buffer();
                 ptr::write(self, RawVec::new_in(a));
             }
-        } else if u32_to_usize(self.cap) != amount {
+        } else if self.cap != amount {
             unsafe {
                 // We know here that our `amount` is greater than zero. This
                 // implies, via the assert above, that capacity is also greater
@@ -562,7 +562,7 @@ impl<'a, T> RawVec<'a, T> {
                 // consequently we don't need runtime checks for creating either
                 // layout
                 let old_size = elem_size * u32_to_usize(self.cap);
-                let new_size = elem_size * amount;
+                let new_size = elem_size * u32_to_usize(amount);
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
@@ -571,7 +571,7 @@ impl<'a, T> RawVec<'a, T> {
                     Err(_) => handle_alloc_error(new_layout),
                 }
             }
-            self.cap = usize_to_u32(amount);
+            self.cap = amount;
         }
     }
 }
@@ -617,8 +617,7 @@ impl<'a, T> RawVec<'a, T> {
             // panic.
 
             let new_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
-            let new_layout =
-                Layout::array::<T>(u32_to_usize(new_cap)).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(new_cap as usize).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
@@ -672,7 +671,7 @@ impl<'a, T> RawVec<'a, T> {
             // }
             // let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
 
-            let new_layout = Layout::array::<T>(u32_to_usize(cap)).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(cap as usize).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 

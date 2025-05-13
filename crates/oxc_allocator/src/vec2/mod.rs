@@ -848,7 +848,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     pub fn shrink_to_fit(&mut self) {
         if self.buf.cap() != self.buf.len {
-            self.buf.shrink_to_fit(u32_to_usize(self.buf.len));
+            self.buf.shrink_to_fit(self.buf.len);
         }
     }
 
@@ -1591,7 +1591,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
-        if self.buf.len == 0u32 {
+        if self.buf.len == 0 {
             None
         } else {
             unsafe {
