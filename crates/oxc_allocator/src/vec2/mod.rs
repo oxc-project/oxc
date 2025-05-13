@@ -723,7 +723,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.buf.cap()
+        u32_to_usize(self.buf.cap())
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -747,7 +747,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve(&mut self, additional: usize) {
-        self.buf.reserve(u32_to_usize(self.buf.len), additional);
+        self.buf.reserve(self.buf.len, usize_to_u32(additional));
     }
 
     /// Reserves the minimum capacity for exactly `additional` more elements to
@@ -774,7 +774,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
-        self.buf.reserve_exact(u32_to_usize(self.buf.len), additional);
+        self.buf.reserve_exact(self.buf.len, usize_to_u32(additional));
     }
 
     /// Attempts to reserve capacity for at least `additional` more elements to be inserted
@@ -798,7 +798,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve(u32_to_usize(self.buf.len), additional)
+        self.buf.try_reserve(self.buf.len, usize_to_u32(additional))
     }
 
     /// Attempts to reserve the minimum capacity for exactly `additional` more elements to
@@ -825,7 +825,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve_exact(u32_to_usize(self.buf.len), additional)
+        self.buf.try_reserve_exact(self.buf.len, usize_to_u32(additional))
     }
 
     /// Shrinks the capacity of the vector as much as possible.
@@ -847,7 +847,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 3);
     /// ```
     pub fn shrink_to_fit(&mut self) {
-        if self.capacity() != u32_to_usize(self.buf.len) {
+        if self.buf.cap() != self.buf.len {
             self.buf.shrink_to_fit(u32_to_usize(self.buf.len));
         }
     }
@@ -1204,7 +1204,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
             let hole: *mut T = &mut self[index];
-            let last = ptr::read(self.get_unchecked(u32_to_usize(self.buf.len) - 1));
+            let last = ptr::read(self.get_unchecked(u32_to_usize(self.buf.len - 1)));
             self.buf.len -= 1;
             ptr::replace(hole, last)
         }
@@ -1231,11 +1231,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
     /// ```
     pub fn insert(&mut self, index: usize, element: T) {
-        let len = self.len();
+        let len = u32_to_usize(self.buf.len);
         assert!(index <= len);
 
         // space for the new element
-        if len == self.buf.cap() {
+        if self.buf.len == self.buf.cap() {
             self.buf.grow_one();
         }
 
@@ -1251,7 +1251,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 // element.
                 ptr::write(p, element);
             }
-            self.set_len(len + 1);
+            self.buf.len += 1;
         }
     }
 
@@ -1563,7 +1563,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
-        if self.buf.len == usize_to_u32(self.buf.cap()) {
+        if self.buf.len == self.buf.cap() {
             self.buf.grow_one();
         }
         unsafe {
@@ -2821,7 +2821,7 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     unsafe fn move_tail(&mut self, extra_capacity: usize) {
         let vec = self.vec.as_mut();
         let used_capacity = self.tail_start + self.tail_len;
-        vec.buf.reserve(used_capacity, extra_capacity);
+        vec.buf.reserve(usize_to_u32(used_capacity), usize_to_u32(extra_capacity));
 
         let new_tail_start = self.tail_start + extra_capacity;
         let src = vec.as_ptr().add(self.tail_start);

@@ -77,8 +77,8 @@ pub const fn u32_to_usize(n: u32) -> usize {
 pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
     a: &'a Bump,
-    cap: u32,
     pub(super) len: u32,
+    cap: u32,
 }
 
 impl<'a, T> RawVec<'a, T> {
@@ -158,8 +158,8 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// This will always be `usize::MAX` if `T` is zero-sized.
     #[inline(always)]
-    pub fn cap(&self) -> usize {
-        if mem::size_of::<T>() == 0 { !0 } else { u32_to_usize(self.cap) }
+    pub fn cap(&self) -> u32 {
+        if mem::size_of::<T>() == 0 { !0 } else { self.cap }
     }
 
     /// Returns a shared reference to the allocator backing this RawVec.
@@ -332,8 +332,8 @@ impl<'a, T> RawVec<'a, T> {
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_exact(
         &mut self,
-        len: usize,
-        additional: usize,
+        len: u32,
+        additional: u32,
     ) -> Result<(), CollectionAllocErr> {
         if self.needs_to_grow(len, additional) {
             self.grow_exact(len, additional)?
@@ -362,14 +362,14 @@ impl<'a, T> RawVec<'a, T> {
     /// # Aborts
     ///
     /// Aborts on OOM
-    pub fn reserve_exact(&mut self, len: usize, additional: usize) {
+    pub fn reserve_exact(&mut self, len: u32, additional: u32) {
         if let Err(err) = self.try_reserve_exact(len, additional) {
             handle_error(err)
         }
     }
 
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
-    pub fn try_reserve(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
+    pub fn try_reserve(&mut self, len: u32, additional: u32) -> Result<(), CollectionAllocErr> {
         if self.needs_to_grow(len, additional) {
             self.grow_amortized(len, additional)?;
         }
@@ -430,13 +430,13 @@ impl<'a, T> RawVec<'a, T> {
     /// # }
     /// ```
     #[inline]
-    pub fn reserve(&mut self, len: usize, additional: usize) {
+    pub fn reserve(&mut self, len: u32, additional: u32) {
         // Callers expect this function to be very cheap when there is already sufficient capacity.
         // Therefore, we move all the resizing and error-handling logic from grow_amortized and
         // handle_reserve behind a call, while making sure that this function is likely to be
         // inlined as just a comparison and a call if the comparison fails.
         #[cold]
-        fn do_reserve_and_handle<T>(slf: &mut RawVec<T>, len: usize, additional: usize) {
+        fn do_reserve_and_handle<T>(slf: &mut RawVec<T>, len: u32, additional: u32) {
             if let Err(err) = slf.grow_amortized(len, additional) {
                 handle_error(err);
             }
@@ -454,7 +454,7 @@ impl<'a, T> RawVec<'a, T> {
     // mark as `#[inline]` because this function is common case in the oxc_parser.
     #[inline]
     pub fn grow_one(&mut self) {
-        if let Err(err) = self.grow_amortized(u32_to_usize(self.cap), 1) {
+        if let Err(err) = self.grow_amortized(self.cap, 1) {
             handle_error(err);
         }
     }
@@ -603,13 +603,13 @@ impl<'a, T> RawVec<'a, T> {
 
 impl<'a, T> RawVec<'a, T> {
     #[inline]
-    fn needs_to_grow(&self, len: usize, additional: usize) -> bool {
+    fn needs_to_grow(&self, len: u32, additional: u32) -> bool {
         additional > self.cap().wrapping_sub(len)
     }
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn grow_exact(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
+    fn grow_exact(&mut self, len: u32, additional: u32) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
@@ -617,11 +617,12 @@ impl<'a, T> RawVec<'a, T> {
             // panic.
 
             let new_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            let new_layout =
+                Layout::array::<T>(u32_to_usize(new_cap)).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = usize_to_u32(new_cap);
+            self.cap = new_cap;
 
             Ok(())
         }
@@ -629,7 +630,7 @@ impl<'a, T> RawVec<'a, T> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn grow_amortized(&mut self, len: usize, additional: usize) -> Result<(), CollectionAllocErr> {
+    fn grow_amortized(&mut self, len: u32, additional: u32) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
@@ -671,11 +672,11 @@ impl<'a, T> RawVec<'a, T> {
             // }
             // let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
 
-            let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(u32_to_usize(cap)).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            self.cap = usize_to_u32(cap);
+            self.cap = cap;
 
             Ok(())
         }
