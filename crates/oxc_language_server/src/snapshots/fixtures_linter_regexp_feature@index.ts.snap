@@ -4,7 +4,7 @@ input_file: crates/oxc_language_server/fixtures/linter/regexp_feature/index.ts
 ---
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
-message: "Unexpected control character\nhelp: '\\u0000' is not a valid control character."
+message: "Unexpected control character\nhelp: '\\u0000' is a control character."
 range: Range { start: Position { line: 1, character: 13 }, end: Position { line: 1, character: 32 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/regexp_feature/index.ts"
