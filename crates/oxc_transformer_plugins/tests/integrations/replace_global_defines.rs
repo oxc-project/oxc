@@ -190,7 +190,9 @@ fn this_expr() {
         // This code should be the same as above
         (() => { ok( this, this.foo, this.foo.bar, this.foo.baz, this.bar,) })();
     ",
-        "ok(1, 2, 3, 2 .baz, 1 .bar);",
+        "
+        // This code should be the same as above
+        ok(1, 2, 3, 2 .baz, 1 .bar);",
         config.clone(),
     );
 

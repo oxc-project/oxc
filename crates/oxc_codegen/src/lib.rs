@@ -15,10 +15,7 @@ mod str;
 
 use std::borrow::Cow;
 
-use oxc_ast::ast::{
-    Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
-    Statement,
-};
+use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SPAN, Span};
@@ -107,11 +104,6 @@ pub struct Codegen<'a> {
     /// Fast path for [CodegenOptions::single_quote]
     quote: Quote,
 
-    /// Fast path for if print comments
-    print_any_comment: bool,
-    print_legal_comment: bool,
-    print_annotation_comment: bool,
-
     // Builders
     comments: CommentsMap,
 
@@ -146,9 +138,6 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn new() -> Self {
         let options = CodegenOptions::default();
-        let print_any_comment = options.print_any_comment();
-        let print_legal_comment = options.print_legal_comment();
-        let print_annotation_comment = options.print_annotation_comment();
         Self {
             options,
             source_text: None,
@@ -167,9 +156,6 @@ impl<'a> Codegen<'a> {
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
-            print_any_comment,
-            print_legal_comment,
-            print_annotation_comment,
             comments: CommentsMap::default(),
             legal_comments: vec![],
             sourcemap_builder: None,
@@ -180,9 +166,6 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
-        self.print_any_comment = options.print_any_comment();
-        self.print_legal_comment = options.print_legal_comment();
-        self.print_annotation_comment = options.print_annotation_comment();
         self.options = options;
         self
     }
@@ -211,14 +194,7 @@ impl<'a> Codegen<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
         self.code.reserve(program.source_text.len());
-
-        if self.print_any_comment {
-            if program.comments.is_empty() {
-                self.print_any_comment = false;
-            } else {
-                self.build_comments(&program.comments);
-            }
-        }
+        self.build_comments(&program.comments);
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
@@ -469,6 +445,44 @@ impl<'a> Codegen<'a> {
         self.needs_semicolon = false;
     }
 
+    fn print_directives_and_statements(
+        &mut self,
+        directives: &[Directive<'_>],
+        stmts: &[Statement<'_>],
+        ctx: Context,
+    ) {
+        for directive in directives {
+            directive.print(self, ctx);
+        }
+        let Some((first, rest)) = stmts.split_first() else {
+            return;
+        };
+
+        // Ensure first string literal is not a directive.
+        let mut first_needs_parens = false;
+        if directives.is_empty() && !self.options.minify {
+            if let Statement::ExpressionStatement(s) = first {
+                let s = s.expression.without_parentheses();
+                if matches!(s, Expression::StringLiteral(_)) {
+                    first_needs_parens = true;
+                    self.print_ascii_byte(b'(');
+                    s.print_expr(self, Precedence::Lowest, ctx);
+                    self.print_ascii_byte(b')');
+                    self.print_semicolon_after_statement();
+                }
+            }
+        }
+
+        if !first_needs_parens {
+            first.print(self, ctx);
+        }
+
+        for stmt in rest {
+            self.print_semicolon_if_needed();
+            stmt.print(self, ctx);
+        }
+    }
+
     #[inline]
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         let Some((first, rest)) = items.split_first() else {
@@ -480,6 +494,44 @@ impl<'a> Codegen<'a> {
             self.print_soft_space();
             item.print(self, ctx);
         }
+    }
+
+    #[inline]
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
+        let Some((first, rest)) = items.split_first() else {
+            return;
+        };
+        first.print_expr(self, precedence, ctx);
+        for item in rest {
+            self.print_comma();
+            self.print_soft_space();
+            item.print_expr(self, precedence, ctx);
+        }
+    }
+
+    fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
+        self.print_ascii_byte(b'(');
+
+        let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
+
+        let has_comment = has_comment_before_right_paren
+            || arguments.iter().any(|item| self.has_comment(item.span().start));
+
+        if has_comment {
+            self.indent();
+            self.print_list_with_comments(arguments, ctx);
+            // Handle `/* comment */);`
+            if !has_comment_before_right_paren
+                || (span.end > 0 && !self.print_expr_comments(span.end - 1))
+            {
+                self.print_soft_newline();
+            }
+            self.dedent();
+            self.print_indent();
+        } else {
+            self.print_list(arguments, ctx);
+        }
+        self.print_ascii_byte(b')');
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
@@ -502,19 +554,6 @@ impl<'a> Codegen<'a> {
                 self.print_indent();
             }
             item.print(self, ctx);
-        }
-    }
-
-    #[inline]
-    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
-        let Some((first, rest)) = items.split_first() else {
-            return;
-        };
-        first.print_expr(self, precedence, ctx);
-        for item in rest {
-            self.print_comma();
-            self.print_soft_space();
-            item.print_expr(self, precedence, ctx);
         }
     }
 

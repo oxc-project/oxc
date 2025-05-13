@@ -457,3 +457,64 @@ delete /* @__PURE__ */ (() => {})();",
         snapshot("pure_comments", &cases);
     }
 }
+
+pub mod options {
+    use oxc_codegen::{CodegenOptions, LegalComment};
+
+    use crate::codegen_options;
+
+    #[test]
+    fn test() {
+        let code = "
+//! Top Legal Comment
+function foo() {
+    /** JSDoc Comment */
+    function bar() {
+        /* #__PURE__ */ x();
+    }
+    function baz() {
+        //! Function Legal Comment
+    }
+    x(/* Normal Comment */);
+    x(/** Call Expression Annotation Comment */ token);
+}";
+
+        for comments in [true, false] {
+            for annotation in [true, false] {
+                for legal in [LegalComment::Inline, LegalComment::Eof, LegalComment::None] {
+                    let options = CodegenOptions {
+                        comments,
+                        annotation_comments: annotation,
+                        legal_comments: legal.clone(),
+                        ..CodegenOptions::default()
+                    };
+                    let printed = codegen_options(code, &options).code;
+
+                    if comments {
+                        assert!(printed.contains("Normal Comment"));
+                    } else {
+                        assert!(!printed.contains("Normal Comment"));
+                    }
+
+                    if annotation {
+                        assert!(printed.contains("JSDoc Comment"));
+                        assert!(printed.contains("__PURE__"));
+                        assert!(printed.contains("Call Expression Annotation Comment"));
+                    } else {
+                        assert!(!printed.contains("JSDoc Comment"));
+                        assert!(!printed.contains("__PURE__"));
+                        assert!(!printed.contains("Call Expression Annotation Comment"));
+                    }
+
+                    if legal.is_none() {
+                        assert!(!printed.contains("Top Legal Comment"));
+                        assert!(!printed.contains("Function Legal Comment"));
+                    } else {
+                        assert!(printed.contains("Top Legal Comment"));
+                        assert!(printed.contains("Function Legal Comment"));
+                    }
+                }
+            }
+        }
+    }
+}

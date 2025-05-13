@@ -121,9 +121,5 @@ export import b = require("b");
     ];
 
     snapshot("ts", &cases);
-    snapshot_options(
-        "minify",
-        &cases,
-        &CodegenOptions { minify: true, ..CodegenOptions::default() },
-    );
+    snapshot_options("minify", &cases, &CodegenOptions::minify());
 }
