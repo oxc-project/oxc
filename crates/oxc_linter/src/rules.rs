@@ -8,26 +8,24 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod consistent_type_specifier_style;
-    pub mod exports_last;
-    pub mod group_exports;
-    pub mod no_absolute_path;
-    pub mod no_anonymous_default_export;
-    pub mod no_empty_named_blocks;
-    pub mod no_mutable_exports;
-    // pub mod no_deprecated;
-    // pub mod no_unused_modules;
     pub mod default;
     pub mod export;
+    pub mod exports_last;
     pub mod first;
+    pub mod group_exports;
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
+    pub mod no_absolute_path;
     pub mod no_amd;
+    pub mod no_anonymous_default_export;
     pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
     pub mod no_dynamic_require;
+    pub mod no_empty_named_blocks;
+    pub mod no_mutable_exports;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_named_default;
@@ -564,8 +562,6 @@ mod node {
 }
 
 oxc_macros::declare_all_lint_rules! {
-    // import::no_deprecated,
-    // import::no_unused_modules,
     eslint::array_callback_return,
     eslint::block_scoped_var,
     eslint::curly,
