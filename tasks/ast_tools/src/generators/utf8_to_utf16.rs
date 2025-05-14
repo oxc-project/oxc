@@ -42,6 +42,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 ///    have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
 /// 5. `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
 ///    Except for `BindingRestElement`, where `type_annotation`'s span is after `BindingPatternKind`.
+/// 6. `FormalParameters` where span can include a `TSThisParameter` which is visited before it.
 ///
 /// Define custom visitors for these types, which ensure `convert_offset` is always called with offsets
 /// in ascending order.
@@ -52,6 +53,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     // Types with custom visitors (see comment above).
     // Also skip `Comment` because we handle adjusting comment spans separately.
     let skip_type_ids = [
+        "FormalParameters",
         "ObjectProperty",
         "BindingProperty",
         "ExportNamedDeclaration",
@@ -99,6 +101,14 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         ///@@line_break
         impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
             #(#methods)*
+
+            ///@@line_break
+            fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
+                // Span of `FormalParameters` itself does not appear in ESTree AST,
+                // and its span includes `TSThisParameter` in types like `Function`,
+                // which is converted before `FormalParameters`. So skip converting span.
+                walk_mut::walk_formal_parameters(self, params);
+            }
 
             ///@@line_break
             fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {

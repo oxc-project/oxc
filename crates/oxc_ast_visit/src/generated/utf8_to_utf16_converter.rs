@@ -404,12 +404,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_formal_parameters(&mut self, it: &mut FormalParameters<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_formal_parameters(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
     fn visit_formal_parameter(&mut self, it: &mut FormalParameter<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_formal_parameter(self, it);
@@ -1065,6 +1059,10 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_js_doc_unknown_type(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
+        walk_mut::walk_formal_parameters(self, params);
     }
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
