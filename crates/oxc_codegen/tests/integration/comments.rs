@@ -1,3 +1,10 @@
+use crate::tester::test_same;
+
+#[test]
+fn unit() {
+    test_same("<div>{/* Hello */}</div>;\n");
+}
+
 pub mod jsdoc {
     use crate::snapshot;
 
