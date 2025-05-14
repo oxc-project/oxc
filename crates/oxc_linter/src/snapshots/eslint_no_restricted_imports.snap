@@ -808,6 +808,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: foo is forbidden, use bar instead
 
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import 'foo'; import {a} from 'b'
+   · ─────────────
+   ╰────
+  help: foo is forbidden, use bar instead
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';

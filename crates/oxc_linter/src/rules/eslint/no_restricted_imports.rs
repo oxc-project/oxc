@@ -993,7 +993,13 @@ impl NoRestrictedImports {
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
-                if request.is_import && module_record.import_entries.is_empty() {
+                if request.is_import
+                    && (module_record.import_entries.is_empty()
+                        || module_record
+                            .import_entries
+                            .iter()
+                            .all(|entry| entry.statement_span != request.statement_span))
+                {
                     side_effect_import_map.entry(source).or_default().push(request.statement_span);
                 }
             }
@@ -3026,6 +3032,12 @@ fn test() {
         //         }]
         //     }])),
         // ),
+        (
+            r"import 'foo'; import {a} from 'b'",
+            Some(
+                serde_json::json!([{ "paths": [{ "name": "foo", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
     ];
 
     let fail_typescript = vec![
