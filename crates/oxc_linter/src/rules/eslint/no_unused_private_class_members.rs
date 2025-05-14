@@ -295,6 +295,15 @@ fn test() {
                 this.#x = 1;
             }
         }",
+        r"export class Issue_11039 {
+            load;
+            constructor(callback) {
+                this.load = () => this.#load(callback);
+            }
+            async #load(callback) {
+                callback;
+            }
+        }",
     ];
 
     let fail = vec![
