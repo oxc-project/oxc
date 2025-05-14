@@ -397,7 +397,7 @@ fn generate_proc_macro() -> RawOutput {
         }
     };
 
-    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "mod.rs"), tokens: output }
+    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "derived_traits.rs"), tokens: output }
         .into_raw(file!())
 }
 

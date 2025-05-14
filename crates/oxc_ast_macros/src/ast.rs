@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, Fields, Ident, Item, ItemEnum, punctuated::Punctuated, token::Comma};
 
-use crate::generated::get_trait_crate_and_generics;
+use crate::generated::derived_traits::get_trait_crate_and_generics;
 
 pub fn ast(input: &Item) -> TokenStream {
     let (head, tail) = match input {
