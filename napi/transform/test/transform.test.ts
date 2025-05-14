@@ -112,6 +112,30 @@ describe('target', () => {
   });
 });
 
+describe('modules', () => {
+  const code = "import * as foo from 'mod';";
+
+  it('should configure esm', () => {
+    const ret = transform('test.js', code, { modules: 'esm' });
+    expect(ret.errors.length).toBe(0);
+    expect(ret.code).toBeDefined();
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import * as foo from "mod";
+      "
+    `);
+  });
+
+  it('should configure cjs', () => {
+    const ret = transform('test.js', code, { modules: 'cjs' });
+    expect(ret.errors.length).toBe(0);
+    expect(ret.code).toBeDefined();
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import * as foo from "mod";
+      "
+    `);
+  });
+})
+
 describe('helpers', () => {
   const data: Array<[HelperMode, string]> = [
     [HelperMode.External, 'babelHelpers.objectSpread2({}, x);\n'],

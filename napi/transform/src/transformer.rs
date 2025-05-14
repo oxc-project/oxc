@@ -130,9 +130,13 @@ pub struct TransformOptions {
     /// @see [esbuild#target](https://esbuild.github.io/api/#target)
     pub target: Option<Either<String, Vec<String>>>,
 
-    /// Transform target module.
-    #[napi(ts_type = "'esm' | 'cjs' | undefined")]
-    pub target_module: Option<String>,
+    /// Enable transformation of ES module syntax to another module type.
+    ///
+    /// Setting this to `false` will preserve ES modules.
+    ///
+    /// @default: `false`
+    #[napi(ts_type = "false | 'esm' | 'cjs'")]
+    pub modules: Option<Either<bool, String>>,
 
     /// Behaviour for runtime helpers.
     pub helpers: Option<Helpers>,
@@ -158,10 +162,14 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             Some(Either::B(list)) => EnvOptions::from_target_list(&list)?,
             _ => EnvOptions::default(),
         };
-        let module = match options.target_module.as_deref() {
-            Some("esm") => Module::ESM,
-            Some("cjs") => Module::CommonJS,
-            _ => Module::Preserve,
+        let module = match options.modules {
+            Some(Either::B(s)) => match s.as_str() {
+                "esm" => Module::ESM,
+                "cjs" => Module::CommonJS,
+                _ => return Err(format!("invalid `modules` option: `{s}`)")),
+            },
+            None | Some(Either::A(false)) => Module::Preserve,
+            Some(Either::A(true)) => return Err("invalid `modules` option: `true`".into()),
         };
         let env = EnvOptions { module, ..env };
         Ok(Self {

@@ -6,6 +6,12 @@ settings:
 
 catalogs:
   default:
+    '@napi-rs/cli':
+      specifier: 3.0.0-alpha.78
+      version: 3.0.0-alpha.78
+    typescript:
+      specifier: 5.8.3
+      version: 5.8.3
     vitest:
       specifier: 3.1.2
       version: 3.1.2
@@ -106,6 +112,9 @@ importers:
 
   napi/transform:
     devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
       vitest:
         specifier: 'catalog:'
         version: 3.1.2(@types/node@22.15.3)(@vitest/browser@3.1.2)
@@ -4450,10 +4459,6 @@ snapshots:
 
   css-what@6.1.0: {}
 
-  debug@4.4.0:
-    dependencies:
-      ms: 2.1.3
-
   debug@4.4.0(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
@@ -5589,7 +5594,7 @@ snapshots:
   vite-node@3.1.2(@types/node@22.15.3):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.0
+      debug: 4.4.0(supports-color@8.1.1)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
       vite: 6.3.4(@types/node@22.15.3)
@@ -5629,7 +5634,7 @@ snapshots:
       '@vitest/spy': 3.1.2
       '@vitest/utils': 3.1.2
       chai: 5.2.0
-      debug: 4.4.0
+      debug: 4.4.0(supports-color@8.1.1)
       expect-type: 1.2.1
       magic-string: 0.30.17
       pathe: 2.0.3
