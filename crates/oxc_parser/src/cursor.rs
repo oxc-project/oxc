@@ -239,6 +239,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
             self.token = self.lexer.next_right_angle();
@@ -249,6 +252,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_l_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq | Kind::LtEq) {
             self.token = self.lexer.re_lex_as_typescript_l_angle(kind);
@@ -259,6 +265,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_ts_r_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
             self.token = self.lexer.re_lex_as_typescript_r_angle(kind);

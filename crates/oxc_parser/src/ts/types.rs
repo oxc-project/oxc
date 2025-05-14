@@ -787,7 +787,6 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        self.re_lex_l_angle();
         if !self.cur_token().is_on_new_line() && self.re_lex_l_angle() == Kind::LAngle {
             let span = self.start_span();
             self.expect(Kind::LAngle);
