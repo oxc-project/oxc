@@ -37,6 +37,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// 1. Types where a shorthand syntax means 2 nodes have same span e.g. `const {x} = y;`, `export {x}`.
 /// 2. `WithClause`, where `IdentifierName` for `with` keyword has span outside of the `WithClause`.
 /// 3. `TemplateLiteral`s, where `quasis` and `expressions` are interleaved.
+///    Ditto `TSTemplateLiteralType`s where `quasis` and `types` are interleaved.
 /// 4. Decorators before `export` in `@dec export class C {}` / `@dec export default class {}`
 ///    have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
 /// 5. `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
@@ -59,6 +60,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportSpecifier",
         "WithClause",
         "TemplateLiteral",
+        "TSTemplateLiteralType",
         "BindingRestElement",
         "Comment",
     ]
@@ -295,6 +297,20 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
                     self.visit_template_element(quasi);
                     self.visit_expression(expression);
+                }
+                self.visit_template_element(lit.quasis.last_mut().unwrap());
+
+                self.convert_offset(&mut lit.span.end);
+            }
+
+            ///@@line_break
+            fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
+                self.convert_offset(&mut lit.span.start);
+
+                // Visit `quasis` and `types` in source order. The two `Vec`s are interleaved.
+                for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
+                    self.visit_template_element(quasi);
+                    self.visit_ts_type(ts_type);
                 }
                 self.visit_template_element(lit.quasis.last_mut().unwrap());
 

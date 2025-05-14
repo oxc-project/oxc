@@ -989,12 +989,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_ts_template_literal_type(&mut self, it: &mut TSTemplateLiteralType<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_ts_template_literal_type(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
     fn visit_ts_as_expression(&mut self, it: &mut TSAsExpression<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_as_expression(self, it);
@@ -1230,6 +1224,16 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
             self.visit_template_element(quasi);
             self.visit_expression(expression);
+        }
+        self.visit_template_element(lit.quasis.last_mut().unwrap());
+        self.convert_offset(&mut lit.span.end);
+    }
+
+    fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
+        self.convert_offset(&mut lit.span.start);
+        for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
+            self.visit_template_element(quasi);
+            self.visit_ts_type(ts_type);
         }
         self.visit_template_element(lit.quasis.last_mut().unwrap());
         self.convert_offset(&mut lit.span.end);
