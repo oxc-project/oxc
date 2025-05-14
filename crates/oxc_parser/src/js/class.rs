@@ -209,7 +209,7 @@ impl<'a> ParserImpl<'a> {
         let mut r#static = modifiers.contains(ModifierKind::Static);
         let mut r#async = modifiers.contains(ModifierKind::Async);
 
-        if self.at(Kind::Static) {
+        if !r#static && self.at(Kind::Static) {
             // static { block }
             if self.peek_at(Kind::LCurly) {
                 self.bump(Kind::Static);

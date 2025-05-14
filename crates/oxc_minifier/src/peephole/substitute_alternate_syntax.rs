@@ -1800,7 +1800,9 @@ mod test {
             "class C { static accessor ['__proto__'] = 0 }",
             "class C { static accessor __proto__ = 0 }",
         );
-        test("class C { static static ['__proto__']() {} }", "class C { static __proto__() {} }");
+
+        // wrong test case
+        // test("class C { static static ['__proto__']() {} }", "class C { static __proto__() {} }");
 
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>

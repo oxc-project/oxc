@@ -462,7 +462,7 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::Default => self.next_token_can_follow_default_keyword(),
-            Kind::Get | Kind::Set => {
+            Kind::Static | Kind::Get | Kind::Set => {
                 self.bump_any();
                 self.can_follow_modifier()
             }

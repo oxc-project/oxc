@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2309/2322 (99.44%)
 Positive Passed: 2288/2322 (98.54%)
-Negative Passed: 1560/1673 (93.25%)
+Negative Passed: 1562/1673 (93.37%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -39,8 +39,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
 
@@ -171,8 +169,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/invalid-static-block-with-modifier-abstract/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
 
@@ -11394,6 +11390,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js:1:23]
+ 1 │ class A {static static static(){}}
+   ·                       ▲
+   ╰────
+  help: Try insert a semicolon here
+
   × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0277/input.js:1:12]
  1 │ class A {a(enum){}}
@@ -12943,6 +12946,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                   ─
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts:2:16]
+ 1 │ class Foo {
+ 2 │   static static {}
+   ·                ▲
+ 3 │ }
+   ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-02/input.ts:2:18]
