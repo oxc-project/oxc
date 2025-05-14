@@ -1,5 +1,7 @@
 //! Token
 
+use std::mem;
+
 use oxc_span::Span;
 
 use super::kind::Kind;
@@ -55,9 +57,10 @@ impl Token {
 
     #[inline]
     pub fn kind(&self) -> Kind {
-        // SAFETY: This conversion is safe because `Kind` is `#[repr(u8)]`,
-        // and we ensure the value stored is a valid `Kind` variant
-        unsafe { std::mem::transmute(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
+        // SAFETY: `Kind` is `#[repr(u8)]`. Only `Token::set_kind` alters these bits,
+        // and it sets them to the `u8` value of an existing `Kind`.
+        // So transmuting these bits back to `Kind` must produce a valid `Kind`.
+        unsafe { mem::transmute::<u8, Kind>(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
 
     #[inline]
