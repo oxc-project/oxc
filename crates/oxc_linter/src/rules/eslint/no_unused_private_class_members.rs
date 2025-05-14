@@ -295,15 +295,19 @@ fn test() {
                 this.#x = 1;
             }
         }",
-        r"export class Issue_11039 {
-            load;
-            constructor(callback) {
+        r"type Callback<T> = () => Promise<T> | T;
+
+         export class Issue_11039<T> {
+            load: () => Promise<T>;
+
+            constructor(callback: Callback<T>) {
                 this.load = () => this.#load(callback);
             }
-            async #load(callback) {
+
+            async #load(callback: Callback<T>) {
                 callback;
             }
-        }",
+         }",
     ];
 
     let fail = vec![
