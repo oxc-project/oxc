@@ -1002,7 +1002,11 @@ impl NoRestrictedImports {
         for path in &self.paths {
             for (source, spans) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() && path.import_names.is_none() {
-                    if let Some(span) = spans.iter().next() {
+                    debug_assert!(
+                        !spans.is_empty(),
+                        "all import entries must have at least one import entry"
+                    );
+                    if let Some(span) = spans.first() {
                         ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
                     }
                 }
