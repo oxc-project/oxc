@@ -15414,41 +15414,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Did you mean to write 'undefined | null | undefined'?
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:4]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
  1 │ ~< <
-   ·    ─
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:9]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:4]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]
  1 │ !< {:>
-   ·    ─
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
-   ·                     ───
+   ·             ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <> x;
-   ·               ───
+   ·             ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:14]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <1234> x;
-   ·              ────
+   ·             ─
    ╰────
 
   × Unexpected token

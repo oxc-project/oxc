@@ -779,6 +779,12 @@ mod test {
     }
 
     #[test]
+    fn js_and_jsx() {
+        let args = &["fixtures/linter/js_as_jsx.js"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn lint_vue_file() {
         let args = &["fixtures/vue/debugger.vue"];
         Tester::new().test_and_snapshot(args);

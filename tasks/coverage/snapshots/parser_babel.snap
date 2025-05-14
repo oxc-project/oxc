@@ -1,9 +1,9 @@
 commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2309/2322 (99.44%)
-Positive Passed: 2288/2322 (98.54%)
-Negative Passed: 1561/1673 (93.31%)
+AST Parsed     : 2311/2322 (99.53%)
+Positive Passed: 2290/2322 (98.62%)
+Negative Passed: 1565/1673 (93.54%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -47,14 +47,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-interface/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-type/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
 
@@ -351,22 +343,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  1 │ await 0
    · ─────
  2 │ 
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
-
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:1:10]
- 1 │ <div>() => {}
-   ·          ▲
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
-
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:1:10]
- 1 │ <div>() => {}
-   ·          ▲
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
@@ -3878,9 +3854,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/invalid-xml-comment-in-module/input.js:1:2]
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/invalid-xml-comment-in-module/input.js:1:1]
  1 │ <!--bar-->
-   ·  ─
+   · ─
    ╰────
 
   × Expected `,` but found `Identifier`
@@ -11518,10 +11494,37 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ─
    ╰────
 
-  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:10]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js:3:5]
+ 2 │   return (
+ 3 │     <>Hello</>
+   ·     ─
+ 4 │   );
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js:1:1]
+ 1 │ <div>{name}</div>
+   · ─
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:1]
  1 │ <div>() => {}
-   ·          ▲
+   · ─
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js:1:1]
+ 1 │ <div></div>
+   · ─
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js:1:1]
+ 1 │ <
+   · ─
+ 2 │   𠮷
    ╰────
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
