@@ -4,8 +4,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStream) {
-    match trait_name {
+pub fn get_trait_crate_and_generics(trait_name: &str) -> Option<(TokenStream, TokenStream)> {
+    let res = match trait_name {
         "CloneIn" => (quote!(::oxc_allocator::CloneIn), quote!(< 'static >)),
         "Dummy" => (quote!(::oxc_allocator::Dummy), quote!(< 'static >)),
         "TakeIn" => (quote!(::oxc_allocator::TakeIn), quote!(< 'static >)),
@@ -14,6 +14,7 @@ pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStre
         "GetSpanMut" => (quote!(::oxc_span::GetSpanMut), TokenStream::new()),
         "ContentEq" => (quote!(::oxc_span::ContentEq), TokenStream::new()),
         "ESTree" => (quote!(::oxc_estree::ESTree), TokenStream::new()),
-        _ => panic!("Invalid derive trait(generate_derive): {trait_name}"),
-    }
+        _ => return None,
+    };
+    Some(res)
 }

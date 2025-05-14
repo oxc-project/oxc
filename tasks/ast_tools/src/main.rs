@@ -389,11 +389,12 @@ fn generate_proc_macro() -> RawOutput {
         use quote::quote;
 
         ///@@line_break
-        pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStream) {
-            match trait_name {
+        pub fn get_trait_crate_and_generics(trait_name: &str) -> Option<(TokenStream, TokenStream)> {
+            let res = match trait_name {
                 #(#match_arms,)*
-                _ => panic!("Invalid derive trait(generate_derive): {trait_name}"),
-            }
+                _ => return None,
+            };
+            Some(res)
         }
     };
 
