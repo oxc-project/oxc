@@ -2178,6 +2178,7 @@ dependencies = [
  "indexmap",
  "insta",
  "itoa",
+ "memchr",
  "oxc-browserslist",
  "oxc_allocator",
  "oxc_ast",

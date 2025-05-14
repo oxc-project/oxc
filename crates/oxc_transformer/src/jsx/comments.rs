@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use memchr::memchr;
+
 use oxc_ast::Comment;
 
 use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
@@ -96,20 +98,26 @@ enum PragmaType {
 fn find_jsx_pragma(mut comment_str: &str) -> Option<(PragmaType, &str, &str)> {
     let pragma_type;
     loop {
-        // Search for `@jsx`.
-        let mut at_sign_index = None;
-        for (index, next4) in comment_str.as_bytes().windows(4).enumerate() {
-            if next4 == b"@jsx" {
-                at_sign_index = Some(index);
-                break;
-            }
-        }
-        // Exit if not found
-        let at_sign_index = at_sign_index?;
+        // Search for `@`.
+        // Note: Using `memchr::memmem::Finder` to search for `@jsx` is slower than only using `memchr`
+        // to find `@` characters, and then checking if `@` is followed by `jsx` separately.
+        let at_sign_index = memchr(b'@', comment_str.as_bytes())?;
 
-        // Trim `@jsx` from start of `comment_str`.
+        // Check `@` is start of `@jsx`.
+        // Note: Checking 4 bytes including leading `@` is faster than checking the 3 bytes after `@`,
+        // because 4 bytes is a `u32`.
+        let next4 = comment_str.as_bytes().get(at_sign_index..at_sign_index + 4)?;
+        if next4 != b"@jsx" {
+            // Not `@jsx`. Trim off up to and including `@` and search again.
+            // SAFETY: Byte at `at_sign_index` is `@`, so `at_sign_index + 1` is either within string
+            // or end of string, and on a UTF-8 char boundary.
+            comment_str = unsafe { comment_str.get_unchecked(at_sign_index + 1..) };
+            continue;
+        }
+
+        // Trim `@jsx` and everything before it from start of `comment_str`.
         // SAFETY: 4 bytes starting at `at_sign_index` are `@jsx`, so `at_sign_index + 4` is within string
-        // or end of string, and must be on a UTF-8 character boundary
+        // or end of string, and must be on a UTF-8 character boundary.
         comment_str = unsafe { comment_str.get_unchecked(at_sign_index + 4..) };
 
         // Get rest of keyword e.g. `Runtime` in `@jsxRuntime`
@@ -230,6 +238,8 @@ mod tests {
             ("@jsxX @jsx h @jsxX", &[(PragmaType::Jsx, "h")]),
             ("@jsxMoon @jsx h @jsxMoon", &[(PragmaType::Jsx, "h")]),
             ("@jsx @jsx h", &[(PragmaType::Jsx, "@jsx")]),
+            // Multiple `@` signs
+            ("@@@@@jsx h", &[(PragmaType::Jsx, "h")]),
         ];
 
         let prefixes = ["", "    ", "\n\n", "*\n* "];
