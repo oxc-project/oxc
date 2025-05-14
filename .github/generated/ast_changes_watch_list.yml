@@ -26,7 +26,7 @@ src:
   - 'crates/oxc_ast/src/serialize/literal.rs'
   - 'crates/oxc_ast/src/serialize/mod.rs'
   - 'crates/oxc_ast/src/serialize/ts.rs'
-  - 'crates/oxc_ast_macros/src/generated/mod.rs'
+  - 'crates/oxc_ast_macros/src/generated/derived_traits.rs'
   - 'crates/oxc_ast_macros/src/lib.rs'
   - 'crates/oxc_ast_visit/src/generated/utf8_to_utf16_converter.rs'
   - 'crates/oxc_ast_visit/src/generated/visit.rs'

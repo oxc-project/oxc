@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, Fields, Ident, Item, ItemEnum, punctuated::Punctuated, token::Comma};
 
-use crate::generated::get_trait_crate_and_generics;
+use crate::generated::derived_traits::get_trait_crate_and_generics;
 
 pub fn ast(input: &Item) -> TokenStream {
     let (head, tail) = match input {
@@ -44,17 +44,20 @@ fn enum_repr(enum_: &ItemEnum) -> TokenStream {
 /// If `GetSpan` is not in scope, or it is not the correct `oxc_span::GetSpan`,
 /// this will raise a compilation error.
 fn assert_generated_derives(attrs: &[Attribute]) -> TokenStream {
-    // NOTE: At this level we don't care if a trait is derived multiple times, It is the
-    // responsibility of the `ast_tools` to raise errors for those.
+    // We don't care here if a trait is derived multiple times.
+    // It is the responsibility of `oxc_ast_tools` to raise errors for those.
     let assertions = attrs
         .iter()
         .filter(|attr| attr.path().is_ident("generate_derive"))
         .flat_map(parse_attr)
         .map(|trait_ident| {
             let trait_name = trait_ident.to_string();
-            let (trait_path, generics) = get_trait_crate_and_generics(&trait_name);
+            let Some((trait_path, generics)) = get_trait_crate_and_generics(&trait_name) else {
+                panic!("Invalid derive trait(generate_derive): {trait_name}");
+            };
+
+            // These are wrapped in a scope to avoid the need for unique identifiers
             quote! {{
-                // NOTE: these are wrapped in a scope to avoid the need for unique identifiers.
                 trait AssertionTrait: #trait_path #generics {}
                 impl<T: #trait_ident #generics> AssertionTrait for T {}
             }}
