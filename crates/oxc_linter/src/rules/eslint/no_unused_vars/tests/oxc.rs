@@ -1253,6 +1253,33 @@ fn test_loops() {
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
 }
 
+#[test]
+fn test_report_vars_only_used_as_types() {
+    let pass = vec![
+        ("const foo = 123; export type Foo = typeof foo;", None),
+        (
+            "const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": false, "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "export const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
+        ),
+        ("function foo(): typeof foo {}", None),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];

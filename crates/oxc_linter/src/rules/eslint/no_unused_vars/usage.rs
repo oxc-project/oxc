@@ -137,8 +137,22 @@ impl<'a> Symbol<'_, 'a> {
                     continue;
                 }
 
-                if !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
+                // ```ts
+                // const foo = 123;
+                // export type Foo = typeof foo
+                // ```
+                if options.report_vars_only_used_as_types
+                    && !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
                     && self.reference_contains_type_query(reference)
+                {
+                    continue;
+                }
+                // ```
+                // function foo(): foo { }
+                // ```
+                if self
+                    .get_ref_relevant_node(reference)
+                    .is_some_and(|node| self.declaration().span().contains_inclusive(node.span()))
                 {
                     continue;
                 }
