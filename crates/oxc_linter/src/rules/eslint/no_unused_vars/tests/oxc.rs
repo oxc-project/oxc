@@ -171,6 +171,10 @@ fn test_vars_self_use() {
         }
         foo();
         ",
+        "
+        let cancel = () => {}
+        export function close() { cancel = cancel?.() }
+        ",
     ];
     let fail = vec![
         "
@@ -182,6 +186,14 @@ fn test_vars_self_use() {
         const foo = () => {
             return foo
         }
+        ",
+        "
+        let cancel = () => {};
+        cancel = cancel?.();
+        ",
+        "
+        let cancel = () => {};
+        { cancel = cancel?.(); }
         ",
     ];
 

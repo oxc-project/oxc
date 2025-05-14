@@ -281,7 +281,6 @@ impl NoUnusedVars {
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
                     Some(last_write) => {
-                        // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
                     }
