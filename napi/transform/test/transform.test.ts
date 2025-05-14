@@ -134,7 +134,7 @@ describe('modules', () => {
       "
     `);
   });
-})
+});
 
 describe('helpers', () => {
   const data: Array<[HelperMode, string]> = [
