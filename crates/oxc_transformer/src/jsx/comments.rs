@@ -248,14 +248,6 @@ mod tests {
                     assert_eq!(&pragmas, expected);
                 }
             }
-
-            let mut comment_str = *comment_str;
-            let mut pragmas = vec![];
-            while let Some((pragma_type, value, remaining)) = find_jsx_pragma(comment_str) {
-                pragmas.push((pragma_type, value));
-                comment_str = remaining;
-            }
-            assert_eq!(&pragmas, expected);
         }
     }
 }
