@@ -6,7 +6,7 @@ use oxc_span::Span;
 
 use super::kind::Kind;
 
-// Bit layout for u128:
+// Bit layout for `u128`:
 // - Bits 0-31 (32 bits): `start`
 // - Bits 32-63 (32 bits): `end`
 // - Bits 64-71 (8 bits): `kind` (as u8)
@@ -24,8 +24,8 @@ const LONE_SURROGATES_SHIFT: u32 = 74;
 const HAS_SEPARATOR_SHIFT: u32 = 75;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
-const KIND_MASK: u128 = 0xFF; // 8 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
+const KIND_MASK: u128 = 0xFF; // 8 bits
 
 const IS_ON_NEW_LINE_FLAG: u128 = 1 << IS_ON_NEW_LINE_SHIFT;
 const ESCAPED_FLAG: u128 = 1 << ESCAPED_SHIFT;
@@ -60,6 +60,38 @@ impl Token {
         token.0 |= IS_ON_NEW_LINE_FLAG;
         token
     }
+}
+
+// Getters and setters
+impl Token {
+    #[inline]
+    pub fn span(&self) -> Span {
+        Span::new(self.start(), self.end())
+    }
+
+    #[inline]
+    pub fn start(&self) -> u32 {
+        ((self.0 >> START_SHIFT) & START_MASK) as u32
+    }
+
+    #[inline]
+    pub(crate) fn set_start(&mut self, start: u32) {
+        self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
+        self.0 |= u128::from(start) << START_SHIFT;
+    }
+
+    #[inline]
+    pub fn end(&self) -> u32 {
+        ((self.0 >> END_SHIFT) & END_MASK) as u32
+    }
+
+    #[inline]
+    pub(crate) fn set_end(&mut self, end: u32) {
+        let start = self.start();
+        debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
+        self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
+        self.0 |= u128::from(end) << END_SHIFT;
+    }
 
     #[inline]
     pub fn kind(&self) -> Kind {
@@ -70,13 +102,9 @@ impl Token {
     }
 
     #[inline]
-    pub fn start(&self) -> u32 {
-        ((self.0 >> START_SHIFT) & START_MASK) as u32
-    }
-
-    #[inline]
-    pub fn end(&self) -> u32 {
-        ((self.0 >> END_SHIFT) & END_MASK) as u32
+    pub(crate) fn set_kind(&mut self, kind: Kind) {
+        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
+        self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
 
     #[inline]
@@ -85,8 +113,18 @@ impl Token {
     }
 
     #[inline]
+    pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
+        self.0 = (self.0 & !IS_ON_NEW_LINE_FLAG) | (u128::from(value) * IS_ON_NEW_LINE_FLAG);
+    }
+
+    #[inline]
     pub fn escaped(&self) -> bool {
         (self.0 & ESCAPED_FLAG) != 0
+    }
+
+    #[inline]
+    pub(crate) fn set_escaped(&mut self, escaped: bool) {
+        self.0 = (self.0 & !ESCAPED_FLAG) | (u128::from(escaped) * ESCAPED_FLAG);
     }
 
     #[inline]
@@ -95,8 +133,8 @@ impl Token {
     }
 
     #[inline]
-    pub fn span(&self) -> Span {
-        Span::new(self.start(), self.end())
+    pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
+        self.0 = (self.0 & !LONE_SURROGATES_FLAG) | (u128::from(value) * LONE_SURROGATES_FLAG);
     }
 
     #[inline]
@@ -107,41 +145,6 @@ impl Token {
     #[inline]
     pub(crate) fn set_has_separator(&mut self) {
         self.0 |= HAS_SEPARATOR_FLAG;
-    }
-
-    #[inline]
-    pub(crate) fn set_kind(&mut self, kind: Kind) {
-        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
-        self.0 |= u128::from(kind as u8) << KIND_SHIFT;
-    }
-
-    #[inline]
-    pub(crate) fn set_start(&mut self, start: u32) {
-        self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
-        self.0 |= u128::from(start) << START_SHIFT;
-    }
-
-    #[inline]
-    pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
-        self.0 = (self.0 & !IS_ON_NEW_LINE_FLAG) | (u128::from(value) * IS_ON_NEW_LINE_FLAG);
-    }
-
-    #[inline]
-    pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.0 = (self.0 & !ESCAPED_FLAG) | (u128::from(escaped) * ESCAPED_FLAG);
-    }
-
-    #[inline]
-    pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
-        self.0 = (self.0 & !LONE_SURROGATES_FLAG) | (u128::from(value) * LONE_SURROGATES_FLAG);
-    }
-
-    #[inline]
-    pub(crate) fn set_end(&mut self, end: u32) {
-        let start = self.start();
-        debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
-        self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
-        self.0 |= u128::from(end) << END_SHIFT;
     }
 }
 
