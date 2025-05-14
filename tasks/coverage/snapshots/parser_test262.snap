@@ -10324,41 +10324,41 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-3.js:18:8]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-3.js:18:9]
  17 │   x = "string"
  18 │   [0]() {}
-    ·        ▲
+    ·         ┬
+    ·         ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-4.js:18:9]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-4.js:18:10]
  17 │   x = 42
  18 │   *gen() {}
-    ·         ▲
+    ·          ┬
+    ·          ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-1.js:17:8]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-1.js:17:27]
  16 │ var C = class {
  17 │   field /* no ASI here */ method(){}
-    ·        ▲
+    ·                           ───┬──
+    ·                              ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-2.js:17:12]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-2.js:17:31]
  16 │ var C = class {
  17 │   field = 1 /* no ASI here */ method(){}
-    ·            ▲
+    ·                               ───┬──
+    ·                                  ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/elements/fields-duplicate-privatenames.js:23:3]
@@ -10372,11 +10372,12 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ }
     ╰────
 
-  × Classes can't have a field named 'constructor'
-    ╭─[test262/test/language/expressions/class/elements/fields-literal-name-propname-constructor.js:29:3]
+  × Expected `(` but found `;`
+    ╭─[test262/test/language/expressions/class/elements/fields-literal-name-propname-constructor.js:29:14]
  28 │ var C = class {
  29 │   constructor;
-    ·   ───────────
+    ·              ┬
+    ·              ╰── `(` expected
  30 │ };
     ╰────
 
@@ -10680,23 +10681,23 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:33:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:33:16]
  32 │ var C = class {
  33 │   x = () => {} == arguments;
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-super.js:26:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-super.js:26:16]
  25 │ var C = class {
  26 │   x = () => {} == super();
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  27 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/expressions/class/elements/nested-literal-name-init-err-contains-arguments.js:33:13]
@@ -12396,14 +12397,14 @@ Negative Passed: 4519/4519 (100.00%)
  71 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:4]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:5]
  32 │ var C = class {
  33 │   x y
-    ·    ▲
+    ·     ┬
+    ·     ╰── `;` expected
  34 │ };
     ╰────
-  help: Try insert a semicolon here
 
   × Expected `{` but found `=>`
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:37:27]
@@ -12843,14 +12844,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
+  × Expected `;` but found `#identifier`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:6]
  35 │ var C = class {
  36 │   #x #y
-    ·     ▲
+    ·      ─┬
+    ·       ╰── `;` expected
  37 │ };
     ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
@@ -26977,12 +26978,12 @@ Negative Passed: 4519/4519 (100.00%)
  17 │ }
     ╰────
 
-  × Expected `(` but found `Identifier`
+  × Expected `;` but found `Identifier`
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-formals-body-duplicate.js:18:18]
  17 │ class Foo {
  18 │   async function foo(bar) { let bar; }
     ·                  ─┬─
-    ·                   ╰── `(` expected
+    ·                   ╰── `;` expected
  19 │ }
     ╰────
 
@@ -28727,41 +28728,41 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-3.js:18:8]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-3.js:18:9]
  17 │   x = "string"
  18 │   [0]() {}
-    ·        ▲
+    ·         ┬
+    ·         ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-4.js:18:9]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-4.js:18:10]
  17 │   x = 42
  18 │   *gen() {}
-    ·         ▲
+    ·          ┬
+    ·          ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-1.js:17:8]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-1.js:17:27]
  16 │ class C {
  17 │   field /* no ASI here */ method(){}
-    ·        ▲
+    ·                           ───┬──
+    ·                              ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-2.js:17:12]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-2.js:17:31]
  16 │ class C {
  17 │   field = 1 /* no ASI here */ method(){}
-    ·            ▲
+    ·                               ───┬──
+    ·                                  ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/elements/fields-duplicate-privatenames.js:23:3]
@@ -28775,11 +28776,12 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ }
     ╰────
 
-  × Classes can't have a field named 'constructor'
-    ╭─[test262/test/language/statements/class/elements/fields-literal-name-propname-constructor.js:29:3]
+  × Expected `(` but found `;`
+    ╭─[test262/test/language/statements/class/elements/fields-literal-name-propname-constructor.js:29:14]
  28 │ class C {
  29 │   constructor;
-    ·   ───────────
+    ·              ┬
+    ·              ╰── `(` expected
  30 │ }
     ╰────
 
@@ -29083,23 +29085,23 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-arguments.js:33:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-arguments.js:33:16]
  32 │ class C {
  33 │   x = () => {} == arguments;
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-super.js:26:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-super.js:26:16]
  25 │ class C {
  26 │   x = () => {} == super();
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  27 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/statements/class/elements/nested-literal-name-init-err-contains-arguments.js:33:13]
@@ -30860,14 +30862,14 @@ Negative Passed: 4519/4519 (100.00%)
  71 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:4]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:5]
  32 │ class C {
  33 │   x y
-    ·    ▲
+    ·     ┬
+    ·     ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Expected `{` but found `=>`
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:37:21]
@@ -31307,14 +31309,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
+  × Expected `;` but found `#identifier`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:6]
  35 │ class C {
  36 │   #x #y
-    ·     ▲
+    ·      ─┬
+    ·       ╰── `;` expected
  37 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]

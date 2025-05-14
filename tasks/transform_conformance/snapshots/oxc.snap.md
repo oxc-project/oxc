@@ -637,15 +637,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor3/input.ts:6:12]
  5 | class C {
  6 |     public @dec get accessor() { return 1; }
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/accessor/decoratorOnClassAccessor4/input.ts
@@ -678,15 +677,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor6/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor6/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor6/input.ts:6:12]
  5 | class C {
  6 |     public @dec set accessor(value: number) { }
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/accessor/decoratorOnClassAccessor7/input.ts
@@ -1054,15 +1052,14 @@ rebuilt        : ["Function", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod17/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod17/input.ts:7:17]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod17/input.ts:7:18]
  6 | class Foo {
  7 |     private prop @decorator
-   :                 ^
+   :                  |
+   :                  `-- `;` expected
  8 |     foo() {
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/method/decoratorOnClassMethod18/input.ts
@@ -1095,15 +1092,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod3/input.ts:6:12]
  5 | class C {
  6 |     public @dec method() {}
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/method/decoratorOnClassMethod4/input.ts
@@ -1349,15 +1345,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/property/decoratorOnClassProperty3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/property/decoratorOnClassProperty3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/property/decoratorOnClassProperty3/input.ts:6:12]
  5 | class C {
  6 |     public @dec prop;
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/property/decoratorOnClassProperty6/input.ts

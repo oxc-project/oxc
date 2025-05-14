@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2309/2322 (99.44%)
 Positive Passed: 2288/2322 (98.54%)
-Negative Passed: 1560/1673 (93.25%)
+Negative Passed: 1561/1673 (93.31%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -39,8 +39,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
 
@@ -2934,41 +2932,41 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-async-identifier/input.js:2:10]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-async-identifier/input.js:2:11]
  1 │ class A {
  2 │   [async] a() {}
-   ·          ▲
+   ·           ┬
+   ·           ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-async-string/input.js:2:12]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-async-string/input.js:2:13]
  1 │ class A {
  2 │   ["async"] a() {}
-   ·            ▲
+   ·             ┬
+   ·             ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-get-identifier/input.js:2:8]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-get-identifier/input.js:2:9]
  1 │ class A {
  2 │   [get] a() {}
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-get-string/input.js:2:10]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-computed-get-string/input.js:2:11]
  1 │ class A {
  2 │   ["get"] a() {}
-   ·          ▲
+   ·           ┬
+   ·           ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Identifier `a` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-duplicate-method-params/input.js:2:9]
@@ -2980,23 +2978,23 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-literal-async/input.js:2:10]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-literal-async/input.js:2:11]
  1 │ class A {
  2 │   "async" a() {}
-   ·          ▲
+   ·           ┬
+   ·           ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-literal-get/input.js:2:8]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-literal-get/input.js:2:9]
  1 │ class A {
  2 │   "get" a() {}
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Classes may not have a static property named prototype
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-static-generator-prototype/input.js:2:11]
@@ -8121,23 +8119,23 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/asi-failure-generator/input.js:3:8]
+  × Expected `;` but found `{`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/asi-failure-generator/input.js:3:9]
  2 │   #p = x
  3 │   *m () {}
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/asi-failure-inline/input.js:2:5]
+  × Expected `;` but found `#identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/asi-failure-inline/input.js:2:6]
  1 │ class Foo {
  2 │   #x #y
-   ·     ▲
+   ·      ─┬
+   ·       ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character `[`
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-computed/input.js:3:4]
@@ -8297,32 +8295,32 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-computed/input.js:3:9]
+  × Expected `;` but found `{`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-computed/input.js:3:10]
  2 │   p = x
  3 │   [m] () {}
-   ·         ▲
+   ·          ┬
+   ·          ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-generator/input.js:3:8]
+  × Expected `;` but found `{`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-generator/input.js:3:9]
  2 │   p = x
  3 │   *m () {}
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-inline/input.js:2:4]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/asi-failure-inline/input.js:2:5]
  1 │ class Foo {
  2 │   x y
-   ·    ▲
+   ·     ┬
+   ·     ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-computed-property-in-params-of-async-arrow/input.js:1:34]
@@ -8338,20 +8336,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-  × Classes can't have a field named 'constructor'
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/no-ctor/input.js:2:3]
- 1 │ class Foo {
+  × Expected `(` but found `}`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/no-ctor/input.js:3:1]
  2 │   constructor
-   ·   ───────────
  3 │ }
+   · ┬
+   · ╰── `(` expected
    ╰────
 
-  × Classes can't have a field named 'constructor'
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/no-ctor-2/input.js:2:3]
- 1 │ class Foo {
+  × Expected `(` but found `*`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/no-ctor-2/input.js:3:3]
  2 │   constructor
-   ·   ───────────
  3 │   *x(){}
+   ·   ┬
+   ·   ╰── `(` expected
+ 4 │ }
    ╰────
 
   × Classes may not have a static property named prototype
@@ -11342,12 +11341,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ╰── `{` expected
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `;` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0268/input.js:1:11]
  1 │ class A {a:0}
-   ·           ▲
+   ·           ┬
+   ·           ╰── `;` expected
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0269/input.js:1:15]
@@ -11387,12 +11386,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ╰── constructor has already been declared here
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0275/input.js:1:11]
+  × Expected `;` but found `static`
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0275/input.js:1:12]
  1 │ class A {a static(){}}
-   ·           ▲
+   ·            ───┬──
+   ·               ╰── `;` expected
    ╰────
-  help: Try insert a semicolon here
+
+  × Expected `;` but found `static`
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js:1:24]
+ 1 │ class A {static static static(){}}
+   ·                        ───┬──
+   ·                           ╰── `;` expected
+   ╰────
 
   × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0277/input.js:1:12]
@@ -12114,14 +12120,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-async-error/input.js:3:11]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-async-error/input.js:3:12]
  2 │ class A extends B {
  3 │     async? method(val: string): Promise<void>;
-   ·           ▲
+   ·            ───┬──
+   ·               ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:3:9]

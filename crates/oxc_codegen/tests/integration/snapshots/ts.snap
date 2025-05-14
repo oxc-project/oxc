@@ -331,3 +331,16 @@ export import b = require("b");
 ----------
 import a = require('a');
 export import b = require('b');
+
+########## 41
+class C {
+  static
+  static
+  static
+  bar() {}
+}
+----------
+class C {
+	static static;
+	static bar() {}
+}

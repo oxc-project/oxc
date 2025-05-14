@@ -118,6 +118,12 @@ export { default as name16 } from "module-name";
 import a = require("a");
 export import b = require("b");
 "#,
+        "class C {
+  static
+  static
+  static
+  bar() {}
+}",
     ];
 
     snapshot("ts", &cases);

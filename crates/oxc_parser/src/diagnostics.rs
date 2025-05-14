@@ -463,13 +463,6 @@ pub fn using_declarations_must_be_initialized(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations must have an initializer.").with_label(span)
 }
 
-/// TS(1093)
-#[cold]
-pub fn static_constructor(span: Span) -> OxcDiagnostic {
-    ts_error("1089", "`static` modifier cannot appear on a constructor declaration.")
-        .with_label(span)
-}
-
 #[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
