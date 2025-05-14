@@ -39,6 +39,8 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// 3. `TemplateLiteral`s, where `quasis` and `expressions` are interleaved.
 /// 4. Decorators before `export` in `@dec export class C {}` / `@dec export default class {}`
 ///    have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
+/// 5. `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
+///    Except for `BindingRestElement`, where `type_annotation`'s span is after `BindingPatternKind`.
 ///
 /// Define custom visitors for these types, which ensure `convert_offset` is always called with offsets
 /// in ascending order.
@@ -57,6 +59,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportSpecifier",
         "WithClause",
         "TemplateLiteral",
+        "BindingRestElement",
         "Comment",
     ]
     .map(|type_name| schema.type_names[type_name]);
@@ -112,6 +115,55 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 }
 
                 self.convert_offset(&mut prop.span.end);
+            }
+
+            ///@@line_break
+            fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
+                // Span of `type_annotation` is within the span of `kind`,
+                // so visit `type_annotation` before exiting span of `kind`
+                let span_end = match &mut pattern.kind {
+                    BindingPatternKind::BindingIdentifier(ident) => {
+                        self.convert_offset(&mut ident.span.start);
+                        walk_mut::walk_binding_identifier(self, ident);
+                        &mut ident.span.end
+                    }
+                    BindingPatternKind::ObjectPattern(obj_pattern) => {
+                        self.convert_offset(&mut obj_pattern.span.start);
+                        walk_mut::walk_object_pattern(self, obj_pattern);
+                        &mut obj_pattern.span.end
+                    }
+                    BindingPatternKind::ArrayPattern(arr_pattern) => {
+                        self.convert_offset(&mut arr_pattern.span.start);
+                        walk_mut::walk_array_pattern(self, arr_pattern);
+                        &mut arr_pattern.span.end
+                    }
+                    BindingPatternKind::AssignmentPattern(assign_pattern) => {
+                        self.convert_offset(&mut assign_pattern.span.start);
+                        walk_mut::walk_assignment_pattern(self, assign_pattern);
+                        &mut assign_pattern.span.end
+                    }
+                };
+
+                if let Some(type_annotation) = &mut pattern.type_annotation {
+                    self.visit_ts_type_annotation(type_annotation);
+                }
+
+                self.convert_offset(span_end);
+            }
+
+            ///@@line_break
+            fn visit_binding_rest_element(&mut self, rest_element: &mut BindingRestElement<'a>) {
+                // `BindingRestElement` contains a `BindingPattern`, but in this case span of
+                // `type_annotation` is after span of `kind`.
+                // So avoid calling `visit_binding_pattern` above.
+                self.convert_offset(&mut rest_element.span.start);
+
+                self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
+                if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
+                    self.visit_ts_type_annotation(type_annotation);
+                }
+
+                self.convert_offset(&mut rest_element.span.end);
             }
 
             ///@@line_break

@@ -398,12 +398,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_binding_rest_element(&mut self, it: &mut BindingRestElement<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_binding_rest_element(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_function(self, it, flags);
@@ -1092,6 +1086,44 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
             }
         }
         self.convert_offset(&mut prop.span.end);
+    }
+
+    fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
+        let span_end = match &mut pattern.kind {
+            BindingPatternKind::BindingIdentifier(ident) => {
+                self.convert_offset(&mut ident.span.start);
+                walk_mut::walk_binding_identifier(self, ident);
+                &mut ident.span.end
+            }
+            BindingPatternKind::ObjectPattern(obj_pattern) => {
+                self.convert_offset(&mut obj_pattern.span.start);
+                walk_mut::walk_object_pattern(self, obj_pattern);
+                &mut obj_pattern.span.end
+            }
+            BindingPatternKind::ArrayPattern(arr_pattern) => {
+                self.convert_offset(&mut arr_pattern.span.start);
+                walk_mut::walk_array_pattern(self, arr_pattern);
+                &mut arr_pattern.span.end
+            }
+            BindingPatternKind::AssignmentPattern(assign_pattern) => {
+                self.convert_offset(&mut assign_pattern.span.start);
+                walk_mut::walk_assignment_pattern(self, assign_pattern);
+                &mut assign_pattern.span.end
+            }
+        };
+        if let Some(type_annotation) = &mut pattern.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        self.convert_offset(span_end);
+    }
+
+    fn visit_binding_rest_element(&mut self, rest_element: &mut BindingRestElement<'a>) {
+        self.convert_offset(&mut rest_element.span.start);
+        self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
+        if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        self.convert_offset(&mut rest_element.span.end);
     }
 
     fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
