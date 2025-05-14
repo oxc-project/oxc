@@ -1,13 +1,16 @@
-use std::{hash::Hash, path::Path};
+use std::{
+    borrow::Cow,
+    error::Error,
+    fmt::{self, Display},
+    ops::Deref,
+    path::Path,
+};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
 use crate::ContentEq;
-
-mod error;
-pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
@@ -550,6 +553,33 @@ impl SourceType {
         }
     }
 }
+
+/// Error returned by [`SourceType::from_path`] and [`SourceType::from_extension`] when
+/// the file extension is not found or recognized.
+#[derive(Debug)]
+pub struct UnknownExtension(Cow<'static, str>);
+
+impl UnknownExtension {
+    fn new<S: Into<Cow<'static, str>>>(ext: S) -> Self {
+        Self(ext.into())
+    }
+}
+
+impl Deref for UnknownExtension {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Display for UnknownExtension {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Unknown file extension: {}", self.0)
+    }
+}
+
+impl Error for UnknownExtension {}
 
 #[cfg(test)]
 mod tests {
