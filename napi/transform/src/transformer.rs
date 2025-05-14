@@ -166,7 +166,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             Some(Either::B(s)) => match s.as_str() {
                 "esm" => Module::ESM,
                 "cjs" => Module::CommonJS,
-                _ => return Err(format!("invalid `modules` option: `{s}`)")),
+                _ => return Err(format!("invalid `modules` option: `{s}`")),
             },
             None | Some(Either::A(false)) => Module::Preserve,
             Some(Either::A(true)) => return Err("invalid `modules` option: `true`".into()),
