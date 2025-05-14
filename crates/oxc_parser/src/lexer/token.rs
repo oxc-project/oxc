@@ -37,12 +37,18 @@ const HAS_SEPARATOR_FLAG: u128 = 1 << HAS_SEPARATOR_SHIFT;
 pub struct Token(u128);
 
 impl Default for Token {
+    #[inline]
     fn default() -> Self {
-        let mut token = Self(0);
-        // `Kind::default()` is `Kind::Eof`. `Kind::Eof as u8` needs to be set.
-        // Assuming `Kind::Eof` will be 1 after `#[repr(u8)]` (Undetermined = 0, Eof = 1)
-        token.set_kind(Kind::default());
-        token
+        // `Kind::default()` is `Kind::Eof`. So `0` is equivalent to:
+        // start: 0,
+        // end: 0,
+        // kind: Kind::default(),
+        // is_on_new_line: false,
+        // escaped: false,
+        // lone_surrogates: false,
+        // has_separator: false,
+        const _: () = assert!(Kind::Eof as u8 == 0);
+        Self(0)
     }
 }
 
@@ -57,8 +63,8 @@ impl Token {
 
     #[inline]
     pub fn kind(&self) -> Kind {
-        // SAFETY: `Kind` is `#[repr(u8)]`. Only `Token::set_kind` alters these bits,
-        // and it sets them to the `u8` value of an existing `Kind`.
+        // SAFETY: `Kind` is `#[repr(u8)]`. Only `Token::default` and `Token::set_kind` set these bits,
+        // and they set them to the `u8` value of an existing `Kind`.
         // So transmuting these bits back to `Kind` must produce a valid `Kind`.
         unsafe { mem::transmute::<u8, Kind>(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
