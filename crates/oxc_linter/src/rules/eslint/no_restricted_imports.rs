@@ -1018,6 +1018,33 @@ impl NoRestrictedImports {
                 }
             }
         }
+
+        for (source, spans) in &side_effect_import_map {
+            let mut whitelist_found = false;
+            let mut err = None;
+            for pattern in &self.patterns {
+                match pattern.get_group_glob_result(source) {
+                    GlobResult::Whitelist => {
+                        whitelist_found = true;
+                        break;
+                    }
+                    GlobResult::Found => {
+                        err = Some(get_diagnostic_from_import_name_result_pattern(
+                            spans[0],
+                            source,
+                            &ImportNameResult::GeneralDisallowed,
+                            pattern,
+                        ));
+                    }
+                    GlobResult::None => {}
+                }
+            }
+            if !whitelist_found {
+                if let Some(err) = err {
+                    ctx.diagnostic(err);
+                }
+            }
+        }
     }
 
     fn report_import_name_allowed(&self, ctx: &LintContext<'_>, entry: &ImportEntry) {
@@ -3036,6 +3063,13 @@ fn test() {
             r"import 'foo'; import {a} from 'b'",
             Some(
                 serde_json::json!([{ "paths": [{ "name": "foo", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
+        // https://github.com/oxc-project/oxc/issues/10984
+        (
+            r"import 'foo'",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "message": "foo is forbidden, use bar instead" }] }]),
             ),
         ),
     ];
