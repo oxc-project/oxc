@@ -59,17 +59,16 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn get_statement_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
+    pub(crate) fn get_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
         if self.comments.is_empty() {
             return None;
         }
         self.comments.remove(&start)
     }
 
-    /// A statement comment also includes legal comments
     #[inline]
-    pub(crate) fn print_statement_comments(&mut self, start: u32) {
-        if let Some(comments) = self.get_statement_comments(start) {
+    pub(crate) fn print_comments_at(&mut self, start: u32) {
+        if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
         }
     }
