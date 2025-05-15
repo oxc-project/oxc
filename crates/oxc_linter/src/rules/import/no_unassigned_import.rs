@@ -17,8 +17,19 @@ fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoUnassignedImport {
+pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoUnassignedImportConfig {
     globs: GlobSet,
+}
+
+impl std::ops::Deref for NoUnassignedImport {
+    type Target = NoUnassignedImportConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
@@ -81,7 +92,7 @@ impl Rule for NoUnassignedImport {
             .and_then(Value::as_array)
             .map(|v| v.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
-        Self { globs: build_globset(allow).unwrap_or_else(|_| GlobSet::empty()) }
+        Self(Box::new(NoUnassignedImportConfig { globs: build_globset(allow).unwrap_or_default() }))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -154,6 +165,7 @@ fn test() {
         ("import './styles/app.css'", Some(json!([{ "allow": ["styles/*.css"]}]))),
         ("import './app.css'", Some(json!([{ "allow": ["**/*.js"]}]))),
         ("import './app.css'", Some(json!([{ "allow": ["**/dir/**"]}]))),
+        ("import './app.js'", None),
         ("require('./app.css')", Some(json!([{ "allow": ["**/*.js"]}]))),
     ];
 
