@@ -31,6 +31,7 @@ mod import {
     pub mod no_named_default;
     pub mod no_namespace;
     pub mod no_self_import;
+    pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
     pub mod unambiguous;
 }
@@ -711,6 +712,7 @@ oxc_macros::declare_all_lint_rules! {
     import::exports_last,
     import::first,
     import::group_exports,
+    import::no_unassigned_import,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,

@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-unassigned-import): A `require()` style import is forbidden.
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ require('should')
+   · ─────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ import 'foo'
+   · ────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ import './styles/app.css'
+   · ─────────────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ import './app.css'
+   · ──────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ import './app.css'
+   · ──────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): Imported module should be assigned
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ import './app.js'
+   · ─────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
+
+  ⚠ eslint-plugin-import(no-unassigned-import): A `require()` style import is forbidden.
+   ╭─[no-unassigned-import.js:1:1]
+ 1 │ require('./app.css')
+   · ────────────────────
+   ╰────
+  help: Consider assigning the import to a variable or removing it if it's unused.
