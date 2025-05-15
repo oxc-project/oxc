@@ -96,7 +96,7 @@ impl Codegen<'_> {
     pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
         for (i, comment) in comments.iter().enumerate() {
             if i == 0 {
-                if comment.preceded_by_newline {
+                if comment.preceded_by_newline() {
                     // Skip printing newline if this comment is already on a newline.
                     if let Some(b) = self.last_byte() {
                         match b {
@@ -113,7 +113,7 @@ impl Codegen<'_> {
                 }
             }
             if i >= 1 {
-                if comment.preceded_by_newline {
+                if comment.preceded_by_newline() {
                     self.print_hard_newline();
                     self.print_indent();
                 } else if comment.is_legal() {
@@ -122,7 +122,7 @@ impl Codegen<'_> {
             }
             self.print_comment(comment);
             if i == comments.len() - 1 {
-                if comment.is_line() || comment.followed_by_newline {
+                if comment.is_line() || comment.followed_by_newline() {
                     self.print_hard_newline();
                 } else {
                     self.print_next_indent_as_space = true;

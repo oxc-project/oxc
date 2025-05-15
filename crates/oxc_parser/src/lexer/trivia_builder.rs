@@ -69,7 +69,7 @@ impl TriviaBuilder {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            self.comments[len - 1].followed_by_newline = true;
+            self.comments[len - 1].set_followed_by_newline(true);
             if !self.saw_newline {
                 self.processed = self.comments.len();
             }
@@ -131,10 +131,10 @@ impl TriviaBuilder {
         }
 
         // This newly added comment may be preceded by a newline.
-        comment.preceded_by_newline = self.saw_newline;
+        comment.set_preceded_by_newline(self.saw_newline);
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
-            comment.followed_by_newline = true;
+            comment.set_followed_by_newline(true);
             if self.should_be_treated_as_trailing_comment() {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
@@ -241,7 +241,7 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentAnnotation, CommentKind, CommentPosition};
+    use oxc_ast::{Comment, CommentAnnotation, CommentKind, CommentPosition, ast::CommentNewlines};
     use oxc_span::{SourceType, Span};
 
     use crate::Parser;
@@ -268,8 +268,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -277,8 +276,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -286,8 +284,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                preceded_by_newline: true,
-                followed_by_newline: false,
+                newlines: CommentNewlines::Leading,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -295,8 +292,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                preceded_by_newline: false,
-                followed_by_newline: false,
+                newlines: CommentNewlines::None,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -304,8 +300,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -313,8 +308,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 147,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -338,8 +332,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 36,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -347,8 +340,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -373,8 +365,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 28,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -382,8 +373,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 28,
-                preceded_by_newline: true,
-                followed_by_newline: true,
+                newlines: CommentNewlines::LeadingAndTrailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -406,8 +396,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 57,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -415,8 +404,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 129,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -438,8 +426,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 55,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -447,8 +434,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 116,
-                preceded_by_newline: false,
-                followed_by_newline: true,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];

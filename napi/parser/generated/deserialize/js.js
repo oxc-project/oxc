@@ -4055,7 +4055,7 @@ function deserializeVecComment(pos) {
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
     arr.push(deserializeComment(pos));
-    pos += 24;
+    pos += 16;
   }
   return arr;
 }

@@ -2482,13 +2482,18 @@ impl ContentEq for CommentAnnotation {
     }
 }
 
+impl ContentEq for CommentNewlines {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
-            && ContentEq::content_eq(&self.preceded_by_newline, &other.preceded_by_newline)
-            && ContentEq::content_eq(&self.followed_by_newline, &other.followed_by_newline)
+            && ContentEq::content_eq(&self.newlines, &other.newlines)
             && ContentEq::content_eq(&self.annotation, &other.annotation)
     }
 }
