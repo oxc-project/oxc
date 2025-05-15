@@ -323,7 +323,7 @@ export async function activate(context: ExtensionContext) {
       if (client.isRunning()) {
         await client.restart();
       }
-    } else if (client.isRunning()) {
+    } else if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
       await client.sendNotification(
         'workspace/didChangeConfiguration',
         {
