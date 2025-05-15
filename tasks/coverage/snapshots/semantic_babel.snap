@@ -2,7 +2,7 @@ commit: 578ac4df
 
 semantic_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1905/2322 (82.04%)
+Positive Passed: 1907/2322 (82.13%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -235,12 +235,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/
 Unresolved references mismatch:
 after transform: ["T", "foo"]
 rebuilt        : ["foo"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 Unresolved references mismatch:

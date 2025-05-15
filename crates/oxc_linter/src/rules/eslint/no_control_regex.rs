@@ -40,7 +40,7 @@ fn no_control_regex_diagnostic(control_chars: &[Character], span: Span) -> OxcDi
         let regexes = other_chars.iter().join(", ");
         writeln!(
             help,
-            "'{regexes}' {} not {}valid control character{}.",
+            "'{regexes}' {} {}control character{}.",
             if other_chars.len() > 1 { "are" } else { "is" },
             if other_chars.len() > 1 { "" } else { "a " },
             if other_chars.len() > 1 { "s" } else { "" },
@@ -52,7 +52,7 @@ fn no_control_regex_diagnostic(control_chars: &[Character], span: Span) -> OxcDi
         let regexes = octal_chars.iter().join(", ");
         writeln!(
             help,
-            "'{regexes}' {} not {}valid control character{}. They look like backreferences, but there {} no corresponding capture group{}. If you are trying to match the octal character, consider using '\\xNN' or '\\u00NN' instead.",
+            "'{regexes}' {} {}control character{}. They look like backreferences, but there {} no corresponding capture group{}.",
             if octal_chars.len() > 1 { "are" } else { "is" },
             if octal_chars.len() > 1 { "" } else { "a " },
             if octal_chars.len() > 1 { "s" } else { "" },
@@ -62,10 +62,8 @@ fn no_control_regex_diagnostic(control_chars: &[Character], span: Span) -> OxcDi
     }
 
     if !null_chars.is_empty() {
-        writeln!(
-        help,
-        "'\\0' matches the null character (U+0000), which is a control character. If you intend to match the null character, consider using '\\x00' or '\\u0000' for clarity."
-        ).unwrap();
+        writeln!(help, "'\\0' matches the null character (U+0000), which is a control character.")
+            .unwrap();
     }
 
     debug_assert!(!help.is_empty());

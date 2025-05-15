@@ -1,7 +1,6 @@
-use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Comment, CommentKind, ast::Argument};
+use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
@@ -10,7 +9,12 @@ pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
-        self.comments.reserve(comments.len());
+        if !self.options.comments
+            && self.options.legal_comments.is_none()
+            && !self.options.annotation_comments
+        {
+            return;
+        }
         let move_legal_comments = {
             let legal_comments = &self.options.legal_comments;
             matches!(
@@ -23,10 +27,25 @@ impl Codegen<'_> {
             if comment.is_pure() || comment.is_no_side_effects() {
                 continue;
             }
-            if comment.is_legal() && move_legal_comments {
-                self.legal_comments.push(*comment);
+            let mut add = false;
+            if comment.is_legal() {
+                if move_legal_comments {
+                    self.legal_comments.push(*comment);
+                } else if self.options.print_legal_comment() {
+                    add = true;
+                }
+            } else if comment.is_leading() {
+                if comment.is_annotation() {
+                    if self.options.print_annotation_comment() {
+                        add = true;
+                    }
+                } else if self.options.print_normal_comment() {
+                    add = true;
+                }
             }
-            self.comments.entry(comment.attached_to).or_default().push(*comment);
+            if add {
+                self.comments.entry(comment.attached_to).or_default().push(*comment);
+            }
         }
     }
 
@@ -34,80 +53,30 @@ impl Codegen<'_> {
         self.comments.contains_key(&start)
     }
 
-    pub(crate) fn contains_comment_in_call_like_expression(
-        &self,
-        span: Span,
-        arguments: &[Argument<'_>],
-    ) -> (bool, bool) {
-        let has_comment_before_right_paren =
-            self.print_annotation_comment && span.end > 0 && self.has_comment(span.end - 1);
-
-        let has_comment = has_comment_before_right_paren
-            || self.print_annotation_comment
-                && arguments.iter().any(|item| self.has_comment(item.span().start));
-
-        (has_comment, has_comment_before_right_paren)
-    }
-
-    /// Whether to keep leading comments.
-    fn should_keep_leading_comment(comment: &Comment) -> bool {
-        comment.preceded_by_newline && comment.is_annotation()
-    }
-
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
-        if !self.print_any_comment {
-            return;
+        if let Some(comments) = self.comments.remove(&start) {
+            self.print_comments(&comments);
         }
-        let Some(comments) = self.comments.remove(&start) else {
-            return;
-        };
-        let comments =
-            comments.into_iter().filter(Self::should_keep_leading_comment).collect::<Vec<_>>();
-        self.print_comments(&comments);
     }
 
-    pub(crate) fn get_statement_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
-        let comments = self.comments.remove(&start)?;
-
-        let mut leading_comments = vec![];
-
-        for comment in comments {
-            if comment.is_legal() {
-                match &self.options.legal_comments {
-                    LegalComment::None if self.options.comments => {
-                        leading_comments.push(comment);
-                        continue;
-                    }
-                    LegalComment::Inline => {
-                        leading_comments.push(comment);
-                        continue;
-                    }
-                    LegalComment::Eof | LegalComment::Linked(_) | LegalComment::External => {
-                        /* noop, handled by `build_comments`. */
-                        continue;
-                    }
-                    LegalComment::None => {}
-                }
-            }
-            if Self::should_keep_leading_comment(&comment) {
-                leading_comments.push(comment);
-            }
+    pub(crate) fn get_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
+        if self.comments.is_empty() {
+            return None;
         }
-
-        Some(leading_comments)
+        self.comments.remove(&start)
     }
 
-    /// A statement comment also includes legal comments
     #[inline]
-    pub(crate) fn print_statement_comments(&mut self, start: u32) {
-        if self.print_any_comment {
-            if let Some(comments) = self.get_statement_comments(start) {
-                self.print_comments(&comments);
-            }
+    pub(crate) fn print_comments_at(&mut self, start: u32) {
+        if let Some(comments) = self.get_comments(start) {
+            self.print_comments(&comments);
         }
     }
 
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
         let Some(comments) = self.comments.remove(&start) else { return false };
 
         for comment in &comments {

@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6521/6528 (99.89%)
 Positive Passed: 6509/6528 (99.71%)
-Negative Passed: 1315/5757 (22.84%)
+Negative Passed: 1323/5757 (22.98%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -3742,8 +3742,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadOfPara
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticAsIdentifier.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticClassMemberError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution4.ts
@@ -3759,8 +3757,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMethod
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMethodsReferencingClassTypeParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMismatchBecauseOfPrototype.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticModifierAlreadySeen.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMustPrecedePublic.ts
 
@@ -5343,10 +5339,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/class
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames12_ES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames12_ES6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames15_ES5.ts
 
@@ -7486,8 +7478,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserObjectCreation1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration10.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature4.ts
@@ -7512,17 +7502,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration8.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration9.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts
 
@@ -9302,22 +9286,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
-   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:18]
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:12]
  1 │ class C {
  2 │     public const var export foo = 10;
-   ·                  ───
+   ·            ─────
  3 │ 
    ╰────
   help: Did you mean `readonly`?
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:21]
+  × Expected `;` but found `export`
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:22]
  1 │ class C {
  2 │     public const var export foo = 10;
-   ·                     ▲
+   ·                      ───┬──
+   ·                         ╰── `;` expected
  3 │ 
    ╰────
-  help: Try insert a semicolon here
 
   × Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration8.ts:2:3]
@@ -9336,10 +9320,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
-   ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:16]
+   ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:10]
  1 │ class AtomicNumbers {
  2 │   static const H = 1;
-   ·                ─
+   ·          ─────
  3 │ }
    ╰────
   help: Did you mean `readonly`?
@@ -9565,14 +9549,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                 ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `;` but found `:`
    ╭─[typescript/tests/cases/compiler/ambientPropertyDeclarationInJs.ts:6:17]
  5 │ 
  6 │     declare prop: string;
-   ·                 ▲
+   ·                 ┬
+   ·                 ╰── `;` expected
  7 │ 
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:11:5]
@@ -10351,21 +10335,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     constructor() {
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts:3:11]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts:3:12]
  2 │     declare [Symbol.toStringTag] = "uh";
  3 │     export foo = 1;
-   ·           ▲
+   ·            ─┬─
+   ·             ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Classes can't have a field named 'constructor'
-   ╭─[typescript/tests/cases/compiler/classFieldsBrokenConstructorEmitNoCrash1.ts:3:3]
- 2 │   prop = 42;
+  × Expected `(` but found `}`
+   ╭─[typescript/tests/cases/compiler/classFieldsBrokenConstructorEmitNoCrash1.ts:4:1]
  3 │   constructor
-   ·   ───────────
  4 │ }
+   · ┬
+   · ╰── `(` expected
    ╰────
 
   × Expected `{` but found `EOF`
@@ -11354,10 +11338,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
-   ╭─[typescript/tests/cases/compiler/constInClassExpression.ts:2:11]
+   ╭─[typescript/tests/cases/compiler/constInClassExpression.ts:2:5]
  1 │ let C = class {
  2 │     const a = 4;
-   ·           ─
+   ·     ─────
  3 │ };
    ╰────
   help: Did you mean `readonly`?
@@ -12847,14 +12831,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts:3:11]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts:3:12]
  2 │     declare foo = 1;
  3 │     export bar = 1;
-   ·           ▲
+   ·            ─┬─
+   ·             ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:9:32]
@@ -14445,6 +14429,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:4:16]
+ 3 │     private private p2;
+ 4 │     static static p3;
+   ·                   ─┬
+   ·                    ╰── `;` expected
+ 5 │     public private p4;
+   ╰────
+
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:2:9]
  1 │ module T {
@@ -14484,14 +14477,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  26 │ 
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/nestedGlobalNamespaceInClass.ts:3:11]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/nestedGlobalNamespaceInClass.ts:3:12]
  2 │ class C {
  3 │     global x
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/nestedUnaryExpressionHang.ts:1:34]
@@ -15421,41 +15414,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Did you mean to write 'undefined | null | undefined'?
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:4]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
  1 │ ~< <
-   ·    ─
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:9]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:4]
+   ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]
  1 │ !< {:>
-   ·    ─
+   ·  ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
-   ·                     ───
+   ·             ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <> x;
-   ·               ───
+   ·             ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:14]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <1234> x;
-   ·              ────
+   ·             ─
    ╰────
 
   × Unexpected token
@@ -15652,14 +15646,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │     }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/propertyWrappedInTry.ts:3:8]
+  × Expected `;` but found `{`
+   ╭─[typescript/tests/cases/compiler/propertyWrappedInTry.ts:3:9]
  2 │ 
  3 │     try {
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  4 │ 
    ╰────
-  help: Try insert a semicolon here
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:3:9]
@@ -16425,6 +16419,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
+  × Expected `;` but found `Identifier`
+    ╭─[typescript/tests/cases/compiler/staticAsIdentifier.ts:12:19]
+ 11 │ class C3 {
+ 12 │     static static p: string;
+    ·                   ┬
+    ·                   ╰── `;` expected
+ 13 │ }
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/staticClassProps.ts:4:15]
  3 │     public foo() {
@@ -16433,6 +16436,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │     }
    ╰────
   help: Try insert a semicolon here
+
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/compiler/staticModifierAlreadySeen.ts:2:19]
+ 1 │ class C {
+ 2 │     static static foo = 1;
+   ·                   ─┬─
+   ·                    ╰── `;` expected
+ 3 │     public static static bar() { }
+   ╰────
 
   × Classes may not have a static property named prototype
    ╭─[typescript/tests/cases/compiler/staticPrototypeProperty.ts:2:11]
@@ -18365,12 +18377,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │   Value
    ╰────
 
-  × Expected `(` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncGetter_es5.ts:2:13]
+  × 'async' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncGetter_es5.ts:2:3]
  1 │ class C {
  2 │   async get foo() {
-   ·             ─┬─
-   ·              ╰── `(` expected
+   ·   ─────
  3 │   }
    ╰────
 
@@ -18395,12 +18406,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected `(` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncSetter_es5.ts:2:13]
+  × 'async' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncSetter_es5.ts:2:3]
  1 │ class C {
  2 │   async set foo(value) {
-   ·             ─┬─
-   ·              ╰── `(` expected
+   ·   ─────
  3 │   }
    ╰────
 
@@ -18507,12 +18517,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │   Value
    ╰────
 
-  × Expected `(` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncGetter_es6.ts:2:13]
+  × 'async' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncGetter_es6.ts:2:3]
  1 │ class C {
  2 │   async get foo() {
-   ·             ─┬─
-   ·              ╰── `(` expected
+   ·   ─────
  3 │   }
    ╰────
 
@@ -18537,12 +18546,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected `(` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncSetter_es6.ts:2:13]
+  × 'async' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncSetter_es6.ts:2:3]
  1 │ class C {
  2 │   async set foo(value) {
-   ·             ─┬─
-   ·              ╰── `(` expected
+   ·   ─────
  3 │   }
    ╰────
 
@@ -18925,14 +18933,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classBody/classBodyWithStatements.ts:2:8]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classBody/classBodyWithStatements.ts:2:9]
  1 │ class C {
  2 │     var x = 1;
-   ·        ▲
+   ·         ┬
+   ·         ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Expected `{` but found `?.`
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingOptionalChain.ts:9:22]
@@ -19261,14 +19269,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  25 │     }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `;` but found `(`
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassSuperCallsInNonConstructorMembers.ts:8:13]
  7 │ class Derived extends Base {
  8 │     a: super();
-   ·             ▲
+   ·             ┬
+   ·             ╰── `;` expected
  9 │     b() {
    ╰────
-  help: Try insert a semicolon here
 
   × 'super' can only be referenced in a derived class.
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/superCallInConstructorWithNoBaseType.ts:1:1]
@@ -19353,14 +19361,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `;` but found `.`
     ╭─[typescript/tests/cases/conformance/classes/members/accessibility/privateInstanceMemberAccessibility.ts:12:12]
  11 │ 
  12 │     a: this.foo; // error
-    ·            ▲
+    ·            ┬
+    ·            ╰── `;` expected
  13 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:6:16]
@@ -20230,13 +20238,44 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  23 │     readonly get #quxProp() { return  3; }       // Error
     ╰────
 
-  × Expected `(` but found `#identifier`
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:27:15]
+  × 'async' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:27:5]
  26 │     declare set #whatProp(value: number)         // Error
  27 │     async get #asyncProp() { return 1; }         // Error
-    ·               ─────┬────
-    ·                    ╰── `(` expected
+    ·     ─────
  28 │     async set #asyncProp(value: number) { }      // Error
+    ╰────
+
+  × 'async' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:28:5]
+ 27 │     async get #asyncProp() { return 1; }         // Error
+ 28 │     async set #asyncProp(value: number) { }      // Error
+    ·     ─────
+ 29 │ }
+    ╰────
+
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:17]
+ 24 │     readonly set #quxProp(value: number) {  }    // Error
+ 25 │     declare get #whatProp()                      // Error
+    ·                 ─────────
+ 26 │     declare set #whatProp(value: number)         // Error
+    ╰────
+
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:26:17]
+ 25 │     declare get #whatProp()                      // Error
+ 26 │     declare set #whatProp(value: number)         // Error
+    ·                 ─────────
+ 27 │     async get #asyncProp() { return 1; }         // Error
+    ╰────
+
+  × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
     ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
@@ -20269,14 +20308,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·       ────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/classes/nestedClassDeclaration.ts:5:10]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/classes/nestedClassDeclaration.ts:5:11]
  4 │     x: string;
  5 │     class C2 {
-   ·          ▲
+   ·           ─┬
+   ·            ╰── `;` expected
  6 │     }
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1267): Property 'prop' cannot have an initializer because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/abstractPropertyInitializer.ts:2:14]
@@ -20343,14 +20382,101 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │     accessor public d: any;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:15]
-  9 │     accessor static h: any;
- 10 │     accessor i() {}
-    ·               ▲
- 11 │     accessor get j() { return false; }
+  × TS(1276): An 'accessor' property cannot be declared optional.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:14:15]
+ 13 │     accessor constructor() {}
+ 14 │     accessor l?: any;
+    ·               ─
+ 15 │     accessor readonly m: any;
     ╰────
-  help: Try insert a semicolon here
+
+  × TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:15:14]
+ 14 │     accessor l?: any;
+ 15 │     accessor readonly m: any;
+    ·              ────────
+ 16 │     accessor declare n: any;
+    ╰────
+
+  × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:16:14]
+ 15 │     accessor readonly m: any;
+ 16 │     accessor declare n: any;
+    ·              ───────
+ 17 │ }
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:27:1]
+ 26 │ 
+ 27 │ accessor class C3 {}
+    · ────────
+ 28 │ accessor interface I2 {}
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:28:1]
+ 27 │ accessor class C3 {}
+ 28 │ accessor interface I2 {}
+    · ────────
+ 29 │ accessor namespace N1 {}
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:29:1]
+ 28 │ accessor interface I2 {}
+ 29 │ accessor namespace N1 {}
+    · ────────
+ 30 │ accessor enum E1 {}
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:29:1]
+ 28 │ accessor interface I2 {}
+ 29 │ accessor namespace N1 {}
+    · ────────
+ 30 │ accessor enum E1 {}
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:30:1]
+ 29 │ accessor namespace N1 {}
+ 30 │ accessor enum E1 {}
+    · ────────
+ 31 │ accessor var V1: any;
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:31:1]
+ 30 │ accessor enum E1 {}
+ 31 │ accessor var V1: any;
+    · ────────
+ 32 │ accessor type T1 = never;
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:32:1]
+ 31 │ accessor var V1: any;
+ 32 │ accessor type T1 = never;
+    · ────────
+ 33 │ accessor function F1() {}
+    ╰────
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:33:1]
+ 32 │ accessor type T1 = never;
+ 33 │ accessor function F1() {}
+    · ────────
+ 34 │ accessor import "x";
+    ╰────
+
+  × Unexpected token
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:34:17]
+ 33 │ accessor function F1() {}
+ 34 │ accessor import "x";
+    ·                 ───
+ 35 │ accessor import {} from "x";
+    ╰────
 
   × Expected `,` but found `*`
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/canFollowGetSetKeyword.ts:11:5]
@@ -20559,23 +20685,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor3.ts:4:11]
+  × Expected `;` but found `@`
+   ╭─[typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor3.ts:4:12]
  3 │ class C {
  4 │     public @dec get accessor() { return 1; }
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor6.ts:4:11]
+  × Expected `;` but found `@`
+   ╭─[typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor6.ts:4:12]
  3 │ class C {
  4 │     public @dec set accessor(value: number) { }
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Expected `,` but found `@`
    ╭─[typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter4.ts:4:24]
@@ -20586,23 +20712,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod17.ts:4:17]
+  × Expected `;` but found `@`
+   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod17.ts:4:18]
  3 │ class Foo {
  4 │     private prop @decorator
-   ·                 ▲
+   ·                  ┬
+   ·                  ╰── `;` expected
  5 │     foo() {
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod3.ts:4:11]
+  × Expected `;` but found `@`
+   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod3.ts:4:12]
  3 │ class C {
  4 │     public @dec method() {}
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × await expression not allowed in formal parameter
    ╭─[typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodParameter3.ts:5:23]
@@ -20621,14 +20747,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty3.ts:4:11]
+  × Expected `;` but found `@`
+   ╭─[typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty3.ts:4:12]
  3 │ class C {
  4 │     public @dec prop;
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
     ╭─[typescript/tests/cases/conformance/decorators/decoratorMetadata-jsdoc.ts:9:9]
@@ -20939,6 +21065,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ╰──── class does not have `extends`
    ╰────
   help: either remove this super, or extend the class
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES5.ts:5:6]
+ 4 │     static [true]() { }
+ 5 │     [[]]() { }
+   ·      ─
+ 6 │     static [{}]() { }
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES6.ts:5:6]
+ 4 │     static [true]() { }
+ 5 │     [[]]() { }
+   ·      ─
+ 6 │     static [{}]() { }
+   ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:4:7]
@@ -24197,23 +24339,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:14]
+  × Expected `;` but found `is`
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:15]
  3 │     export class FileSystemObject {
  4 │         isFSO: this is FileSystemObject;
-   ·                    ▲
+   ·                     ─┬
+   ·                      ╰── `;` expected
  5 │         get isFile(): this is File {
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:14]
+  × Expected `;` but found `is`
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:15]
  3 │     export class FileSystemObject {
  4 │         isFSO: this is FileSystemObject;
-   ·                    ▲
+   ·                     ─┬
+   ·                      ╰── `;` expected
  5 │         get isFile(): this is File {
    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:12]
@@ -25717,14 +25859,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:9]
+  × Expected `;` but found `constructor`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:10]
  1 │ class C {
  2 │   export constructor() { }
-   ·         ▲
+   ·          ─────┬─────
+   ·               ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1030): public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
@@ -25735,11 +25877,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × Classes can't have a field named 'constructor'
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration8.ts:3:10]
+  × Expected `(` but found `;`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration8.ts:3:21]
  2 │   // Not a constructor
  3 │   public constructor;
-   ·          ───────────
+   ·                     ┬
+   ·                     ╰── `(` expected
  4 │ }
    ╰────
 
@@ -25912,23 +26055,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement1.ts:5:6]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement1.ts:5:7]
  4 │ // this as a source unit element.
  5 │ class D {
-   ·      ▲
+   ·       ┬
+   ·       ╰── `;` expected
  6 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement2.ts:4:7]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement2.ts:4:8]
  3 │ 
  4 │   enum E {
-   ·       ▲
+   ·        ┬
+   ·        ╰── `;` expected
  5 │   }
    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
@@ -26036,14 +26179,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IncompleteMemberVariables/parserErrorRecovery_IncompleteMemberVariable2.ts:12:21]
+  × Expected `;` but found `string`
+    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IncompleteMemberVariables/parserErrorRecovery_IncompleteMemberVariable2.ts:12:22]
  11 │ 
  12 │         public con:C "hello";
-    ·                     ▲
+    ·                      ───┬───
+    ·                         ╰── `;` expected
  13 │         // Constructor
     ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/LeftShifts/parserErrorRecovery_LeftShift1.ts:1:29]
@@ -26507,6 +26650,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─
    ╰────
 
+  × Expected `;` but found `[`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration10.ts:2:18]
+ 1 │ class C {
+ 2 │    static static [x: string]: string;
+   ·                  ┬
+   ·                  ╰── `;` expected
+ 3 │ }
+   ╰────
+
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration7.ts:2:4]
  1 │ class C {
@@ -26523,11 +26675,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Expected `;` but found `[`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:11]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·           ─
+   ·           ┬
+   ·           ╰── `;` expected
  3 │ }
    ╰────
 
@@ -26630,14 +26783,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:11]
+  × Expected `;` but found `get`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:12]
  1 │ class C {
  2 │     export get Foo() { }
-   ·           ▲
+   ·            ─┬─
+   ·             ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration12.ts:2:11]
@@ -26688,6 +26841,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
+  × Expected `;` but found `get`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration8.ts:2:19]
+ 1 │ class C {
+ 2 │     static static get Foo() { }
+   ·                   ─┬─
+   ·                    ╰── `;` expected
+ 3 │ }
+   ╰────
+
   × TS(1030): public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
  1 │ class C {
@@ -26697,14 +26859,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:11]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration2.ts:2:19]
  1 │ class C {
- 2 │     export Foo() { }
-   ·           ▲
+ 2 │     static static Foo() { }
+   ·                   ─┬─
+   ·                    ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
+
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:12]
+ 1 │ class C {
+ 2 │     export Foo() { }
+   ·            ─┬─
+   ·             ╰── `;` expected
+ 3 │ }
+   ╰────
 
   × Identifier `public` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]
@@ -26771,14 +26942,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:9]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration2.ts:2:17]
  1 │ class C {
- 2 │   export Foo;
-   ·         ▲
+ 2 │   static static Foo;
+   ·                 ─┬─
+   ·                  ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
+
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:10]
+ 1 │ class C {
+ 2 │   export Foo;
+   ·          ─┬─
+   ·           ╰── `;` expected
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken1.ts:1:5]
@@ -27039,14 +27219,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·            ──
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:7]
  1 │ class Foo2 {
  2 │   var icecream = "chocolate";
-   ·      ▲
+   ·       ────┬───
+   ·           ╰── `;` expected
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
@@ -27892,14 +28072,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     [e2] = 1
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `;` but found `:`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName27.ts:4:9]
  3 │     [e]: number = 0
  4 │     [e2]: number
-   ·         ▲
+   ·         ┬
+   ·         ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1164): Computed property names are not allowed in enums.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName30.ts:3:6]
@@ -27909,14 +28089,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     [e2] = 1
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName33.ts:4:11]
+  × Expected `;` but found `{`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName33.ts:4:12]
  3 │     [e] = 0
  4 │     [e2]() { }
-   ·           ▲
+   ·            ┬
+   ·            ╰── `;` expected
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1164): Computed property names are not allowed in enums.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts:3:6]
@@ -28094,18 +28274,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     get constructor() { return }
  3 │     set constructor(value) {}
    ·         ───────────
- 4 │ }
-   ╰────
-
-  × Multiple constructor implementations are not allowed.
-   ╭─[typescript/tests/cases/conformance/salsa/constructorNameInAccessor.ts:2:9]
- 1 │ class C1 {
- 2 │     get constructor() { return }
-   ·         ─────┬─────
-   ·              ╰── constructor has already been declared here
- 3 │     set constructor(value) {}
-   ·         ─────┬─────
-   ·              ╰── it cannot be redeclared here
  4 │ }
    ╰────
 

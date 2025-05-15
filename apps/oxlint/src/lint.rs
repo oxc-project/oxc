@@ -779,6 +779,12 @@ mod test {
     }
 
     #[test]
+    fn js_and_jsx() {
+        let args = &["fixtures/linter/js_as_jsx.js"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn lint_vue_file() {
         let args = &["fixtures/vue/debugger.vue"];
         Tester::new().test_and_snapshot(args);
@@ -1152,5 +1158,11 @@ mod test {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_rule_config_being_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_11054".into()).test_and_snapshot(args);
     }
 }

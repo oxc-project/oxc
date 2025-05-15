@@ -1,7 +1,8 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde_json::Value;
 
 use crate::{AstNode, ast_util::IsConstant, context::LintContext, rule::Rule};
 
@@ -11,9 +12,38 @@ fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+#[derive(Debug, Default, Clone, PartialEq)]
+enum CheckLoops {
+    All,
+    #[default]
+    AllExceptWhileTrue,
+    None,
+}
+
+impl CheckLoops {
+    fn from(value: &Value) -> Option<Self> {
+        match value {
+            Value::String(str) => match str.as_str() {
+                "all" => Some(Self::All),
+                "allExceptWhileTrue" => Some(Self::AllExceptWhileTrue),
+                "none" => Some(Self::None),
+                _ => None,
+            },
+            Value::Bool(bool) => {
+                if *bool {
+                    Some(Self::All)
+                } else {
+                    Some(Self::None)
+                }
+            }
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoConstantCondition {
-    _check_loops: bool,
+    check_loops: CheckLoops,
 }
 
 declare_oxc_lint!(
@@ -31,73 +61,108 @@ declare_oxc_lint!(
     /// - `if`, `for`, `while`, or `do...while` statement
     /// - `?`: ternary expression
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// if (false) {
-    ///    doSomethingUnfinished();
+    ///   doSomethingUnfinished();
     /// }
     ///
     /// if (new Boolean(x)) {
-    ///     doSomethingAlways();
+    ///   doSomethingAlways();
     /// }
     /// if (x ||= true) {
-    ///     doSomethingAlways();
+    ///   doSomethingAlways();
     /// }
     ///
     /// do {
-    ///     doSomethingForever();
+    ///   doSomethingForever();
     /// } while (x = -1);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// if (x === 0) {
-    ///     doSomething();
+    ///   doSomething();
     /// }
     ///
     /// while (typeof x === "undefined") {
-    ///     doSomething();
+    ///   doSomething();
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### checkLoops
+    ///
+    /// `{ type: "all" | "allExceptWhileTrue" | "none" | boolean, default: "allExceptWhileTrue" }`
+    ///
+    /// - `"all"` or `true` disallows constant expressions in loops
+    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+    /// - `"none"` or `false` allows constant expressions in loops
     NoConstantCondition,
     eslint,
     correctness
 );
 
 impl Rule for NoConstantCondition {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         let obj = value.get(0);
 
         Self {
-            _check_loops: obj
+            check_loops: obj
                 .and_then(|v| v.get("checkLoops"))
-                .and_then(serde_json::Value::as_bool)
+                .and_then(CheckLoops::from)
                 .unwrap_or_default(),
         }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IfStatement(if_stmt) => {
-                if if_stmt.test.is_constant(true, ctx) {
-                    ctx.diagnostic(no_constant_condition_diagnostic(if_stmt.test.span()));
-                }
+            AstKind::IfStatement(if_stmt) => check(ctx, &if_stmt.test),
+            AstKind::ConditionalExpression(condition_expr) => check(ctx, &condition_expr.test),
+            AstKind::WhileStatement(while_stmt) => self.check_loop(ctx, &while_stmt.test, true),
+            AstKind::DoWhileStatement(do_while_stmt) => {
+                self.check_loop(ctx, &do_while_stmt.test, false);
             }
-            AstKind::ConditionalExpression(condition_expr) => {
-                if condition_expr.test.is_constant(true, ctx) {
-                    ctx.diagnostic(no_constant_condition_diagnostic(condition_expr.test.span()));
-                }
+            AstKind::ForStatement(for_stmt) => {
+                let Some(test) = &for_stmt.test else {
+                    return;
+                };
+
+                self.check_loop(ctx, test, false);
             }
             _ => {}
         }
     }
 }
 
+impl NoConstantCondition {
+    fn check_loop<'a>(&self, ctx: &LintContext<'a>, test: &'a Expression<'_>, is_while: bool) {
+        match self.check_loops {
+            CheckLoops::None => return,
+            CheckLoops::AllExceptWhileTrue if is_while => match test {
+                Expression::BooleanLiteral(bool) if bool.value => return,
+                _ => {}
+            },
+            _ => {}
+        }
+
+        check(ctx, test);
+    }
+}
+
+fn check<'a>(ctx: &LintContext<'a>, test: &'a Expression<'_>) {
+    if test.is_constant(true, ctx) {
+        ctx.diagnostic(no_constant_condition_diagnostic(test.span()));
+    }
+}
+
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
@@ -220,28 +285,36 @@ fn test() {
         // ("const undefined = 'lol'; if (undefined) {}", None),
         // ("function foo(Boolean) { if (Boolean(1)) {} }", None),
         // ("const Boolean = () => {}; if (Boolean(1)) {}", None),
-        // "if (Boolean()) {}",
-        // "if (undefined) {}",
+        // ("if (Boolean()) {}", None),
+        // ("if (undefined) {}", None),
         ("q > 0 ? 1 : 2;", None),
         ("`${a}` === a ? 1 : 2", None),
         ("`foo${a}` === a ? 1 : 2", None),
         ("tag`a` === a ? 1 : 2", None),
         ("tag`${a}` === a ? 1 : 2", None),
-        //TODO
-        // ("while(~!a);", None),
-        // ("while(a = b);", None),
-        // ("while(`${a}`);", None),
-        // ("for(;x < 10;);", None),
-        // ("for(;;);", None),
-        // ("for(;`${a}`;);", None),
-        // ("do{ }while(x)", None),
-        // ("while(x += 3) {}", None),
-        // ("while(tag`a`) {}", None),
-        // ("while(tag`${a}`) {}", None),
-        // ("while(`\\\n${a}`) {}", None),
-        // ("while(true);", Some(json!([{"checkLoops":false}]))),
-        // ("for(;true;);", Some(json!([{"checkLoops":false}]))),
-        // ("do{}while(true)", Some(json!([{"checkLoops":false}]))),
+        ("while(~!a);", None),
+        ("while(a = b);", None),
+        ("while(`${a}`);", None),
+        ("for(;x < 10;);", None),
+        ("for(;;);", None),
+        ("for(;`${a}`;);", None),
+        ("do{ }while(x)", None),
+        ("while(x += 3) {}", None),
+        ("while(tag`a`) {}", None),
+        ("while(tag`${a}`) {}", None),
+        ("while(`\\\n${a}`) {}", None),
+        ("while(true);", Some(json!([{ "checkLoops": false }]))),
+        ("for(;true;);", Some(json!([{ "checkLoops": false }]))),
+        ("do{}while(true)", Some(json!([{ "checkLoops": "none" }]))),
+        ("while(true);", Some(json!([{ "checkLoops": "none" }]))),
+        ("for(;true;);", Some(json!([{ "checkLoops": "none" }]))),
+        ("do{ }while(x);", Some(json!([{ "checkLoops": "all" }]))),
+        ("while(true);", Some(json!([{ "checkLoops": "allExceptWhileTrue" }]))),
+        ("while(true);", None),
+        ("while(a == b);", Some(json!([{ "checkLoops": "all" }]))),
+        ("for (let x = 0; x <= 10; x++) {};", Some(json!([{ "checkLoops": "all" }]))),
+        ("do{}while(true)", Some(json!([{ "checkLoops": false }]))),
+        // TODO
         // ("function* foo(){while(true){yield 'foo';}}", None),
         // ("function* foo(){for(;true;){yield 'foo';}}", None),
         // ("function* foo(){do{yield 'foo';}while(true)}", None),
@@ -254,7 +327,6 @@ fn test() {
     ];
 
     let fail = vec![
-        ("if(-2);", None),
         ("if(-2);", None),
         ("if(true);", None),
         ("if(1);", None),
@@ -306,11 +378,13 @@ fn test() {
         ("if((a &&= null) && b);", None),
         ("if(false || (a &&= false));", None),
         ("if((a &&= false) || false);", None),
+        ("while(x = 1);", None),
         ("if(typeof x){}", None),
         ("if(typeof 'abc' === 'string'){}", None),
         ("if(a = typeof b){}", None),
         ("if(a, typeof b){}", None),
         ("if(typeof 'a' == 'string' || typeof 'b' == 'string'){}", None),
+        ("while(typeof x){}", None),
         ("if(1 || void x);", None),
         ("if(void x);", None),
         ("if(y = void x);", None),
@@ -370,39 +444,46 @@ fn test() {
         ("`` ? 1 : 2;", None),
         ("`foo` ? 1 : 2;", None),
         ("`foo${bar}` ? 1 : 2;", None),
+        ("for(;true;);", None),
+        ("for(;``;);", None),
+        ("for(;`foo`;);", None),
+        ("for(;`foo${bar}`;);", None),
+        ("do{}while(true)", None),
+        ("do{}while('1')", None),
+        ("do{}while(0)", None),
+        ("do{}while(t = -2)", None),
+        ("do{}while(``)", None),
+        ("do{}while(`foo`)", None),
+        ("do{}while(`foo${bar}`)", None),
+        ("while([]);", None),
+        ("while(~!0);", None),
+        ("while(x = 1);", Some(json!([{ "checkLoops": "all" }]))),
+        ("while(function(){});", None),
+        ("while(true);", Some(json!([{ "checkLoops": "all" }]))),
+        ("while(1);", None),
+        ("while(() => {});", None),
+        ("while(`foo`);", None),
+        ("while(``);", None),
+        ("while(`${'foo'}`);", None),
+        ("while(`${'foo' + 'bar'}`);", None),
+        ("do{ }while(x = 1)", Some(json!([{ "checkLoops": "all" }]))),
+        ("for (;true;) {};", Some(json!([{ "checkLoops": "all" }]))),
         // TODO
-        // ("for(;true;);", None),
-        // ("for(;``;);", None),
-        // ("for(;`foo`;);", None),
-        // ("for(;`foo${bar}`;);", None),
-        // ("do{}while(true)", None),
-        // ("do{}while('1')", None),
-        // ("do{}while(0)", None),
-        // ("do{}while(t = -2)", None),
-        // ("do{}while(``)", None),
-        // ("do{}while(`foo`)", None),
-        // ("do{}while(`foo${bar}`)", None),
-        // ("while([]);", None),
-        // ("while(~!0);", None),
-        // ("while(x = 1);", None),
-        // ("while(function(){});", None),
-        // ("while(true);", None),
-        // ("while(1);", None),
-        // ("while(() => {});", None),
-        // ("while(`foo`);", None),
-        // ("while(``);", None),
-        // ("while(`${'foo'}`);", None),
-        // ("while(`${'foo' + 'bar'}`);", None),
-        // ("function* foo(){while(true){} yield 'foo';}", None),
-        // ("function* foo(){while(true){if (true) {yield 'foo';}}}", None),
-        // ("function* foo(){while(true){yield 'foo';} while(true) {}}", None),
-        // ("var a = function* foo(){while(true){} yield 'foo';}", None),
-        // ("while (true) { function* foo() {yield;}}", None),
+        // ("function* foo(){while(true){} yield 'foo';}", Some(json!([{ "checkLoops": "all" }]))),
+        // ("function* foo(){while(true){} yield 'foo';}", Some(json!([{ "checkLoops": true }]))),
+        // ("function* foo(){while(true){if (true) {yield 'foo';}}}",Some(json!([{ "checkLoops": "all" }])),),
+        // ("function* foo(){while(true){if (true) {yield 'foo';}}}",Some(json!([{ "checkLoops": true }])),),
+        // ("function* foo(){while(true){yield 'foo';} while(true) {}}", Some(json!([{ "checkLoops": "all" }])),),
+        // ("function* foo(){while(true){yield 'foo';} while(true) {}}",Some(json!([{ "checkLoops": true }])),),
+        // ("var a = function* foo(){while(true){} yield 'foo';}",Some(json!([{ "checkLoops": "all" }])),),
+        // ("var a = function* foo(){while(true){} yield 'foo';}",Some(json!([{ "checkLoops": true }])),),
+        // ("while (true) { function* foo() {yield;}}", Some(json!([{ "checkLoops": "all" }]))),
+        // ("while (true) { function* foo() {yield;}}", Some(json!([{ "checkLoops": true }]))),
         // ("function* foo(){if (true) {yield 'foo';}}", None),
         // ("function* foo() {for (let foo = yield; true;) {}}", None),
         // ("function* foo() {for (foo = yield; true;) {}}", None),
-        // ("function foo() {while (true) {function* bar() {while (true) {yield;}}}}", None),
-        // ("function foo() {while (true) {const bar = function*() {while (true) {yield;}}}}", None),
+        // ("function foo() {while (true) {function* bar() {while (true) {yield;}}}}",Some(json!([{ "checkLoops": "all" }])),),
+        // ("function foo() {while (true) {const bar = function*() {while (true) {yield;}}}}",Some(json!([{ "checkLoops": "all" }])),),
         // ("function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}", None),
     ];
 

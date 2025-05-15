@@ -2,4 +2,8 @@ commit: 578ac4df
 
 transformer_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 2322/2322 (100.00%)
+Positive Passed: 2320/2322 (99.91%)
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/47/input.js
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/48/input.js
+

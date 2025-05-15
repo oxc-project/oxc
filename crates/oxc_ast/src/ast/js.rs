@@ -962,7 +962,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierValue)]
+    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierInit)]
     pub init: Option<Expression<'a>>,
 }
 
@@ -2491,10 +2491,13 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_ts_def)]
+#[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
+    #[estree(skip)]
     pub span: Span,
+    #[estree(skip)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[estree(rename = "attributes")]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
@@ -2590,12 +2593,16 @@ pub struct ExportAllDeclaration<'a> {
 ///
 /// Each [`ExportSpecifier`] is one of the named exports in an [`ExportNamedDeclaration`].
 ///
+/// Note: `export_kind` relates to whether this specific `ExportSpecifier` is preceded by `type` keyword.
+/// If the whole `ExportNamedDeclaration` has a `type` prefix, its `ExportSpecifier`s will still have
+/// `export_kind: ImportOrExportKind::Value`. e.g. in this case: `export type { Foo, Bar }`.
+///
 /// ## Example
 ///
 /// ```ts
 /// //       ____ export_kind
-/// import { type Foo as Bar } from './foo';
-/// //   exported ^^^    ^^^ local
+/// export { type Foo as Bar };
+/// //      local ^^^    ^^^ exported
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -2605,7 +2612,7 @@ pub struct ExportSpecifier<'a> {
     pub local: ModuleExportName<'a>,
     pub exported: ModuleExportName<'a>,
     #[ts]
-    pub export_kind: ImportOrExportKind, // `export type *`
+    pub export_kind: ImportOrExportKind, // `export { type Foo as Bar };`
 }
 
 inherit_variants! {

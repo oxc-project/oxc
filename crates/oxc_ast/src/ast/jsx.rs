@@ -38,7 +38,7 @@ pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
     /// Opening tag of the element.
-    #[estree(via = JSXElementOpening)]
+    #[estree(via = JSXElementOpeningElement)]
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
     /// Children of the element.
     /// This can be text, other elements, or expressions.

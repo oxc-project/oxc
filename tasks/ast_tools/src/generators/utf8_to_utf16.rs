@@ -37,8 +37,12 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// 1. Types where a shorthand syntax means 2 nodes have same span e.g. `const {x} = y;`, `export {x}`.
 /// 2. `WithClause`, where `IdentifierName` for `with` keyword has span outside of the `WithClause`.
 /// 3. `TemplateLiteral`s, where `quasis` and `expressions` are interleaved.
+///    Ditto `TSTemplateLiteralType`s where `quasis` and `types` are interleaved.
 /// 4. Decorators before `export` in `@dec export class C {}` / `@dec export default class {}`
 ///    have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
+/// 5. `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
+///    Except for `BindingRestElement`, where `type_annotation`'s span is after `BindingPatternKind`.
+/// 6. `FormalParameters` where span can include a `TSThisParameter` which is visited before it.
 ///
 /// Define custom visitors for these types, which ensure `convert_offset` is always called with offsets
 /// in ascending order.
@@ -49,6 +53,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     // Types with custom visitors (see comment above).
     // Also skip `Comment` because we handle adjusting comment spans separately.
     let skip_type_ids = [
+        "FormalParameters",
         "ObjectProperty",
         "BindingProperty",
         "ExportNamedDeclaration",
@@ -57,6 +62,8 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportSpecifier",
         "WithClause",
         "TemplateLiteral",
+        "TSTemplateLiteralType",
+        "BindingRestElement",
         "Comment",
     ]
     .map(|type_name| schema.type_names[type_name]);
@@ -72,12 +79,8 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             return None;
         }
 
-        // Skip types in `oxc_regular_expression`, `oxc_syntax`, and `napi/parser` crates.
-        // They don't appear in ESTree AST.
-        if matches!(
-            struct_def.file(schema).krate(),
-            "oxc_regular_expression" | "oxc_syntax" | "napi/parser"
-        ) {
+        // Skip types in `oxc_syntax` and `napi/parser` crates. They don't appear in ESTree AST.
+        if matches!(struct_def.file(schema).krate(), "oxc_syntax" | "napi/parser") {
             return None;
         }
 
@@ -100,11 +103,19 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             #(#methods)*
 
             ///@@line_break
-            fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
+                // Span of `FormalParameters` itself does not appear in ESTree AST,
+                // and its span includes `TSThisParameter` in types like `Function`,
+                // which is converted before `FormalParameters`. So skip converting span.
+                walk_mut::walk_formal_parameters(self, params);
+            }
+
+            ///@@line_break
+            fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+                self.convert_offset(&mut prop.span.start);
 
                 // If shorthand, span of `key` and `value` are the same
-                match (it.shorthand, &mut it.key, &mut it.value) {
+                match (prop.shorthand, &mut prop.key, &mut prop.value) {
                     (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
                         self.visit_identifier_name(key);
                         value.span = key.span;
@@ -115,15 +126,64 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut prop.span.end);
             }
 
             ///@@line_break
-            fn visit_binding_property(&mut self, it: &mut BindingProperty<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
+                // Span of `type_annotation` is within the span of `kind`,
+                // so visit `type_annotation` before exiting span of `kind`
+                let span_end = match &mut pattern.kind {
+                    BindingPatternKind::BindingIdentifier(ident) => {
+                        self.convert_offset(&mut ident.span.start);
+                        walk_mut::walk_binding_identifier(self, ident);
+                        &mut ident.span.end
+                    }
+                    BindingPatternKind::ObjectPattern(obj_pattern) => {
+                        self.convert_offset(&mut obj_pattern.span.start);
+                        walk_mut::walk_object_pattern(self, obj_pattern);
+                        &mut obj_pattern.span.end
+                    }
+                    BindingPatternKind::ArrayPattern(arr_pattern) => {
+                        self.convert_offset(&mut arr_pattern.span.start);
+                        walk_mut::walk_array_pattern(self, arr_pattern);
+                        &mut arr_pattern.span.end
+                    }
+                    BindingPatternKind::AssignmentPattern(assign_pattern) => {
+                        self.convert_offset(&mut assign_pattern.span.start);
+                        walk_mut::walk_assignment_pattern(self, assign_pattern);
+                        &mut assign_pattern.span.end
+                    }
+                };
+
+                if let Some(type_annotation) = &mut pattern.type_annotation {
+                    self.visit_ts_type_annotation(type_annotation);
+                }
+
+                self.convert_offset(span_end);
+            }
+
+            ///@@line_break
+            fn visit_binding_rest_element(&mut self, rest_element: &mut BindingRestElement<'a>) {
+                // `BindingRestElement` contains a `BindingPattern`, but in this case span of
+                // `type_annotation` is after span of `kind`.
+                // So avoid calling `visit_binding_pattern` above.
+                self.convert_offset(&mut rest_element.span.start);
+
+                self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
+                if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
+                    self.visit_ts_type_annotation(type_annotation);
+                }
+
+                self.convert_offset(&mut rest_element.span.end);
+            }
+
+            ///@@line_break
+            fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
+                self.convert_offset(&mut prop.span.start);
 
                 // If shorthand, span of `key` and `value` are the same
-                match (it.shorthand, &mut it.key, &mut it.value) {
+                match (prop.shorthand, &mut prop.key, &mut prop.value) {
                     (
                         true,
                         PropertyKey::StaticIdentifier(key),
@@ -146,7 +206,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut prop.span.end);
             }
 
             ///@@line_break
@@ -174,14 +234,14 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             }
 
             ///@@line_break
-            fn visit_export_specifier(&mut self, it: &mut ExportSpecifier<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
+                self.convert_offset(&mut specifier.span.start);
 
                 // `local` and `exported` have same span if e.g.:
                 // * `export {x}`
                 // * `export {x} from 'foo.js;`
                 // * `export {"a-b"} from 'foo.js';`
-                match (&mut it.local, &mut it.exported) {
+                match (&mut specifier.local, &mut specifier.exported) {
                     (
                         ModuleExportName::IdentifierReference(local),
                         ModuleExportName::IdentifierName(exported),
@@ -209,48 +269,62 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut specifier.span.end);
             }
 
             ///@@line_break
-            fn visit_import_specifier(&mut self, it: &mut ImportSpecifier<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
+                self.convert_offset(&mut specifier.span.start);
 
                 // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
-                match &mut it.imported {
-                    ModuleExportName::IdentifierName(imported) if imported.span == it.local.span => {
+                match &mut specifier.imported {
+                    ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
                         self.visit_identifier_name(imported);
-                        it.local.span = imported.span;
+                        specifier.local.span = imported.span;
                     }
                     imported => {
                         self.visit_module_export_name(imported);
-                        self.visit_binding_identifier(&mut it.local);
+                        self.visit_binding_identifier(&mut specifier.local);
                     }
                 }
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut specifier.span.end);
             }
 
             ///@@line_break
-            fn visit_with_clause(&mut self, it: &mut WithClause<'a>) {
+            fn visit_with_clause(&mut self, with_clause: &mut WithClause<'a>) {
                 // `WithClause::attributes_keyword` has a span before start of the `WithClause`.
                 // ESTree does not include that node, nor the span of the `WithClause` itself,
                 // so skip processing those spans.
-                self.visit_import_attributes(&mut it.with_entries);
+                self.visit_import_attributes(&mut with_clause.with_entries);
             }
 
             ///@@line_break
-            fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {
-                self.convert_offset(&mut it.span.start);
+            fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
+                self.convert_offset(&mut lit.span.start);
 
                 // Visit `quasis` and `expressions` in source order. The two `Vec`s are interleaved.
-                for (quasi, expression) in it.quasis.iter_mut().zip(&mut it.expressions) {
+                for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
                     self.visit_template_element(quasi);
                     self.visit_expression(expression);
                 }
-                self.visit_template_element(it.quasis.last_mut().unwrap());
+                self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-                self.convert_offset(&mut it.span.end);
+                self.convert_offset(&mut lit.span.end);
+            }
+
+            ///@@line_break
+            fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
+                self.convert_offset(&mut lit.span.start);
+
+                // Visit `quasis` and `types` in source order. The two `Vec`s are interleaved.
+                for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
+                    self.visit_template_element(quasi);
+                    self.visit_ts_type(ts_type);
+                }
+                self.visit_template_element(lit.quasis.last_mut().unwrap());
+
+                self.convert_offset(&mut lit.span.end);
             }
         }
 

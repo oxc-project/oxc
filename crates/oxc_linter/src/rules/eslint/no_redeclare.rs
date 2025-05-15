@@ -1,10 +1,14 @@
 use javascript_globals::GLOBALS;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{ModuleKind, Span};
 use oxc_syntax::symbol::SymbolId;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
@@ -52,7 +56,7 @@ declare_oxc_lint!(
     ///
     /// #### builtinGlobals
     ///
-    /// `{ type: bool, default: false }`
+    /// `{ type: bool, default: true }`
     ///
     /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     NoRedeclare,
@@ -116,6 +120,11 @@ impl Rule for NoRedeclare {
             }
         }
     }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        // Modules run in their own scope, and don't conflict with existing globals
+        ctx.source_type().module_kind() == ModuleKind::Script
+    }
 }
 
 #[test]
@@ -178,9 +187,23 @@ fn test() {
         ("type foo = 1; export function foo(): void; export function foo() { }", None),
     ];
 
-    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension(".cts")
+        .test_and_snapshot();
 
     let fail = vec![("var foo;", None, Some(serde_json::json!({ "globals": { "foo": false }})))];
 
-    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, vec![], fail).test();
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, vec![], fail)
+        .change_rule_path_extension(".cts")
+        .test();
+
+    let pass = vec![(
+        "import { performance } from 'node:perf_hooks'; (() => { performance })",
+        None,
+        Some(serde_json::json!({ "globals": { "performance": "readonly" }})),
+    )];
+
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, vec![])
+        .change_rule_path_extension(".ts")
+        .test();
 }

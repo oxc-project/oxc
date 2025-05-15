@@ -9,9 +9,9 @@ use std::fmt::{self, Display};
 #[repr(u8)]
 #[non_exhaustive]
 pub enum Kind {
-    Undetermined,
     #[default]
-    Eof,
+    Eof = 0,
+    Undetermined,
     Skip, // Whitespace, line breaks, comments
     // 12.5 Hashbang Comments
     HashbangComment,

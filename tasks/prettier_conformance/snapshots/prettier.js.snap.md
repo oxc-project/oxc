@@ -1,4 +1,4 @@
-js compatibility: 236/699 (33.76%)
+js compatibility: 237/699 (33.91%)
 
 # Failed
 
@@ -219,7 +219,6 @@ js compatibility: 236/699 (33.76%)
 | js/explicit-resource-management/using-declarations.js | 💥 | 80.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 60.61% |
 | js/explicit-resource-management/valid-using-as-identifier-for-init.js | 💥 | 0.00% |
-| js/explicit-resource-management/valid-using-binding-using.js | 💥 | 0.00% |
 | js/export/blank-line-between-specifiers.js | 💥💥 | 95.00% |
 | js/export-default/function_in_template.js | 💥 | 0.00% |
 | js/export-default/iife.js | 💥 | 0.00% |

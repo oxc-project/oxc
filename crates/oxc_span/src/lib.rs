@@ -10,15 +10,13 @@ mod compact_str;
 mod source_type;
 mod span;
 
-pub use crate::{
-    atom::Atom,
-    cmp::ContentEq,
-    compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},
-    source_type::{
-        Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
-    },
-    span::{GetSpan, GetSpanMut, SPAN, Span},
+pub use atom::Atom;
+pub use cmp::ContentEq;
+pub use compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN};
+pub use source_type::{
+    Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
 };
+pub use span::{GetSpan, GetSpanMut, SPAN, Span};
 
 mod generated {
     #[cfg(debug_assertions)]

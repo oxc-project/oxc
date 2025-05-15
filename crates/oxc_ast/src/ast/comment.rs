@@ -49,15 +49,14 @@ pub enum CommentAnnotation {
     #[default]
     None = 0,
 
-    /// `/** jsdoc */`
-    /// <https://jsdoc.app>
-    Jsdoc = 1,
-
     /// Legal Comment
     /// e.g. `/* @license */`, `/* @preserve */`, or starts with `//!` or `/*!`.
-    ///
     /// <https://esbuild.github.io/api/#legal-comments>
-    Legal = 2,
+    Legal = 1,
+
+    /// `/** jsdoc */`
+    /// <https://jsdoc.app>
+    Jsdoc = 2,
 
     /// `/* #__PURE__ */`
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>

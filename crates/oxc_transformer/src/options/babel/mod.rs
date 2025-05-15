@@ -169,6 +169,9 @@ impl BabelOptions {
 
     pub fn is_jsx(&self) -> bool {
         self.plugins.syntax_jsx
+            || self.presets.jsx.is_some()
+            || self.plugins.react_jsx.is_some()
+            || self.plugins.react_jsx_dev.is_some()
     }
 
     pub fn is_typescript(&self) -> bool {

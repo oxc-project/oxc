@@ -118,12 +118,14 @@ export { default as name16 } from "module-name";
 import a = require("a");
 export import b = require("b");
 "#,
+        "class C {
+  static
+  static
+  static
+  bar() {}
+}",
     ];
 
     snapshot("ts", &cases);
-    snapshot_options(
-        "minify",
-        &cases,
-        &CodegenOptions { minify: true, ..CodegenOptions::default() },
-    );
+    snapshot_options("minify", &cases, &CodegenOptions::minify());
 }

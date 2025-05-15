@@ -75,6 +75,9 @@ importers:
 
   napi/minify:
     devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
       vitest:
         specifier: 'catalog:'
         version: 3.1.3(@types/node@22.15.17)(@vitest/browser@3.1.3)
@@ -100,6 +103,9 @@ importers:
       playwright:
         specifier: ^1.51.0
         version: 1.52.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
       vitest:
         specifier: 'catalog:'
         version: 3.1.3(@types/node@22.15.17)(@vitest/browser@3.1.3)
@@ -112,6 +118,9 @@ importers:
 
   napi/transform:
     devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
       vitest:
         specifier: 'catalog:'
         version: 3.1.3(@types/node@22.15.17)(@vitest/browser@3.1.3)

@@ -6,7 +6,7 @@
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform",
     "build": "pnpm run build-dev --features allocator --release",
-    "test": "vitest run --dir ./test && tsc"
+    "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -38,7 +38,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "typescript": "catalog:"
   },
   "napi": {
     "binaryName": "minify",

@@ -24,6 +24,8 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
+    /// Examples of **incorrect** code for this rule:
+    ///
     /// ```javascript
     /// async function main() {
     ///     const data = await getData();
@@ -31,6 +33,15 @@ declare_oxc_lint!(
     ///     debugger;
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function main() {
+    ///     const data = await getData();
+    ///     const result = complexCalculation(data);
+    /// }
+    /// ```
+    ///
     NoDebugger,
     eslint,
     correctness,

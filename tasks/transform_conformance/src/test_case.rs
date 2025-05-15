@@ -90,10 +90,8 @@ impl TestCase {
     fn source_type(path: &Path, options: &BabelOptions) -> SourceType {
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
-        let mut source_type = SourceType::from_path(path)
-            .unwrap()
-            .with_script(true)
-            .with_jsx(options.plugins.syntax_jsx);
+        let mut source_type =
+            SourceType::from_path(path).unwrap().with_script(true).with_jsx(options.is_jsx());
         source_type = match options.source_type.as_deref() {
             Some("unambiguous") => source_type.with_unambiguous(true),
             Some("script") => source_type.with_script(true),

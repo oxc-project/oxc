@@ -32,3 +32,5 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
+# Only for conformance tests
+conformance = []

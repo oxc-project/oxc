@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize"] }
+oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
 oxc_formatter = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_tasks_transform_checker = { workspace = true }

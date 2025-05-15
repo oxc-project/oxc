@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 35/35 (100.00%)
-Positive Passed: 20/35 (57.14%)
+AST Parsed     : 36/36 (100.00%)
+Positive Passed: 21/36 (58.33%)
 semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["from"]

@@ -119,6 +119,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
+    #[inline]
     fn advance(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
         self.prev_token_end = self.token.end();
@@ -166,23 +167,20 @@ impl<'a> ParserImpl<'a> {
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {
-        if !self.can_insert_semicolon() {
+        if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
+            /* no op */
+        } else {
             let span = Span::new(self.prev_token_end, self.prev_token_end);
             let error = diagnostics::auto_semicolon_insertion(span);
             self.set_fatal_error(error);
-            return;
-        }
-        if self.at(Kind::Semicolon) {
-            self.advance(Kind::Semicolon);
         }
     }
 
+    #[inline]
     pub(crate) fn can_insert_semicolon(&self) -> bool {
-        let kind = self.cur_kind();
-        if kind == Kind::Semicolon {
-            return true;
-        }
-        kind == Kind::RCurly || kind.is_eof() || self.cur_token().is_on_new_line()
+        let token = self.cur_token();
+        let kind = token.kind();
+        kind == Kind::Semicolon || kind == Kind::RCurly || kind.is_eof() || token.is_on_new_line()
     }
 
     /// # Errors
@@ -239,6 +237,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
             self.token = self.lexer.next_right_angle();
@@ -249,6 +250,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_l_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq | Kind::LtEq) {
             self.token = self.lexer.re_lex_as_typescript_l_angle(kind);
@@ -259,6 +263,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn re_lex_ts_r_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
             self.token = self.lexer.re_lex_as_typescript_r_angle(kind);

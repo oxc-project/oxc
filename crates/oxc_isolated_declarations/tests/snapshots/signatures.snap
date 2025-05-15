@@ -24,6 +24,7 @@ export interface I {
 	set value(_: string);
 	get value(): string;
 }
+// Do nothing
 export interface Ref<
 	T = any,
 	S = T

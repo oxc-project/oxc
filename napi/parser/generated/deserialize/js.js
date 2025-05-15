@@ -923,7 +923,7 @@ function deserializeImportDeclaration(pos) {
     end: deserializeU32(pos + 4),
     specifiers,
     source: deserializeStringLiteral(pos + 40),
-    attributes: withClause === null ? [] : withClause.withEntries,
+    attributes: withClause === null ? [] : withClause.attributes,
   };
 }
 
@@ -957,11 +957,7 @@ function deserializeImportNamespaceSpecifier(pos) {
 
 function deserializeWithClause(pos) {
   return {
-    type: 'WithClause',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    attributesKeyword: deserializeIdentifierName(pos + 8),
-    withEntries: deserializeVecImportAttribute(pos + 32),
+    attributes: deserializeVecImportAttribute(pos + 32),
   };
 }
 
@@ -984,7 +980,7 @@ function deserializeExportNamedDeclaration(pos) {
     declaration: deserializeOptionDeclaration(pos + 8),
     specifiers: deserializeVecExportSpecifier(pos + 24),
     source: deserializeOptionStringLiteral(pos + 56),
-    attributes: withClause === null ? [] : withClause.withEntries,
+    attributes: withClause === null ? [] : withClause.attributes,
   };
 }
 
@@ -1005,7 +1001,7 @@ function deserializeExportAllDeclaration(pos) {
     end: deserializeU32(pos + 4),
     exported: deserializeOptionModuleExportName(pos + 8),
     source: deserializeStringLiteral(pos + 64),
-    attributes: withClause === null ? [] : withClause.withEntries,
+    attributes: withClause === null ? [] : withClause.attributes,
   };
 }
 
@@ -1916,7 +1912,7 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
-  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 48) || false;
+  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 48);
   if (optional === null) optional = false;
   const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   return {

@@ -10,10 +10,12 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+#[track_caller]
 pub fn codegen(source_text: &str) -> String {
     codegen_options(source_text, &CodegenOptions::default()).code
 }
 
+#[track_caller]
 pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenReturn {
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
@@ -23,10 +25,12 @@ pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenRe
     Codegen::new().with_options(options).build(&ret.program)
 }
 
+#[track_caller]
 pub fn snapshot(name: &str, cases: &[&str]) {
     snapshot_options(name, cases, &CodegenOptions::default());
 }
 
+#[track_caller]
 pub fn snapshot_options(name: &str, cases: &[&str], options: &CodegenOptions) {
     use std::fmt::Write;
 

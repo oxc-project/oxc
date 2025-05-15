@@ -345,9 +345,20 @@ impl<'a> ParserImpl<'a> {
         {
             return self.parse_variable_declaration_for_statement(span, r#await);
         }
+        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
+        if self.cur_kind() == Kind::Await
+            && !self.peek_token().is_on_new_line()
+            && self.peek_kind() == Kind::Using
+            && !self.nth(2).is_on_new_line()
+        {
+            return self.parse_using_declaration_for_statement(span, r#await);
+        }
 
-        if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
-            || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
+        // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
+        if self.cur_kind() == Kind::Using
+            && !self.peek_token().is_on_new_line()
+            && self.peek_kind() != Kind::Of
+            && self.peek_kind().is_binding_identifier()
         {
             return self.parse_using_declaration_for_statement(span, r#await);
         }

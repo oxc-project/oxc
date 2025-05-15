@@ -3,7 +3,9 @@ use quote::quote;
 use syn::{Item, parse_macro_input};
 
 mod ast;
-mod generated;
+mod generated {
+    pub mod derived_traits;
+}
 
 /// This attribute serves two purposes:
 ///

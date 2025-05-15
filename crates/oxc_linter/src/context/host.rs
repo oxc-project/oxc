@@ -5,13 +5,14 @@ use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    FrameworkFlags, RuleWithSeverity,
+    AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message},
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
+    rules::RuleEnum,
 };
 
 use super::{LintContext, plugin_name_to_prefix};
@@ -226,7 +227,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Creates a new [`LintContext`] for a specific rule.
-    pub fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
+    pub fn spawn(self: Rc<Self>, rule: &RuleEnum, severity: AllowWarnDeny) -> LintContext<'a> {
         let rule_name = rule.name();
         let plugin_name = rule.plugin_name();
 
@@ -236,8 +237,8 @@ impl<'a> ContextHost<'a> {
             current_plugin_name: plugin_name,
             current_plugin_prefix: plugin_name_to_prefix(plugin_name),
             #[cfg(debug_assertions)]
-            current_rule_fix_capabilities: rule.rule.fix(),
-            severity: rule.severity.into(),
+            current_rule_fix_capabilities: rule.fix(),
+            severity: severity.into(),
         }
     }
 
