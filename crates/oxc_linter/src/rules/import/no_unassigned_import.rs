@@ -32,7 +32,6 @@ impl std::ops::Deref for NoUnassignedImport {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -42,10 +41,10 @@ declare_oxc_lint!(
     ///
     /// With both CommonJS' require and the ES6 modules' import syntax,
     /// it is possible to import a module but not to use its result.
-    /// This can be done explicitly by not assigning the module to as variable.
+    /// This can be done explicitly by not assigning the module to a variable.
     /// Doing so can mean either of the following things:
     /// * The module is imported but not used
-    /// * The module has side-effects (like should). Having side-effects,
+    /// * The module has side-effects. Having side-effects,
     /// makes it hard to know whether the module is actually used or can be removed.
     /// It can also make it harder to test or mock parts of your application.
     ///
