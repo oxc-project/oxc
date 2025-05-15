@@ -9,11 +9,13 @@ use crate::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
+    // Padding: 0 bytes
     assert!(size_of::<Span>() == 8);
     assert!(align_of::<Span>() == 8);
     assert!(offset_of!(Span, start) == 0);
     assert!(offset_of!(Span, end) == 4);
 
+    // Padding: 0 bytes
     assert!(size_of::<SourceType>() == 3);
     assert!(align_of::<SourceType>() == 1);
     assert!(offset_of!(SourceType, language) == 0);
@@ -32,11 +34,13 @@ const _: () = {
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
+    // Padding: 0 bytes
     assert!(size_of::<Span>() == 8);
     assert!(align_of::<Span>() == 4);
     assert!(offset_of!(Span, start) == 0);
     assert!(offset_of!(Span, end) == 4);
 
+    // Padding: 0 bytes
     assert!(size_of::<SourceType>() == 3);
     assert!(align_of::<SourceType>() == 1);
     assert!(offset_of!(SourceType, language) == 0);

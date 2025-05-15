@@ -437,8 +437,25 @@ fn generate_layout_assertions_for_struct<'s>(
     assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
     schema: &'s Schema,
 ) {
-    fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
+    fn r#gen(
+        struct_def: &StructDef,
+        is_64: bool,
+        struct_ident: &Ident,
+        schema: &Schema,
+    ) -> TokenStream {
         let layout = struct_def.platform_layout(is_64);
+
+        let fields_total_bytes: u32 = struct_def
+            .fields
+            .iter()
+            .map(|field| {
+                let x = field.type_def(schema).platform_layout(is_64).size;
+                x
+            })
+            .sum();
+        let padding_bytes = layout.size - fields_total_bytes;
+        let padding_comment = format!("@ Padding: {padding_bytes} bytes");
+        let padding_comment = quote!( #[doc = #padding_comment] );
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
@@ -457,6 +474,8 @@ fn generate_layout_assertions_for_struct<'s>(
         });
 
         quote! {
+            ///@@line_break
+            #padding_comment
             #size_align_assertions
             #(#offset_asserts)*
         }
@@ -466,8 +485,8 @@ fn generate_layout_assertions_for_struct<'s>(
         assertions.entry(struct_def.file(schema).krate()).or_default();
 
     let ident = struct_def.ident();
-    assertions_64.extend(r#gen(struct_def, true, &ident));
-    assertions_32.extend(r#gen(struct_def, false, &ident));
+    assertions_64.extend(r#gen(struct_def, true, &ident, schema));
+    assertions_32.extend(r#gen(struct_def, false, &ident, schema));
 }
 
 /// Generate layout assertions for an enum.
@@ -481,7 +500,9 @@ fn generate_layout_assertions_for_enum<'s>(
         assertions.entry(enum_def.file(schema).krate()).or_default();
 
     let ident = enum_def.ident();
+    add_line_break(assertions_64);
     assertions_64.extend(generate_size_align_assertions(enum_def.layout_64(), &ident));
+    add_line_break(assertions_32);
     assertions_32.extend(generate_size_align_assertions(enum_def.layout_32(), &ident));
 }
 
@@ -490,7 +511,6 @@ fn generate_size_align_assertions(layout: &PlatformLayout, ident: &Ident) -> Tok
     let size = number_lit(layout.size);
     let align = number_lit(layout.align);
     quote! {
-        ///@@line_break
         assert!(size_of::<#ident>() == #size);
         assert!(align_of::<#ident>() == #align);
     }
@@ -544,4 +564,10 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
         #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
         const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
     }
+}
+
+fn add_line_break(tokens: &mut TokenStream) {
+    tokens.extend(quote! {
+        ///@@line_break
+    });
 }
