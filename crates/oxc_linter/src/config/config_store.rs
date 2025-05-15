@@ -88,6 +88,13 @@ impl Config {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
+
+        for override_config in overrides_to_apply.clone() {
+            if let Some(override_plugins) = override_config.plugins {
+                plugins |= override_plugins;
+            }
+        }
+
         let mut rules = self
             .base
             .rules
@@ -105,10 +112,6 @@ impl Config {
         for override_config in overrides_to_apply {
             if !override_config.rules.is_empty() {
                 override_config.rules.override_rules(&mut rules, &all_rules);
-            }
-
-            if let Some(override_plugins) = override_config.plugins {
-                plugins |= override_plugins;
             }
 
             if let Some(override_env) = &override_config.env {
