@@ -25,8 +25,7 @@ use crate::{
 use super::define_generator;
 
 // Offsets of `Vec`'s fields.
-// These are based on observation, and are not stable.
-// They will be fully reliable once we implement our own `Vec` type and make it `#[repr(C)]`.
+// `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
 const VEC_PTR_FIELD_OFFSET: usize = 0;
 const VEC_LEN_FIELD_OFFSET: usize = 24;
 
