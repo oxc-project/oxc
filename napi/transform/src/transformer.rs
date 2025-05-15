@@ -27,7 +27,7 @@ use oxc::{
         ReplaceGlobalDefinesConfig,
     },
 };
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
@@ -86,12 +86,13 @@ pub struct TransformResult {
 #[napi(object)]
 #[derive(Default)]
 pub struct TransformOptions {
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
-    pub source_type: Option<String>,
-
     /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
 
     /// The current working directory. Used to resolve relative paths in other
     /// options.
@@ -758,28 +759,11 @@ pub fn transform(
 ) -> TransformResult {
     let source_path = Path::new(&filename);
 
-    let source_type = match options.as_ref().and_then(|options| options.lang.as_deref()) {
-        Some("js") => SourceType::mjs(),
-        Some("jsx") => SourceType::jsx(),
-        Some("ts") => SourceType::ts(),
-        Some("tsx") => SourceType::tsx(),
-        Some(lang) => {
-            return TransformResult {
-                errors: vec![OxcError::new(format!("Incorrect lang '{lang}'"))],
-                ..Default::default()
-            };
-        }
-        None => {
-            let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
-            // Force `script` or `module`
-            match options.as_ref().and_then(|options| options.source_type.as_deref()) {
-                Some("script") => source_type = source_type.with_script(true),
-                Some("module") => source_type = source_type.with_module(true),
-                _ => {}
-            }
-            source_type
-        }
-    };
+    let source_type = get_source_type(
+        &filename,
+        options.as_ref().and_then(|options| options.lang.as_deref()),
+        options.as_ref().and_then(|options| options.source_type.as_deref()),
+    );
 
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,

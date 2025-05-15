@@ -1,0 +1,13 @@
+{
+    "overrides": [
+      {
+        "files": ["*.test.ts"],
+        "plugins": ["jest", "vitest"],
+        "rules": {
+          "jest/valid-title": "deny",
+          "no-unused-vars": "off"
+        }
+      }
+    ]
+  }
+  

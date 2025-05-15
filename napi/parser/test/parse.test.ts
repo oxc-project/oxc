@@ -1,8 +1,8 @@
 import { Worker } from 'node:worker_threads';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
-import type { ExpressionStatement, TSTypeAliasDeclaration } from '../index.js';
+import type { ExpressionStatement, ParserOptions, TSTypeAliasDeclaration } from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -38,6 +38,23 @@ describe('parse', () => {
       showSemanticErrors: true,
     });
     expect(ret.errors.length).toBe(1);
+  });
+
+  describe('sets lang and sourceType', () => {
+    const code = 'await(1)';
+    let langs: ParserOptions['lang'][] = ['js', 'ts', 'jsx', 'tsx'];
+    test.each(langs)('%s', (lang) => {
+      const ret = parseSync('test.cjs', code, { lang, sourceType: 'script' });
+      expect(ret.errors.length).toBe(0);
+      // Parsed as `await(1)`
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('CallExpression');
+    });
+    test.each(langs)('%s', (lang) => {
+      const ret = parseSync('test.cjs', code, { lang, sourceType: 'module' });
+      expect(ret.errors.length).toBe(0);
+      // Parsed as `await 1`
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('AwaitExpression');
+    });
   });
 
   describe('TS properties', () => {

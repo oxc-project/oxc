@@ -1165,4 +1165,10 @@ mod test {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11054".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_plugins_in_overrides_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
+    }
 }

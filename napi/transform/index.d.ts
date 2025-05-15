@@ -361,9 +361,10 @@ export declare function transform(filename: string, sourceText: string, options?
  * @see {@link transform}
  */
 export interface TransformOptions {
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /** Treat the source text as `script` or `module` code. */
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /**
    * The current working directory. Used to resolve relative paths in other
    * options.
