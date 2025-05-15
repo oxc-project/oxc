@@ -27,7 +27,7 @@ use super::define_generator;
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
 const VEC_PTR_FIELD_OFFSET: usize = 0;
-const VEC_LEN_FIELD_OFFSET: usize = 20;
+const VEC_LEN_FIELD_OFFSET: usize = 8;
 
 /// Generator for raw transfer deserializer.
 pub struct RawTransferGenerator;

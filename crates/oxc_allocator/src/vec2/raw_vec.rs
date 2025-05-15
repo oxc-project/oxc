@@ -66,9 +66,9 @@ use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow}
 #[repr(C)]
 pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
-    a: &'a Bump,
-    cap: u32,
     pub(super) len: u32,
+    cap: u32,
+    a: &'a Bump,
 }
 
 impl<'a, T> RawVec<'a, T> {
