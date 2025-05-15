@@ -143,8 +143,8 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_has_separator(&mut self) {
-        self.0 |= HAS_SEPARATOR_FLAG;
+    pub(crate) fn set_has_separator(&mut self, value: bool) {
+        self.0 = (self.0 & !HAS_SEPARATOR_FLAG) | (u128::from(value) * HAS_SEPARATOR_FLAG);
     }
 }
 
@@ -200,7 +200,7 @@ mod test {
         token.set_lone_surrogates(lone_surrogates);
         if has_separator {
             // Assuming set_has_separator is not always called if false
-            token.set_has_separator();
+            token.set_has_separator(true);
         }
 
         assert_eq!(token.kind(), kind);
@@ -244,7 +244,7 @@ mod test {
         token_with_flags.set_is_on_new_line(true);
         token_with_flags.set_escaped(true);
         token_with_flags.set_lone_surrogates(true);
-        token_with_flags.set_has_separator();
+        token_with_flags.set_has_separator(true);
 
         token_with_flags.set_start(40);
         assert_eq!(token_with_flags.start(), 40);
@@ -261,7 +261,7 @@ mod test {
         token_with_flags2.set_is_on_new_line(true);
         // escaped is false by default
         token_with_flags2.set_lone_surrogates(true);
-        token_with_flags2.set_has_separator();
+        token_with_flags2.set_has_separator(true);
 
         token_with_flags2.set_escaped(true);
         assert_eq!(token_with_flags2.start(), 50);
@@ -283,7 +283,7 @@ mod test {
         // is_on_new_line is false by default
         token_flags_test_newline.set_escaped(true);
         token_flags_test_newline.set_lone_surrogates(true);
-        token_flags_test_newline.set_has_separator();
+        token_flags_test_newline.set_has_separator(true);
 
         token_flags_test_newline.set_is_on_new_line(true);
         assert!(token_flags_test_newline.is_on_new_line());
@@ -305,7 +305,7 @@ mod test {
         token_flags_test_lone_surrogates.set_is_on_new_line(true);
         token_flags_test_lone_surrogates.set_escaped(true);
         // lone_surrogates is false by default
-        token_flags_test_lone_surrogates.set_has_separator();
+        token_flags_test_lone_surrogates.set_has_separator(true);
 
         token_flags_test_lone_surrogates.set_lone_surrogates(true);
         assert!(token_flags_test_lone_surrogates.lone_surrogates());
