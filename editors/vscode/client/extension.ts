@@ -316,7 +316,7 @@ export async function activate(context: ExtensionContext) {
     // update the initializationOptions for a possible restart
     client.clientOptions.initializationOptions = this.languageServerConfig;
 
-    if (event.affectsConfiguration('oxc.configPath')) {
+    if (configService.effectsWorkspaceConfigPathChange(event)) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(this.getOxlintCustomConfigs());
 
