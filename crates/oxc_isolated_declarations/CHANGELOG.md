@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Bug Fixes
+
+- 9a4b135 isolated-declarations: Lost leading comments of `export default` function/class/interface (#10990) (Dunqing)
+
 ## [0.69.0] - 2025-05-09
 
 - 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)

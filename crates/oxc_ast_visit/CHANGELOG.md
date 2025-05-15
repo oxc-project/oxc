@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+### Bug Fixes
+
+- 2bdb338 ast_visit: Fix visitation order for `FormalParameters` in `Utf8ToUtf16Converter` (#11019) (overlookmotel)
+- 282420c ast_visit: Fix visitation order for `TSTemplateLiteralType` in `Utf8ToUtf16Converter` (#11007) (overlookmotel)
+- d0d04e3 ast_visit: Fix visitation order for `BindingPattern` in `Utf8ToUtf16Converter` (#11003) (overlookmotel)
+
+### Refactor
+
+- 287b3c3 ast_visit: Descriptive method param names in `Utf8ToUtf16Converter` (#10987) (overlookmotel)
+
+### Testing
+
+- a05361e ast/estree: Check span offsets are converted in ascending order in ESTree conformance tests (#10887) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 - 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)

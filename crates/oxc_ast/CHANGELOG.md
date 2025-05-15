@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+### Documentation
+
+- 206e07d ast: Fix docs for `ExportSpecifier` (#10891) (overlookmotel)
+- b23fef7 ast/estree: Standardize doc comments for ESTree serializers (#10968) (overlookmotel)
+
+### Refactor
+
+- 6cc74ff ast/estree: Add semi-colon (#10973) (overlookmotel)
+- 2958ff7 ast/estree: Rename serializers (#10969) (overlookmotel)
+- b8018b9 ast/estree: Split custom serializers into multiple files (#10967) (overlookmotel)
+- 08f1f3f ast/estree: Remove custom serializer for `Elision` (#10965) (overlookmotel)
+- d01a47b ast/estree: Simplify custom serializers for `FormalParameters` (#10964) (overlookmotel)
+- bfc6b9a ast/estree: Rename custom serializers for fields containing `FormalParameters` (#10963) (overlookmotel)
+
+### Styling
+
+- 6d4936f ast/estree: Reformat `raw_deser` code (#10972) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 - 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)

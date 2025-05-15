@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+### Refactor
+
+- c1e6c9b ast_macros: Move logic out of generated code (#11049) (overlookmotel)
+- 2a403cb ast_macros: Rename generated file (#11047) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 ### Styling

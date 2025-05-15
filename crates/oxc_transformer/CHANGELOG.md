@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Bug Fixes
+
+- 6c20277 transformer: Always update jsx options from comments (#10966) (magic-akari)
+- 27a21a7 transformer/jsx: Fix parsing JSX pragma comments (#10983) (overlookmotel)
+- a39eb85 transformer/legacy-decorator: Abstract class doesn't work in metadata (#10952) (Dunqing)
+
+### Performance
+
+- 1aed99b transformer/jsx: Use `memchr` for parsing JSX pragma comments (#11001) (overlookmotel)
+
+### Testing
+
+- 6540f44 transformer/jsx: Fix tests for JSX pragma parsing (#11000) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 - 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)

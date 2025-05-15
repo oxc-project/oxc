@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+### Testing
+
+- a05361e ast/estree: Check span offsets are converted in ascending order in ESTree conformance tests (#10887) (overlookmotel)
+
 ## [0.68.0] - 2025-05-03
 
 - 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)

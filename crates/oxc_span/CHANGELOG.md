@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.70.0] - 2025-05-15
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Bug Fixes
+
+
+### Performance
+
+- c50b1a5 span: Faster conversion of path/extension to `SourceType` (#10996) (overlookmotel)
+
+### Refactor
+
+- 567368e span: Remove `source_type` module (#11024) (overlookmotel)
+
+### Styling
+
+- ff4d160 span: List exports individually (#11025) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 ### Features
