@@ -7,12 +7,13 @@ use oxc_napi::{Comment, OxcError};
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
-    pub source_type: Option<String>,
-
     /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
 
     /// Return an AST which includes TypeScript-related properties, or excludes them.
     ///

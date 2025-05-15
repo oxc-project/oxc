@@ -140,9 +140,10 @@ export interface OxcError {
 export declare function parseAsync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParserOptions {
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /** Treat the source text as `script` or `module` code. */
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /**
    * Return an AST which includes TypeScript-related properties, or excludes them.
    *

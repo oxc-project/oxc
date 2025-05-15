@@ -24,6 +24,7 @@ crate-type = ["lib", "cdylib"]
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_diagnostics = { workspace = true }
+oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 napi = { workspace = true }
