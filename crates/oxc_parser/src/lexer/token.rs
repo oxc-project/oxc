@@ -1,6 +1,6 @@
 //! Token
 
-use std::mem;
+use std::{mem, ptr};
 
 use oxc_span::Span;
 
@@ -15,22 +15,26 @@ use super::kind::Kind;
 // - Bit 74 (1 bit): `lone_surrogates`
 // - Bit 75 (1 bit): `has_separator`
 
-const START_SHIFT: u32 = 0;
-const END_SHIFT: u32 = 32;
-const KIND_SHIFT: u32 = 64;
-const IS_ON_NEW_LINE_SHIFT: u32 = 72;
-const ESCAPED_SHIFT: u32 = 73;
-const LONE_SURROGATES_SHIFT: u32 = 74;
-const HAS_SEPARATOR_SHIFT: u32 = 75;
+const START_SHIFT: usize = 0;
+const END_SHIFT: usize = 32;
+const KIND_SHIFT: usize = 64;
+const IS_ON_NEW_LINE_SHIFT: usize = 72;
+const ESCAPED_SHIFT: usize = 80;
+const LONE_SURROGATES_SHIFT: usize = 88;
+const HAS_SEPARATOR_SHIFT: usize = 96;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const KIND_MASK: u128 = 0xFF; // 8 bits
+const BOOL_MASK: u128 = 0xFF; // 8 bits
 
-const IS_ON_NEW_LINE_FLAG: u128 = 1 << IS_ON_NEW_LINE_SHIFT;
-const ESCAPED_FLAG: u128 = 1 << ESCAPED_SHIFT;
-const LONE_SURROGATES_FLAG: u128 = 1 << LONE_SURROGATES_SHIFT;
-const HAS_SEPARATOR_FLAG: u128 = 1 << HAS_SEPARATOR_SHIFT;
+const _: () = {
+    // Check flags fields are aligned on 8
+    assert!(IS_ON_NEW_LINE_SHIFT % 8 == 0);
+    assert!(ESCAPED_SHIFT % 8 == 0);
+    assert!(LONE_SURROGATES_SHIFT % 8 == 0);
+    assert!(HAS_SEPARATOR_SHIFT % 8 == 0);
+};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
@@ -57,7 +61,7 @@ impl Token {
     pub(super) fn new_on_new_line() -> Self {
         // Start with a default token, then set the flag
         let mut token = Self::default();
-        token.0 |= IS_ON_NEW_LINE_FLAG;
+        token.set_is_on_new_line(true);
         token
     }
 }
@@ -109,42 +113,74 @@ impl Token {
 
     #[inline]
     pub fn is_on_new_line(&self) -> bool {
-        (self.0 & IS_ON_NEW_LINE_FLAG) != 0
+        // SAFETY: 8 bits starting at `IS_ON_NEW_LINE_SHIFT` are only set in `Token::default` and
+        // `Token::set_is_on_new_line`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe {
+            *ptr::from_ref(self)
+                .cast::<bool>()
+                .add(IS_ON_NEW_LINE_SHIFT / 8)
+                .as_ref()
+                .unwrap_unchecked()
+        }
     }
 
     #[inline]
     pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
-        self.0 = (self.0 & !IS_ON_NEW_LINE_FLAG) | (u128::from(value) * IS_ON_NEW_LINE_FLAG);
+        self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
+        self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
     }
 
     #[inline]
     pub fn escaped(&self) -> bool {
-        (self.0 & ESCAPED_FLAG) != 0
+        // SAFETY: 8 bits starting at `ESCAPED_SHIFT` are only set in `Token::default` and
+        // `Token::set_escaped`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe {
+            *ptr::from_ref(self).cast::<bool>().add(ESCAPED_SHIFT / 8).as_ref().unwrap_unchecked()
+        }
     }
 
     #[inline]
     pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.0 = (self.0 & !ESCAPED_FLAG) | (u128::from(escaped) * ESCAPED_FLAG);
+        self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
+        self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
     }
 
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
-        (self.0 & LONE_SURROGATES_FLAG) != 0
+        // SAFETY: 8 bits starting at `LONE_SURROGATES_SHIFT` are only set in `Token::default` and
+        // `Token::set_lone_surrogates`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe {
+            *ptr::from_ref(self)
+                .cast::<bool>()
+                .add(LONE_SURROGATES_SHIFT / 8)
+                .as_ref()
+                .unwrap_unchecked()
+        }
     }
 
     #[inline]
     pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
-        self.0 = (self.0 & !LONE_SURROGATES_FLAG) | (u128::from(value) * LONE_SURROGATES_FLAG);
+        self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
+        self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
     }
 
     #[inline]
     pub fn has_separator(&self) -> bool {
-        (self.0 & HAS_SEPARATOR_FLAG) != 0
+        // SAFETY: 8 bits starting at `HAS_SEPARATOR_SHIFT` are only set in `Token::default` and
+        // `Token::set_has_separator`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe {
+            *ptr::from_ref(self)
+                .cast::<bool>()
+                .add(HAS_SEPARATOR_SHIFT / 8)
+                .as_ref()
+                .unwrap_unchecked()
+        }
     }
 
     #[inline]
     pub(crate) fn set_has_separator(&mut self, value: bool) {
-        self.0 = (self.0 & !HAS_SEPARATOR_FLAG) | (u128::from(value) * HAS_SEPARATOR_FLAG);
+        self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
+        self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
     }
 }
 
@@ -318,5 +354,45 @@ mod test {
         assert!(token_flags_test_lone_surrogates.is_on_new_line());
         assert!(token_flags_test_lone_surrogates.escaped());
         assert!(token_flags_test_lone_surrogates.has_separator());
+    }
+
+    #[test]
+    fn is_on_new_line() {
+        let mut token = Token::default();
+        assert!(!token.is_on_new_line());
+        token.set_is_on_new_line(true);
+        assert!(token.is_on_new_line());
+        token.set_is_on_new_line(false);
+        assert!(!token.is_on_new_line());
+    }
+
+    #[test]
+    fn escaped() {
+        let mut token = Token::default();
+        assert!(!token.escaped());
+        token.set_escaped(true);
+        assert!(token.escaped());
+        token.set_escaped(false);
+        assert!(!token.escaped());
+    }
+
+    #[test]
+    fn lone_surrogates() {
+        let mut token = Token::default();
+        assert!(!token.lone_surrogates());
+        token.set_lone_surrogates(true);
+        assert!(token.lone_surrogates());
+        token.set_lone_surrogates(false);
+        assert!(!token.lone_surrogates());
+    }
+
+    #[test]
+    fn has_separator() {
+        let mut token = Token::default();
+        assert!(!token.has_separator());
+        token.set_has_separator(true);
+        assert!(token.has_separator());
+        token.set_has_separator(false);
+        assert!(!token.has_separator());
     }
 }
