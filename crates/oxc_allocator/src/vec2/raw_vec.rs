@@ -132,9 +132,11 @@ impl<'a, T> RawVec<'a, T> {
     /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
     #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
-        alloc_guard(cap).unwrap_or_else(|_| capacity_overflow());
-        // `cap as u32` and `len as u32` are safe because `alloc_guard` ensures that
-        // `cap` and `len` cannot exceed `u32::MAX`.
+        // `unwrap_unchecked()` is okay because that caller needs to ensure that
+        // `cap` is less than or equal to `u32::MAX` otherwise this is UB.
+        cap_guard(cap).unwrap_unchecked();
+        // `cap as u32` and `len as u32` are safe because caller ensured that `len` must be less
+        // than or equal to `cap` and `cap_guard` ensures that `cap` cannot exceed `u32::MAX`.
         RawVec { ptr: NonNull::new_unchecked(ptr), a, cap: cap as u32, len: len as u32 }
     }
 }
@@ -638,14 +640,15 @@ impl<'a, T> RawVec<'a, T> {
 
             // `len as usize` is safe because `len` is `u32`, so it must be
             // less than `usize::MAX`.
-            let new_cap = (len as usize).checked_add(additional).ok_or(CapacityOverflow)?;
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            let cap = (len as usize).checked_add(additional).ok_or(CapacityOverflow)?;
+            cap_guard(cap)?;
+
+            let new_layout = Layout::array::<T>(cap).map_err(|_| CapacityOverflow)?;
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
-            // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
-            self.cap = new_cap as u32;
+            // `cap as u32` is safe because `cap_guard` ensures that `cap` cannot exceed `u32::MAX`.
+            self.cap = cap as u32;
 
             Ok(())
         }
@@ -669,6 +672,7 @@ impl<'a, T> RawVec<'a, T> {
             // This guarantees exponential growth. The doubling cannot overflow
             // because `cap <= isize::MAX` and the type of `cap` is `u32`.
             let cap = cmp::max((self.cap() as usize) * 2, required_cap);
+            cap_guard(cap)?;
 
             // The following commented-out code is copied from the standard library.
             // We don't use it because this would cause notable performance regression
@@ -702,8 +706,7 @@ impl<'a, T> RawVec<'a, T> {
 
             self.ptr = self.finish_grow(new_layout)?.cast();
 
-            // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
-            // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
+            // `cap as u32` is safe because `cap_guard` ensures that `cap` cannot exceed `u32::MAX`.
             self.cap = cap as u32;
 
             Ok(())
@@ -755,21 +758,29 @@ impl<'a, T> RawVec<'a, T> {
 // * We don't ever allocate `> isize::MAX` byte-size objects
 // * We don't overflow `u32::MAX` and actually allocate too little
 //
-// On 64-bit we need to check for overflow since trying to allocate `> u32::MAX`
-// bytes is overflow because `cap` and `len` are both `u32`s.
-// On 32-bit and 16-bit we need to add an extra guard for this in case we're
-// running on a platform which can use all 4GB in user-space. e.g. PAE or x32
-
+// On 64-bit we just need to check for overflow since trying to allocate
+// `> isize::MAX` bytes will surely fail. On 32-bit and 16-bit we need to add
+// an extra guard for this in case we're running on a platform which can use
+// all 4GB in user-space. e.g. PAE or x32
 #[inline]
 fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
-    if mem::size_of::<usize>() < 8 {
-        if alloc_size > ::core::isize::MAX as usize {
-            return Err(CapacityOverflow);
-        }
-    } else if alloc_size > u32::MAX as usize {
-        return Err(CapacityOverflow);
+    if mem::size_of::<usize>() < 8 && alloc_size > ::core::isize::MAX as usize {
+        Err(CapacityOverflow)
+    } else {
+        Ok(())
     }
-    Ok(())
+}
+
+/// Guard against capacity exceeding `u32::MAX` (only relevant on 64-bit systems)
+/// since on 32-bit systems, `isize::MAX` is less than `u32::MAX`, and we can't
+/// allocate more than `isize::MAX` bytes.
+#[inline]
+fn cap_guard(cap: usize) -> Result<(), CollectionAllocErr> {
+    if mem::size_of::<usize>() == 8 && cap > ::core::u32::MAX as usize {
+        Err(CapacityOverflow)
+    } else {
+        Ok(())
+    }
 }
 
 // One central function responsible for reporting capacity overflows. This'll
