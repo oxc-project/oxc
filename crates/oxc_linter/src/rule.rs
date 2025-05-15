@@ -1,16 +1,11 @@
-use std::{
-    borrow::{Borrow, Cow},
-    fmt,
-    hash::{Hash, Hasher},
-    ops::Deref,
-};
+use std::{borrow::Cow, fmt, hash::Hash};
 
 use oxc_semantic::SymbolId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AllowWarnDeny, AstNode, FixKind, RuleEnum,
+    AstNode, FixKind,
     context::{ContextHost, LintContext},
     utils::PossibleJestNode,
 };
@@ -262,46 +257,6 @@ impl RuleFixMeta {
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
         value.fix_kind()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RuleWithSeverity {
-    pub rule: RuleEnum,
-    pub severity: AllowWarnDeny,
-}
-
-impl Hash for RuleWithSeverity {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.rule.hash(state);
-    }
-}
-
-impl PartialEq for RuleWithSeverity {
-    fn eq(&self, other: &Self) -> bool {
-        self.rule == other.rule
-    }
-}
-
-impl Eq for RuleWithSeverity {}
-
-impl Deref for RuleWithSeverity {
-    type Target = RuleEnum;
-
-    fn deref(&self) -> &Self::Target {
-        &self.rule
-    }
-}
-
-impl Borrow<RuleEnum> for RuleWithSeverity {
-    fn borrow(&self) -> &RuleEnum {
-        &self.rule
-    }
-}
-
-impl RuleWithSeverity {
-    pub fn new(rule: RuleEnum, severity: AllowWarnDeny) -> Self {
-        Self { rule, severity }
     }
 }
 

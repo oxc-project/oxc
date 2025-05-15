@@ -3,16 +3,19 @@ use std::{
     sync::Arc,
 };
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use super::{LintConfig, LintPlugins, overrides::OxlintOverrides};
-use crate::{RuleWithSeverity, rules::RULES};
+use crate::{
+    AllowWarnDeny,
+    rules::{RULES, RuleEnum},
+};
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug)]
 pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
-    pub rules: Arc<[RuleWithSeverity]>,
+    pub rules: Arc<[(RuleEnum, AllowWarnDeny)]>,
     pub config: Arc<LintConfig>,
 }
 
@@ -33,7 +36,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(
-        rules: Vec<RuleWithSeverity>,
+        rules: Vec<(RuleEnum, AllowWarnDeny)>,
         config: LintConfig,
         overrides: OxlintOverrides,
     ) -> Self {
@@ -50,7 +53,7 @@ impl Config {
         self.base.config.plugins
     }
 
-    pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
     }
 
@@ -89,9 +92,9 @@ impl Config {
             .base
             .rules
             .iter()
-            .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
+            .filter(|(rule, _)| plugins.contains(LintPlugins::from(rule.plugin_name())))
             .cloned()
-            .collect::<FxHashSet<_>>();
+            .collect::<FxHashMap<_, _>>();
 
         let all_rules = RULES
             .iter()
@@ -153,7 +156,7 @@ impl ConfigStore {
         self.nested_configs.is_empty().then_some(self.base.base.rules.len())
     }
 
-    pub fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.base.rules
     }
 
@@ -193,7 +196,7 @@ mod test {
 
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
-        AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity,
+        AllowWarnDeny, LintPlugins, RuleEnum,
         config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, config_store::Config},
     };
 
@@ -204,11 +207,8 @@ mod test {
     }
 
     #[expect(clippy::default_trait_access)]
-    fn no_explicit_any() -> RuleWithSeverity {
-        RuleWithSeverity::new(
-            RuleEnum::TypescriptNoExplicitAny(Default::default()),
-            AllowWarnDeny::Warn,
-        )
+    fn no_explicit_any() -> (RuleEnum, AllowWarnDeny) {
+        (RuleEnum::TypescriptNoExplicitAny(Default::default()), AllowWarnDeny::Warn)
     }
 
     /// an empty ruleset is a no-op
@@ -229,10 +229,7 @@ mod test {
 
         assert_eq!(rules_for_source_file.rules.len(), 1);
         assert_eq!(rules_for_test_file.rules.len(), 1);
-        assert_eq!(
-            rules_for_test_file.rules[0].rule.id(),
-            rules_for_source_file.rules[0].rule.id()
-        );
+        assert_eq!(rules_for_test_file.rules[0].0.id(), rules_for_source_file.rules[0].0.id());
     }
 
     /// adding plugins but no rules is a no-op
@@ -254,10 +251,7 @@ mod test {
 
         assert_eq!(rules_for_source_file.rules.len(), 1);
         assert_eq!(rules_for_test_file.rules.len(), 1);
-        assert_eq!(
-            rules_for_test_file.rules[0].rule.id(),
-            rules_for_source_file.rules[0].rule.id()
-        );
+        assert_eq!(rules_for_test_file.rules[0].0.id(), rules_for_source_file.rules[0].0.id());
     }
 
     #[test]
@@ -324,11 +318,11 @@ mod test {
 
         let app = store.resolve("App.tsx".as_ref()).rules;
         assert_eq!(app.len(), 1);
-        assert_eq!(app[0].severity, AllowWarnDeny::Warn);
+        assert_eq!(app[0].1, AllowWarnDeny::Warn);
 
         let src_app = store.resolve("src/App.tsx".as_ref()).rules;
         assert_eq!(src_app.len(), 1);
-        assert_eq!(src_app[0].severity, AllowWarnDeny::Deny);
+        assert_eq!(src_app[0].1, AllowWarnDeny::Deny);
     }
 
     #[test]
