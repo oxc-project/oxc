@@ -36,7 +36,10 @@ impl SpecParser {
         self.source_text.clone_from(&spec_content);
 
         let allocator = Allocator::default();
-        let source_type = SourceType::from_path(spec).unwrap_or_default();
+        let mut source_type = SourceType::from_path(spec).unwrap_or_default();
+        if source_type.is_javascript() {
+            source_type = source_type.with_jsx(true);
+        }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
         self.visit_program(&mut ret.program);

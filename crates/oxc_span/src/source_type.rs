@@ -149,8 +149,8 @@ impl From<FileExtension> for SourceType {
         };
 
         let variant = match file_ext {
-            Js | Mjs | Cjs | Jsx | Tsx => LanguageVariant::Jsx,
-            Ts | Mts | Cts => LanguageVariant::Standard,
+            Jsx | Tsx => LanguageVariant::Jsx,
+            Js | Mjs | Cjs | Ts | Mts | Cts => LanguageVariant::Standard,
         };
 
         SourceType { language, module_kind, variant }
@@ -673,7 +673,7 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::jsx(), js);
+        assert_eq!(SourceType::mjs(), js);
         assert_eq!(SourceType::jsx().with_module(true), jsx);
 
         assert!(js.is_module());
@@ -686,9 +686,9 @@ mod tests {
         assert!(!cjs.is_strict());
         assert!(jsx.is_strict());
 
-        assert!(js.is_jsx());
-        assert!(mjs.is_jsx());
-        assert!(cjs.is_jsx());
+        assert!(js.is_javascript());
+        assert!(mjs.is_javascript());
+        assert!(cjs.is_javascript());
         assert!(jsx.is_jsx());
     }
 }

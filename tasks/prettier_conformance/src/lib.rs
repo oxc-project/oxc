@@ -411,6 +411,7 @@ impl TestRunner {
         formatter_options: FormatOptions,
     ) -> String {
         let allocator = Allocator::default();
+        let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
                 preserve_parens: false,
