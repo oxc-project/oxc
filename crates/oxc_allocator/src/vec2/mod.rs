@@ -724,7 +724,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.buf.cap()
+        self.buf.cap_usize()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -735,7 +735,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -762,7 +762,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -786,7 +786,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -813,7 +813,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -848,7 +848,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert!(vec.capacity() >= 3);
     /// ```
     pub fn shrink_to_fit(&mut self) {
-        if self.capacity() != self.buf.len {
+        if self.buf.cap() != self.buf.len {
             self.buf.shrink_to_fit(self.buf.len);
         }
     }
@@ -955,7 +955,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
     pub fn truncate(&mut self, len: usize) {
-        let current_len = self.buf.len;
+        let current_len = self.buf.len_usize();
         unsafe {
             let mut ptr = self.as_mut_ptr().add(current_len);
             // Set the final length at the end, keeping in mind that
@@ -1105,6 +1105,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Safety
     ///
+    /// - `new_len` must be less than or equal to `u32::MAX`.
     /// - `new_len` must be less than or equal to [`capacity()`].
     /// - The elements at `old_len..new_len` must be initialized.
     ///
@@ -1169,8 +1170,12 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(b"aaaa", &*vec);
     /// ```
     #[inline]
+    #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn set_len(&mut self, new_len: usize) {
-        self.buf.len = new_len;
+        // `new_len as u32` is safe because caller must ensure that
+        // `new_len` is less than or equal to `u32::MAX`, otherwise
+        // it is UB.
+        self.buf.len = new_len as u32;
     }
 
     /// Removes an element from the vector and returns it.
@@ -1205,7 +1210,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
             let hole: *mut T = &mut self[index];
-            let last = ptr::read(self.get_unchecked(self.buf.len - 1));
+            let last = ptr::read(self.get_unchecked(self.buf.len_usize() - 1));
             self.buf.len -= 1;
             ptr::replace(hole, last)
         }
@@ -1232,11 +1237,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
     /// ```
     pub fn insert(&mut self, index: usize, element: T) {
-        let len = self.len();
+        let len = self.buf.len_usize();
         assert!(index <= len);
 
         // space for the new element
-        if len == self.buf.cap() {
+        if self.buf.len == self.buf.cap() {
             self.buf.grow_one();
         }
 
@@ -1252,7 +1257,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 // element.
                 ptr::write(p, element);
             }
-            self.set_len(len + 1);
+            self.buf.len += 1;
         }
     }
 
@@ -1547,7 +1552,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the number of elements in the vector overflows a `usize`.
+    /// Panics if the number of elements in the vector overflows a `u32`.
     ///
     /// # Examples
     ///
@@ -1568,7 +1573,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.buf.grow_one();
         }
         unsafe {
-            let end = self.buf.ptr().add(self.buf.len);
+            let end = self.buf.ptr().add(self.buf.len_usize());
             ptr::write(end, value);
             self.buf.len += 1;
         }
@@ -1606,7 +1611,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the number of elements in the vector overflows a `usize`.
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    /// Panics if the length of `Self` and `other` add up to more than `u32::MAX`.
     ///
     /// # Examples
     ///
@@ -1630,13 +1636,24 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     }
 
     /// Appends elements to `Self` from other buffer.
+    ///
+    /// # SAFETY
+    ///
+    /// The caller must ensure that the length of buffer passed in is less than or
+    /// equal to `u32::MAX`.
+    /// The length of the `Self` and `other` buffer add up to must be less than or
+    /// equal to `u32::MAX`.
     #[inline]
+    #[expect(clippy::cast_possible_truncation)]
     unsafe fn append_elements(&mut self, other: *const [T]) {
         let count = (*other).len();
         self.reserve(count);
         let len = self.len();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
-        self.buf.len += count;
+        // `unwrap_unchecked()` is okay because that caller needs to ensure that
+        // the length of the buffer passed in is less than or equal to `u32::MAX`,
+        // otherwise it is UB.
+        self.buf.len = self.buf.len.checked_add(count as u32).unwrap_unchecked()
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
@@ -1753,7 +1770,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn len(&self) -> usize {
-        self.buf.len
+        self.buf.len_usize()
     }
 
     /// Returns `true` if the vector contains no elements.
@@ -1802,7 +1819,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn split_off(&mut self, at: usize) -> Self {
         assert!(at <= self.len(), "`at` out of bounds");
 
-        let other_len = self.buf.len - at;
+        let other_len = self.buf.len_usize() - at;
         let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
 
         // Unsafely `set_len` and copy items to `other`.
@@ -2096,23 +2113,23 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 // that the optimizer will see does not alias with any stores through the Vec's data
 // pointer. This is a workaround for alias analysis issue #32155
 struct SetLenOnDrop<'a> {
-    len: &'a mut usize,
-    local_len: usize,
+    len: &'a mut u32,
+    local_len: u32,
 }
 
 impl<'a> SetLenOnDrop<'a> {
     #[inline]
-    fn new(len: &'a mut usize) -> Self {
+    fn new(len: &'a mut u32) -> Self {
         SetLenOnDrop { local_len: *len, len }
     }
 
     #[inline]
-    fn increment_len(&mut self, increment: usize) {
+    fn increment_len(&mut self, increment: u32) {
         self.local_len += increment;
     }
 
     #[inline]
-    fn decrement_len(&mut self, decrement: usize) {
+    fn decrement_len(&mut self, decrement: u32) {
         self.local_len -= decrement;
     }
 }
@@ -2209,7 +2226,7 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
         unsafe {
             let p = self.buf.ptr();
             // assume(!p.is_null());
-            slice::from_raw_parts(p, self.buf.len)
+            slice::from_raw_parts(p, self.buf.len_usize())
         }
     }
 }
@@ -2219,7 +2236,7 @@ impl<'bump, T: 'bump> ops::DerefMut for Vec<'bump, T> {
         unsafe {
             let ptr = self.buf.ptr();
             // assume(!ptr.is_null());
-            slice::from_raw_parts_mut(ptr, self.buf.len)
+            slice::from_raw_parts_mut(ptr, self.buf.len_usize())
         }
     }
 }
@@ -2802,7 +2819,7 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
         let vec = self.vec.as_mut();
-        let range_start = vec.buf.len;
+        let range_start = vec.buf.len_usize();
         let range_end = self.tail_start;
         let range_slice =
             slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
@@ -2819,10 +2836,14 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     }
 
     /// Make room for inserting more elements before the tail.
+    #[expect(clippy::cast_possible_truncation)]
     unsafe fn move_tail(&mut self, extra_capacity: usize) {
         let vec = self.vec.as_mut();
         let used_capacity = self.tail_start + self.tail_len;
-        vec.buf.reserve(used_capacity, extra_capacity);
+        // `used_capacity as u32` is safe because the [`Vec::drain`] method has ensured that
+        // `self.tail_start` is less than or equal to `self.len()`, and `self.tail_len` calculated
+        // from `self.len() - self.tail_start`, and `self.len()` is `u32`.
+        vec.buf.reserve(used_capacity as u32, extra_capacity);
 
         let new_tail_start = self.tail_start + extra_capacity;
         let src = vec.as_ptr().add(self.tail_start);

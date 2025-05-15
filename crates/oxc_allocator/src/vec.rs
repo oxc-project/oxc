@@ -78,7 +78,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// minimum *capacity* specified, the vector will have a zero *length*.
     ///
     /// For `Vec<T>` where `T` is a zero-sized type, there will be no allocation
-    /// and the capacity will always be `usize::MAX`.
+    /// and the capacity will always be `u32::MAX`.
     ///
     /// # Panics
     ///
