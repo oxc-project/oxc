@@ -1159,4 +1159,10 @@ mod test {
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_rule_config_being_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_11054".into()).test_and_snapshot(args);
+    }
 }

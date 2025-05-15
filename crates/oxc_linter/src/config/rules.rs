@@ -147,6 +147,7 @@ impl OxlintRules {
             rules_for_override.remove(&rule);
         }
         for (rule, severity) in rules_to_replace {
+            let _ = rules_for_override.remove(&rule);
             rules_for_override.insert(rule, severity);
         }
     }
