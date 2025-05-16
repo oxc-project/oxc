@@ -373,8 +373,7 @@ impl<'a> ParserImpl<'a> {
         let mut list = self.ast.vec();
         let mut first = true;
         loop {
-            let kind = self.cur_kind();
-            if kind == close || self.has_fatal_error() {
+            if self.cur_kind() == close || self.has_fatal_error() {
                 break;
             }
             if first {

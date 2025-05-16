@@ -12960,12 +12960,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Expected `]` but found `=`
+  × Expected `,` but found `=`
    ╭─[typescript/tests/cases/compiler/indexSignatureWithInitializer1.ts:2:14]
  1 │ class C {
  2 │   [a: number = 1]: number;
    ·              ┬
-   ·              ╰── `]` expected
+   ·              ╰── `,` expected
  3 │ }
    ╰────
 

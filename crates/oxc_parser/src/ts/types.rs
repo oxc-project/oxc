@@ -1218,16 +1218,25 @@ impl<'a> ParserImpl<'a> {
             ModifierFlags::READONLY | ModifierFlags::STATIC,
             diagnostics::cannot_appear_on_an_index_signature,
         );
-        self.bump(Kind::LBrack);
-        let parameters = self.ast.vec1(self.parse_ts_index_signature_name());
+        self.expect(Kind::LBrack);
+        let params = self.parse_delimited_list(
+            Kind::RBrack,
+            Kind::Comma,
+            /* trailing_separator */
+            false, //  An index signature cannot have a trailing comma.
+            Self::parse_ts_index_signature_name,
+        );
         self.expect(Kind::RBrack);
+        if params.len() != 1 {
+            self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
+        }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
             return self.unexpected();
         };
         self.parse_type_member_semicolon();
         self.ast.ts_index_signature(
             self.end_span(span),
-            parameters,
+            params,
             type_annotation,
             modifiers.contains(ModifierKind::Readonly),
             modifiers.contains(ModifierKind::Static),
@@ -1248,12 +1257,10 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let name = self.parse_identifier_name().name;
         let type_annotation = self.parse_ts_type_annotation();
-
-        if type_annotation.is_none() {
-            return self.unexpected();
+        if let Some(type_annotation) = type_annotation {
+            return self.ast.ts_index_signature_name(self.end_span(span), name, type_annotation);
         }
-
-        self.ast.ts_index_signature_name(self.end_span(span), name, type_annotation.unwrap())
+        self.unexpected()
     }
 
     pub(crate) fn parse_class_element_modifiers(

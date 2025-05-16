@@ -3488,7 +3488,8 @@ impl Gen for TSIndexSignature<'_> {
         p.print_str("[");
         for (index, parameter) in self.parameters.iter().enumerate() {
             if index != 0 {
-                p.print_str(" | ");
+                p.print_str(",");
+                p.print_soft_space();
             }
             p.print_str(parameter.name.as_str());
             p.print_colon();

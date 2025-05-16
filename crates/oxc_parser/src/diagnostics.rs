@@ -504,7 +504,6 @@ pub fn import_arguments(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
 }
 
-/// TS(2566)
 #[cold]
 pub fn rest_element_property_name(span: Span) -> OxcDiagnostic {
     ts_error("2566", "A rest element cannot have a property name.").with_label(span)
@@ -520,15 +519,12 @@ pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("import() requires a specifier.").with_label(span)
 }
 
-// ================================= MODIFIERS =================================
-
 #[cold]
 pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
         .with_label(modifier.span)
 }
 
-/// TS(1028)
 #[cold]
 pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1028", "Accessibility modifier already seen.")
@@ -536,7 +532,6 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
         .with_help("Remove the duplicate modifier.")
 }
 
-/// TS(1030)
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
@@ -544,26 +539,22 @@ pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
         .with_help("Remove the duplicate modifier.")
 }
 
-/// TS(1273)
 #[cold]
 pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
         .with_label(modifier.span)
 }
 
-/// TS(1090)
 pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
         .with_label(modifier.span)
 }
 
-/// TS(1071)
 pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
         .with_label(modifier.span)
 }
 
-/// TS(1243)
 pub fn accessor_modifier(modifier: &Modifier) -> OxcDiagnostic {
     ts_error(
         "1243",
@@ -572,43 +563,41 @@ pub fn accessor_modifier(modifier: &Modifier) -> OxcDiagnostic {
     .with_label(modifier.span)
 }
 
-/// TS(1354)
 #[cold]
 pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
     ts_error("1354", "'readonly' type modifier is only permitted on array and tuple literal types.")
         .with_label(span)
 }
 
-/// TS(18010)
 #[cold]
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
 }
 
-/// TS(2206)
 #[cold]
 pub fn type_modifier_on_named_type_import(span: Span) -> OxcDiagnostic {
     ts_error("2206", "The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.")
              .with_label(span)
 }
 
-/// TS(2207)
 #[cold]
 pub fn type_modifier_on_named_type_export(span: Span) -> OxcDiagnostic {
     ts_error("2207", "The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.")
          .with_label(span)
 }
 
-// ================================== TS ENUMS =================================
-
-/// Computed property names are not allowed in enums.ts(1164)
 #[cold]
 pub fn computed_property_names_not_allowed_in_enums(span: Span) -> OxcDiagnostic {
     ts_error("1164", "Computed property names are not allowed in enums.").with_label(span)
 }
-/// An enum member cannot have a numeric name.ts(2452)
+
 #[cold]
 pub fn enum_member_cannot_have_numeric_name(span: Span) -> OxcDiagnostic {
     ts_error("2452", "An enum member cannot have a numeric name.").with_label(span)
+}
+
+#[cold]
+pub fn index_signature_one_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1096", "An index signature must have exactly one parameter.").with_label(span)
 }

@@ -2,8 +2,9 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
@@ -25,8 +26,8 @@ fn main() -> std::io::Result<()> {
     let mut allocator = Allocator::default();
 
     let printed = {
-        let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
-        codegen(&ret, minify)
+        let program = parse(&allocator, &source_text, source_type);
+        codegen(&program, minify)
     };
     println!("First time:");
     println!("{printed}");
@@ -35,9 +36,9 @@ fn main() -> std::io::Result<()> {
         // Reset the allocator as we don't need the first AST any more
         allocator.reset();
 
-        let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
+        let program = parse(&allocator, &printed, source_type);
         println!("Second time:");
-        let printed2 = codegen(&ret, minify);
+        let printed2 = codegen(&program, minify);
         println!("{printed2}");
         // Check syntax error
         parse(&allocator, &printed2, source_type);
@@ -51,25 +52,22 @@ fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
-) -> Option<ParserReturn<'a>> {
+) -> Program<'a> {
     let ret = Parser::new(allocator, source_text, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,
             ..ParseOptions::default()
         })
         .parse();
-    if !ret.errors.is_empty() {
-        for error in ret.errors {
-            println!("{:?}", error.with_source_code(source_text.to_string()));
-        }
-        return None;
+    for error in ret.errors {
+        println!("{:?}", error.with_source_code(source_text.to_string()));
     }
-    Some(ret)
+    ret.program
 }
 
-fn codegen(ret: &ParserReturn<'_>, minify: bool) -> String {
+fn codegen(program: &Program<'_>, minify: bool) -> String {
     Codegen::new()
         .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })
-        .build(&ret.program)
+        .build(program)
         .code
 }
