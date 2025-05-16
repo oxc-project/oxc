@@ -282,7 +282,7 @@ impl TestCase {
         let input = fs::read_to_string(&self.path).unwrap();
 
         if filtered {
-            println!("input_path: {:?}", &self.path);
+            println!("input_path: {}", self.path.display());
             println!("output_path: {output_path:?}");
         }
 
@@ -404,7 +404,7 @@ impl TestCase {
 
     fn test_exec(&self, filtered: bool) {
         if filtered {
-            println!("input_path: {:?}", &self.path);
+            println!("input_path: {}", self.path.display());
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 

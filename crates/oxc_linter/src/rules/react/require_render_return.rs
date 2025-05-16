@@ -141,7 +141,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
         },
     );
 
-    state.iter().any(|&state| state == FoundReturn::Yes)
+    state.contains(&FoundReturn::Yes)
 }
 
 const RENDER_METHOD_NAME: &str = "render";

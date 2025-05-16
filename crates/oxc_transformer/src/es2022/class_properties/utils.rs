@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Utility functions.
 
-use std::path::PathBuf;
+use std::path::Path;
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
@@ -48,10 +48,11 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> Identif
 #[inline(always)]
 pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
     expr: &Expression,
-    path: &PathBuf,
+    path: &Path,
 ) {
     debug_assert!(
         !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
-        "Should not be: {expr:?} in {path:?}",
+        "Should not be: {expr:?} in {}",
+        path.display()
     );
 }

@@ -52,7 +52,7 @@ impl<'a> Template<'a> {
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
         format_rule_output(&out_path)?;
 
-        println!("Saved test file to {out_path:?}");
+        println!("Saved test file to {}", out_path.display());
 
         Ok(())
     }

@@ -771,14 +771,13 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 ctx.ast.plain_formal_parameter(param.span(), binding.create_binding_pattern(ctx)),
             );
         }
-        let parameters = ctx.ast.alloc_formal_parameters(
+
+        ctx.ast.alloc_formal_parameters(
             SPAN,
             FormalParameterKind::FormalParameter,
             parameters,
             NONE,
-        );
-
-        parameters
+        )
     }
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].

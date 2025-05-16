@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/take_in.rs`.
 
-#![allow(clippy::needless_lifetimes)]
+#![expect(clippy::elidable_lifetime_names)]
 
 use oxc_allocator::TakeIn;
 

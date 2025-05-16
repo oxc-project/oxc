@@ -132,7 +132,7 @@ impl TypeScriptTranspileCase {
                 );
                 if !matched {
                     let snapshot =
-                        format!("\n#### {:?} ####\n{}", self.path(), baseline.snapshot());
+                        format!("\n#### {} ####\n{}", self.path().display(), baseline.snapshot());
                     return TestResult::CorrectError(snapshot, false);
                 }
             }

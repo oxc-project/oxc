@@ -113,10 +113,10 @@ export default function generateAncestorsCode(types) {
 
   return `
     #![expect(
+      clippy::cast_ptr_alignment,
+      clippy::elidable_lifetime_names,
       clippy::ptr_as_ptr,
       clippy::undocumented_unsafe_blocks,
-      clippy::cast_ptr_alignment,
-      clippy::needless_lifetimes
     )]
 
     use std::{cell::Cell, marker::PhantomData, mem::offset_of};

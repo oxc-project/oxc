@@ -6,7 +6,7 @@ Positive Passed: 19/20 (95.00%)
 Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
 
 
-#### "typescript/tests/cases/transpile/declarationComputedPropertyNames.ts" ####
+#### typescript/tests/cases/transpile/declarationComputedPropertyNames.ts ####
 //// [declarationComputedPropertyNames.ts] ////
 export namespace presentNs {
 	export const a = Symbol();
@@ -308,7 +308,7 @@ export {};
  6 | 
    `----
 
-#### "typescript/tests/cases/transpile/declarationFunctionDeclarations.ts" ####
+#### typescript/tests/cases/transpile/declarationFunctionDeclarations.ts ####
 //// [fnDecl.ts] ////
 type T = number[];
 export function fnDeclBasic1(p: number[] | string[] | [T] = [], rParam: string): void {}

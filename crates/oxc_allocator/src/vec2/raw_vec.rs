@@ -617,7 +617,7 @@ impl<'a, T> RawVec<'a, T> {
 }
 */
 
-impl<'a, T> RawVec<'a, T> {
+impl<T> RawVec<'_, T> {
     #[inline]
     fn needs_to_grow(&self, len: u32, additional: usize) -> bool {
         // `self.cap().wrapping_sub(len) as usize` is safe because
@@ -739,7 +739,7 @@ impl<'a, T> RawVec<'a, T> {
     }
 }
 
-impl<'a, T> RawVec<'a, T> {
+impl<T> RawVec<'_, T> {
     /// Frees the memory owned by the RawVec *without* trying to Drop its contents.
     pub unsafe fn dealloc_buffer(&mut self) {
         let elem_size = mem::size_of::<T>();

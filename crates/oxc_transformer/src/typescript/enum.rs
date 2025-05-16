@@ -226,7 +226,8 @@ impl<'a> TypeScriptEnum<'a> {
                 previous_enum_members.insert(member_name, constant_value.clone());
 
                 // prev_constant_value = constant_value
-                let init = match constant_value {
+
+                match constant_value {
                     None => {
                         prev_constant_value = None;
                         let mut new_initializer = initializer.take_in(ast.allocator);
@@ -251,9 +252,7 @@ impl<'a> TypeScriptEnum<'a> {
                             ast.expression_string_literal(SPAN, ast.atom(&str), None)
                         }
                     },
-                };
-
-                init
+                }
             } else if let Some(value) = &prev_constant_value {
                 match value {
                     ConstantValue::Number(value) => {

@@ -409,11 +409,11 @@ impl<'a> TypeScript<'a, '_> {
             &body,
             ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
         );
-        let static_block = ctx.ast.class_element_static_block_with_scope_id(
+
+        ctx.ast.class_element_static_block_with_scope_id(
             SPAN,
             ctx.ast.vec_from_iter(body),
             scope_id,
-        );
-        static_block
+        )
     }
 }
