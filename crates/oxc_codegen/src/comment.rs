@@ -1,6 +1,7 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::borrow::Cow;
 
-use oxc_ast::{Comment, CommentKind};
+use oxc_ast::{Comment, CommentKind, ast::Program};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
@@ -15,13 +16,6 @@ impl Codegen<'_> {
         {
             return;
         }
-        let move_legal_comments = {
-            let legal_comments = &self.options.legal_comments;
-            matches!(
-                legal_comments,
-                LegalComment::Eof | LegalComment::Linked(_) | LegalComment::External
-            )
-        };
         for comment in comments {
             // Omit pure comments because they are handled separately.
             if comment.is_pure() || comment.is_no_side_effects() {
@@ -29,9 +23,7 @@ impl Codegen<'_> {
             }
             let mut add = false;
             if comment.is_legal() {
-                if move_legal_comments {
-                    self.legal_comments.push(*comment);
-                } else if self.options.print_legal_comment() {
+                if self.options.print_legal_comment() {
                     add = true;
                 }
             } else if comment.is_leading() {
@@ -142,8 +134,7 @@ impl Codegen<'_> {
             }
             CommentKind::Block => {
                 // Print block comments with our own indentation.
-                let lines = comment_source.split(is_line_terminator);
-                for line in lines {
+                for line in comment_source.split(is_line_terminator) {
                     if !line.starts_with("/*") {
                         self.print_indent();
                     }
@@ -156,25 +147,66 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn try_print_eof_legal_comments(&mut self) {
-        match self.options.legal_comments.clone() {
-            LegalComment::Eof => {
-                let comments = self.legal_comments.drain(..).collect::<Vec<_>>();
-                if !comments.is_empty() {
-                    self.print_hard_newline();
+    /// Handle Eof / Linked / External Comments.
+    /// Return a list of comments of linked or external.
+    pub(crate) fn handle_eof_linked_or_external_comments(
+        &mut self,
+        program: &Program<'_>,
+    ) -> Vec<Comment> {
+        let legal_comments = &self.options.legal_comments;
+        if matches!(legal_comments, LegalComment::None | LegalComment::Inline) {
+            return vec![];
+        }
+
+        // Dedupe legal comments for smaller output size.
+        let mut set = FxHashSet::default();
+        let mut comments = vec![];
+
+        let source_text = program.source_text;
+        for comment in program.comments.iter().filter(|c| c.is_legal()) {
+            let mut text = Cow::Borrowed(comment.span.source_text(source_text));
+            if comment.is_block() && text.contains(is_line_terminator) {
+                let mut buffer = String::with_capacity(text.len());
+                // Print block comments with our own indentation.
+                for line in text.split(is_line_terminator) {
+                    if !line.starts_with("/*") {
+                        buffer.push('\t');
+                    }
+                    buffer.push_str(line.trim_start());
+                    if !line.ends_with("*/") {
+                        buffer.push('\n');
+                    }
                 }
+                text = Cow::Owned(buffer);
+            }
+            if set.insert(text) {
+                comments.push(*comment);
+            }
+        }
+
+        if comments.is_empty() {
+            return vec![];
+        }
+
+        match legal_comments {
+            LegalComment::Eof => {
+                self.print_hard_newline();
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();
                 }
+                vec![]
             }
             LegalComment::Linked(path) => {
+                let path = path.clone();
                 self.print_hard_newline();
                 self.print_str("/*! For license information please see ");
                 self.print_str(&path);
                 self.print_str(" */");
+                comments
             }
-            _ => {}
+            LegalComment::External => comments,
+            LegalComment::None | LegalComment::Inline => unreachable!(),
         }
     }
 }

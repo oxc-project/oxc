@@ -107,8 +107,6 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
-    legal_comments: Vec<Comment>,
-
     sourcemap_builder: Option<SourcemapBuilder>,
 }
 
@@ -157,7 +155,6 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
-            legal_comments: vec![],
             sourcemap_builder: None,
         }
     }
@@ -199,10 +196,10 @@ impl<'a> Codegen<'a> {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
         program.print(&mut self, Context::default());
-        self.try_print_eof_legal_comments();
+        let legal_comments = self.handle_eof_linked_or_external_comments(program);
         let code = self.code.into_string();
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { code, map, legal_comments: self.legal_comments }
+        CodegenReturn { code, map, legal_comments }
     }
 
     /// Turn what's been built so far into a string. Like [`build`],
