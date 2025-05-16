@@ -100,7 +100,7 @@ pub struct NameSpan<'a> {
 impl<'a> NameSpan<'a> {
     /// Constructor
     pub fn new(name: Atom<'a>, span: Span) -> Self {
-        Self { name, span }
+        Self { span, name }
     }
 }
 

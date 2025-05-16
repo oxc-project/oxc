@@ -18,8 +18,8 @@ const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 24);
     assert!(align_of::<NameSpan>() == 8);
-    assert!(offset_of!(NameSpan, name) == 0);
-    assert!(offset_of!(NameSpan, span) == 16);
+    assert!(offset_of!(NameSpan, name) == 8);
+    assert!(offset_of!(NameSpan, span) == 0);
 
     // Padding: 7 bytes
     assert!(size_of::<ImportEntry>() == 96);
@@ -36,8 +36,8 @@ const _: () = {
     // Padding: 7 bytes
     assert!(size_of::<ExportEntry>() == 144);
     assert!(align_of::<ExportEntry>() == 8);
-    assert!(offset_of!(ExportEntry, statement_span) == 0);
-    assert!(offset_of!(ExportEntry, span) == 8);
+    assert!(offset_of!(ExportEntry, statement_span) == 8);
+    assert!(offset_of!(ExportEntry, span) == 0);
     assert!(offset_of!(ExportEntry, module_request) == 16);
     assert!(offset_of!(ExportEntry, import_name) == 40);
     assert!(offset_of!(ExportEntry, export_name) == 72);
@@ -102,8 +102,8 @@ const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 16);
     assert!(align_of::<NameSpan>() == 4);
-    assert!(offset_of!(NameSpan, name) == 0);
-    assert!(offset_of!(NameSpan, span) == 8);
+    assert!(offset_of!(NameSpan, name) == 8);
+    assert!(offset_of!(NameSpan, span) == 0);
 
     // Padding: 3 bytes
     assert!(size_of::<ImportEntry>() == 64);
@@ -120,8 +120,8 @@ const _: () = {
     // Padding: 3 bytes
     assert!(size_of::<ExportEntry>() == 96);
     assert!(align_of::<ExportEntry>() == 4);
-    assert!(offset_of!(ExportEntry, statement_span) == 0);
-    assert!(offset_of!(ExportEntry, span) == 8);
+    assert!(offset_of!(ExportEntry, statement_span) == 8);
+    assert!(offset_of!(ExportEntry, span) == 0);
     assert!(offset_of!(ExportEntry, module_request) == 16);
     assert!(offset_of!(ExportEntry, import_name) == 32);
     assert!(offset_of!(ExportEntry, export_name) == 52);

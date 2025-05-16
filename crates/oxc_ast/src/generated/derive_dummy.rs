@@ -651,7 +651,7 @@ impl<'a> Dummy<'a> for BlockStatement<'a> {
 impl<'a> Dummy<'a> for Declaration<'a> {
     /// Create a dummy [`Declaration`].
     ///
-    /// Has cost of making 1 allocation (48 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::VariableDeclaration(Dummy::dummy(allocator))
     }
@@ -1210,7 +1210,7 @@ impl<'a> Dummy<'a> for ClassElement<'a> {
 impl<'a> Dummy<'a> for MethodDefinition<'a> {
     /// Create a dummy [`MethodDefinition`].
     ///
-    /// Has cost of making 3 allocations (160 bytes).
+    /// Has cost of making 3 allocations (152 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
