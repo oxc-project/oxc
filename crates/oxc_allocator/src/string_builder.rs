@@ -100,7 +100,7 @@ impl<'a> StringBuilder<'a> {
         }
 
         let layout = Layout::from_size_align(capacity, 1).expect("`capacity` exceeds `isize::MAX");
-        let start_ptr = allocator.bump().alloc_layout(layout);
+        let start_ptr = allocator.arena().alloc_layout(layout);
         // SAFETY: We just allocated `capacity` bytes, starting at `start_ptr`
         let end_capacity_ptr = unsafe { start_ptr.add(capacity) };
 
@@ -122,7 +122,7 @@ impl<'a> StringBuilder<'a> {
     #[inline]
     pub fn from_str_in(s: &str, allocator: &'a Allocator) -> Self {
         let layout = Layout::for_value(s);
-        let start_ptr = allocator.bump().alloc_layout(layout);
+        let start_ptr = allocator.arena().alloc_layout(layout);
 
         // SAFETY: `s.as_ptr()` is the start of `s` string, so valid for reading `s.len()` bytes.
         // `start_ptr.as_ptr()` is valid for writing `bytes.len()` bytes as we just reserved capacity.
@@ -217,7 +217,7 @@ impl<'a> StringBuilder<'a> {
         // Allocate `total_len` bytes.
         // SAFETY: Caller guarantees `total_len <= isize::MAX`.
         let layout = unsafe { Layout::from_size_align_unchecked(total_len, 1) };
-        let start_ptr = allocator.bump().alloc_layout(layout);
+        let start_ptr = allocator.arena().alloc_layout(layout);
 
         let mut end_ptr = start_ptr;
         for str in strings {
@@ -460,7 +460,7 @@ impl<'a> StringBuilder<'a> {
             let additional = cmp::max(additional, DEFAULT_MIN_CAPACITY);
             let layout = Layout::from_size_align(additional, 1)
                 .expect("attempt to grow `StringBuilder` beyond `isize::MAX` bytes");
-            let start_ptr = self.allocator.bump().alloc_layout(layout);
+            let start_ptr = self.allocator.arena().alloc_layout(layout);
             self.start_ptr = start_ptr;
             self.end_ptr = start_ptr;
             // SAFETY: Just allocated `additional` bytes, starting at `start_ptr`,
@@ -487,7 +487,7 @@ impl<'a> StringBuilder<'a> {
             // SAFETY: Previously allocated at `start_ptr` with `old_layout`.
             // `new_layout` is larger than `old_layout`.
             let new_start_ptr =
-                unsafe { self.allocator.bump().grow(self.start_ptr, old_layout, new_layout) };
+                unsafe { self.allocator.arena().grow(self.start_ptr, old_layout, new_layout) };
 
             self.start_ptr = new_start_ptr;
             // SAFETY: `len` is always less than or equal to capacity.
@@ -512,7 +512,7 @@ impl<'a> StringBuilder<'a> {
             // Ensure don't allocate less than 8 bytes.
             // SAFETY: `DEFAULT_MIN_CAPACITY` is a valid size for `Layout` with align 1.
             let layout = unsafe { Layout::from_size_align_unchecked(DEFAULT_MIN_CAPACITY, 1) };
-            let start_ptr = self.allocator.bump().alloc_layout(layout);
+            let start_ptr = self.allocator.arena().alloc_layout(layout);
             self.start_ptr = start_ptr;
             self.end_ptr = start_ptr;
             // SAFETY: Just allocated `DEFAULT_MIN_CAPACITY` bytes, starting at `start_ptr`,
@@ -538,7 +538,7 @@ impl<'a> StringBuilder<'a> {
             // SAFETY: Previously allocated at `start_ptr` with `old_layout`.
             // `new_layout` is larger than `old_layout`.
             let new_start_ptr =
-                unsafe { self.allocator.bump().grow(self.start_ptr, old_layout, new_layout) };
+                unsafe { self.allocator.arena().grow(self.start_ptr, old_layout, new_layout) };
 
             self.start_ptr = new_start_ptr;
             // SAFETY: `len` is always less than or equal to capacity.

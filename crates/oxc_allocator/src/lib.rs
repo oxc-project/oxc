@@ -33,6 +33,7 @@ mod address;
 mod alloc;
 mod allocator;
 mod allocator_api2;
+mod arena;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -58,3 +59,10 @@ pub use pool::{AllocatorGuard, AllocatorPool};
 pub use string_builder::StringBuilder;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+
+// Just for doctests
+#[doc(hidden)]
+pub mod __private {
+    pub use super::alloc::Alloc;
+    pub use super::arena::*;
+}

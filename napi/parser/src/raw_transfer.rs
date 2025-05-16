@@ -1,4 +1,5 @@
 use std::{
+    alloc::Layout,
     mem::{self, ManuallyDrop},
     ptr::{self, NonNull},
     str,
@@ -203,14 +204,21 @@ unsafe fn parse_raw_impl(
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
     // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
     // or be out of bounds.
-    let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!(is_multiple_of(data_ptr as usize, BUMP_ALIGN));
+    let start_ptr = unsafe { buffer_ptr.add(data_offset) };
+    debug_assert!(is_multiple_of(start_ptr as usize, BUMP_ALIGN));
     debug_assert!(is_multiple_of(data_size, BUMP_ALIGN));
-    // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
-    // `data_ptr` and `data_size` are multiples of 16.
+    // SAFETY: `data_size` was calculated to be before end of `buffer`
+    let end_ptr = unsafe { start_ptr.add(data_size) };
+    // SAFETY: `start_ptr` and `data_size` outline a section of the memory in `buffer`.
+    // `start_ptr` and `data_size` are multiples of 16.
     // `data_size` is greater than `Allocator::MIN_SIZE`.
-    let allocator =
-        unsafe { Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size) };
+    // `BUMP_ALIGN` may not be the correct alignment, but it doesn't matter as we don't let
+    // the `Allocator` get dropped.
+    // `data_size` is much less than `isize::MAX` so cannot produce an invalid `Layout`.
+    let allocator = unsafe {
+        let layout = Layout::from_size_align_unchecked(data_size, BUMP_ALIGN);
+        Allocator::from_raw_parts(NonNull::new_unchecked(start_ptr), layout)
+    };
     let allocator = ManuallyDrop::new(allocator);
 
     // Parse source.
@@ -275,7 +283,14 @@ unsafe fn parse_raw_impl(
         // Write `RawTransferData` to arena, and return pointer to it
         let data = RawTransferData { program, comments, module, errors };
         let data = allocator.alloc(data);
-        ptr::from_ref(data).cast::<u8>()
+        let data_ptr = ptr::from_ref(data).cast::<u8>();
+
+        // Check `Allocator` has not created any further chunks
+        // TODO: Would be better to add "no growth" option to `ArenaConfig`,
+        // or ask `Arena` if it's allocated more chunks.
+        assert!(data_ptr >= start_ptr && data_ptr < end_ptr);
+
+        data_ptr
     };
 
     // Write offset of `RawTransferData` and `bool` representing AST type into end of buffer
