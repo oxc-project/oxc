@@ -409,7 +409,7 @@ impl<'a> TypeScript<'a, '_> {
             &body,
             ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
         );
-        
+
         ctx.ast.class_element_static_block_with_scope_id(
             SPAN,
             ctx.ast.vec_from_iter(body),

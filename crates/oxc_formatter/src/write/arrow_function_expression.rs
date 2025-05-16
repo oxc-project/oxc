@@ -368,8 +368,6 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut current = arrow;
         let mut should_break = false;
 
-        
-
         loop {
             if current.expression {
                 if let Some(Statement::ExpressionStatement(expr_stmt)) =

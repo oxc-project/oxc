@@ -162,7 +162,6 @@ impl<'a> ParserImpl<'a> {
             _ => name.chars().next().unwrap().is_uppercase(),
         };
 
-        
         if is_reference {
             let identifier = self.ast.alloc_identifier_reference(identifier.span, identifier.name);
             JSXElementName::IdentifierReference(identifier)

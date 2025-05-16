@@ -226,7 +226,6 @@ impl<'a> TypeScriptEnum<'a> {
                 previous_enum_members.insert(member_name, constant_value.clone());
 
                 // prev_constant_value = constant_value
-                
 
                 match constant_value {
                     None => {

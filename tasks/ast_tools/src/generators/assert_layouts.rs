@@ -448,10 +448,7 @@ fn generate_layout_assertions_for_struct<'s>(
         let fields_total_bytes: u32 = struct_def
             .fields
             .iter()
-            .map(|field| {
-                
-                field.type_def(schema).platform_layout(is_64).size
-            })
+            .map(|field| field.type_def(schema).platform_layout(is_64).size)
             .sum();
         let padding_bytes = layout.size - fields_total_bytes;
         let padding_comment = format!("@ Padding: {padding_bytes} bytes");

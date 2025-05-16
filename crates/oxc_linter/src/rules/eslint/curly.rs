@@ -249,8 +249,6 @@ fn should_have_braces<'a>(
     };
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    
-
     if is_block && (is_not_single_statement || braces_necessary) {
         Some(true)
     } else if options.contains(&CurlyType::Multi) {

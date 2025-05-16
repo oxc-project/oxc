@@ -29,8 +29,6 @@ fn generate_cli() -> String {
     // Hack usage line
     let markdown = markdown.replacen("**Usage**:", "## Usage\n", 1);
 
-    
-
     markdown
         .split('\n')
         .flat_map(|line| {

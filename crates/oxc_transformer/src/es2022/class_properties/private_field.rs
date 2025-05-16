@@ -359,7 +359,6 @@ impl<'a> ClassProperties<'a, '_> {
         let prop_ident = prop_binding.create_read_expression(ctx);
 
         // Get replacement for callee
-        
 
         if is_static {
             // `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`

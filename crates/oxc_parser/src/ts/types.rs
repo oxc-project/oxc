@@ -269,7 +269,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier();
         let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
         let span = self.end_span(span);
-        
+
         self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false)
     }
 

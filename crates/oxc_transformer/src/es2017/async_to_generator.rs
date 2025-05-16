@@ -771,7 +771,6 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 ctx.ast.plain_formal_parameter(param.span(), binding.create_binding_pattern(ctx)),
             );
         }
-        
 
         ctx.ast.alloc_formal_parameters(
             SPAN,
