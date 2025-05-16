@@ -23,18 +23,23 @@ pub struct RuleTableRow {
     pub category: RuleCategory,
     #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
+    #[cfg(feature = "ruledocs")]
+    pub schema: Option<schemars::schema::Schema>,
+
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,
 }
 
 impl Default for RuleTable {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl RuleTable {
-    pub fn new() -> Self {
+    #[expect(clippy::allow_attributes)]
+    #[allow(unused, unused_mut)]
+    pub fn new(mut generator: Option<&mut schemars::SchemaGenerator>) -> Self {
         let default_rules = RULES
             .iter()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
@@ -49,6 +54,8 @@ impl RuleTable {
                     name,
                     #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
+                    #[cfg(feature = "ruledocs")]
+                    schema: generator.as_mut().and_then(|g| rule.schema(g)),
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
@@ -153,7 +160,7 @@ mod test {
     static TABLE: OnceLock<RuleTable> = OnceLock::new();
 
     fn table() -> &'static RuleTable {
-        TABLE.get_or_init(RuleTable::new)
+        TABLE.get_or_init(RuleTable::default)
     }
 
     #[test]

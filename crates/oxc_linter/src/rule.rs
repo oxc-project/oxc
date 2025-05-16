@@ -1,7 +1,9 @@
-use std::{borrow::Cow, fmt, hash::Hash};
+#[cfg(feature = "ruledocs")]
+use std::borrow::Cow;
+use std::{fmt, hash::Hash};
 
 use oxc_semantic::SymbolId;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -14,6 +16,12 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
     fn from_configuration(_value: serde_json::Value) -> Self {
         Self::default()
+    }
+
+    #[expect(unused_variables)]
+    #[cfg(feature = "ruledocs")]
+    fn schema(generator: &mut SchemaGenerator) -> Option<Schema> {
+        None
     }
 
     /// Visit each AST Node
@@ -68,6 +76,11 @@ pub trait RuleMeta {
     const FIX: RuleFixMeta = RuleFixMeta::None;
 
     fn documentation() -> Option<&'static str> {
+        None
+    }
+
+    #[expect(unused_variables)]
+    fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
 }
@@ -209,6 +222,7 @@ impl RuleFixMeta {
         matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }
 
+    #[cfg(feature = "ruledocs")]
     pub fn description(self) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed("No auto-fix is available for this rule."),

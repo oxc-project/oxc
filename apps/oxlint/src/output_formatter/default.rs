@@ -13,7 +13,7 @@ pub struct DefaultOutputFormatter;
 impl InternalFormatter for DefaultOutputFormatter {
     fn all_rules(&self) -> Option<String> {
         let mut output = String::new();
-        let table = RuleTable::new();
+        let table = RuleTable::default();
         for section in table.sections {
             output.push_str(section.render_markdown_table(None).as_str());
             output.push('\n');

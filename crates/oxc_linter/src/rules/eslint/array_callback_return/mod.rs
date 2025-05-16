@@ -6,6 +6,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use self::return_checker::{StatementReturnStatus, check_function_body};
@@ -32,7 +33,8 @@ fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ArrayCallbackReturn {
     /// When set to true, rule will also report forEach callbacks that return a value.
     check_for_each: bool,
@@ -75,7 +77,8 @@ declare_oxc_lint!(
     /// ```
     ArrayCallbackReturn,
     eslint,
-    pedantic
+    pedantic,
+    config = ArrayCallbackReturn
 );
 
 impl Rule for ArrayCallbackReturn {

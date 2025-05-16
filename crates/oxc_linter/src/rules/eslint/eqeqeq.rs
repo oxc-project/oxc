@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -15,7 +16,8 @@ fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         .with_label(span2)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Eqeqeq {
     compare_type: CompareType,
     null_type: NullType,
@@ -88,7 +90,8 @@ declare_oxc_lint!(
     Eqeqeq,
     eslint,
     pedantic,
-    conditional_fix_dangerous,
+    fix = conditional_fix_dangerous,
+    config = Eqeqeq,
 );
 
 impl Rule for Eqeqeq {
@@ -186,7 +189,8 @@ impl Rule for Eqeqeq {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum CompareType {
     #[default]
     Always,
@@ -202,7 +206,8 @@ impl CompareType {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum NullType {
     #[default]
     Always,
