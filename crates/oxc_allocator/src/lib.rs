@@ -24,6 +24,7 @@
 mod address;
 mod allocator;
 mod allocator_api2;
+mod arena;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -44,3 +45,9 @@ pub use hash_map::HashMap;
 pub use string::String;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+
+// Just for doctests
+#[doc(hidden)]
+pub mod __arena {
+    pub use super::arena::*;
+}
