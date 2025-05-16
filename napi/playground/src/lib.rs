@@ -129,6 +129,7 @@ impl Oxc {
             Parser::new(&allocator, &source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
+        self.diagnostics.extend(errors);
 
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform.unwrap_or_default() {
@@ -146,7 +147,7 @@ impl Oxc {
             ))
         });
         if run_options.syntax.unwrap_or_default() {
-            self.diagnostics.extend(errors.into_iter().chain(semantic_ret.errors));
+            self.diagnostics.extend(semantic_ret.errors);
         }
 
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
