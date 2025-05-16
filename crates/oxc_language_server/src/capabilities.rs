@@ -13,6 +13,7 @@ pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_execute_command: bool,
     pub workspace_configuration: bool,
+    pub dynamic_watchers: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -33,12 +34,18 @@ impl From<ClientCapabilities> for Capabilities {
             .workspace
             .as_ref()
             .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
+        let dynamic_watchers = value.workspace.is_some_and(|workspace| {
+            workspace.did_change_watched_files.is_some_and(|watched_files| {
+                watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
+            })
+        });
 
         Self {
             code_action_provider,
             workspace_apply_edit,
             workspace_execute_command,
             workspace_configuration,
+            dynamic_watchers,
         }
     }
 }
