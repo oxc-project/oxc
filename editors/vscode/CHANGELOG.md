@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.11] - 2025-05-16
+
+### Features
+
+- 078bf0b language_server: Better fallback handling when passing invalid `Options` values (#10930) (Sysix)
+- be7f7e1 language_server/editor: Support multi workspace folders (#10875) (Sysix)
+
+### Bug Fixes
+
+- 87bf2a8 editor: Send only `workspace/didChangeConfiguration` when some workspace configuration is effected (#11017) (Sysix)
+- ed5708d editor: Detect all workspaces config path changes (#11016) (Sysix)
+
+### Refactor
+
+- 3cc1466 language_server: New configuration structure for `initialize` and `workspace/didChangeConfiguration` (#10890) (Sysix)
+
+### Testing
+
+- 76b6b33 editor: Add tests for multi workspace folder setup (#10904) (Sysix)
+
 ## [0.16.10] - 2025-05-09
 
 ### Features
