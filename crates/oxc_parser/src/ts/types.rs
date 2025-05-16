@@ -269,9 +269,8 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier();
         let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
         let span = self.end_span(span);
-        let ts_type_parameter =
-            self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false);
-        ts_type_parameter
+        
+        self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false)
     }
 
     fn parse_postfix_type_or_higher(&mut self) -> TSType<'a> {

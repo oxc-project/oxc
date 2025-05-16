@@ -162,15 +162,15 @@ impl<'a> ParserImpl<'a> {
             _ => name.chars().next().unwrap().is_uppercase(),
         };
 
-        let element_name = if is_reference {
+        
+        if is_reference {
             let identifier = self.ast.alloc_identifier_reference(identifier.span, identifier.name);
             JSXElementName::IdentifierReference(identifier)
         } else if name == "this" {
             JSXElementName::ThisExpression(self.ast.alloc_this_expression(identifier.span))
         } else {
             JSXElementName::Identifier(self.alloc(identifier))
-        };
-        element_name
+        }
     }
 
     /// `JSXMemberExpression` :

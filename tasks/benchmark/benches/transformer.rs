@@ -41,17 +41,17 @@ fn bench_transformer(criterion: &mut Criterion) {
                     .into_scoping();
 
                 runner.run(|| {
-                    let ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        &transform_options,
-                    )
-                    .build_with_scoping(scoping, &mut program);
+                    
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.
                     // That's not central to transformer, so we don't want it included in this measure.
-                    ret
+                    Transformer::new(
+                        &allocator,
+                        Path::new(&file.file_name),
+                        &transform_options,
+                    )
+                    .build_with_scoping(scoping, &mut program)
                 });
             });
         });

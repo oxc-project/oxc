@@ -110,12 +110,15 @@ impl Oxlintrc {
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
         let mut string = read_to_string(path).map_err(|e| {
-            OxcDiagnostic::error(format!("Failed to parse config {path:?} with error {e:?}"))
+            OxcDiagnostic::error(format!(
+                "Failed to parse config {} with error {e:?}",
+                path.display()
+            ))
         })?;
 
         // jsonc support
         json_strip_comments::strip(&mut string).map_err(|err| {
-            OxcDiagnostic::error(format!("Failed to parse jsonc file {path:?}: {err:?}"))
+            OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
         })?;
 
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
@@ -130,7 +133,10 @@ impl Oxlintrc {
                     )
                 }
             };
-            OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
+            OxcDiagnostic::error(format!(
+                "Failed to parse eslint config {}.\n{err}",
+                path.display()
+            ))
         })?;
 
         let mut config = Self::deserialize(&json).map_err(|err| {

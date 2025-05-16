@@ -130,7 +130,7 @@ impl IsolatedLintHandler {
         }
         let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
-        debug!("lint {path:?}");
+        debug!("lint {}", path.display());
 
         let lint_service_options = LintServiceOptions::new(
             self.options.root_path.clone(),

@@ -230,7 +230,8 @@ impl<'l> Runtime<'l> {
 
         let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
-                "Failed to open file {path:?} with error \"{e}\""
+                "Failed to open file {} with error \"{e}\"",
+                path.display()
             )))
         });
         Some(match file_result {

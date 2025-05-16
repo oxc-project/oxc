@@ -449,8 +449,8 @@ fn generate_layout_assertions_for_struct<'s>(
             .fields
             .iter()
             .map(|field| {
-                let x = field.type_def(schema).platform_layout(is_64).size;
-                x
+                
+                field.type_def(schema).platform_layout(is_64).size
             })
             .sum();
         let padding_bytes = layout.size - fields_total_bytes;

@@ -94,7 +94,6 @@
     clippy::semicolon_if_nothing_returned,
     clippy::needless_pass_by_ref_mut,
     clippy::needless_for_each,
-    clippy::needless_lifetimes,
     clippy::cloned_instead_of_copied,
     clippy::checked_conversions,
     clippy::legacy_numeric_constants,
@@ -2134,7 +2133,7 @@ impl<'a> SetLenOnDrop<'a> {
     }
 }
 
-impl<'a> Drop for SetLenOnDrop<'a> {
+impl Drop for SetLenOnDrop<'_> {
     #[inline]
     fn drop(&mut self) {
         *self.len = self.local_len;
@@ -2197,7 +2196,7 @@ impl<'bump, T: 'bump + Hash> Hash for Vec<'bump, T> {
     }
 }
 
-impl<'bump, T, I> Index<I> for Vec<'bump, T>
+impl<T, I> Index<I> for Vec<'_, T>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2209,7 +2208,7 @@ where
     }
 }
 
-impl<'bump, T, I> IndexMut<I> for Vec<'bump, T>
+impl<T, I> IndexMut<I> for Vec<'_, T>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2277,7 +2276,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> IntoIterator for &'a Vec<'bump, T> {
+impl<'a, T> IntoIterator for &'a Vec<'_, T> {
     type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
 
@@ -2286,7 +2285,7 @@ impl<'a, 'bump, T> IntoIterator for &'a Vec<'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
+impl<'a, T> IntoIterator for &'a mut Vec<'_, T> {
     type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
 
@@ -2398,7 +2397,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 /// append the entire slice at once.
 ///
 /// [`copy_from_slice`]: https://doc.rust-lang.org/std/primitive.slice.html#method.copy_from_slice
-impl<'a, 'bump, T: 'a + Copy> Extend<&'a T> for Vec<'bump, T> {
+impl<'a, T: 'a + Copy> Extend<&'a T> for Vec<'_, T> {
     fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
         self.extend(iter.into_iter().cloned())
     }
@@ -2547,7 +2546,7 @@ pub struct IntoIter<'bump, T> {
     end: *const T,
 }
 
-impl<'bump, T: fmt::Debug> fmt::Debug for IntoIter<'bump, T> {
+impl<T: fmt::Debug> fmt::Debug for IntoIter<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("IntoIter").field(&self.as_slice()).finish()
     }
@@ -2595,8 +2594,8 @@ impl<'bump, T: 'bump> IntoIter<'bump, T> {
     }
 }
 
-unsafe impl<'bump, T: Send> Send for IntoIter<'bump, T> {}
-unsafe impl<'bump, T: Sync> Sync for IntoIter<'bump, T> {}
+unsafe impl<T: Send> Send for IntoIter<'_, T> {}
+unsafe impl<T: Sync> Sync for IntoIter<'_, T> {}
 
 impl<'bump, T: 'bump> Iterator for IntoIter<'bump, T> {
     type Item = T;
@@ -2604,7 +2603,7 @@ impl<'bump, T: 'bump> Iterator for IntoIter<'bump, T> {
     #[inline]
     fn next(&mut self) -> Option<T> {
         unsafe {
-            if self.ptr as *const _ == self.end {
+            if std::ptr::eq(self.ptr, self.end) {
                 None
             } else if mem::size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
@@ -2664,7 +2663,7 @@ impl<'bump, T: 'bump> ExactSizeIterator for IntoIter<'bump, T> {}
 
 impl<'bump, T: 'bump> FusedIterator for IntoIter<'bump, T> {}
 
-impl<'bump, T> Drop for IntoIter<'bump, T> {
+impl<T> Drop for IntoIter<'_, T> {
     fn drop(&mut self) {
         // drop all remaining elements
         self.for_each(drop);
@@ -2690,10 +2689,10 @@ impl<'a, 'bump, T: 'a + 'bump + fmt::Debug> fmt::Debug for Drain<'a, 'bump, T> {
     }
 }
 
-unsafe impl<'a, 'bump, T: Sync> Sync for Drain<'a, 'bump, T> {}
-unsafe impl<'a, 'bump, T: Send> Send for Drain<'a, 'bump, T> {}
+unsafe impl<T: Sync> Sync for Drain<'_, '_, T> {}
+unsafe impl<T: Send> Send for Drain<'_, '_, T> {}
 
-impl<'a, 'bump, T> Iterator for Drain<'a, 'bump, T> {
+impl<T> Iterator for Drain<'_, '_, T> {
     type Item = T;
 
     #[inline]
@@ -2706,14 +2705,14 @@ impl<'a, 'bump, T> Iterator for Drain<'a, 'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> DoubleEndedIterator for Drain<'a, 'bump, T> {
+impl<T> DoubleEndedIterator for Drain<'_, '_, T> {
     #[inline]
     fn next_back(&mut self) -> Option<T> {
         self.iter.next_back().map(|elt| unsafe { ptr::read(elt as *const _) })
     }
 }
 
-impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
+impl<T> Drop for Drain<'_, '_, T> {
     fn drop(&mut self) {
         // exhaust self first
         self.for_each(drop);
@@ -2735,9 +2734,9 @@ impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> ExactSizeIterator for Drain<'a, 'bump, T> {}
+impl<T> ExactSizeIterator for Drain<'_, '_, T> {}
 
-impl<'a, 'bump, T> FusedIterator for Drain<'a, 'bump, T> {}
+impl<T> FusedIterator for Drain<'_, '_, T> {}
 
 /// A splicing iterator for `Vec`.
 ///
@@ -2749,7 +2748,7 @@ pub struct Splice<'a, 'bump, I: Iterator + 'a + 'bump> {
     replace_with: I,
 }
 
-impl<'a, 'bump, I: Iterator> Iterator for Splice<'a, 'bump, I> {
+impl<I: Iterator> Iterator for Splice<'_, '_, I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -2761,15 +2760,15 @@ impl<'a, 'bump, I: Iterator> Iterator for Splice<'a, 'bump, I> {
     }
 }
 
-impl<'a, 'bump, I: Iterator> DoubleEndedIterator for Splice<'a, 'bump, I> {
+impl<I: Iterator> DoubleEndedIterator for Splice<'_, '_, I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.drain.next_back()
     }
 }
 
-impl<'a, 'bump, I: Iterator> ExactSizeIterator for Splice<'a, 'bump, I> {}
+impl<I: Iterator> ExactSizeIterator for Splice<'_, '_, I> {}
 
-impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
+impl<I: Iterator> Drop for Splice<'_, '_, I> {
     fn drop(&mut self) {
         self.drain.by_ref().for_each(drop);
 
@@ -2812,7 +2811,7 @@ impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
 }
 
 /// Private helper methods for `Splice::drop`
-impl<'a, 'bump, T> Drain<'a, 'bump, T> {
+impl<T> Drain<'_, '_, T> {
     /// The range from `self.vec.len` to `self.tail_start` contains elements
     /// that have been moved out.
     /// Fill that range as much as possible with new elements from the `replace_with` iterator.
@@ -2866,7 +2865,7 @@ where
     pred: F,
 }
 
-impl<'a, 'bump, T, F> Iterator for DrainFilter<'a, 'bump, T, F>
+impl<T, F> Iterator for DrainFilter<'_, '_, T, F>
 where
     F: FnMut(&mut T) -> bool,
 {
@@ -2900,7 +2899,7 @@ where
     }
 }
 
-impl<'a, 'bump, T, F> Drop for DrainFilter<'a, 'bump, T, F>
+impl<T, F> Drop for DrainFilter<'_, '_, T, F>
 where
     F: FnMut(&mut T) -> bool,
 {

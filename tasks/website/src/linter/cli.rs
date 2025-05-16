@@ -29,7 +29,9 @@ fn generate_cli() -> String {
     // Hack usage line
     let markdown = markdown.replacen("**Usage**:", "## Usage\n", 1);
 
-    let markdown = markdown
+    
+
+    markdown
         .split('\n')
         .flat_map(|line| {
             // Hack the bug on the line containing `###`
@@ -50,7 +52,5 @@ fn generate_cli() -> String {
             line.to_string()
         })
         .collect::<Vec<_>>()
-        .join("\n");
-
-    markdown
+        .join("\n")
 }
