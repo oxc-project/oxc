@@ -212,7 +212,8 @@ impl LanguageServer for Backend {
                     continue;
                 };
 
-                let Some(diagnostics) = worker.did_change_configuration(&option.options).await
+                let Some(diagnostics) =
+                    worker.did_change_configuration(&option.options).await.diagnostics
                 else {
                     continue;
                 };
@@ -242,7 +243,8 @@ impl LanguageServer for Backend {
                 let Some(config) = &configs[index] else {
                     continue;
                 };
-                let Some(diagnostics) = worker.did_change_configuration(config).await else {
+                let Some(diagnostics) = worker.did_change_configuration(config).await.diagnostics
+                else {
                     continue;
                 };
 
@@ -288,7 +290,8 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
+            let Some(diagnostics) = worker.did_change_watched_files(file_event).await.diagnostics
+            else {
                 continue;
             };
 

@@ -24,6 +24,18 @@ pub struct WorkspaceWorker {
     options: Mutex<Options>,
 }
 
+// When changing configuration or watched files
+pub struct ClientNotifications {
+    // the diagnostics are changing for some files
+    pub diagnostics: Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+    // the configuration changed `configPath` or some watched files changed `extends`
+    #[expect(dead_code)]
+    pub add_file_watchers: Option<()>,
+    // the configuration changed `configPath` or some watched files changed `extends`
+    #[expect(dead_code)]
+    pub remove_file_watchers: Option<()>,
+}
+
 impl WorkspaceWorker {
     pub fn new(root_uri: Uri) -> Self {
         Self {
@@ -211,18 +223,16 @@ impl WorkspaceWorker {
         text_edits
     }
 
-    pub async fn did_change_watched_files(
-        &self,
-        _file_event: &FileEvent,
-    ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+    pub async fn did_change_watched_files(&self, _file_event: &FileEvent) -> ClientNotifications {
         self.refresh_server_linter().await;
-        Some(self.revalidate_diagnostics().await)
+        ClientNotifications {
+            diagnostics: Some(self.revalidate_diagnostics().await),
+            add_file_watchers: None,
+            remove_file_watchers: None,
+        }
     }
 
-    pub async fn did_change_configuration(
-        &self,
-        changed_options: &Options,
-    ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+    pub async fn did_change_configuration(&self, changed_options: &Options) -> ClientNotifications {
         let current_option = &self.options.lock().await.clone();
 
         debug!(
@@ -237,10 +247,18 @@ impl WorkspaceWorker {
 
         if Self::needs_linter_restart(current_option, changed_options) {
             self.refresh_server_linter().await;
-            return Some(self.revalidate_diagnostics().await);
+            return ClientNotifications {
+                diagnostics: Some(self.revalidate_diagnostics().await),
+                add_file_watchers: None,
+                remove_file_watchers: None,
+            };
         }
 
-        None
+        ClientNotifications {
+            diagnostics: None,
+            add_file_watchers: None,
+            remove_file_watchers: None,
+        }
     }
 }
 
