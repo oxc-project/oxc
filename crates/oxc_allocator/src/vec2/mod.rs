@@ -720,7 +720,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         self.buf.set_len(new_len);
     }
 
-    /// Returns a shared reference to the allocator backing this `Vec`.
+    /// Returns a shared reference to the arena backing this `Vec`.
     ///
     /// # Examples
     ///
@@ -730,14 +730,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// // uses the same allocator as the provided `Vec`
     /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
     ///     for string in ["foo", "bar", "baz"] {
-    ///         vec.push(vec.bump().alloc_str(string));
+    ///         vec.push(vec.arena().alloc_str(string));
     ///     }
     /// }
     /// ```
     #[inline]
     #[must_use]
-    pub fn bump(&self) -> &'a A {
-        self.buf.bump()
+    pub fn arena(&self) -> &'a A {
+        self.buf.arena()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -1735,7 +1735,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
         let other_len = self.len_usize() - at;
-        let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
+        let mut other = Vec::with_capacity_in(other_len, self.buf.arena());
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -2070,7 +2070,7 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
 impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
     #[cfg(not(test))]
     fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
+        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.arena());
         v.extend(self.iter().cloned());
         v
     }
@@ -2081,7 +2081,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
     // NB see the slice::hack module in slice.rs for more information
     #[cfg(test)]
     fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::new_in(self.buf.bump());
+        let mut v = Vec::new_in(self.buf.arena());
         v.extend(self.iter().cloned());
         v
     }
@@ -2703,7 +2703,7 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.bump());
+            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.arena());
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.
@@ -2822,7 +2822,7 @@ where
 
 /*
 #[cfg(feature = "std")]
-impl<'a> io::Write for Vec<'a, u8> {
+impl<'a, A: Alloc> io::Write for Vec<'a, u8, A> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.extend_from_slice_copy(buf);
@@ -2849,7 +2849,7 @@ mod serialize {
 
     use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-    impl<'a, T> Serialize for Vec<'a, T>
+    impl<'a, T, A: Alloc> Serialize for Vec<'a, T, A>
     where
         T: Serialize,
     {

@@ -33,10 +33,16 @@ const FOUR_GIB: usize = 1 << (IS_SUPPORTED_PLATFORM as usize * 32);
 // Note: Rust's workaround will likely commit a whole page of memory, just to store the real pointer.
 const ALLOC_SIZE: usize = FOUR_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
+
+const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
+    Ok(layout) => layout,
+    Err(_) => unreachable!(),
+};
+
 const CHUNK_SIZE: usize = TWO_GIB;
 pub const CHUNK_ALIGN: usize = FOUR_GIB;
 
-const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
+const CHUNK_LAYOUT: Layout = match Layout::from_size_align(CHUNK_SIZE, CHUNK_ALIGN) {
     Ok(layout) => layout,
     Err(_) => unreachable!(),
 };
@@ -89,8 +95,10 @@ impl FixedSizeAllocator {
 
         // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
         // the allocation we just made.
-        // `chunk_ptr` has high alignment (4 GiB). `size` is large and a high power of 2 (2 GiB).
-        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        // `chunk_ptr` has high alignment (4 GiB).
+        // `CHUNK_LAYOUT`'s `size` is large and a high power of 2 (2 GiB).
+        // `CHUNK_LAYOUT`'s `align` is large (4 GiB).
+        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_LAYOUT) };
 
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
         Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }

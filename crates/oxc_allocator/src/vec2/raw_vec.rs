@@ -192,8 +192,8 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
     }
 
-    /// Returns a shared reference to the allocator backing this RawVec.
-    pub fn bump(&self) -> &'a A {
+    /// Returns a shared reference to the arena backing this `RawVec`.
+    pub fn arena(&self) -> &'a A {
         self.alloc
     }
 
@@ -826,13 +826,13 @@ fn handle_error(error: AllocError) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use bumpalo::Bump;
+    use crate::arena::ArenaDefault;
 
     use super::*;
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let arena = Bump::new();
+        let arena = ArenaDefault::new();
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`

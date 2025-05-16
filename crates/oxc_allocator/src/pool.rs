@@ -133,15 +133,15 @@ mod wrapper {
             // Set cursor back to end
             self.0.reset();
 
-            // Set data pointer back to start.
-            // SAFETY: Fixed-size allocators have data pointer originally aligned on `CHUNK_ALIGN`,
-            // and size less than `CHUNK_ALIGN`. So we can restore original data pointer by rounding down
-            // to next multiple of `CHUNK_ALIGN`.
+            // Set start pointer back to original start.
+            // SAFETY: Fixed-size allocators have start pointer originally aligned on `CHUNK_ALIGN`,
+            // and size less than `CHUNK_ALIGN`. So we can restore original start pointer by rounding
+            // down to next multiple of `CHUNK_ALIGN`.
             unsafe {
-                let data_ptr = self.0.data_ptr();
-                let offset = data_ptr.as_ptr() as usize % CHUNK_ALIGN;
-                let data_ptr = data_ptr.sub(offset);
-                self.0.set_data_ptr(data_ptr);
+                let start_ptr = self.0.arena().start_ptr();
+                let offset = start_ptr.as_ptr() as usize % CHUNK_ALIGN;
+                let start_ptr = start_ptr.sub(offset);
+                self.0.arena().set_start_ptr(start_ptr);
             }
         }
 

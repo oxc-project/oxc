@@ -13,7 +13,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bumpalo::Bump;
 use rustc_hash::FxBuildHasher;
 
 // Re-export additional types from `hashbrown`
@@ -25,9 +24,9 @@ pub use hashbrown::{
     },
 };
 
-use crate::Allocator;
+use crate::{Allocator, arena::ArenaDefault as Arena};
 
-type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Bump>;
+type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Arena>;
 
 /// A hash map without `Drop`, that uses [`FxHasher`] to hash keys, and stores data in arena allocator.
 ///
@@ -80,7 +79,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
+        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -93,7 +92,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner =
-            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -101,7 +100,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ///
     /// The map cannot be used after calling this. The iterator element type is `K`.
     #[inline(always)]
-    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Bump> {
+    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_keys()
     }
@@ -110,7 +109,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ///
     /// The map cannot be used after calling this. The iterator element type is `V`.
     #[inline(always)]
-    pub fn into_values(self) -> IntoValues<K, V, &'alloc Bump> {
+    pub fn into_values(self) -> IntoValues<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_values()
     }
@@ -134,7 +133,7 @@ impl<'alloc, K, V> DerefMut for HashMap<'alloc, K, V> {
 }
 
 impl<'alloc, K, V> IntoIterator for HashMap<'alloc, K, V> {
-    type IntoIter = IntoIter<K, V, &'alloc Bump>;
+    type IntoIter = IntoIter<K, V, &'alloc Arena>;
     type Item = (K, V);
 
     /// Creates a consuming iterator, that is, one that moves each key-value pair out of the map
