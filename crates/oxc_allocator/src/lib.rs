@@ -17,7 +17,6 @@
 //! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
 //!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
-//!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 
 #![warn(missing_docs)]
 
@@ -26,6 +25,7 @@ mod address;
 mod alloc;
 mod allocator;
 mod allocator_api2;
+mod arena;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -47,3 +47,10 @@ pub use hash_map::HashMap;
 pub use string::String;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+
+// Just for doctests
+#[doc(hidden)]
+pub mod __arena {
+    pub use super::alloc::Alloc;
+    pub use super::arena::*;
+}

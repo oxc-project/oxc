@@ -19,7 +19,7 @@ workspace = true
 doctest = true
 
 [dependencies]
-oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "pointer_ext"] }
 oxc_estree = { workspace = true, optional = true }
 
 allocator-api2 = { workspace = true }

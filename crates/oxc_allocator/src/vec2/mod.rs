@@ -2923,7 +2923,7 @@ where
 
 /*
 #[cfg(feature = "std")]
-impl<'a> io::Write for Vec<'a, u8> {
+impl<'a, A: Alloc> io::Write for Vec<'a, u8, A> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.extend_from_slice_copy(buf);
@@ -2950,7 +2950,7 @@ mod serialize {
 
     use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-    impl<'a, T> Serialize for Vec<'a, T>
+    impl<'a, T, A: Alloc> Serialize for Vec<'a, T, A>
     where
         T: Serialize,
     {

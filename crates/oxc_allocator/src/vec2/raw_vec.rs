@@ -814,13 +814,13 @@ fn handle_error(error: CollectionAllocErr) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use bumpalo::Bump;
+    use crate::arena::ArenaDefault;
 
     use super::*;
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let arena = Bump::new();
+        let arena = ArenaDefault::new();
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`

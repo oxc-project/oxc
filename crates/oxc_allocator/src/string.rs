@@ -48,7 +48,7 @@ impl<'alloc> String<'alloc> {
     /// [`with_capacity_in`]: String::with_capacity_in
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(ManuallyDrop::new(BumpaloString::new_in(allocator.bump())))
+        Self(ManuallyDrop::new(BumpaloString::new_in(allocator.arena())))
     }
 
     /// Creates a new empty [`String`] with specified capacity.
@@ -66,7 +66,7 @@ impl<'alloc> String<'alloc> {
     /// [`new_in`]: String::new_in
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(ManuallyDrop::new(BumpaloString::with_capacity_in(capacity, allocator.bump())))
+        Self(ManuallyDrop::new(BumpaloString::with_capacity_in(capacity, allocator.arena())))
     }
 
     /// Construct a new [`String`] from a string slice.
@@ -82,7 +82,7 @@ impl<'alloc> String<'alloc> {
     /// ```
     #[inline(always)]
     pub fn from_str_in(s: &str, allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(ManuallyDrop::new(BumpaloString::from_str_in(s, allocator.bump())))
+        Self(ManuallyDrop::new(BumpaloString::from_str_in(s, allocator.arena())))
     }
 
     /// Convert `Vec<u8>` into [`String`].
@@ -277,7 +277,7 @@ impl<'alloc> String<'alloc> {
     ) -> String<'alloc> {
         // SAFETY: Safety conditions of this method are the same as `BumpaloString`'s method
         let inner =
-            unsafe { BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump()) };
+            unsafe { BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.arena()) };
         Self(ManuallyDrop::new(inner))
     }
 
