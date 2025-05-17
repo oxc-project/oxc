@@ -483,7 +483,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "PointerAlign" => return,
         "bool" => "return uint8[pos] === 1;",
         "u8" => "return uint8[pos];",
-        // "u16" => "return uint16[pos >> 1];",
+        "u16" => "return uint16[pos >> 1];",
         "u32" => "return uint32[pos >> 2];",
         #[rustfmt::skip]
         "u64" => "

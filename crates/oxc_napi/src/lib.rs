@@ -31,7 +31,7 @@ pub fn convert_utf8_to_utf16(
                 converter.convert_span(&mut span);
             }
             Comment {
-                r#type: match comment.kind {
+                r#type: match comment.kind() {
                     CommentKind::Line => String::from("Line"),
                     CommentKind::Block => String::from("Block"),
                 },

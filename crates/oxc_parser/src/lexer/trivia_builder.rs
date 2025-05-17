@@ -83,7 +83,7 @@ impl TriviaBuilder {
         if self.processed < len {
             // All unprocessed preceding comments are leading comments attached to this token start.
             for comment in &mut self.comments[self.processed..] {
-                comment.position = CommentPosition::Leading;
+                comment.set_position(CommentPosition::Leading);
                 comment.attached_to = token.start();
             }
             self.processed = len;
@@ -149,14 +149,14 @@ impl TriviaBuilder {
         let mut s = comment.content_span().source_text(source_text);
 
         if s.starts_with('!') {
-            comment.annotation = CommentAnnotation::Legal;
+            comment.set_annotation(CommentAnnotation::Legal);
             return;
         }
 
         if comment.is_block() && s.starts_with('*') {
             // Ignore webpack comment `/*****/`
             if !s.bytes().all(|c| c == b'*') {
-                comment.annotation = CommentAnnotation::Jsdoc;
+                comment.set_annotation(CommentAnnotation::Jsdoc);
                 return;
             }
         }
@@ -165,38 +165,38 @@ impl TriviaBuilder {
 
         if let Some(ss) = s.strip_prefix('@') {
             if ss.starts_with("vite") {
-                comment.annotation = CommentAnnotation::Vite;
+                comment.set_annotation(CommentAnnotation::Vite);
                 return;
             }
             if ss.starts_with("license") || ss.starts_with("preserve") {
-                comment.annotation = CommentAnnotation::Legal;
+                comment.set_annotation(CommentAnnotation::Legal);
                 return;
             }
             s = ss;
         } else if let Some(ss) = s.strip_prefix('#') {
             s = ss;
         } else if s.starts_with("webpack") {
-            comment.annotation = CommentAnnotation::Webpack;
+            comment.set_annotation(CommentAnnotation::Webpack);
             return;
         } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
             .iter()
             .any(|ss| s.starts_with(ss))
         {
-            comment.annotation = CommentAnnotation::CoverageIgnore;
+            comment.set_annotation(CommentAnnotation::CoverageIgnore);
         } else {
             if contains_license_or_preserve_comment(s) {
-                comment.annotation = CommentAnnotation::Legal;
+                comment.set_annotation(CommentAnnotation::Legal);
             }
             return;
         }
 
         let Some(s) = s.strip_prefix("__") else { return };
         if s.starts_with("PURE__") {
-            comment.annotation = CommentAnnotation::Pure;
+            comment.set_annotation(CommentAnnotation::Pure);
             self.has_pure_comment = true;
         }
         if s.starts_with("NO_SIDE_EFFECTS__") {
-            comment.annotation = CommentAnnotation::NoSideEffects;
+            comment.set_annotation(CommentAnnotation::NoSideEffects);
             self.has_no_side_effects_comment = true;
         }
     }
@@ -241,7 +241,7 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentAnnotation, CommentKind, CommentPosition, ast::CommentNewlines};
+    use oxc_ast::{Comment, CommentAnnotation, ast::CommentFlags};
     use oxc_span::{SourceType, Span};
 
     use crate::Parser;
@@ -265,51 +265,35 @@ mod test {
         let expected = [
             Comment {
                 span: Span::new(9, 24),
-                kind: CommentKind::Block,
-                position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK
+                    | CommentFlags::PRECEDED_BY_NEW_LINE
+                    | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(33, 45),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::PRECEDED_BY_NEW_LINE | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(54, 69),
-                kind: CommentKind::Block,
-                position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::Leading,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK | CommentFlags::PRECEDED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(76, 92),
-                kind: CommentKind::Block,
-                position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::None,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK | CommentFlags::TRAILING,
             },
             Comment {
                 span: Span::new(93, 106),
-                kind: CommentKind::Line,
-                position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::TRAILING | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(115, 138),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 147,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::PRECEDED_BY_NEW_LINE | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
         ];
 
@@ -329,19 +313,17 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(20, 35),
-                kind: CommentKind::Block,
-                position: CommentPosition::Leading,
                 attached_to: 36,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK
+                    | CommentFlags::PRECEDED_BY_NEW_LINE
+                    | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(42, 58),
-                kind: CommentKind::Block,
-                position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK
+                    | CommentFlags::TRAILING
+                    | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
         ];
         assert_eq!(comments, expected);
@@ -362,19 +344,17 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(1, 13),
-                kind: CommentKind::Block,
-                position: CommentPosition::Leading,
                 attached_to: 28,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK
+                    | CommentFlags::PRECEDED_BY_NEW_LINE
+                    | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(14, 26),
-                kind: CommentKind::Block,
-                position: CommentPosition::Leading,
                 attached_to: 28,
-                newlines: CommentNewlines::LeadingAndTrailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::BLOCK
+                    | CommentFlags::PRECEDED_BY_NEW_LINE
+                    | CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
         ];
         assert_eq!(comments, expected);
@@ -393,19 +373,13 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(24, 44),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 57,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(96, 116),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 129,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
         ];
         assert_eq!(comments, expected);
@@ -423,19 +397,13 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(18, 38),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 55,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
             Comment {
                 span: Span::new(79, 99),
-                kind: CommentKind::Line,
-                position: CommentPosition::Leading,
                 attached_to: 116,
-                newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                flags: CommentFlags::FOLLOWED_BY_NEW_LINE,
             },
         ];
         assert_eq!(comments, expected);
@@ -469,7 +437,7 @@ token /* Trailing 1 */
         for (source_text, expected) in data {
             let comments = get_comments(source_text);
             assert_eq!(comments.len(), 1, "{source_text}");
-            assert_eq!(comments[0].annotation, expected, "{source_text}");
+            assert_eq!(comments[0].annotation(), expected, "{source_text}");
         }
     }
 }

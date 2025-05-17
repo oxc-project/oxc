@@ -848,13 +848,13 @@ impl Comments {
                     .count() as u32,
                 // FIXME
                 piece: SyntaxTriviaPieceComments {},
-                kind: match comment.kind {
+                kind: match comment.kind() {
                     ast::CommentKind::Line => CommentKind::Line,
                     ast::CommentKind::Block => CommentKind::Block, // TODO: missing CommentKind::InlineBlock
                 },
                 formatted: Cell::new(false),
             };
-            match comment.position {
+            match comment.position() {
                 ast::CommentPosition::Leading => {
                     map.push_leading(comment.attached_to, c);
                 }

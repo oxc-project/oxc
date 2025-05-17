@@ -2063,16 +2063,17 @@ function deserializeJSDocUnknownType(pos) {
 }
 
 function deserializeComment(pos) {
-  const type = deserializeCommentKind(pos + 12),
-    start = deserializeU32(pos),
-    end = deserializeU32(pos + 4);
+  const type = deserializeCommentKind(pos + 12);
+  const start = deserializeU32(pos);
+  const end = deserializeU32(pos + 4);
   const endCut = type === 'Line' ? 0 : 2;
-  return {
+  const comment = {
     type,
     value: sourceText.slice(start + 2, end - endCut),
     start,
     end,
   };
+  return comment;
 }
 
 function deserializeNameSpan(pos) {
@@ -5259,6 +5260,10 @@ function deserializeBoxTSExternalModuleReference(pos) {
 
 function deserializeU32(pos) {
   return uint32[pos >> 2];
+}
+
+function deserializeU16(pos) {
+  return uint16[pos >> 1];
 }
 
 function deserializeOptionNameSpan(pos) {

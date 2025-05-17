@@ -128,7 +128,7 @@ impl Codegen<'_> {
             return;
         };
         let comment_source = comment.span.source_text(source_text);
-        match comment.kind {
+        match comment.kind() {
             CommentKind::Line => {
                 self.print_str(comment_source);
             }

@@ -212,26 +212,33 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
     }
 }
 
-/// Serialize `value` field of `Comment`.
+/// Serializer for `Comment`
+///
+/// This meta type is only present for raw transfer, which can transfer faster.
+///
+/// ## Serialization of `value` field of `Comment`
 ///
 /// This serializer does not work for JSON serializer, because there's no access to source text
 /// in `fn serialize`. But in any case, comments often contain characters which need escaping in JSON,
 /// which is slow, so it's probably faster to transfer comments as NAPI types (which we do).
-///
-/// This meta type is only present for raw transfer, which can transfer faster.
 #[ast_meta]
-#[estree(
-    ts_type = "string",
-    raw_deser = "
-        const endCut = THIS.type === 'Line' ? 0 : 2;
-        SOURCE_TEXT.slice(THIS.start + 2, THIS.end - endCut)
-    "
-)]
-pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
+#[estree(raw_deser = "
+    const type = DESER[CommentKind](POS_OFFSET.flags);
+    const start = DESER[u32](POS_OFFSET.span.start);
+    const end = DESER[u32](POS_OFFSET.span.end);
+    const endCut = THIS.type === 'Line' ? 0 : 2;
+    const comment = {
+        type,
+        value: SOURCE_TEXT.slice(THIS.start + 2, THIS.end - endCut),
+        start,
+        end,
+    };
+    comment
+")]
+pub struct CommentConverter<'a>(#[expect(dead_code)] pub &'a Comment);
 
-impl ESTree for CommentValue<'_> {
-    #[expect(clippy::unimplemented)]
+impl ESTree for CommentConverter<'_> {
     fn serialize<S: Serializer>(&self, _serializer: S) {
-        unimplemented!();
+        unimplemented!()
     }
 }

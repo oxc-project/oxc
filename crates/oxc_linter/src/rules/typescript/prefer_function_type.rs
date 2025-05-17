@@ -169,7 +169,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             comments.for_each(|(comment_interface, span)| {
                                                 let comment = span.source_text(source_code);
 
-                                                match comment_interface.kind {
+                                                match comment_interface.kind() {
                                                     CommentKind::Line => {
                                                         let single_line_comment: String =
                                                             format!("//{comment}\n");
