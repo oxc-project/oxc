@@ -3,6 +3,7 @@
 use std::{cmp::min, slice};
 
 use oxc_ast::ast::{Comment, Program};
+use oxc_data_structures::pointer_ext::PointerExt;
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
@@ -551,7 +552,7 @@ fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
         if chunk.contains_unicode() {
             // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
             // `ptr` is derived from `start_ptr`.
-            let offset = unsafe { offset_from(ptr, start_ptr) };
+            let offset = unsafe { ptr.offset_from_usize(start_ptr) };
             process_slice(chunk.as_slice(), offset);
         }
 
@@ -572,27 +573,9 @@ fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
         let last_chunk = unsafe { slice::from_raw_parts(ptr, remaining_len) };
         // SAFETY: `ptr` is after `start_ptr`. Both are within bounds of `bytes`.
         // `ptr` is derived from `start_ptr`.
-        let offset = unsafe { offset_from(ptr, start_ptr) };
+        let offset = unsafe { ptr.offset_from_usize(start_ptr) };
         process_slice(last_chunk, offset);
     }
-}
-
-/// Calculate distance in bytes from `from_ptr` to `to_ptr`.
-///
-/// # SAFETY
-/// * `from_ptr` must be before or equal to `to_ptr`.
-/// * Both pointers must point to within the same object (or the end of the object).
-/// * Both pointers must be derived from the same original pointer.
-#[inline]
-unsafe fn offset_from(to_ptr: *const u8, from_ptr: *const u8) -> usize {
-    debug_assert!(to_ptr as usize >= from_ptr as usize);
-
-    // SAFETY: Caller `from_ptr` and `to_ptr` are both derived from same original pointer,
-    // and in bounds of same object.
-    // Both pointers are `*const u8`, so alignment and stride requirements are not relevant.
-    let offset = unsafe { to_ptr.offset_from(from_ptr) };
-    // SAFETY: Caller guarantees `from_ptr` is before or equal to `to_ptr`, so `offset >= 0`
-    unsafe { usize::try_from(offset).unwrap_unchecked() }
 }
 
 #[cfg(test)]
