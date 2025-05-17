@@ -1627,6 +1627,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn append(&mut self, other: &mut Self) {
         unsafe {
+            // SAFETY: The elements in `other` are made inaccessible by `other.set_len(0)` straight after
             self.append_elements(other.as_slice() as _);
             other.set_len(0);
         }
@@ -1636,10 +1637,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # SAFETY
     ///
-    /// The caller must ensure that the length of buffer passed in is less than or
-    /// equal to `u32::MAX`.
-    /// The length of the `Self` and `other` buffer add up to must be less than or
-    /// equal to `u32::MAX`.
+    /// Elements from `other` will be copied into `self`'s buffer.
+    /// Caller must ensure either that `T` is `Copy`, or the elements of `other` are not accessible
+    /// except by the pointer `other`, and that they are not read after this call.
     #[inline]
     #[expect(clippy::cast_possible_truncation)]
     unsafe fn append_elements(&mut self, other: *const [T]) {
@@ -1647,10 +1647,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         self.reserve(count);
         let len = self.len();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
-        // `unwrap_unchecked()` is okay because that caller needs to ensure that
-        // the length of the buffer passed in is less than or equal to `u32::MAX`,
-        // otherwise it is UB.
-        self.buf.len = self.buf.len.checked_add(count as u32).unwrap_unchecked()
+        // `count` cannot be `> u32::MAX`, so `count as u32` cannot truncate `count`.
+        // `self.buf.len + count` cannot be `> u32::MAX`.
+        // If either of these conditions was violated, `self.reserve(count)` above would have panicked.
+        // So this addition cannot wrap around.
+        self.buf.len += count as u32;
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
