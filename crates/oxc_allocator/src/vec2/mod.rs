@@ -2298,31 +2298,60 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         //      for item in iterator {
         //          self.push(item);
         //      }
-        let mut len = self.len_usize();
+
+        // Refuse to handle ZSTs, to avoid having to write special logic for it.
+        // Calculation of `len` at end of this method would be incorrect for ZSTs,
+        // because `ptr.add(1)` is same as `ptr.byte_add(0)` i.e. does not move the pointer.
+        // TODO: We will remove support for ZSTs from `Vec` entirely. Remove this const assert then.
+        const {
+            assert!(size_of::<T>() > 0, "Cannot `extend` a `Vec<T>` where `T` is zero-sized");
+        }
+
+        // Get pointers to location to write next element, and end of allocation.
+        // SAFETY: `len` and `capacity` are always within bounds of the allocation.
+        let mut next_element_ptr = unsafe { self.as_mut_ptr().add(self.len_usize()) };
+        let mut capacity_end_ptr = unsafe { self.as_ptr().add(self.capacity_usize()) };
+
         while let Some(element) = iterator.next() {
-            if len == self.capacity_usize() {
+            if next_element_ptr.cast_const() == capacity_end_ptr {
+                // `Vec` is full to capacity.
                 // This reallocation path is rarely taken, especially with prior reservation,
                 // so mark it `#[cold]` and `#[inline(never)]` helps the compiler optimize the
                 // common case, and prevents this cold path from being inlined to the `while` loop,
                 // which increases the execution instructions and hits the performance.
                 #[cold]
                 #[inline(never)]
-                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator, len: usize) {
-                    // `len` is always `<= u32::MAX`. If attempted to grow the `Vec` beyond this
-                    // on a previous turn, `RawVec::reserve` would have panicked.
+                fn reserve_slow<T>(
+                    v: &mut Vec<T>,
+                    iterator: &impl Iterator,
+                    next_element_ptr: &mut *mut T,
+                    capacity_end_ptr: &mut *const T,
+                ) {
+                    // SAFETY: `next_element_ptr` is at end of the `Vec`'s allocation.
+                    // `len` cannot be more than `u32::MAX` so `as u32` cannot truncate it.
                     #[expect(clippy::cast_possible_truncation)]
-                    let len = len as u32;
+                    let len = unsafe { (*next_element_ptr).offset_from(v.as_ptr()) as u32 };
 
                     let (lower, _) = iterator.size_hint();
                     v.buf.reserve(len, lower.saturating_add(1));
+
+                    // Update `next_element_ptr` and `capacity_end_ptr`, because allocation has grown,
+                    // and likely moved too.
+                    // SAFETY: `len` and `capacity` are always within bounds of the allocation.
+                    unsafe {
+                        *next_element_ptr = v.as_mut_ptr().add(len as usize);
+                        *capacity_end_ptr = v.as_ptr().add(v.capacity_usize());
+                    }
                 }
 
-                reserve_slow(self, &iterator, len);
+                reserve_slow(self, &iterator, &mut next_element_ptr, &mut capacity_end_ptr);
             }
+
+            // SAFETY: `next_element_ptr` is within bounds of the `Vec`'s allocation,
+            // and not at the end of it, because we just ensured the `Vec` is not full to capacity
             unsafe {
-                ptr::write(self.as_mut_ptr().add(len), element);
-                // Can't overflow since we would have had to alloc the address space
-                len += 1;
+                ptr::write(next_element_ptr, element);
+                next_element_ptr = next_element_ptr.add(1);
             }
         }
 
@@ -2334,8 +2363,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         // so they get dropped when the `Vec` is dropped.
         // But our `Vec` requires that `T` is not `Drop`, so we don't need to worry about that.
         //
-        // SAFETY: `len` cannot be `> u32::MAX` because `reserve` would have already panicked if it was.
-        unsafe { self.set_len(len) };
+        // SAFETY: `next_element_ptr` is within bounds of the `Vec`'s allocation (or maybe at its very end)
+        unsafe {
+            // `len` cannot be `> u32::MAX` because `reserve` would have already panicked if it was
+            #[expect(clippy::cast_possible_truncation)]
+            let len = next_element_ptr.offset_from(self.as_ptr()) as u32;
+            self.buf.set_len(len);
+        }
     }
 }
 
